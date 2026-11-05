@@ -1,0 +1,147 @@
+import Foundation
+import BasedCore
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
+
+extension NSAttributedString.Key {
+    static let basedMarks = NSAttributedString.Key("based.marks")
+    static let basedMention = NSAttributedString.Key("based.mention")
+    static let basedEquation = NSAttributedString.Key("based.equation")
+}
+
+struct TextStyle: Equatable {
+    var type: BlockType
+    var format: PageFormat?
+    var color: TColor?
+    var checked = false
+}
+
+/// RichText ⇄ NSAttributedString. The source of truth is stored in custom attributes;
+/// fonts and colours are derived for display only.
+@MainActor
+enum AttributedBridge {
+    static func font(_ base: PlatformFont, bold: Bool, italic: Bool) -> PlatformFont {
+        guard bold || italic else { return base }
+        #if os(macOS)
+        var f = base
+        if bold { f = NSFontManager.shared.convert(f, toHaveTrait: .boldFontMask) }
+        if italic { f = NSFontManager.shared.convert(f, toHaveTrait: .italicFontMask) }
+        return f
+        #else
+        var traits = base.fontDescriptor.symbolicTraits
+        if bold { traits.insert(.traitBold) }
+        if italic { traits.insert(.traitItalic) }
+        guard let d = base.fontDescriptor.withSymbolicTraits(traits) else { return base }
+        return UIFont(descriptor: d, size: base.pointSize)
+        #endif
+    }
+
+    static func paragraphStyle(_ style: TextStyle) -> NSParagraphStyle {
+        let p = NSMutableParagraphStyle()
+        p.lineHeightMultiple = style.type == .code ? 1.2 : (style.type.isHeading || style.type == .page ? 1.05 : 1.18)
+        return p
+    }
+
+    static func attributes(_ marks: Marks, style: TextStyle) -> [NSAttributedString.Key: Any] {
+        let base = Theme.baseFont(for: style.type, format: style.format)
+        var a: [NSAttributedString.Key: Any] = [:]
+        var font = font(base, bold: marks.bold, italic: marks.italic)
+        var fg: PlatformColor = style.color.map { $0.isBackground ? Theme.textPrimary : Theme.platformColor($0) } ?? Theme.textPrimary
+        if style.type == .page && style.color == nil { fg = Theme.textPrimary }
+        if marks.code, style.type != .code {
+            font = PlatformFont.monospacedSystemFont(ofSize: base.pointSize * 0.85, weight: marks.bold ? .bold : .regular)
+            a[.backgroundColor] = Theme.codeBackground
+            fg = Theme.inlineCode
+        }
+        if let c = marks.color {
+            if c.isBackground { a[.backgroundColor] = Theme.platformColor(c) } else { fg = Theme.platformColor(c) }
+        }
+        if marks.underline || marks.link != nil { a[.underlineStyle] = NSUnderlineStyle.single.rawValue }
+        if marks.link != nil {
+            a[.underlineColor] = Theme.textSecondary
+            #if os(macOS)
+            if let link = marks.link, let url = URL(string: link) { a[.link] = url }
+            #endif
+        }
+        if marks.strikethrough || style.checked { a[.strikethroughStyle] = NSUnderlineStyle.single.rawValue }
+        if style.checked { fg = Theme.textSecondary }
+        a[.font] = font
+        a[.foregroundColor] = fg
+        a[.paragraphStyle] = paragraphStyle(style)
+        if !marks.isPlain { a[.basedMarks] = marks.key }
+        return a
+    }
+
+    static func attributed(_ rt: RichText, style: TextStyle, store: WorkspaceStore) -> NSAttributedString {
+        let out = NSMutableAttributedString()
+        if style.type == .code {
+            let a = attributes(.plain, style: style)
+            out.append(NSAttributedString(string: rt.plainText, attributes: a))
+            return out
+        }
+        for run in rt.runs {
+            var text = run.text
+            var a = attributes(run.marks, style: style)
+            if let m = run.mention {
+                a[.basedMention] = m.key
+                switch m {
+                case .page(let id):
+                    text = store.title(of: id)
+                    a[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                    a[.underlineColor] = Theme.divider
+                    a[.font] = font(Theme.baseFont(for: style.type, format: style.format), bold: true, italic: run.marks.italic)
+                    #if os(macOS)
+                    a[.link] = URL(string: "based://page/" + id)
+                    #endif
+                case .date(let d):
+                    text = "@" + (DateDisplay.relative(d.start) ?? DateDisplay.long(DateValue(start: d.start, includeTime: d.includeTime)))
+                    a[.foregroundColor] = Theme.textSecondary
+                case .user(let u):
+                    text = "@" + (u == "me" ? "Me" : u)
+                    a[.foregroundColor] = Theme.textSecondary
+                case .link(let u):
+                    if text.isEmpty { text = u }
+                    a[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                }
+            }
+            if let eq = run.equation {
+                a[.basedEquation] = eq
+                text = eq.isEmpty ? "ƒ" : eq
+                a[.font] = PlatformFont.monospacedSystemFont(ofSize: Theme.baseFont(for: style.type, format: style.format).pointSize * 0.9, weight: .regular)
+                a[.backgroundColor] = Theme.codeBackground
+            }
+            out.append(NSAttributedString(string: text, attributes: a))
+        }
+        return out
+    }
+
+    static func richText(_ s: NSAttributedString, plain: Bool = false) -> RichText {
+        if plain { return RichText(s.string) }
+        var runs: [TextRun] = []
+        let ns = s.string as NSString
+        s.enumerateAttributes(in: NSRange(location: 0, length: s.length)) { attrs, range, _ in
+            let text = ns.substring(with: range)
+            let marks = (attrs[.basedMarks] as? String).map { Marks(key: $0) } ?? .plain
+            let mention = (attrs[.basedMention] as? String).flatMap { Mention(key: $0) }
+            let eq = attrs[.basedEquation] as? String
+            if let last = runs.last, last.mention == mention, last.equation == eq, mention != nil || eq != nil, last.marks == marks {
+                runs[runs.count - 1].text += text
+            } else {
+                runs.append(TextRun(text, marks: marks, mention: mention, equation: eq))
+            }
+        }
+        // Equations keep their expression as text
+        for i in runs.indices where runs[i].equation != nil { runs[i].text = runs[i].equation ?? runs[i].text }
+        return RichText(runs: runs)
+    }
+
+    /// Attributes for newly typed text: inherit marks but never mentions/equations.
+    static func typingAttributes(_ marks: Marks, style: TextStyle) -> [NSAttributedString.Key: Any] {
+        var m = marks
+        m.link = nil
+        return attributes(m, style: style)
+    }
+}

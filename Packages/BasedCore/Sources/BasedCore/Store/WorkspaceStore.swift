@@ -356,6 +356,12 @@ public final class WorkspaceStore {
         }
     }
 
+    /// Forget undo/redo history (after onboarding or imports).
+    public func clearUndoHistory() {
+        undoStack.removeAll()
+        redoStack.removeAll()
+    }
+
     /// Stop the current typing burst from merging with the next edit.
     public func breakUndoCoalescing() {
         if var top = undoStack.last { top.coalesceKey = nil; undoStack[undoStack.count - 1] = top }

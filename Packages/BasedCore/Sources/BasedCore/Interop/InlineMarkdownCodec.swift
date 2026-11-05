@@ -100,7 +100,7 @@ struct InlineParser {
             }
             if c == "$", i + 1 < chars.count, chars[i + 1] != " ", let close = find("$", from: i + 1), close > i + 1 {
                 flush()
-                runs.append(TextRun("⁣", equation: String(chars[(i + 1)..<close])))
+                let expr = String(chars[(i + 1)..<close]); runs.append(TextRun(expr, equation: expr))
                 i = close + 1; continue
             }
             let spans: [(String, (inout Marks) -> Void)] = [

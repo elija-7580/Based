@@ -117,7 +117,7 @@ public enum InlineMarkdown {
             if plain[i] == dollar {
                 guard close - i > 1 else { return nil }
                 let expr = String(utf16CodeUnits: Array(plain[(i + 1)..<close]), count: close - i - 1)
-                let run = TextRun("⁣", equation: expr)
+                let run = TextRun(expr, equation: expr)
                 let t = text.replacing(i, caret, with: RichText(runs: [run]))
                 return Result(text: t, caret: i + run.length)
             }
