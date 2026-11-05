@@ -6,17 +6,6 @@ import AppKit
 import UIKit
 #endif
 
-/// How a block's text view looks and behaves.
-struct RichTextConfig: Equatable {
-    var style: TextStyle
-    var placeholder: String = ""
-    /// Show the placeholder even when the view is not focused (headings, titles).
-    var alwaysShowPlaceholder = false
-    /// Plain text editing (code blocks).
-    var plain = false
-    var editable = true
-}
-
 /// Bridges one platform text view to the page's `EditorController`.
 @MainActor
 final class TextCoordinator: NSObject, TextHost {

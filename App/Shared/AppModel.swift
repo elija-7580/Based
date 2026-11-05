@@ -41,6 +41,8 @@ final class AppModel {
     var lastSyncDate: Date?
     /// Editor of the page that last had keyboard focus (menu commands are routed there).
     @ObservationIgnored weak var activeEditor: EditorController?
+    /// Blocks/pages being dragged inside the app (drop targets read this instead of decoding providers).
+    @ObservationIgnored var draggedBlocks: [RecordID] = []
 
     struct ExportRequest: Identifiable {
         let id = UUID()

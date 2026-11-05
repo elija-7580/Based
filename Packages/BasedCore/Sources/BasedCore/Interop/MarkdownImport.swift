@@ -231,14 +231,14 @@ public struct MarkdownImporter {
         return out
     }
 
-    static func heading(_ t: String) -> (BlockType, String)? {
+    public static func heading(_ t: String) -> (BlockType, String)? {
         for (prefix, type) in [("#### ", BlockType.heading4), ("### ", .heading3), ("## ", .heading2), ("# ", .heading1)] where t.hasPrefix(prefix) {
             return (type, String(t.dropFirst(prefix.count)))
         }
         return nil
     }
 
-    static func listItem(_ t: String) -> (BlockType, Bool, String)? {
+    public static func listItem(_ t: String) -> (BlockType, Bool, String)? {
         for p in ["- [ ] ", "* [ ] ", "- [x] ", "- [X] ", "* [x] "] where t.hasPrefix(p) {
             return (.todo, p.contains("x") || p.contains("X"), String(t.dropFirst(p.count)))
         }

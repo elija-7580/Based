@@ -19,6 +19,17 @@ struct TextStyle: Equatable {
     var checked = false
 }
 
+/// How a block's text view looks and behaves.
+struct RichTextConfig: Equatable {
+    var style: TextStyle
+    var placeholder: String = ""
+    /// Show the placeholder even when the view is not focused (headings, titles).
+    var alwaysShowPlaceholder = false
+    /// Plain text editing (code blocks).
+    var plain = false
+    var editable = true
+}
+
 /// RichText ⇄ NSAttributedString. The source of truth is stored in custom attributes;
 /// fonts and colours are derived for display only.
 @MainActor
@@ -76,7 +87,7 @@ enum AttributedBridge {
     }
 
     static func attributed(_ rt: RichText, style: TextStyle, store: WorkspaceStore) -> NSAttributedString {
-        let out = NSMutableAttributedString()
+        let out = NSMutableAttributedString(string: "")
         if style.type == .code {
             let a = attributes(.plain, style: style)
             out.append(NSAttributedString(string: rt.plainText, attributes: a))

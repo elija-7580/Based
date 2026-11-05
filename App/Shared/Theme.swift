@@ -105,6 +105,13 @@ enum Theme {
         }
     }
 
+    /// Height of the first line of a block's text view (used to align bullets, checkboxes and handles).
+    static func lineHeight(for type: BlockType, format: PageFormat?) -> CGFloat {
+        let size = fontSize(for: type, small: format?.smallText == true)
+        let mult: CGFloat = type == .code ? 1.2 : (type.isHeading || type == .page ? 1.05 : 1.18)
+        return ceil(size * 1.2 * mult) + 6
+    }
+
     static func baseFont(for type: BlockType, format: PageFormat?) -> PlatformFont {
         let size = fontSize(for: type, small: format?.smallText == true)
         let weight: PlatformFont.Weight = (type.isHeading || type == .page) ? .bold : .regular

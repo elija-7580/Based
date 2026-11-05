@@ -79,6 +79,9 @@ final class EditorController {
     var hasTextSelection = false
     var picker: PickerPurpose?
     var linkEditor: RecordID?
+    /// Page typography (font, small text, full width); mirrored from the page block.
+    var format: PageFormat?
+    var isLocked: Bool { format?.locked == true }
     @ObservationIgnored private var hosts: [RecordID: WeakHost] = [:]
     @ObservationIgnored var pendingFocus: FocusTarget?
 
