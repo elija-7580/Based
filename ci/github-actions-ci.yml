@@ -1,0 +1,85 @@
+# Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files).
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["replica/**", "**/*.md"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: "Build the macOS and iOS apps"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  core:
+    name: BasedCore tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev
+      - run: swift --version
+      - name: Test
+        working-directory: Packages/BasedCore
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee ../../core-test.log
+      - name: Publish log
+        if: always()
+        run: |
+          mkdir -p /tmp/out && grep -E "error:|failed|passed|Executed" core-test.log | tail -n 80 > /tmp/out/core.txt || true
+          bash scripts/publish-logs.sh core
+
+  apps:
+    name: Build apps (macOS + iOS)
+    # The macOS runner is expensive for private repos: only run when asked.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || contains(github.event.head_commit.message, '[ci]')
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep Xcode || true
+          X=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -n 1)
+          [ -n "$X" ] && sudo xcode-select -s "$X"
+          xcodebuild -version
+      - name: Generate project
+        run: |
+          brew install xcodegen >/dev/null
+          python3 -m pip install --quiet --break-system-packages pillow || python3 -m pip install --quiet pillow || true
+          python3 scripts/make_icons.py || true
+          xcodegen generate
+      - name: Build macOS app
+        run: |
+          set -o pipefail
+          xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Debug -destination 'generic/platform=macOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build-macos.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build-macos.log
+      - name: Build iOS app (Simulator)
+        if: always()
+        run: |
+          set -o pipefail
+          xcodebuild -project Based.xcodeproj -scheme Based-iOS -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-ios.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build-ios.log
+      - name: Publish logs
+        if: always()
+        run: |
+          mkdir -p /tmp/out
+          for p in macos ios; do
+            f=build-$p.log
+            [ -f $f ] || continue
+            { grep -E "BUILD (SUCCEEDED|FAILED)" $f | tail -n 1; grep -E "error:" $f | sed "s|$PWD/||" | sort -u | head -n 300; } > /tmp/out/$p.txt
+            grep -E "warning:" $f | sed "s|$PWD/||" | sort -u | head -n 200 > /tmp/out/$p-warnings.txt
+          done
+          bash scripts/publish-logs.sh apps

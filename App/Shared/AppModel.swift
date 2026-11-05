@@ -32,6 +32,8 @@ final class AppModel {
     var showQuickFind = false
     var showSettings = false
     var showTrash = false
+    var showImport = false
+    var exportRequest: ExportRequest?
     var moveRequest: MoveRequest?
     var expanded: Set<RecordID> = []
     var errorMessage: String?
@@ -39,6 +41,11 @@ final class AppModel {
     var lastSyncDate: Date?
     /// Editor of the page that last had keyboard focus (menu commands are routed there).
     @ObservationIgnored weak var activeEditor: EditorController?
+
+    struct ExportRequest: Identifiable {
+        let id = UUID()
+        var pageID: RecordID
+    }
 
     struct MoveRequest: Identifiable {
         let id = UUID()
@@ -89,6 +96,14 @@ final class AppModel {
         return id
     }
 
+    /// Set at build time via `BASED_CLOUD_SYNC` (Info.plist key `BasedCloudSyncEnabled`).
+    static var cloudSyncBuildFlag: Bool {
+        let v = Bundle.main.object(forInfoDictionaryKey: "BasedCloudSyncEnabled")
+        if let b = v as? Bool { return b }
+        if let s = v as? String { return ["yes", "true", "1"].contains(s.lowercased()) }
+        return false
+    }
+
     var syncEnabled: Bool {
         get { UserDefaults.standard.object(forKey: "based.sync") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "based.sync"); newValue ? startSyncIfConfigured() : stopSync() }
@@ -96,8 +111,7 @@ final class AppModel {
 
     func startSyncIfConfigured() {
         #if canImport(CloudKit)
-        guard cloud == nil, syncEnabled, let id = cloudContainerID,
-              (Bundle.main.object(forInfoDictionaryKey: "BasedCloudSyncEnabled") as? Bool) == true else {
+        guard cloud == nil, syncEnabled, let id = cloudContainerID, Self.cloudSyncBuildFlag else {
             syncStatus = cloudContainerID == nil ? "Not configured" : "Off"
             return
         }
@@ -186,6 +200,16 @@ final class AppModel {
         }
         if case .side(let p)? = peek, store.isTrashed(p) { peek = nil }
         if case .center(let p)? = peek, store.isTrashed(p) { peek = nil }
+    }
+
+    func exportCurrentPage() {
+        guard let id = currentPageID ?? peek?.id else { return }
+        exportRequest = ExportRequest(pageID: id)
+    }
+
+    func goBack() {
+        if peek != nil { peek = nil; return }
+        if !path.isEmpty { path.removeLast() }
     }
 
     func undo() { store.undo() }

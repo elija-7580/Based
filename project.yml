@@ -1,0 +1,57 @@
+name: Based
+options:
+  bundleIdPrefix: com.friedrich-ulrich
+  deploymentTarget:
+    macOS: "14.0"
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+configFiles:
+  Debug: Config/Based.xcconfig
+  Release: Config/Based.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+packages:
+  BasedCore:
+    path: Packages/BasedCore
+targets:
+  Based-macOS:
+    type: application
+    platform: macOS
+    scheme: {}
+    sources:
+      - App/Shared
+      - App/macOS
+    dependencies:
+      - package: BasedCore
+    settings:
+      base:
+        PRODUCT_NAME: Based
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID)
+        INFOPLIST_FILE: App/macOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX).entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+  Based-iOS:
+    type: application
+    platform: iOS
+    scheme: {}
+    sources:
+      - App/Shared
+      - App/iOS
+    dependencies:
+      - package: BasedCore
+    settings:
+      base:
+        PRODUCT_NAME: Based
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID)
+        INFOPLIST_FILE: App/iOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/iOS/Based$(BASED_ENTITLEMENTS_SUFFIX).entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO

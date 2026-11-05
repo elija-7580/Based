@@ -6,3 +6,6 @@ xcuserdata/
 *.xcuserstate
 .pushstate*.json
 Config/Local.xcconfig
+App/Shared/Assets.xcassets/AppIcon.appiconset/*.png
+Based.xcodeproj/
+build/
