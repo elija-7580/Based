@@ -519,9 +519,23 @@ final class AppModel {
     var agentSessionID: RecordID?
     /// ⌘N → "New agent session" sheet.
     var showNewSession = false
+    /// Set before showing the sheet to start a sub-agent of this session.
+    var newSessionParent: RecordID?
 
-    func openSession(_ sid: RecordID) {
+    enum AgentsMode: String, CaseIterable { case sessions = "Sessions", board = "Board", canvas = "Canvas" }
+    /// Agents screen: session list + console, Kanban board, or the canvas of agents per project.
+    var agentsMode: AgentsMode = AgentsMode(rawValue: UserDefaults.standard.string(forKey: "agents.mode") ?? "") ?? .sessions {
+        didSet { UserDefaults.standard.set(agentsMode.rawValue, forKey: "agents.mode") }
+    }
+
+    func newSubAgent(of parent: RecordID) {
+        newSessionParent = parent
+        showNewSession = true
+    }
+
+    func openSession(_ sid: RecordID, console: Bool = true) {
         agentSessionID = sid
+        if console { agentsMode = .sessions }
         peek = nil
         if selection != .sessions { selection = .sessions }
     }

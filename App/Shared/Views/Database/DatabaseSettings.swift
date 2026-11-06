@@ -310,6 +310,23 @@ struct ViewSettingsView: View {
                 if v.type == .chart {
                     section("Chart") { chartSettings }
                 }
+                if v.type == .map {
+                    section("Map") {
+                        let places = ctx.db.properties.filter { $0.type == .place }
+                        Picker("Map by", selection: Binding(get: { v.mapPropertyID ?? places.first?.id ?? "" }, set: { id in update("Map by") { $0.mapPropertyID = id.isEmpty ? nil : id } })) {
+                            if places.isEmpty { Text("No Place property").tag("") }
+                            ForEach(places) { Text($0.name).tag($0.id) }
+                        }
+                        Picker("Height", selection: Binding(get: { v.mapHeight ?? "medium" }, set: { h in update("Map height") { $0.mapHeight = h } })) {
+                            Text("Small").tag("small"); Text("Medium").tag("medium"); Text("Large").tag("large"); Text("Extra large").tag("extra_large")
+                        }
+                        if places.isEmpty {
+                            Button("Add a Place property") {
+                                if let id = ctx.store.addProperty(to: ctx.db.id, name: "Place", type: .place) { update("Map by") { $0.mapPropertyID = id } }
+                            }
+                        }
+                    }
+                }
                 if v.type == .board || v.type == .gallery {
                     section("Cards") {
                         Picker("Card preview", selection: Binding(get: { coverKey(v.cardCover ?? (v.type == .gallery ? .pageContent : CardCover.none)) },

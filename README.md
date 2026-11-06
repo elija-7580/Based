@@ -239,19 +239,38 @@ formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 ## Status
 
-**Pass 11 found that the app had not compiled since Pass 8/9** (duplicate
-`hasTextSelection`, a `SettingsPage.workspace` redeclaration, main-actor
-`Commands` calls). These are fixed, and `ci/typecheck/run.sh` now
-type-checks all of `App/Shared` on Linux against signature stubs of SwiftUI,
-AppKit, Combine, Charts, WebKit, … (`ci/typecheck/stubs`) plus the real
-BasedCore/BasedBrain modules — current result: *typecheck OK*. The stubs
-can't prove the code builds with Apple's SDK, so expect a few fixes on the
-first Xcode run. Copy `ci/github-actions-ci.yml` to
-`.github/workflows/ci.yml` to get macOS + iOS simulator builds on every push.
+**Pass 12** adds agent orchestration and the Notion map view:
+
+- **Sub-agents** — coding agents start other agents through Based's MCP tools (`spawn_agent`,
+  `wait_for_agents`, `agent_sessions`, `read_agent_session`, `message_agent`, `stop_agent`). Sub-agents
+  inherit the folder and project, their final answer is reported back to the parent; depth ≤ 3, ≤ 8 running
+  per parent. Also from the UI ("New sub-agent…", `/spawn <task>`).
+- **Agents screen: Sessions · Board · Canvas** — a Kanban board (group by status / project / agent, drag &
+  drop, inline approvals, live activity) and a canvas with one swimlane per project, parent → sub-agent
+  trees, animated edges for running agents, zoom / pan, time range, scheduled agents and an inspector.
+- **Claude-Code-style console** — welcome box, `/` command popup (`/help`, `/status`, `/cost`, `/clear`,
+  `/spawn`, `/agents`, `/board`, `/mode`, `/terminal`, `/stop`; others go to the agent), `@` file mentions
+  from the working folder, edit diffs with file line numbers, status line (mode · agent · model · tokens),
+  sub-agent chips and parent breadcrumb.
+- **Map view** — MapKit pins for rows with a Place property (emoji monograms, selection card, "without a
+  location" list, typed addresses geocoded in the background), place search editor, Notion API import of
+  map views (`map_by`) and place values.
+
+Pass 11 found that the app had not compiled since Pass 8/9; that is fixed and `bash ci/typecheck/run.sh`
+type-checks all of `App/Shared` on Linux against signature stubs of SwiftUI, AppKit, MapKit, CoreLocation,
+Charts, WebKit, … (`ci/typecheck/stubs`) plus the real BasedCore/BasedBrain modules — current result:
+*typecheck OK*. The stubs can't prove the code builds with Apple's SDK, so expect a few fixes on the first
+Xcode run.
+
+**Automatic build (CI):** `ci/github-actions-ci.yml` builds the macOS + iOS apps on GitHub's Mac servers,
+runs all tests and the type-check on every push, and publishes the results to the `ci-logs` branch. To turn
+it on once: github.com → *Add file → Create new file* → name `.github/workflows/ci.yml` → paste the file →
+*Commit* (the agent integration is not allowed to write workflow files).
 
 Honest status of every requirement: [`replica/backlog.md`](replica/backlog.md).
 
-Tests on Linux: `make test` → BasedCore 53, BasedBrain 36 (incl. Notion
+Tests on Linux: `make test` → BasedCore 55, BasedBrain 51 (incl. sub-agents end-to-end against a fake
+ACP agent, agent graph / board layout, line diffs, console completion, place values and map views, Notion
 API import against a fake API — blocks, databases, views, dashboards with
 widgets from other databases, filters, relations, formulas, files, rate
 limiting, re-import — HTML export fidelity fixtures, zip import, dashboard

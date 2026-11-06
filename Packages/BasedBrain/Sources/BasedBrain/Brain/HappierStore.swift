@@ -21,8 +21,23 @@ public struct AgentSession: Sendable, Identifiable, Equatable {
     public var project: String = ""
     /// Parent session for sub-agents.
     public var parentID: RecordID?
+    /// The task a sub-agent was spawned with (or the first prompt of a session).
+    public var task: String = ""
+    /// Final answer of the last finished turn (what a sub-agent reports back to its parent).
+    public var result: String = ""
     /// "based" = built-in AI chat; otherwise a coding agent id.
     public var isChat: Bool { agentID == "based" }
+}
+
+extension AgentSession {
+    /// Nesting level of `sid` in a session map (0 = top level); stops at cycles and missing parents.
+    public static func depth(of sid: RecordID, in all: [RecordID: AgentSession]) -> Int {
+        var d = 0, seen: Set<RecordID> = [sid], cur = all[sid]?.parentID
+        while let p = cur, let s = all[p], !seen.contains(p) { d += 1; seen.insert(p); cur = s.parentID }
+        return d
+    }
+    /// Running or waiting for the user.
+    public var isActive: Bool { status == .running || status == .waiting }
 }
 
 public struct InboxItem: Sendable, Identifiable, Equatable {
@@ -114,6 +129,9 @@ extension BrainStore {
         // Columns added in Pass 9 (project dashboard, sub-agents).
         if propID(db, "Project") == nil { _ = store.addProperty(to: db, name: "Project", type: .text) }
         if propID(db, "Parent") == nil { _ = store.addProperty(to: db, name: "Parent", type: .text) }
+        // Pass 12 (agent hierarchy): the task a session was given and its latest final answer.
+        if propID(db, "Task") == nil { _ = store.addProperty(to: db, name: "Task", type: .text) }
+        if propID(db, "Result") == nil { _ = store.addProperty(to: db, name: "Result", type: .text) }
         return db
     }
     public var inboxDB: RecordID { ensureHappier().inbox }
@@ -157,15 +175,26 @@ extension BrainStore {
                                 status: AgentSession.Status(rawValue: selectName(row, db, "Status") ?? "") ?? .idle,
                                 machine: text(row, db, "Machine"), cwd: cwd, acpSessionID: acp.isEmpty ? nil : acp,
                                 tokens: tokens, startedAt: started, updatedAt: row.updatedAt, encrypted: bool(row, db, "Encrypted", default: false),
-                                project: project, parentID: parent.isEmpty ? nil : parent)
+                                project: project, parentID: parent.isEmpty ? nil : parent,
+                                task: text(row, db, "Task"), result: text(row, db, "Result"))
         }.sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    /// Direct sub-agents of a session.
+    public func children(of sid: RecordID) -> [AgentSession] { sessions().filter { $0.parentID == sid } }
+
+    /// Nesting level (0 = top-level session). Cycles are cut off.
+    public func depth(of sid: RecordID) -> Int {
+        let all = Dictionary(sessions().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return AgentSession.depth(of: sid, in: all)
     }
 
     @discardableResult
     public func createSession(title: String, agentID: String, machine: String, cwd: String, encrypted: Bool,
-                              project: String? = nil, parentID: RecordID? = nil) -> RecordID {
+                              project: String? = nil, parentID: RecordID? = nil, task: String? = nil) -> RecordID {
         let db = sessionsDB
         let id = store.addRow(to: db, title: RichText(title))
+        if let task, !task.isEmpty { setText(id, db, "Task", String(task.prefix(4000))) }
         setText(id, db, "Agent", agentID); setText(id, db, "Machine", machine); setText(id, db, "Directory", cwd)
         if let project, !project.isEmpty { setText(id, db, "Project", project) }
         if let parentID { setText(id, db, "Parent", parentID) }
@@ -176,8 +205,11 @@ extension BrainStore {
     }
 
     public func updateSession(_ id: RecordID, status: AgentSession.Status? = nil, acpSessionID: String? = nil, addTokens: Int = 0,
-                              agentID: String? = nil, title: String? = nil, project: String? = nil) {
+                              agentID: String? = nil, title: String? = nil, project: String? = nil,
+                              result: String? = nil, task: String? = nil) {
         let db = sessionsDB
+        if let result { setText(id, db, "Result", String(result.suffix(8000))) }
+        if let task, store.blocks[id] != nil { setText(id, db, "Task", String(task.prefix(4000))) }
         if let title, !title.isEmpty, store.blocks[id] != nil { store.setText(id, RichText(title)) }
         if let project { setText(id, db, "Project", project) }
         if let status { setSelect(id, db, "Status", status.rawValue) }

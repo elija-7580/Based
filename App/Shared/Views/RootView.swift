@@ -46,7 +46,9 @@ struct RootView: View {
         .background(WindowAccessor { model.mainWindow = $0; WindowChrome.configure($0) })
         #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
-        .sheet(isPresented: $model.showNewSession) { NewSessionSheet().environment(model.brain.happier) }
+        .sheet(isPresented: $model.showNewSession, onDismiss: { model.newSessionParent = nil }) {
+            NewSessionSheet(parent: model.newSessionParent).environment(model.brain.happier)
+        }
         .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
         .sheet(isPresented: $model.showNotionImport) { NotionImportSheet().environment(model) }
         .sheet(item: $model.moveRequest) { req in

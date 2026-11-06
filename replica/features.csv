@@ -97,7 +97,7 @@ Calendar view,databases,should,yes,partial,"month grid, drag to reschedule; no w
 Timeline view,databases,could,yes,partial,simplified bars; no dependencies
 Chart view,databases,could,yes,yes,see Chart view row (Pass 8)
 Form view,databases,could,yes,yes,Pass 11: questions from properties; submit adds a row
-Feed / map views,databases,could,yes,no,
+Feed / map views,databases,could,yes,partial,map view in Pass 12; feed view open
 Multiple views per database,databases,must,yes,yes,
 Filters (and/or groups),databases,must,yes,yes,
 Sorts (multi-key),databases,must,yes,yes,
@@ -178,14 +178,20 @@ Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcr
 CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal
 Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning"
 "Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D"
-"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views incl. dashboards (widgets) and forms; maps → table
+"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps
 Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; removed content → trash; original timestamps and authors kept
 Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression"
 Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store
 Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import
 Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11
-Map view,databases,could,yes,no,imported as table
+Map view,databases,could,yes,yes,Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values
 Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom
 Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS)
 Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11
 Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token
+Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later
+Sub-agents (agents start agents),agents,should,n/a,yes,"Pass 12: spawn_agent / wait_for_agents / message_agent / stop_agent MCP tools, depth 3, fan-out 8, results reported to parent"
+Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / agent, drag & drop, inline approvals"
+Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector"
+Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12
+CI build on every push,infra,should,n/a,partial,workflow ready in ci/github-actions-ci.yml; needs one manual copy to .github/workflows

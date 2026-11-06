@@ -78,7 +78,7 @@ struct DashboardRowView: View {
             switch v.type {
             case .chart:
                 return v.chart?.kind == .number ? 150 : CGFloat(v.chart?.heightPoints ?? 280) + 70
-            case .calendar, .board, .timeline: return 420
+            case .calendar, .board, .timeline, .map: return 420
             default: return 340
             }
         }
@@ -139,6 +139,7 @@ struct DashboardWidgetCard: View {
         case .gallery: GalleryLayout(ctx: wctx)
         case .calendar: CalendarLayout(ctx: wctx)
         case .timeline: TimelineLayout(ctx: wctx)
+        case .map: MapLayout(ctx: wctx, compact: true)
         default: TableLayout(ctx: wctx)
         }
     }

@@ -455,4 +455,51 @@ final class NotionAPIImportTests: XCTestCase {
         XCTAssertEqual(NotionAPIMapper.color("purple_background"), .purpleBackground)
         XCTAssertNil(NotionAPIMapper.color("default"))
     }
+
+    /// Map views (map_by) and place values (name, address, lat/lon, Google place id).
+    func testMapViewAndPlaceImport() async throws {
+        let f = makeFake()
+        let mapView = "99999999-9999-4999-8999-000000000007"
+        func patch(_ v: JSONValue?, _ change: (inout [String: JSONValue]) -> Void) -> JSONValue {
+            guard case .object(var o)? = v else { return v ?? .null }
+            change(&o)
+            return .object(o)
+        }
+        f.routes["GET data_sources/\(tasksDS)"] = patch(f.routes["GET data_sources/\(tasksDS)"]) { ds in
+            ds["properties"] = patch(ds["properties"]) { $0["Where"] = ["id": "pl", "name": "Where", "type": "place", "place": [:]] }
+        }
+        f.routes["POST data_sources/\(tasksDS)/query"] = patch(f.routes["POST data_sources/\(tasksDS)/query"]) { q in
+            q["results"] = .array((q["results"]?.array ?? []).map { row in
+                patch(row) { r in
+                    let isFirst = r["id"]?.string == row1
+                    r["properties"] = patch(r["properties"]) {
+                        $0["Where"] = ["id": "pl", "type": "place", "place": isFirst
+                            ? ["name": "Office", "address": "Main St 1, Berlin", "lat": 52.52, "lon": 13.405, "google_place_id": "g-1"] : .null]
+                    }
+                }
+            })
+        }
+        f.routes["GET views?database_id=\(tasksDB)"] = list([["object": "view", "id": .string(viewAll)], ["object": "view", "id": .string(viewBoard)],
+                                                             ["object": "view", "id": .string(mapView)]])
+        f.routes["GET views/\(mapView)"] = ["object": "view", "id": .string(mapView), "name": "Map", "type": "map", "data_source_id": .string(tasksDS),
+            "parent": ["type": "database_id", "database_id": .string(tasksDB)],
+            "configuration": ["type": "map", "map_by": "pl", "height": "large"]]
+        let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
+        let assets = FileAssetStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("nm-" + UUID().uuidString))
+        _ = try await importer(f).run([NotionTarget("https://www.notion.so/\(hub.replacingOccurrences(of: "-", with: ""))")!], into: store, assets: assets)
+        let db = try XCTUnwrap(store.databases[tasksDS])
+        let place = try XCTUnwrap(db.properties.first { $0.name == "Where" })
+        XCTAssertEqual(place.type, .place)
+        let map = try XCTUnwrap(store.views[mapView])
+        XCTAssertEqual(map.type, .map)
+        XCTAssertEqual(map.mapPropertyID, place.id)
+        XCTAssertEqual(map.mapHeight, "large")
+        guard case .place(let raw)? = store.blocks[row1]?.values[place.id] else { return XCTFail("no place value") }
+        let v = PlaceValue(raw: raw)
+        XCTAssertEqual(v.name, "Office")
+        XCTAssertEqual(v.address, "Main St 1, Berlin")
+        XCTAssertEqual(v.lat ?? 0, 52.52, accuracy: 1e-9)
+        XCTAssertEqual(v.googlePlaceID, "g-1")
+        XCTAssertNil(store.blocks[row2]?.values[place.id])
+    }
 }

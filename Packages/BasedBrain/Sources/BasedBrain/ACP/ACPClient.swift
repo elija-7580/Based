@@ -62,6 +62,8 @@ public enum ACPUpdate: Sendable, Equatable {
     case usage(input: Int, output: Int)
     case notice(String)
     case modeChanged(String)
+    /// A file edit (old → new text) proposed or made by a tool call, rendered as a diff.
+    case diff(path: String, old: String, new: String)
     case other(String)
 }
 
@@ -152,6 +154,13 @@ public final class ACPClient: @unchecked Sendable {
 
     // MARK: Incoming
 
+    /// ACP tool-call content `{"type":"diff","path","oldText","newText"}` → `.diff`.
+    private func emitDiffs(_ content: JSONValue?) {
+        for c in content?.array ?? [] where c["type"]?.string == "diff" {
+            onUpdate?(.diff(path: c["path"]?.string ?? "file", old: c["oldText"]?.string ?? "", new: c["newText"]?.string ?? ""))
+        }
+    }
+
     private func handleNotification(_ method: String, _ params: JSONValue?) {
         guard method == "session/update", let u = params?["update"] else { return }
         let kind = u["sessionUpdate"]?.string ?? ""
@@ -162,7 +171,9 @@ public final class ACPClient: @unchecked Sendable {
         case "user_message_chunk": onUpdate?(.userText(text))
         case "tool_call":
             onUpdate?(.toolCall(id: u["toolCallId"]?.string ?? "", title: u["title"]?.string ?? "tool", kind: u["kind"]?.string ?? "other", status: u["status"]?.string ?? "pending"))
+            emitDiffs(u["content"])
         case "tool_call_update":
+            emitDiffs(u["content"])
             let out = u["content"]?.array?.compactMap { $0["content"]?["text"]?.string }.joined(separator: "\n")
             onUpdate?(.toolCallUpdate(id: u["toolCallId"]?.string ?? "", status: u["status"]?.string ?? "", output: out?.isEmpty == false ? out : nil))
         case "plan":

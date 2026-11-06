@@ -13,6 +13,8 @@ import UIKit
 struct NewSessionSheet: View {
     @Environment(HappierModel.self) private var happier
     @Environment(\.dismiss) private var dismiss
+    /// Start a sub-agent of this session (inherits its folder).
+    var parent: RecordID? = nil
     @State private var agentID = "claude"
     @State private var cwd = ""
     @State private var title = ""
@@ -21,6 +23,10 @@ struct NewSessionSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let p = parent, let ps = happier.sessions.first(where: { $0.id == p }) {
+                    Label("Sub-agent of “\(ps.title.nonEmptyOr("Untitled session"))” — its answer is reported back there", systemImage: "arrow.turn.down.right")
+                        .font(.callout).foregroundStyle(Theme.secondary)
+                }
                 Picker("Agent", selection: $agentID) {
                     ForEach(happier.agents.filter(\.enabled)) { a in Label(a.name, systemImage: a.icon).tag(a.id) }
                 }
@@ -35,7 +41,7 @@ struct NewSessionSheet: View {
                     #endif
                 }
                 TextField("Title (optional)", text: $title)
-                TextField("First message", text: $prompt, axis: .vertical).lineLimit(3...8)
+                TextField(parent == nil ? "First message" : "Task for the sub-agent", text: $prompt, axis: .vertical).lineLimit(3...8)
                 if happier.useServer {
                     Label("Runs on the Based server daemon", systemImage: "server.rack").font(.caption).foregroundStyle(Theme.secondary)
                 } else {
@@ -44,22 +50,29 @@ struct NewSessionSheet: View {
                 if let a = happier.agent(agentID), !a.note.isEmpty { Text(a.note).font(.caption).foregroundStyle(Theme.secondary) }
             }
             .formStyle(.grouped)
-            .navigationTitle("New session")
+            .navigationTitle(parent == nil ? "New session" : "New sub-agent")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Start") {
-                        happier.defaultDirectory = cwd
-                        happier.startSession(agentID: agentID, cwd: cwd, title: title.isEmpty ? nil : title, prompt: prompt)
+                        if parent == nil { happier.defaultDirectory = cwd }
+                        happier.startSession(agentID: agentID, cwd: cwd, title: title.isEmpty ? nil : title, prompt: prompt, parent: parent)
                         dismiss()
                     }
-                    .disabled(cwd.isEmpty)
+                    .disabled(cwd.isEmpty || (parent != nil && prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
                     .accessibilityIdentifier("session.start")
                 }
             }
         }
         .frame(minWidth: 420, minHeight: 360)
-        .onAppear { cwd = happier.defaultDirectory; if let first = happier.agents.first(where: \.enabled) { agentID = first.id } }
+        .onAppear {
+            cwd = happier.defaultDirectory
+            if let first = happier.agents.first(where: \.enabled) { agentID = first.id }
+            if let p = parent, let ps = happier.sessions.first(where: { $0.id == p }) {
+                if !ps.cwd.isEmpty { cwd = ps.cwd }
+                if happier.agent(ps.agentID)?.enabled == true { agentID = ps.agentID }
+            }
+        }
     }
 }
 

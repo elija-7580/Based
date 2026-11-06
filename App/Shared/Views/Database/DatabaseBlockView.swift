@@ -171,6 +171,7 @@ struct DatabaseBlockView: View {
         case .chart: ChartLayout(ctx: ctx)
         case .dashboard: DashboardLayout(ctx: ctx)
         case .form: FormLayout(ctx: ctx)
+        case .map: MapLayout(ctx: ctx)
         default: TableLayout(ctx: ctx)
         }
     }

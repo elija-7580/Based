@@ -20,7 +20,9 @@ public final class AgentRuntime: @unchecked Sendable {
     }
 
     /// `modelRef` like "anthropic/claude-sonnet-4-5"; nil → first registered provider's first model.
-    public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = []) async throws -> Outcome {
+    /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
+    public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
+                    callerSession: String? = nil) async throws -> Outcome {
         guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
         let context = await MainActor.run { tools.brain.systemContext(query: prompt) }
         let specs = await MainActor.run { tools.specs }
@@ -44,12 +46,19 @@ public final class AgentRuntime: @unchecked Sendable {
                 onProgress?("\(call.name) \(call.arguments.text.prefix(80))")
                 let res: AgentTools.ToolResult
                 if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
-                else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }), let r = await host(call.name, call.arguments) { res = r }
+                else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }),
+                        let r = await host(call.name, Self.withCaller(call.arguments, callerSession)) { res = r }
                 else { res = await MainActor.run { tools.call(call.name, call.arguments) } }
                 messages.append(ChatMessage(role: .tool, content: String(res.text.prefix(24_000)), toolCallID: call.id))
             }
         }
         return Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)
+    }
+
+    static func withCaller(_ args: JSONValue, _ session: String?) -> JSONValue {
+        guard let session, case .object(var o) = args else { return args }
+        o["_caller_session"] = .string(session)
+        return .object(o)
     }
 
     /// Run a stored agent (instructions page) once, logging the run to its page.

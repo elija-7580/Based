@@ -229,6 +229,7 @@ public extension WorkspaceStore {
                     if view.groupBy?.propertyID == propertyID { view.groupBy = nil }
                     if view.datePropertyID == propertyID { view.datePropertyID = nil }
                     if view.endDatePropertyID == propertyID { view.endDatePropertyID = nil }
+                    if view.mapPropertyID == propertyID { view.mapPropertyID = nil }
                     view.calculations?[propertyID] = nil
                     if let f = view.filter { view.filter = f.removing(propertyID: propertyID) }
                 }
@@ -430,13 +431,22 @@ public extension WorkspaceStore {
             v.datePropertyID = db.properties.first { $0.type == .date }?.id
         case .gallery:
             v.cardCover = .pageContent
+        case .map:
+            v.mapPropertyID = db.properties.first { $0.type == .place }?.id
         default: break
         }
         let view = v
         let needsDate = (type == .calendar || type == .timeline) && view.datePropertyID == nil
         let needsStatus = type == .board && view.groupBy == nil
+        let needsPlace = type == .map && view.mapPropertyID == nil
         return transact("Add view") { tx in
             var vv = view
+            if needsPlace {
+                // Notion needs a Place property for map views — add one like it does.
+                let p = PropertySchema(name: uniquePropertyName("Place", in: db), type: .place)
+                tx.updateDatabase(dbID) { $0.properties.append(p) }
+                vv.mapPropertyID = p.id
+            }
             if needsDate {
                 let p = PropertySchema(name: uniquePropertyName("Date", in: db), type: .date)
                 tx.updateDatabase(dbID) { $0.properties.append(p) }
@@ -484,6 +494,8 @@ public extension WorkspaceStore {
             v.datePropertyID = db.properties.first { $0.type == .date }?.id
         case .gallery:
             v.cardCover = .pageContent
+        case .map:
+            v.mapPropertyID = db.properties.first { $0.type == .place }?.id
         case .chart:
             let x = db.properties.first { $0.type == .status } ?? db.properties.first { $0.type == .select }
                 ?? db.properties.first { [.multiSelect, .checkbox, .date].contains($0.type) }
@@ -681,7 +693,8 @@ public extension PropertyValue {
         case .person(let ids): return ids.joined(separator: ", ")
         case .files(let files): return files.map { $0.url ?? $0.name }.joined(separator: ", ")
         case .checkbox(let b): return b ? "Yes" : "No"
-        case .url(let s), .email(let s), .phone(let s), .place(let s): return s
+        case .url(let s), .email(let s), .phone(let s): return s
+        case .place(let s): return PlaceValue.display(s)
         case .relation(let ids): return ids.joined(separator: ", ")
         case .uniqueID(let n): return (schema?.idPrefix.map { "\($0)-" } ?? "") + String(n)
         }

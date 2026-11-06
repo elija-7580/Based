@@ -198,7 +198,8 @@ public final class AgentTools {
         case .multiSelect(let os): return os.compactMap { p.option($0)?.name }.joined(separator: ", ")
         case .date(let d): return DateParsing.format(d)
         case .checkbox(let b): return b ? "true" : "false"
-        case .url(let s), .email(let s), .phone(let s), .place(let s): return s
+        case .url(let s), .email(let s), .phone(let s): return s
+        case .place(let s): return PlaceValue.display(s)
         case .person(let ps): return ps.joined(separator: ", ")
         case .relation(let ids): return ids.map { store.title(of: $0) }.joined(separator: ", ")
         case .files(let fs): return "\(fs.count) file(s)"

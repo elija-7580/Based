@@ -76,7 +76,12 @@ public final class MCPServer: @unchecked Sendable {
                 let text = (try? decision.encoded()).map { String(decoding: $0, as: UTF8.self) } ?? "{\"behavior\":\"deny\",\"message\":\"error\"}"
                 return ["content": [["type": "text", "text": .string(text)]]]
             }
-            let r = await tools.callAsync(name, args)
+            var callArgs = args
+            // Session-scoped calls (`/mcp/session/<id>`): host tools learn who is calling (sub-agent parent).
+            if let session, await MainActor.run(body: { tools.isHost(name) }), case .object(var o) = args {
+                o["_caller_session"] = .string(session); callArgs = .object(o)
+            }
+            let r = await tools.callAsync(name, callArgs)
             return ["content": [["type": "text", "text": .string(r.text)]], "isError": .bool(r.isError)]
         case "resources/list":
             let items: [JSONValue] = await MainActor.run {

@@ -90,7 +90,7 @@ public enum ClaudeStream {
     /// "Bash(ls -la)", "Edit(Sources/App.swift)" — the one-line title Claude Code shows.
     public static func title(of tool: String, input: JSONValue) -> String {
         func s(_ k: String) -> String? { input[k]?.string }
-        let arg: String?
+        var arg: String?
         switch tool {
         case "Bash": arg = s("command")
         case "Read", "Edit", "MultiEdit", "Write", "NotebookEdit", "NotebookRead": arg = s("file_path") ?? s("notebook_path")
@@ -101,12 +101,39 @@ public enum ClaudeStream {
         case "WebSearch": arg = s("query")
         case "Task", "Agent": arg = s("description")
         case "TodoWrite": arg = nil
-        default: arg = input.object?.values.lazy.compactMap { $0.string }.first
+        default: arg = input.object?.sorted { $0.key < $1.key }.lazy.compactMap { $0.value.string }.first
         }
-        let name = tool.hasPrefix("mcp__") ? tool.split(separator: "_").filter { !$0.isEmpty }.dropFirst().joined(separator: ":") : tool
+        var name = tool
+        if tool.hasPrefix("mcp__") {
+            // mcp__<server>__<tool> → "server:tool"; Based's own orchestration tools read like Claude Code's Task tool.
+            let parts = tool.components(separatedBy: "__").filter { !$0.isEmpty }
+            let server = parts.count > 1 ? parts[1] : "mcp"
+            let t = parts.count > 2 ? parts[2...].joined(separator: "__") : server
+            switch t {
+            case "spawn_agent": name = "Agent"; arg = s("title") ?? s("prompt")
+            case "wait_for_agents": name = "Wait"; arg = s("session_ids") ?? "all sub-agents"
+            case "message_agent": name = "Message"; arg = s("prompt")
+            case "read_agent_session": name = "Read session"; arg = s("session_id")
+            case "agent_sessions": name = "Sessions"; arg = s("scope") ?? "children"
+            case "stop_agent": name = "Stop agent"; arg = s("session_id")
+            default: name = "\(server):\(t)"
+            }
+        }
         guard let arg, !arg.isEmpty else { return name }
         let one = arg.replacingOccurrences(of: "\n", with: " ")
         return "\(name)(\(one.count > 120 ? String(one.prefix(117)) + "…" : one))"
+    }
+
+    /// Edit / MultiEdit / Write inputs → diffs (old → new text) for the transcript.
+    public static func diffs(_ tool: String, _ input: JSONValue) -> [ACPUpdate] {
+        let path = input["file_path"]?.string ?? input["notebook_path"]?.string ?? "file"
+        switch tool {
+        case "Edit": return [.diff(path: path, old: input["old_string"]?.string ?? "", new: input["new_string"]?.string ?? "")]
+        case "MultiEdit":
+            return (input["edits"]?.array ?? []).map { .diff(path: path, old: $0["old_string"]?.string ?? "", new: $0["new_string"]?.string ?? "") }
+        case "Write": return [.diff(path: path, old: "", new: input["content"]?.string ?? "")]
+        default: return []
+        }
     }
 
     /// TodoWrite input → plan lines ("☐ task" / "☒ done").
@@ -130,7 +157,7 @@ public enum ClaudeStream {
         case .thinking(let t): return [.agentThought(t)]
         case .toolUse(let id, let name, let input):
             if name == "TodoWrite" { return [.plan(todos(input))] }
-            return [.toolCall(id: id, title: title(of: name, input: input), kind: kind(of: name), status: "in_progress")]
+            return [.toolCall(id: id, title: title(of: name, input: input), kind: kind(of: name), status: "in_progress")] + diffs(name, input)
         case .toolResult(let id, let output, let isError):
             return [.toolCallUpdate(id: id, status: isError ? "failed" : "completed", output: output)]
         case .result(_, _, _, let i, let o, _, _): return [.usage(input: i, output: o)]

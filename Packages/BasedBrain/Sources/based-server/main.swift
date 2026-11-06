@@ -114,7 +114,8 @@ func sessionJSON(_ s: AgentSession) -> JSONValue {
              "machine": .string(s.machine), "cwd": .string(s.cwd), "tokens": .number(Double(s.tokens)),
              "started": .string(ISO8601DateFormatter().string(from: s.startedAt)), "encrypted": .bool(s.encrypted),
              "live": .bool(happier.liveSessionIDs.contains(s.id)), "project": .string(s.project),
-             "parent": s.parentID.map(JSONValue.string) ?? .null])
+             "parent": s.parentID.map(JSONValue.string) ?? .null, "task": .string(s.task), "result": .string(String(s.result.suffix(2000))),
+             "working": .bool(happier.isWorking(s.id))])
 }
 func inboxJSON(_ i: InboxItem) -> JSONValue {
     .object(["id": .string(i.id), "title": .string(i.title), "kind": .string(i.kind.rawValue), "status": .string(i.status.rawValue),
@@ -210,9 +211,16 @@ let server = HTTPServer(port: opts.port) { req in
         let agent = body["agent"]?.string ?? "claude"
         let cwd = body["cwd"]?.string ?? FileManager.default.currentDirectoryPath
         do {
+            let prompt = body["prompt"]?.string ?? ""
+            if let parent = body["parent"]?.string, !parent.isEmpty, !prompt.isEmpty {
+                // Sub-agent: inherits directory/project, obeys depth and fan-out limits.
+                let sid = try await happier.spawn(agentID: agent, prompt: prompt, title: body["title"]?.string, cwd: body["cwd"]?.string,
+                                                  project: body["project"]?.string, parentID: parent)
+                return .json(["id": .string(sid)])
+            }
             let sid = try await happier.startSession(agentID: agent, cwd: cwd, title: body["title"]?.string,
                                                      project: body["project"]?.string, parentID: body["parent"]?.string)
-            if let prompt = body["prompt"]?.string, !prompt.isEmpty {
+            if !prompt.isEmpty {
                 Task { _ = try? await happier.prompt(sid, prompt) }
             }
             return .json(["id": .string(sid)])

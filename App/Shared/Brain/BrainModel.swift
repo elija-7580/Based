@@ -180,7 +180,7 @@ final class BrainModel {
             var answer = ""
             do {
                 if hasProvider {
-                    let o = try await rt.run(prompt: p, modelRef: model.isEmpty ? nil : model, history: history)
+                    let o = try await rt.run(prompt: p, modelRef: model.isEmpty ? nil : model, history: history, callerSession: sid)
                     answer = o.text.isEmpty ? "(done)" : o.text
                 } else if useClaude {
                     let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown.\n\n" + String(context.prefix(6000))
@@ -195,7 +195,7 @@ final class BrainModel {
                 }
                 if idx < turns.count { turns[idx].text = answer }
                 brain.appendTranscript(sid, role: "Agent", markdown: answer)
-                brain.updateSession(sid, status: .done)
+                brain.updateSession(sid, status: .done, result: answer)
             } catch {
                 if idx < turns.count { turns[idx].text = "⚠️ \(error)" }
                 brain.appendTranscript(sid, role: "Error", markdown: "\(error)")

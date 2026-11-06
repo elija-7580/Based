@@ -653,8 +653,10 @@ public final class NotionAPIMapper {
             if s.type == .rollup { return nil }
             return computed(body, s)
         case "place", "location":
-            let name = body?["name"]?.string ?? body?["address"]?.string
-            return name.map { .place($0) }
+            guard let body, !body.isNull else { return nil }
+            let v = PlaceValue(name: body["name"]?.string, address: body["address"]?.string, lat: body["lat"]?.number, lon: body["lon"]?.number,
+                               googlePlaceID: body["google_place_id"]?.string)
+            return v.isEmpty ? nil : .place(v.raw)
         default:
             return nil
         }
@@ -895,6 +897,11 @@ public final class NotionAPIMapper {
         if let w = cfg?["wrap_cells"]?.bool { view.wrapCells = w }
         // Chart
         if type == .chart { view.chart = chart(cfg, ds: ds) }
+        // Map
+        if type == .map {
+            view.mapPropertyID = prop(ds, ref: cfg?["map_by"]?.string)?.id ?? schemas[ds]?.first { $0.type == .place }?.id
+            if let h = cfg?["height"]?.string { view.mapHeight = h }
+        }
         // Filter & sorts
         if let f = v["filter"], !f.isNull, let g = filterGroup(f, ds: ds, view: &view), !g.isEmpty { view.filter = g }
         var sorts: [SortRule] = []

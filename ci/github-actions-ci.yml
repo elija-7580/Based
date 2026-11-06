@@ -1,4 +1,6 @@
-# Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files).
+# Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files):
+#   github.com/elija-7580/Based → Add file → Create new file → name ".github/workflows/ci.yml" → paste → Commit.
+# Afterwards GitHub builds and tests everything on each push; results appear in the "Actions" tab and as ✓ / ✗ next to each commit.
 name: CI
 
 on:
@@ -39,10 +41,32 @@ jobs:
           mkdir -p /tmp/out && grep -E "error:|failed|passed|Executed" core-test.log | tail -n 80 > /tmp/out/core.txt || true
           bash scripts/publish-logs.sh core
 
+  typecheck:
+    name: BasedBrain tests + app type-check (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev python3
+      - name: BasedBrain tests
+        working-directory: Packages/BasedBrain
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee ../../brain-test.log
+      - name: Type-check App/Shared against the SwiftUI / AppKit / MapKit stubs
+        run: |
+          set -o pipefail
+          bash ci/typecheck/run.sh 2>&1 | tee typecheck.log
+      - name: Publish log
+        if: always()
+        run: |
+          mkdir -p /tmp/out
+          { grep -E "error:|failed|Executed" brain-test.log | tail -n 60; grep -E "error:|typecheck OK" typecheck.log | sed "s|/tmp/based-typecheck/src/||" | head -n 200; } > /tmp/out/typecheck.txt || true
+          bash scripts/publish-logs.sh typecheck
+
   apps:
     name: Build apps (macOS + iOS)
-    # The macOS runner is expensive for private repos: only run when asked.
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || contains(github.event.head_commit.message, '[ci]')
+    # Public repository: macOS runners are free, so the apps build on every push (add "[skip apps]" to a commit message to skip).
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip apps]')
     runs-on: macos-15
     timeout-minutes: 40
     steps:

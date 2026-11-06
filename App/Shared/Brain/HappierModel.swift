@@ -25,6 +25,8 @@ final class HappierModel {
     var thoughts: [RecordID: String] = [:]
     var events: [RecordID: [SessionEvent]] = [:]    // tool calls / notices / plan
     var busy: Set<RecordID> = []
+    /// Sessions with a turn in flight, including sub-agents the runtime started itself.
+    var working: Set<RecordID> = []
     var lastError: String?
     var connectionStatus: [RecordID: String] = [:]
     /// Bumped when a session's transcript (its page body) changes — views read this instead of the whole store.
@@ -99,6 +101,14 @@ final class HappierModel {
         }
         runtime.cipher = SessionCipher(base64: cipherKey)
         runtime.onUpdate = { [weak self] sid, update in Task { @MainActor in self?.handle(sid, update) } }
+        runtime.onTurn = { [weak self] sid, started in
+            Task { @MainActor in
+                guard let self else { return }
+                if started { self.working.insert(sid); if !self.busy.contains(sid) { self.liveText[sid] = ""; self.thoughts[sid] = nil } }
+                else { self.working.remove(sid); if !self.busy.contains(sid) { self.liveText[sid] = nil } }
+                self.refresh()
+            }
+        }
         runtime.onLog = { [weak self] line in Task { @MainActor in self?.events[":log", default: []].append(.init(icon: "terminal", text: line, status: "")) } }
         connections.onStatus = { [weak self] id, status in Task { @MainActor in self?.connectionStatus[id] = status; self?.brain.setConnectionStatus(id, status) } }
         refresh()
@@ -193,6 +203,40 @@ final class HappierModel {
     }
 
     var pendingCount: Int { inbox.filter { $0.status == .pending }.count }
+
+    // MARK: Hierarchy (sub-agents)
+
+    /// Running right now (a prompt from this device, a sub-agent turn, or a status synced from another device).
+    func isWorking(_ sid: RecordID) -> Bool { busy.contains(sid) || working.contains(sid) }
+    var workingSet: Set<RecordID> { busy.union(working) }
+    func status(of s: AgentSession) -> AgentSession.Status { s.effectiveStatus(working: isWorking(s.id)) }
+    func children(of sid: RecordID) -> [AgentSession] { sessions.filter { $0.parentID == sid }.sorted { $0.startedAt < $1.startedAt } }
+    func parent(of s: AgentSession) -> AgentSession? { s.parentID.flatMap { p in sessions.first { $0.id == p } } }
+    var runningCount: Int { agentSessions.filter { status(of: $0) == .running }.count }
+    /// Latest tool call / notice of a session (live activity line on board and canvas cards).
+    func activity(_ sid: RecordID) -> String? {
+        if let e = events[sid]?.last { return e.text.components(separatedBy: "\n").first }
+        if let t = liveText[sid], !t.isEmpty { return String(t.suffix(140)) }
+        return nil
+    }
+
+    /// Starts a sub-agent of `parent` (same folder and project unless given) with a task.
+    func spawnSubAgent(parent: RecordID, agentID: String, prompt: String, title: String?, cwd: String? = nil) {
+        lastError = nil
+        Task {
+            do {
+                if useServer {
+                    let r = try await serverCall("POST", "/sessions", ["agent": .string(agentID), "prompt": .string(prompt), "parent": .string(parent),
+                                                                     "title": title.map(JSONValue.string) ?? .null, "cwd": cwd.map(JSONValue.string) ?? .null])
+                    if let e = r["error"]?.string { throw ServerError(e) }
+                } else {
+                    let sid = try await runtime.spawn(agentID: agentID, prompt: prompt, title: title, cwd: cwd, parentID: parent)
+                    Log.info("Spawned sub-agent \(sid) under \(parent)", category: "agents")
+                }
+                refresh()
+            } catch { lastError = "\(error)" }
+        }
+    }
     func isLive(_ sid: RecordID) -> Bool { runtime.liveSessionIDs.contains(sid) }
     func agent(_ id: String) -> AgentDefinition? { agents.first { $0.id == id } }
     func transcript(_ sid: RecordID) -> String { brain.transcript(sid, cipher: runtime.cipher) }
@@ -210,6 +254,9 @@ final class HappierModel {
         case .notice(let n): events[sid, default: []].append(.init(icon: "info.circle", text: n, status: ""))
         case .modeChanged(let m): events[sid, default: []].append(.init(icon: "switch.2", text: "Mode: \(m)", status: ""))
         case .other(let s): events[sid, default: []].append(.init(icon: "ellipsis.circle", text: s, status: ""))
+        case .diff(let path, let old, let new):
+            let c = LineDiff.counts(LineDiff.ops(old: old, new: new))
+            events[sid, default: []].append(.init(icon: "pencil.line", text: "Update(\(path)) +\(c.added) -\(c.removed)", status: "completed"))
         }
     }
 
@@ -229,7 +276,8 @@ final class HappierModel {
 
     // MARK: Sessions
 
-    func startSession(agentID: String, cwd: String, title: String?, prompt: String) {
+    func startSession(agentID: String, cwd: String, title: String?, prompt: String, parent: RecordID? = nil) {
+        if let parent, !prompt.isEmpty { spawnSubAgent(parent: parent, agentID: agentID, prompt: prompt, title: title, cwd: cwd); return }
         lastError = nil
         Task {
             do {

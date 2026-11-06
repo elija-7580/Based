@@ -57,6 +57,13 @@ struct PropertyValueView: View {
             }
         case .date, .createdTime, .lastEditedTime:
             if case .date(let d) = value { Text(Self.format(d, property)).lineLimit(1) }
+        case .place:
+            if case .place(let raw)? = row.values[property.id] {
+                let v = PlaceValue(raw: raw)
+                if !v.isEmpty {
+                    Label(v.display, systemImage: v.hasCoordinates ? "mappin.and.ellipse" : "mappin").lineLimit(wrap ? nil : 1)
+                }
+            }
         case .number:
             if case .number(let n) = value { Text(CellFormatter.number(n, property.numberFormat)).monospacedDigit() }
         case .formula, .rollup:
@@ -218,6 +225,8 @@ struct PropertyValueEditor: View {
                 PersonEditor(rowID: rowID, property: property)
             case .number:
                 ScalarEditor(rowID: rowID, property: property, done: done)
+            case .place:
+                PlaceEditor(rowID: rowID, property: property, done: done)
             default:
                 ScalarEditor(rowID: rowID, property: property, done: done)
             }

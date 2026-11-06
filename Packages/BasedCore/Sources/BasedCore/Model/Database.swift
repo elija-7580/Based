@@ -249,9 +249,9 @@ public enum ViewType: String, Codable, CaseIterable, Sendable {
     public var displayName: String { rawValue.capitalized }
 
     /// View types implemented in this build.
-    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart, .form, .dashboard]
+    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart, .map, .form, .dashboard]
     /// Types a dashboard widget can have (dashboards can't be nested).
-    public static let widgetTypes: [ViewType] = [.chart, .table, .board, .list, .gallery, .calendar, .timeline]
+    public static let widgetTypes: [ViewType] = [.chart, .table, .board, .list, .gallery, .calendar, .timeline, .map]
 }
 
 public enum Combinator: String, Codable, Sendable { case and, or }
@@ -416,6 +416,10 @@ public struct DatabaseView: Codable, Hashable, Identifiable, Sendable {
     public var showIcons: Bool?
     public var loadLimit: Int?
     public var chart: ChartConfig?
+    /// Map views: the Place property that positions rows (Notion's "Map by").
+    public var mapPropertyID: String?
+    /// Map views: "small" | "medium" | "large" | "extra_large" (height when the view is inline on a page).
+    public var mapHeight: String?
     /// Dashboard layout (rows of widgets) when `type == .dashboard`.
     public var dashboard: DashboardConfig?
     /// Set on widget views: the dashboard view that shows them. Widget views aren't listed in the block's view

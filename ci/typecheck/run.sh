@@ -20,7 +20,7 @@ mod MetricKit "$TC/stubs/MetricKit.swift"
 mod AppKit "$TC/stubs/AppKit.swift"
 mod UniformTypeIdentifiers "$TC/stubs/UniformTypeIdentifiers.swift"
 mod SwiftUI "$TC"/stubs/SwiftUI/*.swift
-for m in Charts WebKit AVKit PDFKit SwiftTerm; do mod "$m" "$TC/stubs/$m.swift"; done
+for m in CoreLocation Charts WebKit AVKit PDFKit SwiftTerm MapKit; do mod "$m" "$TC/stubs/$m.swift"; done
 rm -rf "$OUT/src"; python3 "$TC/preprocess.py" "$ROOT/App/Shared" "$OUT/src"
 swiftc -diagnostic-style=llvm -typecheck -continue-building-after-errors -parse-as-library -swift-version 5 -module-name Based -D DEBUG \
   -I "$OUT/mods" -I "$BRAIN" "${CSQL[@]}" "$@" "$OUT"/src/*.swift

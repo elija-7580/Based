@@ -89,7 +89,8 @@ public struct SearchEngine {
                 let text = b.values.values.compactMap { v -> String? in
                     switch v {
                     case .text(let t): return t.plainText
-                    case .url(let s), .email(let s), .phone(let s), .place(let s): return s
+                    case .url(let s), .email(let s), .phone(let s): return s
+                    case .place(let s): return PlaceValue.display(s)
                     default: return nil
                     }
                 }.joined(separator: " ")

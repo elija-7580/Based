@@ -200,3 +200,35 @@
   report" (version, options, requests, last failure, warnings — no token / content) and fix hints in the
   import sheet; per-view read failures become warnings.
 - `replica/backlog.md`: every requirement with honest status.
+
+## Pass 12 — sub-agents, agent board + canvas, Claude-Code console, map view
+
+- **Sub-agents** (`HappierRuntime`): `spawn(agentID:prompt:title:cwd:project:parentID:)` inherits cwd /
+  project, enforces depth (3) and running fan-out (8), posts "Started sub-agent … (session id)" and, when the
+  child's turn ends, "Sub-agent … finished (session id): <answer>" into the parent. MCP host tools
+  `spawn_agent` (optional `wait`), `wait_for_agents`, `agent_sessions` (children / all), `read_agent_session`,
+  `message_agent`, `stop_agent`; session-scoped MCP calls inject `_caller_session`, so the caller is the
+  default parent. Native Claude Code gets an orchestration system prompt, ACP agents get it as context.
+  Sessions store `Task` and `Result`; `inFlight` tracks turns the runtime starts itself (`onTurn`).
+  `based-server` POST /sessions with `parent` spawns. Tests run the whole flow against a python fake ACP agent.
+- **Agent graph** (`AgentGraph`): project swimlanes (most recent first), tidy tree layout (subtree widths,
+  parent centred), edges (active when the child runs), lane counts, only-active keeps ancestors, cycle-safe;
+  board columns by status / project / agent.
+- **App**: Agents screen with Sessions · Board · Canvas (`AgentBoard.swift`): board cards with task, parent,
+  live activity, result, inline Allow / Deny, drag & drop between columns; canvas with pan / zoom / fit,
+  range filter, legend, scheduled agents, animated dashed edges, lane "New session here", inspector with
+  approvals, events, result, sub-agents and a message box. Session list shows sub-agents indented.
+- **Console** (`SessionConsole`): Claude Code welcome box and tips, `/` command popup with ↑↓ / Tab / Return /
+  Esc, local commands (`/help`, `/status`, `/cost`, `/clear`, `/spawn`, `/subagent`, `/agents`, `/board`,
+  `/mode`, `/terminal`, `/stop`), `@` file mentions (`ConsoleCompletion.files/rank`), tool headers without
+  the doubled name, `DiffBlock` ("Updated path with N additions and M removals", numbered red / green lines,
+  collapsible), "Open sub-agent" links in notices, status line, sub-agent chips, parent breadcrumb.
+  Diffs come from Claude Code Edit / MultiEdit / Write inputs and ACP `diff` content; `LineDiff` (LCS with
+  prefix / suffix trim, unified hunks, real file line numbers via `firstLine(of:inFile:)`).
+- **Map view**: `PlaceValue` (JSON or typed text or "lat, lon"), `DatabaseView.mapPropertyID / mapHeight`,
+  adding a map view creates a Place property like Notion; `MapLayout` (MapKit markers, selection card, fit,
+  "without a location" list, background geocoding saved to the row), `PlaceEditor` (MapKit search), settings
+  section; Notion API maps (`map_by`, `height`) and place values import.
+- **CI**: `ci/github-actions-ci.yml` gained a Linux job (BasedBrain tests + app type-check); app builds run on
+  every push (public repo → free macOS runners). Still needs the one-time manual copy to `.github/workflows/`.
+- Type-check stubs: MapKit + CoreLocation. Tests: BasedCore 55, BasedBrain 51 — all green; typecheck OK.

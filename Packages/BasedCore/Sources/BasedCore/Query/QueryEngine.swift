@@ -73,7 +73,8 @@ public final class QueryEngine {
         case .person(let ids): return .list(ids.map(Value.person))
         case .files(let f): return .list(f.map { .string($0.name) })
         case .checkbox(let b): return .bool(b)
-        case .url(let s), .email(let s), .phone(let s), .place(let s): return .string(s)
+        case .url(let s), .email(let s), .phone(let s): return .string(s)
+        case .place(let s): return .string(PlaceValue.display(s))
         case .relation(let ids): return .list(ids.map(Value.page))
         case .uniqueID(let n): return .number(Double(n))
         }

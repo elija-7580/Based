@@ -4,7 +4,7 @@ import BasedCore
 /// A structured view of a session transcript (stored as Markdown with `**Role**` headers in the session page),
 /// used by the Claude-Code-style session UI.
 public struct TranscriptItem: Identifiable, Sendable, Equatable {
-    public enum Kind: String, Sendable { case user, agent, thought, tool, plan, notice, error, system }
+    public enum Kind: String, Sendable { case user, agent, thought, tool, plan, notice, error, system, diff }
     public var id: Int
     public var kind: Kind
     public var text: String
@@ -17,7 +17,7 @@ public struct TranscriptItem: Identifiable, Sendable, Equatable {
 public enum TranscriptParser {
     static let roles: [String: TranscriptItem.Kind] = [
         "you": .user, "user": .user, "agent": .agent, "assistant": .agent, "thought": .thought, "thinking": .thought,
-        "tool": .tool, "tool result": .tool, "tool failed": .tool, "plan": .plan, "notice": .notice, "error": .error, "system": .system,
+        "tool": .tool, "tool result": .tool, "tool failed": .tool, "plan": .plan, "notice": .notice, "error": .error, "system": .system, "diff": .diff,
     ]
 
     public static func parse(_ markdown: String) -> [TranscriptItem] {
@@ -46,6 +46,16 @@ public enum TranscriptParser {
             }
             guard let kind = roles[key] else {
                 items.append(TranscriptItem(id: items.count, kind: .agent, text: text))
+                return
+            }
+            if kind == .diff {
+                // "`path`\n```diff\n…\n```" → text = path, output = unified diff body
+                var lines = text.components(separatedBy: "\n")
+                var path = lines.first ?? ""
+                if path.hasPrefix("`"), path.hasSuffix("`"), path.count > 1 { path = String(path.dropFirst().dropLast()); lines.removeFirst() } else { path = "" }
+                if lines.first?.hasPrefix("```") == true { lines.removeFirst() }
+                if lines.last?.hasPrefix("```") == true { lines.removeLast() }
+                items.append(TranscriptItem(id: items.count, kind: .diff, text: path, output: lines.joined(separator: "\n")))
                 return
             }
             if kind == .tool {
