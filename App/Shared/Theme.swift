@@ -237,6 +237,7 @@ extension ViewType {
         case .gallery: return "square.grid.2x2"
         case .calendar: return "calendar"
         case .timeline: return "chart.bar.xaxis"
+        case .chart: return "chart.pie"
         default: return "square.stack"
         }
     }

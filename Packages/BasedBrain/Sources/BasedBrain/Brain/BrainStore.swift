@@ -107,12 +107,12 @@ public final class BrainStore {
 
     // MARK: Helpers
 
-    private func propID(_ db: RecordID, _ name: String) -> String? { store.databases[db]?.properties.first { $0.name == name }?.id }
-    private func text(_ row: Block, _ db: RecordID, _ name: String) -> String {
+    func propID(_ db: RecordID, _ name: String) -> String? { store.databases[db]?.properties.first { $0.name == name }?.id }
+    func text(_ row: Block, _ db: RecordID, _ name: String) -> String {
         guard let pid = propID(db, name), case .text(let t)? = row.values[pid] else { return "" }
         return t.plainText
     }
-    private func bool(_ row: Block, _ db: RecordID, _ name: String, default d: Bool) -> Bool {
+    func bool(_ row: Block, _ db: RecordID, _ name: String, default d: Bool) -> Bool {
         guard let pid = propID(db, name), case .checkbox(let b)? = row.values[pid] else { return d }
         return b
     }

@@ -26,7 +26,6 @@ targets:
   Based-macOS:
     type: application
     platform: macOS
-    scheme: {}
     sources:
       - App/Shared
       - App/macOS
@@ -45,7 +44,6 @@ targets:
   Based-iOS:
     type: application
     platform: iOS
-    scheme: {}
     sources:
       - App/Shared
       - App/iOS
@@ -61,3 +59,48 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/iOS/Based$(BASED_ENTITLEMENTS_SUFFIX).entitlements
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
+  Based-macOS-UITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - App/UITests
+    dependencies:
+      - target: Based-macOS
+    settings:
+      base:
+        TEST_TARGET_NAME: Based-macOS
+        GENERATE_INFOPLIST_FILE: YES
+  Based-iOS-UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - App/UITests
+    dependencies:
+      - target: Based-iOS
+    settings:
+      base:
+        TEST_TARGET_NAME: Based-iOS
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Based-macOS:
+    build:
+      targets:
+        Based-macOS: all
+        Based-macOS-UITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - Based-macOS-UITests
+  Based-iOS:
+    build:
+      targets:
+        Based-iOS: all
+        Based-iOS-UITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - Based-iOS-UITests

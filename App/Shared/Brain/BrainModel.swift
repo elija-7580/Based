@@ -48,6 +48,7 @@ final class BrainModel {
     let store: WorkspaceStore
     let brain: BrainStore
     let tools: AgentTools
+    let happier: HappierModel
     @ObservationIgnored private(set) var registry = ModelRegistry()
     @ObservationIgnored private(set) var runtime: AgentRuntime
     @ObservationIgnored private var scheduler: AgentScheduler?
@@ -81,6 +82,7 @@ final class BrainModel {
         self.store = store
         brain = BrainStore(store: store)
         tools = AgentTools(store: store, brain: brain)
+        happier = HappierModel(store: store, brain: brain, tools: tools)
         runtime = AgentRuntime(registry: registry, tools: tools)
         reloadProviders()
         configureScheduler()

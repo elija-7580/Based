@@ -71,6 +71,7 @@ struct PageScreen: View {
                         let below = r.maxY + 4
                         let fitsBelow = below + 360 < geo.size.height
                         InlineMenuView(editor: editor)
+                            .accessibilityIdentifier("slash.menu")
                             .offset(x: min(max(0, r.minX + 24), max(0, geo.size.width - 330)),
                                     y: fitsBelow ? below : max(0, r.minY - 364))
                     }
@@ -233,6 +234,7 @@ struct PageHeader: View {
                 c.editable = !locked
                 return c
             }(), controller: editor)
+            .accessibilityIdentifier("page.title")
         }
     }
 

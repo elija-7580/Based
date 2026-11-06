@@ -56,3 +56,30 @@ your pages as resources (`based://page/<id>`), and your skills as prompts.
 ## Backups
 
 The whole workspace is one SQLite file (`/data/based.sqlite` in the volume). `sqlite3 based.sqlite ".backup b.sqlite"` or snapshot the volume.
+
+## Coding-agent daemon (Happier-style)
+
+The same `based-server` is the daemon that runs Claude Code / Codex / Gemini
+for your iPhone (and for Macs that prefer it). It needs the agent CLIs on the
+machine (`npm i -g @zed-industries/claude-code-acp @zed-industries/codex-acp`
+or `npx` available; `gemini`, `opencode`, `pi` optional) and the same
+end-to-end key as your devices:
+
+```
+based-server --db /var/lib/based/based.sqlite --token "$TOKEN" \
+  --cipher-key "$(cat /etc/based/session.key)" --machine vps-1
+```
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /acp/agents` | installed agents |
+| `GET/POST /sessions` | list / start `{agent, cwd, title, prompt}` |
+| `POST /sessions/{id}/prompt` | send a message (blocks until the turn ends) |
+| `GET /sessions/{id}/transcript` | decrypted Markdown |
+| `POST /sessions/{id}/cancel` · `/stop` · `/switch {agent}` | control |
+| `GET /inbox?pending=true` · `POST /inbox/{id}/resolve {decision}` | approvals |
+| `GET /connections` · `POST /connections/reload` | MCP connections |
+
+Secrets for connections come from environment variables named after the
+Keychain key (`CONNECTION.GITHUB` → `CONNECTION_GITHUB` works too). Sessions,
+Inbox and Connections are ordinary records, so they sync to every app.

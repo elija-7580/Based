@@ -18,6 +18,9 @@ struct Options {
     var ollama = ProcessInfo.processInfo.environment["OLLAMA_URL"]
     var stdio = false
     var noScheduler = false
+    var cipherKey = ProcessInfo.processInfo.environment["BASED_CIPHER_KEY"]
+    var machine = ProcessInfo.processInfo.environment["BASED_MACHINE"] ?? (ProcessInfo.processInfo.hostName)
+    var noACP = false
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -31,8 +34,11 @@ struct Options {
             case "--ollama": ollama = it.next()
             case "--stdio": stdio = true
             case "--no-scheduler": noScheduler = true
+            case "--cipher-key": cipherKey = it.next()
+            case "--machine": machine = it.next() ?? machine
+            case "--no-acp": noACP = true
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -43,7 +49,7 @@ struct Options {
 let opts = Options()
 func log(_ s: String) { if !opts.stdio { print("[\(ISO8601DateFormatter().string(from: Date()))] \(s)"); fflush(stdout) } else { FileHandle.standardError.write(Data((s + "\n").utf8)) } }
 
-@MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime) {
+@MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime, HappierRuntime) {
     let persistence = try SQLitePersistence(url: URL(fileURLWithPath: opts.db))
     let store = WorkspaceStore(persistence: persistence, node: "server")
     let brain = BrainStore(store: store)
@@ -53,11 +59,21 @@ func log(_ s: String) { if !opts.stdio { print("[\(ISO8601DateFormatter().string
     if let k = opts.openai, !k.isEmpty { registry.register(OpenAIProvider(apiKey: k)) }
     if let u = opts.ollama, let url = URL(string: u) { registry.register(OpenAIProvider.ollama(baseURL: url)) }
     let runtime = AgentRuntime(registry: registry, tools: tools)
-    return (store, tools, MCPServer(tools: tools), SyncServer(store: store), runtime)
+    // Happier-style control room: MCP connections + ACP coding agents, transcripts in the Brain.
+    let env = ProcessInfo.processInfo.environment
+    let connections = ConnectionManager(tools: tools, secret: { key in
+        env[key] ?? env[key.uppercased()] ?? env[key.uppercased().replacingOccurrences(of: ".", with: "_").replacingOccurrences(of: "-", with: "_")]
+    })
+    let happier = HappierRuntime(brain: brain, connections: connections, machineName: opts.machine)
+    if let k = opts.cipherKey { happier.cipher = SessionCipher(base64: k) }
+    let exe = CommandLine.arguments.first ?? "based-server"
+    happier.basedMCPServer = MCPServerConfig(name: "based", command: exe, args: ["--stdio", "--db", opts.db])
+    happier.onLog = { log("acp: \($0)") }
+    return (store, tools, MCPServer(tools: tools), SyncServer(store: store), runtime, happier)
 }
 
-let (store, tools, mcp, sync, runtime) = try await MainActor.run { try boot() }
-_ = store; _ = tools
+let (store, tools, mcp, sync, runtime, happier) = try await MainActor.run { try boot() }
+_ = store
 
 if opts.stdio {
     await StdioTransport(server: mcp).run()
@@ -65,6 +81,31 @@ if opts.stdio {
 }
 
 if opts.token.isEmpty { log("WARNING: no --token set; the server is open to anyone who can reach it.") }
+if !opts.noACP {
+    await happier.connections?.reload()
+    log("connections: \(await MainActor.run { tools.brain.connections().filter(\.enabled).count }) enabled")
+}
+
+/// Path matcher for "/sessions/{id}/prompt"‑style routes.
+func match(_ path: String, _ pattern: String) -> [String]? {
+    let p = path.split(separator: "/"), q = pattern.split(separator: "/")
+    guard p.count == q.count else { return nil }
+    var caps: [String] = []
+    for (a, b) in zip(p, q) { if b == "*" { caps.append(String(a)) } else if a != b { return nil } }
+    return caps
+}
+
+func sessionJSON(_ s: AgentSession) -> JSONValue {
+    .object(["id": .string(s.id), "title": .string(s.title), "agent": .string(s.agentID), "status": .string(s.status.rawValue),
+             "machine": .string(s.machine), "cwd": .string(s.cwd), "tokens": .number(Double(s.tokens)),
+             "started": .string(ISO8601DateFormatter().string(from: s.startedAt)), "encrypted": .bool(s.encrypted),
+             "live": .bool(happier.liveSessionIDs.contains(s.id))])
+}
+func inboxJSON(_ i: InboxItem) -> JSONValue {
+    .object(["id": .string(i.id), "title": .string(i.title), "kind": .string(i.kind.rawValue), "status": .string(i.status.rawValue),
+             "session": i.sessionID.map(JSONValue.string) ?? .null, "detail": .string(i.detail),
+             "options": .array(i.options.map(JSONValue.string)), "decision": i.decision.map(JSONValue.string) ?? .null])
+}
 
 let server = HTTPServer(port: opts.port) { req in
     func authorized() -> Bool { opts.token.isEmpty || req.bearerToken == opts.token }
@@ -103,6 +144,76 @@ let server = HTTPServer(port: opts.port) { req in
             let o = try await runtime.run(prompt: body["prompt"]?.string ?? "", modelRef: body["model"]?.string)
             return .json(["text": .string(o.text), "tokens": .number(Double(o.usage.total)), "steps": .number(Double(o.steps))])
         } catch { return .json(["error": .string("\(error)")], status: 500) }
+    // MARK: Happier‑style control room (ACP agents, inbox, connections)
+    case ("GET", "/acp/agents"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        return .json(["agents": .array(happier.agents.map { a in
+            .object(["id": .string(a.id), "name": .string(a.name), "command": .string(a.command), "enabled": .bool(a.enabled),
+                     "installed": .bool(FileManager.default.isExecutableFile(atPath: ProcessTransport.resolve(a.command)))]) })])
+    case ("GET", "/sessions"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let list = await MainActor.run { tools.brain.sessions() }
+        return .json(["sessions": .array(list.map(sessionJSON))])
+    case ("POST", "/sessions"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        let agent = body["agent"]?.string ?? "claude"
+        let cwd = body["cwd"]?.string ?? FileManager.default.currentDirectoryPath
+        do {
+            let sid = try await happier.startSession(agentID: agent, cwd: cwd, title: body["title"]?.string)
+            if let prompt = body["prompt"]?.string, !prompt.isEmpty {
+                Task { _ = try? await happier.prompt(sid, prompt) }
+            }
+            return .json(["id": .string(sid)])
+        } catch { return .json(["error": .string("\(error)")], status: 500) }
+    case ("POST", _) where match(req.path, "/sessions/*/prompt") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sessions/*/prompt")![0]
+        let text = (try? JSONValue.parse(req.body))?["prompt"]?.string ?? ""
+        do {
+            if happier.client(for: sid) == nil { try await happier.attach(sid) }
+            let stop = try await happier.prompt(sid, text)
+            return .json(["stop": .string(stop.rawValue)])
+        } catch { return .json(["error": .string("\(error)")], status: 500) }
+    case ("GET", _) where match(req.path, "/sessions/*/transcript") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sessions/*/transcript")![0]
+        let md = await MainActor.run { tools.brain.transcript(sid, cipher: happier.cipher) }
+        return .json(["markdown": .string(md)])
+    case ("POST", _) where match(req.path, "/sessions/*/cancel") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        happier.cancel(match(req.path, "/sessions/*/cancel")![0]); return .json(["ok": true])
+    case ("POST", _) where match(req.path, "/sessions/*/stop") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        happier.stop(match(req.path, "/sessions/*/stop")![0]); return .json(["ok": true])
+    case ("POST", _) where match(req.path, "/sessions/*/switch") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sessions/*/switch")![0]
+        let agent = (try? JSONValue.parse(req.body))?["agent"]?.string ?? "codex"
+        do { try await happier.switchAgent(sid, to: agent); return .json(["ok": true]) }
+        catch { return .json(["error": .string("\(error)")], status: 500) }
+    case ("GET", "/inbox"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let pending = req.query["pending"] != "false"
+        let items = await MainActor.run { tools.brain.inbox(pendingOnly: pending) }
+        return .json(["items": .array(items.map(inboxJSON))])
+    case ("POST", _) where match(req.path, "/inbox/*/resolve") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let iid = match(req.path, "/inbox/*/resolve")![0]
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        let decision = body["decision"]?.string ?? "reject_once"
+        let approved = decision.hasPrefix("allow") || decision == "approve" || body["approved"]?.bool == true
+        await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected) }
+        return .json(["ok": true])
+    case ("GET", "/connections"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let list = await MainActor.run { tools.brain.connections() }
+        return .json(["connections": .array(list.map { c in
+            .object(["id": .string(c.id), "name": .string(c.name), "transport": .string(c.transport.rawValue), "command": .string(c.command),
+                     "enabled": .bool(c.enabled), "exposeToAgents": .bool(c.exposeToAgents), "status": .string(c.status)]) })])
+    case ("POST", "/connections/reload"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        await happier.connections?.reload(); return .json(["ok": true])
     default:
         return .json(["error": "not found"], status: 404)
     }

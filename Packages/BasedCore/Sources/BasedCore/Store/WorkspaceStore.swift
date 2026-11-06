@@ -166,6 +166,8 @@ public final class WorkspaceStore {
     public let persistence: Persistence?
     public var userID: String? = "me"
     public private(set) var lastError: Error?
+    /// Monotonic counter bumped on every committed change (local, remote, undo). Use as a cache key.
+    public private(set) var revision: Int = 0
 
     /// Called after local, undo and redo commits with the changed keys (sync hook).
     public var onLocalChange: (([RecordKey]) -> Void)?
@@ -335,6 +337,7 @@ public final class WorkspaceStore {
         if origin == .local || origin == .undo || origin == .redo {
             onLocalChange?(Array(change.keys))
         }
+        revision &+= 1
         for handler in observers.values { handler(change) }
     }
 
@@ -479,21 +482,26 @@ public final class WorkspaceStore {
     }
 
     private func insertIntoIndex(_ b: Block) {
-        var list = childIndex[b.parent.key] ?? []
         let key = (b.sortKey, b.id)
-        var lo = 0, hi = list.count
+        let parentKey = b.parent.key
+        // Mutate in place (no copy-on-write duplication); appending at the end is O(1) amortised.
+        if childIndex[parentKey] == nil { childIndex[parentKey] = [b.id]; return }
+        let count = childIndex[parentKey]!.count
+        if let lastID = childIndex[parentKey]!.last, (blocks[lastID]?.sortKey ?? "", lastID) < key {
+            childIndex[parentKey]!.append(b.id); return
+        }
+        var lo = 0, hi = count
         while lo < hi {
             let mid = (lo + hi) / 2
-            let m = blocks[list[mid]]
-            if (m?.sortKey ?? "", list[mid]) < key { lo = mid + 1 } else { hi = mid }
+            let id = childIndex[parentKey]![mid]
+            if (blocks[id]?.sortKey ?? "", id) < key { lo = mid + 1 } else { hi = mid }
         }
-        list.insert(b.id, at: lo)
-        childIndex[b.parent.key] = list
+        childIndex[parentKey]!.insert(b.id, at: lo)
     }
 
     private func removeFromIndex(_ id: RecordID, parentKey: String) {
-        guard var list = childIndex[parentKey] else { return }
-        list.removeAll { $0 == id }
-        childIndex[parentKey] = list.isEmpty ? nil : list
+        guard childIndex[parentKey] != nil else { return }
+        if let i = childIndex[parentKey]!.lastIndex(of: id) { childIndex[parentKey]!.remove(at: i) }
+        if childIndex[parentKey]!.isEmpty { childIndex[parentKey] = nil }
     }
 }

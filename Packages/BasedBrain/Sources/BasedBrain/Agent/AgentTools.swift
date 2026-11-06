@@ -38,10 +38,27 @@ public final class AgentTools {
             ToolSpec(name: "load_skill", description: "Load a skill's full instructions by name.",
                      inputSchema: .schema(["name": .str("Skill name")], required: ["name"])),
             ToolSpec(name: "about_user", description: "Read the user's About page.", inputSchema: .schema([:])),
-        ]
+            ToolSpec(name: "create_chart", description: "Add a chart view to a database (bar, horizontalBar, line, area, pie, donut). x_property groups rows (select/status/date/checkbox/text); y_property is a number property to aggregate (omit to count rows).",
+                     inputSchema: .schema(["database_id": .str("Database id"), "kind": .str("bar | horizontalBar | line | area | pie | donut"), "x_property": .str("Property name for the x axis / slices"), "y_property": .str("Number property to aggregate (optional)"), "aggregate": .str("count | sum | average | min | max | median"), "name": .str("View name")], required: ["database_id", "kind"])),
+            ToolSpec(name: "add_html", description: "Append an HTML visualisation block (rendered in a sandboxed web view) to a page. Inline <style> and <script> are allowed; use it for custom charts, diagrams, widgets.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "html": .str("Complete HTML snippet"), "height": .num("Height in points (default 320)")], required: ["page_id", "html"])),
+            ToolSpec(name: "add_mermaid", description: "Append a Mermaid diagram (flowchart, sequence, gantt, mindmap …) to a page.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "mermaid": .str("Mermaid source")], required: ["page_id", "mermaid"])),
+            ToolSpec(name: "list_connections", description: "List connected external services (MCP servers) and their tools. External tools are called directly by name.", inputSchema: .schema([:])),
+            ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
+        ] + externalSpecs
     }
 
     public struct ToolResult: Sendable { public var text: String; public var isError: Bool }
+
+    /// Tools provided by connected MCP servers (filled by `ConnectionManager`). Names are `<slug>__<tool>`.
+    public var externalSpecs: [ToolSpec] = []
+    /// Async executor for external tools; returns nil when the name is not external.
+    public var externalCall: (@Sendable (String, JSONValue) async -> ToolResult?)?
+    public func isExternal(_ name: String) -> Bool { externalSpecs.contains { $0.name == name } }
+    nonisolated public static func slug(_ name: String) -> String {
+        String(name.lowercased().map { $0.isLetter || $0.isNumber ? $0 : "_" }).trimmingCharacters(in: CharacterSet(charactersIn: "_"))
+    }
 
     public func call(_ name: String, _ args: JSONValue) -> ToolResult {
         do { return ToolResult(text: try dispatch(name, args), isError: false) }
@@ -119,6 +136,34 @@ public final class AgentTools {
             guard let s = brain.skills().first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw ToolError("No skill '\(n)'") }
             return "# \(s.name)\n\(s.body)"
         case "about_user": return brain.about
+        case "create_chart":
+            let db = try database(a)
+            let kind = ChartConfig.Kind(rawValue: try req(a, "kind")) ?? .bar
+            let x = a["x_property"]?.string.flatMap { n in db.properties.first { $0.name.caseInsensitiveCompare(n) == .orderedSame }?.id }
+            let y = a["y_property"]?.string.flatMap { n in db.properties.first { $0.name.caseInsensitiveCompare(n) == .orderedSame }?.id }
+            let agg = ChartConfig.Aggregate(rawValue: a["aggregate"]?.string ?? "") ?? (y == nil ? .count : .sum)
+            guard let vid = store.addView(to: db.blockID, type: .chart, name: a["name"]?.string ?? "Chart") else { throw ToolError("Could not add view") }
+            store.updateView(vid, name: "Configure chart") { $0.chart = ChartConfig(kind: kind, xPropertyID: x, yPropertyID: y, aggregate: agg) }
+            return "Created chart view \(vid) on database \(db.title.plainText)."
+        case "add_html":
+            let id = try req(a, "page_id"); let html = try req(a, "html")
+            guard store.blocks[id] != nil else { throw ToolError("No page \(id)") }
+            var b = ImportedBlock(.code, text: RichText(html)); b.props.language = "html"; b.props.url = "preview"; b.props.caption = a["height"]?.number.map { RichText("height=\(Int($0))") }
+            store.insertImported([b], in: .block(id), name: "Add HTML")
+            return "Added HTML block to \(id)."
+        case "add_mermaid":
+            let id = try req(a, "page_id"); let src = try req(a, "mermaid")
+            guard store.blocks[id] != nil else { throw ToolError("No page \(id)") }
+            var b = ImportedBlock(.code, text: RichText(src)); b.props.language = "mermaid"; b.props.url = "preview"
+            store.insertImported([b], in: .block(id), name: "Add diagram")
+            return "Added Mermaid diagram to \(id)."
+        case "list_connections":
+            let cs = brain.connections()
+            if cs.isEmpty { return "No connections. Add MCP servers in Settings → Connections." }
+            return cs.map { c in "- \(c.name) (\(c.transport.rawValue), \(c.enabled ? "enabled" : "disabled")) \(c.status)\n" + (externalSpecs.filter { $0.name.hasPrefix(Self.slug(c.name) + "__") }.map { "    • \($0.name): \($0.description.prefix(80))" }.joined(separator: "\n")) }.joined(separator: "\n")
+        case "inbox":
+            let items = brain.inbox(pendingOnly: true)
+            return items.isEmpty ? "Inbox is empty." : items.map { "- [\($0.kind.rawValue)] \($0.title) (id: \($0.id))" }.joined(separator: "\n")
         default: throw ToolError("Unknown tool \(name)")
         }
     }

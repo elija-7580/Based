@@ -56,10 +56,42 @@ Notion's features and built clean-room from public documentation.
 - **Page outline**: floating heading rail on the right (hover to expand,
   click to jump); per-page toggle. Shortcuts added: ⌘J Ask AI, ⌘⇧U parent
   page, ⌘\ sidebar.
+- **Control room for coding agents** (Happier-style, built in): **Sessions**
+  run Claude Code, Codex, Gemini CLI, OpenCode, Pi or any ACP agent in a folder
+  — from the Mac directly or through the `based-server` daemon for iPhone —
+  with live transcript, tool-call feed, plan, token counter and *switch agent
+  mid-session* (the transcript is handed over). **Inbox** collects every
+  `session/request_permission` and question; approve/reject on any device.
+  Transcripts are end-to-end encrypted (ChaCha20-Poly1305, key in Keychain,
+  pairing by pasting the key). ⌘J → *Run with Claude Code* hands a prompt over.
+- **Connections** (MCP client): add GitHub, Slack, Google Drive/Gmail/Calendar,
+  Linear, Notion, Filesystem, Brave Search, Fetch, Apple Notes/Reminders or any
+  stdio/HTTP MCP server once; the Agent Brain gets their tools (`github__…`)
+  and every coding-agent session receives them as `mcpServers`. Based itself
+  is handed to the agents as an MCP server, so they can read/write your pages.
+- **Visualisations**: **Chart** view for databases (bar, horizontal bar, line,
+  area, pie, donut; count/sum/avg/min/max/median; date buckets day→year; option
+  colours; legend, values, limit + “Other”) and **HTML / Mermaid blocks** —
+  code blocks with language `html` or `mermaid` get a *Code | Preview* toggle
+  and render sandboxed (D3, Chart.js, any HTML). The brain can create both
+  (`create_chart`, `add_html`, `add_mermaid`).
+- **Large databases**: length-prefixed fractional index keys (50k appends stay
+  ≤5 chars), in-place child index, memoised `QueryCache` keyed by store
+  revision, lazy table rows with *Load 50 more / Load all*. Benchmark in
+  `ChartAndCacheTests`: 50k rows insert 1.7 s, sorted query 0.5 s, cached hit
+  ~10 µs (debug build, Linux).
+- **Settings like Notion**: Account (My account, My settings, My notifications,
+  My connections, Language & region) and Workspace (Settings, People,
+  Teamspaces, Security, Agents & AI, Connections, Import, Sync & server,
+  Billing, About) with start page, cursor on open, spell-check, week start,
+  timezone, date format, export all content, reset workspace, …
+- **UI tests**: `App/UITests` (XCUITest, macOS + iOS) walk sidebar, new page,
+  slash menu, Quick Find, ⌘J, Sessions/Inbox, every Settings page and the
+  database table; `make uitest`.
 
 Not implemented: comments, sharing/publishing, page history, real-time
-multi-user, chart/form/feed/map views, sub-items, HTML/PDF export, find in
-page, share extension, widgets, watchOS target.
+multi-user, form/feed/map views, sub-items, HTML/PDF export, find in page,
+share extension, widgets, watchOS target.
 
 ## Repository layout
 
@@ -119,7 +151,13 @@ stubs; `App/Shared/Editor/RichTextView.swift` (AppKit/UIKit text views) was
 reviewed but not compiled. Expect a handful of fixes on the first Xcode run.
 Copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml` to get macOS +
 iOS simulator builds on every push; failures are written to the `ci-logs`
-branch so they can be fixed iteratively.
+branch so they can be fixed iteratively. Pass 8 (control room, charts, HTML
+preview, settings, UI tests) was written without the stub harness (lost in a
+sandbox reset) — syntax-checked with `swiftc -parse` and reviewed by hand.
+
+Tests on Linux: `make test` → BasedCore 36, BasedBrain 19 (incl. RFC 8439
+ChaCha20-Poly1305 vector, JSON-RPC framing, Happier store CRUD, chart
+aggregation, query cache, fractional index, 50k-row benchmark).
 
 ## License
 

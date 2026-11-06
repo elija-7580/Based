@@ -249,7 +249,7 @@ public enum ViewType: String, Codable, CaseIterable, Sendable {
     public var displayName: String { rawValue.capitalized }
 
     /// View types implemented in this build.
-    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline]
+    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart]
 }
 
 public enum Combinator: String, Codable, Sendable { case and, or }
@@ -413,6 +413,7 @@ public struct DatabaseView: Codable, Hashable, Identifiable, Sendable {
     public var openIn: OpenMode?
     public var showIcons: Bool?
     public var loadLimit: Int?
+    public var chart: ChartConfig?
     public var sortKey: String
     public var createdAt: Date
     public var updatedAt: Date

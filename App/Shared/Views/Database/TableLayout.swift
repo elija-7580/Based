@@ -80,7 +80,7 @@ struct TableLayout: View {
     var body: some View {
         let props = ctx.visibleProperties
         ScrollView(.horizontal, showsIndicators: true) {
-            VStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
                 TableHeader(ctx: ctx, properties: props)
                 if let groups = ctx.visibleGroups {
                     ForEach(groups) { g in
@@ -98,7 +98,13 @@ struct TableLayout: View {
                     let limit = (ctx.view.loadLimit ?? 50) + limitBoost
                     rows(Array(ctx.result.rows.prefix(limit)), props: props)
                     if ctx.result.rows.count > limit {
-                        Button("Load more") { limitBoost += 50 }.buttonStyle(.plain).foregroundStyle(Theme.secondary).padding(6)
+                        HStack(spacing: 12) {
+                            Button("Load \(min(50, ctx.result.rows.count - limit)) more") { limitBoost += 50 }
+                            Button("Load all (\(ctx.result.rows.count))") { limitBoost = ctx.result.rows.count }
+                            Text("\(limit) of \(ctx.result.rows.count)").foregroundStyle(.tertiary)
+                        }
+                        .buttonStyle(.plain).foregroundStyle(Theme.secondary).font(.callout).padding(6)
+                        .accessibilityIdentifier("table.loadMore")
                     }
                     newRow(values: [:])
                     CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows)
@@ -157,6 +163,7 @@ struct TableHeader: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(properties) { p in HeaderCell(ctx: ctx, property: p) }
+                .accessibilityIdentifier("table.header")
             if !ctx.locked {
                 Button { adding = true } label: { Image(systemName: "plus").padding(8) }
                     .buttonStyle(.plain)

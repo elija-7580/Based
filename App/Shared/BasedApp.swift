@@ -14,6 +14,7 @@ struct BasedApp: App {
             RootView()
                 .environment(model)
                 .environment(model.brain)
+                .environment(model.brain.happier)
                 .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
                 #if os(macOS)
                 .frame(minWidth: 760, minHeight: 480)
@@ -25,8 +26,9 @@ struct BasedApp: App {
             SettingsView()
                 .environment(model)
                 .environment(model.brain)
+                .environment(model.brain.happier)
                 .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
-                .frame(width: 560, height: 640)
+                .frame(width: 760, height: 640)
         }
         #endif
     }
@@ -88,6 +90,8 @@ struct BasedCommands: Commands {
             Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
             Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)
             Button("Home") { model.selection = .home }.keyboardShortcut("h", modifiers: [.command, .shift])
+            Button("Sessions") { model.selection = .sessions }.keyboardShortcut("1", modifiers: [.command, .shift])
+            Button("Inbox") { model.selection = .inbox }.keyboardShortcut("2", modifiers: [.command, .shift])
             Button("Trash") { model.showTrash = true }
             Divider()
             Button("Sync Now") { model.syncNow() }.keyboardShortcut("r", modifiers: [.command, .shift])

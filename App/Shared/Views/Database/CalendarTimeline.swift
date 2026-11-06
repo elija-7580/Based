@@ -34,7 +34,7 @@ struct CalendarLayout: View {
     let ctx: DBContext
     @State private var month = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: Date())) ?? Date()
 
-    private let cal = Calendar.current
+    private let cal = Prefs.calendar
 
     var body: some View {
         if ctx.dateProperty == nil {

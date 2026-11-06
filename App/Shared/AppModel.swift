@@ -18,6 +18,8 @@ enum SidebarItem: Hashable {
     case trash
     case settings
     case home
+    case sessions   // Happier-style coding-agent sessions
+    case inbox      // approvals / questions from agents
 }
 
 @MainActor @Observable
@@ -25,6 +27,8 @@ final class AppModel {
     let store: WorkspaceStore
     let assets: FileAssetStore
     @ObservationIgnored let registry: Registry
+    /// Memoised view queries (filters/sorts/groups) — one shared cache, invalidated by store revision.
+    @ObservationIgnored let queryCache: QueryCache
     @ObservationIgnored private(set) var persistence: SQLitePersistence?
     #if canImport(CloudKit)
     @ObservationIgnored private(set) var cloud: CloudSync?
@@ -48,6 +52,8 @@ final class AppModel {
     @ObservationIgnored private(set) var brain: BrainModel!
     var showTrash = false
     var showImport = false
+    var showExportAll = false
+    var exportAllMessage: String?
     var exportRequest: ExportRequest?
     var moveRequest: MoveRequest?
     var expanded: Set<RecordID> = []
@@ -90,6 +96,7 @@ final class AppModel {
         let node = Self.deviceNodeID()
         store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
         registry = Registry(store: store)
+        queryCache = QueryCache(store: store)
         if store.blocks.isEmpty { Onboarding.seed(store) }
         brain = BrainModel(store: store)
         if let first = store.topLevelPages().first { selection = .page(first.id) }
@@ -183,7 +190,7 @@ final class AppModel {
             peek = nil
             if case .page(let root)? = selection, root == id, path.isEmpty { return }
             if path.last == id { return }
-            if selection == nil || selection == .trash || selection == .settings || selection == .home {
+            if selection == nil || selection == .trash || selection == .settings || selection == .home || selection == .sessions || selection == .inbox {
                 selection = .page(id)
             } else {
                 path.append(id)
@@ -218,6 +225,33 @@ final class AppModel {
         }
         if case .side(let p)? = peek, store.isTrashed(p) { peek = nil }
         if case .center(let p)? = peek, store.isTrashed(p) { peek = nil }
+    }
+
+    func setWorkspaceIcon(_ icon: PageIcon?) {
+        store.transact("Workspace icon") { tx in tx.updateWorkspace { $0.icon = icon } }
+    }
+
+    /// Settings → Export all: every page as Markdown (databases as CSV + page folders) into one directory.
+    func exportWorkspace(to directory: URL) {
+        let exporter = MarkdownExporter(store: store)
+        let fm = FileManager.default
+        var count = 0
+        func write(_ page: Block, into dir: URL) {
+            let base = MarkdownExporter.fileName(store.title(of: page.id))
+            let isDB = page.type == .databasePage || page.type == .databaseInline
+            let text = isDB ? (store.database(forBlock: page.id).map { exporter.csv(database: $0.id) } ?? "") : exporter.export(page: page.id)
+            try? text.write(to: dir.appendingPathComponent(base + (isDB ? ".csv" : ".md")), atomically: true, encoding: .utf8)
+            count += 1
+            let kids = store.subpages(of: page.id)
+            if !kids.isEmpty {
+                let sub = dir.appendingPathComponent(base, isDirectory: true)
+                try? fm.createDirectory(at: sub, withIntermediateDirectories: true)
+                kids.forEach { write($0, into: sub) }
+            }
+        }
+        try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
+        store.topLevelPages().forEach { write($0, into: directory) }
+        exportAllMessage = "Exported \(count) pages to \(directory.path)"
     }
 
     func exportCurrentPage() {

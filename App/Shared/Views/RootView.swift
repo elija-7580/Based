@@ -31,13 +31,14 @@ struct RootView: View {
             PeekView(pageID: peek.id, mode: .centerPeek).environment(model)
         }
         .sheet(isPresented: $model.showQuickFind) { QuickFindView().environment(model) }
-        .sheet(isPresented: $model.showAI) { AIPanel().environment(model).environment(model.brain) }
+        .sheet(isPresented: $model.showAI) { AIPanel().environment(model).environment(model.brain).environment(model.brain.happier) }
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
+        .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
         .sheet(item: $model.moveRequest) { req in
             PagePicker(purpose: .move(req.ids)) { model.moveRequest = nil }.environment(model)
         }
         #if os(iOS)
-        .sheet(isPresented: $model.showSettings) { NavigationStack { SettingsView() }.environment(model) }
+        .sheet(isPresented: $model.showSettings) { NavigationStack { SettingsView() }.environment(model).environment(model.brain).environment(model.brain.happier) }
         #endif
         .fileImporter(isPresented: $model.showImport, allowedContentTypes: [.folder, .item], allowsMultipleSelection: true) { result in
             if case .success(let urls) = result { importFiles(urls) }
@@ -66,6 +67,8 @@ struct RootView: View {
         case .page(let id)?: PageScreen(pageID: id, model: model).id(id)
         case .trash?: TrashView()
         case .settings?: SettingsView()
+        case .sessions?: SessionsView().environment(model.brain.happier)
+        case .inbox?: InboxView().environment(model.brain.happier)
         default: HomeView()
         }
     }
@@ -157,11 +160,23 @@ struct SidebarView: View {
         List(selection: $model.selection) {
             Section {
                 Button { model.showQuickFind = true } label: { Label("Search", systemImage: "magnifyingglass") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.search")
                 Button { model.showAI = true } label: { Label("Ask AI", systemImage: "sparkles") }
-                    .buttonStyle(.plain)
-                Label("Home", systemImage: "house").tag(SidebarItem.home)
+                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.askAI")
+                Label("Home", systemImage: "house").tag(SidebarItem.home).accessibilityIdentifier("sidebar.home")
                 Label("Agent Brain", systemImage: "brain").tag(SidebarItem.page(model.brain.brain.rootID))
+                Label("Sessions", systemImage: "terminal").tag(SidebarItem.sessions)
+                    .accessibilityIdentifier("sidebar.sessions")
+                HStack {
+                    Label("Inbox", systemImage: "tray")
+                    Spacer()
+                    if model.brain.happier.pendingCount > 0 {
+                        Text("\(model.brain.happier.pendingCount)").font(.caption2.bold()).foregroundStyle(.white)
+                            .padding(.horizontal, 6).padding(.vertical, 1).background(Capsule().fill(Color.orange))
+                    }
+                }
+                .tag(SidebarItem.inbox)
+                .accessibilityIdentifier("sidebar.inbox")
             } header: {
                 WorkspaceHeader()
             }
@@ -175,7 +190,7 @@ struct SidebarView: View {
                 ForEach(store.topLevelPages(), id: \.id) { PageTreeRow(page: $0) }
                     .onMove { from, to in movePages(from: from, to: to) }
                 Button { model.newPage() } label: { Label("Add a page", systemImage: "plus") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.addPage")
                     .foregroundStyle(Theme.secondary)
             }
             Section {
@@ -188,16 +203,17 @@ struct SidebarView: View {
                 .menuStyle(.borderlessButton)
                 Button { model.showImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
                     .buttonStyle(.plain)
-                Label("Trash", systemImage: "trash").tag(SidebarItem.trash)
+                Label("Trash", systemImage: "trash").tag(SidebarItem.trash).accessibilityIdentifier("sidebar.trash")
                 #if os(iOS)
-                Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings)
+                Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings).accessibilityIdentifier("sidebar.settings")
                 #endif
             }
         }
         .listStyle(.sidebar)
+        .accessibilityIdentifier("sidebar")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { model.newPage() } label: { Image(systemName: "square.and.pencil") }
+                Button { model.newPage() } label: { Image(systemName: "square.and.pencil") }.accessibilityIdentifier("toolbar.newPage")
                     .help("New page")
             }
         }
@@ -436,7 +452,7 @@ struct QuickFindView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary)
-                TextField("Search or jump to…", text: $query)
+                TextField("Search or jump to…", text: $query).accessibilityIdentifier("quickfind.field")
                     .textFieldStyle(.plain)
                     .font(.system(size: 17))
                     .focused($fieldFocused)
@@ -575,55 +591,3 @@ struct TrashView: View {
     }
 }
 
-// MARK: - Settings
-
-struct SettingsView: View {
-    @Environment(AppModel.self) private var model
-    @State private var name = ""
-    @State private var syncOn = true
-    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
-
-    var body: some View {
-        let store = model.store
-        Form {
-            Section("Appearance") {
-                Picker("Appearance", selection: $appearance) {
-                    ForEach(Appearance.allCases) { a in Text(a.title).tag(a.rawValue) }
-                }
-            }
-            Section("Workspace") {
-                TextField("Name", text: $name)
-                    .onSubmit { if !name.isEmpty { store.renameWorkspace(name) } }
-                LabeledContent("Pages", value: "\(store.allPages().count)")
-                LabeledContent("Databases", value: "\(store.databases.count)")
-            }
-            Section("iCloud sync") {
-                LabeledContent("Status", value: model.syncStatus)
-                if let d = model.lastSyncDate {
-                    LabeledContent("Last synced", value: d.formatted(date: .abbreviated, time: .shortened))
-                }
-                Toggle("Sync with iCloud", isOn: Binding(get: { syncOn }, set: { v in syncOn = v; model.syncEnabled = v }))
-                    .disabled(!AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil)
-                if !AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil {
-                    Text("This build has no iCloud container. Set BASED_CLOUD_SYNC = YES, a development team and an iCloud container in Config/Local.xcconfig, then rebuild.")
-                        .font(.caption).foregroundStyle(Theme.secondary)
-                }
-                Button("Sync now") { model.syncNow() }.disabled(!syncOn)
-            }
-            AISettingsView()
-            Section("Data") {
-                Button("Import from Notion export…") { model.showImport = true }
-                Button("Purge Trash (older than 30 days)") { store.purgeTrash() }
-                Button("Clear undo history") { store.clearUndoHistory() }
-            }
-            Section("About") {
-                LabeledContent("Version", value: (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "dev")
-                Text("Based is a local-first, open-source note-taking app. Data lives on this device and syncs through your private iCloud database.")
-                    .font(.caption).foregroundStyle(Theme.secondary)
-            }
-        }
-        .formStyle(.grouped)
-        .navigationTitle("Settings")
-        .onAppear { name = store.workspace.name; syncOn = model.syncEnabled }
-    }
-}

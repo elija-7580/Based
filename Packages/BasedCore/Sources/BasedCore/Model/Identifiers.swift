@@ -106,8 +106,13 @@ public final class StampClock: @unchecked Sendable {
     }
 }
 
-/// Fractional index keys: strings that sort lexicographically and always
-/// allow a new key between any two keys. Base-62 digits, no trailing "0".
+/// Fractional index keys: strings that sort lexicographically and always allow a new key between any two keys.
+///
+/// Format (compatible with the widely used "fractional-indexing" scheme): an *integer part* whose first
+/// character encodes its length (`a`…`z` → 2…27 digits, `A`…`Z` → 27…2 digits for the negative range)
+/// followed by an optional *fractional part* in base‑62 with no trailing `0`. Appending at the end of a
+/// list increments the integer part, so keys stay short (≈4 characters for 100k rows) instead of growing
+/// with every insert. Older keys produced by a pure midpoint scheme are still accepted through a fallback.
 public enum FractionalIndex {
     static let digits: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
     static let lookup: [Character: Int] = {
@@ -115,15 +120,108 @@ public enum FractionalIndex {
         for (i, c) in digits.enumerated() { d[c] = i }
         return d
     }()
+    static let smallestInteger = "A" + String(repeating: "0", count: 26)
+    public static let first = "a0"
+
+    // MARK: Integer part
+
+    static func integerLength(_ head: Character) -> Int? {
+        guard let v = head.asciiValue else { return nil }
+        if v >= 97 && v <= 122 { return Int(v - 97) + 2 }        // a…z
+        if v >= 65 && v <= 90 { return Int(90 - v) + 2 }         // A…Z
+        return nil
+    }
+
+    static func integerPart(_ key: String) -> Substring? {
+        guard let h = key.first, let len = integerLength(h), len <= key.count else { return nil }
+        return key.prefix(len)
+    }
+
+    /// True when `key` follows the length‑prefixed format.
+    public static func isValid(_ key: String) -> Bool {
+        guard let int = integerPart(key) else { return false }
+        let frac = key.dropFirst(int.count)
+        if frac.last == "0" { return false }
+        return key.dropFirst().allSatisfy { lookup[$0] != nil }
+    }
+
+    static func increment(_ x: Substring) -> String? {
+        var chars = Array(x)
+        let head = chars.removeFirst()
+        var i = chars.count - 1
+        while i >= 0 {
+            let d = (lookup[chars[i]] ?? 0) + 1
+            if d == digits.count { chars[i] = "0"; i -= 1 } else { chars[i] = digits[d]; return String(head) + String(chars) }
+        }
+        if head == "Z" { return "a0" }
+        if head == "z" { return nil }
+        let h = Character(UnicodeScalar(head.asciiValue! + 1))
+        if h > "a" { chars.append("0") } else { chars.removeLast() }
+        return String(h) + String(chars)
+    }
+
+    static func decrement(_ x: Substring) -> String? {
+        var chars = Array(x)
+        let head = chars.removeFirst()
+        var i = chars.count - 1
+        while i >= 0 {
+            let d = (lookup[chars[i]] ?? 0) - 1
+            if d < 0 { chars[i] = digits[digits.count - 1]; i -= 1 } else { chars[i] = digits[d]; return String(head) + String(chars) }
+        }
+        if head == "a" { return "Z" + String(digits[digits.count - 1]) }
+        if head == "A" { return nil }
+        let h = Character(UnicodeScalar(head.asciiValue! - 1))
+        if h < "Z" { chars.append(digits[digits.count - 1]) } else { chars.removeLast() }
+        return String(h) + String(chars)
+    }
+
+    // MARK: Public API
 
     /// A key strictly between `a` and `b` (nil = unbounded).
     public static func between(_ a: String?, _ b: String?) -> String {
-        var lo = a ?? ""
-        var hi = b
-        if let h = hi, !lo.isEmpty, h <= lo { hi = nil } // repair invalid order
-        if lo.hasSuffix("0") { lo = String(lo.reversed().drop(while: { $0 == "0" }).reversed()) }
-        return midpoint(Array(lo), hi.map { Array($0) })
+        if let a, let b, a >= b { return legacyBetween(a, nil) }          // repair invalid order
+        if let a, !isValid(a) { return legacyBetween(a, b) }
+        if let b, !isValid(b) { return legacyBetween(a, b) }
+        guard let a else {
+            guard let b else { return first }
+            let ib = integerPart(b)!
+            let fb = b.dropFirst(ib.count)
+            if ib == smallestInteger { return String(ib) + midpoint([], Array(fb)) }
+            if !fb.isEmpty { return String(ib) }
+            return decrement(ib) ?? legacyBetween(nil, b)
+        }
+        let ia = integerPart(a)!
+        let fa = a.dropFirst(ia.count)
+        guard let b else {
+            return increment(ia) ?? String(ia) + midpoint(Array(fa), nil)
+        }
+        let ib = integerPart(b)!
+        let fb = b.dropFirst(ib.count)
+        if ia == ib { return String(ia) + midpoint(Array(fa), Array(fb)) }
+        if let i = increment(ia), i < b { return i }
+        return String(ia) + midpoint(Array(fa), nil)
     }
+
+    /// `count` evenly spaced keys between `a` and `b`.
+    public static func keys(count: Int, between a: String? = nil, _ b: String? = nil) -> [String] {
+        guard count > 0 else { return [] }
+        if count == 1 { return [between(a, b)] }
+        if b == nil {
+            var c = between(a, nil); var out = [c]
+            for _ in 1..<count { c = between(c, nil); out.append(c) }
+            return out
+        }
+        if a == nil {
+            var c = between(nil, b); var out = [c]
+            for _ in 1..<count { c = between(nil, c); out.append(c) }
+            return out.reversed()
+        }
+        let mid = count / 2
+        let c = between(a, b)
+        return keys(count: mid, between: a, c) + [c] + keys(count: count - mid - 1, between: c, b)
+    }
+
+    // MARK: Fractional midpoint (shared with the legacy scheme)
 
     private static func midpoint(_ a: [Character], _ b: [Character]?) -> String {
         if let b {
@@ -144,34 +242,12 @@ public enum FractionalIndex {
         return String(digits[digitA]) + midpoint(a.isEmpty ? [] : Array(a.dropFirst()), nil)
     }
 
-    /// `count` evenly spaced keys between `a` and `b`.
-    public static func keys(count: Int, between a: String? = nil, _ b: String? = nil) -> [String] {
-        guard count > 0 else { return [] }
-        if a == nil && b == nil {
-            var width = 1
-            var capacity = digits.count
-            while capacity < count + 1 { width += 1; capacity *= digits.count }
-            var result: [String] = []
-            result.reserveCapacity(count)
-            for i in 1...count {
-                var value = Int((Double(i) * Double(capacity) / Double(count + 1)).rounded(.down))
-                var chars = [Character](repeating: "0", count: width)
-                for pos in stride(from: width - 1, through: 0, by: -1) {
-                    chars[pos] = digits[value % digits.count]
-                    value /= digits.count
-                }
-                while chars.last == "0" { chars.removeLast() }
-                result.append(String(chars))
-            }
-            return result
-        }
-        var result: [String] = []
-        var lo = a
-        for _ in 0..<count {
-            let k = between(lo, b)
-            result.append(k)
-            lo = k
-        }
-        return result
+    /// Pure midpoint keys (pre‑format data). Still correct, just grows with repeated appends.
+    static func legacyBetween(_ a: String?, _ b: String?) -> String {
+        var lo = a ?? ""
+        var hi = b
+        if let h = hi, !lo.isEmpty, h <= lo { hi = nil }
+        if lo.hasSuffix("0") { lo = String(lo.reversed().drop(while: { $0 == "0" }).reversed()) }
+        return midpoint(Array(lo), hi.map { Array($0) })
     }
 }

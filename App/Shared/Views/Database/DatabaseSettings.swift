@@ -307,6 +307,9 @@ struct ViewSettingsView: View {
                         }
                     }
                 }
+                if v.type == .chart {
+                    section("Chart") { chartSettings }
+                }
                 if v.type == .board || v.type == .gallery {
                     section("Cards") {
                         Picker("Card preview", selection: Binding(get: { coverKey(v.cardCover ?? (v.type == .gallery ? .pageContent : CardCover.none)) },
@@ -351,6 +354,48 @@ struct ViewSettingsView: View {
     }
 
     private func update(_ name: String, _ f: @escaping (inout DatabaseView) -> Void) { store.updateView(v.id, name: name, f) }
+
+    // MARK: Chart
+
+    private var chart: ChartConfig { v.chart ?? ChartConfig() }
+    private func updateChart(_ name: String, _ f: @escaping (inout ChartConfig) -> Void) {
+        update(name) { view in var c = view.chart ?? ChartConfig(); f(&c); view.chart = c }
+    }
+
+    @ViewBuilder
+    private var chartSettings: some View {
+        let categorical = ctx.db.properties.filter { [.select, .status, .multiSelect, .checkbox, .date, .createdTime, .lastEditedTime, .person, .relation, .text, .title].contains($0.type) }
+        let numeric = ctx.db.properties.filter { [.number, .formula, .rollup].contains($0.type) }
+        Picker("Chart type", selection: Binding(get: { chart.kind }, set: { k in updateChart("Chart type") { $0.kind = k } })) {
+            ForEach(ChartConfig.Kind.allCases, id: \.self) { Text($0.displayName).tag($0) }
+        }
+        .accessibilityIdentifier("chart.kind")
+        Picker(chart.kind == .pie || chart.kind == .donut ? "Slices" : "X axis", selection: Binding(get: { chart.xPropertyID ?? "" }, set: { id in updateChart("X axis") { $0.xPropertyID = id.isEmpty ? nil : id } })) {
+            Text("None (single bucket)").tag("")
+            ForEach(categorical) { Text($0.name).tag($0.id) }
+        }
+        if let x = chart.xPropertyID, let p = ctx.db.property(x), [.date, .createdTime, .lastEditedTime].contains(p.type) {
+            Picker("Group dates by", selection: Binding(get: { chart.dateBucket }, set: { b in updateChart("Date bucket") { $0.dateBucket = b } })) {
+                ForEach(ChartConfig.DateBucket.allCases, id: \.self) { Text($0.displayName).tag($0) }
+            }
+        }
+        Picker(chart.kind == .pie || chart.kind == .donut ? "Slice size" : "Y axis", selection: Binding(get: { chart.yPropertyID ?? "" }, set: { id in updateChart("Y axis") { $0.yPropertyID = id.isEmpty ? nil : id; if id.isEmpty { $0.aggregate = .count } else if $0.aggregate == .count { $0.aggregate = .sum } } })) {
+            Text("Count of rows").tag("")
+            ForEach(numeric) { Text($0.name).tag($0.id) }
+        }
+        if chart.yPropertyID != nil {
+            Picker("Aggregate", selection: Binding(get: { chart.aggregate }, set: { a in updateChart("Aggregate") { $0.aggregate = a } })) {
+                ForEach(ChartConfig.Aggregate.allCases.filter { $0 != .count }, id: \.self) { Text($0.displayName).tag($0) }
+            }
+        }
+        Toggle("Show values", isOn: Binding(get: { chart.showValues }, set: { on in updateChart("Show values") { $0.showValues = on } }))
+        Toggle("Show legend", isOn: Binding(get: { chart.showLegend }, set: { on in updateChart("Show legend") { $0.showLegend = on } }))
+        Toggle("Sort by value", isOn: Binding(get: { chart.sortByValue }, set: { on in updateChart("Sort by value") { $0.sortByValue = on } }))
+        Picker("Max categories", selection: Binding(get: { chart.limit ?? 0 }, set: { n in updateChart("Limit") { $0.limit = n == 0 ? nil : n } })) {
+            Text("All").tag(0)
+            ForEach([5, 8, 10, 15, 20], id: \.self) { Text("\($0) + Other").tag($0) }
+        }
+    }
 
     private func section<C: View>(_ title: String, @ViewBuilder _ c: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 6) {

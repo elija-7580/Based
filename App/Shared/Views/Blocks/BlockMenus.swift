@@ -296,7 +296,7 @@ struct InlineMenuView: View {
         let highlighted = editor.menu?.highlighted ?? 0
         VStack(alignment: .leading, spacing: 0) {
             if items.isEmpty {
-                Text("No results").foregroundStyle(Theme.secondary).padding(10)
+                Text("No results").foregroundStyle(Theme.secondary).padding(10).accessibilityIdentifier("slash.empty")
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {

@@ -482,6 +482,7 @@ struct CodeBlockView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .font(.system(size: 12))
+                if CodePreviewToggle.supports(block.props.language) { CodePreviewToggle(block: block) }
                 Spacer()
                 if hovering {
                     Button(block.props.wrap == false ? "Wrap" : "No wrap") {
@@ -495,8 +496,12 @@ struct CodeBlockView: View {
                 }
             }
             .foregroundStyle(Theme.secondary)
-            BlockText(block: block, editor: editor)
-            if let cap = block.props.caption, !cap.isEmpty {
+            if CodePreviewToggle.supports(block.props.language), CodePreviewToggle.isPreview(block) {
+                HTMLPreview(source: block.text.plainText, language: block.props.language ?? "html", height: previewHeight(from: block.props.caption) ?? 320)
+            } else {
+                BlockText(block: block, editor: editor)
+            }
+            if let cap = block.props.caption, !cap.isEmpty, !cap.plainText.hasPrefix("height=") {
                 Text(cap.plainText).font(.system(size: 13)).foregroundStyle(Theme.secondary)
             }
         }

@@ -157,3 +157,14 @@ MCP server for external AI clients,ai,should,yes,yes,stdio + Streamable HTTP; to
 Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device
 Import from Notion API (live),import,should,n/a,yes,brain 1:1 + pages/databases by ID
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud
+Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets
+HTML / Mermaid block preview,blocks,should,partial,yes,code block language html/mermaid → sandboxed WKWebView
+Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon
+Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device
+Switch agent mid-session,ai,should,no,yes,transcript hand-off
+E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing
+MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents
+Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-first equivalents for billing/people
+Export all workspace content,app,should,yes,yes,Markdown + CSV tree
+Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug
+UI test suite,app,should,n/a,yes,XCUITest macOS + iOS

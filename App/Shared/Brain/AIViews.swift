@@ -6,6 +6,7 @@ import BasedBrain
 struct AIPanel: View {
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
+    @Environment(HappierModel.self) private var happier
     @Environment(\.dismiss) private var dismiss
     @State private var input = ""
     @FocusState private var focused: Bool
@@ -17,6 +18,14 @@ struct AIPanel: View {
                 Text("Ask Based").font(.headline)
                 Spacer()
                 if !brain.turns.isEmpty { Button("Clear") { brain.clearChat() }.buttonStyle(.plain).foregroundStyle(Theme.secondary) }
+                Menu {
+                    ForEach(happier.agents.filter(\.enabled)) { a in
+                        Button { runWithAgent(a.id) } label: { Label("Run with \(a.name)", systemImage: a.icon) }
+                    }
+                } label: { Image(systemName: "terminal").foregroundStyle(Theme.secondary) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Hand this prompt to a coding agent in a new session")
+                .accessibilityIdentifier("ai.runWithAgent")
                 Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.secondary) }.buttonStyle(.plain)
             }
             .padding(12)
@@ -38,7 +47,7 @@ struct AIPanel: View {
             Divider()
             HStack(alignment: .bottom, spacing: 8) {
                 TextField("Ask anything about your notes… (⏎ to send)", text: $input, axis: .vertical)
-                    .textFieldStyle(.plain).lineLimit(1...6).focused($focused)
+                    .textFieldStyle(.plain).lineLimit(1...6).focused($focused).accessibilityIdentifier("ai.input")
                     .onSubmit { send() }
                 Button { send() } label: { Image(systemName: brain.isRunning ? "stop.circle" : "arrow.up.circle.fill").font(.title2) }
                     .buttonStyle(.plain).disabled(input.isEmpty || brain.isRunning).foregroundStyle(Color.accentColor)
@@ -66,6 +75,15 @@ struct AIPanel: View {
                 Button(s) { input = s; send() }.buttonStyle(.plain).foregroundStyle(Color.accentColor)
             }
         }
+    }
+
+    /// Hands the current prompt to a coding agent (Claude Code, Codex …) as a new session and opens it.
+    private func runWithAgent(_ agentID: String) {
+        let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        happier.startSession(agentID: agentID, cwd: happier.defaultDirectory, title: text.isEmpty ? nil : String(text.prefix(60)), prompt: text)
+        input = ""
+        model.selection = .sessions
+        dismiss()
     }
 
     private func send() {

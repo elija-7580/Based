@@ -1,0 +1,463 @@
+import SwiftUI
+import BasedCore
+import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
+
+/// Notion‑style settings: a sidebar with Account and Workspace sections, detail on the right.
+/// Opens as the macOS Settings window and as a sidebar destination on iOS.
+struct SettingsView: View {
+    @Environment(AppModel.self) private var model
+    @State private var page: SettingsPage = .myAccount
+
+    enum SettingsPage: String, CaseIterable, Identifiable {
+        case myAccount, mySettings, myNotifications, myConnections, languageRegion
+        case workspace, people, teamspaces, security, agents, connections, importData, sync, billing, about
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .myAccount: return "My account"
+            case .mySettings: return "My settings"
+            case .myNotifications: return "My notifications"
+            case .myConnections: return "My connections"
+            case .languageRegion: return "Language & region"
+            case .workspace: return "Settings"
+            case .people: return "People"
+            case .teamspaces: return "Teamspaces"
+            case .security: return "Security"
+            case .agents: return "Agents & AI"
+            case .connections: return "Connections"
+            case .importData: return "Import"
+            case .sync: return "Sync & server"
+            case .billing: return "Billing"
+            case .about: return "About"
+            }
+        }
+        var symbol: String {
+            switch self {
+            case .myAccount: return "person.crop.circle"
+            case .mySettings: return "slider.horizontal.3"
+            case .myNotifications: return "bell"
+            case .myConnections: return "link"
+            case .languageRegion: return "globe"
+            case .workspace: return "gearshape"
+            case .people: return "person.2"
+            case .teamspaces: return "person.3"
+            case .security: return "lock.shield"
+            case .agents: return "sparkles"
+            case .connections: return "puzzlepiece.extension"
+            case .importData: return "square.and.arrow.down"
+            case .sync: return "arrow.triangle.2.circlepath.icloud"
+            case .billing: return "creditcard"
+            case .about: return "info.circle"
+            }
+        }
+        static let account: [SettingsPage] = [.myAccount, .mySettings, .myNotifications, .myConnections, .languageRegion]
+        static let workspace: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .about]
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            sidebar
+                .frame(width: 210)
+                .background(Color(Theme.codeBackground).opacity(0.6))
+            Divider()
+            VStack(alignment: .leading, spacing: 0) {
+                Text(page.title).font(.title3.bold()).padding([.top, .horizontal], 20).padding(.bottom, 6)
+                Divider().padding(.horizontal, 20)
+                detail
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .navigationTitle("Settings")
+        .accessibilityIdentifier("settings.root")
+    }
+
+    private var sidebar: some View {
+        List(selection: $page) {
+            Section("Account") {
+                ForEach(SettingsPage.account) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
+            }
+            Section("Workspace") {
+                ForEach(SettingsPage.workspace) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
+            }
+        }
+        .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        Form {
+            switch page {
+            case .myAccount: MyAccountSettings()
+            case .mySettings: MySettings()
+            case .myNotifications: NotificationSettings()
+            case .myConnections: ConnectionsSettingsView().environment(model.brain.happier)
+            case .languageRegion: LanguageRegionSettings()
+            case .workspace: WorkspaceSettings()
+            case .people: PeopleSettings()
+            case .teamspaces: TeamspacesSettings()
+            case .security: SecuritySettings()
+            case .agents:
+                AgentsSettingsView().environment(model.brain.happier)
+                AISettingsView()
+            case .connections: ConnectionsSettingsView().environment(model.brain.happier)
+            case .importData: ImportSettings()
+            case .sync: SyncSettings()
+            case .billing: BillingSettings()
+            case .about: AboutSettings()
+            }
+        }
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+    }
+}
+
+// MARK: - Account
+
+struct MyAccountSettings: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("account.name") private var name = ""
+    @AppStorage("account.email") private var email = ""
+    @AppStorage("account.initials") private var initials = ""
+
+    var body: some View {
+        Section("Profile") {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle().fill(Color.accentColor.opacity(0.2)).frame(width: 56, height: 56)
+                    Text(initials.isEmpty ? String(name.prefix(1)).uppercased() : initials).font(.title2.bold())
+                }
+                VStack(alignment: .leading) {
+                    TextField("Preferred name", text: $name).textFieldStyle(.roundedBorder)
+                    Text("Shown on pages you edit and in agent transcripts.").font(.caption).foregroundStyle(Theme.secondary)
+                }
+            }
+            TextField("Initials (avatar)", text: $initials)
+        }
+        Section("Account security") {
+            TextField("Email (for the Based server account)", text: $email)
+            LabeledContent("Password", value: "Set on the Based server")
+            LabeledContent("2‑step verification", value: "Device keychain + passkey (planned)")
+        }
+        Section("Devices") {
+            LabeledContent("This device", value: model.brain.happier.machineName)
+            Text("Sessions, encryption key and secrets live in this device's Keychain.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Support") {
+            Button("Export my data…") { model.showExportAll = true }
+            Button("Delete my account", role: .destructive) { }.disabled(true)
+                .help("Based is local‑first; remove the app's data folder to delete everything.")
+        }
+    }
+}
+
+struct MySettings: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+    @AppStorage(Prefs.startPage) private var startPage = "last"
+    @AppStorage(Prefs.openLinksInApp) private var openLinksInApp = true
+    @AppStorage(Prefs.cursorOnOpen) private var cursorOnOpen = "title"
+    @AppStorage(Prefs.spellCheck) private var spellCheck = true
+    @AppStorage(Prefs.compactMode) private var compact = false
+    @AppStorage(Prefs.fontFamily) private var font = "default"
+    @AppStorage(Prefs.smallText) private var smallText = false
+    @AppStorage(Prefs.fullWidth) private var fullWidth = false
+
+    var body: some View {
+        Section("Appearance") {
+            Picker("Appearance", selection: $appearance) { ForEach(Appearance.allCases) { a in Text(a.title).tag(a.rawValue) } }
+                .accessibilityIdentifier("settings.appearance")
+            Picker("Default font", selection: $font) { Text("Default").tag("default"); Text("Serif").tag("serif"); Text("Mono").tag("mono") }
+            Toggle("Small text by default", isOn: $smallText)
+            Toggle("Full width by default", isOn: $fullWidth)
+            Toggle("Compact sidebar", isOn: $compact)
+        }
+        Section("Startup") {
+            Picker("Open on start", selection: $startPage) {
+                Text("Last visited page").tag("last")
+                Text("Home").tag("home")
+                ForEach(model.store.topLevelPages(), id: \.id) { Text(model.store.title(of: $0.id)).tag($0.id) }
+            }
+            Toggle("Open links in desktop app", isOn: $openLinksInApp)
+            Picker("Cursor on page open", selection: $cursorOnOpen) { Text("Title").tag("title"); Text("Body").tag("body"); Text("Don't focus").tag("none") }
+        }
+        Section("Editing") {
+            Toggle("Spell‑check", isOn: $spellCheck)
+            Toggle("Autocorrect", isOn: .constant(true)).disabled(true)
+        }
+        Section("Privacy") {
+            Toggle("Cookie / analytics", isOn: .constant(false)).disabled(true)
+            Text("Based never sends telemetry. AI requests go only to the providers you configured.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+    }
+}
+
+struct NotificationSettings: View {
+    @AppStorage(Prefs.notifyMobile) private var mobile = true
+    @AppStorage(Prefs.notifyEmailActivity) private var emailActivity = false
+    @AppStorage(Prefs.notifyEmailDigest) private var digest = false
+    @AppStorage(Prefs.notifyAnnouncements) private var announcements = false
+    @AppStorage(Prefs.notifyAgents) private var agents = true
+    var body: some View {
+        Section("Push") {
+            Toggle("Mobile push notifications", isOn: $mobile)
+            Toggle("Agent approvals (Inbox)", isOn: $agents)
+            Text("When an agent asks for permission you get a notification on every device with this workspace.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Email (via Based server)") {
+            Toggle("Activity in your workspace", isOn: $emailActivity)
+            Toggle("Email digests", isOn: $digest)
+            Toggle("Announcements and update emails", isOn: $announcements)
+        }
+        Section("Slack") {
+            Text("Connect Slack under My connections to receive notifications there.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+    }
+}
+
+struct LanguageRegionSettings: View {
+    @AppStorage(Prefs.language) private var language = "system"
+    @AppStorage(Prefs.weekStartMonday) private var monday = false
+    @AppStorage(Prefs.autoTimezone) private var autoTZ = true
+    @AppStorage(Prefs.timezone) private var tz = TimeZone.current.identifier
+    @AppStorage(Prefs.dateFormat) private var dateFormat = "system"
+    @AppStorage(Prefs.timeFormat24h) private var h24 = true
+    var body: some View {
+        Section("Language") {
+            Picker("Language", selection: $language) { ForEach(Prefs.languages, id: \.code) { Text($0.name).tag($0.code) } }
+            Text("Changes the app's language after restart. Pages keep their own content.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Region") {
+            Toggle("Start week on Monday", isOn: $monday)
+            Toggle("Set timezone automatically", isOn: $autoTZ)
+            if !autoTZ {
+                Picker("Timezone", selection: $tz) {
+                    ForEach(TimeZone.knownTimeZoneIdentifiers.filter { $0.contains("/") }, id: \.self) { Text($0).tag($0) }
+                }
+            }
+            Picker("Date format", selection: $dateFormat) {
+                Text("System").tag("system"); Text("2026‑03‑10").tag("iso"); Text("10.03.2026").tag("eu"); Text("03/10/2026").tag("us")
+            }
+            Toggle("24‑hour time", isOn: $h24)
+        }
+    }
+}
+
+// MARK: - Workspace
+
+struct WorkspaceSettings: View {
+    @Environment(AppModel.self) private var model
+    @State private var name = ""
+    @State private var confirmReset = false
+    var body: some View {
+        let store = model.store
+        Section("Workspace settings") {
+            HStack {
+                IconPickerButton(icon: store.workspace.icon) { model.setWorkspaceIcon($0) }
+                TextField("Name", text: $name).onSubmit { if !name.isEmpty { store.renameWorkspace(name) } }
+                    .accessibilityIdentifier("settings.workspaceName")
+            }
+            LabeledContent("Pages", value: "\(store.allPages().count)")
+            LabeledContent("Databases", value: "\(store.databases.count)")
+            LabeledContent("Blocks", value: "\(store.blocks.count)")
+        }
+        Section("Public settings") {
+            TextField("Domain (Based server)", text: .constant("")).disabled(true)
+            Toggle("Allow publishing pages to the web", isOn: .constant(false)).disabled(true)
+            Text("Publishing needs a Based server with a public domain; coming with the sharing update.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Content") {
+            Button("Export all workspace content…") { model.showExportAll = true }
+            Button("Purge Trash (older than 30 days)") { store.purgeTrash() }
+            Button("Clear undo history") { store.clearUndoHistory() }
+        }
+        Section("Danger zone") {
+            Button("Reset workspace…", role: .destructive) { confirmReset = true }
+                .confirmationDialog("Move every page to Trash?", isPresented: $confirmReset) {
+                    Button("Move all pages to Trash", role: .destructive) { store.trash(store.topLevelPages().map(\.id)) }
+                }
+        }
+        .onAppear { name = store.workspace.name }
+    }
+}
+
+struct PeopleSettings: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("account.name") private var name = ""
+    @State private var invite = ""
+    var body: some View {
+        Section("Members · 1") {
+            HStack {
+                Image(systemName: "person.crop.circle.fill").font(.title2)
+                VStack(alignment: .leading) { Text(name.isEmpty ? "You" : name); Text(model.store.userID ?? "me").font(.caption).foregroundStyle(Theme.secondary) }
+                Spacer()
+                Text("Workspace owner").font(.caption).foregroundStyle(Theme.secondary)
+            }
+        }
+        Section("Invite") {
+            HStack {
+                TextField("Email address", text: $invite)
+                Button("Invite") { }.disabled(true)
+            }
+            Text("Multi‑user collaboration arrives with the Based server accounts update. Until then, this workspace syncs between your own devices (iCloud or your server).")
+                .font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Guests") { Text("No guests").foregroundStyle(Theme.secondary) }
+    }
+}
+
+struct TeamspacesSettings: View {
+    var body: some View {
+        Section("Teamspaces") {
+            LabeledContent("Default teamspace", value: "General")
+            Toggle("Allow members to create teamspaces", isOn: .constant(true)).disabled(true)
+            Text("One workspace is enough for now; teamspaces become available with multi‑user accounts.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+    }
+}
+
+struct SecuritySettings: View {
+    @AppStorage("security.requireAuth") private var requireAuth = false
+    @AppStorage("security.allowExport") private var allowExport = true
+    @AppStorage("security.allowGuests") private var allowGuests = false
+    @AppStorage("security.agentWritesNeedApproval") private var agentApproval = true
+    var body: some View {
+        Section("Access") {
+            Toggle("Require Face ID / Touch ID to open Based", isOn: $requireAuth)
+            Toggle("Allow exporting pages", isOn: $allowExport)
+            Toggle("Allow guests on pages", isOn: $allowGuests).disabled(true)
+        }
+        Section("Agents") {
+            Toggle("Agents must get approval before writing files or running commands", isOn: $agentApproval)
+            Text("Mirrors the permission policy under Agents & AI; the Inbox collects every request.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Encryption") {
+            LabeledContent("Local database", value: "SQLite in the app sandbox (FileVault / iOS data protection)")
+            LabeledContent("Agent transcripts", value: "ChaCha20‑Poly1305, key in Keychain")
+            LabeledContent("Server transport", value: "HTTPS + bearer token")
+        }
+    }
+}
+
+struct ImportSettings: View {
+    @Environment(AppModel.self) private var model
+    var body: some View {
+        Section("Import") {
+            Button { model.showImport = true } label: { Label("Notion export (.zip / Markdown & CSV / HTML)", systemImage: "square.and.arrow.down") }
+                .accessibilityIdentifier("settings.importNotion")
+            Text("1:1 import of pages, databases, properties, views and files. For a live import via the Notion API see Agents & AI → Import from Notion.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("Also supported") {
+            Label("Markdown files and folders", systemImage: "doc.text")
+            Label("CSV → database", systemImage: "tablecells")
+            Label("HTML pages", systemImage: "chevron.left.forwardslash.chevron.right")
+            Label("Evernote / Apple Notes (via export to HTML)", systemImage: "note.text")
+        }
+    }
+}
+
+struct SyncSettings: View {
+    @Environment(AppModel.self) private var model
+    @Environment(BrainModel.self) private var brain
+    @State private var syncOn = true
+    @State private var serverToken = Secrets.get("server.token") ?? ""
+    var body: some View {
+        @Bindable var brain = brain
+        Section("iCloud") {
+            LabeledContent("Status", value: model.syncStatus)
+            if let d = model.lastSyncDate { LabeledContent("Last synced", value: d.formatted(date: .abbreviated, time: .shortened)) }
+            Toggle("Sync with iCloud", isOn: Binding(get: { syncOn }, set: { v in syncOn = v; model.syncEnabled = v }))
+                .disabled(!AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil)
+            if !AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil {
+                Text("This build has no iCloud container. Set BASED_CLOUD_SYNC = YES, a development team and an iCloud container in Config/Local.xcconfig, then rebuild.")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+            }
+            Button("Sync now") { model.syncNow() }.disabled(!syncOn)
+        }
+        Section("Based server (your VPS)") {
+            TextField("Server URL (https://based.example.com)", text: $brain.serverURL).accessibilityIdentifier("settings.serverURL")
+            SecureField("Server token", text: $serverToken)
+            HStack {
+                Button("Connect") { Secrets.set("server.token", serverToken); brain.startServerSyncIfConfigured() }
+                Spacer()
+                LabeledContent("Status", value: brain.serverStatus)
+            }
+            Text("The server is the sync hub, MCP endpoint for Claude/ChatGPT/Cursor, scheduler for the Agent Brain and the daemon that runs coding agents for your iPhone.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        .onAppear { syncOn = model.syncEnabled }
+    }
+}
+
+struct BillingSettings: View {
+    var body: some View {
+        Section("Plan") {
+            LabeledContent("Current plan", value: "Open source · free forever")
+            Text("Based is MIT‑licensed. Costs you may have: your own server (optional) and AI provider usage billed by Anthropic / OpenAI.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("AI usage") {
+            Text("Tokens used by the Agent Brain are logged in Agent Brain → Runs.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+    }
+}
+
+struct AboutSettings: View {
+    var body: some View {
+        Section("About") {
+            LabeledContent("Version", value: (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "dev")
+            LabeledContent("Build", value: (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "dev")
+            Text("Based is a local‑first, open‑source Notion alternative with a built‑in AI brain and Happier‑style control room for coding agents. Data lives on your devices and syncs through iCloud or your own server.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            Link("Source code on GitHub", destination: URL(string: "https://github.com/elija-7580/Based")!)
+        }
+    }
+}
+
+/// Small icon button that opens the shared `IconPicker` in a popover.
+struct IconPickerButton: View {
+    let icon: PageIcon?
+    let onPick: (PageIcon?) -> Void
+    @State private var open = false
+    var body: some View {
+        Button { open.toggle() } label: {
+            Group {
+                if let icon { PageIconView(icon: icon, size: 22) } else { Image(systemName: "face.smiling").font(.title2).foregroundStyle(Theme.secondary) }
+            }
+            .frame(width: 32, height: 32)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color(Theme.codeBackground)))
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $open) { IconPicker(current: icon, onPick: { onPick($0); open = false }).frame(width: 360, height: 400) }
+    }
+}
+
+/// Export‑all sheet: pick a folder (macOS) or export into Documents (iOS).
+struct ExportAllSheet: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Export all workspace content").font(.headline)
+            Text("Every page becomes a Markdown file, every database a CSV, nested pages become folders — the same structure Notion exports.").font(.callout).foregroundStyle(Theme.secondary)
+            if let m = model.exportAllMessage { Text(m).font(.caption).textSelection(.enabled) }
+            HStack {
+                Spacer()
+                Button("Close") { dismiss() }
+                Button("Export…") {
+                    #if os(macOS)
+                    let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.prompt = "Export here"
+                    if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true)) }
+                    #else
+                    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                    model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true))
+                    #endif
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("settings.exportAll")
+            }
+        }
+        .padding(20).frame(minWidth: 420)
+    }
+}

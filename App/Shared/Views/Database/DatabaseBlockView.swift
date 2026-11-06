@@ -131,8 +131,8 @@ struct DatabaseBlockView: View {
 
     @ViewBuilder
     private func content(block: Block, db: Database, views: [DatabaseView], view: DatabaseView) -> some View {
-        let engine = QueryEngine(store: model.store)
-        let result = engine.run(view, search: searching ? search : nil)
+        let engine = model.queryCache.queryEngine
+        let result = model.queryCache.run(view, search: searching ? search : nil)
         let ctx = DBContext(block: block, db: db, view: view, engine: engine, result: result, model: model,
                             locked: db.locked == true || model.store.blocks[model.store.containingPage(of: blockID) ?? ""]?.props.format?.locked == true)
         VStack(alignment: .leading, spacing: 6) {
@@ -158,6 +158,7 @@ struct DatabaseBlockView: View {
         case .gallery: GalleryLayout(ctx: ctx)
         case .calendar: CalendarLayout(ctx: ctx)
         case .timeline: TimelineLayout(ctx: ctx)
+        case .chart: ChartLayout(ctx: ctx)
         default: TableLayout(ctx: ctx)
         }
     }
