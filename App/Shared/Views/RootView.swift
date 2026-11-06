@@ -89,6 +89,9 @@ struct RootView: View {
         }
         .onOpenURL { url in
             guard url.scheme == "based" else { return }
+            #if DEBUG && os(macOS)
+            if DebugDriver.handle(url, model: model) { return }
+            #endif
             let id = url.lastPathComponent
             if url.host == "page" { model.open(id) }
         }

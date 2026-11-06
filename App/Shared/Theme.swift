@@ -89,6 +89,11 @@ enum Theme {
     static let selection = dynamic(light: 0xD3E5EF, dark: 0x1F3A4D)
     static let divider = dynamic(light: 0xE9E9E7, dark: 0x373737)
 
+    /// Notion's hover fill for quiet buttons and menu rows (rgba(55,53,47,0.08) light).
+    static let hoverFillColor = dynamic(light: 0xEFEFEE, dark: 0x2C2C2C)
+    static var hoverFill: Color { Color(hoverFillColor) }
+    static var dividerColor: Color { Color(divider) }
+
     static var secondary: Color { Color(textSecondary) }
     static var primary: Color { Color(textPrimary) }
 

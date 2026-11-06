@@ -40,8 +40,13 @@ struct PageScreen: View {
             if page.props.isTemplate == true { TemplateBanner(page: page) }
             ScrollViewReader { scroll in
             ScrollView {
+                VStack(spacing: 0) {
+                if let cover = page.props.cover {
+                    // Notion: the cover spans the whole page area, edge to edge — never clipped to the column.
+                    PageCoverView(page: page, cover: cover, locked: editor.isLocked, isPeek: isPeek)
+                }
                 VStack(alignment: .leading, spacing: 0) {
-                    PageHeader(page: page, editor: editor, isPeek: isPeek)
+                    PageHeader(page: page, editor: editor, isPeek: isPeek, horizontalPadding: horizontalPadding)
                     VStack(alignment: .leading, spacing: 0) {
                         if page.isRow || page.props.isTemplate == true, let db = model.store.database(ofRow: pageID) {
                             RowPropertiesPanel(db: db, row: page, locked: editor.isLocked || db.locked == true)
@@ -72,6 +77,7 @@ struct PageScreen: View {
                 }
                 .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
                 .frame(maxWidth: .infinity)
+                }
             }
             .background(GeometryReader { g in
                 Color.clear
@@ -167,72 +173,63 @@ struct PageHeader: View {
     let page: Block
     let editor: EditorController
     var isPeek = false
+    /// Same horizontal padding as the block column, so title and blocks share one left edge.
+    var horizontalPadding: CGFloat = 96
     @Environment(AppModel.self) private var model
     @State private var hover = false
     @State private var iconPicker = false
-    @State private var coverPicker = false
 
     private var store: WorkspaceStore { model.store }
     private var locked: Bool { editor.isLocked }
+    private var hasCover: Bool { page.props.cover != nil }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let cover = page.props.cover {
-                CoverView(cover: cover)
-                    .frame(height: isPeek ? 140 : 220)
-                    .overlay(alignment: .bottomTrailing) {
-                        if hover, !locked {
-                            HStack(spacing: 0) {
-                                Button("Change cover") { coverPicker = true }
-                                Divider().frame(height: 14)
-                                Button("Remove") { store.setPageCover(page.id, nil) }
-                            }
-                            .buttonStyle(.plain)
-                            .font(.system(size: 12))
-                            .padding(.horizontal, 8).padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
-                            .padding(10)
-                        }
-                    }
-            } else {
-                Color.clear.frame(height: isPeek ? 24 : 56)
+            if !hasCover {
+                // Notion: ~80 pt of air above the title on a page without a cover (less in peek).
+                Color.clear.frame(height: isPeek ? 28 : 64)
             }
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 if let icon = page.props.icon {
                     Button { if !locked { iconPicker = true } } label: {
                         icon.view(size: 78, assets: model.assets).frame(width: 84, height: 84, alignment: .leading)
                     }
                     .buttonStyle(.plain)
-                    .offset(y: page.props.cover != nil ? -42 : 0)
-                    .padding(.bottom, page.props.cover != nil ? -42 : 0)
+                    .help(locked ? "" : "Change icon")
+                    // With a cover the icon overlaps its bottom edge by half, like Notion.
+                    .offset(y: hasCover ? -42 : 0)
+                    .padding(.bottom, hasCover ? -42 : 0)
+                    .popover(isPresented: $iconPicker) {
+                        IconPicker(current: page.props.icon) { store.setPageIcon(page.id, $0); iconPicker = false }
+                    }
+                } else if hasCover {
+                    Color.clear.frame(height: 12)
                 }
                 if !locked {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 2) {
                         if page.props.icon == nil {
-                            Button { store.setPageIcon(page.id, .emoji(EmojiCatalog.random())) } label: { Label("Add icon", systemImage: "face.smiling") }
+                            HeaderGhostButton(title: "Add icon", symbol: "face.smiling") {
+                                store.setPageIcon(page.id, .emoji(EmojiCatalog.random()))
+                            }
                         }
-                        if page.props.cover == nil {
-                            Button { store.setPageCover(page.id, .gradient(Int.random(in: 0..<Covers.gradients.count))) } label: { Label("Add cover", systemImage: "photo") }
+                        if !hasCover {
+                            HeaderGhostButton(title: "Add cover", symbol: "photo") {
+                                store.setPageCover(page.id, .gradient(Int.random(in: 0..<Covers.gradients.count)))
+                            }
                         }
                     }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.secondary)
+                    .padding(.leading, -6)
                     .opacity(hover ? 1 : 0)
-                    .frame(height: 22)
+                    .animation(.easeOut(duration: 0.12), value: hover)
+                    .frame(height: 28)
                 }
                 title
                     .padding(.bottom, 8)
             }
             .padding(.horizontal, horizontalPadding)
         }
+        .contentShape(Rectangle())
         .onHover { hover = $0 }
-        .popover(isPresented: $iconPicker) {
-            IconPicker(current: page.props.icon) { store.setPageIcon(page.id, $0); iconPicker = false }
-        }
-        .popover(isPresented: $coverPicker) {
-            CoverPicker(current: page.props.cover) { store.setPageCover(page.id, $0); coverPicker = false }
-        }
         #if os(iOS)
         .onAppear { hover = true }
         #endif
@@ -256,13 +253,74 @@ struct PageHeader: View {
     }
 
     private var format: PageFormat? { page.props.format }
+}
 
-    private var horizontalPadding: CGFloat {
-        #if os(macOS)
-        return isPeek ? 52 : 72
-        #else
-        return 20
-        #endif
+/// Notion's quiet header buttons ("Add icon", "Add cover"): grey text, light hover fill.
+struct HeaderGhostButton: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.secondary)
+                .padding(.horizontal, 6).padding(.vertical, 4)
+                .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Theme.hoverFill : .clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+    }
+}
+
+/// Full-bleed page cover with Notion's hover controls ("Change cover · Reposition · Remove").
+struct PageCoverView: View {
+    let page: Block
+    let cover: PageCover
+    var locked = false
+    var isPeek = false
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+    @State private var picker = false
+
+    var body: some View {
+        CoverView(cover: cover)
+            .frame(maxWidth: .infinity)
+            .frame(height: isPeek ? 160 : 260)
+            .clipped()
+            .overlay(alignment: .bottomTrailing) {
+                if !locked {
+                    HStack(spacing: 0) {
+                        coverButton("Change cover") { picker = true }
+                        Divider().frame(height: 14)
+                        coverButton("Remove") { model.store.setPageCover(page.id, nil) }
+                    }
+                    .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
+                    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Theme.dividerColor))
+                    .padding(.trailing, 16).padding(.bottom, 12)
+                    .opacity(hover || picker ? 1 : 0)
+                    .animation(.easeOut(duration: 0.12), value: hover)
+                }
+            }
+            .contentShape(Rectangle())
+            .onHover { hover = $0 }
+            .popover(isPresented: $picker) {
+                CoverPicker(current: page.props.cover) { model.store.setPageCover(page.id, $0); picker = false }
+            }
+    }
+
+    private func coverButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.75))
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
