@@ -81,6 +81,7 @@ public final class Log: @unchecked Sendable {
     private var ringStart = 0
     private let ringCapacity: Int
     private var crumbs: [String] = []
+    private var previousTail: [LogEntry] = []
     private var nextID: UInt64 = 1
     private var listeners: [UUID: (LogEntry) -> Void] = [:]
     private let queue = DispatchQueue(label: "based.log.file", qos: .utility)
@@ -128,6 +129,8 @@ public final class Log: @unchecked Sendable {
     public func configure(directory: URL, name: String = "based", maxFileBytes: UInt64 = 2 << 20, maxFiles: Int = 5) {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let url = directory.appendingPathComponent(name + ".log")
+        let tail = Self.readTail(of: url, limit: 80)
+        locked { previousTail = tail }
         queue.sync {
             try? file?.close()
             if !FileManager.default.fileExists(atPath: url.path) { FileManager.default.createFile(atPath: url.path, contents: nil) }
@@ -140,6 +143,24 @@ public final class Log: @unchecked Sendable {
     }
 
     public var directory: URL? { queue.sync { fileURL?.deletingLastPathComponent() } }
+
+    /// The last lines the previous run wrote (read in `configure`, before this run appends) —
+    /// what happened right before a crash, hang or force quit.
+    public var previousSessionTail: [LogEntry] { locked { previousTail } }
+
+    /// Last `limit` entries of a JSONL log file, reading only its end.
+    public static func readTail(of url: URL, limit: Int, maxBytes: UInt64 = 128 << 10) -> [LogEntry] {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return [] }
+        defer { try? h.close() }
+        let size = (try? h.seekToEnd()) ?? 0
+        guard size > 0 else { return [] }
+        let start = size > maxBytes ? size - maxBytes : 0
+        try? h.seek(toOffset: start)
+        guard let data = try? h.readToEnd() else { return [] }
+        var lines = data.split(separator: 0x0A)
+        if start > 0, !lines.isEmpty { lines.removeFirst() }   // partial first line
+        return lines.suffix(limit).compactMap { try? decoder.decode(LogEntry.self, from: Data($0)) }
+    }
 
     /// Current + rotated log files, newest first.
     public var logFiles: [URL] {

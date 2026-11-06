@@ -1,7 +1,8 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 12. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check, **auf dem Mac noch nicht gebaut**),
-🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 13. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
+Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
 > Wichtig: Bis Pass 10 kompilierte die App in Xcode nicht (3 Fehler aus Pass 8/9, jetzt behoben). Alles
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
@@ -81,6 +82,9 @@ Stand: Pass 12. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check, **auf dem
 | Sechs Punkte fehlen | 🟡 Pass 9 |
 | Ruckeln / Langsamkeit | 🟡 Sidebar rendert nur bei Strukturänderungen; Messung auf dem Mac offen |
 | Logging-System | ✅ Diagnostics (Log, Hänger-Watchdog, Crash-Report, Layout-Audit) |
+| „Logs kopieren"-Button | ✅ Pass 13: Diagnostics → *Copy logs* (Bericht / gezeigte Einträge / alle Log-Dateien), Hilfe → *Copy Diagnostic Report*, Button im Absturz-Hinweis, *Copy line* pro Zeile, Kopieren pro Hänger |
+| Hänger mit Ort (Stacktrace) | 🟡 Pass 13: Hauptthread-Stack wird während des Hängers gesampelt (Mach, ohne Signale) und symbolisiert; Mach-Teil nur gegen nachgebaute Header geprüft — braucht einen echten Hänger auf dem Mac |
+| Falscher Absturz-Alarm nach Xcode-Stopp | ✅ Pass 13: Debugger-Flag im Marker → nur Notiz statt Alert |
 
 ## Später
 | Anforderung | Status |

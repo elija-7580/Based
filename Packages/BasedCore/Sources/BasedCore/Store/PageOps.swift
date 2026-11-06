@@ -225,7 +225,9 @@ public extension WorkspaceStore {
     /// Pages that mention or link to `id` (served from an incrementally maintained index).
     func backlinks(to id: RecordID) -> [RecordID] {
         if !linkIndexBuilt {
-            for b in blocks.values { reindexLinks(b.id) }
+            Log.measure("Backlink index (\(blocks.count) blocks)", warnAfter: 0.05) {
+                for b in blocks.values { reindexLinks(b.id) }
+            }
             linkIndexBuilt = true
         }
         var pages: [RecordID] = []
@@ -239,8 +241,45 @@ public extension WorkspaceStore {
         return pages.sorted { title(of: $0).localizedCaseInsensitiveCompare(title(of: $1)) == .orderedAscending }
     }
 
+    /// Builds the backlink index off the main thread (call right after opening a workspace), so the
+    /// first page open doesn't scan every block. Changes made meanwhile are re-indexed on install;
+    /// a `backlinks(to:)` call before it finishes still builds synchronously.
+    public func prepareLinkIndexInBackground() {
+        guard !linkIndexBuilt, linkIndexPending == nil else { return }
+        let snapshot = blocks
+        linkIndexPending = []
+        Task.detached(priority: .utility) {
+            let start = DispatchTime.now().uptimeNanoseconds
+            var targets: [RecordID: Set<RecordID>] = [:]
+            var sources: [RecordID: Set<RecordID>] = [:]
+            for (id, b) in snapshot {
+                let l = WorkspaceStore.linkedPages(of: b)
+                guard !l.isEmpty else { continue }
+                targets[id] = l
+                for t in l { sources[t, default: []].insert(id) }
+            }
+            let ms = Int(Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000)
+            await MainActor.run { [targets, sources] in
+                self.installLinkIndex(targets: targets, sources: sources)
+                Log.debug("Backlink index built in the background: \(snapshot.count) blocks in \(ms) ms", category: "perf")
+            }
+        }
+    }
+
+    /// True once backlinks are served from the index.
+    public var isLinkIndexReady: Bool { linkIndexBuilt }
+
+    internal func installLinkIndex(targets: [RecordID: Set<RecordID>], sources: [RecordID: Set<RecordID>]) {
+        defer { linkIndexPending = nil }
+        guard !linkIndexBuilt else { return }
+        linkTargets = targets
+        linkSources = sources
+        linkIndexBuilt = true
+        for id in linkIndexPending ?? [] { reindexLinks(id) }
+    }
+
     /// Pages a block links to (mentions, link-to-page, table cells, text properties).
-    static func linkedPages(of b: Block) -> Set<RecordID> {
+    nonisolated static func linkedPages(of b: Block) -> Set<RecordID> {
         var out = Set(b.text.mentionedPages)
         if let t = b.props.linkTarget { out.insert(t) }
         for c in b.props.cells ?? [] { out.formUnion(c.mentionedPages) }
@@ -261,13 +300,28 @@ public extension WorkspaceStore {
     }
 
     /// Pages ordered by last edit, for "Recents" and Quick Find without a query.
+    /// Cached per store revision; only the newest candidates are checked for trashed ancestors.
     func recentPages(limit: Int = 20) -> [Block] {
-        Array(blocks.values.filter { $0.type.isPageLike && !isTrashed($0.id) }
-            .sorted { $0.updatedAt > $1.updatedAt }.prefix(limit))
+        if let c = recentPagesCache, c.revision == revision, c.limit >= limit { return Array(c.pages.prefix(limit)) }
+        let keep = max(limit, 40)
+        var candidates: [(date: Date, id: RecordID)] = []
+        candidates.reserveCapacity(blocks.count / 4)
+        for b in blocks.values where b.type.isPageLike && b.trashedAt == nil { candidates.append((b.updatedAt, b.id)) }
+        candidates.sort { $0.date != $1.date ? $0.date > $1.date : $0.id < $1.id }
+        var out: [Block] = []
+        for c in candidates {
+            if out.count >= keep { break }
+            if !isTrashed(c.id), let b = blocks[c.id] { out.append(b) }
+        }
+        recentPagesCache = (revision, keep, out)
+        return Array(out.prefix(limit))
     }
 
-    /// All pages in the workspace (including database rows), not trashed.
+    /// All pages in the workspace (including database rows), not trashed. Cached per store revision.
     func allPages() -> [Block] {
-        blocks.values.filter { $0.type.isPageLike && !isTrashed($0.id) }
+        if let c = allPagesCache, c.revision == revision { return c.pages }
+        let pages = blocks.values.filter { $0.type.isPageLike && !isTrashed($0.id) }
+        allPagesCache = (revision, pages)
+        return pages
     }
 }

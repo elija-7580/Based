@@ -195,3 +195,5 @@ Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / a
 Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector"
 Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12
 CI build on every push,infra,should,n/a,partial,workflow ready in ci/github-actions-ci.yml; needs one manual copy to .github/workflows
+"Copy logs (diagnostic report to clipboard)",app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice"
+"Hang stack sampling (where the main thread is stuck)",app,should,n/a,partial,"Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker"

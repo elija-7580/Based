@@ -31,9 +31,13 @@ enum AppDiagnostics {
 
     static var isUITesting: Bool { ProcessInfo.processInfo.arguments.contains("-ui-testing") }
 
+    /// When this run started (report uptime).
+    nonisolated(unsafe) static private(set) var launchedAt = Date()
+
     static func bootstrap() {
         guard !started else { return }
         started = true
+        launchedAt = Date()
         SandboxMigration.migrateIfNeeded()
         let log = Log.shared
         log.subsystem = Bundle.main.bundleIdentifier ?? "com.based.app"
@@ -62,14 +66,67 @@ enum AppDiagnostics {
         return "\(info["CFBundleShortVersionString"] as? String ?? "?") (\(info["CFBundleVersion"] as? String ?? "?"))"
     }
 
+    static var buildConfiguration: String {
+        #if DEBUG
+        return "debug build"
+        #else
+        return "release build"
+        #endif
+    }
+
+    static var architecture: String {
+        #if arch(arm64)
+        return "arm64"
+        #elseif arch(x86_64)
+        return "x86_64"
+        #else
+        return "other"
+        #endif
+    }
+
     /// Header for exported logs: app/OS version, sandbox state, last crash, breadcrumbs.
     static func reportHeader() -> String {
-        var s = "Based \(versionString) — \(ProcessInfo.processInfo.operatingSystemVersionString)\n"
-        s += "Sandboxed: \(isSandboxed) · Exported \(Date().formatted(date: .abbreviated, time: .standard))\n"
-        if let c = CrashReporter.previousCrash { s += "Previous run ended unexpectedly: \(c.summary)\n" }
+        var s = "Based \(versionString) (\(buildConfiguration)) — \(ProcessInfo.processInfo.operatingSystemVersionString)\n"
+        s += "Sandboxed: \(isSandboxed) · Debugger: \(DebuggerCheck.isAttached) · Exported \(Date().formatted(date: .abbreviated, time: .standard))\n"
+        if let c = CrashReporter.previousCrash { s += "Previous run: \(c.summary)\n" }
         s += "Hangs this session: \(HangWatchdog.shared.hangCount)\n"
         s += "Breadcrumbs: " + Log.shared.breadcrumbs.suffix(30).joined(separator: " | ") + "\n"
         return s
+    }
+
+    /// The "Copy logs" report: facts, previous run, hangs with main-thread stacks, breadcrumbs and
+    /// log lines (`entries`, default: the last 250 at info level and above).
+    @MainActor
+    static func report(model: AppModel?, entries: [LogEntry]? = nil, entriesNote: String? = nil) -> DiagnosticReport {
+        var r = DiagnosticReport()
+        let p = ProcessInfo.processInfo
+        let gb = Double(p.physicalMemory) / 1_073_741_824
+        let up = Int(Date().timeIntervalSince(launchedAt))
+        r.facts = [
+            .init("App", "Based \(versionString) · \(buildConfiguration)"),
+            .init("System", "\(p.operatingSystemVersionString) · \(architecture) · \(p.activeProcessorCount) cores · \(String(format: "%.0f", gb)) GB"),
+            .init("Process", "sandboxed: \(isSandboxed ? "yes" : "no") · debugger: \(DebuggerCheck.isAttached ? "attached" : "no") · running \(up / 60) min \(up % 60) s"),
+            .init("Hang stacks", HangWatchdog.shared.samplingAvailable ? "on" : "unavailable"),
+        ]
+        if let model {
+            r.facts.append(.init("Workspace", "\(model.store.blocks.count) blocks · \(model.store.databases.count) databases · \(model.tabs.count) tabs"))
+        }
+        r.previousRun = CrashReporter.previousCrash?.report
+        r.hangs = HangWatchdog.shared.hangs.map(\.report)
+        r.breadcrumbs = Log.shared.breadcrumbs
+        let list = entries ?? Log.shared.recent(limit: 250, minLevel: .info)
+        r.entries = list
+        r.entriesNote = entriesNote ?? "last \(list.count) entries, info and above"
+        return r
+    }
+
+    /// Puts the report on the clipboard. Returns its size in characters.
+    @MainActor @discardableResult
+    static func copyReport(model: AppModel?, entries: [LogEntry]? = nil, entriesNote: String? = nil) -> Int {
+        let text = report(model: model, entries: entries, entriesNote: entriesNote).render()
+        Clipboard.copy(text)
+        Log.info("Diagnostic report copied to the clipboard (\(text.count) characters)", category: "app")
+        return text.count
     }
 }
 

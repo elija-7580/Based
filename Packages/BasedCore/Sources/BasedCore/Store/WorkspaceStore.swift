@@ -179,6 +179,11 @@ public final class WorkspaceStore {
     var linkTargets: [RecordID: Set<RecordID>] = [:]
     var linkSources: [RecordID: Set<RecordID>] = [:]
     var linkIndexBuilt = false
+    /// Non-nil while the index is built in the background: blocks changed meanwhile (re-indexed on install).
+    var linkIndexPending: Set<RecordID>?
+    /// Revision-keyed caches for whole-workspace page lists (Home "Recents", Quick Find, link pickers).
+    var recentPagesCache: (revision: Int, limit: Int, pages: [Block])?
+    var allPagesCache: (revision: Int, pages: [Block])?
     /// Transactions slower than this are logged as warnings (perf diagnostics).
     public var slowTransactionThreshold: TimeInterval = 0.05
     private var undoStack: [UndoEntry] = []
@@ -353,6 +358,7 @@ public final class WorkspaceStore {
         }
         revision &+= 1
         if linkIndexBuilt { for k in change.keys where k.kind == .block { reindexLinks(k.id) } }
+        else if linkIndexPending != nil { for k in change.keys where k.kind == .block { linkIndexPending?.insert(k.id) } }
         let observeStart = DispatchTime.now().uptimeNanoseconds
         for handler in observers.values { handler(change) }
         let observeMs = Double(DispatchTime.now().uptimeNanoseconds - observeStart) / 1_000_000

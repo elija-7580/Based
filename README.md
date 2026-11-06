@@ -121,8 +121,11 @@ Notion's features and built clean-room from public documentation.
   Diagnostics), main-thread **hang watchdog** (pings every 250 ms, records
   stalls > 0.5 s with the last breadcrumbs), crash reporter (alert on next
   launch), **layout audit** that flags overlapping and clipped controls,
-  slow-operation timing (`Log.measure`)
-  and *Export logs…* (report header + log) for bug reports.
+  slow-operation timing (`Log.measure`), **Copy logs** (one click: a compact
+  report with app / system / workspace facts, the previous run, every hang
+  with the main thread's **sampled call stack**, breadcrumbs and the latest
+  log lines — also in Help → Copy Diagnostic Report and the crash notice)
+  and *Export logs…* (report header + all log files) for bug reports.
 - **UI tests**: `App/UITests` (XCUITest, macOS + iOS) walk sidebar, new page,
   slash menu, search, command palette, tabs, find, chat panel, block gutter,
   Agents/Inbox, Agent Brain dashboard, every Settings page, the database
@@ -239,6 +242,26 @@ formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 ## Status
 
+The app builds and runs on the Mac (first user log: macOS 27.2, a 53,086-block Notion import).
+
+**Pass 13** — diagnostics you can paste:
+
+- **Copy logs** in Help → Diagnostics (menu: report · shown entries · full log files), Help → *Copy Diagnostic
+  Report*, a *Copy report* button on the "quit unexpectedly" notice, *Copy line* on log rows and a copy button
+  per hang. The report (`DiagnosticReport`) is plain text in sections: facts (version, debug/release, OS,
+  CPU, memory, debugger, workspace size), previous run (why it ended, last actions, last log lines), hangs
+  (newest first, "in: <first Based frame>", stack), breadcrumbs, log lines without redundant metadata.
+- **Hang stacks** — while the main thread is blocked the watchdog suspends it for microseconds, walks its
+  frame pointers (`MainThreadSampler`, Mach APIs, debugger-safe, no allocation while suspended) and
+  symbolicates + demangles the frames afterwards. A freeze longer than 2 s is written to the log and the crash
+  marker immediately, so after a force quit the next launch says "Based froze last time" with the stack.
+- **No false crash alarms** — the marker records whether Xcode's debugger was attached; stopping the app
+  from Xcode is logged as a notice instead of a "quit unexpectedly" alert.
+- **Faster navigation on big workspaces** — the backlink index is built in the background right after the
+  workspace opens (it used to scan all blocks on the first page open), Recents / Quick Find / link pickers
+  reuse page lists per store revision instead of filtering and sorting every block on each render; the
+  workspace open time is logged.
+
 **Pass 12** adds agent orchestration and the Notion map view:
 
 - **Sub-agents** — coding agents start other agents through Based's MCP tools (`spawn_agent`,
@@ -269,7 +292,8 @@ it on once: github.com → *Add file → Create new file* → name `.github/work
 
 Honest status of every requirement: [`replica/backlog.md`](replica/backlog.md).
 
-Tests on Linux: `make test` → BasedCore 55, BasedBrain 51 (incl. sub-agents end-to-end against a fake
+Tests on Linux: `make test` → BasedCore 62, BasedBrain 51 (incl. diagnostic report rendering, Swift
+demangling, previous-run log tail, page-list caches, background backlink index, sub-agents end-to-end against a fake
 ACP agent, agent graph / board layout, line diffs, console completion, place values and map views, Notion
 API import against a fake API — blocks, databases, views, dashboards with
 widgets from other databases, filters, relations, formulas, files, rate

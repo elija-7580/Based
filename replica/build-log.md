@@ -232,3 +232,38 @@
 - **CI**: `ci/github-actions-ci.yml` gained a Linux job (BasedBrain tests + app type-check); app builds run on
   every push (public repo → free macOS runners). Still needs the one-time manual copy to `.github/workflows/`.
 - Type-check stubs: MapKit + CoreLocation. Tests: BasedCore 55, BasedBrain 51 — all green; typecheck OK.
+
+## Pass 13 — Copy logs, hang stacks, faster navigation on big workspaces
+
+Trigger: the first log from the Mac (the app builds and runs: macOS 27.2, 53,086 blocks / 221 databases)
+showed "Hang: main thread blocked 524 ms … navigate → Getting Started" and "Previous run ended
+unexpectedly" — pasted from the Diagnostics view with a broken layout. Request: a copy-logs button.
+
+- **`DiagnosticReport`** (BasedCore): facts, previous run (summary, crash text, frozen-thread stack, last
+  actions, last log lines), hangs (newest first, culprit = first Based frame, ≤ 30 frames), breadcrumbs, log
+  lines via `LogEntry.compactLine()` (time only, `breadcrumbs` / `stack` metadata dropped, multi-line
+  messages indented). `Log.previousSessionTail` reads the end of `based.log` before this run appends.
+- **`MainThreadSampler` / `StackSymbols`** (BasedCore): `prepare()` on the main thread records its Mach port
+  and stack bounds; `sample()` (watchdog thread) does `thread_suspend` → `thread_get_state`
+  (ARM_THREAD_STATE64 / x86_THREAD_STATE64) → frame-pointer walk into a preallocated buffer (PAC bits
+  stripped, async-frame bit masked, bounds-checked) → `thread_resume`; symbolication with `dladdr` and
+  `swift_demangle`, `simplify` drops `Swift.` and return types. The Darwin branches were type-checked on
+  Linux against hand-written stand-ins for the Mach / dyld declarations (both arm64 and x86_64 paths).
+  `DebuggerCheck.isAttached` (sysctl P_TRACED; Linux: TracerPid).
+- **HangWatchdog**: 50 ms ticks, ping every 250 ms, samples at 0.3 s and then every second while blocked
+  (≤ 5), hang records carry `frames`; log line gets `in=` and `stack=`; ongoing > 2 s logs the stack and
+  writes it into the crash marker (`CrashReporter.noteOngoingHang`, cleared when the main thread is back).
+- **CrashReporter**: marker records `debugger` and `hang`; `Info.summary` distinguishes crash / frozen then
+  killed / stopped from Xcode / no clean shutdown; `pendingNotice` skips the alert for Xcode stops; the info
+  stays available after dismissing (reports). iOS foreground re-arms the marker (`resumeMarker`).
+- **UI**: Diagnostics top bar *Copy logs* menu (primary action = report; "shown entries" respects level /
+  category / search; "full log files"), "Copied N KB" feedback; Hangs tab shows culprit, stack disclosure
+  and a copy button; log rows *Copy line* / *Copy message*; System tab shows build type, debugger, sampling;
+  Help → *Copy Diagnostic Report*; crash alert *Copy report* and "Based froze last time" title.
+- **Performance**: `prepareLinkIndexInBackground()` after opening the workspace (snapshot → detached task →
+  install on the main actor, changes made meanwhile re-indexed); synchronous fallback is measured
+  (`Log.measure`, warns > 50 ms). `recentPages` / `allPages` cached per store revision; recents sort only
+  page candidates and check trashed ancestors lazily. "Workspace opened … in N ms".
+- Tests: BasedCore 62 (+7: report sections, empty report, demangle/simplify, sampler safety, previous-run
+  tail, page-list cache invalidation, background backlink index with a concurrent change), BasedBrain 51 —
+  all green; `bash ci/typecheck/run.sh` → typecheck OK.

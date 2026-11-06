@@ -197,6 +197,7 @@ final class AppModel {
         // Before anything touches Application Support: move data out of the old sandbox container
         // (builds ≤ Pass 8 were sandboxed) and start the log file.
         AppDiagnostics.bootstrap()
+        let openStart = Date()
         let fm = FileManager.default
         let base = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
             ?? fm.temporaryDirectory
@@ -222,7 +223,8 @@ final class AppModel {
         store.purgeTrash()
         startSyncIfConfigured()
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
-        Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases", category: "app")
+        store.prepareLinkIndexInBackground()
+        Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms", category: "app")
     }
 
     static func deviceNodeID() -> String {

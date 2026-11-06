@@ -13,7 +13,7 @@ struct RootView: View {
     @State private var columns = NavigationSplitViewVisibility.all
     @State private var importSummary: String?
     @State private var importProgress: Double?
-    @State private var crash: CrashReporter.Info? = CrashReporter.previousCrash
+    @State private var crash: CrashReporter.Info? = CrashReporter.pendingNotice
 
     var body: some View {
         @Bindable var model = model
@@ -74,7 +74,8 @@ struct RootView: View {
         .alert("Import finished", isPresented: Binding(get: { importSummary != nil }, set: { if !$0 { importSummary = nil } })) {
             Button("OK") { importSummary = nil }
         } message: { Text(importSummary ?? "") }
-        .alert("Based quit unexpectedly last time", isPresented: Binding(get: { crash != nil }, set: { if !$0 { crash = nil; CrashReporter.dismissPreviousCrash() } })) {
+        .alert(crash?.hangSeconds != nil ? "Based froze last time" : "Based quit unexpectedly last time", isPresented: Binding(get: { crash != nil }, set: { if !$0 { crash = nil; CrashReporter.dismissPreviousCrash() } })) {
+            Button("Copy report") { AppDiagnostics.copyReport(model: model); crash = nil; CrashReporter.dismissPreviousCrash() }
             Button("Show diagnostics") { model.selection = .diagnostics; crash = nil; CrashReporter.dismissPreviousCrash() }
             Button("Dismiss", role: .cancel) { crash = nil; CrashReporter.dismissPreviousCrash() }
         } message: { Text(crash?.summary ?? "") }

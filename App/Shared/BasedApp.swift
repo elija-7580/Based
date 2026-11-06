@@ -169,6 +169,7 @@ struct BasedCommands: Commands {
             Divider()
             Button("Diagnostics & Logs") { model.selection = .diagnostics }
                 .keyboardShortcut("d", modifiers: [.command, .option, .shift])
+            Button("Copy Diagnostic Report") { AppDiagnostics.copyReport(model: model) }
         }
     }
 
