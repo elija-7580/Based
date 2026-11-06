@@ -378,7 +378,10 @@ public enum ClaudePrint {
         return nil
     }
 
-    public struct Failure: Error, CustomStringConvertible { public let description: String }
+    public struct Failure: Error, CustomStringConvertible {
+        public let description: String
+        public init(description: String) { self.description = description }
+    }
 
     /// Runs the CLI off the calling thread. `executable` defaults to `which claude`.
     public static func ask(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
@@ -410,10 +413,13 @@ public enum ClaudePrint {
 public extension ClaudePrint {
     /// Arguments for a streamed run: thinking, text deltas, tool calls and results arrive line by line.
     static func streamArguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
-                                allowedTools: [String] = [], model: String? = nil) -> [String] {
+                                allowedTools: [String] = [], model: String? = nil, effort: String? = nil,
+                                permissionMode: String? = nil) -> [String] {
         var a = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
                           allowedTools: allowedTools, model: model)
         if let i = a.firstIndex(of: "json") { a[i] = "stream-json" }
+        if let e = effort, !e.isEmpty { a += ["--effort", e] }
+        if let m = permissionMode, !m.isEmpty { a += ["--permission-mode", m] }
         return a + ["--verbose", "--include-partial-messages"]
     }
 
@@ -421,7 +427,8 @@ public extension ClaudePrint {
     /// Cancelling the calling task terminates the process.
     static func stream(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
                        appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
-                       model: String? = nil, onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<Reply, Error> {
+                       model: String? = nil, effort: String? = nil, permissionMode: String? = nil,
+                       onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<Reply, Error> {
         #if os(macOS) || os(Linux)
         guard let exe = executable ?? ShellEnvironment.which("claude") else {
             return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
@@ -429,7 +436,7 @@ public extension ClaudePrint {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: exe)
         p.arguments = streamArguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
-                                      allowedTools: allowedTools, model: model)
+                                      allowedTools: allowedTools, model: model, effort: effort, permissionMode: permissionMode)
         p.environment = ShellEnvironment.environment()
         p.currentDirectoryURL = URL(fileURLWithPath: cwd)
         let out = Pipe(), err = Pipe()
@@ -497,5 +504,9 @@ final class StreamState: @unchecked Sendable {
     }
 
     func appendError(_ d: Data) { lock.lock(); errors.append(d); lock.unlock() }
+
+    private var eventCount = 0
+    func sawEvent() { lock.lock(); eventCount += 1; lock.unlock() }
+    var events: Int { lock.lock(); defer { lock.unlock() }; return eventCount }
     var errorText: String { lock.lock(); defer { lock.unlock() }; return String(decoding: errors, as: UTF8.self) }
 }

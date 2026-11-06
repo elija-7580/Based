@@ -128,62 +128,64 @@ final class BrainModel {
 
     /// The conversation shown in the chat panel; persisted as a session with agent id "based".
     var chatID: RecordID?
-    /// The chat engine the user picked under the composer: "auto", "claude-code" or a model ref
-    /// ("anthropic/claude-…", "apple/on-device", …).
-    var chatEngineChoice: String = UserDefaults.standard.string(forKey: "ai.chatEngine") ?? "auto" {
-        didSet { UserDefaults.standard.set(chatEngineChoice, forKey: "ai.chatEngine") }
+    /// What answers in the chat (picker under the composer): Auto, a coding-agent CLI with model / effort /
+    /// permission mode, or an API model. Stored as JSON; old plain values ("auto", "claude-code", refs) still load.
+    var engineSpec: ChatEngineSpec = ChatEngineSpec.decode(UserDefaults.standard.string(forKey: "ai.chatEngine")) {
+        didSet { UserDefaults.standard.set(engineSpec.encoded, forKey: "ai.chatEngine") }
     }
 
-    enum Engine: Equatable { case model(String), claudeCode, none }
+    enum Engine: Equatable { case model(String), cli(ChatEngineSpec), none }
 
     /// Auto: an API / server model (tools, big context) → Claude Code (the user's subscription, tools via MCP)
-    /// → Apple Intelligence on device (no tools, small window — last resort). Before, Apple Intelligence
-    /// counted as "a provider" and won over Claude Code, which produced echo-like answers.
+    /// → Codex → Apple Intelligence on device (no tools, small window — last resort).
     var resolvedEngine: Engine {
-        switch chatEngineChoice {
-        case "claude-code" where claudeAvailable: return .claudeCode
-        case let ref where ref != "auto" && ref != "claude-code" && registry.resolve(ref) != nil: return .model(ref)
+        switch engineSpec.kind {
+        case .api where registry.resolve(engineSpec.model) != nil: return .model(engineSpec.model)
+        case .claudeCode, .codex, .gemini, .opencode:
+            if installedCLIs.contains(engineSpec.kind) { return .cli(engineSpec) }
         default: break
         }
         if let p = registry.byChatPreference.first(where: { !$0.isOnDevice }) {
             let ref = defaultModel.isEmpty || registry.resolve(defaultModel)?.0.isOnDevice == true ? "\(p.id)/\(p.models.first ?? "")" : defaultModel
             return .model(ref)
         }
-        if claudeAvailable { return .claudeCode }
+        if installedCLIs.contains(.claudeCode) { return .cli(ChatEngineSpec(kind: .claudeCode)) }
+        if installedCLIs.contains(.codex) { return .cli(ChatEngineSpec(kind: .codex)) }
         if let p = registry.all.first(where: \.isOnDevice) { return .model("\(p.id)/\(p.models.first ?? "")") }
         return .none
     }
 
-    /// Label shown under the composer.
+    /// Label for meta lines ("Claude Code · Opus 5.5").
     var chatEngine: String {
         switch resolvedEngine {
         case .model(let ref): return ref.hasPrefix("apple/") ? "Apple Intelligence (on device)" : ref
-        case .claudeCode: return "Claude Code"
+        case .cli(let s): return s.model.isEmpty ? s.kind.title : s.kind.title + " · " + CLICatalog.label(ChatEngineSpec(kind: s.kind, model: s.model))
         case .none: return "No AI configured"
         }
     }
 
-    struct EngineChoice: Identifiable, Hashable { let id: String; let label: String }
-
-    /// Choices for the engine picker.
-    var engineChoices: [EngineChoice] {
-        var out = [EngineChoice(id: "auto", label: "Auto · " + chatEngine)]
-        if claudeAvailable { out.append(EngineChoice(id: "claude-code", label: "Claude Code")) }
-        for p in registry.byChatPreference {
-            for m in p.models { out.append(EngineChoice(id: "\(p.id)/\(m)", label: p.isOnDevice ? "Apple Intelligence (on device)" : "\(p.id)/\(m)")) }
-        }
-        return out
+    /// API models grouped by provider for the picker.
+    var apiModelGroups: [(provider: String, onDevice: Bool, models: [String])] {
+        registry.byChatPreference.map { p in (p.displayName, p.isOnDevice, p.models.map { m in "\(p.id)/\(m)" }) }
     }
 
+    /// Coding-agent CLIs found on this Mac (login-shell PATH), resolved in the background at launch.
+    var installedCLIs: Set<ChatEngineSpec.Kind> = []
     /// Claude Code installed (used for chat when no API key is configured — runs on the user's subscription).
-    /// Resolved in the background at launch (the login-shell PATH lookup can take seconds).
-    var claudeAvailable = false
+    var claudeAvailable: Bool { installedCLIs.contains(.claudeCode) }
 
     func detectClaude() {
         #if os(macOS)
         Task.detached(priority: .utility) { [weak self] in
-            let path = ShellEnvironment.which("claude")
-            await MainActor.run { self?.claudeAvailable = path != nil }
+            var found: Set<ChatEngineSpec.Kind> = []
+            for k in [ChatEngineSpec.Kind.claudeCode, .codex, .gemini, .opencode] {
+                if let c = k.command, ShellEnvironment.which(c) != nil { found.insert(k) }
+            }
+            if !found.contains(.opencode), FileManager.default.fileExists(atPath: "/Applications/OpenCode.app/Contents/MacOS/opencode-cli") {
+                found.insert(.opencode)
+            }
+            let f = found
+            await MainActor.run { self?.installedCLIs = f }
         }
         #endif
     }
@@ -264,11 +266,19 @@ final class BrainModel {
         }
         rt.onEvent = { e in Task { @MainActor in apply(e) } }
         rt.onProgress = nil
-        let useClaude = engine == .claudeCode
-        let resume = brain.sessions().first { $0.id == sid }?.acpSessionID.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
-        let context = useClaude ? brain.systemContext(query: trimmed) : ""
-        let mcp = useClaude ? happier.mcpConfig(session: sid) : nil
+        let cliSpec: ChatEngineSpec? = { if case .cli(let s) = engine { return s }; return nil }()
+        // A chat remembers its CLI session as "<kind>:<id>"; switching the engine starts a fresh CLI session.
+        let resumeKey = (cliSpec?.kind.rawValue ?? "") + ":"
+        let stored = brain.sessions().first { $0.id == sid }?.acpSessionID
+        let resume: String? = {
+            guard let stored, let spec = cliSpec else { return nil }
+            if spec.kind == .claudeCode, stored.hasPrefix("claude:") { return String(stored.dropFirst(7)) }
+            return stored.hasPrefix(resumeKey) ? String(stored.dropFirst(resumeKey.count)) : nil
+        }()
+        let context = cliSpec != nil ? brain.systemContext(query: trimmed) : ""
+        let mcp = cliSpec != nil ? happier.mcpConfig(session: sid) : nil
         let engineLabel = chatEngine
+        let mcpEndpoint = happier.runtime.mcpEndpoint
         runningTask = Task {
             var failed = false
             do {
@@ -276,12 +286,30 @@ final class BrainModel {
                     let o = try await rt.run(prompt: p, modelRef: ref, history: history, callerSession: sid)
                     try Task.checkCancellation()
                     apply(.result(text: o.text.isEmpty ? "(done)" : o.text, sessionID: nil, costUSD: nil, isError: false))
-                } else if useClaude {
+                } else if let spec = cliSpec {
                     let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + String(context.prefix(6000))
-                    switch await ClaudePrint.stream(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp,
-                                                    allowedTools: mcp == nil ? [] : ["mcp__based"], onEvent: apply) {
+                    let result: Result<ClaudePrint.Reply, Error>
+                    var sessionFromStream: String?
+                    let track: @MainActor (ChatEvent) -> Void = { e in
+                        if case .started(_, let s?) = e { sessionFromStream = s }
+                        apply(e)
+                    }
+                    switch spec.kind {
+                    case .claudeCode:
+                        result = await ClaudePrint.stream(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp,
+                                                          allowedTools: mcp == nil ? [] : ["mcp__based"],
+                                                          model: spec.model.isEmpty ? nil : spec.model,
+                                                          effort: spec.effort.isEmpty ? nil : spec.effort,
+                                                          permissionMode: spec.permission.isEmpty ? nil : spec.permission, onEvent: track)
+                    default:
+                        result = await Self.runCLI(spec, prompt: p, resume: resume, system: system,
+                                                   mcp: mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) }, onEvent: track)
+                    }
+                    switch result {
                     case .success(let r):
-                        if let cs = r.sessionID { brain.updateSession(sid, acpSessionID: "claude:" + cs) }
+                        if let cs = r.sessionID ?? sessionFromStream {
+                            brain.updateSession(sid, acpSessionID: (spec.kind == .claudeCode ? "claude" : spec.kind.rawValue) + ":" + cs)
+                        }
                     case .failure(let e): throw e
                     }
                 } else {
@@ -315,6 +343,41 @@ final class BrainModel {
             isRunning = false
             runningTask = nil
         }
+    }
+
+    /// Codex / Gemini / OpenCode: streamed through `CLIChatRunner` with the matching line parser.
+    nonisolated static func runCLI(_ spec: ChatEngineSpec, prompt: String, resume: String?, system: String,
+                                   mcp: (url: String, token: String)?,
+                                   onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<ClaudePrint.Reply, Error> {
+        #if os(macOS)
+        guard let cmd = spec.kind.command else { return .failure(ChatError.noEngine) }
+        let exe = ShellEnvironment.which(cmd)
+            ?? (spec.kind == .opencode ? "/Applications/OpenCode.app/Contents/MacOS/opencode-cli" : nil)
+        guard let exe, FileManager.default.isExecutableFile(atPath: exe) else {
+            return .failure(ClaudePrint.Failure(description: "\(spec.kind.title) is not installed."))
+        }
+        var env = ShellEnvironment.environment()
+        let args: [String]
+        let parse: @Sendable (String) -> [ChatEvent]
+        switch spec.kind {
+        case .codex:
+            if let mcp { env["BASED_MCP_TOKEN"] = mcp.token }
+            args = CLIChatArguments.codex(prompt: prompt, spec: spec, resume: resume, mcpURL: mcp?.url, systemPrompt: system)
+            parse = CodexChatStream.events(fromLine:)
+        case .gemini:
+            args = CLIChatArguments.gemini(prompt: prompt, spec: spec, resume: resume, systemPrompt: system)
+            parse = GeminiChatStream.events(fromLine:)
+        case .opencode:
+            args = CLIChatArguments.opencode(prompt: prompt, spec: spec, resume: resume, systemPrompt: system)
+            parse = OpenCodeChatStream.events(fromLine:)
+        default:
+            return .failure(ChatError.noEngine)
+        }
+        return await CLIChatRunner.run(executable: exe, arguments: args, environment: env, cwd: NSHomeDirectory(),
+                                       parse: parse, onEvent: onEvent)
+        #else
+        return .failure(ChatError.noEngine)
+        #endif
     }
 
     /// Tells the model how to produce artifacts the chat can show in its panel.

@@ -2,6 +2,7 @@
 import AppKit
 import SwiftUI
 import BasedCore
+import BasedBrain
 
 /// Debug-only remote control through `based://debug/...` URLs, so the UI can be checked without a person at
 /// the screen (e.g. `open -g "based://debug/snapshot?out=/tmp/a.png"`). Snapshots are drawn by the app itself
@@ -48,6 +49,11 @@ enum DebugDriver {
             case "chat": model.openChat(q["id"], fullPage: true)
             default: break
             }
+        case "engine":
+            let kind = ChatEngineSpec.Kind(rawValue: q["kind"] ?? "auto") ?? .auto
+            model.brain.engineSpec = ChatEngineSpec(kind: kind, model: q["model"] ?? "", effort: q["effort"] ?? "", permission: q["permission"] ?? "")
+        case "ask":
+            model.brain.ask(q["text"] ?? "hi", pageContext: nil)
         case "chat":
             model.showChatPanel = q["panel"] != "0"
         case "newpage":

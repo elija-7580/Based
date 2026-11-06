@@ -138,7 +138,7 @@ struct ChatEmptyState: View {
             AIGlyph(size: compact ? 30 : 40, vivid: true)
             Text(compact ? "How can I help?" : "What can I fetch for you?")
                 .font(.system(size: compact ? 18 : 28, weight: .semibold))
-            if !brain.hasProvider && !brain.claudeAvailable {
+            if !brain.hasProvider && brain.installedCLIs.isEmpty {
                 VStack(spacing: 6) {
                     Text("No AI connected yet. Add an API key in Settings → AI, or install Claude Code to use your Claude subscription.")
                         .multilineTextAlignment(.center).foregroundStyle(Theme.secondary).font(.callout)
@@ -215,10 +215,6 @@ struct ChatComposer: View {
     let compact: Bool
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
-    private var engineSelection: Binding<String> {
-        let brain = brain
-        return Binding(get: { brain.chatEngineChoice }, set: { brain.chatEngineChoice = $0 })
-    }
     @Environment(HappierModel.self) private var happier
     @State private var input = ""
     @State private var usePage = true
@@ -268,32 +264,22 @@ struct ChatComposer: View {
                 .help("Hand this prompt to a coding agent in a new session")
                 .accessibilityIdentifier("ai.runWithAgent")
                 Spacer(minLength: 4)
-                if brain.engineChoices.count > 2 {
-                    Picker("", selection: engineSelection) {
-                        ForEach(brain.engineChoices) { Text($0.label).tag($0.id) }
-                    }
-                    .labelsHidden().fixedSize().controlSize(.small)
-                    .help("Which AI answers in this chat")
-                    .accessibilityIdentifier("ai.engine")
-                } else {
-                    Text(brain.chatEngine).font(.system(size: 11)).foregroundStyle(Theme.secondary).lineLimit(1)
-                }
+                PermissionModeButton()
+                EnginePickerButton()
                 DictationButton { focused = true }
-                Button { if brain.isRunning { brain.stop() } else { send() } } label: {
-                    Image(systemName: brain.isRunning ? "stop.circle.fill" : "arrow.up.circle.fill").font(.system(size: 22))
+                SendStopButton(running: brain.isRunning, enabled: canSend) {
+                    if brain.isRunning { brain.stop() } else { send() }
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(canSend || brain.isRunning ? Color.accentColor : Theme.secondary.opacity(0.5))
-                .disabled(!canSend && !brain.isRunning)
-                .help(brain.isRunning ? "Stop" : "Send (↩)")
-                .accessibilityIdentifier("ai.send")
             }
+            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: brain.engineSpec.kind)
             .foregroundStyle(Theme.secondary)
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.background))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
-        .shadow(color: .black.opacity(compact ? 0 : 0.06), radius: 8, y: 2)
+        .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 10)
+        .background(RoundedRectangle(cornerRadius: compact ? 14 : 20, style: .continuous).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: compact ? 14 : 20, style: .continuous)
+            .stroke(focused ? Theme.secondary.opacity(0.45) : Color(Theme.divider), lineWidth: focused ? 1 : 0.8))
+        .shadow(color: .black.opacity(compact ? 0.03 : (focused ? 0.10 : 0.06)), radius: focused ? 14 : 8, y: 3)
+        .animation(.easeOut(duration: 0.18), value: focused)
         .acceptsFileDrops { urls in attachments += urls.map { ChatAttachment(url: $0) } }
         .padding(compact ? 10 : 16)
         .onAppear { focused = true }
@@ -317,5 +303,58 @@ struct ChatComposer: View {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         happier.startSession(agentID: agentID, cwd: happier.defaultDirectory, title: text.isEmpty ? nil : String(text.prefix(60)), prompt: text)
         input = ""
+    }
+}
+
+
+/// Claude-style send button: a filled circle with an arrow that springs in when there is something to send,
+/// turning into a square stop button while the reply runs.
+struct SendStopButton: View {
+    let running: Bool
+    let enabled: Bool
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(running || enabled ? Theme.primary : Theme.secondary.opacity(0.25))
+                    .frame(width: 28, height: 28)
+                    .scaleEffect(hover && (running || enabled) ? 1.06 : 1)
+                if running {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(Color(PlatformColor.textBackgroundColorCompat))
+                        .frame(width: 10, height: 10)
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                } else {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color(PlatformColor.textBackgroundColorCompat))
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                }
+            }
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled && !running)
+        .onHover { hover = $0 }
+        .animation(.spring(response: 0.28, dampingFraction: 0.7), value: running)
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: enabled)
+        .animation(.easeOut(duration: 0.12), value: hover)
+        .keyboardShortcut(running ? KeyboardShortcut(".", modifiers: .command) : nil)
+        .help(running ? "Stop (⌘.)" : "Send (↩)")
+        .accessibilityIdentifier("ai.send")
+    }
+}
+
+extension PlatformColor {
+    /// The window background (white / near-black) — the glyph colour on the filled send button.
+    static var textBackgroundColorCompat: PlatformColor {
+        #if os(macOS)
+        return .textBackgroundColor
+        #else
+        return .systemBackground
+        #endif
     }
 }
