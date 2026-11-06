@@ -238,10 +238,9 @@ struct ChatComposer: View {
     let compact: Bool
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
-    private var modelSelection: Binding<String> {
+    private var engineSelection: Binding<String> {
         let brain = brain
-        return Binding(get: { brain.defaultModel.isEmpty ? (brain.modelChoices.first ?? "") : brain.defaultModel },
-                       set: { brain.defaultModel = $0 })
+        return Binding(get: { brain.chatEngineChoice }, set: { brain.chatEngineChoice = $0 })
     }
     @Environment(HappierModel.self) private var happier
     @State private var input = ""
@@ -279,11 +278,13 @@ struct ChatComposer: View {
                 .help("Hand this prompt to a coding agent in a new session")
                 .accessibilityIdentifier("ai.runWithAgent")
                 Spacer(minLength: 4)
-                if brain.modelChoices.count > 1 {
-                    Picker("", selection: modelSelection) {
-                        ForEach(brain.modelChoices, id: \.self) { Text($0).tag($0) }
+                if brain.engineChoices.count > 2 {
+                    Picker("", selection: engineSelection) {
+                        ForEach(brain.engineChoices) { Text($0.label).tag($0.id) }
                     }
                     .labelsHidden().fixedSize().controlSize(.small)
+                    .help("Which AI answers in this chat")
+                    .accessibilityIdentifier("ai.engine")
                 } else {
                     Text(brain.chatEngine).font(.system(size: 11)).foregroundStyle(Theme.secondary).lineLimit(1)
                 }

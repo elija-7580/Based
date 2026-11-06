@@ -539,9 +539,9 @@ public struct NSEventModifierFlags: OptionSet, Sendable, Hashable { public let r
     public static let capsLock = NSEventModifierFlags(rawValue: 1 << 16), shift = NSEventModifierFlags(rawValue: 1 << 17), control = NSEventModifierFlags(rawValue: 1 << 18), option = NSEventModifierFlags(rawValue: 1 << 19), command = NSEventModifierFlags(rawValue: 1 << 20), numericPad = NSEventModifierFlags(rawValue: 1 << 21), help = NSEventModifierFlags(rawValue: 1 << 22), function = NSEventModifierFlags(rawValue: 1 << 23), deviceIndependentFlagsMask = NSEventModifierFlags(rawValue: 0xffff0000) }
 open class NSEvent: NSObject, @unchecked Sendable {
     public typealias ModifierFlags = NSEventModifierFlags
-    public enum EventType: UInt, Sendable { case leftMouseDown = 1, leftMouseUp, rightMouseDown, rightMouseUp, mouseMoved, leftMouseDragged, rightMouseDragged, mouseEntered, mouseExited, keyDown, keyUp, flagsChanged, scrollWheel = 22, otherMouseDown = 25 }
+    public enum EventType: UInt, Sendable { case leftMouseDown = 1, leftMouseUp, rightMouseDown, rightMouseUp, mouseMoved, leftMouseDragged, rightMouseDragged, mouseEntered, mouseExited, keyDown, keyUp, flagsChanged, scrollWheel = 22, otherMouseDown = 25, swipe = 31 }
     public struct EventTypeMask: OptionSet, Sendable { public let rawValue: UInt64; public init(rawValue: UInt64) { self.rawValue = rawValue }
-        public static let keyDown = EventTypeMask(rawValue: 1 << 10), keyUp = EventTypeMask(rawValue: 1 << 11), flagsChanged = EventTypeMask(rawValue: 1 << 12), leftMouseDown = EventTypeMask(rawValue: 2), leftMouseUp = EventTypeMask(rawValue: 4), rightMouseDown = EventTypeMask(rawValue: 8), mouseMoved = EventTypeMask(rawValue: 32), scrollWheel = EventTypeMask(rawValue: 1 << 22), leftMouseDragged = EventTypeMask(rawValue: 64), any = EventTypeMask(rawValue: .max) }
+        public static let keyDown = EventTypeMask(rawValue: 1 << 10), keyUp = EventTypeMask(rawValue: 1 << 11), flagsChanged = EventTypeMask(rawValue: 1 << 12), leftMouseDown = EventTypeMask(rawValue: 2), leftMouseUp = EventTypeMask(rawValue: 4), rightMouseDown = EventTypeMask(rawValue: 8), mouseMoved = EventTypeMask(rawValue: 32), scrollWheel = EventTypeMask(rawValue: 1 << 22), leftMouseDragged = EventTypeMask(rawValue: 64), otherMouseDown = EventTypeMask(rawValue: 1 << 25), swipe = EventTypeMask(rawValue: 1 << 31), any = EventTypeMask(rawValue: .max) }
     open var modifierFlags: ModifierFlags { [] }
     open class var modifierFlags: ModifierFlags { [] }
     open class var pressedMouseButtons: Int { 0 }
@@ -557,6 +557,8 @@ open class NSEvent: NSObject, @unchecked Sendable {
     open var timestamp: TimeInterval { 0 }
     open var scrollingDeltaY: CGFloat { 0 }
     open var deltaY: CGFloat { 0 }
+    open var deltaX: CGFloat { 0 }
+    open var buttonNumber: Int { 0 }
     open class func addLocalMonitorForEvents(matching m: EventTypeMask, handler: @escaping (NSEvent) -> NSEvent?) -> Any? { nil }
     open class func addGlobalMonitorForEvents(matching m: EventTypeMask, handler: @escaping (NSEvent) -> Void) -> Any? { nil }
     open class func removeMonitor(_ m: Any) {}

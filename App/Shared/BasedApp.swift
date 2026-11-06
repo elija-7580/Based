@@ -70,6 +70,8 @@ struct BasedCommands: Commands {
                 .keyboardShortcut("i", modifiers: [.command, .shift])
             Button("Export Page as Markdown…") { model.exportCurrentPage() }
                 .keyboardShortcut("e", modifiers: [.command, .shift])
+            Button("Export Page as HTML…") { model.exportCurrentPage(as: .html) }
+                .keyboardShortcut("e", modifiers: [.command, .shift, .option])
         }
         CommandGroup(replacing: .saveItem) {
             Button("Close Tab") {
@@ -134,7 +136,7 @@ struct BasedCommands: Commands {
             Button("Search…") {
                 run("⌘K") {
                     // Notion: ⌘K with selected text adds a link, otherwise it opens search.
-                    if let ed = model.activeEditor, ed.hasTextSelection, !model.showQuickFind { ed.beginLinkEditing() }
+                    if let ed = model.activeEditor, ed.hasTextSelection, !model.showQuickFind, OverlayFocus.editorIsFirstResponder { ed.beginLinkEditing() }
                     else { model.showCommandPalette = false; model.showQuickFind.toggle() }
                 }
             }
@@ -146,7 +148,7 @@ struct BasedCommands: Commands {
             Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
             Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)
             Divider()
-            Button("Home") { model.selection = .home }.keyboardShortcut("h", modifiers: [.command, .shift])
+            Button("Home") { model.goHome() }.keyboardShortcut("h", modifiers: [.command, .shift])
             Button("Agents") { model.selection = .projects }.keyboardShortcut("1", modifiers: [.command, .shift])
             Button("Inbox") { model.selection = .inbox }.keyboardShortcut("2", modifiers: [.command, .shift])
             Button("Agent Brain") { model.selection = .brain }.keyboardShortcut("3", modifiers: [.command, .shift])

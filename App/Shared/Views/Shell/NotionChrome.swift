@@ -129,10 +129,7 @@ struct MacTitleBar: View {
             }
             .onHover { if $0 && model.sidebarCollapsed { peekSidebar = true } }
             .accessibilityIdentifier("toolbar.sidebar")
-            ChromeIconButton(symbol: "arrow.left", size: 14, help: "Back (⌘[)", disabled: !model.canGoBack) { model.goBack() }
-                .accessibilityIdentifier("toolbar.back")
-            ChromeIconButton(symbol: "arrow.right", size: 14, help: "Forward (⌘])", disabled: !model.canGoForward) { model.goForward() }
-                .accessibilityIdentifier("toolbar.forward")
+            HistoryButtons()
             TabStrip()
                 .padding(.leading, 6)
             Spacer(minLength: 40)
@@ -733,6 +730,15 @@ struct SidebarNavRow: View {
                 SidebarContextMenu(items: model.sidebarSelection.contains(item) && model.sidebarSelection.count > 1 ? Array(model.sidebarSelection) : [.chat(id)])
             } else {
                 Button("Open in new tab", systemImage: "plus.rectangle.on.rectangle") { model.newTab(item) }
+                if item == .home {
+                    Divider()
+                    if let id = model.currentPageID, !model.isHome(id) {
+                        Button("Use current page as Home", systemImage: "house") { model.setHome(id) }
+                    }
+                    if model.homePageID != nil {
+                        Button("Choose another Home page…", systemImage: "arrow.triangle.2.circlepath") { model.setHome(nil); model.goHome() }
+                    }
+                }
             }
         }
         .accessibilityElement(children: .combine)

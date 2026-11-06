@@ -467,7 +467,7 @@ public extension WorkspaceStore {
         transact("Delete") { tx in
             let now = Date()
             for id in ids {
-                guard let b = tx.block(id) else { continue }
+                guard let b = tx.block(id), !containsProtected(id) else { continue }
                 if b.type.isPageLike || (b.type == .databaseInline && ownsDatabase(b)) {
                     tx.update(id) { $0.trashedAt = now }
                 } else {

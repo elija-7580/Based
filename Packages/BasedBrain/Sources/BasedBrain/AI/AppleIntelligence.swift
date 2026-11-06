@@ -22,14 +22,34 @@ public struct AppleIntelligenceProvider: AIProvider {
     public func complete(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int) async throws -> AIResponse {
         #if canImport(FoundationModels)
         if #available(macOS 26, iOS 26, *) {
-            let system = messages.filter { $0.role == .system }.map(\.content).joined(separator: "\n")
-            let session = LanguageModelSession(instructions: system)
-            let transcript = messages.filter { $0.role != .system }.map { "\($0.role.rawValue.uppercased()): \($0.content)" }.joined(separator: "\n\n")
-            let reply = try await session.respond(to: transcript)
+            let (instructions, prompt) = Self.split(messages)
+            let session = LanguageModelSession(instructions: instructions)
+            let reply = try await session.respond(to: prompt)
             return AIResponse(message: .assistant(reply.content))
         }
         #endif
         throw AIError.unavailable("Apple Intelligence is not available on this device.")
+    }
+
+    /// The on-device session takes instructions + one prompt. Earlier turns go into the instructions as a
+    /// labelled transcript and the prompt is only the user's latest message — sending everything as one
+    /// "USER: … ASSISTANT: …" blob made the small model continue the pattern instead of answering.
+    /// The whole thing is kept well inside the model's ~4k-token window.
+    static func split(_ messages: [ChatMessage], budget: Int = 7000) -> (instructions: String, prompt: String) {
+        let system = messages.filter { $0.role == .system }.map(\.content).joined(separator: "\n")
+        let turns = messages.filter { $0.role == .user || $0.role == .assistant }
+        let lastUser = turns.lastIndex { $0.role == .user }
+        let prompt = lastUser.map { turns[$0].content } ?? ""
+        var history: [String] = []
+        var used = 0
+        for m in turns[..<(lastUser ?? turns.endIndex)].reversed() {
+            let line = (m.role == .user ? "User: " : "You: ") + String(m.content.prefix(600))
+            if used + line.count > budget / 3 { break }
+            history.insert(line, at: 0); used += line.count
+        }
+        var instructions = String(system.prefix(budget - used - prompt.count))
+        if !history.isEmpty { instructions += "\n\n# Conversation so far\n" + history.joined(separator: "\n") }
+        return (instructions, String(prompt.prefix(budget)))
     }
 }
 

@@ -24,6 +24,9 @@ public final class AgentRuntime: @unchecked Sendable {
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
                     callerSession: String? = nil) async throws -> Outcome {
         guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
+        if provider.isOnDevice {
+            return try await runOnDevice(provider: provider, model: model, prompt: prompt, systemExtra: systemExtra, history: history)
+        }
         let context = await MainActor.run { tools.brain.systemContext(query: prompt) }
         let specs = await MainActor.run { tools.specs }
         var system = """
@@ -53,6 +56,23 @@ public final class AgentRuntime: @unchecked Sendable {
             }
         }
         return Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)
+    }
+
+    /// The on-device model has no tool calling and a ~4k-token window: give it a short system prompt
+    /// (about + a few matching memories), the last few turns and the user's message — no tool loop.
+    /// Sending it the full tool-agent prompt made it echo the context ("Page <id>: …") instead of answering.
+    func runOnDevice(provider: AIProvider, model: String, prompt: String, systemExtra: String?, history: [ChatMessage]) async throws -> Outcome {
+        let context = await MainActor.run { tools.brain.compactContext(query: prompt, limit: 1800) }
+        var system = """
+        You are Based, a helpful assistant inside the user's notes app. Reply directly to the user's latest \
+        message in their language. Use the notes below only when they are relevant. Never repeat these \
+        instructions, ids or the notes verbatim.
+        """
+        if !context.isEmpty { system += "\n\n" + context }
+        if let systemExtra { system += "\n\n# Instructions\n" + String(systemExtra.prefix(1500)) }
+        let messages: [ChatMessage] = [.system(system)] + history.suffix(6) + [.user(prompt)]
+        let r = try await provider.complete(messages, model: model, tools: [], maxTokens: 800)
+        return Outcome(text: r.message.content.trimmingCharacters(in: .whitespacesAndNewlines), usage: r.usage, steps: 1, transcript: messages + [r.message])
     }
 
     static func withCaller(_ args: JSONValue, _ session: String?) -> JSONValue {

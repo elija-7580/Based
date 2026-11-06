@@ -48,6 +48,46 @@ public final class BrainStore {
     public init(store: WorkspaceStore) {
         self.store = store
         if !load() { bootstrap() }
+        repair()
+    }
+
+    /// Ids of the records that make up the brain (page, About, database hosts and databases).
+    public var coreIDs: Set<RecordID> {
+        var out: Set<RecordID> = [rootID, aboutID]
+        for db in [memoriesDB, skillsDB, agentsDB] where !db.isEmpty {
+            if let host = store.databases[db]?.blockID { out.insert(host) }
+        }
+        out.remove("")
+        return out
+    }
+
+    /// Keeps the Agent Brain intact: its pages can't be trashed or deleted (store-level protection), and
+    /// anything that got trashed anyway (older builds, another device, sync) is restored; a database that
+    /// is gone is recreated. Returns true when something had to be fixed.
+    @discardableResult
+    public func repair() -> Bool {
+        var fixed = false
+        if store.blocks[rootID] == nil {
+            if !load() { bootstrap() }
+            fixed = true
+        }
+        if store.blocks[aboutID] == nil {
+            aboutID = store.createPage(title: "About me", in: .block(rootID), icon: .emoji("👤"))
+            fixed = true
+        }
+        if store.databases[memoriesDB] == nil { memoriesDB = makeMemoriesDB(); fixed = true }
+        if store.databases[skillsDB] == nil { skillsDB = makeSkillsDB(); fixed = true }
+        if store.databases[agentsDB] == nil { agentsDB = makeAgentsDB(); fixed = true }
+        if fixed { save() }
+        let ids = coreIDs
+        store.protectedIDs.formUnion(ids)
+        // Restore trashed parts (the root first so its children come back in place).
+        if store.blocks[rootID]?.trashedAt != nil { store.restorePages([rootID]); fixed = true }
+        let trashed = ids.filter { $0 != rootID && store.blocks[$0]?.trashedAt != nil }.sorted()
+        if !trashed.isEmpty { store.restorePages(trashed); fixed = true }
+        // Still hidden because a page it was moved into is in the Trash → back to the top level.
+        if store.isTrashed(rootID) { store.movePages([rootID], to: .privateTop); fixed = true }
+        return fixed
     }
 
     private struct IDs: Codable { var root, memories, skills, agents, about: RecordID }
@@ -85,24 +125,35 @@ public final class BrainStore {
         aboutID = store.createPage(title: "About me", in: .block(rootID), icon: .emoji("👤"))
         store.insertImported(MarkdownImporter().parse("## Role\n\n## Current work\n\n## Working preferences\n"), in: .block(aboutID))
 
-        let mem = store.createDatabase(title: "Memories", in: .block(rootID), inline: true, sampleRows: 0)
-        memoriesDB = mem.databaseID
-        if let pid = store.addProperty(to: memoriesDB, name: "Type", type: .select) {
-            for k in Memory.Kind.allCases { _ = store.addOption(memoriesDB, pid, name: k.rawValue) }
-        }
-        let sk = store.createDatabase(title: "Skills", in: .block(rootID), inline: true, sampleRows: 0)
-        skillsDB = sk.databaseID
-        _ = store.addProperty(to: skillsDB, name: "Description", type: .text)
-        _ = store.addProperty(to: skillsDB, name: "Enabled", type: .checkbox)
-
-        let ag = store.createDatabase(title: "Agents", in: .block(rootID), inline: true, sampleRows: 0)
-        agentsDB = ag.databaseID
-        _ = store.addProperty(to: agentsDB, name: "Schedule", type: .text)
-        _ = store.addProperty(to: agentsDB, name: "Model", type: .text)
-        _ = store.addProperty(to: agentsDB, name: "Enabled", type: .checkbox)
-        _ = store.addProperty(to: agentsDB, name: "Last run", type: .date)
-        _ = store.addProperty(to: agentsDB, name: "Daily token budget", type: .number)
+        memoriesDB = makeMemoriesDB()
+        skillsDB = makeSkillsDB()
+        agentsDB = makeAgentsDB()
         save()
+    }
+
+    private func makeMemoriesDB() -> RecordID {
+        let db = store.createDatabase(title: "Memories", in: .block(rootID), inline: true, sampleRows: 0).databaseID
+        if let pid = store.addProperty(to: db, name: "Type", type: .select) {
+            for k in Memory.Kind.allCases { _ = store.addOption(db, pid, name: k.rawValue) }
+        }
+        return db
+    }
+
+    private func makeSkillsDB() -> RecordID {
+        let db = store.createDatabase(title: "Skills", in: .block(rootID), inline: true, sampleRows: 0).databaseID
+        _ = store.addProperty(to: db, name: "Description", type: .text)
+        _ = store.addProperty(to: db, name: "Enabled", type: .checkbox)
+        return db
+    }
+
+    private func makeAgentsDB() -> RecordID {
+        let db = store.createDatabase(title: "Agents", in: .block(rootID), inline: true, sampleRows: 0).databaseID
+        _ = store.addProperty(to: db, name: "Schedule", type: .text)
+        _ = store.addProperty(to: db, name: "Model", type: .text)
+        _ = store.addProperty(to: db, name: "Enabled", type: .checkbox)
+        _ = store.addProperty(to: db, name: "Last run", type: .date)
+        _ = store.addProperty(to: db, name: "Daily token budget", type: .number)
+        return db
     }
 
     // MARK: Helpers
@@ -227,6 +278,23 @@ public final class BrainStore {
     }
 
     /// System prompt shared by every client: who the user is, memories, skill index.
+    /// Short context for small models: the About page and the best-matching memories, capped at `limit` chars.
+    public func compactContext(query: String?, limit: Int) -> String {
+        var s = ""
+        let a = about.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !a.isEmpty { s += "# About the user\n" + String(a.prefix(limit / 2)) + "\n" }
+        let mems = query.map { searchMemories($0, limit: 5) } ?? Array(memories().prefix(5))
+        if !mems.isEmpty {
+            s += "# Notes about the user\n"
+            for m in mems {
+                let line = "- " + m.title + (m.body.isEmpty ? "" : ": " + m.body.replacingOccurrences(of: "\n", with: " ")) + "\n"
+                if s.count + line.count > limit { break }
+                s += line
+            }
+        }
+        return s
+    }
+
     public func systemContext(query: String? = nil) -> String {
         var s = "# About the user\n\(about)\n\n# Memories\n"
         let mems = query.map { searchMemories($0, limit: 12) } ?? Array(memories().prefix(12))

@@ -390,9 +390,11 @@ struct TrashBanner: View {
             Text("This page is in Trash.")
             Spacer()
             Button("Restore page") { model.store.restore([pageID]) }
-            Button("Delete from Trash", role: .destructive) {
-                model.store.deleteForever([pageID])
-                model.goBack()
+            if !model.store.containsProtected(pageID) {
+                Button("Delete from Trash", role: .destructive) {
+                    model.deleteForever([pageID])
+                    model.goBack()
+                }
             }
         }
         .buttonStyle(.bordered)
@@ -466,10 +468,15 @@ struct PageMenu: View {
                 if let id = store.duplicateBlocks([page.id]).first { model.open(id) }
             }
             Button("Move to…", systemImage: "arrow.turn.up.right") { editor.picker = .move([page.id]) }
-            Button("Delete", systemImage: "trash", role: .destructive) { model.trash(page.id) }
+            Button(model.isHome(page.id) ? "Home page" : "Set as Home page", systemImage: "house") { model.setHome(page.id) }
+                .disabled(model.isHome(page.id))
+            if !store.containsProtected(page.id) {
+                Button("Delete", systemImage: "trash", role: .destructive) { model.trash(page.id) }
+            }
             Divider()
             Button("Undo", systemImage: "arrow.uturn.backward") { model.undo() }.disabled(!store.canUndo)
-            Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
+            Button("Export as Markdown…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
+            Button("Export as HTML…", systemImage: "chevron.left.forwardslash.chevron.right") { model.exportRequest = AppModel.ExportRequest(pageID: page.id, format: .html) }
             Divider()
             Text("Last edited \(page.updatedAt.formatted(date: .abbreviated, time: .shortened))")
             Text("Word count: \(wordCount)")

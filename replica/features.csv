@@ -137,7 +137,7 @@ Publish to web,collaboration,could,yes,no,
 Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended"
 Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
-Export as HTML / PDF,export,should,yes,no,
+Export as HTML / PDF,export,should,yes,partial,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing"
 Dark mode (system + toggle),app,must,yes,yes,
 Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9"
 Settings,app,must,yes,yes,
@@ -158,7 +158,7 @@ Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intell
 Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1"
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets
-HTML / Mermaid block preview,blocks,should,partial,yes,code block language html/mermaid → sandboxed WKWebView
+HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview"
 Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon
 Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device
 Switch agent mid-session,ai,should,no,yes,transcript hand-off
@@ -197,3 +197,6 @@ Claude-Code-style console (slash commands / @files / diffs / status line),agents
 CI build on every push,infra,should,n/a,partial,workflow ready in ci/github-actions-ci.yml; needs one manual copy to .github/workflows
 "Copy logs (diagnostic report to clipboard)",app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice"
 "Hang stack sampling (where the main thread is stuck)",app,should,n/a,partial,"Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker"
+Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library"
+Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)"
+Agent Brain can't be deleted,ai,must,n/a,yes,"store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens"

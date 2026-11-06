@@ -346,3 +346,45 @@ Scope: sidebar, page tree, page CRUD, Trash, new Library view. Page rendering (c
   compile but cannot run on the Linux toolchain (main-actor test classes). `bash ci/typecheck/run.sh` →
   typecheck OK. `App/UITests/SidebarLibraryUITests.swift` (screenshots + delete/undo/restore/delete-forever,
   move one / several, drag-nest) — written, not run (needs a Mac).
+
+## Pass 16 — chat engine, protected Agent Brain, Home, back/forward, ⌘K focus, HTML
+
+Scope: feedback round ("chat answers nonsense", "Agent Brain page in Trash", back/forward everywhere, choose Home,
+⌘K focus, HTML still missing).
+
+- **Chat answered with echoes** ("Based: Page 42e9…: "Getting Started" - clear steps."): with no API key the
+  app registered Apple Intelligence as the only provider, so `hasProvider` was true and Claude Code was never
+  used. The on-device model then got the full tool-agent prompt (about, memories, skill list, 15 tool specs it
+  can't call), the history as one "USER: … ASSISTANT: …" blob and the page **id** — it echoed the context.
+  Fix: `ModelRegistry.byChatPreference` / `resolve("")` put on-device last; `BrainModel.resolvedEngine`
+  (auto = API model → Claude Code → Apple Intelligence; or the engine picked under the composer, persisted as
+  `ai.chatEngine`); `AgentRuntime.runOnDevice` (compact system prompt from `BrainStore.compactContext`, last 6
+  turns, no tools); `AppleIntelligenceProvider.split` (history into instructions, only the latest message as
+  prompt, capped for the ~4k window). Page context = title (+ id for tool engines, + 1 500 chars of text on
+  device) instead of a bare id.
+- **Agent Brain protected**: `WorkspaceStore.protectedIDs`; `trashPages`, `trash`, `deleteBlocks`,
+  `deleteForever` skip protected ids and pages containing one (`containsProtected`, `protectedAmong`).
+  `BrainStore.repair()` (init + dashboard `onAppear`) registers the ids, restores trashed parts (root first),
+  moves the root out of a trashed parent, recreates missing databases (`makeMemoriesDB/SkillsDB/AgentsDB`).
+  UI: no Delete in page / sidebar menus, no "Delete from Trash" in the banner, toast when blocked.
+- **Home**: `Workspace.homePageID` (optional, synced), `setHomePage`, `homePageID` (nil when trashed).
+  Home shows that page (`PageScreen`, no extra top bar) or `HomeChooser`; "Set as Home page" in the page ••• and
+  sidebar menus, Home row context menu, Settings → My settings → Home. The old Home overview is `HomeOverview`
+  at the top of Library (foldable, `library.overviewOpen`). `currentPageID` is the Home page while on Home.
+- **Back / forward**: `NavigationInput` (macOS local event monitor) — mouse buttons 4/5, swipe, ⌘← / ⌘→ when no
+  text view is first responder. `HistoryButtons` (title bar, iOS toolbar) with a history menu on right-click /
+  long-press (`backEntries`, `forwardEntries`, `jumpHistory`). ⌘[ / ⌘] unchanged.
+- **⌘K focus**: `OverlayFocus.grab` resigns the page's NSTextView, then focuses the field (now + 3 retries);
+  used by search and the ⌘N palette. ⌘K only starts link editing when the page editor really is first responder
+  (the selection flag could be stale).
+- **HTML**: slash commands *HTML* and *Mermaid diagram* (`SlashAction.codeBlock(language:)`); `HTMLExporter`
+  (BasedCore): standalone document, Notion-like CSS (light/dark), lists grouped, to-dos, toggles, callouts,
+  columns, tables, inline databases as tables, HTML blocks live in `<iframe sandbox="allow-scripts" srcdoc>`,
+  Mermaid, MathJax, page links → `Title.html`. File → Export Page as HTML… (⌥⇧⌘E), page / sidebar menus,
+  Settings → Export all → HTML.
+- Stubs: `NSEvent.buttonNumber`, `deltaX`, `.swipe`, `.otherMouseDown` mask.
+- Tests (Swift Testing, run with `swift test --disable-xctest`): BasedCore `Pass16Tests` (5) + `PageManagementTests`
+  (12), BasedBrain `Pass16BrainTests` (4) — green on Linux, Swift 6.2. `bash ci/typecheck/run.sh` → typecheck OK.
+  The XCTest suites compile but the Linux 6.2 runner aborts while listing them (`Could not cast … @MainActor`
+  test methods) — they need a Mac (`make test`).
+

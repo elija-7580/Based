@@ -45,6 +45,7 @@ struct RootView: View {
         .auditLayout("window")
         #if os(macOS)
         .background(WindowAccessor { model.mainWindow = $0; WindowChrome.configure($0) })
+        .onAppear { NavigationInput.install(model: model) }
         #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .sheet(isPresented: $model.showNewSession, onDismiss: { model.newSessionParent = nil }) {
@@ -141,20 +142,23 @@ struct RootView: View {
         Binding(get: { model.exportRequest != nil }, set: { if !$0 { model.exportRequest = nil } })
     }
 
+    private var exportIsHTML: Bool { model.exportRequest?.format == .html }
+
     private var exportIsCSV: Bool {
-        guard let id = model.exportRequest?.pageID, let b = model.store.blocks[id] else { return false }
+        guard !exportIsHTML, let id = model.exportRequest?.pageID, let b = model.store.blocks[id] else { return false }
         return b.type == .databasePage || b.type == .databaseInline
     }
 
-    private var exportType: UTType { exportIsCSV ? .commaSeparatedText : .plainText }
+    private var exportType: UTType { exportIsHTML ? .html : exportIsCSV ? .commaSeparatedText : .plainText }
 
     private var exportName: String {
         guard let id = model.exportRequest?.pageID else { return "Untitled" }
-        return MarkdownExporter.fileName(model.store.title(of: id)) + (exportIsCSV ? ".csv" : ".md")
+        return MarkdownExporter.fileName(model.store.title(of: id)) + (exportIsHTML ? ".html" : exportIsCSV ? ".csv" : ".md")
     }
 
     private var exportDocument: TextDocument? {
         guard let id = model.exportRequest?.pageID else { return nil }
+        if exportIsHTML { return TextDocument(text: HTMLExporter(store: model.store).export(page: id)) }
         let exporter = MarkdownExporter(store: model.store)
         if exportIsCSV, let db = model.store.database(forBlock: id) {
             return TextDocument(text: exporter.csv(database: db.id))
@@ -268,6 +272,7 @@ struct DetailShell: View {
             DetailContent(rootOnly: true)
                 .navigationDestination(for: RecordID.self) { id in PageScreen(pageID: id, model: model).id(id) }
                 .toolbar {
+                    ToolbarItem(placement: .topBarLeading) { HistoryButtons(size: 15) }
                     ToolbarItem(placement: .primaryAction) {
                         Button { model.toggleChatPanel() } label: { Image(systemName: "sparkles") }
                             .accessibilityIdentifier("toolbar.chat")
@@ -331,7 +336,7 @@ struct DetailContent: View {
         let item: SidebarItem = (rootOnly ? nil : model.path.last.map { SidebarItem.page($0) }) ?? model.selection ?? .home
         #if os(macOS)
         VStack(spacing: 0) {
-            if !item.isPage { ScreenTopBar(item: item) }
+            if !item.isPage && !(item == .home && model.homePageID != nil) { ScreenTopBar(item: item) }
             content(item)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -350,6 +355,7 @@ struct DetailContent: View {
         case .chat: return "chat"
         case .sessions, .projects: return "agents"
         case .page(let id): return "page-" + id
+        case .home: return "home-" + (model.homePageID ?? "")
         default: return "\(item)"
         }
     }
@@ -358,7 +364,8 @@ struct DetailContent: View {
     private func content(_ item: SidebarItem) -> some View {
         switch item {
         case .page(let id): PageScreen(pageID: id, model: model)
-        case .home: HomeView()
+        case .home:
+            if let h = model.homePageID { PageScreen(pageID: h, model: model) } else { HomeChooser() }
         case .trash: TrashView()
         case .settings: SettingsView()
         case .sessions, .projects: AgentsScreen()
@@ -401,7 +408,7 @@ struct PanelResizeHandle: View {
 
 /// Plain text file for `.fileExporter` (Markdown / CSV).
 struct TextDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.plainText, .commaSeparatedText] }
+    static var readableContentTypes: [UTType] { [.plainText, .commaSeparatedText, .html] }
     var text: String
 
     init(text: String) { self.text = text }
@@ -417,59 +424,114 @@ struct TextDocument: FileDocument {
 
 // MARK: - Home
 
-struct HomeView: View {
+/// Home without a chosen page: pick one (any page can be Home — set it here, from a page's ••• menu or from
+/// the sidebar). The old Home overview (recents, favorites, get started) now sits at the top of Library.
+struct HomeChooser: View {
+    @Environment(AppModel.self) private var model
+    @State private var filter = ""
+
+    var body: some View {
+        let _ = model.registry.workspace.structureRevision
+        let store = model.store
+        let recent = store.recentPages(limit: 8)
+        let top = store.topLevelPages()
+        let q = filter.trimmingCharacters(in: .whitespaces)
+        let candidates = (recent + top.filter { t in !recent.contains { $0.id == t.id } })
+            .filter { q.isEmpty || store.title(of: $0.id).localizedCaseInsensitiveContains(q) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Image(systemName: "house").font(.system(size: 34)).foregroundStyle(Theme.secondary)
+                    .frame(maxWidth: .infinity).padding(.top, 48)
+                Text("Choose your Home page").font(.system(size: 26, weight: .bold)).frame(maxWidth: .infinity)
+                Text("Home opens the page you pick. You can change it any time from a page's ••• menu or by right-clicking a page in the sidebar.")
+                    .foregroundStyle(Theme.secondary).multilineTextAlignment(.center).frame(maxWidth: .infinity)
+                TextField("Filter pages…", text: $filter).textFieldStyle(.roundedBorder).frame(maxWidth: 420).frame(maxWidth: .infinity)
+                VStack(spacing: 2) {
+                    ForEach(candidates.prefix(40), id: \.id) { p in
+                        Button { model.setHome(p.id) } label: {
+                            HStack(spacing: 10) {
+                                PageIconView(icon: p.props.icon, isDatabase: p.type == .databasePage, size: 16)
+                                Text(store.title(of: p.id).nonEmptyOr("Untitled")).lineLimit(1)
+                                Spacer()
+                                Text("Set as Home").font(.caption).foregroundStyle(Color.accentColor)
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 7)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("home.choose." + p.id)
+                    }
+                }
+                .frame(maxWidth: 520).frame(maxWidth: .infinity)
+                HStack(spacing: 10) {
+                    Button("New page as Home") { let id = model.store.createPage(title: "Home", icon: .emoji("🏠")); model.setHome(id) }
+                    Button("Open Library overview") { model.selection = .library }
+                }
+                .buttonStyle(.bordered).frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 40).padding(.bottom, 40)
+        }
+        .accessibilityIdentifier("home.chooser")
+        #if os(iOS)
+        .navigationTitle("Home")
+        #endif
+    }
+}
+
+/// Overview shown at the top of Library: greeting, recently visited, favorites, get started.
+struct HomeOverview: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision
         let store = model.store
-        ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
-                Text(greeting).font(.system(size: 30, weight: .bold)).frame(maxWidth: .infinity)
-                    .padding(.top, 40)
-                section("Recently visited", symbol: "clock") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(store.recentPages(limit: 12).filter { !$0.isRow || true }, id: \.id) { p in
-                                Button { model.open(p.id) } label: { HomeCard(page: p) }.buttonStyle(.plain)
-                            }
-                            Button { model.newPage() } label: {
-                                VStack { Image(systemName: "plus"); Text("New page") }
-                                    .foregroundStyle(Theme.secondary)
-                                    .frame(width: 150, height: 130)
-                                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.04)))
-                            }
-                            .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: 18) {
+            Text(greeting).font(.system(size: 22, weight: .bold))
+            section("Recently visited", symbol: "clock") {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(store.recentPages(limit: 12), id: \.id) { p in
+                            Button { model.open(p.id) } label: { HomeCard(page: p) }.buttonStyle(.plain)
                         }
-                    }
-                }
-                let favs = store.favoritePages()
-                if !favs.isEmpty {
-                    section("Favorites", symbol: "star") {
-                        ForEach(favs, id: \.id) { p in
-                            Button { model.open(p.id) } label: {
-                                HStack { PageIconView(icon: p.props.icon, size: 16); Text(store.title(of: p.id)); Spacer() }
-                            }
-                            .buttonStyle(.plain)
+                        Button { model.newPage() } label: {
+                            VStack { Image(systemName: "plus"); Text("New page") }
+                                .foregroundStyle(Theme.secondary)
+                                .frame(width: 150, height: 130)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.04)))
                         }
+                        .buttonStyle(.plain)
                     }
-                }
-                section("Get started", symbol: "sparkles") {
-                    HStack(spacing: 10) {
-                        Button("New page") { model.newPage() }
-                        Button("Search ⌘K") { model.showQuickFind = true }
-                        Button("Import from Notion…") { model.showNotionImport = true }
-                    }
-                    .buttonStyle(.bordered)
                 }
             }
-            .padding(.horizontal, 40)
-            .frame(maxWidth: 900)
-            .frame(maxWidth: .infinity)
+            let favs = store.favoritePages()
+            if !favs.isEmpty {
+                section("Favorites", symbol: "star") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(favs, id: \.id) { p in
+                                Button { model.open(p.id) } label: {
+                                    HStack(spacing: 6) { PageIconView(icon: p.props.icon, size: 14); Text(store.title(of: p.id)).lineLimit(1) }
+                                        .padding(.horizontal, 10).padding(.vertical, 6)
+                                        .background(Capsule().fill(Color.primary.opacity(0.05)))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
+            HStack(spacing: 10) {
+                Button("New page") { model.newPage() }
+                Button("Search ⌘K") { model.showQuickFind = true }
+                Button("Import from Notion…") { model.showNotionImport = true }
+                if let h = model.homePageID {
+                    Button("Home: \(store.title(of: h).nonEmptyOr("Untitled"))") { model.goHome() }
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
-        #if os(iOS)
-        .navigationTitle("Home")
-        #endif
+        .accessibilityIdentifier("library.overview")
     }
 
     private var greeting: String {
@@ -482,8 +544,8 @@ struct HomeView: View {
     }
 
     private func section<C: View>(_ title: String, symbol: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: symbol).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: symbol).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.secondary)
             c()
         }
     }

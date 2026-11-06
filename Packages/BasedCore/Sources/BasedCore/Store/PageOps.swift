@@ -135,7 +135,7 @@ public extension WorkspaceStore {
     func trash(_ ids: [RecordID]) {
         transact("Move to Trash") { tx in
             let now = Date()
-            for id in ids where tx.block(id) != nil { tx.update(id) { $0.trashedAt = now } }
+            for id in ids where tx.block(id) != nil && !containsProtected(id) { tx.update(id) { $0.trashedAt = now } }
         }
     }
 
@@ -144,7 +144,7 @@ public extension WorkspaceStore {
 
     func deleteForever(_ ids: [RecordID]) {
         transact("Delete forever") { tx in
-            for id in ids where tx.block(id) != nil { removeSubtree(id, tx: tx) }
+            for id in ids where tx.block(id) != nil && !containsProtected(id) { removeSubtree(id, tx: tx) }
             tx.updateWorkspace { $0.favorites.removeAll { ids.contains($0) } }
         }
     }

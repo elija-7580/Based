@@ -63,13 +63,15 @@ struct BrainDashboard: View {
                 .id(tab)
         }
         .accessibilityIdentifier("brain.dashboard")
+        // Brings back anything of the brain that ended up in the Trash (older builds, other devices).
+        .onAppear { if brainModel.brain.repair() { model.showToast("Agent Brain restored") } }
     }
 
     @ViewBuilder
     private var content: some View {
         if tab == .connections {
             Form { ConnectionsSettingsView() }.formStyle(.grouped)
-        } else if let id = pageID(for: tab), model.store.blocks[id] != nil {
+        } else if let id = pageID(for: tab), model.store.blocks[id] != nil, !model.store.isTrashed(id) {
             PageScreen(pageID: id, model: model, isPeek: true)
         } else {
             ContentUnavailableView("Not set up yet", systemImage: tab.symbol, description: Text("The Agent Brain pages are created on first launch."))

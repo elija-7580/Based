@@ -1,6 +1,34 @@
 import SwiftUI
 import BasedCore
 import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
+
+/// Moves keyboard focus into an overlay's text field reliably. The page's text view (AppKit) stays first
+/// responder when ⌘K opens the overlay, and a plain `focused = true` in `onAppear` sometimes lost against it —
+/// typing then went into the page. Resign the editor first, then focus on the next run-loop turns.
+enum OverlayFocus {
+    @MainActor static func grab(_ set: @escaping @MainActor () -> Void) {
+        #if os(macOS)
+        if let w = NSApp.keyWindow, let tv = w.firstResponder as? NSTextView, !tv.isFieldEditor { w.makeFirstResponder(nil) }
+        #endif
+        set()
+        for delay in [0.0, 0.05, 0.15] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { set() }
+        }
+    }
+
+    /// The page editor really has keyboard focus right now (not just a stale selection flag).
+    @MainActor static var editorIsFirstResponder: Bool {
+        #if os(macOS)
+        guard let tv = NSApp.keyWindow?.firstResponder as? NSTextView else { return false }
+        return !tv.isFieldEditor
+        #else
+        return true
+        #endif
+    }
+}
 
 // MARK: - ⌘K / ⌘P search
 
@@ -59,7 +87,7 @@ struct SearchOverlay: View {
         }
         .frame(width: 680)
         .frame(minHeight: 300, maxHeight: 560)
-        .onAppear { focused = true; recompute() }
+        .onAppear { OverlayFocus.grab { focused = true }; recompute() }
         .onChange(of: query) { _, _ in highlighted = 0; recompute() }
         .onChange(of: scope) { _, _ in highlighted = 0; recompute() }
         .onChange(of: titleOnly) { _, _ in recompute() }
@@ -337,7 +365,7 @@ struct CommandPalette: View {
             .padding(6)
         }
         .frame(width: 440)
-        .onAppear { focused = true }
+        .onAppear { OverlayFocus.grab { focused = true } }
         .onChange(of: filter) { _, _ in highlighted = 0 }
         .accessibilityIdentifier("palette")
     }

@@ -167,8 +167,10 @@ final class AppModel {
     @ObservationIgnored var draggedBlocks: [RecordID] = []
 
     struct ExportRequest: Identifiable {
+        enum Format { case markdown, html }
         let id = UUID()
         var pageID: RecordID
+        var format: Format = .markdown
     }
 
     struct MoveRequest: Identifiable {
@@ -193,6 +195,7 @@ final class AppModel {
     var currentPageID: RecordID? {
         if let last = path.last { return last }
         if case .page(let id)? = selection { return id }
+        if selection == .home { return store.homePageID }
         return nil
     }
 
@@ -377,6 +380,24 @@ final class AppModel {
     /// Moves a page (and everything inside it) to the Trash and offers Undo.
     func trash(_ id: RecordID) { trash([id]) }
 
+    // MARK: Home page
+
+    /// The page shown under Home (nil → Home asks you to pick one; the overview lives in Library).
+    var homePageID: RecordID? { store.homePageID }
+    func isHome(_ id: RecordID) -> Bool { store.homePageID == id }
+
+    func setHome(_ id: RecordID?) {
+        store.setHomePage(id)
+        if let id { showToast("“\(store.title(of: id).nonEmptyOr("Untitled"))” is now your Home page") }
+        else { showToast("Home page cleared") }
+    }
+
+    /// Opens Home (⇧⌘H, sidebar row).
+    func goHome() {
+        peek = nil
+        if selection == .home { path = [] } else { selection = .home }
+    }
+
     /// Leaves trashed pages that are on screen (selection, navigation stack, peek).
     private func leaveTrashedPages() {
         if !path.isEmpty { path.removeAll { store.isTrashed($0) } }
@@ -417,7 +438,9 @@ final class AppModel {
 
     /// Trash → Delete permanently (the caller confirms first).
     func deleteForever(_ ids: [RecordID]) {
+        let ids = ids.filter { !store.containsProtected($0) }
         let n = ids.count
+        guard n > 0 else { brain.brain.repair(); return }
         store.deleteForever(ids)
         showToast(n == 1 ? "Deleted permanently" : "Deleted \(n) pages permanently")
     }
@@ -427,21 +450,23 @@ final class AppModel {
     }
 
     /// Settings → Export all: every page as Markdown (databases as CSV + page folders) into one directory.
-    func exportWorkspace(to directory: URL) {
-        let count = writeExport(store.topLevelPages(), to: directory)
+    func exportWorkspace(to directory: URL, html: Bool = false) {
+        let count = writeExport(store.topLevelPages(), to: directory, html: html)
         exportAllMessage = "Exported \(count) pages to \(directory.path)"
     }
 
     /// Writes pages as Markdown and databases as CSV, sub-pages in folders named after their parent.
-    func writeExport(_ pages: [Block], to directory: URL) -> Int {
+    func writeExport(_ pages: [Block], to directory: URL, html: Bool = false) -> Int {
         let exporter = MarkdownExporter(store: store)
+        let htmlExporter = HTMLExporter(store: store)
         let fm = FileManager.default
         var count = 0
         func write(_ page: Block, into dir: URL) {
             let base = MarkdownExporter.fileName(store.title(of: page.id))
             let isDB = page.type == .databasePage || page.type == .databaseInline
-            let text = isDB ? (store.database(forBlock: page.id).map { exporter.csv(database: $0.id) } ?? "") : exporter.export(page: page.id)
-            try? text.write(to: dir.appendingPathComponent(base + (isDB ? ".csv" : ".md")), atomically: true, encoding: .utf8)
+            let text = html ? htmlExporter.export(page: page.id)
+                : isDB ? (store.database(forBlock: page.id).map { exporter.csv(database: $0.id) } ?? "") : exporter.export(page: page.id)
+            try? text.write(to: dir.appendingPathComponent(base + (html ? ".html" : isDB ? ".csv" : ".md")), atomically: true, encoding: .utf8)
             count += 1
             let kids = store.subpages(of: page.id)
             if !kids.isEmpty {
@@ -455,9 +480,9 @@ final class AppModel {
         return count
     }
 
-    func exportCurrentPage() {
+    func exportCurrentPage(as format: ExportRequest.Format = .markdown) {
         guard let id = currentPageID ?? peek?.id else { return }
-        exportRequest = ExportRequest(pageID: id)
+        exportRequest = ExportRequest(pageID: id, format: format)
     }
 
     /// ⌘⇧U — open the parent page of the current page.
@@ -486,6 +511,25 @@ final class AppModel {
         peek = nil
         backHistory.append(lastSnapshot)
         restore(next)
+    }
+
+    /// Where back / forward lead, for the arrows' history menus: (offset, title), nearest first.
+    struct HistoryEntry: Identifiable { let id: Int; let title: String }
+    var backEntries: [HistoryEntry] {
+        backHistory.reversed().prefix(12).enumerated().map { HistoryEntry(id: -($0.offset + 1), title: snapshotTitle($0.element)) }
+    }
+    var forwardEntries: [HistoryEntry] {
+        forwardHistory.reversed().prefix(12).enumerated().map { HistoryEntry(id: $0.offset + 1, title: snapshotTitle($0.element)) }
+    }
+
+    private func snapshotTitle(_ s: NavSnapshot) -> String {
+        (s.path.last.map { SidebarItem.page($0) } ?? s.selection)?.title(in: self) ?? "Home"
+    }
+
+    /// Several steps at once (history menu): negative = back, positive = forward.
+    func jumpHistory(_ offset: Int) {
+        if offset < 0 { for _ in 0..<(-offset) where !backHistory.isEmpty { goBack() } }
+        else { for _ in 0..<offset where !forwardHistory.isEmpty { goForward() } }
     }
 
     private func noteNavigation() {
@@ -649,7 +693,13 @@ final class AppModel {
 
     /// Moves pages to the Trash in one undoable step (children go with their parent) and shows an Undo toast.
     func trash(_ ids: [RecordID]) {
+        let blocked = store.protectedAmong(ids)
         let done = store.trashPages(ids)
+        if !blocked.isEmpty && done.isEmpty {
+            showToast(blocked.count == 1 && ids.count == 1 ? "“\(store.title(of: blocked[0]).nonEmptyOr("Untitled"))” is part of the Agent Brain and can't be deleted"
+                                                           : "Agent Brain pages can't be deleted")
+            return
+        }
         guard !done.isEmpty else { return }
         leaveTrashedPages()
         sidebarSelection = selection.map { [$0] } ?? []

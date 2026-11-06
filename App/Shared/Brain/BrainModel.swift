@@ -95,11 +95,53 @@ final class BrainModel {
 
     /// The conversation shown in the chat panel; persisted as a session with agent id "based".
     var chatID: RecordID?
-    /// Which engine answered last ("Claude Code", "anthropic/claude-…", …) — shown under the composer.
-    var chatEngine: String {
-        if hasProvider { return defaultModel.isEmpty ? (registry.all.first?.displayName ?? "AI") : defaultModel }
-        return claudeAvailable ? "Claude Code" : "No AI configured"
+    /// The chat engine the user picked under the composer: "auto", "claude-code" or a model ref
+    /// ("anthropic/claude-…", "apple/on-device", …).
+    var chatEngineChoice: String = UserDefaults.standard.string(forKey: "ai.chatEngine") ?? "auto" {
+        didSet { UserDefaults.standard.set(chatEngineChoice, forKey: "ai.chatEngine") }
     }
+
+    enum Engine: Equatable { case model(String), claudeCode, none }
+
+    /// Auto: an API / server model (tools, big context) → Claude Code (the user's subscription, tools via MCP)
+    /// → Apple Intelligence on device (no tools, small window — last resort). Before, Apple Intelligence
+    /// counted as "a provider" and won over Claude Code, which produced echo-like answers.
+    var resolvedEngine: Engine {
+        switch chatEngineChoice {
+        case "claude-code" where claudeAvailable: return .claudeCode
+        case let ref where ref != "auto" && ref != "claude-code" && registry.resolve(ref) != nil: return .model(ref)
+        default: break
+        }
+        if let p = registry.byChatPreference.first(where: { !$0.isOnDevice }) {
+            let ref = defaultModel.isEmpty || registry.resolve(defaultModel)?.0.isOnDevice == true ? "\(p.id)/\(p.models.first ?? "")" : defaultModel
+            return .model(ref)
+        }
+        if claudeAvailable { return .claudeCode }
+        if let p = registry.all.first(where: \.isOnDevice) { return .model("\(p.id)/\(p.models.first ?? "")") }
+        return .none
+    }
+
+    /// Label shown under the composer.
+    var chatEngine: String {
+        switch resolvedEngine {
+        case .model(let ref): return ref.hasPrefix("apple/") ? "Apple Intelligence (on device)" : ref
+        case .claudeCode: return "Claude Code"
+        case .none: return "No AI configured"
+        }
+    }
+
+    struct EngineChoice: Identifiable, Hashable { let id: String; let label: String }
+
+    /// Choices for the engine picker.
+    var engineChoices: [EngineChoice] {
+        var out = [EngineChoice(id: "auto", label: "Auto · " + chatEngine)]
+        if claudeAvailable { out.append(EngineChoice(id: "claude-code", label: "Claude Code")) }
+        for p in registry.byChatPreference {
+            for m in p.models { out.append(EngineChoice(id: "\(p.id)/\(m)", label: p.isOnDevice ? "Apple Intelligence (on device)" : "\(p.id)/\(m)")) }
+        }
+        return out
+    }
+
     /// Claude Code installed (used for chat when no API key is configured — runs on the user's subscription).
     /// Resolved in the background at launch (the login-shell PATH lookup can take seconds).
     var claudeAvailable = false
@@ -133,8 +175,19 @@ final class BrainModel {
     func ask(_ prompt: String, pageContext: RecordID? = nil) {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isRunning else { return }
+        let engine = resolvedEngine
+        let onDevice: Bool = { if case .model(let r) = engine { return r.hasPrefix("apple/") }; return false }()
         var p = trimmed
-        if let pageContext { p += "\n\n(The user is currently looking at page id \(pageContext): \"\(store.title(of: pageContext))\".)" }
+        if let pageContext, store.blocks[pageContext] != nil, !store.isTrashed(pageContext) {
+            let title = store.title(of: pageContext).nonEmptyOr("Untitled")
+            if onDevice {
+                // No tools on device: hand over the page text itself (short).
+                let body = MarkdownExporter(store: store).export(page: pageContext, includeTitle: false)
+                p += "\n\n---\nOpen page “\(title)”:\n" + String(body.prefix(1500))
+            } else {
+                p += "\n\n---\nContext: the user has the page “\(title)” open (page id \(pageContext)). Read it with the tools only if the question is about it."
+            }
+        }
         // Persist: the first message creates the chat.
         let sid: RecordID
         if let c = chatID, store.blocks[c] != nil { sid = c } else {
@@ -148,18 +201,18 @@ final class BrainModel {
         turns.append(ChatTurn(role: .assistant, text: ""))
         isRunning = true
         let history: [ChatMessage] = turns.dropLast(2).map { ChatMessage(role: $0.role, content: $0.text) }
-        let rt = runtime, model = defaultModel
+        let rt = runtime
         let idx = turns.count - 1
         rt.onProgress = { [weak self] line in Task { @MainActor in if let self, idx < self.turns.count { self.turns[idx].progress.append(line) } } }
-        let useClaude = !hasProvider && claudeAvailable
+        let useClaude = engine == .claudeCode
         let resume = brain.sessions().first { $0.id == sid }?.acpSessionID.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
         let context = useClaude ? brain.systemContext(query: trimmed) : ""
         let mcp = useClaude ? happier.mcpConfig(session: sid) : nil
         Task {
             var answer = ""
             do {
-                if hasProvider {
-                    let o = try await rt.run(prompt: p, modelRef: model.isEmpty ? nil : model, history: history, callerSession: sid)
+                if case .model(let ref) = engine {
+                    let o = try await rt.run(prompt: p, modelRef: ref, history: history, callerSession: sid)
                     answer = o.text.isEmpty ? "(done)" : o.text
                 } else if useClaude {
                     let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown.\n\n" + String(context.prefix(6000))

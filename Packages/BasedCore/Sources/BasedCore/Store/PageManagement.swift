@@ -81,12 +81,21 @@ public extension WorkspaceStore {
 
     // MARK: Trash
 
+    /// The id is protected, or a protected record lives inside it (deleting it would take that one along).
+    func containsProtected(_ id: RecordID) -> Bool {
+        guard !protectedIDs.isEmpty else { return false }
+        return protectedIDs.contains(id) || protectedIDs.contains { isDescendant($0, of: id) }
+    }
+
+    /// Of `ids`, those that can't be trashed or deleted.
+    func protectedAmong(_ ids: [RecordID]) -> [RecordID] { ids.filter(containsProtected) }
+
     /// Moves pages (and, implicitly, everything inside them) to the Trash in one undoable step.
     /// Ids nested inside another selected id are skipped: trashing the parent already hides them, and
     /// restoring the parent brings them back. Returns the ids that were trashed.
     @discardableResult
     func trashPages(_ ids: [RecordID]) -> [RecordID] {
-        let unique = Array(Set(ids)).filter { blocks[$0] != nil && !isTrashed($0) }
+        let unique = Array(Set(ids)).filter { blocks[$0] != nil && !isTrashed($0) && !containsProtected($0) }
         let set = Set(unique)
         let roots = documentOrder(unique.filter { id in !set.contains { $0 != id && isDescendant(id, of: $0) } })
         guard !roots.isEmpty else { return [] }
@@ -222,6 +231,18 @@ public extension WorkspaceStore {
     // MARK: Favorites
 
     /// Adds or removes all `ids` from Favorites in one step (adds unless every id is already a favorite).
+    /// The chosen Home page, if it still exists and isn't in the Trash.
+    var homePageID: RecordID? {
+        guard let id = workspace.homePageID, blocks[id] != nil, !isTrashed(id) else { return nil }
+        return id
+    }
+
+    /// Sets (or with nil clears) the page shown under Home. Synced like the rest of the workspace.
+    func setHomePage(_ id: RecordID?) {
+        guard workspace.homePageID != id else { return }
+        transact(id == nil ? "Clear Home page" : "Set Home page") { tx in tx.updateWorkspace { $0.homePageID = id } }
+    }
+
     func setFavorite(_ ids: [RecordID], _ on: Bool) {
         transact(on ? "Add to Favorites" : "Remove from Favorites") { tx in
             tx.updateWorkspace { w in

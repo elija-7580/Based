@@ -244,6 +244,19 @@ formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 The app builds and runs on the Mac (first user log: macOS 27.2, a 53,086-block Notion import).
 
+**Pass 16** — chat that answers, a protected Agent Brain, your own Home page, back/forward everywhere, HTML:
+
+- **Chat**: with no API key the in-app chat used the small on-device model with the full agent prompt and
+  echoed it back. It now uses an API model if you have one, otherwise Claude Code, and the on-device model
+  only as a last resort (with a short prompt). Pick the engine under the chat field.
+- **Agent Brain** pages can't be deleted; anything of it found in the Trash is restored automatically.
+- **Home** opens a page you choose (page ••• → *Set as Home page*, right-click in the sidebar, or Settings);
+  the old Home overview is now at the top of **Library**.
+- **Back / forward** with mouse buttons 4/5, trackpad swipe, ⌘[ / ⌘] and ⌘← / ⌘→ (outside text); right-click
+  the arrows for the history.
+- **⌘K** puts the cursor in the search field reliably.
+- **HTML**: `/html` and `/mermaid` blocks with live preview; *Export Page as HTML…* (⌥⇧⌘E) and *Export all → HTML*.
+
 **Pass 14** — the first pasted report found a 7-minute launch hang, and the block gutter works like Notion:
 
 - **No Keychain hang at launch** — the report showed `Secrets.get` → `SecItemCopyMatching` waiting 431 s on

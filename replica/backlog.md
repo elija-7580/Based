@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 15. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -98,3 +98,15 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | watchOS | ❌ |
 | Zusammenarbeit (mehrere Nutzer) | ❌ |
 | UI-Tests | 🟡 XCUITests geschrieben, nie gelaufen |
+
+## Pass 16
+| Anforderung | Status | Notiz |
+|---|---|---|
+| Chat antwortet sinnvoll ohne API-Key | 🟡 | Reihenfolge API-Modell → Claude Code → Apple Intelligence, Engine-Auswahl unter dem Eingabefeld; On-Device-Pfad ohne Tools; am Mac noch nicht geprüft |
+| Agent Brain nicht löschbar | ✅ | Schutz im Store + Selbstreparatur (Tests) |
+| Vor/Zurück überall (Maus, Tastatur, Wischen) | 🟡 | Maustasten 4/5, Wischen, ⌘←/⌘→, ⌘[/⌘], Verlaufsmenü; am Mac noch nicht von Hand geprüft |
+| Home-Seite selbst wählen, Übersicht in Library | ✅ | |
+| ⌘K: Cursor sofort im Suchfeld | 🟡 | Editor gibt den Fokus ab, Feld wird mehrfach fokussiert; am Mac prüfen |
+| HTML-Block im Slash-Menü | ✅ | /html, /mermaid |
+| Export als HTML | ✅ | Seite + ganzer Workspace; PDF fehlt noch |
+

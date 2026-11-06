@@ -458,6 +458,8 @@ public struct Workspace: Codable, Hashable, Identifiable, Sendable {
     /// Teamspaces shown as their own sidebar sections (nil = none). Top-level pages join one through
     /// `BlockProps.teamspace`; everything else at the top level is Private.
     public var teamspaces: [Teamspace]?
+    /// The page shown under "Home" (nil = none chosen yet). Optional, so older records decode unchanged.
+    public var homePageID: RecordID?
     public var createdAt: Date
     public var updatedAt: Date
     public var stamp: Stamp

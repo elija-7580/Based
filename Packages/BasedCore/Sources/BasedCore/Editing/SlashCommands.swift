@@ -12,6 +12,8 @@ public enum SlashSection: String, CaseIterable, Sendable {
 
 public enum SlashAction: Hashable, Sendable {
     case block(BlockType)
+    /// Code block with a preset language; `html` and `mermaid` render a live preview.
+    case codeBlock(language: String)
     case toggleHeading(BlockType)
     case page
     case columns(Int)
@@ -73,6 +75,8 @@ public enum SlashCommands {
             .init("Video", "Upload or embed with a link.", .media, .block(.video), symbol: "play.rectangle", aliases: ["movie", "youtube"]),
             .init("Audio", "Upload or embed with a link.", .media, .block(.audio), symbol: "waveform", aliases: ["sound", "music", "mp3"]),
             .init("Code", "Capture a code snippet.", .media, .block(.code), symbol: "chevron.left.forwardslash.chevron.right", aliases: ["snippet", "pre"], shortcut: "```"),
+            .init("HTML", "Write HTML, CSS and JavaScript and see it live.", .media, .codeBlock(language: "html"), symbol: "chevron.left.forwardslash.chevron.right", aliases: ["html", "web", "css", "javascript", "widget", "iframe html"]),
+            .init("Mermaid diagram", "Flowcharts, sequence diagrams and more from text.", .media, .codeBlock(language: "mermaid"), symbol: "point.3.connected.trianglepath.dotted", aliases: ["mermaid", "diagram", "flowchart", "chart"]),
             .init("File", "Upload or embed with a link.", .media, .block(.file), symbol: "paperclip", aliases: ["attachment", "upload"]),
             .init("PDF", "Embed a PDF document.", .media, .block(.pdf), symbol: "doc.richtext", aliases: ["document"]),
             .init("Web bookmark", "Save a link as a visual bookmark.", .media, .block(.bookmark), symbol: "bookmark", aliases: ["bookmark", "url", "link preview"]),

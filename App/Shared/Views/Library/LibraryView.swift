@@ -15,6 +15,7 @@ struct LibraryView: View {
     @State private var cache: (revision: Int, items: [LibraryItem])?
     @State private var confirmDelete = false
     @FocusState private var tableFocused: Bool
+    @AppStorage("library.overviewOpen") private var overviewOpen = true
 
     static let columns: [(LibrarySort, CGFloat?)] = [(.title, nil), (.kind, 96), (.location, 180), (.edited, 128), (.created, 128)]
 
@@ -28,6 +29,7 @@ struct LibraryView: View {
         let visibleIDs = Set(rows.map(\.id))
         let selected = selection.intersection(visibleIDs)
         VStack(spacing: 0) {
+            overview
             header(total: all.count, shown: rows.count)
             filterBar
             Rectangle().fill(Chrome.border).frame(height: 1)
@@ -79,6 +81,21 @@ struct LibraryView: View {
         } message: { Text("Sub-pages go with their parent. You can undo or restore from Trash.") }
         .onAppear { tableFocused = true }
         .accessibilityIdentifier("library")
+    }
+
+    /// Overview (former Home screen) above the list; folds away with the chevron.
+    private var overview: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button { withAnimation(.easeOut(duration: 0.15)) { overviewOpen.toggle() } } label: {
+                Label("Overview", systemImage: overviewOpen ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("library.overviewToggle")
+            if overviewOpen { HomeOverview() }
+        }
+        .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, overviewOpen ? 16 : 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Data

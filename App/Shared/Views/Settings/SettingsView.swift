@@ -179,6 +179,18 @@ struct MySettings: View {
             Toggle("Full width by default", isOn: $fullWidth)
             Toggle("Compact sidebar", isOn: $compact)
         }
+        Section("Home") {
+            Picker("Home page", selection: Binding(get: { model.homePageID ?? "" }, set: { model.setHome($0.isEmpty ? nil : $0) })) {
+                Text("None (choose on Home)").tag("")
+                if let h = model.homePageID, !model.store.topLevelPages().contains(where: { $0.id == h }) {
+                    Text(model.store.title(of: h).nonEmptyOr("Untitled")).tag(h)
+                }
+                ForEach(model.store.topLevelPages(), id: \.id) { Text(model.store.title(of: $0.id).nonEmptyOr("Untitled")).tag($0.id) }
+            }
+            .accessibilityIdentifier("settings.homePage")
+            Text("Home (⇧⌘H) opens this page. The overview with recent pages and favorites is at the top of Library.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+        }
         Section("Startup") {
             Picker("Open on start", selection: $startPage) {
                 Text("Last visited page").tag("last")
@@ -502,10 +514,17 @@ struct IconPickerButton: View {
 struct ExportAllSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var html = false
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Export all workspace content").font(.headline)
             Text("Every page becomes a Markdown file, every database a CSV, nested pages become folders — the same structure Notion exports.").font(.callout).foregroundStyle(Theme.secondary)
+            Picker("Format", selection: $html) {
+                Text("Markdown & CSV").tag(false)
+                Text("HTML").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("settings.exportFormat")
             if let m = model.exportAllMessage { Text(m).font(.caption).textSelection(.enabled) }
             HStack {
                 Spacer()
@@ -513,10 +532,10 @@ struct ExportAllSheet: View {
                 Button("Export…") {
                     #if os(macOS)
                     let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.prompt = "Export here"
-                    if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true)) }
+                    if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true), html: html) }
                     #else
                     let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                    model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true))
+                    model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true), html: html)
                     #endif
                 }
                 .buttonStyle(.borderedProminent)

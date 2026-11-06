@@ -156,6 +156,9 @@ public protocol Persistence: AnyObject {
 /// In-memory record cache with indexes, transactions, undo/redo, observers.
 @MainActor
 public final class WorkspaceStore {
+    /// Records that can't be trashed or deleted (the Agent Brain page, its About page and database hosts).
+    /// Trash / delete calls skip them — and any page that contains one.
+    public var protectedIDs: Set<RecordID> = []
     public private(set) var blocks: [RecordID: Block] = [:]
     public private(set) var databases: [RecordID: Database] = [:]
     public private(set) var views: [RecordID: DatabaseView] = [:]

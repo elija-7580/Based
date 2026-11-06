@@ -356,6 +356,13 @@ final class EditorController {
                 host(id)?.endEditing()
                 selectedBlocks = [target]
             }
+        case .codeBlock(let language):
+            var target = id
+            if replaceable || empty { store.turnInto([id], .code) }
+            else if let n = store.insertBlock(.code, after: id) { target = n }
+            // Starts in Code mode; the block header switches to Preview (and remembers it per block).
+            store.updateBlock(target, name: "Code language") { $0.props.language = language; $0.props.url = nil }
+            focus(FocusTarget(target, 0))
         case .toggleHeading(let h):
             if replaceable || empty {
                 store.turnInto([id], h, toggleable: true)

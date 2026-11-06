@@ -77,6 +77,11 @@ public protocol AIProvider: Sendable {
     func complete(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int) async throws -> AIResponse
 }
 
+public extension AIProvider {
+    /// The on-device model (Apple Intelligence): no tools, small context window.
+    var isOnDevice: Bool { id == "apple" }
+}
+
 /// Known providers keyed by id; the app and server register the ones with keys.
 public final class ModelRegistry: @unchecked Sendable {
     private var providers: [String: AIProvider] = [:]
@@ -87,6 +92,13 @@ public final class ModelRegistry: @unchecked Sendable {
     public func provider(_ id: String) -> AIProvider? { lock.lock(); defer { lock.unlock() }; return providers[id] }
     public var all: [AIProvider] { lock.lock(); defer { lock.unlock() }; return providers.values.sorted { $0.id < $1.id } }
 
+    /// Providers ordered for chat: cloud / server models first, the small on-device model last
+    /// (it has no tool calling and a ~4k token window, so it is only a fallback).
+    public var byChatPreference: [AIProvider] { all.sorted { ($0.isOnDevice ? 1 : 0, $0.id) < ($1.isOnDevice ? 1 : 0, $1.id) } }
+
+    /// At least one provider that can call tools (anything but the on-device model).
+    public var hasToolCapableProvider: Bool { all.contains { !$0.isOnDevice } }
+
     /// "anthropic/claude-sonnet-4-5" → provider + model. A bare model name is looked up across providers.
     public func resolve(_ ref: String) -> (AIProvider, String)? {
         if let slash = ref.firstIndex(of: "/") {
@@ -94,7 +106,7 @@ public final class ModelRegistry: @unchecked Sendable {
             return provider(pid).map { ($0, model) }
         }
         for p in all where p.models.contains(ref) { return (p, ref) }
-        return all.first.map { ($0, ref.isEmpty ? ($0.models.first ?? "") : ref) }
+        return byChatPreference.first.map { ($0, ref.isEmpty ? ($0.models.first ?? "") : ref) }
     }
 }
 

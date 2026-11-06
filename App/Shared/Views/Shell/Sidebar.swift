@@ -169,9 +169,14 @@ struct SidebarContextMenu: View {
             if page.type == .page {
                 Button("Add a page inside", systemImage: "plus") { model.newPage(in: .block(id)) }
             }
-            Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: id) }
-            Divider()
-            Button("Delete", systemImage: "trash", role: .destructive) { model.trash([id]) }
+            Button("Export as Markdown…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: id) }
+            Button("Export as HTML…", systemImage: "chevron.left.forwardslash.chevron.right") { model.exportRequest = AppModel.ExportRequest(pageID: id, format: .html) }
+            Button(model.isHome(id) ? "Home page" : "Set as Home page", systemImage: "house") { model.setHome(id) }
+                .disabled(model.isHome(id))
+            if !store.containsProtected(id) {
+                Divider()
+                Button("Delete", systemImage: "trash", role: .destructive) { model.trash([id]) }
+            }
         } else if pages.count > 1 {
             Text("\(pages.count) pages selected")
             Button(pages.allSatisfy { store.isFavorite($0) } ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") { model.toggleFavorite(pages) }
