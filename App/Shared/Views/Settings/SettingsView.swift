@@ -55,8 +55,8 @@ struct SettingsView: View {
             case .about: return "info.circle"
             }
         }
-        static let account: [SettingsPage] = [.myAccount, .mySettings, .myNotifications, .myConnections, .languageRegion]
-        static let workspace: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .diagnostics, .about]
+        static let accountPages: [SettingsPage] = [.myAccount, .mySettings, .myNotifications, .myConnections, .languageRegion]
+        static let workspacePages: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .diagnostics, .about]
     }
 
     var body: some View {
@@ -79,10 +79,10 @@ struct SettingsView: View {
     private var sidebar: some View {
         List(selection: $page) {
             Section("Account") {
-                ForEach(SettingsPage.account) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
+                ForEach(SettingsPage.accountPages) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
             }
             Section("Workspace") {
-                ForEach(SettingsPage.workspace) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
+                ForEach(SettingsPage.workspacePages) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
             }
         }
         .listStyle(.sidebar)

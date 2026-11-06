@@ -26,11 +26,6 @@ extension EditorController {
         if selectedBlocks.isEmpty, let first = copies.first { focusEnd(first) } else { selectedBlocks = Set(copies) }
     }
 
-    /// True when the focused text block has a non-empty text selection (⌘K then means "link", not "search").
-    var hasTextSelection: Bool {
-        guard let id = focusedID else { return false }
-        return (host(id)?.selectedRange().length ?? 0) > 0
-    }
 
     func beginLinkEditing() {
         guard let id = focusedID, host(id)?.selectedRange().length ?? 0 > 0 else { return }

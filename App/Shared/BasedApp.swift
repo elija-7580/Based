@@ -46,7 +46,7 @@ struct BasedCommands: Commands {
     let model: AppModel
 
     /// Runs a menu command and leaves a breadcrumb (crash reports show the last commands).
-    private func run(_ name: String, _ action: () -> Void) {
+    @MainActor private func run(_ name: String, _ action: () -> Void) {
         Log.breadcrumb("cmd \(name)")
         action()
     }
@@ -172,7 +172,7 @@ struct BasedCommands: Commands {
     }
 
     /// ⌘F: page find bar, database search on full-page databases, workspace search elsewhere.
-    private func find() {
+    @MainActor private func find() {
         guard let id = model.currentPageID else { model.showQuickFind = true; return }
         if model.store.blocks[id]?.type == .databasePage { model.dbSearchRequest += 1; return }
         if model.showFind { model.findFocusRequest += 1 } else { model.showFind = true }

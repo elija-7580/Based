@@ -238,6 +238,11 @@ struct ChatComposer: View {
     let compact: Bool
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
+    private var modelSelection: Binding<String> {
+        let brain = brain
+        return Binding(get: { brain.defaultModel.isEmpty ? (brain.modelChoices.first ?? "") : brain.defaultModel },
+                       set: { brain.defaultModel = $0 })
+    }
     @Environment(HappierModel.self) private var happier
     @State private var input = ""
     @State private var usePage = true
@@ -275,7 +280,7 @@ struct ChatComposer: View {
                 .accessibilityIdentifier("ai.runWithAgent")
                 Spacer(minLength: 4)
                 if brain.modelChoices.count > 1 {
-                    Picker("", selection: Binding(get: { brain.defaultModel.isEmpty ? (brain.modelChoices.first ?? "") : brain.defaultModel }, set: { brain.defaultModel = $0 })) {
+                    Picker("", selection: modelSelection) {
                         ForEach(brain.modelChoices, id: \.self) { Text($0).tag($0) }
                     }
                     .labelsHidden().fixedSize().controlSize(.small)
