@@ -64,6 +64,13 @@ enum DebugDriver {
                 model.store.insertImported(MarkdownImporter().parse(md), in: .block(id), name: "Debug")
             }
             model.open(id)
+        case "state":
+            let hc = model.brain.happier.chats.count
+            let out = q["out"] ?? NSTemporaryDirectory() + "based-state.txt"
+            let sessions = model.brain.brain.sessions()
+            var lines = ["happier.chats \(hc)", "sessions \(sessions.count)", "chats(store) \(sessions.filter(\.isChat).count)"]
+            lines += sessions.prefix(10).map { "  \($0.agentID) · \($0.title) · \($0.id)" }
+            try? lines.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
         case "pages":
             let out = q["out"] ?? NSTemporaryDirectory() + "based-pages.txt"
             let lines = model.store.blocks.values

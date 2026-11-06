@@ -60,15 +60,19 @@ struct AssistantMessageView: View {
         let parts = turn.reply.parts
         VStack(alignment: .leading, spacing: 10) {
             ForEach(groups(parts)) { g in
-                switch g.kind {
-                case .thinking: ThinkingView(part: g.parts[0])
-                case .text: MarkdownMessageView(markdown: g.parts[0].text, streaming: g.parts[0].status == .running)
-                case .todos: TodoCardView(todos: g.parts[0].todos)
-                case .tool: ToolGroupView(parts: g.parts)
+                Group {
+                    switch g.kind {
+                    case .thinking: ThinkingView(part: g.parts[0])
+                    case .text: MarkdownMessageView(markdown: g.parts[0].text, streaming: g.parts[0].status == .running)
+                    case .todos: TodoCardView(todos: g.parts[0].todos)
+                    case .tool: ToolGroupView(parts: g.parts)
+                    }
                 }
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 6)), removal: .opacity))
             }
             if turn.isRunning && !turn.reply.isThinking && parts.last?.status != .running {
                 ChatWorkingIndicator(label: parts.isEmpty ? "Thinking…" : "Working…")
+                    .transition(.opacity)
             }
             if !turn.isRunning {
                 HStack(spacing: 10) {
@@ -81,16 +85,19 @@ struct AssistantMessageView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onHover { hover = $0 }
+        .animation(.spring(response: 0.35, dampingFraction: 0.9), value: parts.map(\.id))
+        .animation(.easeOut(duration: 0.2), value: turn.isRunning)
+        .animation(.easeOut(duration: 0.15), value: hover)
     }
 
-    struct Group: Identifiable { let id: String; let kind: ChatPart.Kind; var parts: [ChatPart] }
+    struct PartGroup: Identifiable { let id: String; let kind: ChatPart.Kind; var parts: [ChatPart] }
 
     /// Consecutive tool calls share one card (like Claude: "Ran 3 tools").
-    private func groups(_ parts: [ChatPart]) -> [Group] {
-        var out: [Group] = []
+    private func groups(_ parts: [ChatPart]) -> [PartGroup] {
+        var out: [PartGroup] = []
         for p in parts {
             if p.kind == .tool, let last = out.last, last.kind == .tool { out[out.count - 1].parts.append(p) }
-            else { out.append(Group(id: p.id, kind: p.kind, parts: [p])) }
+            else { out.append(PartGroup(id: p.id, kind: p.kind, parts: [p])) }
         }
         return out
     }
@@ -104,21 +111,26 @@ struct ThinkingView: View {
 
     var body: some View {
         let running = part.status == .running
+        let hasText = !part.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         VStack(alignment: .leading, spacing: 6) {
-            Button { withAnimation(.easeOut(duration: 0.15)) { open.toggle() } } label: {
+            Button { if hasText { withAnimation(.spring(response: 0.3, dampingFraction: 0.88)) { open.toggle() } } } label: {
                 HStack(spacing: 6) {
                     AIGlyph(size: 13).foregroundStyle(running ? Color.accentColor : Theme.secondary)
+                        .symbolEffectPulse(running)
                     if running { ShimmerText(text: "Thinking…") }
-                    else { Text(label).foregroundStyle(Theme.secondary) }
-                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
-                        .rotationEffect(.degrees(open ? 90 : 0))
-                        .foregroundStyle(Theme.secondary)
+                    else { Text(label).foregroundStyle(Theme.secondary).transition(.opacity) }
+                    if hasText {
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                            .rotationEffect(.degrees(open ? 90 : 0))
+                            .foregroundStyle(Theme.secondary)
+                    }
                 }
                 .font(.system(size: 13))
                 .contentShape(Rectangle())
+                .animation(.easeOut(duration: 0.2), value: running)
             }
             .buttonStyle(.plain)
-            if open || running {
+            if hasText && (open || running) {
                 Text(running ? String(part.text.suffix(600)) : part.text)
                     .font(.system(size: 12.5))
                     .italic()
@@ -128,6 +140,7 @@ struct ThinkingView: View {
                     .textSelection(.enabled)
                     .padding(.leading, 12)
                     .overlay(alignment: .leading) { Rectangle().fill(Color(Theme.divider)).frame(width: 2) }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }
@@ -601,5 +614,24 @@ struct DictationButton: View {
         #else
         EmptyView()   // iOS: the keyboard's mic key
         #endif
+    }
+}
+
+
+extension View {
+    /// A gentle pulse while something runs (SF Symbols effect on macOS 14+).
+    @ViewBuilder
+    func symbolEffectPulse(_ on: Bool) -> some View {
+        if on { self.opacity(1).modifier(PulseModifier()) } else { self }
+    }
+}
+
+private struct PulseModifier: ViewModifier {
+    @State private var up = false
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(up ? 1.08 : 0.94)
+            .opacity(up ? 1 : 0.7)
+            .onAppear { withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { up = true } }
     }
 }

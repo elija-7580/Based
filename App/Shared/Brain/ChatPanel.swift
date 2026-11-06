@@ -190,23 +190,72 @@ struct ChatSuggestions: View {
 struct ChatTranscriptView: View {
     let compact: Bool
     @Environment(BrainModel.self) private var brain
+    /// Pinned to the bottom while the reply streams; scrolling up unpins and shows the ↓ button.
+    @State private var atBottom = true
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 22) {
-                    ForEach(brain.turns) { ChatTurnView(turn: $0, compact: compact).id($0.id) }
+                    ForEach(brain.turns) { t in
+                        ChatTurnView(turn: t, compact: compact)
+                            .id(t.id)
+                            .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 10)), removal: .opacity))
+                    }
                     Color.clear.frame(height: 1).id("end")
+                        .onAppear { atBottom = true }
+                        .onDisappear { atBottom = false }
                 }
                 .padding(.horizontal, compact ? 16 : 32)
                 .padding(.vertical, 16)
                 .frame(maxWidth: compact ? .infinity : 760)
                 .frame(maxWidth: .infinity)
+                .animation(.spring(response: 0.38, dampingFraction: 0.9), value: brain.turns.map(\.id))
             }
-            .onChange(of: brain.turns.last?.reply) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
-            .onChange(of: brain.turns.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
+            .overlay(alignment: .bottom) {
+                if !atBottom {
+                    ScrollToBottomButton {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) { proxy.scrollTo("end", anchor: .bottom) }
+                    }
+                    .padding(.bottom, 12)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: 8)))
+                }
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: atBottom)
+            .onChange(of: brain.turns.last?.reply) { _, _ in
+                if atBottom { proxy.scrollTo("end", anchor: .bottom) }
+            }
+            .onChange(of: brain.turns.count) { _, _ in
+                // A new message always brings the bottom into view (like Claude / ChatGPT).
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) { proxy.scrollTo("end", anchor: .bottom) }
+            }
             .onAppear { proxy.scrollTo("end", anchor: .bottom) }
         }
+    }
+}
+
+/// Round ↓ button centred above the composer (ChatGPT / Claude) when the transcript is scrolled up.
+struct ScrollToBottomButton: View {
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.down")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.primary)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(.background))
+                .overlay(Circle().stroke(Theme.dividerColor))
+                .shadow(color: .black.opacity(hover ? 0.18 : 0.10), radius: hover ? 8 : 5, y: 2)
+                .scaleEffect(hover ? 1.06 : 1)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .animation(.easeOut(duration: 0.12), value: hover)
+        .help("Scroll to bottom")
+        .accessibilityIdentifier("chat.scrollToBottom")
     }
 }
 

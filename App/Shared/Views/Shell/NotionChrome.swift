@@ -913,9 +913,9 @@ struct SidebarSectionHeader: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(title).font(.system(size: 12, weight: .medium))
-            if hover {
-                Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .bold))
-            }
+            Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
+                .rotationEffect(.degrees(open ? 90 : 0))
+                .opacity(hover ? 1 : 0)
             Spacer(minLength: 0)
             if hover, let onAdd {
                 Button(action: onAdd) { SidebarHoverIcon(symbol: "plus") }
@@ -930,7 +930,8 @@ struct SidebarSectionHeader: View {
         .background(RoundedRectangle(cornerRadius: 6).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover.opacity(0.6) : .clear)))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
-        .onTapGesture { open.toggle() }
+        .animation(.easeOut(duration: 0.12), value: hover)
+        .onTapGesture { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } }
         .padding(.top, 12)
         .accessibilityIdentifier("sidebar.section." + title.lowercased())
     }

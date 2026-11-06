@@ -420,6 +420,8 @@ public extension ClaudePrint {
         if let i = a.firstIndex(of: "json") { a[i] = "stream-json" }
         if let e = effort, !e.isEmpty { a += ["--effort", e] }
         if let m = permissionMode, !m.isEmpty { a += ["--permission-mode", m] }
+        // Thinking summaries when the CLI provides them (otherwise the chat shows "Thought for N s").
+        a += ["--settings", #"{"showThinkingSummaries":true}"#]
         return a + ["--verbose", "--include-partial-messages"]
     }
 
