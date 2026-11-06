@@ -51,7 +51,12 @@ final class HappierModel {
 
     static let agentsKey = "acp.agents"
     static func loadAgents() -> [AgentDefinition] {
-        if let d = UserDefaults.standard.data(forKey: agentsKey), let a = try? JSONDecoder().decode([AgentDefinition].self, from: d), !a.isEmpty { return a }
+        if let d = UserDefaults.standard.data(forKey: agentsKey), var a = try? JSONDecoder().decode([AgentDefinition].self, from: d), !a.isEmpty {
+            // Pass 18: OpenCode's `acp` subcommand is confirmed — turn on the untouched old default.
+            if let i = a.firstIndex(where: { $0.id == "opencode" }), !a[i].enabled, a[i].note.hasPrefix("Install opencode; verify"),
+               let fresh = AgentDefinition.defaults.first(where: { $0.id == "opencode" }) { a[i] = fresh }
+            return a
+        }
         return AgentDefinition.defaults
     }
     var agents: [AgentDefinition] = HappierModel.loadAgents() {

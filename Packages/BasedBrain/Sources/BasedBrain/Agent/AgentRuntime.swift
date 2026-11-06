@@ -9,6 +9,8 @@ public final class AgentRuntime: @unchecked Sendable {
     public var maxTokensPerReply = 4096
     /// Called after each step with a short progress line (for UI).
     public var onProgress: (@Sendable (String) -> Void)?
+    /// Structured events (tool calls and results, text) for the Claude-style chat view.
+    public var onEvent: (@Sendable (ChatEvent) -> Void)?
 
     public init(registry: ModelRegistry, tools: AgentTools) { self.registry = registry; self.tools = tools }
 
@@ -45,14 +47,17 @@ public final class AgentRuntime: @unchecked Sendable {
             usage = usage + r.usage
             messages.append(r.message)
             if r.message.toolCalls.isEmpty { return Outcome(text: r.message.content, usage: usage, steps: steps, transcript: messages) }
+            if !r.message.content.isEmpty { onEvent?(.text(r.message.content)) }
             for call in r.message.toolCalls {
                 onProgress?("\(call.name) \(call.arguments.text.prefix(80))")
+                onEvent?(.toolUse(id: call.id, name: call.name, input: call.arguments))
                 let res: AgentTools.ToolResult
                 if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
                 else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }),
                         let r = await host(call.name, Self.withCaller(call.arguments, callerSession)) { res = r }
                 else { res = await MainActor.run { tools.call(call.name, call.arguments) } }
                 messages.append(ChatMessage(role: .tool, content: String(res.text.prefix(24_000)), toolCallID: call.id))
+                onEvent?(.toolResult(id: call.id, output: String(res.text.prefix(4_000)), isError: res.isError))
             }
         }
         return Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)

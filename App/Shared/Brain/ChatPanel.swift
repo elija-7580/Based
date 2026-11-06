@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import BasedCore
 import BasedBrain
 
@@ -174,8 +175,8 @@ struct ChatTranscriptView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
-                    ForEach(brain.turns) { ChatTurnView(turn: $0).id($0.id) }
+                LazyVStack(alignment: .leading, spacing: 22) {
+                    ForEach(brain.turns) { ChatTurnView(turn: $0, compact: compact).id($0.id) }
                     Color.clear.frame(height: 1).id("end")
                 }
                 .padding(.horizontal, compact ? 16 : 32)
@@ -183,50 +184,9 @@ struct ChatTranscriptView: View {
                 .frame(maxWidth: compact ? .infinity : 760)
                 .frame(maxWidth: .infinity)
             }
-            .onChange(of: brain.turns.last?.text) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
+            .onChange(of: brain.turns.last?.reply) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onChange(of: brain.turns.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onAppear { proxy.scrollTo("end", anchor: .bottom) }
-        }
-    }
-}
-
-struct ChatTurnView: View {
-    let turn: ChatTurn
-
-    var body: some View {
-        if turn.role == .user {
-            HStack {
-                Spacer(minLength: 40)
-                Text(turn.text)
-                    .textSelection(.enabled)
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.06)))
-            }
-        } else {
-            VStack(alignment: .leading, spacing: 6) {
-                if !turn.progress.isEmpty {
-                    DisclosureGroup {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(Array(turn.progress.enumerated()), id: \.offset) { Text($0.element).font(.caption.monospaced()) }
-                        }
-                    } label: {
-                        Label("\(turn.progress.count) step\(turn.progress.count == 1 ? "" : "s")", systemImage: "wrench.and.screwdriver")
-                    }
-                    .font(.caption)
-                    .foregroundStyle(Theme.secondary)
-                }
-                if turn.text.isEmpty {
-                    HStack(spacing: 6) {
-                        ProgressView().controlSize(.small)
-                        Text("Thinking…").foregroundStyle(Theme.secondary)
-                    }
-                } else {
-                    Text(ConsoleItemView.markdown(turn.text))
-                        .textSelection(.enabled)
-                        .lineSpacing(2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
         }
     }
 }
@@ -243,10 +203,19 @@ struct ChatComposer: View {
     @Environment(HappierModel.self) private var happier
     @State private var input = ""
     @State private var usePage = true
+    @State private var attachments: [ChatAttachment] = []
+    @State private var pickFiles = false
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if !attachments.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(attachments) { a in AttachmentChip(name: a.name) { attachments.removeAll { $0.id == a.id } } }
+                    }
+                }
+            }
             TextField(compact ? "Ask AI anything…" : "Ask, search or make anything…", text: $input, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: compact ? 13.5 : 15))
@@ -255,6 +224,10 @@ struct ChatComposer: View {
                 .onSubmit(send)
                 .accessibilityIdentifier("ai.input")
             HStack(spacing: 8) {
+                Button { pickFiles = true } label: { Image(systemName: "plus") }
+                    .buttonStyle(.plain)
+                    .help("Attach files (or drop them here)")
+                    .accessibilityIdentifier("ai.attach")
                 if let page = model.currentPageID {
                     Button { usePage.toggle() } label: {
                         Label(model.store.title(of: page).nonEmptyOr("Untitled"), systemImage: usePage ? "doc.text.fill" : "doc.text")
@@ -286,12 +259,14 @@ struct ChatComposer: View {
                 } else {
                     Text(brain.chatEngine).font(.system(size: 11)).foregroundStyle(Theme.secondary).lineLimit(1)
                 }
-                Button(action: send) {
-                    Image(systemName: brain.isRunning ? "stop.circle.fill" : "arrow.up.circle.fill").font(.system(size: 20))
+                DictationButton { focused = true }
+                Button { if brain.isRunning { brain.stop() } else { send() } } label: {
+                    Image(systemName: brain.isRunning ? "stop.circle.fill" : "arrow.up.circle.fill").font(.system(size: 22))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(input.isEmpty && !brain.isRunning ? Theme.secondary.opacity(0.5) : Color.accentColor)
-                .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || brain.isRunning)
+                .foregroundStyle(canSend || brain.isRunning ? Color.accentColor : Theme.secondary.opacity(0.5))
+                .disabled(!canSend && !brain.isRunning)
+                .help(brain.isRunning ? "Stop" : "Send (↩)")
                 .accessibilityIdentifier("ai.send")
             }
             .foregroundStyle(Theme.secondary)
@@ -300,15 +275,23 @@ struct ChatComposer: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(.background))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
         .shadow(color: .black.opacity(compact ? 0 : 0.06), radius: 8, y: 2)
+        .acceptsFileDrops { urls in attachments += urls.map { ChatAttachment(url: $0) } }
         .padding(compact ? 10 : 16)
         .onAppear { focused = true }
+        .fileImporter(isPresented: $pickFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { r in
+            if case .success(let urls) = r { attachments += urls.map { ChatAttachment(url: $0) } }
+        }
     }
+
+    private var canSend: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty }
 
     private func send() {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !brain.isRunning else { return }
+        guard canSend, !brain.isRunning else { return }
         input = ""
-        brain.ask(text, pageContext: usePage ? model.currentPageID : nil)
+        let files = attachments
+        attachments = []
+        brain.ask(text, pageContext: usePage ? model.currentPageID : nil, attachments: files)
     }
 
     private func runWithAgent(_ agentID: String) {

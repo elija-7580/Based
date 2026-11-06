@@ -404,3 +404,98 @@ public enum ClaudePrint {
         #endif
     }
 }
+
+// MARK: - Streaming (in-app chat)
+
+public extension ClaudePrint {
+    /// Arguments for a streamed run: thinking, text deltas, tool calls and results arrive line by line.
+    static func streamArguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
+                                allowedTools: [String] = [], model: String? = nil) -> [String] {
+        var a = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+                          allowedTools: allowedTools, model: model)
+        if let i = a.firstIndex(of: "json") { a[i] = "stream-json" }
+        return a + ["--verbose", "--include-partial-messages"]
+    }
+
+    /// Runs `claude -p` with `stream-json` and reports every event on the main actor while it runs.
+    /// Cancelling the calling task terminates the process.
+    static func stream(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
+                       appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
+                       model: String? = nil, onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<Reply, Error> {
+        #if os(macOS) || os(Linux)
+        guard let exe = executable ?? ShellEnvironment.which("claude") else {
+            return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
+        }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: exe)
+        p.arguments = streamArguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+                                      allowedTools: allowedTools, model: model)
+        p.environment = ShellEnvironment.environment()
+        p.currentDirectoryURL = URL(fileURLWithPath: cwd)
+        let out = Pipe(), err = Pipe()
+        p.standardOutput = out
+        p.standardError = err
+        p.standardInput = FileHandle.nullDevice
+        let state = StreamState()
+        out.fileHandleForReading.readabilityHandler = { h in
+            let chunk = h.availableData
+            for line in state.feed(chunk) {
+                for e in ClaudeChatStream.events(fromLine: line) {
+                    state.note(e)
+                    Task { @MainActor in onEvent(e) }
+                }
+            }
+        }
+        err.fileHandleForReading.readabilityHandler = { h in state.appendError(h.availableData) }
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { (c: CheckedContinuation<Result<Reply, Error>, Never>) in
+                p.terminationHandler = { proc in
+                    out.fileHandleForReading.readabilityHandler = nil
+                    err.fileHandleForReading.readabilityHandler = nil
+                    // Whatever is left in the pipe.
+                    let rest = out.fileHandleForReading.readDataToEndOfFile()
+                    for line in state.feed(rest + Data([0x0A])) {
+                        for e in ClaudeChatStream.events(fromLine: line) { state.note(e); Task { @MainActor in onEvent(e) } }
+                    }
+                    if let r = state.reply {
+                        c.resume(returning: r.isError ? .failure(Failure(description: r.text.isEmpty ? "Claude Code reported an error" : r.text)) : .success(r))
+                    } else if proc.terminationReason == .uncaughtSignal {
+                        c.resume(returning: .failure(Failure(description: "Stopped")))
+                    } else {
+                        c.resume(returning: .failure(Failure(description: state.errorText.isEmpty ? "claude exited with status \(proc.terminationStatus)" : String(state.errorText.prefix(600)))))
+                    }
+                }
+                do { try p.run() } catch {
+                    c.resume(returning: .failure(Failure(description: "Couldn't start claude: \(error.localizedDescription)")))
+                }
+            }
+        } onCancel: {
+            if p.isRunning { p.terminate() }
+        }
+        #else
+        return .failure(Failure(description: "Claude Code runs on the Mac or a Based server."))
+        #endif
+    }
+}
+
+/// Line buffer + final reply for `ClaudePrint.stream` (touched from the pipe's queue).
+final class StreamState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var buffer = Data()
+    private var errors = Data()
+    private(set) var reply: ClaudePrint.Reply?
+
+    func feed(_ d: Data) -> [String] {
+        lock.lock(); defer { lock.unlock() }
+        buffer.append(d)
+        return ClaudeChatStream.takeLines(&buffer)
+    }
+
+    func note(_ e: ChatEvent) {
+        guard case .result(let t, let s, let c, let err) = e else { return }
+        lock.lock(); reply = ClaudePrint.Reply(text: t, sessionID: s, isError: err, costUSD: c); lock.unlock()
+    }
+
+    func appendError(_ d: Data) { lock.lock(); errors.append(d); lock.unlock() }
+    var errorText: String { lock.lock(); defer { lock.unlock() }; return String(decoding: errors, as: UTF8.self) }
+}

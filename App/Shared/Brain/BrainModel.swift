@@ -8,6 +8,35 @@ struct ChatTurn: Identifiable, Equatable {
     var role: ChatMessage.Role
     var text: String
     var progress: [String] = []
+    /// Assistant turns: thinking, tool calls, to-dos and text, in order (Claude-style rendering).
+    var reply = ChatTurnBuilder()
+    /// User turns: names of attached files.
+    var attachments: [String] = []
+    /// Assistant turns: "Claude Code · 12 s · $0.01".
+    var meta: String?
+    var isRunning = false
+    var failed = false
+    var started = Date()
+}
+
+/// A file attached to the next message (composer chips).
+struct ChatAttachment: Identifiable, Equatable {
+    let id = UUID()
+    var url: URL
+    var name: String { url.lastPathComponent }
+    var isImage: Bool { FileDrop.imageExt.contains(url.pathExtension.lowercased()) }
+
+    /// Prompt text for the attachment: text files inline (up to 60 KB), others by path — Claude Code and the
+    /// coding agents can open the path themselves.
+    func promptText() -> String {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        let textExt: Set<String> = ["md", "markdown", "txt", "csv", "json", "swift", "js", "ts", "tsx", "py", "rb", "go", "rs", "html", "css", "yml", "yaml", "toml", "xml", "sh", "c", "h", "m", "java", "kt", "sql", "log"]
+        if textExt.contains(url.pathExtension.lowercased()), let d = try? Data(contentsOf: url), d.count <= 60_000, let s = String(data: d, encoding: .utf8) {
+            return "Attached file `\(name)`:\n```\(url.pathExtension.lowercased())\n\(s)\n```"
+        }
+        return "Attached file: \(url.path)"
+    }
 }
 
 /// App-side owner of the Agent Brain: providers, runtime, scheduler, server sync, chat state.
@@ -161,23 +190,37 @@ final class BrainModel {
         guard let id else { newChat(); return }
         guard id != chatID || turns.isEmpty else { return }
         chatID = id
-        turns = TranscriptParser.parse(brain.transcript(id)).compactMap { item in
-            switch item.kind {
-            case .user: return ChatTurn(role: .user, text: item.text)
-            case .agent: return ChatTurn(role: .assistant, text: item.text)
-            case .error: return ChatTurn(role: .assistant, text: "⚠️ " + item.text)
-            case .tool: return nil
-            default: return nil
-            }
+        // Group everything between two user messages into one assistant turn with its parts.
+        var out: [ChatTurn] = []
+        var pending: [TranscriptItem] = []
+        func flushReply() {
+            guard !pending.isEmpty else { return }
+            var t = ChatTurn(role: .assistant, text: "")
+            for part in ChatTurnBuilder.parts(from: pending) { t.reply.restore(part) }
+            t.text = t.reply.text
+            t.failed = pending.contains { $0.kind == .error }
+            out.append(t)
+            pending = []
         }
+        for item in TranscriptParser.parse(brain.transcript(id)) {
+            if item.kind == .user { flushReply(); out.append(ChatTurn(role: .user, text: item.text)) }
+            else { pending.append(item) }
+        }
+        flushReply()
+        turns = out
     }
 
-    func ask(_ prompt: String, pageContext: RecordID? = nil) {
+    /// The running reply (Stop button).
+    @ObservationIgnored private var runningTask: Task<Void, Never>?
+    func stop() { runningTask?.cancel() }
+
+    func ask(_ prompt: String, pageContext: RecordID? = nil, attachments: [ChatAttachment] = []) {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isRunning else { return }
+        guard !trimmed.isEmpty || !attachments.isEmpty, !isRunning else { return }
         let engine = resolvedEngine
         let onDevice: Bool = { if case .model(let r) = engine { return r.hasPrefix("apple/") }; return false }()
         var p = trimmed
+        for a in attachments { p += "\n\n" + a.promptText() }
         if let pageContext, store.blocks[pageContext] != nil, !store.isTrashed(pageContext) {
             let title = store.title(of: pageContext).nonEmptyOr("Untitled")
             if onDevice {
@@ -188,53 +231,83 @@ final class BrainModel {
                 p += "\n\n---\nContext: the user has the page “\(title)” open (page id \(pageContext)). Read it with the tools only if the question is about it."
             }
         }
+        let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
         // Persist: the first message creates the chat.
         let sid: RecordID
         if let c = chatID, store.blocks[c] != nil { sid = c } else {
-            sid = brain.createSession(title: String(trimmed.prefix(60)), agentID: "based", machine: happier.machineName, cwd: "", encrypted: false)
+            sid = brain.createSession(title: String(shown.prefix(60)), agentID: "based", machine: happier.machineName, cwd: "", encrypted: false)
             chatID = sid
         }
-        brain.appendTranscript(sid, role: "You", markdown: trimmed)
+        let attachNote = attachments.isEmpty ? "" : "\n\n" + attachments.map { "📎 \($0.name)" }.joined(separator: "  ")
+        brain.appendTranscript(sid, role: "You", markdown: shown + attachNote)
         brain.updateSession(sid, status: .running)
-        Log.breadcrumb("ask AI (\(trimmed.count) chars)")
-        turns.append(ChatTurn(role: .user, text: trimmed))
-        turns.append(ChatTurn(role: .assistant, text: ""))
+        Log.breadcrumb("ask AI (\(trimmed.count) chars, \(attachments.count) files)")
+        var user = ChatTurn(role: .user, text: trimmed)
+        user.attachments = attachments.map(\.name)
+        turns.append(user)
+        var reply = ChatTurn(role: .assistant, text: "")
+        reply.isRunning = true
+        turns.append(reply)
+        let replyID = reply.id
         isRunning = true
-        let history: [ChatMessage] = turns.dropLast(2).map { ChatMessage(role: $0.role, content: $0.text) }
+        let history: [ChatMessage] = turns.dropLast(2).filter { !$0.text.isEmpty }.map { ChatMessage(role: $0.role, content: $0.text) }
         let rt = runtime
-        let idx = turns.count - 1
-        rt.onProgress = { [weak self] line in Task { @MainActor in if let self, idx < self.turns.count { self.turns[idx].progress.append(line) } } }
+        // Events land on the reply turn (looked up by id: the list may change while it runs).
+        let apply: @MainActor (ChatEvent) -> Void = { [weak self] e in
+            guard let self, let i = self.turns.firstIndex(where: { $0.id == replyID }) else { return }
+            self.turns[i].reply.apply(e)
+        }
+        rt.onEvent = { e in Task { @MainActor in apply(e) } }
+        rt.onProgress = nil
         let useClaude = engine == .claudeCode
         let resume = brain.sessions().first { $0.id == sid }?.acpSessionID.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
         let context = useClaude ? brain.systemContext(query: trimmed) : ""
         let mcp = useClaude ? happier.mcpConfig(session: sid) : nil
-        Task {
-            var answer = ""
+        let engineLabel = chatEngine
+        runningTask = Task {
+            var failed = false
             do {
                 if case .model(let ref) = engine {
                     let o = try await rt.run(prompt: p, modelRef: ref, history: history, callerSession: sid)
-                    answer = o.text.isEmpty ? "(done)" : o.text
+                    try Task.checkCancellation()
+                    apply(.result(text: o.text.isEmpty ? "(done)" : o.text, sessionID: nil, costUSD: nil, isError: false))
                 } else if useClaude {
                     let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown.\n\n" + String(context.prefix(6000))
-                    switch await ClaudePrint.ask(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp, allowedTools: mcp == nil ? [] : ["mcp__based"]) {
+                    switch await ClaudePrint.stream(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp,
+                                                    allowedTools: mcp == nil ? [] : ["mcp__based"], onEvent: apply) {
                     case .success(let r):
-                        answer = r.text.isEmpty ? "(done)" : r.text
                         if let cs = r.sessionID { brain.updateSession(sid, acpSessionID: "claude:" + cs) }
                     case .failure(let e): throw e
                     }
                 } else {
                     throw ChatError.noEngine
                 }
-                if idx < turns.count { turns[idx].text = answer }
-                brain.appendTranscript(sid, role: "Agent", markdown: answer)
-                brain.updateSession(sid, status: .done, result: answer)
             } catch {
-                if idx < turns.count { turns[idx].text = "⚠️ \(error)" }
-                brain.appendTranscript(sid, role: "Error", markdown: "\(error)")
-                brain.updateSession(sid, status: .failed)
+                failed = true
+                let msg = Task.isCancelled ? "Stopped." : "⚠️ \(error)"
+                apply(.result(text: "", sessionID: nil, costUSD: nil, isError: true))
+                if let i = turns.firstIndex(where: { $0.id == replyID }) {
+                    turns[i].reply.restore(ChatPart(id: "err", kind: .text, text: msg))
+                }
+                brain.appendTranscript(sid, role: "Error", markdown: msg)
                 Log.error("Chat failed: \(error)", category: "ai")
             }
+            if let i = turns.firstIndex(where: { $0.id == replyID }) {
+                let r = turns[i].reply
+                turns[i].text = r.text
+                turns[i].isRunning = false
+                turns[i].failed = failed
+                var meta = [engineLabel, "\(Int(Date().timeIntervalSince(turns[i].started).rounded())) s"]
+                if let c = r.costUSD { meta.append(String(format: "$%.3f", c)) }
+                turns[i].meta = meta.joined(separator: " · ")
+                for (role, md) in r.transcriptSections where !(failed && role == "Agent" && md.isEmpty) {
+                    brain.appendTranscript(sid, role: role, markdown: md)
+                }
+                brain.updateSession(sid, status: failed ? .failed : .done, result: r.text)
+            }
+            rt.onEvent = nil
             isRunning = false
+            runningTask = nil
         }
     }
 

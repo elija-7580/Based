@@ -420,3 +420,27 @@ Scope: feedback round ("chat answers nonsense", "Agent Brain page in Trash", bac
   Markdown, HighlightSwift, SwiftMath, Speech framework; UI references opencode (MIT), Clarc (Apache-2.0),
   21st-dev/1code, LibreChat; ACP as the single internal event model.
 
+## Pass 18 — Claude-style chat in Based's look, OpenCode on
+
+- **Event model** (`BasedBrain/Agent/ChatStream.swift`): `ChatEvent` (started, thinking/text deltas, finished blocks,
+  tool use / result, result with cost), `ChatPart` (thinking, text, tool, todos; running / done / failed; timing),
+  `ChatTurnBuilder` (folds events; streamed blocks are replaced by the finished ones; TodoWrite and
+  TaskCreate/TaskUpdate → one to-do list; tool argument summary), `ClaudeChatStream` (Claude Code `stream-json` lines
+  → events, sub-agent lines skipped, chunked line splitting), transcript round trip (`transcriptSections`,
+  `parts(from:)`).
+- **Streaming Claude Code**: `ClaudePrint.stream` runs `claude -p --output-format stream-json --verbose
+  --include-partial-messages`, reports events on the main actor, Stop terminates the process.
+  `AgentRuntime.onEvent` reports tool calls / results / interim text for API models.
+- **Chat UI** (`App/Shared/Brain/ChatParts.swift`): user bubbles with attachment chips; assistant replies as parts —
+  "Thinking…" with shimmer → "Thought for N s" (collapsible), tool cards (icon + verb per tool, monospaced argument,
+  spinner / check / cross, expandable output; consecutive calls grouped "Used N tools"; browser tools as "Used the
+  browser"; Based MCP tools with the AI glyph), to-do card with progress bar and active form, Markdown via Based's
+  Markdown importer (headings, lists, to-dos, quotes, code blocks with language + Copy, tables, dividers, links,
+  page mentions), copy + "engine · seconds · cost" on hover.
+- **Composer**: + attach (file picker) and drop files onto it (text files inline up to 60 KB, others by path),
+  mic → macOS system dictation, Stop actually stops, engine picker as before.
+- **Saved chats** reopen with thinking, tool cards and to-dos (grouped per assistant turn).
+- **OpenCode** enabled by default as a coding agent (`opencode acp`); old untouched disabled entries are upgraded.
+- Tests: `ChatStreamTests` (5: stream-json → parts, Task tools, transcript round trip, chunked lines, arguments).
+  `bash ci/typecheck/run.sh` → typecheck OK.
+
