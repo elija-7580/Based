@@ -52,11 +52,12 @@ struct BlockRow: View {
     var number: Int?
     var listDepth = 0
     @Environment(AppModel.self) private var model
-    @State private var hovering = false
+    #if os(iOS)
     @State private var showMenu = false
     @State private var dropEdge: DropEdge?
     /// Last measured size, read by the drop delegate. A plain box (not observed) so resizing doesn't re-render.
     @State private var geometry = SizeBox()
+    #endif
 
     var body: some View {
         let node = model.registry.block(id)
@@ -69,13 +70,15 @@ struct BlockRow: View {
     /// Width of the + / ⋮⋮ gutter left of every block (inside the page's horizontal padding).
     static let gutter: CGFloat = 44
 
-    private func rendersChildrenBelow(_ b: Block) -> Bool {
+    /// Children render as rows right below the block (not inside it like callouts, quotes and columns).
+    static func rendersChildrenBelow(_ b: Block, store: WorkspaceStore) -> Bool {
         guard store.showsChildrenInline(b) else { return false }
         switch b.type {
         case .columnList, .column, .syncedBlock, .callout, .quote, .button: return false
         default: return true
         }
     }
+    private func rendersChildrenBelow(_ b: Block) -> Bool { Self.rendersChildrenBelow(b, store: store) }
 
     @ViewBuilder
     private func content(_ b: Block, node: BlockNode) -> some View {
@@ -93,13 +96,11 @@ struct BlockRow: View {
             .background(RoundedRectangle(cornerRadius: 4).fill(background(b, selected: selected)))
             .anchorPreference(key: MenuAnchorKey.self, value: .bounds) { menuHere ? $0 : nil }
             #if os(macOS)
-            // The hover / hit area includes the 44-pt gutter on the left, so moving the pointer onto the
-            // + and ⋮⋮ buttons keeps them visible and clickable (they used to vanish on the way there).
-            .padding(.leading, Self.gutter)
-            .overlay(alignment: .topLeading) { handle(b) }
-            .contentShape(Rectangle())
-            .onHover { hovering = $0 }
-            .padding(.leading, -Self.gutter)
+            // The page-level gutter (BlockGutter.swift) hit-tests these frames for the + / ⋮⋮ and for drops.
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: BlockCanvas.space) }) { f in
+                editor.gutter.register(id, frame: f, showsHandle: b.type != .columnList)
+            }
+            .onDisappear { editor.gutter.unregister(id) }
             #else
             .overlay(alignment: .topLeading) { handle(b) }
             #endif
@@ -109,10 +110,15 @@ struct BlockRow: View {
             }
         }
         .id(b.id)
+        #if os(macOS)
+        .opacity(editor.gutter.draggingIDs.contains(id) ? 0.35 : 1)
+        .contentShape(Rectangle())
+        #else
         .overlay(alignment: dropAlignment) { dropIndicator }
         .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { geometry.size = $0 })
         .contentShape(Rectangle())
         .onDrop(of: [.text], delegate: BlockDropDelegate(target: b, model: model, editor: editor, box: geometry, edge: $dropEdge))
+        #endif
         .contextMenu { BlockMenuItems(ids: menuTargets, editor: editor) }
         .popover(isPresented: linkBinding) { LinkEditorView(editor: editor, blockID: id) }
     }
@@ -131,53 +137,11 @@ struct BlockRow: View {
         return Color.clear
     }
 
-    // MARK: Handle (⋮⋮) — click for the block menu, drag to move
+    // MARK: Handle (⋮⋮) — iOS (macOS: page-level gutter in BlockGutter.swift)
 
+    #if os(iOS)
     @ViewBuilder
     private func handle(_ b: Block) -> some View {
-        #if os(macOS)
-        let visible = (hovering || showMenu) && !editor.isLocked
-        HStack(spacing: 0) {
-            Button {
-                let nid = store.insertBlock(.text, after: id, text: RichText("/")) ?? id
-                editor.menu = InlineMenu(kind: .slash, blockID: nid, anchor: 0, query: "")
-                editor.focus(FocusTarget(nid, 1))
-            } label: {
-                Image(systemName: "plus").frame(width: 18, height: 22).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .help("Click to add below")
-            .accessibilityIdentifier("block.add")
-            Image(systemName: "circle.grid.2x3.fill")
-                .font(.system(size: 9))
-                .frame(width: 16, height: 22)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if NSEvent.modifierFlags.contains(.shift) {
-                        editor.selectedBlocks.formSymmetricDifference([id])
-                    } else {
-                        editor.focusedID.flatMap { editor.host($0) }?.endEditing()
-                        editor.selectedBlocks = [id]
-                        showMenu = true
-                    }
-                }
-                .onDrag {
-                    model.draggedBlocks = menuTargets
-                    return NSItemProvider(object: id as NSString)
-                }
-                .help("Drag to move\nClick to open menu")
-                .accessibilityIdentifier("block.handle")
-                .popover(isPresented: $showMenu, arrowEdge: .leading) {
-                    BlockMenuView(ids: menuTargets, editor: editor) { showMenu = false }
-                }
-        }
-        .foregroundStyle(Theme.secondary)
-        .padding(.leading, 6)
-        .offset(y: handleOffset(b))
-        .opacity(visible ? 1 : 0)
-        .allowsHitTesting(visible)
-        .accessibilityHidden(!visible)
-        #else
         if editor.focusedID == id || editor.selectedBlocks.contains(id) {
             Image(systemName: "circle.grid.2x3.fill")
                 .font(.system(size: 9))
@@ -195,7 +159,6 @@ struct BlockRow: View {
                         .presentationCompactAdaptation(.popover)
                 }
         }
-        #endif
     }
 
     private func handleOffset(_ b: Block) -> CGFloat {
@@ -224,8 +187,10 @@ struct BlockRow: View {
             }
         }
     }
+#endif
 }
 
+#if os(iOS)
 /// Mutable size holder that SwiftUI doesn't observe (see `BlockRow.geometry`).
 final class SizeBox {
     var size = CGSize(width: 600, height: 30)
@@ -281,6 +246,7 @@ struct BlockDropDelegate: DropDelegate {
         return true
     }
 }
+#endif
 
 // MARK: - Markers (bullets, numbers, checkboxes, toggles)
 

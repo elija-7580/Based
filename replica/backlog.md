@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 13. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 14. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -18,11 +18,12 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Notion-Design statt Obsidian-Look | 🟡 | Pass 11: Fenster ohne Titelleiste, Tabs in der Titelleiste, Notion-Sidebar, Seiten-Topbar, 708-pt-Textspalte, Notion-Farben |
 | Alle Funktionen + Shortcuts 1:1 | 🟡 | Großer Teil (Blöcke, Slash-Menü, Markdown-Shortcuts, ⌘K/⌘N/⌘F/⌘J/⌘T/⌘W/⌘[/⌘]/⌘\\, ⌘⇧H …); vollständiger Abgleich offen |
 | Notion-Einstellungen | 🟡 | Settings-Seiten im Notion-Stil; viele Workspace-/Team-Optionen ohne Funktion (kein Mehrbenutzer) |
+| Start ohne Hänger (Keychain) | ✅ | Pass 14: Schlüssel werden im Hintergrund ohne Dialog aus der Keychain geladen; Freigabe bei neuer Code-Signatur über Einstellungen → AI („Allow Keychain access…“) |
 
 ## Editor & Seiten
 | Anforderung | Status | Notiz |
 |---|---|---|
-| Drag-Handles (sechs Punkte), Verschachteln, Verschieben | 🟡 | Gutter in Pass 9 repariert; braucht Mac-Test |
+| Drag-Handles (sechs Punkte), Verschachteln, Verschieben | 🟡 | Pass 14 neu: ein Hover-Bereich pro Seite (+ / ⋮⋮ verschwinden nicht mehr), eigenes Ziehen mit Geist + blauer Linie (verschachteln, ausrücken, Spalten, Auto-Scroll); Geometrie getestet, auf dem Mac noch nicht von Hand geprüft |
 | Blöcke/Spalten/Bilder in der Größe ändern | 🟡 | Spalten + Bilder; nicht alle Blocktypen |
 | Seiten öffnen wie Notion (Vollbild, Side Peek, Center Peek) | ✅ | |
 | Outline rechts | ✅ | `PageOutline` |

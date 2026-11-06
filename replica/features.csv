@@ -72,7 +72,7 @@ Turn into (any block type),editor,must,yes,yes,
 Turn into page,editor,should,yes,yes,
 Block action menu (delete / duplicate / move / color),editor,must,yes,yes,
 Drag handle to reorder blocks,editor,must,yes,yes,
-Drag to nest / create columns,editor,could,yes,partial,"drag to reorder; column creation via menu, not drag"
+Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns"
 Multi-block selection (Esc / shift),editor,should,yes,yes,
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,
 Duplicate block (⌘D),editor,should,yes,yes,

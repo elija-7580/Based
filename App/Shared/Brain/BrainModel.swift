@@ -2,38 +2,6 @@ import SwiftUI
 import Observation
 import BasedCore
 import BasedBrain
-#if canImport(Security)
-import Security
-#endif
-
-/// Secrets live in the Keychain (API keys, server token); everything else in UserDefaults.
-enum Secrets {
-    static func get(_ key: String) -> String? {
-        #if canImport(Security)
-        let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "com.based.app",
-                                kSecAttrAccount as String: key, kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
-        var out: AnyObject?
-        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return nil }
-        return String(data: d, encoding: .utf8)
-        #else
-        return UserDefaults.standard.string(forKey: "secret." + key)
-        #endif
-    }
-
-    static func set(_ key: String, _ value: String?) {
-        #if canImport(Security)
-        let base: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "com.based.app", kSecAttrAccount as String: key]
-        SecItemDelete(base as CFDictionary)
-        guard let value, !value.isEmpty else { return }
-        var add = base
-        add[kSecValueData as String] = Data(value.utf8)
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        SecItemAdd(add as CFDictionary, nil)
-        #else
-        UserDefaults.standard.set(value, forKey: "secret." + key)
-        #endif
-    }
-}
 
 struct ChatTurn: Identifiable, Equatable {
     let id = UUID()
@@ -55,6 +23,7 @@ final class BrainModel {
     @ObservationIgnored private(set) var runtime: AgentRuntime
     @ObservationIgnored private var scheduler: AgentScheduler?
     @ObservationIgnored private(set) var serverSync: ServerSync?
+    @ObservationIgnored private var secretsObserver: NSObjectProtocol?
 
     var turns: [ChatTurn] = []
     var isRunning = false
@@ -90,6 +59,16 @@ final class BrainModel {
         configureScheduler()
         startServerSyncIfConfigured()
         detectClaude()
+        // Keys arrive from the Keychain in the background (see `Secrets`): pick them up when they do.
+        secretsObserver = NotificationCenter.default.addObserver(forName: Secrets.didLoad, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.secretsLoaded() }
+        }
+    }
+
+    private func secretsLoaded() {
+        reloadProviders()
+        if serverSync == nil { startServerSyncIfConfigured() }
+        happier.secretsLoaded()
     }
 
     // MARK: Providers

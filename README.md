@@ -244,6 +244,28 @@ formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 The app builds and runs on the Mac (first user log: macOS 27.2, a 53,086-block Notion import).
 
+**Pass 14** — the first pasted report found a 7-minute launch hang, and the block gutter works like Notion:
+
+- **No Keychain hang at launch** — the report showed `Secrets.get` → `SecItemCopyMatching` waiting 431 s on
+  the main thread for the macOS Keychain prompt (locally built copies get a new code signature with each
+  build, so macOS asks again for every saved key). Keys stay in the Keychain, but Based now reads them on a
+  background queue, without UI, into an in-memory cache; nothing on the main thread waits for the Keychain.
+  Keys macOS won't hand out silently show up in Settings → AI as "N saved keys need Keychain permission" with
+  *Allow Keychain access…* (one macOS prompt per key — choose "Always Allow") or *Not now*. Signing with
+  your Apple development team (`DEVELOPMENT_TEAM` in `Config/Local.xcconfig`) keeps the signature stable,
+  so the answer sticks across rebuilds. The session key is only generated once the load finished and no
+  existing key is waiting for permission. Diagnostics / the report show the Keychain state.
+- **Block gutter like Notion** — one hover region for the whole page instead of one per row: the + and ⋮⋮
+  of the block under the pointer stay visible while you move onto them (also for blocks in columns,
+  callouts and nested lists); a short grace period stops flicker between blocks; typing hides them.
+  **+** on an empty line opens the slash menu there, otherwise adds a line below (⌥-click: above).
+  **⋮⋮** click opens the block menu, drag moves the block (or the whole selection): a ghost follows the
+  pointer, a blue line shows where it lands — between blocks, indented to nest (move right), outdented
+  below a last child (move left), vertical on a block's side for columns; the page auto-scrolls near the
+  edges; dropping outside the page cancels. The drag no longer goes through system drag & drop (text views
+  swallowed those drops). The geometry is in BasedCore (`BlockGutterGeometry`, tested).
+- Launch log splits the open time into store and agent-brain init.
+
 **Pass 13** — diagnostics you can paste:
 
 - **Copy logs** in Help → Diagnostics (menu: report · shown entries · full log files), Help → *Copy Diagnostic

@@ -11,3 +11,6 @@ public func SecItemUpdate(_ query: CFDictionary, _ attributes: CFDictionary) -> 
 public func SecItemDelete(_ query: CFDictionary) -> OSStatus { 0 }
 public func SecRandomCopyBytes(_ rnd: Any?, _ count: Int, _ bytes: UnsafeMutableRawPointer) -> Int32 { 0 }
 public let kSecRandomDefault: Any? = nil
+
+@available(macOS, deprecated: 10.10) public func SecKeychainSetUserInteractionAllowed(_ state: Bool) -> OSStatus { 0 }
+public let errSecInteractionNotAllowed: OSStatus = -25308, errSecAuthFailed: OSStatus = -25293

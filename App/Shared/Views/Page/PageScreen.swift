@@ -60,6 +60,15 @@ struct PageScreen: View {
                         }
                     }
                     .padding(.horizontal, horizontalPadding)
+                    #if os(macOS)
+                    // One hover region + overlay for the whole page: the + / ⋮⋮ of the block under the
+                    // pointer, the blue drop line and the drag ghost (BlockGutter.swift). The padding is part
+                    // of the region, so moving onto the handle keeps it visible.
+                    .overlay(alignment: .topLeading) { BlockGutterOverlay(editor: editor) }
+                    .onContinuousHover(coordinateSpace: BlockCanvas.space) { editor.gutter.hover($0, locked: editor.isLocked) }
+                    .coordinateSpace(BlockCanvas.space)
+                    .background(EnclosingScrollViewReader { editor.gutter.scrollView = $0 })
+                    #endif
                 }
                 .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
                 .frame(maxWidth: .infinity)
@@ -136,8 +145,9 @@ struct PageScreen: View {
 
     private var horizontalPadding: CGFloat {
         #if os(macOS)
-        if isPeek { return max(24, min(52, (availableWidth - Theme.contentWidth) / 2)) }
-        return max(24, min(96, (availableWidth - Theme.contentWidth) / 2))
+        // Never narrower than the + / ⋮⋮ gutter (it lives in this padding).
+        if isPeek { return max(52, min(64, (availableWidth - Theme.contentWidth) / 2)) }
+        return max(56, min(96, (availableWidth - Theme.contentWidth) / 2))
         #else
         return 20
         #endif

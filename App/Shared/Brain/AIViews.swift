@@ -15,10 +15,12 @@ struct AISettingsView: View {
     @State private var pageIDs = ""
     @State private var importResult: String?
     @State private var importing = false
+    private var secrets: SecretsStatus { SecretsStatus.shared }
 
     var body: some View {
         @Bindable var brain = brain
         Group {
+            SecretsPermissionSection()
             Section("Providers") {
                 SecureField("Anthropic API key", text: $anthropic).onSubmit { Secrets.set("anthropic", anthropic); brain.reloadProviders() }
                 SecureField("OpenAI API key", text: $openai).onSubmit { Secrets.set("openai", openai); brain.reloadProviders() }
@@ -72,6 +74,37 @@ struct AISettingsView: View {
                 }.disabled(notionToken.isEmpty || importing)
                 if let importResult { Text(importResult).font(.caption) }
                 Text("Share the pages/databases with your integration in Notion first (••• → Connections). For a full workspace import use File → Import from Notion….").font(.caption).foregroundStyle(Theme.secondary)
+            }
+        }
+        // Keys load from the Keychain in the background — fill fields that were empty when the view appeared.
+        .onChange(of: secrets.revision) { _, _ in
+            if anthropic.isEmpty { anthropic = Secrets.get("anthropic") ?? "" }
+            if openai.isEmpty { openai = Secrets.get("openai") ?? "" }
+            if serverToken.isEmpty { serverToken = Secrets.get("server.token") ?? "" }
+            if notionToken.isEmpty { notionToken = Secrets.get("notion") ?? "" }
+        }
+    }
+}
+
+/// "N keys need Keychain permission" — shown when this build couldn't read stored keys without a prompt
+/// (locally built apps get a new code signature with each build). Nothing is asked at launch any more.
+struct SecretsPermissionSection: View {
+    private var status: SecretsStatus { SecretsStatus.shared }
+    var body: some View {
+        if !status.pending.isEmpty || status.lastMessage != nil {
+            Section("Keychain") {
+                if !status.pending.isEmpty {
+                    Label("\(status.pending.count) saved key\(status.pending.count == 1 ? " needs" : "s need") Keychain permission: \(status.pendingDescription)", systemImage: "key")
+                    Text("This copy of Based has a new code signature (each local build gets one), so macOS asks before handing out keys an earlier build saved. Based no longer asks at launch — allow it here. macOS shows one prompt per key; choose “Always Allow”. Signing with your Apple development team (DEVELOPMENT_TEAM in Config/Local.xcconfig) keeps the signature stable across rebuilds.")
+                        .font(.caption).foregroundStyle(Theme.secondary)
+                    HStack {
+                        Button(status.requesting ? "Waiting for macOS…" : "Allow Keychain access…") { status.requestAccess() }
+                            .disabled(status.requesting)
+                            .accessibilityIdentifier("secrets.allowKeychain")
+                        Button("Not now") { Secrets.dismissPending() }.disabled(status.requesting)
+                    }
+                }
+                if let m = status.lastMessage { Text(m).font(.caption).foregroundStyle(Theme.secondary) }
             }
         }
     }

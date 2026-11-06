@@ -267,3 +267,54 @@ unexpectedly" — pasted from the Diagnostics view with a broken layout. Request
 - Tests: BasedCore 62 (+7: report sections, empty report, demangle/simplify, sampler safety, previous-run
   tail, page-list cache invalidation, background backlink index with a concurrent change), BasedBrain 51 —
   all green; `bash ci/typecheck/run.sh` → typecheck OK.
+
+## Pass 14 — Keychain launch hang, Notion-style block gutter and dragging
+
+First pasted report (release build, stack sampling on): a **431 s hang at launch** in
+`Secrets.get(String)` → `SecItemCopyMatching` → legacy Keychain decrypt (`SecKeychainItemCopyContent` …
+`mach_msg`), called from `HappierModel.init` ← `BrainModel.init` ← `AppModel.init` on the main thread —
+macOS showing its Keychain permission prompt because every local build has a new code signature. Second
+request: the + / ⋮⋮ vanish before the pointer reaches them, blocks can't be dragged — "make blocks behave like
+Notion".
+
+- **`Secrets`** (new file `App/Shared/Brain/Secrets.swift`, old enum removed from `BrainModel.swift`): still
+  the Keychain (service `com.based.app`), now behind a lock-protected in-memory cache. `startLoading()`
+  (first thing in `AppModel.init`) runs on a serial background queue: attribute-only listing (nothing is
+  decrypted, no prompt), then one read per account with `SecKeychainSetUserInteractionAllowed(false)`;
+  failures become `pending`. `set` updates the cache at once and writes on the queue. `didLoad` (main
+  thread) → `BrainModel` reloads providers, starts server sync if it wasn't running, `HappierModel` applies
+  the session key and reconnects connections that now have a secret. `ensureSessionKey()` only generates a
+  new session key once the load finished and `session.key` isn't pending (a replacement would cut the
+  device off from sessions encrypted with the old key). `SecretsStatus` (observable) drives the Settings → AI
+  "Keychain" section (*Allow Keychain access…* = interactive reads on the queue, *Not now*), refreshes empty
+  key fields when values arrive, and the Diagnostics System tab / report fact "Keychain". iOS reads all items
+  in one query. A file-based store was considered and rejected — it would have taken the keys out of the
+  Keychain.
+- **Gutter** (new file `App/Shared/Views/Blocks/BlockGutter.swift`): `BlockGutterState` per
+  `EditorController` (`editor.gutter`). Each `BlockRow` registers the frame of its own line(s) in the
+  `BlockCanvas.space` coordinate space (`onGeometryChange`, unobserved dictionary); the page's padded block
+  container has one `onContinuousHover`, one overlay (`BlockGutterOverlay`) and the coordinate space — the
+  old per-row `.onHover` + negative padding + `.contentShape` combination cut the gutter out of the hit area.
+  `BlockGutterGeometry.hoverTarget` (BasedCore) picks the innermost block under the pointer; a gutter wins
+  over a block it lies inside (callout / column children) but not over a neighbour column. 220 ms grace
+  period, frozen while the menu is open or a drag runs, hidden while typing (`textDidChange`).
+  macOS page padding is at least 56 pt (peek 52) so the gutter always fits.
+- **+**: empty text line → "/" in place + slash menu; else new line below with "/" (⌥: above).
+  **⋮⋮**: one `DragGesture(minimumDistance: 0)` — < 3 pt = click (select, keep a selection it belongs to,
+  open `BlockMenuView` popover; ⇧-click toggles selection), more = drag. No `NSItemProvider` / `onDrop` on
+  macOS any more (the NSTextViews took the text drops).
+- **Drop**: `BlockGutterGeometry.dropTarget(at:blockLeft:rows:)` — rows = rendered blocks minus the dragged
+  ones and their descendants (`dropRows`), nearest by vertical distance (gutter counts as inside), upper
+  half → before, lower half → after; `blockLeft` = pointer − grab offset: ≥ ¾ indent right of a nestable
+  block → first child (line indented), below a block whose children show → first child, left of a last
+  child's level → after the parent (repeats up the chain); right edge (last 40 pt) / left edge (first
+  12 pt, middle half) → columns (page level or inside a column). Moves via `moveBlocks` / `placeInColumn`,
+  moved blocks stay selected, dragged rows dim to 35 %, ghost label (title or "N blocks"), blue 3-pt line,
+  auto-scroll at 60 Hz within 48 pt of the scroll view's top / bottom edge (`EnclosingScrollViewReader`
+  finds SwiftUI's NSScrollView), far outside the blocks = cancel. iOS keeps the focused-block handle with
+  system drag & drop.
+- Launch log: "Workspace opened … (store N ms, agent brain N ms)".
+- Tests: BasedCore 67 (+5 `BlockGutterGeometryTests`: gutter hover, callout child vs. neighbour column,
+  before / after / first child / nest, outdent, columns), BasedBrain 51 — all green; `bash
+  ci/typecheck/run.sh` → typecheck OK (stubs: `onContinuousHover(coordinateSpace: some
+  CoordinateSpaceProtocol)`, `SecKeychainSetUserInteractionAllowed`).

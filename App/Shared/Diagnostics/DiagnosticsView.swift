@@ -8,6 +8,11 @@ import AppKit
 
 /// Help ▸ Diagnostics (and Settings ▸ Diagnostics): live log, hangs, layout audit and system info.
 struct DiagnosticsView: View {
+    @MainActor static var secretsSummary: String {
+        let s = SecretsStatus.shared
+        guard s.loaded else { return "loading in the background…" }
+        return "\(Secrets.cachedCount) key(s) loaded" + (s.pending.isEmpty ? "" : " · \(s.pending.count) need permission (Settings → AI)")
+    }
     enum Tab: String, CaseIterable, Identifiable { case logs = "Log", hangs = "Hangs", layout = "Layout", system = "System"; var id: String { rawValue } }
 
     @Environment(AppModel.self) private var model
@@ -242,6 +247,7 @@ struct DiagnosticsView: View {
                 LabeledContent("Debugger", value: DebuggerCheck.isAttached ? "Attached (Xcode)" : "Not attached")
                 LabeledContent("Hangs this session", value: "\(HangWatchdog.shared.hangCount)")
                 LabeledContent("Hang stack sampling", value: HangWatchdog.shared.samplingAvailable ? "On" : "Unavailable")
+                LabeledContent("Keychain", value: Self.secretsSummary)
                 if let c = CrashReporter.previousCrash {
                     LabeledContent("Previous run", value: c.summary)
                 }

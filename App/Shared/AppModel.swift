@@ -197,6 +197,8 @@ final class AppModel {
         // Before anything touches Application Support: move data out of the old sandbox container
         // (builds ≤ Pass 8 were sandboxed) and start the log file.
         AppDiagnostics.bootstrap()
+        // Keychain reads happen in the background, without UI (they used to block launch on a permission prompt).
+        Secrets.startLoading()
         let openStart = Date()
         let fm = FileManager.default
         let base = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
@@ -214,7 +216,10 @@ final class AppModel {
         registry = Registry(store: store)
         queryCache = QueryCache(store: store)
         if store.blocks.isEmpty { Onboarding.seed(store) }
+        let storeMS = Int(Date().timeIntervalSince(openStart) * 1000)
+        let brainStart = Date()
         brain = BrainModel(store: store)
+        let brainMS = Int(Date().timeIntervalSince(brainStart) * 1000)
         brain.assets = assets
         if let first = store.topLevelPages().first(where: { $0.id != brain.brain.rootID }) { selection = .page(first.id) }
         tabs = [BrowserTab(id: activeTabID, selection: selection)]
@@ -224,7 +229,7 @@ final class AppModel {
         startSyncIfConfigured()
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
         store.prepareLinkIndexInBackground()
-        Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms", category: "app")
+        Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms (store \(storeMS) ms, agent brain \(brainMS) ms)", category: "app")
     }
 
     static func deviceNodeID() -> String {

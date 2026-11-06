@@ -75,7 +75,8 @@ final class HappierModel {
     var defaultDirectory: String = UserDefaults.standard.string(forKey: "acp.cwd") ?? NSHomeDirectory() {
         didSet { UserDefaults.standard.set(defaultDirectory, forKey: "acp.cwd") }
     }
-    /// End‑to‑end key (base64, 32 bytes) shared between devices and the daemon; stored in the Keychain.
+    /// End‑to‑end key (base64, 32 bytes) shared between devices and the daemon; stored in the Keychain
+    /// (read in the background at launch — `secretsLoaded()` applies it when it arrives).
     var cipherKey: String = Secrets.get("session.key") ?? "" {
         didSet { Secrets.set("session.key", cipherKey.isEmpty ? nil : cipherKey); runtime.cipher = SessionCipher(base64: cipherKey) }
     }
@@ -94,11 +95,7 @@ final class HappierModel {
         runtime.machineName = machineName
         runtime.agents = agents
         runtime.permissionPolicy = permissionPolicy
-        if cipherKey.isEmpty {
-            // Property observers don't fire inside init: persist the fresh key explicitly.
-            let k = SessionCipher.generate().base64
-            cipherKey = k; Secrets.set("session.key", k)
-        }
+        ensureSessionKey()
         runtime.cipher = SessionCipher(base64: cipherKey)
         runtime.onUpdate = { [weak self] sid, update in Task { @MainActor in self?.handle(sid, update) } }
         runtime.onTurn = { [weak self] sid, started in
@@ -122,6 +119,23 @@ final class HappierModel {
         }
         if !AppDiagnostics.isUITesting { startLocalMCP() }
         #endif
+    }
+
+    /// A fresh session key — but only once the Keychain load finished and no existing key is waiting for
+    /// permission (replacing it would cut this device off from sessions encrypted with the old one).
+    private func ensureSessionKey() {
+        guard cipherKey.isEmpty, Secrets.isLoaded, !Secrets.isPending("session.key") else { return }
+        let k = SessionCipher.generate().base64
+        // Property observers don't fire inside init: persist + apply explicitly.
+        cipherKey = k; Secrets.set("session.key", k); runtime.cipher = SessionCipher(base64: k)
+    }
+
+    /// Called by `BrainModel` when keys arrived from the Keychain.
+    func secretsLoaded() {
+        let k = Secrets.get("session.key") ?? ""
+        if !k.isEmpty, k != cipherKey { cipherKey = k } else { ensureSessionKey() }
+        // Reconnect only when a connection actually has a secret now (reload drops live clients).
+        if brain.connections().contains(where: { $0.enabled && Secrets.get($0.secretKey) != nil }) { reloadConnections() }
     }
 
     /// Starts the loopback MCP server agents use to reach the workspace, the Inbox and sub-agents.

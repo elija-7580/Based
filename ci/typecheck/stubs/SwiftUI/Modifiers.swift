@@ -165,6 +165,7 @@ extension View {
     public func highPriorityGesture<G: Gesture>(_ g: G, including mask: GestureMask = .all) -> _M { .init() }
     public func onHover(perform action: @escaping (Bool) -> Void) -> _M { .init() }
     public func onContinuousHover(coordinateSpace: CoordinateSpace = .local, perform action: @escaping (HoverPhase) -> Void) -> _M { .init() }
+    public func onContinuousHover(coordinateSpace: some CoordinateSpaceProtocol, perform action: @escaping (HoverPhase) -> Void) -> _M { .init() }
     public func onKeyPress(_ key: KeyEquivalent, action: @escaping () -> KeyPress.Result) -> _M { .init() }
     public func onKeyPress(_ key: KeyEquivalent, phases: KeyPress.Phases, action: @escaping (KeyPress) -> KeyPress.Result) -> _M { .init() }
     public func onKeyPress(keys: Set<KeyEquivalent>, phases: KeyPress.Phases = [.down, .repeat], action: @escaping (KeyPress) -> KeyPress.Result) -> _M { .init() }

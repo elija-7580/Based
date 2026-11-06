@@ -82,6 +82,8 @@ final class EditorController {
     /// Page typography (font, small text, full width); mirrored from the page block.
     var format: PageFormat?
     var isLocked: Bool { format?.locked == true }
+    /// + / ⋮⋮ gutter and block dragging (see `BlockGutter.swift`).
+    let gutter = BlockGutterState()
     @ObservationIgnored private var hosts: [RecordID: WeakHost] = [:]
     @ObservationIgnored var pendingFocus: FocusTarget?
 
@@ -151,6 +153,7 @@ final class EditorController {
     // MARK: Text changes
 
     func textDidChange(_ id: RecordID, _ text: RichText, selection: NSRange, inserted: Bool) -> EditResult? {
+        gutter.hideWhileTyping()
         guard let b = store.blocks[id] else { return nil }
         let caret = selection.location
         if b.type == .page {

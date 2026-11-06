@@ -107,6 +107,7 @@ enum AppDiagnostics {
             .init("System", "\(p.operatingSystemVersionString) · \(architecture) · \(p.activeProcessorCount) cores · \(String(format: "%.0f", gb)) GB"),
             .init("Process", "sandboxed: \(isSandboxed ? "yes" : "no") · debugger: \(DebuggerCheck.isAttached ? "attached" : "no") · running \(up / 60) min \(up % 60) s"),
             .init("Hang stacks", HangWatchdog.shared.samplingAvailable ? "on" : "unavailable"),
+            .init("Keychain", DiagnosticsView.secretsSummary),
         ]
         if let model {
             r.facts.append(.init("Workspace", "\(model.store.blocks.count) blocks · \(model.store.databases.count) databases · \(model.tabs.count) tabs"))
