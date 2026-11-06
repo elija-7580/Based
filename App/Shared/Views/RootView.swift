@@ -494,7 +494,7 @@ struct HomeCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .bottomLeading) {
-                if let c = page.props.cover { CoverView(cover: c) } else { Color.primary.opacity(0.05) }
+                if let c = page.props.cover { CoverView(cover: c, position: page.props.format?.coverPosition ?? 0.5) } else { Color.primary.opacity(0.05) }
                 PageIconView(icon: page.props.icon, isDatabase: page.type == .databasePage, size: 26)
                     .padding(.leading, 12).offset(y: 12)
             }

@@ -266,6 +266,8 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var format: PageFormat?
     public var bookmark: BookmarkMeta?
     public var width: Double?
+    /// Maximum height (pt) of an inline embed such as an HTML file; nil = automatic.
+    public var height: Double?
     public var isTemplate: Bool?
     public var buttonLabel: String?
 

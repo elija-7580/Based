@@ -52,7 +52,7 @@ struct RowCard: View {
         case .none:
             EmptyView()
         case .pageCover:
-            if let c = row.props.cover { CoverView(cover: c) } else { Color.primary.opacity(0.03) }
+            if let c = row.props.cover { CoverView(cover: c, position: row.props.format?.coverPosition ?? 0.5) } else { Color.primary.opacity(0.03) }
         case .property(let pid):
             if case .files(let files)? = row.values[pid], let f = files.first {
                 if let a = f.asset, let url = ctx.model.assets.url(for: a), let img = PlatformImage(contentsOfFile: url.path) {

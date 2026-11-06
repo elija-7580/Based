@@ -57,6 +57,7 @@ public final class FileAssetStore: AssetStore {
         case "heic": return "image/heic"
         case "svg": return "image/svg+xml"
         case "pdf": return "application/pdf"
+        case "html", "htm": return "text/html"
         case "mp4", "m4v": return "video/mp4"
         case "mov": return "video/quicktime"
         case "mp3": return "audio/mpeg"
