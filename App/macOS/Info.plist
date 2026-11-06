@@ -11,6 +11,7 @@
 	<key>CFBundlePackageType</key><string>APPL</string>
 	<key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>Based links</string><key>CFBundleURLSchemes</key><array><string>based</string></array></dict></array>
 	<key>BasedCloudKitContainer</key><string>$(BASED_CLOUDKIT_CONTAINER)</string>
 	<key>BasedCloudSyncEnabled</key><string>$(BASED_CLOUD_SYNC)</string>
 	<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>

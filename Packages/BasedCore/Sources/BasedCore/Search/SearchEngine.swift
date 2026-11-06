@@ -7,6 +7,13 @@ public struct SearchHit: Identifiable, Hashable, Sendable {
     /// Matching content text (nil when only the title matched).
     public var snippet: String?
     public var blockID: RecordID?
+
+    public init(pageID: RecordID, score: Double = 0, snippet: String? = nil, blockID: RecordID? = nil) {
+        self.pageID = pageID
+        self.score = score
+        self.snippet = snippet
+        self.blockID = blockID
+    }
 }
 
 public struct SearchFilters: Sendable {
