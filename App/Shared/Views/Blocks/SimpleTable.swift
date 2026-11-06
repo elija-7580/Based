@@ -58,7 +58,7 @@ struct SimpleTableView: View {
     private func cell(row: Block, r: Int, c: Int, rowCount: Int) -> some View {
         let header = (block.props.tableHeaderRow == true && r == 0) || (block.props.tableHeaderColumn == true && c == 0)
         let text = (row.props.cells ?? []).indices.contains(c) ? row.props.cells![c] : RichText()
-        TableCellField(text: text, bold: header, editable: !locked) { new in
+        TableCellField(text: text, bold: header, editable: !locked, onFocus: { editor.selectedBlocks = [] }) { new in
             store.updateBlock(row.id, name: "Edit cell", coalesce: "cell-\(row.id)-\(c)") { b in
                 var cells = b.props.cells ?? []
                 while cells.count <= c { cells.append(RichText()) }
@@ -142,16 +142,26 @@ struct SimpleTableView: View {
     }
 }
 
-/// Plain-text editor for a rich-text cell; keeps formatting until the text actually changes.
+/// Rich-text editor for a table cell: ⌘B / ⌘I / ⌘U / ⇧⌘S / ⌘E format the selection like in any other block.
 struct TableCellField: View {
     let text: RichText
     var bold = false
     var editable = true
+    var onFocus: () -> Void = {}
     let onChange: (RichText) -> Void
+    #if !os(macOS)
     @State private var draft = ""
+    #endif
 
     var body: some View {
         Group {
+            #if os(macOS)
+            if editable {
+                TableCellTextView(text: text, header: bold, onFocus: onFocus, onChange: onChange)
+            } else {
+                Text(text.plainText)
+            }
+            #else
             if editable {
                 TextField("", text: $draft, axis: .vertical)
                     .textFieldStyle(.plain)
@@ -159,11 +169,140 @@ struct TableCellField: View {
             } else {
                 Text(text.plainText)
             }
+            #endif
         }
         .font(.system(size: 14, weight: bold ? .semibold : .regular))
         .padding(.horizontal, 8)
         .padding(.vertical, 7)
+        #if !os(macOS)
         .onAppear { draft = text.plainText }
         .onChange(of: text.plainText) { _, v in if v != draft { draft = v } }
+        #endif
     }
 }
+
+#if os(macOS)
+import AppKit
+
+struct TableCellTextView: NSViewRepresentable {
+    let text: RichText
+    let header: Bool
+    var onFocus: () -> Void = {}
+    let onChange: (RichText) -> Void
+    @Environment(AppModel.self) private var model
+
+    @MainActor
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: TableCellTextView
+        var applied = RichText()
+        var isApplying = false
+        weak var view: BasedNSTextView?
+        init(_ p: TableCellTextView) { parent = p }
+
+        private var style: TextStyle { TextStyle(type: .text, format: nil, color: nil) }
+
+        func load(_ rt: RichText, selection: NSRange?) {
+            guard let v = view else { return }
+            isApplying = true
+            let attr = NSMutableAttributedString(attributedString: AttributedBridge.attributed(rt, style: style, store: parent.model.store))
+            if parent.header, attr.length > 0 {
+                attr.enumerateAttribute(.font, in: NSRange(location: 0, length: attr.length)) { f, r, _ in
+                    if let f = f as? NSFont { attr.addAttribute(.font, value: NSFontManager.shared.convert(f, toHaveTrait: .boldFontMask), range: r) }
+                }
+            }
+            v.textStorage?.setAttributedString(attr)
+            applied = AttributedBridge.richText(attr)
+            if let s = selection {
+                let loc = max(0, min(s.location, attr.length))
+                v.setSelectedRange(NSRange(location: loc, length: max(0, min(s.length, attr.length - loc))))
+            }
+            v.typingAttributes = AttributedBridge.typingAttributes(applied.marks(at: v.selectedRange().location), style: style)
+            isApplying = false
+            v.invalidateIntrinsicContentSize()
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard !isApplying, let v = view, let storage = v.textStorage, !v.hasMarkedText() else { return }
+            let rt = AttributedBridge.richText(storage)
+            applied = rt
+            parent.onChange(rt)
+            v.invalidateIntrinsicContentSize()
+        }
+
+        func toggle(_ kind: MarkKind) {
+            guard let v = view else { return }
+            let r = v.selectedRange()
+            if r.length == 0 {
+                var m = applied.marks(at: r.location)
+                kind.set(&m, !kind.get(m))
+                v.typingAttributes = AttributedBridge.typingAttributes(m, style: style)
+                return
+            }
+            let t = applied.toggling(kind, r.location, r.location + r.length)
+            parent.onChange(t)
+            load(t, selection: r)
+        }
+
+        func handle(_ e: NSEvent) -> Bool {
+            let mods = e.modifierFlags.intersection([.command, .shift, .option, .control])
+            let key = e.charactersIgnoringModifiers?.lowercased()
+            if mods == .command {
+                switch key {
+                case "b": toggle(.bold)
+                case "i": toggle(.italic)
+                case "u": toggle(.underline)
+                case "e": toggle(.code)
+                default: return false
+                }
+                return true
+            }
+            if mods == [.command, .shift], key == "s" { toggle(.strikethrough); return true }
+            return false
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> BasedNSTextView {
+        let tv = BasedNSTextView(usingTextLayoutManager: false)
+        tv.drawsBackground = false
+        tv.isRichText = true
+        tv.importsGraphics = false
+        tv.allowsUndo = true
+        tv.isHorizontallyResizable = false
+        tv.isVerticallyResizable = false
+        tv.textContainerInset = .zero
+        tv.textContainer?.lineFragmentPadding = 0
+        tv.textContainer?.widthTracksTextView = true
+        tv.textContainer?.heightTracksTextView = false
+        tv.textContainer?.containerSize = NSSize(width: 124, height: CGFloat.greatestFiniteMagnitude)
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.isAutomaticTextReplacementEnabled = false
+        tv.isAutomaticLinkDetectionEnabled = false
+        tv.smartInsertDeleteEnabled = false
+        tv.insertionPointColor = Theme.textPrimary
+        tv.selectedTextAttributes = [.backgroundColor: Theme.selection]
+        tv.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        let c = context.coordinator
+        tv.delegate = c
+        tv.keyEquivalentHandler = { [weak c] e in c?.handle(e) ?? false }
+        tv.onFocus = { [weak c] in c?.parent.onFocus() }
+        c.view = tv
+        c.load(text, selection: nil)
+        return tv
+    }
+
+    func updateNSView(_ tv: BasedNSTextView, context: Context) {
+        let c = context.coordinator
+        c.parent = self
+        if text != c.applied { c.load(text, selection: tv.selectedRange()) }
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: BasedNSTextView, context: Context) -> CGSize? {
+        var w = proposal.width ?? 124
+        if !w.isFinite || w <= 0 { w = 124 }
+        return CGSize(width: w, height: max(20, nsView.height(forWidth: w)))
+    }
+}
+#endif

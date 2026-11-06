@@ -48,7 +48,12 @@ public final class HTTPServer: @unchecked Sendable {
     }
 
     public func start() throws {
-        fd = socket(AF_INET, Int32(SOCK_STREAM.rawValue), 0)
+        #if canImport(Darwin)
+        let sockStream = SOCK_STREAM
+        #else
+        let sockStream = Int32(SOCK_STREAM.rawValue)
+        #endif
+        fd = socket(AF_INET, sockStream, 0)
         guard fd >= 0 else { throw NSError(domain: "http", code: 1, userInfo: [NSLocalizedDescriptionKey: "socket() failed"]) }
         var yes: Int32 = 1
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, socklen_t(MemoryLayout<Int32>.size))

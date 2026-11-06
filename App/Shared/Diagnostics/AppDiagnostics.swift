@@ -97,8 +97,8 @@ enum AppDiagnostics {
     /// The "Copy logs" report: facts, previous run, hangs with main-thread stacks, breadcrumbs and
     /// log lines (`entries`, default: the last 250 at info level and above).
     @MainActor
-    static func report(model: AppModel?, entries: [LogEntry]? = nil, entriesNote: String? = nil) -> DiagnosticReport {
-        var r = DiagnosticReport()
+    static func report(model: AppModel?, entries: [LogEntry]? = nil, entriesNote: String? = nil) -> BasedCore.DiagnosticReport {
+        var r = BasedCore.DiagnosticReport()
         let p = ProcessInfo.processInfo
         let gb = Double(p.physicalMemory) / 1_073_741_824
         let up = Int(Date().timeIntervalSince(launchedAt))

@@ -328,9 +328,18 @@ final class BasedNSTextView: NSTextView {
     var placeholder = ""
     var showsPlaceholderAlways = false
 
+    /// Standalone uses (table cells) have no `TextCoordinator`; they handle ⌘B/⌘I/… through this hook.
+    var keyEquivalentHandler: ((NSEvent) -> Bool)?
+    var onFocus: (() -> Void)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if window?.firstResponder === self, keyEquivalentHandler?(event) == true { return true }
+        return super.performKeyEquivalent(with: event)
+    }
+
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
-        if ok { coordinator?.didBegin() }
+        if ok { coordinator?.didBegin(); onFocus?() }
         return ok
     }
 

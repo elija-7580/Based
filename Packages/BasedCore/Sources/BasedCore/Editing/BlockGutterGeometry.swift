@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 /// One rendered block for the editor gutter and block drag & drop. All frames share one coordinate space
 /// (the page canvas); `frame` covers the block's own line(s) — children rendered below it are separate rows.

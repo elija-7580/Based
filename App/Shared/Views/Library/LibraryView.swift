@@ -12,7 +12,7 @@ struct LibraryView: View {
     @State private var query = LibraryQuery()
     @State private var selection: Set<RecordID> = []
     @State private var anchor: RecordID?
-    @State private var cache: (revision: Int, items: [LibraryItem])?
+    @State private var cache: (revision: Int, items: [BasedCore.LibraryItem])?
     @State private var confirmDelete = false
     @FocusState private var tableFocused: Bool
     @AppStorage("library.overviewOpen") private var overviewOpen = true
@@ -100,7 +100,7 @@ struct LibraryView: View {
 
     // MARK: Data
 
-    private func items() -> [LibraryItem] {
+    private func items() -> [BasedCore.LibraryItem] {
         let rev = model.store.revision
         if let c = cache, c.revision == rev { return c.items }
         let brain = model.brain.brain
@@ -117,7 +117,7 @@ struct LibraryView: View {
         anchor = id
     }
 
-    private func click(_ id: RecordID, rows: [LibraryItem]) {
+    private func click(_ id: RecordID, rows: [BasedCore.LibraryItem]) {
         tableFocused = true
         #if os(macOS)
         let flags = NSEvent.modifierFlags
@@ -131,7 +131,7 @@ struct LibraryView: View {
         anchor = id
     }
 
-    private func open(_ item: LibraryItem) {
+    private func open(_ item: BasedCore.LibraryItem) {
         if item.kind == .file, let p = item.parentID { model.open(p); return }
         model.open(item.id)
     }
@@ -221,7 +221,7 @@ struct LibraryView: View {
         }
     }
 
-    private func columnHeader(rows: [LibraryItem], selected: Set<RecordID>) -> some View {
+    private func columnHeader(rows: [BasedCore.LibraryItem], selected: Set<RecordID>) -> some View {
         HStack(spacing: 0) {
             LibraryCheckbox(state: selected.isEmpty ? .off : (selected.count == rows.count ? .on : .mixed)) {
                 selection = selected.count == rows.count ? [] : Set(rows.map(\.id))
@@ -257,7 +257,7 @@ struct LibraryView: View {
     // MARK: Context menu
 
     @ViewBuilder
-    private func rowMenu(_ item: LibraryItem, rows: [LibraryItem], selected: Set<RecordID>) -> some View {
+    private func rowMenu(_ item: BasedCore.LibraryItem, rows: [BasedCore.LibraryItem], selected: Set<RecordID>) -> some View {
         let ids = selected.contains(item.id) && selected.count > 1 ? rows.map(\.id).filter(selected.contains) : [item.id]
         if ids.count == 1 {
             Button("Open", systemImage: "arrow.up.right.square") { open(item) }
@@ -338,7 +338,7 @@ struct LibraryBarButton: View {
 
 /// One Library row.
 struct LibraryRow: View {
-    let item: LibraryItem
+    let item: BasedCore.LibraryItem
     let selected: Bool
     /// "Same title" filter: why this row shares its title with others (see `DuplicateCause`).
     var note: String?
