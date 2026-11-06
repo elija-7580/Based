@@ -1,5 +1,8 @@
 import SwiftUI
 import BasedCore
+#if os(macOS)
+import AppKit
+#endif
 
 @main
 struct BasedApp: App {
@@ -10,6 +13,7 @@ struct BasedApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(model.brain)
                 .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
                 #if os(macOS)
                 .frame(minWidth: 760, minHeight: 480)
@@ -20,8 +24,9 @@ struct BasedApp: App {
         Settings {
             SettingsView()
                 .environment(model)
+                .environment(model.brain)
                 .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
-                .frame(width: 520, height: 460)
+                .frame(width: 560, height: 640)
         }
         #endif
     }
@@ -74,7 +79,12 @@ struct BasedCommands: Commands {
             Button("Toggle Dark Mode") { Appearance.toggle() }.keyboardShortcut("l", modifiers: [.command, .shift])
         }
         CommandMenu("Go") {
+            Button("Ask AI…") { model.showAI.toggle() }.keyboardShortcut("j")
             Button("Search…") { model.showQuickFind = true }.keyboardShortcut("p")
+            Button("Open Parent Page") { model.openParent() }.keyboardShortcut("u", modifiers: [.command, .shift])
+            #if os(macOS)
+            Button("Toggle Sidebar") { NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil) }.keyboardShortcut("\\")
+            #endif
             Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
             Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)
             Button("Home") { model.selection = .home }.keyboardShortcut("h", modifiers: [.command, .shift])

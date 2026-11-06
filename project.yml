@@ -20,6 +20,8 @@ settings:
 packages:
   BasedCore:
     path: Packages/BasedCore
+  BasedBrain:
+    path: Packages/BasedBrain
 targets:
   Based-macOS:
     type: application
@@ -30,6 +32,8 @@ targets:
       - App/macOS
     dependencies:
       - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
     settings:
       base:
         PRODUCT_NAME: Based
@@ -47,6 +51,8 @@ targets:
       - App/iOS
     dependencies:
       - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
     settings:
       base:
         PRODUCT_NAME: Based

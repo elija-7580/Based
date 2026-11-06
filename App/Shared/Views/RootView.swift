@@ -31,6 +31,7 @@ struct RootView: View {
             PeekView(pageID: peek.id, mode: .centerPeek).environment(model)
         }
         .sheet(isPresented: $model.showQuickFind) { QuickFindView().environment(model) }
+        .sheet(isPresented: $model.showAI) { AIPanel().environment(model).environment(model.brain) }
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .sheet(item: $model.moveRequest) { req in
             PagePicker(purpose: .move(req.ids)) { model.moveRequest = nil }.environment(model)
@@ -157,7 +158,10 @@ struct SidebarView: View {
             Section {
                 Button { model.showQuickFind = true } label: { Label("Search", systemImage: "magnifyingglass") }
                     .buttonStyle(.plain)
+                Button { model.showAI = true } label: { Label("Ask AI", systemImage: "sparkles") }
+                    .buttonStyle(.plain)
                 Label("Home", systemImage: "house").tag(SidebarItem.home)
+                Label("Agent Brain", systemImage: "brain").tag(SidebarItem.page(model.brain.brain.rootID))
             } header: {
                 WorkspaceHeader()
             }
@@ -606,6 +610,7 @@ struct SettingsView: View {
                 }
                 Button("Sync now") { model.syncNow() }.disabled(!syncOn)
             }
+            AISettingsView()
             Section("Data") {
                 Button("Import from Notion export…") { model.showImport = true }
                 Button("Purge Trash (older than 30 days)") { store.purgeTrash() }

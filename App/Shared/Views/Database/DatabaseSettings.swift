@@ -469,6 +469,10 @@ struct PropertyHeaderMenu: View {
                     Divider()
                     row("Insert left", "arrow.left.to.line") { insert(left: true) }
                     row("Insert right", "arrow.right.to.line") { insert(left: false) }
+                    if [.text, .select, .status, .multiSelect, .checkbox].contains(property.type) {
+                        AutofillButton(databaseID: ctx.db.id, propertyID: property.id, rows: store.rows(of: ctx.db.id).map(\.id))
+                            .buttonStyle(.plain).padding(.horizontal, 8).padding(.vertical, 4)
+                    }
                     if property.type != .title {
                         row("Duplicate property", "plus.square.on.square") { _ = store.duplicateProperty(ctx.db.id, property.id); done() }
                         row("Delete property", "trash", destructive: true) { store.deleteProperty(ctx.db.id, property.id); done() }

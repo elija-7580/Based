@@ -33,6 +33,7 @@ struct PageScreen: View {
         VStack(spacing: 0) {
             if model.store.isTrashed(pageID) { TrashBanner(pageID: pageID) }
             if page.props.isTemplate == true { TemplateBanner(page: page) }
+            ScrollViewReader { scroll in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     PageHeader(page: page, editor: editor, isPeek: isPeek)
@@ -57,6 +58,10 @@ struct PageScreen: View {
                 }
                 .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
                 .frame(maxWidth: .infinity)
+            }
+            .overlay(alignment: .topTrailing) {
+                if page.type != .databasePage, format?.hideOutline != true { PageOutline(pageID: pageID, scroll: scroll) }
+            }
             }
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
             .overlayPreferenceValue(MenuAnchorKey.self) { anchor in
@@ -434,6 +439,7 @@ struct PageMenu: View {
             }
             Toggle("Small text", isOn: Binding(get: { f.smallText == true }, set: { v in store.setPageFormat(page.id) { $0.smallText = v ? true : nil } }))
             Toggle("Full width", isOn: Binding(get: { f.fullWidth == true }, set: { v in store.setPageFormat(page.id) { $0.fullWidth = v ? true : nil } }))
+            Toggle("Outline", isOn: Binding(get: { f.hideOutline != true }, set: { v in store.setPageFormat(page.id) { $0.hideOutline = v ? nil : true } }))
             Toggle("Lock page", isOn: Binding(get: { f.locked == true }, set: { v in store.setPageFormat(page.id) { $0.locked = v ? true : nil } }))
             Toggle("Show backlinks", isOn: Binding(get: { f.hideBacklinks != true }, set: { v in store.setPageFormat(page.id) { $0.hideBacklinks = v ? nil : true } }))
             Divider()

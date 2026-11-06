@@ -31,3 +31,22 @@
 - Not done: open-source inspiration (AppFlowy AGPL, AFFiNE MIT, Anytype
   ASAL) was evaluated for architecture only; no code copied (license mix and
   Rust/TS → Swift gap).
+- Pass 7 · **Agent Brain + server** (`Packages/BasedBrain`, 8 tests green on
+  Linux): JSONValue, AI providers (Anthropic Messages, OpenAI Chat Completions
+  incl. Ollama, Apple Intelligence via FoundationModels), AgentTools (15 tools
+  over the store, shared by runtime + MCP), AgentRuntime (tool loop), Schedule
+  parser (`every 15m`, `daily 07:00`, `weekdays`, `weekly mon`, `monthly`,
+  cron) + AgentScheduler with daily token budgets, BrainStore (Agent Brain
+  page with Memories/Skills/Agents databases + About page, stored as normal
+  records so it syncs), MCPServer (initialize/tools/resources/prompts, stdio +
+  Streamable HTTP), dependency-free HTTPServer, SyncServer/ServerSync (pull
+  since cursor, push with stale detection, tombstones), NotionAPIImporter
+  (pages, databases, brain 1:1), `based-server` executable. Smoke-tested live
+  over curl (health, MCP create_page, auth, sync pull, stdio initialize).
+- Pass 7 · App: BrainModel (Keychain secrets, providers, chat, local
+  scheduler, server sync, Notion import), AIPanel (⌘J), AI settings sections,
+  *Autofill with AI* in the property menu, Agent Brain in the sidebar, floating
+  PageOutline rail (+ per-page toggle, `PageFormat.hideOutline`), ⌘⇧U parent,
+  ⌘\ sidebar. Type-checked against the stub harness: zero errors.
+- Deploy: Dockerfile (static release build), docker-compose + Caddy (auto TLS),
+  systemd unit, Claude Desktop MCP config, deploy/README.

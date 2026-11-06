@@ -221,6 +221,8 @@ public struct PageFormat: Codable, Hashable, Sendable {
     public var locked: Bool?
     public var coverPosition: Double?
     public var hideBacklinks: Bool?
+    /// Hide the floating outline (table of contents rail) on the right.
+    public var hideOutline: Bool?
 
     public init(font: PageFont? = nil, smallText: Bool? = nil, fullWidth: Bool? = nil, locked: Bool? = nil) {
         self.font = font; self.smallText = smallText; self.fullWidth = fullWidth; self.locked = locked

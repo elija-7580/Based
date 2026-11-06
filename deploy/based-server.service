@@ -1,0 +1,18 @@
+# /etc/systemd/system/based-server.service  (bare-metal alternative to Docker)
+[Unit]
+Description=Based server (sync, MCP, agents)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=based
+EnvironmentFile=/etc/based/env        # BASED_TOKEN=…, ANTHROPIC_API_KEY=…, OPENAI_API_KEY=…
+ExecStart=/usr/local/bin/based-server --db /var/lib/based/based.sqlite --port 8787
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/based
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,28 @@
+services:
+  based:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    environment:
+      BASED_TOKEN: ${BASED_TOKEN:?set a long random token}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      TZ: Europe/Vienna
+    volumes:
+      - based-data:/data
+    ports:
+      - "127.0.0.1:8787:8787"
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    environment:
+      BASED_DOMAIN: ${BASED_DOMAIN:?e.g. based.example.com}
+volumes:
+  based-data:
+  caddy-data:

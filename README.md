@@ -1,10 +1,12 @@
 # Based
 
-Native, local-first notes for **macOS and iPhone**: pages, a block editor and
-databases, synced through your own iCloud. It's modeled on Notion's
-note-taking features and built clean-room from public documentation.
+Native, local-first notes for **macOS and iPhone** (iPad runs; watchOS planned):
+pages, a block editor, databases and an **Agent Brain** — memories, skills and
+scheduled agents that every connected AI (in-app, Claude, ChatGPT, Cursor via
+MCP) shares. Synced through your own iCloud and/or your own server. Modeled on
+Notion's features and built clean-room from public documentation.
 
-> Prototype. 108 of 149 tracked Notion features are implemented, 24 partially;
+> Prototype. 117 of 158 tracked features are implemented, 24 partially;
 > see [`replica/features.csv`](replica/features.csv) for the parity matrix and
 > [`replica/build-log.md`](replica/build-log.md) for progress.
 > The core package is unit-tested on Linux. The SwiftUI app has been
@@ -37,15 +39,37 @@ note-taking features and built clean-room from public documentation.
 - **App**: light/dark/system (⇧⌘L), settings, iPhone keyboard toolbar and
   long-press menus, iPad runs (layout not tuned).
 
+- **Agent Brain** (`Packages/BasedBrain`): an *Agent Brain* page in the
+  workspace holds **Memories** (Title + Type, like Notion AI), **Skills**
+  (reusable instructions, exposed as MCP prompts) and **Agents** (instructions
+  page + `Schedule` + `Model` + token budget). Chat with the workspace agent
+  (⌘J); it reads/writes pages and databases through tools and saves memories.
+  Providers: Anthropic and OpenAI API keys, any OpenAI-compatible server
+  (Ollama), Apple Intelligence on device for *Autofill with AI* on properties.
+- **MCP server**: `based-server --stdio` or `POST /mcp` — same tools, pages as
+  resources, skills as prompts, for Claude Desktop, ChatGPT, Cursor, ….
+- **Server sync**: `based-server` on a VPS keeps the workspace online, runs
+  agents on schedule and syncs with the apps (HLC last-writer-wins, same as
+  iCloud). See [`deploy/`](deploy/README.md).
+- **Notion API import**: Settings → AI → *Import from Notion*: Memories,
+  Skills and About page come over 1:1; any page tree or database by ID.
+- **Page outline**: floating heading rail on the right (hover to expand,
+  click to jump); per-page toggle. Shortcuts added: ⌘J Ask AI, ⌘⇧U parent
+  page, ⌘\ sidebar.
+
 Not implemented: comments, sharing/publishing, page history, real-time
 multi-user, chart/form/feed/map views, sub-items, HTML/PDF export, find in
-page, share extension, widgets, AI.
+page, share extension, widgets, watchOS target.
 
 ## Repository layout
 
 - `Packages/BasedCore` — model, store, editing, databases, formulas,
   import/export, search, sync core (Swift package; Foundation only, tested on
   Linux and macOS)
+- `Packages/BasedBrain` — AI providers, agent tools/runtime/scheduler, MCP
+  server, HTTP server, server sync, Notion API import, and the `based-server`
+  executable (Foundation only, tested on Linux)
+- `deploy/` — Dockerfile, docker-compose + Caddy, systemd unit, MCP client config
 - `App/Shared` — SwiftUI app shared by macOS and iOS; `App/macOS`, `App/iOS`
   — Info.plist and entitlements
 - `project.yml` — XcodeGen project; `Config/` — build settings
@@ -57,7 +81,8 @@ page, share extension, widgets, AI.
 Core (any platform with Swift 5.9+/6):
 
 ```bash
-make test        # = swift test --package-path Packages/BasedCore
+make test        # = swift test for BasedCore and BasedBrain
+swift build -c release --package-path Packages/BasedBrain   # → based-server
 ```
 
 Apps (macOS 14+ / iOS 17+, Xcode 16+, `brew install xcodegen`):

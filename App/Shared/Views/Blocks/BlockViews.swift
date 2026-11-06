@@ -94,6 +94,7 @@ struct BlockRow: View {
                     .padding(.leading, Theme.indent)
             }
         }
+        .id(b.type.isHeading ? b.id : nil)
         .overlay(alignment: .topLeading) { handle(b) }
         .overlay(alignment: dropAlignment) { dropIndicator }
         .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { size = $0 })

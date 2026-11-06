@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "based": {
+      "url": "https://based.example.com/mcp",
+      "headers": { "Authorization": "Bearer YOUR_BASED_TOKEN" }
+    },
+    "based-local": {
+      "command": "/usr/local/bin/based-server",
+      "args": ["--stdio", "--db", "/Users/you/Library/Application Support/Based/based.sqlite"]
+    }
+  }
+}

@@ -42,7 +42,10 @@ final class AppModel {
     @ObservationIgnored private var restoringHistory = false
     var peek: Peek?
     var showQuickFind = false
+    var showAI = false
     var showSettings = false
+    /// Agent Brain (memories, skills, agents, AI providers, server sync).
+    @ObservationIgnored private(set) var brain: BrainModel!
     var showTrash = false
     var showImport = false
     var exportRequest: ExportRequest?
@@ -88,6 +91,7 @@ final class AppModel {
         store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
         registry = Registry(store: store)
         if store.blocks.isEmpty { Onboarding.seed(store) }
+        brain = BrainModel(store: store)
         if let first = store.topLevelPages().first { selection = .page(first.id) }
         store.purgeTrash()
         startSyncIfConfigured()
@@ -219,6 +223,14 @@ final class AppModel {
     func exportCurrentPage() {
         guard let id = currentPageID ?? peek?.id else { return }
         exportRequest = ExportRequest(pageID: id)
+    }
+
+    /// ⌘⇧U — open the parent page of the current page.
+    func openParent() {
+        guard let id = currentPageID ?? peek?.id, let parent = store.containingPage(of: id) ?? store.parentBlock(of: id).flatMap({ store.containingPage(of: $0.id) }) else {
+            selection = .home; return
+        }
+        open(parent)
     }
 
     var canGoBack: Bool { !backHistory.isEmpty || !path.isEmpty || peek != nil }
