@@ -283,7 +283,8 @@ struct CommandPalette: View {
             m.openRoot(c.blockID)
         },
         Item(id: 5, title: "New agent session", detail: "Claude Code, Codex … in a folder", symbol: "terminal") { $0.showNewSession = true },
-        Item(id: 6, title: "Import…", detail: "Notion export (.zip), Markdown, CSV, HTML", symbol: "square.and.arrow.down") { $0.showImport = true },
+        Item(id: 6, title: "Import from Notion…", detail: "1:1 via the Notion API: pages, databases, views", symbol: "square.and.arrow.down.on.square") { $0.showNotionImport = true },
+        Item(id: 7, title: "Import file…", detail: "Notion export (.zip, HTML recommended), Markdown, CSV", symbol: "square.and.arrow.down") { $0.showImport = true },
     ]
 
     private var visible: [Item] {

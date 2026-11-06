@@ -44,6 +44,8 @@ public final class Tx {
     var before: [RecordKey: Snapshot] = [:]
     var order: [RecordKey] = []
     var parents: Set<String> = []
+    /// Keep `updatedAt` / `updatedBy` of written records (imports carry the source's timestamps).
+    public var preserveTimestamps = false
 
     init(store: WorkspaceStore) { self.store = store }
 
@@ -315,7 +317,7 @@ public final class WorkspaceStore {
             }
             if cur == prev { continue }
             if restamp {
-                cur = stamped(cur, now: now)
+                cur = stamped(cur, now: now, keepTimes: tx.preserveTimestamps)
                 var ignored = Set<String>()
                 restore(key, cur, &ignored)
             }
@@ -359,11 +361,12 @@ public final class WorkspaceStore {
         }
     }
 
-    private func stamped(_ r: Record, now: Date) -> Record {
+    private func stamped(_ r: Record, now: Date, keepTimes: Bool = false) -> Record {
         let s = clock.now()
         switch r {
         case .block(var b):
-            b.stamp = s; b.updatedAt = now; b.updatedBy = userID
+            b.stamp = s
+            if !keepTimes { b.updatedAt = now; b.updatedBy = userID }
             return .block(b)
         case .database(var d):
             d.stamp = s; d.updatedAt = now

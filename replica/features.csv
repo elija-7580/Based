@@ -134,7 +134,7 @@ Page history / versions,history,should,yes,no,
 Comments and discussions,collaboration,should,yes,no,
 Sharing and permissions,collaboration,could,yes,no,single user scope
 Publish to web,collaboration,could,yes,no,
-Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress"
+Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended"
 Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
 Export as HTML / PDF,export,should,yes,no,
@@ -155,7 +155,7 @@ Skills (reusable instructions),ai,should,yes,yes,Skills database; exposed as MCP
 Custom agents on schedule,ai,should,yes,yes,Agents database; based-server or Mac runs schedules; token budgets
 MCP server for external AI clients,ai,should,yes,yes,stdio + Streamable HTTP; tools/resources/prompts
 Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device
-Import from Notion API (live),import,should,n/a,yes,brain 1:1 + pages/databases by ID
+Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1"
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets
 HTML / Mermaid block preview,blocks,should,partial,yes,code block language html/mermaid → sandboxed WKWebView
@@ -173,8 +173,12 @@ AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or f
 Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete"
 Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete"
 Peek navigation (prev/next row),databases,should,yes,yes,⌃⇧↑/↓ in side/center peek; open in new tab
-Import HTML export,import,should,yes,yes,Notion HTML export converted to Markdown blocks
+Import HTML export,import,should,yes,yes,"lossless NotionHTMLImporter: page header, all blocks, colors, columns, tables, database property types/colors/relations; unknown markup kept as HTML block"
 Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcript view, inline permission prompts, shift+tab modes, SwiftTerm terminal (macOS)"
 CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal
 Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning"
 "Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D"
+"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views; dashboards/forms/maps → table
+Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; removed content → trash; original timestamps and authors kept
+Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression"
+Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store

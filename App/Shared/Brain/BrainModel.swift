@@ -46,6 +46,8 @@ struct ChatTurn: Identifiable, Equatable {
 @MainActor @Observable
 final class BrainModel {
     let store: WorkspaceStore
+    /// Where imported files go (set by the app model).
+    @ObservationIgnored weak var assets: FileAssetStore?
     let brain: BrainStore
     let tools: AgentTools
     let happier: HappierModel
@@ -279,13 +281,14 @@ final class BrainModel {
         imp.onProgress = { [weak self] s in Task { @MainActor in self?.schedulerLog.append(s) } }
         do {
             let r = try await imp.importBrain(memoriesDatabaseID: memoriesDB.nonEmptyOrNil, skillsDatabaseID: skillsDB.nonEmptyOrNil, aboutPageID: aboutPage.nonEmptyOrNil, into: brain)
+            // Pages and databases go through the full-fidelity importer (views, formulas, relations, files).
+            let targets = pages.compactMap { NotionTarget($0.hasPrefix("db:") ? String($0.dropFirst(3)) : $0) }
             var n = 0
-            for p in pages where !p.isEmpty {
-                if p.hasPrefix("db:") { try await imp.importDatabase(String(p.dropFirst(3)), into: store, parent: .workspace) }
-                else { try await imp.importPage(p, into: store, parent: .workspace, brain: brain) }
-                n += 1
+            if !targets.isEmpty {
+                let pr = try await NotionWorkspaceImport(token: token).run(targets, into: store, assets: assets)
+                n = pr.pages + pr.databases
             }
-            return "Imported \(r.memories) memories, \(r.skills) skills, \(n) page tree(s)."
+            return "Imported \(r.memories) memories, \(r.skills) skills, \(n) pages & databases."
         } catch { return "Import failed: \(error)" }
     }
 }

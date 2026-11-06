@@ -128,6 +128,8 @@ final class AppModel {
     @ObservationIgnored private(set) var brain: BrainModel!
     var showTrash = false
     var showImport = false
+    /// Notion API import sheet (token + links).
+    var showNotionImport = false
     var showExportAll = false
     var exportAllMessage: String?
     var exportRequest: ExportRequest?
@@ -201,6 +203,7 @@ final class AppModel {
         queryCache = QueryCache(store: store)
         if store.blocks.isEmpty { Onboarding.seed(store) }
         brain = BrainModel(store: store)
+        brain.assets = assets
         if let first = store.topLevelPages().first(where: { $0.id != brain.brain.rootID }) { selection = .page(first.id) }
         tabs = [BrowserTab(id: activeTabID, selection: selection)]
         lastSnapshot = NavSnapshot(selection: selection, path: [])

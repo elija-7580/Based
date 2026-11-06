@@ -61,7 +61,7 @@ struct AISettingsView: View {
                 TextField("Memories database ID", text: $memoriesDB)
                 TextField("Skills database ID", text: $skillsDB)
                 TextField("About page ID", text: $aboutPage)
-                TextField("Page or database IDs to import (comma-separated; prefix db: for databases)", text: $pageIDs)
+                TextField("Page or database links / IDs to import (comma-separated)", text: $pageIDs)
                 Button(importing ? "Importing…" : "Import") {
                     Secrets.set("notion", notionToken); importing = true
                     Task {
@@ -71,7 +71,7 @@ struct AISettingsView: View {
                     }
                 }.disabled(notionToken.isEmpty || importing)
                 if let importResult { Text(importResult).font(.caption) }
-                Text("Share the pages/databases with your integration in Notion first (••• → Connections).").font(.caption).foregroundStyle(Theme.secondary)
+                Text("Share the pages/databases with your integration in Notion first (••• → Connections). For a full workspace import use File → Import from Notion….").font(.caption).foregroundStyle(Theme.secondary)
             }
         }
     }

@@ -34,6 +34,49 @@ public struct HTMLNode {
     }
 }
 
+public extension HTMLNode {
+    var isText: Bool { tag.isEmpty }
+    var elements: [HTMLNode] { children.filter { !$0.tag.isEmpty } }
+    func attr(_ name: String) -> String? { attrs[name] }
+
+    /// Text exactly as written (no whitespace collapsing), `<br>` as newline.
+    var rawText: String {
+        var s = ""
+        func walk(_ n: HTMLNode) {
+            if n.tag.isEmpty { s += n.text } else if n.tag == "br" { s += "\n" } else if n.tag != "style" && n.tag != "script" { n.children.forEach(walk) }
+        }
+        walk(self)
+        return s
+    }
+
+    /// Serialized markup of the node (used to keep unknown content as an HTML block).
+    var outerHTML: String {
+        if tag.isEmpty { return HTMLParser.escape(text) }
+        if tag == "#root" { return innerHTML }
+        var s = "<" + tag
+        for (k, v) in attrs.sorted(by: { $0.key < $1.key }) {
+            s += " " + k + "=\"" + HTMLParser.escape(v).replacingOccurrences(of: "\"", with: "&quot;") + "\""
+        }
+        if HTMLParser.voidTags.contains(tag) { return s + "/>" }
+        return s + ">" + innerHTML + "</" + tag + ">"
+    }
+
+    var innerHTML: String {
+        if HTMLParser.rawTags.contains(tag) { return children.map(\.text).joined() }
+        return children.map(\.outerHTML).joined()
+    }
+
+    /// Inline style property, e.g. `style("width")` for `style="width:240px"`.
+    func style(_ property: String) -> String? {
+        guard let st = attrs["style"] else { return nil }
+        for decl in st.split(separator: ";") {
+            let parts = decl.split(separator: ":", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            if parts.count == 2, parts[0].lowercased() == property { return parts[1] }
+        }
+        return nil
+    }
+}
+
 public enum HTMLParser {
     static let voidTags: Set<String> = ["br", "img", "hr", "input", "meta", "link", "col", "source", "wbr", "area", "base", "embed", "param", "track"]
     static let rawTags: Set<String> = ["script", "style", "textarea", "title"]
@@ -160,6 +203,10 @@ public enum HTMLParser {
             out.append(s[i]); i = s.index(after: i)
         }
         return out
+    }
+
+    public static func escape(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;")
     }
 
     static func collapse(_ s: String) -> String {

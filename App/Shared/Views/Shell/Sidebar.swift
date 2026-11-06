@@ -71,8 +71,13 @@ struct SidebarView: View {
                 } label: { Label("New", systemImage: "square.and.pencil") }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
-                Button { model.showImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
-                    .buttonStyle(.plain)
+                Menu {
+                    Button("From Notion (API)…", systemImage: "square.and.arrow.down.on.square") { model.showNotionImport = true }
+                    Button("From file (Notion export, Markdown, CSV, HTML)…", systemImage: "doc.zipper") { model.showImport = true }
+                } label: { Label("Import", systemImage: "square.and.arrow.down") }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .accessibilityIdentifier("sidebar.import")
                 Label("Trash", systemImage: "trash").tag(SidebarItem.trash).accessibilityIdentifier("sidebar.trash")
                 #if os(iOS)
                 Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings).accessibilityIdentifier("sidebar.settings")

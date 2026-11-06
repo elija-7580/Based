@@ -127,3 +127,48 @@
   agents, brain dashboard, layout overlap/clipping check). App code:
   `swiftc -parse` clean, model/brain/store member references and type names
   cross-checked by script; first Xcode build may still need small fixes.
+- Pass 10 · Feedback: "der Import aus Notion ist komplett shit" — should look
+  1:1 like Notion incl. databases, ideally via link/API, and keep everything
+  from the HTML. Rebuilt the import from scratch:
+- Pass 10 · Core: `ImportBuilder` (collects blocks / databases / views with
+  stable ids, sort keys, placeholder assets) + `WorkspaceStore.commitImport`
+  (one undoable transaction, original created/edited times and authors kept,
+  re-import updates records in place, stale children → trash, stale views
+  removed). `NotionHTMLImporter` replaces the HTML→Markdown detour: page
+  header (icon, cover + position, serif/mono, full width, small text),
+  every block type (toggle headings, callout icon + color, columns with
+  ratios, tables with header row/column, code language + wrap, equations,
+  image width / caption, bookmarks with metadata, embeds, files, link to page
+  vs. subpage, TOC, breadcrumb), rich text (marks, text and
+  background colors, links, page / user / date mentions, inline equations);
+  databases from the export tables with property types, select / status
+  colors and groups, number formats, unique-ID prefix, relations resolved by
+  row id, created / edited time and people as row metadata, hidden columns;
+  anything without a native block stays as an HTML block with live preview.
+- Pass 10 · Notion API (`BasedBrain/Import/NotionAPI`): `NotionClient`
+  (API 2026-03-11, ~3 req/s, Retry-After / 5xx retries, pagination, signed
+  file downloads), `NotionCrawler` (links, ids or everything shared via
+  search; pages, block trees, databases → data sources → rows, views + view
+  row order via view queries, truncated relation / people lists, related
+  databases, users, files — batched with a TaskGroup), `NotionAPIMapper`
+  (all block types, colors, mentions, databases with every property type,
+  status groups, two-way relations, rollups, formulas translated from
+  `{{notion:block_property:…}}` to `prop("…")` when Based supports every
+  function, otherwise static values + original expression, unique IDs, files,
+  views: table / board / list / gallery / calendar / timeline / chart with
+  property order, visibility, widths, wrap, group by (+ hide empty, date
+  grouping), card cover / size, nested and/or filters, sorts incl. created /
+  edited time; multi-source databases, linked views, databases reachable only
+  through relations), `NotionWorkspaceImport` (fetch → map → commit,
+  progress, cancel, `verify(token:)`).
+- Pass 10 · App: `NotionImportSheet` (File → Import from Notion… ⌥⌘I, sidebar
+  Import menu, ⌘K, Settings → Import): integration secret with check (stored
+  in the Keychain), sharing instructions, links or "everything shared",
+  options (subpages, row content, related databases, copy files), progress,
+  cancel, summary, open the result. File import now runs the HTML importer in
+  the background and writes in one step; Markdown imports suggest the API /
+  HTML route. Settings → AI page import uses the new importer.
+- Pass 10 · Tests: BasedCore 50 (HTML export fidelity, re-import in place,
+  generic HTML kept, ids), BasedBrain 35 (fake Notion API: full import incl.
+  views / filters evaluated by the query engine, live formula + rollup
+  values, files, 429 retry, re-import, search mode, link parsing, 401).

@@ -63,7 +63,9 @@ struct BasedCommands: Commands {
             Button("New Tab") { run("⌘T") { model.newTab() } }
                 .keyboardShortcut("t")
             Divider()
-            Button("Import…") { model.showImport = true }
+            Button("Import from Notion…") { model.showNotionImport = true }
+                .keyboardShortcut("i", modifiers: [.command, .option])
+            Button("Import File…") { model.showImport = true }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
             Button("Export Page as Markdown…") { model.exportCurrentPage() }
                 .keyboardShortcut("e", modifiers: [.command, .shift])

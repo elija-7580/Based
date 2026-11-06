@@ -350,9 +350,12 @@ struct ImportSettings: View {
     @Environment(AppModel.self) private var model
     var body: some View {
         Section("Import") {
-            Button { model.showImport = true } label: { Label("Notion export (.zip / Markdown & CSV / HTML)", systemImage: "square.and.arrow.down") }
+            Button { model.showNotionImport = true } label: { Label("Import from Notion (API)…", systemImage: "square.and.arrow.down.on.square") }
+                .accessibilityIdentifier("settings.importNotionAPI")
+            Text("Most faithful: pages, formatting, databases with all properties, views (filters, sorts, groups), rows, relations, formulas and files. Needs an internal integration token; importing again updates in place.").font(.caption).foregroundStyle(Theme.secondary)
+            Button { model.showImport = true } label: { Label("Notion export file (.zip HTML / Markdown & CSV)", systemImage: "square.and.arrow.down") }
                 .accessibilityIdentifier("settings.importNotion")
-            Text("1:1 import of pages, databases, properties, views and files. For a live import via the Notion API see Agents & AI → Import from Notion.").font(.caption).foregroundStyle(Theme.secondary)
+            Text("Export from Notion as HTML with subpages for a lossless import (anything Based can't show natively is kept as an HTML block). Markdown & CSV exports lose colors, toggles and layout.").font(.caption).foregroundStyle(Theme.secondary)
         }
         Section("Also supported") {
             Label("Markdown files and folders", systemImage: "doc.text")

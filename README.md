@@ -34,10 +34,16 @@ Notion's features and built clean-room from public documentation.
   files, number formats, type conversion.
 - **Sync**: CloudKit `CKSyncEngine` (private DB), offline-first, HLC
   last-writer-wins per record, fractional-index ordering, assets as CKAssets.
-- **Import / export**: the Notion export `.zip` as downloaded (nested
-  `Part-N.zip` archives too), unzipped folders, Markdown + CSV (relations,
-  nested pages) and HTML exports, Markdown files — unpacked in the background
-  with a progress card; export page as Markdown, database as CSV.
+- **Import / export**: **1:1 import from Notion** — through the Notion API
+  (paste page / database links or import everything shared with an
+  integration: formatting, colors, toggles, callouts, columns, tables, synced
+  blocks, files, databases with every property type, views with filters,
+  sorts, groups, cover and column widths, rows with content, two-way
+  relations, rollups, formulas) or from a Notion **HTML export** `.zip`
+  (lossless: markup without a native block is kept as an HTML block with
+  preview). Importing the same pages again updates them in place. Also the
+  Markdown + CSV export, unzipped folders, Markdown files; export page as
+  Markdown, database as CSV.
 - **App**: light/dark/system (⇧⌘L), settings, iPhone keyboard toolbar and
   long-press menus, iPad runs (layout not tuned).
 
@@ -53,8 +59,9 @@ Notion's features and built clean-room from public documentation.
 - **Server sync**: `based-server` on a VPS keeps the workspace online, runs
   agents on schedule and syncs with the apps (HLC last-writer-wins, same as
   iCloud). See [`deploy/`](deploy/README.md).
-- **Notion API import**: Settings → AI → *Import from Notion*: Memories,
-  Skills and About page come over 1:1; any page tree or database by ID.
+- **Notion API import**: File → *Import from Notion…* (⌥⌘I) for pages and
+  databases; Settings → AI → *Import from Notion* additionally brings over
+  Memories, Skills and the About page of a Notion Agent setup.
 - **Page outline**: floating heading rail on the right (hover to expand,
   click to jump); per-page toggle. Shortcuts added: ⌘J Ask AI, ⌘⇧U parent
   page, ⌘\ sidebar.
@@ -190,9 +197,31 @@ Settings → Agents & AI → *Agent setup* shows what is found and tests it.
 
 ### Importing from Notion
 
-Settings → Workspace → Export → *Markdown & CSV* (or HTML), include
-subpages, then **File → Import…** (⌘⇧I) in Based and pick the downloaded
-`.zip` — no need to unzip.
+**Through the API (most faithful, includes views and formulas)**
+
+1. Create an internal integration at
+   [notion.so/profile/integrations](https://www.notion.so/profile/integrations)
+   (capabilities: *Read content*, *Read user information*) and copy its secret.
+2. In Notion open each top-level page or database → **••• → Connections** →
+   add the integration (subpages and inline databases are included).
+3. In Based: **File → Import from Notion…** (⌥⌘I, also in the sidebar's
+   *Import* menu, ⌘K and Settings → Import), paste the secret and the page
+   links (*Share → Copy link*), or choose *Everything shared*.
+
+Pages, blocks and rows keep their Notion ids, so importing again updates the
+existing pages instead of duplicating them (content deleted in Notion moves
+to the trash). Files hosted by Notion are copied into Based (their links
+expire after an hour). Formulas are translated to Based formulas when every
+function is supported, otherwise their values are imported and the original
+expression is kept in the property description.
+
+**From an export file (no integration needed)**
+
+Settings → Workspace → Export → **HTML**, include subpages, then
+**File → Import File…** (⌘⇧I) in Based and pick the downloaded `.zip` — no
+need to unzip. The HTML export keeps colors, toggles, columns, callouts and
+database property types; it has no views (one table view is created) and no
+formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 ### Keyboard shortcuts (macOS)
 
@@ -216,13 +245,15 @@ stubs; `App/Shared/Editor/RichTextView.swift` (AppKit/UIKit text views) was
 reviewed but not compiled. Expect a handful of fixes on the first Xcode run.
 Copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml` to get macOS +
 iOS simulator builds on every push; failures are written to the `ci-logs`
-branch so they can be fixed iteratively. Pass 8 and Pass 9 (shell, tabs,
-agent console, diagnostics) were written without the stub harness (lost in a
+branch so they can be fixed iteratively. Pass 8, 9 and 10 (shell, tabs,
+agent console, diagnostics, Notion import sheet) were written without the stub harness (lost in a
 sandbox reset) — syntax-checked with `swiftc -parse`, symbol references
 cross-checked by script and reviewed by hand.
 
-Tests on Linux: `make test` → BasedCore 46, BasedBrain 30 (incl. Notion
-zip/HTML import fixtures, log rotation, Claude Code stream parsing, CLI
+Tests on Linux: `make test` → BasedCore 50, BasedBrain 35 (incl. Notion
+API import against a fake API — blocks, databases, views, filters, relations,
+formulas, files, rate limiting, re-import — HTML export fidelity fixtures,
+zip import, log rotation, Claude Code stream parsing, CLI
 session index, transcript parser, local MCP host, RFC 8439
 ChaCha20-Poly1305 vector, JSON-RPC framing, Happier store CRUD, chart
 aggregation, query cache, fractional index, 50k-row benchmark).

@@ -9,11 +9,14 @@ public struct ImportReport: Sendable {
     public var rootIDs: [RecordID] = []
 }
 
-/// Expanded import sources: ZIP archives unpacked and HTML exports converted in a temporary folder.
+/// Expanded import sources: ZIP archives unpacked in a temporary folder, HTML exports already parsed into `builder`.
 public struct PreparedImport: Sendable {
+    /// Markdown / CSV sources for the Markdown importer.
     public var urls: [URL]
     public var temporaryDirectories: [URL] = []
     public var notes: [String] = []
+    /// Notion HTML exports, parsed with full fidelity (committed by `importPrepared`).
+    public var builder: ImportBuilder?
 
     public func cleanup() {
         for d in temporaryDirectories { try? FileManager.default.removeItem(at: d) }
@@ -35,10 +38,10 @@ public final class NotionImporter {
         self.assets = assets
     }
 
-    static let hexSuffix = try! NSRegularExpression(pattern: "\\s+([0-9a-f]{32})$", options: [.caseInsensitive])
+    nonisolated static let hexSuffix = try! NSRegularExpression(pattern: "\\s+([0-9a-f]{32})$", options: [.caseInsensitive])
 
     /// "Project Plan 1a2b…(32 hex)" → "Project Plan"
-    public static func cleanTitle(_ name: String) -> String {
+    nonisolated public static func cleanTitle(_ name: String) -> String {
         var base = name
         for ext in [".md", ".csv"] where base.lowercased().hasSuffix(ext) { base = String(base.dropLast(ext.count)) }
         if base.hasSuffix("_all") { base = String(base.dropLast(4)) }
@@ -58,9 +61,9 @@ public final class NotionImporter {
         }
     }
 
-    /// Unzips archives and converts HTML exports into a temporary folder. Thread-safe; call it off
-    /// the main thread for large exports, then pass `urls` to `importItems` and `cleanup()` afterwards.
-    nonisolated public static func prepare(_ urls: [URL], progress: (@Sendable (Double) -> Void)? = nil) throws -> PreparedImport {
+    /// Unzips archives and parses HTML exports. Thread-safe; call it off the main thread for large exports, then pass
+    /// the result to `importPrepared` and `cleanup()` afterwards. With an asset store, files are copied here too.
+    nonisolated public static func prepare(_ urls: [URL], assets: AssetStore? = nil, progress: (@Sendable (Double) -> Void)? = nil) throws -> PreparedImport {
         let fm = FileManager.default
         var out = PreparedImport(urls: [])
         func tempDir() throws -> URL {
@@ -69,6 +72,7 @@ public final class NotionImporter {
             out.temporaryDirectories.append(d)
             return d
         }
+        var html: [URL] = []
         for (i, u) in urls.enumerated() {
             let ext = u.pathExtension.lowercased()
             var isDir: ObjCBool = false
@@ -76,42 +80,63 @@ public final class NotionImporter {
             if exists, !isDir.boolValue, ext == "zip" || (ext.isEmpty && ZipArchive.isZip(u)) {
                 let dir = try tempDir()
                 let archive = try ZipArchive(url: u)
-                let n = try archive.extractAll(to: dir) { p in progress?((Double(i) + p * 0.9) / Double(urls.count)) }
-                let pages = HTMLExportConverter.containsHTML(dir) ? HTMLExportConverter.convertFolder(dir) : 0
-                out.notes.append("Unpacked \(u.lastPathComponent): \(n) files" + (pages > 0 ? ", \(pages) HTML pages converted" : ""))
-                out.urls.append(dir)
+                let n = try archive.extractAll(to: dir) { p in progress?((Double(i) + p * 0.5) / Double(urls.count)) }
+                out.notes.append("Unpacked \(u.lastPathComponent): \(n) files")
+                if HTMLExportConverter.containsHTML(dir) { html.append(dir) }
+                if containsMarkdown(dir) || !HTMLExportConverter.containsHTML(dir) { out.urls.append(dir) }
             } else if exists, isDir.boolValue, HTMLExportConverter.containsHTML(u) {
-                let dir = try tempDir()
-                let copy = dir.appendingPathComponent(u.lastPathComponent, isDirectory: true)
-                try fm.copyItem(at: u, to: copy)
-                HTMLExportConverter.convertFolder(copy)
-                out.urls.append(copy)
+                html.append(u)
+                if containsMarkdown(u) { out.urls.append(u) }
             } else if exists, ext == "html" || ext == "htm" {
-                let dir = try tempDir()
-                try fm.copyItem(at: u, to: dir.appendingPathComponent(u.lastPathComponent))
-                let sibling = u.deletingPathExtension()
-                if fm.fileExists(atPath: sibling.path) {
-                    try? fm.copyItem(at: sibling, to: dir.appendingPathComponent(sibling.lastPathComponent, isDirectory: true))
-                }
-                HTMLExportConverter.convertFolder(dir)
-                let base = dir.appendingPathComponent(sibling.lastPathComponent)
-                let md = base.appendingPathExtension("md"), csv = base.appendingPathExtension("csv")
-                out.urls.append(fm.fileExists(atPath: csv.path) ? csv : md)
+                html.append(u)
             } else {
                 out.urls.append(u)
             }
-            progress?(Double(i + 1) / Double(urls.count))
+            progress?(Double(i + 1) / Double(urls.count) * 0.5)
         }
+        if !html.isEmpty {
+            let builder = ImportBuilder(createdBy: nil)
+            for (i, src) in html.enumerated() {
+                let imp = NotionHTMLImporter(builder: builder)
+                imp.progress = { p in progress?(0.5 + (Double(i) + p) / Double(html.count) * 0.4) }
+                imp.importExport(at: src)
+            }
+            if let assets { builder.resolveAssets(assets) }
+            out.builder = builder
+        }
+        progress?(1)
         return out
+    }
+
+    nonisolated static func containsMarkdown(_ dir: URL) -> Bool {
+        guard let e = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil) else { return false }
+        for case let u as URL in e where ["md", "csv"].contains(u.pathExtension.lowercased()) { return true }
+        return false
+    }
+
+    /// Commits a prepared import: parsed HTML exports first, then Markdown / CSV sources.
+    public func importPrepared(_ prepared: PreparedImport, into parent: ParentRef = .workspace) throws -> ImportReport {
+        var r = ImportReport()
+        if let b = prepared.builder, !b.isEmpty {
+            b.resolveAssets(assets)
+            r = store.commitImport(b, into: parent, name: "Import")
+            r.assets = b.storedAssets
+        }
+        if !prepared.urls.isEmpty {
+            let m = try importItems(prepared.urls, into: parent)
+            r.pages += m.pages; r.databases += m.databases; r.rows += m.rows; r.assets += m.assets
+            r.warnings += m.warnings
+            r.rootIDs += m.rootIDs
+        }
+        r.warnings.insert(contentsOf: prepared.notes, at: 0)
+        return r
     }
 
     public func importItems(_ urls: [URL], into parent: ParentRef = .workspace) throws -> ImportReport {
         if Self.needsPreparation(urls) {
             let prepared = try Self.prepare(urls)
             defer { prepared.cleanup() }
-            var r = try importItems(prepared.urls, into: parent)
-            r.warnings.insert(contentsOf: prepared.notes, at: 0)
-            return r
+            return try importPrepared(prepared, into: parent)
         }
         report = ImportReport()
         ids = [:]; consumed = []

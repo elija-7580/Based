@@ -42,6 +42,7 @@ struct RootView: View {
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .sheet(isPresented: $model.showNewSession) { NewSessionSheet().environment(model.brain.happier) }
         .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
+        .sheet(isPresented: $model.showNotionImport) { NotionImportSheet().environment(model) }
         .sheet(item: $model.moveRequest) { req in
             PagePicker(purpose: .move(req.ids)) { model.moveRequest = nil }.environment(model)
         }
@@ -95,14 +96,15 @@ struct RootView: View {
                 importProgress = nil
             }
             do {
+                // Unzipping and parsing HTML exports happens off the main actor; writing is one transaction.
                 let prepared = try await Task.detached(priority: .userInitiated) {
-                    try NotionImporter.prepare(urls) { p in Task { @MainActor in importProgress = p * 0.6 } }
+                    try NotionImporter.prepare(urls, assets: assets) { p in Task { @MainActor in importProgress = p * 0.8 } }
                 }.value
                 defer { prepared.cleanup() }
-                importProgress = 0.7
+                importProgress = 0.85
                 await Task.yield()
                 let r = try Log.measure("import", category: "import", warnAfter: 2) {
-                    try NotionImporter(store: store, assets: assets).importItems(prepared.urls, into: .workspace)
+                    try NotionImporter(store: store, assets: assets).importPrepared(prepared, into: .workspace)
                 }
                 var s = "\(r.pages) pages, \(r.databases) databases, \(r.rows) rows, \(r.assets) files imported."
                 let notes = prepared.notes + r.warnings
@@ -110,9 +112,12 @@ struct RootView: View {
                 if notes.count > 10 { s += "\n… \(notes.count - 10) more (see Diagnostics → Log)" }
                 for w in r.warnings { Log.warning(w, category: "import") }
                 Log.notice("import done: \(r.pages) pages, \(r.databases) dbs, \(r.rows) rows", category: "import")
+                if prepared.builder == nil, r.pages + r.databases > 0 {
+                    s += "\n\nTip: Markdown & CSV exports lose colors, toggles, columns and views. For a 1:1 copy use File → Import from Notion… (API) or a Notion HTML export."
+                }
                 importSummary = s
                 if r.pages + r.databases == 0 {
-                    importSummary = "Nothing was imported.\n\nChoose a Notion export (.zip, folder, Markdown/CSV or HTML files)." + (notes.isEmpty ? "" : "\n\n" + notes.prefix(6).joined(separator: "\n"))
+                    importSummary = "Nothing was imported.\n\nChoose a Notion export (.zip — HTML recommended, folder, Markdown/CSV or HTML files), or use File → Import from Notion… with an integration token." + (notes.isEmpty ? "" : "\n\n" + notes.prefix(6).joined(separator: "\n"))
                 }
                 if let first = r.rootIDs.first { model.openRoot(first) }
             } catch {
@@ -453,7 +458,7 @@ struct HomeView: View {
                     HStack(spacing: 10) {
                         Button("New page") { model.newPage() }
                         Button("Search ⌘K") { model.showQuickFind = true }
-                        Button("Import from Notion…") { model.showImport = true }
+                        Button("Import from Notion…") { model.showNotionImport = true }
                     }
                     .buttonStyle(.bordered)
                 }
