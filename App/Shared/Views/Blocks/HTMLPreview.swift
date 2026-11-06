@@ -17,8 +17,10 @@ struct HTMLPreview: View {
             .accessibilityIdentifier("html.preview")
     }
 
+    private var document: String { Self.document(source: source, language: language) }
+
     /// Full HTML document; the page reports its height back so the block grows with its content.
-    private var document: String {
+    static func document(source: String, language: String) -> String {
         let reporter = """
         <script>
         (function(){

@@ -216,7 +216,7 @@ struct ToolRowView: View {
     var body: some View {
         let style = ToolStyle(name: part.toolName)
         VStack(alignment: .leading, spacing: 6) {
-            Button { if part.output?.isEmpty == false { withAnimation(.easeOut(duration: 0.15)) { open.toggle() } } } label: {
+            Button { if part.output?.isEmpty == false || !part.images.isEmpty { withAnimation(.easeOut(duration: 0.15)) { open.toggle() } } } label: {
                 HStack(spacing: 8) {
                     Group {
                         if style.symbol == SymbolImage.ai { AIGlyph(size: 13) } else { Image(systemName: style.symbol).font(.system(size: 12)) }
@@ -247,6 +247,8 @@ struct ToolRowView: View {
                 .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
                 .padding(.horizontal, 10).padding(.bottom, 8)
             }
+            // Browser / computer use: the latest screenshot stays visible, like Claude's browser view.
+            if !part.images.isEmpty { ToolImageStrip(images: part.images) }
         }
     }
 }
@@ -404,7 +406,11 @@ struct MarkdownBlockView: View {
                 .padding(.leading, 12)
                 .overlay(alignment: .leading) { Rectangle().fill(Theme.secondary.opacity(0.5)).frame(width: 3) }
         case .code:
-            ChatCodeBlockView(code: block.text.plainText, language: block.props.language)
+            if let a = ChatArtifact.from(language: block.props.language, code: block.text.plainText) {
+                ArtifactCardView(artifact: a)
+            } else {
+                ChatCodeBlockView(code: block.text.plainText, language: block.props.language)
+            }
         case .divider:
             Divider().padding(.vertical, 4)
         case .equation:

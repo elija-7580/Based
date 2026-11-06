@@ -121,5 +121,5 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Sidebar Notes / AI mit zwei Homes | ✅ | |
 | Tabs ziehen | 🟡 | eigene Geste; am Mac prüfen |
 | Eigenes AI-Icon | ✅ | |
-| Chat-UI wie Claude Code | 🟡 | Pass 18: Thinking, Tool-Karten, To-dos, Markdown, Anhänge, Diktat, Stop; Artefakt-Panel fehlt; am Mac prüfen |
+| Chat-UI wie Claude Code | 🟡 | Pass 18/19: Thinking, Tool-Karten, To-dos, Markdown, Anhänge, Diktat, Stop, Artefakt-Panel, Browser-Screenshots; am Mac prüfen |
 

@@ -67,3 +67,50 @@ struct ChatStreamTests {
         #expect(!a.contains("json"))
     }
 }
+
+struct ChatArtifactTests {
+    @Test func extractsPreviewableBlocks() {
+        let md = """
+        Here you go:
+
+        ```html
+        <!doctype html>
+        <html><head><title>Budget</title></head>
+        <body>
+        <h1>Budget</h1>
+        <p>…</p>
+        </body></html>
+        ```
+
+        Small example: ```css``` inline is ignored.
+
+        ```html
+        <b>hi</b>
+        ```
+
+        ```jsx
+        import { useState } from "react";
+        export default function Counter() {
+          const [n, setN] = useState(0);
+          return <button onClick={() => setN(n + 1)}>{n}</button>;
+        }
+        ```
+        """
+        let a = ChatArtifact.extract(md)
+        #expect(a.map(\.kind) == [.html, .react], "the 1-line HTML snippet stays a code block")
+        #expect(a[0].title == "Budget")
+        #expect(a[1].title == "Counter")
+        #expect(a[1].document.contains("React.createElement(Counter)"))
+        #expect(!a[1].document.contains("import { useState }"))
+    }
+
+    @Test func toolImagesAttachToTheirCard() {
+        let png = Data([0x89, 0x50, 0x4E, 0x47]).base64EncodedString()
+        let line = #"{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"b1","content":[{"type":"text","text":"Took screenshot"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":""# + png + #""}}]}]}}"#
+        var b = ChatTurnBuilder()
+        b.apply(.toolUse(id: "b1", name: "mcp__claude-in-chrome__computer", input: ["action": "screenshot"]))
+        for e in ClaudeChatStream.events(fromLine: line) { b.apply(e) }
+        #expect(b.parts[0].output == "Took screenshot")
+        #expect(b.parts[0].images == [Data([0x89, 0x50, 0x4E, 0x47])])
+    }
+}

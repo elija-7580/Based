@@ -56,6 +56,10 @@ final class BrainModel {
 
     var turns: [ChatTurn] = []
     var isRunning = false
+    /// Artifact shown in the panel next to the chat (nil = closed).
+    var artifact: ChatArtifact?
+    /// Set when a reply finishes with an artifact; the full-page chat opens it (the docked panel only shows the card).
+    var newArtifact: ChatArtifact?
     var showPanel = false
     var serverStatus = "Off"
     var schedulerLog: [String] = []
@@ -184,12 +188,13 @@ final class BrainModel {
         #endif
     }
 
-    func newChat() { chatID = nil; turns = []; isRunning = false }
+    func newChat() { chatID = nil; turns = []; isRunning = false; artifact = nil }
 
     func openChat(_ id: RecordID?) {
         guard let id else { newChat(); return }
         guard id != chatID || turns.isEmpty else { return }
         chatID = id
+        artifact = nil
         // Group everything between two user messages into one assistant turn with its parts.
         var out: [ChatTurn] = []
         var pending: [TranscriptItem] = []
@@ -272,7 +277,7 @@ final class BrainModel {
                     try Task.checkCancellation()
                     apply(.result(text: o.text.isEmpty ? "(done)" : o.text, sessionID: nil, costUSD: nil, isError: false))
                 } else if useClaude {
-                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown.\n\n" + String(context.prefix(6000))
+                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + String(context.prefix(6000))
                     switch await ClaudePrint.stream(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp,
                                                     allowedTools: mcp == nil ? [] : ["mcp__based"], onEvent: apply) {
                     case .success(let r):
@@ -300,6 +305,7 @@ final class BrainModel {
                 var meta = [engineLabel, "\(Int(Date().timeIntervalSince(turns[i].started).rounded())) s"]
                 if let c = r.costUSD { meta.append(String(format: "$%.3f", c)) }
                 turns[i].meta = meta.joined(separator: " · ")
+                if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
                 for (role, md) in r.transcriptSections where !(failed && role == "Agent" && md.isEmpty) {
                     brain.appendTranscript(sid, role: role, markdown: md)
                 }
@@ -310,6 +316,9 @@ final class BrainModel {
             runningTask = nil
         }
     }
+
+    /// Tells the model how to produce artifacts the chat can show in its panel.
+    static let artifactHint = "For visual or interactive results (a web page, chart, small app, diagram, illustration) reply with ONE complete fenced block — ```html (self-contained, inline CSS/JS, CDNs allowed), ```svg, ```mermaid or ```jsx (a React component with `export default`, Tailwind classes work) — and keep the text around it short; the app shows it as a live artifact."
 
     enum ChatError: Error, CustomStringConvertible {
         case noEngine

@@ -15,13 +15,17 @@ struct ChatPanel: View {
         VStack(spacing: 0) {
             header
             Divider()
-            if brain.turns.isEmpty {
-                ChatEmptyState(compact: true)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if let a = brain.artifact {
+                ArtifactPanel(artifact: a)
             } else {
-                ChatTranscriptView(compact: true)
+                if brain.turns.isEmpty {
+                    ChatEmptyState(compact: true)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ChatTranscriptView(compact: true)
+                }
+                ChatComposer(compact: true)
             }
-            ChatComposer(compact: true)
         }
         .background(.background)
     }
@@ -70,6 +74,7 @@ struct ChatPanel: View {
 struct ChatFullPage: View {
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
+    @AppStorage("chat.artifactWidth") private var artifactWidth: Double = 560
 
     var body: some View {
         Group {
@@ -84,13 +89,27 @@ struct ChatFullPage: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(spacing: 0) {
-                    ChatTranscriptView(compact: false)
-                    ChatComposer(compact: false)
-                        .frame(maxWidth: 760)
-                        .frame(maxWidth: .infinity)
+                HStack(spacing: 0) {
+                    VStack(spacing: 0) {
+                        ChatTranscriptView(compact: brain.artifact != nil)
+                        ChatComposer(compact: false)
+                            .frame(maxWidth: 760)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .frame(minWidth: 340)
+                    if let a = brain.artifact {
+                        PanelResizeHandle(width: $artifactWidth, range: 360...1100)
+                        ArtifactPanel(artifact: a)
+                            .frame(width: artifactWidth)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
+                .animation(.easeOut(duration: 0.2), value: brain.artifact?.id)
             }
+        }
+        .onChange(of: brain.newArtifact) { _, a in
+            // A reply just finished with an artifact: open it next to the chat (like Claude).
+            if let a { brain.artifact = a; brain.newArtifact = nil }
         }
         .onAppear { syncFromSelection() }
         .onChange(of: model.selection) { _, _ in syncFromSelection() }

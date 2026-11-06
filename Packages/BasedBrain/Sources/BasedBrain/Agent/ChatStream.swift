@@ -17,6 +17,8 @@ public enum ChatEvent: Sendable, Equatable {
     case text(String)
     case toolUse(id: String, name: String, input: JSONValue)
     case toolResult(id: String, output: String, isError: Bool)
+    /// A screenshot / image a tool returned (browser use, computer use, image tools).
+    case toolImage(id: String, data: Data, mediaType: String)
     case result(text: String, sessionID: String?, costUSD: Double?, isError: Bool)
 }
 
@@ -42,6 +44,8 @@ public struct ChatPart: Sendable, Equatable, Identifiable {
     public var toolName: String = ""
     public var detail: String = ""
     public var output: String?
+    /// Images returned by the tool (newest last, at most 4 kept).
+    public var images: [Data] = []
     public var status: Status = .done
     public var todos: [TodoItem] = []
     /// Built from deltas; replaced when the finished block arrives.
@@ -135,6 +139,10 @@ public struct ChatTurnBuilder: Sendable, Equatable {
             parts[i].output = output
             parts[i].status = isError ? .failed : .done
             parts[i].finished = Date()
+        case .toolImage(let id, let data, _):
+            guard let i = parts.lastIndex(where: { $0.id == id && $0.kind == .tool }) ?? parts.lastIndex(where: { $0.kind == .tool }) else { return }
+            parts[i].images.append(data)
+            if parts[i].images.count > 4 { parts[i].images.removeFirst(parts[i].images.count - 4) }
         case .result(let t, let s, let c, let err):
             finalText = t; sessionID = s ?? sessionID; costUSD = c ?? costUSD; isError = err
             closeThinking()
@@ -246,10 +254,17 @@ public enum ClaudeChatStream {
                 }
             }
         case "user":
-            return (v["message"]?["content"]?.array ?? []).compactMap { b -> ChatEvent? in
-                guard b["type"]?.string == "tool_result" else { return nil }
-                return .toolResult(id: b["tool_use_id"]?.string ?? "", output: Self.text(of: b["content"]), isError: b["is_error"]?.bool ?? false)
+            var out: [ChatEvent] = []
+            for b in v["message"]?["content"]?.array ?? [] where b["type"]?.string == "tool_result" {
+                let id = b["tool_use_id"]?.string ?? ""
+                out.append(.toolResult(id: id, output: Self.text(of: b["content"]), isError: b["is_error"]?.bool ?? false))
+                for img in b["content"]?.array ?? [] where img["type"]?.string == "image" {
+                    guard let src = img["source"], src["type"]?.string == "base64", let b64 = src["data"]?.string,
+                          let data = Data(base64Encoded: b64) else { continue }
+                    out.append(.toolImage(id: id, data: data, mediaType: src["media_type"]?.string ?? "image/png"))
+                }
             }
+            return out
         case "result":
             return [.result(text: v["result"]?.string ?? "", sessionID: v["session_id"]?.string,
                             costUSD: v["total_cost_usd"]?.number ?? v["cost_usd"]?.number, isError: v["is_error"]?.bool ?? false)]
@@ -261,7 +276,7 @@ public enum ClaudeChatStream {
     static func text(of content: JSONValue?) -> String {
         guard let content else { return "" }
         if let s = content.string { return s }
-        return (content.array ?? []).compactMap { $0["text"]?.string ?? ($0["type"]?.string == "image" ? "[image]" : nil) }.joined(separator: "\n")
+        return (content.array ?? []).compactMap { $0["text"]?.string }.joined(separator: "\n")
     }
 
     /// Splits a growing byte buffer into complete lines (keeps the unfinished tail).
@@ -321,6 +336,120 @@ public extension ChatTurnBuilder {
             case .error: return ChatPart(id: "s\(i)", kind: .text, text: "⚠️ " + item.text)
             default: return nil
             }
+        }
+    }
+}
+
+// MARK: - Artifacts
+
+/// A self-contained result the chat shows in its own panel (like Claude's artifacts): an HTML page, an SVG,
+/// a Mermaid diagram or a React component, taken from a fenced code block of an answer.
+public struct ChatArtifact: Sendable, Equatable, Identifiable {
+    public enum Kind: String, Sendable { case html, svg, mermaid, react }
+    public var id: String { kind.rawValue + ":" + String(source.hashValue) }
+    public var kind: Kind
+    public var title: String
+    public var source: String
+
+    public init(kind: Kind, title: String, source: String) { self.kind = kind; self.title = title; self.source = source }
+
+    public static func kind(forLanguage lang: String?) -> Kind? {
+        switch (lang ?? "").lowercased() {
+        case "html", "htm": return .html
+        case "svg": return .svg
+        case "mermaid": return .mermaid
+        case "jsx", "tsx", "react": return .react
+        default: return nil
+        }
+    }
+
+    /// Artifact for a code block, if it is one: previewable language and more than a snippet
+    /// (a 3-line HTML example in an explanation stays a code block).
+    public static func from(language: String?, code: String) -> ChatArtifact? {
+        guard let k = kind(forLanguage: language) else { return nil }
+        let lines = code.split(separator: "\n", omittingEmptySubsequences: false).count
+        guard lines >= 5 || code.lowercased().contains("<html") || code.lowercased().contains("<svg") || k == .mermaid else { return nil }
+        return ChatArtifact(kind: k, title: title(of: code, kind: k), source: code)
+    }
+
+    /// All artifacts in an answer, in order.
+    public static func extract(_ markdown: String) -> [ChatArtifact] {
+        var out: [ChatArtifact] = []
+        var lang: String?
+        var buf: [String] = []
+        var inFence = false
+        for line in markdown.components(separatedBy: "\n") {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            if t.hasPrefix("```") {
+                if inFence {
+                    if let a = from(language: lang, code: buf.joined(separator: "\n")) { out.append(a) }
+                    inFence = false; buf = []; lang = nil
+                } else {
+                    inFence = true
+                    lang = String(t.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+                }
+                continue
+            }
+            if inFence { buf.append(line) }
+        }
+        return out
+    }
+
+    static func title(of code: String, kind: Kind) -> String {
+        func between(_ a: String, _ b: String) -> String? {
+            guard let r1 = code.range(of: a, options: .caseInsensitive), let r2 = code.range(of: b, options: .caseInsensitive, range: r1.upperBound..<code.endIndex) else { return nil }
+            let s = code[r1.upperBound..<r2.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+            return s.isEmpty ? nil : String(s.prefix(80))
+        }
+        switch kind {
+        case .html:
+            if let t = between("<title>", "</title>") { return t }
+            if let h = between("<h1", "</h1>"), let gt = h.firstIndex(of: ">") { return String(h[h.index(after: gt)...]).trimmingCharacters(in: .whitespaces) }
+            return "Web page"
+        case .svg: return "Image (SVG)"
+        case .mermaid:
+            let first = code.split(separator: "\n").first.map { String($0).trimmingCharacters(in: .whitespaces) } ?? ""
+            return first.isEmpty ? "Diagram" : "Diagram · " + first.prefix(30)
+        case .react:
+            if let r = code.range(of: #"(function|const)\s+([A-Z][A-Za-z0-9]*)"#, options: .regularExpression) {
+                return String(code[r]).components(separatedBy: .whitespaces).last ?? "Component"
+            }
+            return "Component"
+        }
+    }
+
+    /// Full HTML document for the preview (React via React 18 + Babel standalone, SVG wrapped).
+    public var document: String {
+        switch kind {
+        case .html:
+            return source
+        case .svg:
+            return "<!doctype html><html><head><meta charset=\"utf-8\"><style>html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center;background:transparent}svg{max-width:100%;height:auto}</style></head><body>\(source)</body></html>"
+        case .mermaid:
+            return source
+        case .react:
+            var code = source
+            // `export default function App` → render it.
+            var name = "App"
+            if let r = code.range(of: #"export\s+default\s+(function\s+)?([A-Z][A-Za-z0-9]*)"#, options: .regularExpression) {
+                name = String(code[r]).components(separatedBy: .whitespaces).last ?? "App"
+            }
+            code = code.replacingOccurrences(of: #"export\s+default\s+"#, with: "", options: .regularExpression)
+            code = code.replacingOccurrences(of: #"(?m)^import .*$"#, with: "", options: .regularExpression)
+            return """
+            <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+            <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+            <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+            <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <style>body{margin:0;font-family:-apple-system,system-ui,sans-serif}</style></head>
+            <body><div id="root"></div>
+            <script type="text/babel" data-presets="react,typescript" data-type="module">
+            const { useState, useEffect, useMemo, useRef, useCallback, useReducer } = React;
+            \(code)
+            ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(\(name)));
+            </script></body></html>
+            """
         }
     }
 }

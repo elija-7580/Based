@@ -444,3 +444,22 @@ Scope: feedback round ("chat answers nonsense", "Agent Brain page in Trash", bac
 - Tests: `ChatStreamTests` (5: stream-json → parts, Task tools, transcript round trip, chunked lines, arguments).
   `bash ci/typecheck/run.sh` → typecheck OK.
 
+## Pass 19 — artifacts panel, browser screenshots in tool cards
+
+- **Artifacts** (`ChatArtifact` in BasedBrain): fenced ```html / ```svg / ```mermaid / ```jsx|tsx blocks of 5+ lines (or
+  full documents) become artifacts with a title (`<title>`, `<h1>`, component name, diagram type) and a preview
+  document (React 18 + Babel standalone + Tailwind CDN, `export default` component rendered, imports stripped;
+  SVG centred). `ChatArtifact.extract` for whole answers.
+- **UI** (`App/Shared/Brain/ArtifactViews.swift`): the reply shows an artifact card instead of the code block; click
+  opens the panel — full-page chat: resizable panel on the right (`chat.artifactWidth`), opens automatically when a
+  reply finishes with an artifact; docked chat: panel replaces the transcript (✕ back). Panel: Preview | Code,
+  Copy code, Save as page (new page with a live HTML / Mermaid block), Export as HTML…, Reload.
+  `HTMLPreview.document(source:language:)` is shared.
+- **Prompting**: Claude Code chat and the API agent are told to answer visual / interactive requests with one
+  complete html / svg / mermaid / jsx block.
+- **Browser screenshots**: `ChatEvent.toolImage` from image items in Claude Code tool results (browser use,
+  computer use, Playwright / Chrome MCP); tool rows keep the latest screenshot visible (`ToolImageStrip`, click to
+  enlarge, count badge); at most 4 images per tool kept in memory, not saved to the transcript.
+- Tests: `ChatArtifactTests` (extraction, titles, React document, screenshot → card). BasedBrain Swift Testing 11
+  green; `bash ci/typecheck/run.sh` → typecheck OK.
+
