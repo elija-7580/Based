@@ -17,8 +17,10 @@ struct HTMLPreview: View {
             .accessibilityIdentifier("html.preview")
     }
 
+    private var document: String { Self.document(source: source, language: language) }
+
     /// Full HTML document; the page reports its height back so the block grows with its content.
-    private var document: String {
+    static func document(source: String, language: String) -> String {
         let reporter = """
         <script>
         (function(){
@@ -108,6 +110,8 @@ struct WebContentView: NSViewRepresentable {
         let cfg = WKWebViewConfiguration()
         cfg.userContentController.add(c, name: "height")
         cfg.preferences.javaScriptCanOpenWindowsAutomatically = false
+        // Isolated: no cookies / localStorage shared with other previews or the app.
+        cfg.websiteDataStore = .nonPersistent()
         return cfg
     }
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
@@ -119,6 +123,7 @@ struct WebContentView: NSViewRepresentable {
         }
         /// Links inside previews open in the default browser instead of navigating the sandbox.
         func webView(_ w: WKWebView, decidePolicyFor a: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if a.request.url?.isFileURL == true { decisionHandler(.cancel); return }
             if a.navigationType == .linkActivated, let u = a.request.url { NSWorkspace.shared.open(u); decisionHandler(.cancel) } else { decisionHandler(.allow) }
         }
     }
@@ -131,6 +136,7 @@ struct WebContentView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let cfg = WKWebViewConfiguration()
         cfg.userContentController.add(context.coordinator, name: "height")
+        cfg.websiteDataStore = .nonPersistent()
         let v = WKWebView(frame: .zero, configuration: cfg)
         v.isOpaque = false; v.backgroundColor = .clear; v.scrollView.isScrollEnabled = false
         v.navigationDelegate = context.coordinator
@@ -150,6 +156,7 @@ struct WebContentView: UIViewRepresentable {
             if let h = m.body as? Double { onHeight(CGFloat(h)) } else if let h = m.body as? Int { onHeight(CGFloat(h)) }
         }
         func webView(_ w: WKWebView, decidePolicyFor a: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if a.request.url?.isFileURL == true { decisionHandler(.cancel); return }
             if a.navigationType == .linkActivated, let u = a.request.url { UIApplication.shared.open(u); decisionHandler(.cancel) } else { decisionHandler(.allow) }
         }
     }

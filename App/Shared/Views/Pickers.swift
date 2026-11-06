@@ -112,13 +112,24 @@ enum Covers {
 
 struct CoverView: View {
     let cover: PageCover
+    /// Vertical focus of image covers: 0 = top edge visible, 1 = bottom edge (Notion's "Reposition").
     var position: Double = 0.5
+    /// Reports how many points the image is taller than the visible cover (0 for gradients/colours).
+    var onOverflow: ((CGFloat) -> Void)? = nil
     @Environment(AppModel.self) private var model
+    @State private var rendered: CGSize = .zero
 
     var body: some View {
         GeometryReader { geo in
+            let overflow = max(0, rendered.height - geo.size.height)
             content
-                .frame(width: geo.size.width, height: geo.size.height)
+                .frame(minWidth: geo.size.width, minHeight: geo.size.height)
+                .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { size in
+                    rendered = size
+                    onOverflow?(max(0, size.height - geo.size.height))
+                })
+                .offset(y: -overflow * CGFloat(min(1, max(0, position))))
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                 .clipped()
         }
     }

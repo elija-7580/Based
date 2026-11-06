@@ -10,6 +10,9 @@ struct PageScreen: View {
     @FocusState private var keyFocus: Bool
     /// Width of the scroll area (Notion: 708 pt text column with 96 pt side padding, less in narrow windows).
     @State private var availableWidth: CGFloat = 1000
+    /// Height of the scroll area; the cover is 30 % of it (clamped like Notion's 30vh cover).
+    @State private var availableHeight: CGFloat = 800
+    @State private var fileDropTargeted = false
 
     init(pageID: RecordID, model: AppModel, isPeek: Bool = false) {
         self.pageID = pageID
@@ -41,8 +44,11 @@ struct PageScreen: View {
             ScrollViewReader { scroll in
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    PageHeader(page: page, editor: editor, isPeek: isPeek)
+                    // Notion: the cover spans the whole content area edge to edge; icon, title and blocks
+                    // share one left edge inside the centred text column below it.
+                    PageCoverArea(page: page, locked: editor.isLocked, height: coverHeight)
                     VStack(alignment: .leading, spacing: 0) {
+                        PageHeader(page: page, editor: editor, isPeek: isPeek)
                         if page.isRow || page.props.isTemplate == true, let db = model.store.database(ofRow: pageID) {
                             RowPropertiesPanel(db: db, row: page, locked: editor.isLocked || db.locked == true)
                                 .padding(.bottom, 12)
@@ -60,15 +66,27 @@ struct PageScreen: View {
                         }
                     }
                     .padding(.horizontal, horizontalPadding)
+                    .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
-                .frame(maxWidth: .infinity)
             }
             .background(GeometryReader { g in
                 Color.clear
-                    .onAppear { availableWidth = g.size.width }
+                    .onAppear { availableWidth = g.size.width; availableHeight = g.size.height }
                     .onChange(of: g.size.width) { _, w in availableWidth = w }
+                    .onChange(of: g.size.height) { _, h in availableHeight = h }
             })
+            // Files dragged in from Finder / Files become blocks (HTML renders inline as an embed).
+            .onDrop(of: [.fileURL], isTargeted: $fileDropTargeted) { providers in
+                guard !editor.isLocked, page.type != .databasePage else { return false }
+                return FileDrop.insert(providers, into: pageID, after: editor.selectedBlocks.first ?? editor.focusedID, model: model)
+            }
+            .overlay {
+                if fileDropTargeted {
+                    RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor.opacity(0.6), lineWidth: 2).padding(4)
+                        .allowsHitTesting(false)
+                }
+            }
             .overlay(alignment: .topTrailing) {
                 if page.type != .databasePage, format?.hideOutline != true, !model.showFind { PageOutline(pageID: pageID, scroll: scroll) }
             }
@@ -134,6 +152,15 @@ struct PageScreen: View {
         .onDisappear { if model.activeEditor === editor { model.activeEditor = nil } }
     }
 
+    private var coverHeight: CGFloat {
+        if isPeek { return 140 }
+        #if os(macOS)
+        return min(280, max(200, availableHeight * 0.3))
+        #else
+        return min(240, max(160, availableHeight * 0.25))
+        #endif
+    }
+
     private var horizontalPadding: CGFloat {
         #if os(macOS)
         if isPeek { return max(24, min(52, (availableWidth - Theme.contentWidth) / 2)) }
@@ -152,6 +179,108 @@ struct PageScreen: View {
 
 // MARK: - Header
 
+/// Full-bleed page cover with hover controls (Change cover · Reposition · Remove), Notion-style.
+struct PageCoverArea: View {
+    let page: Block
+    var locked = false
+    var height: CGFloat
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+    @State private var coverPicker = false
+    @State private var repositioning = false
+    /// Position while dragging in reposition mode (0 = top, 1 = bottom).
+    @State private var draft: Double?
+    @State private var dragStart: Double?
+    @State private var overflow: CGFloat = 0
+
+    private var store: WorkspaceStore { model.store }
+    private var saved: Double { page.props.format?.coverPosition ?? 0.5 }
+    private var canReposition: Bool {
+        switch page.props.cover {
+        case .asset, .url: return true
+        default: return false
+        }
+    }
+
+    var body: some View {
+        if let cover = page.props.cover {
+            CoverView(cover: cover, position: draft ?? saved, onOverflow: { o in if abs(o - overflow) > 0.5 { overflow = o } })
+                .frame(height: height)
+                .frame(maxWidth: .infinity)
+                .contentShape(Rectangle())
+                .gesture(repositionGesture, including: repositioning ? .all : .subviews)
+                .overlay {
+                    if repositioning {
+                        Text("Drag image to reposition")
+                            .font(.system(size: 13, weight: .medium))
+                            .padding(.horizontal, 10).padding(.vertical, 5)
+                            .background(Capsule().fill(.black.opacity(0.45)))
+                            .foregroundStyle(.white)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if (hover || repositioning), !locked { controls }
+                }
+                .onHover { hover = $0 }
+                .popover(isPresented: $coverPicker) {
+                    CoverPicker(current: page.props.cover) { store.setPageCover(page.id, $0); coverPicker = false }
+                }
+                .accessibilityIdentifier("page.cover")
+                #if os(iOS)
+                .onAppear { hover = true }
+                #endif
+        }
+    }
+
+    @ViewBuilder
+    private var controls: some View {
+        HStack(spacing: 0) {
+            if repositioning {
+                coverButton("Save position") {
+                    if let d = draft { store.setPageFormat(page.id) { $0.coverPosition = d } }
+                    draft = nil; repositioning = false
+                }
+                Divider().frame(height: 14)
+                coverButton("Cancel") { draft = nil; repositioning = false }
+            } else {
+                coverButton("Change cover") { coverPicker = true }
+                if canReposition {
+                    Divider().frame(height: 14)
+                    coverButton("Reposition") { draft = saved; repositioning = true }
+                }
+                Divider().frame(height: 14)
+                coverButton("Remove") { store.setPageCover(page.id, nil) }
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
+        .padding(10)
+    }
+
+    private func coverButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(title, action: action)
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .contentShape(Rectangle())
+    }
+
+    private var repositionGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { v in
+                guard repositioning else { return }
+                let start = dragStart ?? (draft ?? saved)
+                if dragStart == nil { dragStart = start }
+                guard overflow > 0 else { return }
+                // Dragging the image down reveals more of its top, like Notion.
+                draft = min(1, max(0, start - Double(v.translation.height / overflow)))
+            }
+            .onEnded { _ in dragStart = nil }
+    }
+}
+
+/// Icon, "Add icon / Add cover" hover controls and the title. Lives inside the text column, so all three
+/// share the left edge of the blocks below.
 struct PageHeader: View {
     let page: Block
     let editor: EditorController
@@ -159,69 +288,61 @@ struct PageHeader: View {
     @Environment(AppModel.self) private var model
     @State private var hover = false
     @State private var iconPicker = false
-    @State private var coverPicker = false
+
+    static let iconSize: CGFloat = 78
 
     private var store: WorkspaceStore { model.store }
     private var locked: Bool { editor.isLocked }
+    private var hasCover: Bool { page.props.cover != nil }
+    private var hasIcon: Bool { page.props.icon != nil }
+    /// Only reserve the controls row when it has something to offer (Notion collapses it otherwise).
+    private var showsControls: Bool { !locked && (!hasIcon || !hasCover) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let cover = page.props.cover {
-                CoverView(cover: cover)
-                    .frame(height: isPeek ? 140 : 220)
-                    .overlay(alignment: .bottomTrailing) {
-                        if hover, !locked {
-                            HStack(spacing: 0) {
-                                Button("Change cover") { coverPicker = true }
-                                Divider().frame(height: 14)
-                                Button("Remove") { store.setPageCover(page.id, nil) }
-                            }
-                            .buttonStyle(.plain)
-                            .font(.system(size: 12))
-                            .padding(.horizontal, 8).padding(.vertical, 4)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
-                            .padding(10)
-                        }
+            if !hasCover {
+                Color.clear.frame(height: isPeek ? 24 : (hasIcon ? 48 : 64))
+            }
+            if let icon = page.props.icon {
+                Button { if !locked { iconPicker = true } } label: {
+                    icon.view(size: Self.iconSize, assets: model.assets)
+                        .frame(width: Self.iconSize, height: Self.iconSize, alignment: .center)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("page.icon")
+                // Overlap the cover's bottom edge by half the icon height.
+                .offset(y: hasCover ? -Self.iconSize / 2 : 0)
+                .padding(.bottom, hasCover ? -Self.iconSize / 2 : 0)
+                .popover(isPresented: $iconPicker) {
+                    IconPicker(current: page.props.icon) { store.setPageIcon(page.id, $0); iconPicker = false }
+                }
+            }
+            if showsControls {
+                HStack(spacing: 12) {
+                    if !hasIcon {
+                        Button { store.setPageIcon(page.id, .emoji(EmojiCatalog.random())) } label: { Label("Add icon", systemImage: "face.smiling") }
                     }
+                    if !hasCover {
+                        Button { store.setPageCover(page.id, .gradient(Int.random(in: 0..<Covers.gradients.count))) } label: { Label("Add cover", systemImage: "photo") }
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.secondary)
+                .opacity(hover ? 1 : 0)
+                .frame(height: 24)
+                .padding(.top, hasIcon ? 8 : (hasCover ? 12 : 0))
+                .padding(.bottom, 4)
             } else {
-                Color.clear.frame(height: isPeek ? 24 : 56)
+                Color.clear.frame(height: hasIcon ? 10 : 24)
             }
-            VStack(alignment: .leading, spacing: 6) {
-                if let icon = page.props.icon {
-                    Button { if !locked { iconPicker = true } } label: {
-                        icon.view(size: 78, assets: model.assets).frame(width: 84, height: 84, alignment: .leading)
-                    }
-                    .buttonStyle(.plain)
-                    .offset(y: page.props.cover != nil ? -42 : 0)
-                    .padding(.bottom, page.props.cover != nil ? -42 : 0)
-                }
-                if !locked {
-                    HStack(spacing: 12) {
-                        if page.props.icon == nil {
-                            Button { store.setPageIcon(page.id, .emoji(EmojiCatalog.random())) } label: { Label("Add icon", systemImage: "face.smiling") }
-                        }
-                        if page.props.cover == nil {
-                            Button { store.setPageCover(page.id, .gradient(Int.random(in: 0..<Covers.gradients.count))) } label: { Label("Add cover", systemImage: "photo") }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.secondary)
-                    .opacity(hover ? 1 : 0)
-                    .frame(height: 22)
-                }
-                title
-                    .padding(.bottom, 8)
-            }
-            .padding(.horizontal, horizontalPadding)
+            title
+                .padding(.bottom, 8)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .onHover { hover = $0 }
-        .popover(isPresented: $iconPicker) {
-            IconPicker(current: page.props.icon) { store.setPageIcon(page.id, $0); iconPicker = false }
-        }
-        .popover(isPresented: $coverPicker) {
-            CoverPicker(current: page.props.cover) { store.setPageCover(page.id, $0); coverPicker = false }
-        }
         #if os(iOS)
         .onAppear { hover = true }
         #endif
@@ -245,14 +366,6 @@ struct PageHeader: View {
     }
 
     private var format: PageFormat? { page.props.format }
-
-    private var horizontalPadding: CGFloat {
-        #if os(macOS)
-        return isPeek ? 52 : 72
-        #else
-        return 20
-        #endif
-    }
 }
 
 // MARK: - Row properties

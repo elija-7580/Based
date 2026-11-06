@@ -23,7 +23,7 @@ struct MediaBlockView: View {
             } else {
                 media
                     .overlay(alignment: .topTrailing) {
-                        if hovering && !editor.isLocked && block.type != .bookmark {
+                        if hovering && !editor.isLocked && block.type != .bookmark && !isHTMLFile {
                             Button { showSource = true } label: {
                                 Image(systemName: "arrow.triangle.2.circlepath").padding(5)
                                     .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
@@ -78,6 +78,7 @@ struct MediaBlockView: View {
         case .file: return "Upload or embed a file"
         case .pdf: return "Embed or upload a PDF"
         case .bookmark: return "Add a web bookmark"
+        case .embed: return "Embed a link or an HTML file"
         default: return "Embed a link"
         }
     }
@@ -88,8 +89,23 @@ struct MediaBlockView: View {
         return nil
     }
 
+    /// An uploaded HTML file in an embed or file block: rendered inline (sandboxed) instead of as a file row.
+    private var isHTMLFile: Bool {
+        guard block.type == .embed || block.type == .file, let u = sourceURL, u.isFileURL else { return false }
+        return HTMLFileBlockView.isHTML(block, url: u)
+    }
+
     @ViewBuilder
     private var media: some View {
+        if isHTMLFile, let u = sourceURL {
+            HTMLFileBlockView(block: block, url: u, editor: editor, onReplace: { showSource = true })
+        } else {
+            mediaByType
+        }
+    }
+
+    @ViewBuilder
+    private var mediaByType: some View {
         switch block.type {
         case .image: ImageBlockView(block: block, url: sourceURL, editor: editor)
         case .video:
@@ -330,15 +346,16 @@ struct MediaSourcePicker: View {
         case .video: return [.movie, .audiovisualContent]
         case .audio: return [.audio]
         case .pdf: return [.pdf]
+        case .embed: return [.html]
         default: return [.item]
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if block.type != .bookmark && block.type != .embed {
+            if block.type != .bookmark {
                 Button { importing = true } label: {
-                    Label("Upload file", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
+                    Label(block.type == .embed ? "Upload HTML file" : "Upload file", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 Text("or embed a link").font(.system(size: 12)).foregroundStyle(Theme.secondary)
@@ -355,7 +372,9 @@ struct MediaSourcePicker: View {
                 model.store.updateBlock(block.id, name: "Upload") { b in
                     b.props.asset = ref
                     b.props.url = nil
+                    b.props.bookmark = nil
                     if b.type == .file, ref.mime == "application/pdf" { b.type = .pdf }
+                    if b.type == .file, ref.mime == "text/html" { b.type = .embed }
                 }
                 done()
             }
