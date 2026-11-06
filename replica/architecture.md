@@ -56,13 +56,50 @@ Tab/Shift-Tab, arrows at the first/last line and typed characters. Every
 structural edit is one store transaction, so undo/redo covers both text and
 structure. Typing is coalesced into one undo step.
 
+## App layer (SwiftUI)
+
+```
+AppModel            @Observable: store, navigation (selection, path, back
+                    stack), open modes (full / side peek / center peek),
+                    sheets (quick find, trash, move, import/export), sync
+                    engine lifecycle, active EditorController
+EditorController    per page: focus + caret hand-off between block text views
+                    (TextHost protocol), slash & inline menus, block selection,
+                    Return/Backspace/Tab/arrow semantics, paste, marks
+AttributedBridge    RichText ⇄ NSAttributedString (marks, mentions, equations
+                    as custom attribute keys), typing attributes
+RichTextView        NSViewRepresentable / UIViewRepresentable around
+                    BasedNSTextView / BasedUITextView (TextKit 1, intrinsic
+                    height, placeholder, key commands, iOS keyboard toolbar)
+BlockViews          one view per BlockType, recursive children, drag handle,
+                    block menus; MediaBlocks for image/video/file/pdf/
+                    bookmark/embed/equation (WKWebView), SimpleTable
+Database/           DatabaseBlockView (tabs/toolbar) → layout views (Table,
+                    Board, List, Gallery, Calendar, Timeline) → Cells /
+                    PropertyValueEditor; DatabaseSettings for filters, sorts,
+                    groups, view and property configuration
+RootView            NavigationSplitView: Sidebar (tree, favorites, new,
+                    import, trash) · Home · PageScreen · inspector side peek ·
+                    sheets (QuickFind, Trash, Settings) · fileImporter/
+                    fileExporter · onOpenURL (based://page/<id>)
+Theme               colours (dynamic light/dark), fonts per block type,
+                    page formats (default/serif/mono, small text)
+```
+
+Rules: views never mutate records directly — every change goes through a
+`WorkspaceStore` transaction (undoable, observed, persisted, synced). The
+store is the single source of truth; SwiftUI observes it via `@Observable`.
+Platform code is confined to `RichTextView.swift`, `Theme` typealiases and
+`#if os()` blocks in a few views.
+
 ## Milestones
 
-1. Core + persistence + tests (Linux) ✅ target of pass 1
-2. App shell: sidebar, pages, block editor, slash menu, shortcuts
-3. Databases: table/board/list/gallery/calendar, properties, filter/sort/group
-4. Sync (CloudKit) + assets
-5. Import/export (Notion export, Markdown), search, trash, favorites, backlinks
-6. Parity backlog: columns drag, synced blocks, page history, comments,
+1. Core + persistence + tests (Linux) ✅
+2. App shell: sidebar, pages, block editor, slash menu, shortcuts ✅ (type-checked)
+3. Databases: table/board/list/gallery/calendar, properties, filter/sort/group ✅
+4. Sync (CloudKit) + assets ✅ code, ⏳ untested on device
+5. Import/export (Notion export, Markdown), search, trash, favorites, backlinks ✅
+6. **First Xcode build + fix pass, CI workflow enabled** ⏳
+7. Parity backlog: columns drag, synced blocks, page history, comments,
    templates, buttons, timeline/chart/form views, relations/rollups UI, KaTeX,
    share extension, widgets, PDF export
