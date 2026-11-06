@@ -116,7 +116,7 @@ public final class ProcessTransport: @unchecked Sendable {
         peer = JSONRPCPeer { data in stdinHandle.write(data) }
         process.executableURL = URL(fileURLWithPath: Self.resolve(command))
         process.arguments = arguments
-        var env = ProcessInfo.processInfo.environment
+        var env = ShellEnvironment.environment()
         for (k, v) in environment { env[k] = v }
         process.environment = env
         if let cwd { process.currentDirectoryURL = URL(fileURLWithPath: cwd) }
@@ -146,16 +146,9 @@ public final class ProcessTransport: @unchecked Sendable {
         isRunning = false
     }
 
-    /// Resolve a bare command name through PATH plus common user locations (Homebrew, nvm, volta, cargo).
+    /// Resolve a bare command name through the login-shell PATH plus common user locations (Homebrew, nvm, volta, cargo).
     public static func resolve(_ command: String) -> String {
         if command.hasPrefix("/") || command.hasPrefix(".") { return command }
-        let home = ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory()
-        var dirs = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map(String.init)
-        dirs += ["/opt/homebrew/bin", "/usr/local/bin", "\(home)/.local/bin", "\(home)/.volta/bin", "\(home)/.cargo/bin", "\(home)/.bun/bin", "/usr/bin", "/bin"]
-        if let nvm = try? FileManager.default.contentsOfDirectory(atPath: "\(home)/.nvm/versions/node") {
-            dirs += nvm.sorted().reversed().map { "\(home)/.nvm/versions/node/\($0)/bin" }
-        }
-        for d in dirs where FileManager.default.isExecutableFile(atPath: "\(d)/\(command)") { return "\(d)/\(command)" }
-        return command
+        return ShellEnvironment.which(command) ?? command
     }
 }

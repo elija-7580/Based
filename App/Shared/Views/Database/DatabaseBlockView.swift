@@ -19,7 +19,10 @@ struct DBContext {
     /// Non-title properties shown on cards / list rows.
     var cardProperties: [PropertySchema] { visibleProperties.filter { $0.type != .title } }
 
-    func open(_ rowID: RecordID) { model.open(rowID, mode: view.openIn ?? .sidePeek) }
+    func open(_ rowID: RecordID) {
+        model.peekSiblings = (visibleGroups?.flatMap(\.rows) ?? result.rows).map(\.id)
+        model.open(rowID, mode: view.openIn ?? .sidePeek)
+    }
 
     @discardableResult
     func addRow(values: [String: PropertyValue] = [:], title: RichText = RichText(), at position: InsertPosition = .end,
@@ -104,6 +107,7 @@ struct DatabaseBlockView: View {
     @State private var showSettings = false
     @State private var renamingView: RecordID?
     @State private var viewName = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         let node = model.registry.block(blockID)
@@ -148,6 +152,12 @@ struct DatabaseBlockView: View {
             layout(ctx)
         }
         .padding(.vertical, 4)
+        .onChange(of: model.dbSearchRequest) { _, _ in
+            // ⌘F on a full-page database searches its rows (Notion behaviour).
+            guard fullPage else { return }
+            searching = true
+            searchFocused = true
+        }
     }
 
     @ViewBuilder
@@ -250,14 +260,18 @@ struct DatabaseBlockView: View {
             if searching {
                 TextField("Type to search…", text: $search)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 160)
-                    .onSubmit {}
+                    .frame(width: 180)
+                    .focused($searchFocused)
+                    .onAppear { searchFocused = true }
+                    .onKeyPress(.escape) { searching = false; search = ""; return .handled }
+                    .accessibilityIdentifier("db.search")
                 Button { searching = false; search = "" } label: { Image(systemName: "xmark.circle.fill") }
                     .buttonStyle(.plain).foregroundStyle(Theme.secondary)
             } else {
                 Button { searching = true } label: { Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary) }
                     .buttonStyle(.plain)
-                    .help("Search")
+                    .help("Search (⌘F)")
+                    .accessibilityIdentifier("db.searchButton")
             }
             Button { showSettings.toggle() } label: { Image(systemName: "ellipsis").foregroundStyle(Theme.secondary) }
                 .buttonStyle(.plain)

@@ -17,11 +17,11 @@ Sidebar page tree with expand/collapse,navigation,must,yes,yes,
 Drag and drop pages in sidebar,navigation,should,yes,yes,
 Breadcrumbs,navigation,should,yes,yes,
 Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)"
-Open page in new window (Mac),navigation,should,yes,partial,native macOS window tabs/new window via system; no menu item
-Tabs (Mac),navigation,could,yes,partial,native macOS window tabs; native window tabs
+Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system
+Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs"
 Quick Find search (titles + content),search,must,yes,yes,
 Recent pages in search,search,should,yes,yes,
-Search filters (created by / date / in page),search,could,yes,partial,title-only toggle + sort; no creator/date filters
+Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter"
 Backlinks,linking,should,yes,yes,
 Page mention (@ / [[),linking,must,yes,yes,
 Date mention,linking,should,yes,yes,
@@ -82,7 +82,7 @@ Undo / redo for text and structure,editor,must,yes,yes,
 Paste Markdown / multi-line as blocks,editor,must,yes,yes,
 Paste URL as bookmark / mention / link,editor,could,yes,yes,
 Copy blocks as Markdown,editor,should,yes,yes,
-Find in page,editor,could,yes,no,
+Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search"
 Emoji picker with search,editor,should,yes,yes,
 Word / character count,editor,could,yes,yes,
 Placeholders per block type,editor,should,yes,yes,
@@ -95,7 +95,7 @@ List view,databases,should,yes,yes,
 Gallery view with card preview,databases,should,yes,yes,
 Calendar view,databases,should,yes,partial,"month grid, drag to reschedule; no week view"
 Timeline view,databases,could,yes,partial,simplified bars; no dependencies
-Chart view,databases,could,yes,no,
+Chart view,databases,could,yes,yes,see Chart view row (Pass 8)
 Form view,databases,could,yes,no,
 Feed / map views,databases,could,yes,no,
 Multiple views per database,databases,must,yes,yes,
@@ -134,12 +134,12 @@ Page history / versions,history,should,yes,no,
 Comments and discussions,collaboration,should,yes,no,
 Sharing and permissions,collaboration,could,yes,no,single user scope
 Publish to web,collaboration,could,yes,no,
-Import Notion export (Markdown & CSV),import,must,yes,yes,
+Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress"
 Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
 Export as HTML / PDF,export,should,yes,no,
 Dark mode (system + toggle),app,must,yes,yes,
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,partial,⌘N ⌘P ⌘[ ⌘] ⇧⌘L ⌘⇧H; no ⌘\ sidebar toggle shortcut
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9"
 Settings,app,must,yes,yes,
 iPhone keyboard toolbar,mobile,must,yes,yes,
 iPhone long-press block menu,mobile,must,yes,yes,
@@ -168,3 +168,13 @@ Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-fir
 Export all workspace content,app,should,yes,yes,Markdown + CSV tree
 Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug
 UI test suite,app,should,n/a,yes,XCUITest macOS + iOS
+Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import
+AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or floating on narrow windows; full-page chat; history
+Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete"
+Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete"
+Peek navigation (prev/next row),databases,should,yes,yes,⌃⇧↑/↓ in side/center peek; open in new tab
+Import HTML export,import,should,yes,yes,Notion HTML export converted to Markdown blocks
+Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcript view, inline permission prompts, shift+tab modes, SwiftTerm terminal (macOS)"
+CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal
+Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning"
+"Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D"

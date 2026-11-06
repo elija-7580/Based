@@ -7,6 +7,9 @@ import BasedBrain
 //   • MCP server for Claude / ChatGPT / Cursor …      POST /mcp   (Streamable HTTP)  or  --stdio
 //   • Agent scheduler (runs agents on their schedule)
 //   • Health                                          GET /health
+//   • Logs (JSONL, same format as the apps)           GET /logs?level=warning&limit=200
+//   • Claude Code / Codex chats on this machine       GET /cli-sessions, GET /cli-sessions/{id}/transcript
+//   • Agent setup check                               GET /doctor
 // Configuration via flags or env: BASED_DB, BASED_PORT, BASED_TOKEN, ANTHROPIC_API_KEY, OPENAI_API_KEY, OLLAMA_URL
 
 struct Options {
@@ -47,7 +50,12 @@ struct Options {
 }
 
 let opts = Options()
-func log(_ s: String) { if !opts.stdio { print("[\(ISO8601DateFormatter().string(from: Date()))] \(s)"); fflush(stdout) } else { FileHandle.standardError.write(Data((s + "\n").utf8)) } }
+// Structured logs: JSONL files next to the database + stderr (journald / docker logs pick it up).
+Log.shared.subsystem = "com.based.server"
+Log.shared.configure(directory: URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("logs"), name: "based-server")
+Log.shared.echoToStderr = true
+if let lvl = ProcessInfo.processInfo.environment["BASED_LOG_LEVEL"].flatMap(LogLevel.init(name:)) { Log.shared.minimumLevel = lvl }
+func log(_ s: String, category: String = "server") { Log.info(s, category: category) }
 
 @MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime, HappierRuntime) {
     let persistence = try SQLitePersistence(url: URL(fileURLWithPath: opts.db))
@@ -68,8 +76,14 @@ func log(_ s: String) { if !opts.stdio { print("[\(ISO8601DateFormatter().string
     if let k = opts.cipherKey { happier.cipher = SessionCipher(base64: k) }
     let exe = CommandLine.arguments.first ?? "based-server"
     happier.basedMCPServer = MCPServerConfig(name: "based", command: exe, args: ["--stdio", "--db", opts.db])
-    happier.onLog = { log("acp: \($0)") }
-    return (store, tools, MCPServer(tools: tools), SyncServer(store: store), runtime, happier)
+    happier.onLog = { Log.debug($0, category: "acp") }
+    let publicURL = ProcessInfo.processInfo.environment["BASED_PUBLIC_URL"] ?? "http://127.0.0.1:\(opts.port)"
+    happier.mcpEndpoint = (publicURL, opts.token)
+    tools.hostSpecs = HappierRuntime.subAgentSpecs
+    tools.hostCall = { [happier] name, args in await happier.hostTool(name, args) }
+    let mcp = MCPServer(tools: tools)
+    mcp.approval = { [happier] session, tool, input in await happier.claudeApproval(session: session, tool: tool, input: input) }
+    return (store, tools, mcp, SyncServer(store: store), runtime, happier)
 }
 
 let (store, tools, mcp, sync, runtime, happier) = try await MainActor.run { try boot() }
@@ -99,7 +113,8 @@ func sessionJSON(_ s: AgentSession) -> JSONValue {
     .object(["id": .string(s.id), "title": .string(s.title), "agent": .string(s.agentID), "status": .string(s.status.rawValue),
              "machine": .string(s.machine), "cwd": .string(s.cwd), "tokens": .number(Double(s.tokens)),
              "started": .string(ISO8601DateFormatter().string(from: s.startedAt)), "encrypted": .bool(s.encrypted),
-             "live": .bool(happier.liveSessionIDs.contains(s.id))])
+             "live": .bool(happier.liveSessionIDs.contains(s.id)), "project": .string(s.project),
+             "parent": s.parentID.map(JSONValue.string) ?? .null])
 }
 func inboxJSON(_ i: InboxItem) -> JSONValue {
     .object(["id": .string(i.id), "title": .string(i.title), "kind": .string(i.kind.rawValue), "status": .string(i.status.rawValue),
@@ -121,6 +136,41 @@ let server = HTTPServer(port: opts.port) { req in
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: out)
     case ("GET", "/mcp"):
         return .text("SSE streaming is not supported; use POST /mcp (Streamable HTTP, JSON responses).", status: 405)
+    case ("POST", _) where match(req.path, "/mcp/session/*") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/mcp/session/*")![0]
+        guard let out = await mcp.handle(req.body, session: sid) else { return HTTPServer.Response(status: 202) }
+        return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: out)
+    case ("GET", "/logs"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let level = req.query["level"].flatMap(LogLevel.init(name:)) ?? .debug
+        let limit = Int(req.query["limit"] ?? "") ?? 300
+        let entries = Log.shared.recent(limit: limit, minLevel: level, category: req.query["category"], search: req.query["q"])
+        if req.query["format"] == "text" { return .text(entries.map(\.line).joined(separator: "\n")) }
+        let data = (try? JSONEncoder().encode(entries)) ?? Data("[]".utf8)
+        return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: data)
+    case ("GET", "/cli-sessions"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let list = CLISessionIndex.scan(limit: Int(req.query["limit"] ?? "") ?? 200)
+        let f = ISO8601DateFormatter()
+        return .json(["sessions": .array(list.map { s in
+            .object(["id": .string(s.id), "tool": .string(s.tool), "title": .string(s.title), "cwd": .string(s.cwd), "project": .string(s.project),
+                     "updated": .string(f.string(from: s.updatedAt)), "branch": s.gitBranch.map(JSONValue.string) ?? .null,
+                     "resume": .string(s.resumeCommand)]) })])
+    case ("GET", _) where match(req.path, "/cli-sessions/*/transcript") != nil:
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let id = match(req.path, "/cli-sessions/*/transcript")![0]
+        guard let s = CLISessionIndex.scan(limit: 2000).first(where: { $0.id == id }) else { return .json(["error": "not found"], status: 404) }
+        return .json(["messages": .array(CLISessionIndex.transcript(of: s).map { m in
+            .object(["role": .string(m.role.rawValue), "text": .string(m.text), "tool": m.toolName.map(JSONValue.string) ?? .null]) })])
+    case ("GET", "/doctor"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let tools = AgentDoctor.probeTools()
+        return .json(["environment": .string(ShellEnvironment.note),
+                      "tools": .array(tools.map { t in .object(["id": .string(t.id), "name": .string(t.name), "path": t.path.map(JSONValue.string) ?? .null,
+                                                                 "version": t.version.map(JSONValue.string) ?? .null, "install": .string(t.install)]) }),
+                      "agents": .array(happier.agents.map { a in let st = AgentDoctor.status(of: a, tools: tools)
+                          return .object(["id": .string(a.id), "state": .string(st.state.rawValue), "summary": .string(st.summary), "fix": st.fix.map(JSONValue.string) ?? .null]) })])
     case ("GET", "/sync/pull"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let since = req.query["since"].flatMap { try? JSONDecoder().decode(Stamp.self, from: Data($0.utf8)) }
@@ -160,7 +210,8 @@ let server = HTTPServer(port: opts.port) { req in
         let agent = body["agent"]?.string ?? "claude"
         let cwd = body["cwd"]?.string ?? FileManager.default.currentDirectoryPath
         do {
-            let sid = try await happier.startSession(agentID: agent, cwd: cwd, title: body["title"]?.string)
+            let sid = try await happier.startSession(agentID: agent, cwd: cwd, title: body["title"]?.string,
+                                                     project: body["project"]?.string, parentID: body["parent"]?.string)
             if let prompt = body["prompt"]?.string, !prompt.isEmpty {
                 Task { _ = try? await happier.prompt(sid, prompt) }
             }
@@ -171,7 +222,7 @@ let server = HTTPServer(port: opts.port) { req in
         let sid = match(req.path, "/sessions/*/prompt")![0]
         let text = (try? JSONValue.parse(req.body))?["prompt"]?.string ?? ""
         do {
-            if happier.client(for: sid) == nil { try await happier.attach(sid) }
+            if happier.connection(for: sid) == nil { try await happier.attach(sid) }
             let stop = try await happier.prompt(sid, text)
             return .json(["stop": .string(stop.rawValue)])
         } catch { return .json(["error": .string("\(error)")], status: 500) }
@@ -223,7 +274,7 @@ log("based-server listening on :\(opts.port) · db \(opts.db) · providers: \(ru
 
 if !opts.noScheduler {
     let scheduler = AgentScheduler(runtime: runtime)
-    scheduler.onEvent = { log("scheduler: \($0)") }
+    scheduler.onEvent = { log($0, category: "scheduler") }
     scheduler.start()
     log("scheduler started (tick 60s)")
 }

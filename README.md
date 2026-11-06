@@ -6,7 +6,7 @@ scheduled agents that every connected AI (in-app, Claude, ChatGPT, Cursor via
 MCP) shares. Synced through your own iCloud and/or your own server. Modeled on
 Notion's features and built clean-room from public documentation.
 
-> Prototype. 117 of 158 tracked features are implemented, 24 partially;
+> Prototype. 142 of 179 tracked features are implemented, 22 partially;
 > see [`replica/features.csv`](replica/features.csv) for the parity matrix and
 > [`replica/build-log.md`](replica/build-log.md) for progress.
 > The core package is unit-tested on Linux. The SwiftUI app has been
@@ -17,7 +17,7 @@ Notion's features and built clean-room from public documentation.
 
 - **Pages**: tree in sidebar, drag & drop, icons (emoji/image), covers, fonts,
   small text, full width, lock, duplicate, move, favorites, trash with restore,
-  backlinks, deep links (`based://page/<id>`), Quick Find (⌘P), Home.
+  backlinks, deep links (`based://page/<id>`), search (⌘K / ⌘P), Home.
 - **Block editor**: every Notion block type except tabs — text, headings 1–4,
   lists, to-dos, toggles & toggle headings, quote, callout, divider, code,
   equation, image/video/audio/file/PDF, bookmark, embed, TOC, breadcrumb,
@@ -34,8 +34,10 @@ Notion's features and built clean-room from public documentation.
   files, number formats, type conversion.
 - **Sync**: CloudKit `CKSyncEngine` (private DB), offline-first, HLC
   last-writer-wins per record, fractional-index ordering, assets as CKAssets.
-- **Import / export**: Notion export (Markdown + CSV, with relations and
-  nested pages), Markdown files; export page as Markdown, database as CSV.
+- **Import / export**: the Notion export `.zip` as downloaded (nested
+  `Part-N.zip` archives too), unzipped folders, Markdown + CSV (relations,
+  nested pages) and HTML exports, Markdown files — unpacked in the background
+  with a progress card; export page as Markdown, database as CSV.
 - **App**: light/dark/system (⇧⌘L), settings, iPhone keyboard toolbar and
   long-press menus, iPad runs (layout not tuned).
 
@@ -85,12 +87,42 @@ Notion's features and built clean-room from public documentation.
   Teamspaces, Security, Agents & AI, Connections, Import, Sync & server,
   Billing, About) with start page, cursor on open, spell-check, week start,
   timezone, date format, export all content, reset workspace, …
+- **Workspace shell like Notion** (Pass 9): Notion-style sidebar
+  (workspace menu, search, home, inbox, agents, favorites, private pages,
+  multi-select with ⌘/⇧-click + bulk open in tabs / favorite / duplicate /
+  move / delete), **tabs** (⌘T,
+  ⌘W, ⌃Tab, ⌘1–9, drag to reorder), **search overlay** (⌘K, Pages / Chats
+  scopes, date-grouped results, *Ask AI*, ⌘↵ opens in new tab), **command
+  palette** (⌘N: page, AI chat, meeting notes, database, agent session,
+  import), **find in page** (⌘F, ⌘G / ⇧⌘G), the **AI chat as right-side
+  panel** (⌘J, resizable, floats over narrow windows, *open as full page*),
+  side peek with ⌃⇧↑/↓ to step through rows, database row multi-select with
+  bulk actions. The block gutter (`+` / `⋮⋮`) sits in a reserved 44-pt
+  margin, so it is always visible on hover and clickable.
+- **Coding agents, Claude Code style**: *Agents* lists sessions grouped by
+  project plus your existing Claude Code / Codex CLI history
+  (`~/.claude/projects`, `~/.codex/sessions`). A session opens as a console —
+  transcript with tool calls, inline permission prompts (press 1/2/3),
+  `shift+tab` cycles the permission mode, `esc` interrupts — or as a **real
+  terminal** (SwiftTerm) running `claude` / `codex` in the project folder.
+  *Agent setup* (Settings → Agents & AI) finds the CLIs through your login
+  shell, checks the Claude login and runs a test prompt per agent. The Agent
+  Brain opens as a dashboard (About, Memories, Skills, Scheduled agents,
+  Connections).
+- **Diagnostics & logs** (Help → Diagnostics & Logs, ⌥⇧⌘D): rotating JSONL
+  log (`~/Library/Application Support/Based/Logs`, level in Settings →
+  Diagnostics), main-thread **hang watchdog** (pings every 250 ms, records
+  stalls > 0.5 s with the last breadcrumbs), crash reporter (alert on next
+  launch), **layout audit** that flags overlapping and clipped controls,
+  slow-operation timing (`Log.measure`)
+  and *Export logs…* (report header + log) for bug reports.
 - **UI tests**: `App/UITests` (XCUITest, macOS + iOS) walk sidebar, new page,
-  slash menu, Quick Find, ⌘J, Sessions/Inbox, every Settings page and the
-  database table; `make uitest`.
+  slash menu, search, command palette, tabs, find, chat panel, block gutter,
+  Agents/Inbox, Agent Brain dashboard, every Settings page, the database
+  table and a layout check for overlapping/clipped elements; `make uitest`.
 
 Not implemented: comments, sharing/publishing, page history, real-time
-multi-user, form/feed/map views, sub-items, HTML/PDF export, find in page,
+multi-user, form/feed/map views, sub-items, HTML/PDF export,
 share extension, widgets, watchOS target.
 
 ## Repository layout
@@ -138,10 +170,43 @@ Without an Apple Developer team the app runs local-only. To enable sync:
    shipping).
 3. `make project`, run on both devices with the same Apple ID.
 
+### Running local coding agents (Claude Code, Codex, …)
+
+The default macOS build is App-Sandboxed, and a sandboxed app cannot start
+`claude`, `codex` or `node` from your home folder. Either run sessions
+through `based-server` (see `deploy/`), or build without the sandbox:
+
+```
+# Config/Local.xcconfig
+BASED_AGENTS_SUFFIX = -Agents
+```
+
+then `make project`. This picks `Based-Agents.entitlements` (or
+`Based-iCloud-Agents.entitlements` with iCloud). The un-sandboxed build stores
+its data in `~/Library/Application Support/Based` instead of the sandbox
+container; on first launch it copies the workspace and preferences over from
+the old container once (API keys in the Keychain may need to be re-entered).
+Settings → Agents & AI → *Agent setup* shows what is found and tests it.
+
 ### Importing from Notion
 
-Settings → Workspace → Export → *Markdown & CSV*, include subpages, unzip the
-archive, then **File → Import…** (⌘⇧I) in Based and pick the unzipped folder.
+Settings → Workspace → Export → *Markdown & CSV* (or HTML), include
+subpages, then **File → Import…** (⌘⇧I) in Based and pick the downloaded
+`.zip` — no need to unzip.
+
+### Keyboard shortcuts (macOS)
+
+| Shortcut | Action |
+|---|---|
+| ⌘N / ⌥⌘N / ⇧⌘N | New… palette / new page / new AI chat |
+| ⌘K, ⌘P | Search (⌘K adds a link when text is selected) |
+| ⌘F, ⌘G, ⇧⌘G | Find in page (database: focus search) |
+| ⌘J | AI chat panel |
+| ⌘T, ⌘W, ⌃Tab, ⌘1–9 | Tabs |
+| ⌘[ ⌘], ⇧⌘U, ⌘\ | Back / forward, parent page, sidebar |
+| ⇧⌘1 / ⇧⌘2 / ⇧⌘3 | Agents / Inbox / Agent Brain |
+| ⇧⌘L | Dark mode |
+| ⌥⇧⌘D | Diagnostics & logs |
 
 ## Status
 
@@ -151,11 +216,14 @@ stubs; `App/Shared/Editor/RichTextView.swift` (AppKit/UIKit text views) was
 reviewed but not compiled. Expect a handful of fixes on the first Xcode run.
 Copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml` to get macOS +
 iOS simulator builds on every push; failures are written to the `ci-logs`
-branch so they can be fixed iteratively. Pass 8 (control room, charts, HTML
-preview, settings, UI tests) was written without the stub harness (lost in a
-sandbox reset) — syntax-checked with `swiftc -parse` and reviewed by hand.
+branch so they can be fixed iteratively. Pass 8 and Pass 9 (shell, tabs,
+agent console, diagnostics) were written without the stub harness (lost in a
+sandbox reset) — syntax-checked with `swiftc -parse`, symbol references
+cross-checked by script and reviewed by hand.
 
-Tests on Linux: `make test` → BasedCore 36, BasedBrain 19 (incl. RFC 8439
+Tests on Linux: `make test` → BasedCore 46, BasedBrain 30 (incl. Notion
+zip/HTML import fixtures, log rotation, Claude Code stream parsing, CLI
+session index, transcript parser, local MCP host, RFC 8439
 ChaCha20-Poly1305 vector, JSON-RPC framing, Happier store CRUD, chart
 aggregation, query cache, fractional index, 50k-row benchmark).
 

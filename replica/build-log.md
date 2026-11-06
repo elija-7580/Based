@@ -82,3 +82,48 @@
   menu, Quick Find, ⌘J, table header, settings pages, sessions/inbox.
 - Tests: BasedCore 36 green, BasedBrain 19 green (Linux). App code parsed
   with `swiftc -parse`; needs the first Xcode build.
+- Pass 9 · Feedback round (UI shifted/clipped on open, `+`/`⋮⋮` not
+  clickable, stutter, broken zip import, agent UI). Shell rewritten:
+  `RootView` (NavigationSplitView 220–400 pt sidebar + `DetailShell`), window
+  min 640×420 with `contentMinSize` and default 1240×820 so the restored frame
+  can't clip, unified toolbar with back/forward + ⌘J, `navigationTitle` /
+  `navigationSubtitle` from the model instead of per-screen toolbars (those
+  shifted the layout). New `Sidebar` (Notion order, recent chats, multi-select
+  + bulk context menu), `TabStrip` (⌘T/⌘W/⌃Tab/⌘1–9, drag reorder),
+  `SearchOverlay` (⌘K/⌘P, Pages/Chats, date buckets, Ask AI, ⌘↵ new tab),
+  `CommandPalette` (⌘N), `FindBar` (⌘F/⌘G/⇧⌘G, scroll + select block),
+  `ChatPanel` (right panel docked ≥ 680 pt, else floating; resizable;
+  `ChatFullPage`), peek prev/next (⌃⇧↑/↓), database row multi-select with
+  bulk bar. Block gutter: hover + hit area moved to the row header with a
+  reserved 44-pt margin, handle buttons `allowsHitTesting` only when visible,
+  size tracking via a reference box instead of `@State` (no re-render per
+  layout pass → less stutter).
+- Pass 9 · Core: Notion import accepts the downloaded `.zip` (pure-Swift
+  `Zip` reader incl. deflate, nested `Part-N.zip`) and HTML exports
+  (`HTMLImport` → blocks); `NotionImporter.prepare` runs off the main actor
+  with progress. `WorkspaceStore` structure revision (sidebar/backlinks don't
+  re-render on every keystroke), cached backlinks. `Log` (levels, categories,
+  JSONL rotation 5 × 2 MB, listeners, breadcrumbs, `Log.measure`).
+- Pass 9 · Agents: `ShellEnvironment` (login-shell PATH, `which`),
+  `AgentDoctor` (probe claude/codex/node/npx, login check, test prompts),
+  `ClaudeCodeDriver` (native `claude -p --output-format stream-json`
+  sessions with permission modes), `CLISessionIndex` (Claude Code / Codex
+  history), `TranscriptParser`, `LocalMCPHost` (Based as MCP server for
+  local agents, approval for writes). App: `AgentsScreen`, `SessionConsole`
+  (Claude-Code look, inline permission prompt, shift+tab modes, esc),
+  `AgentTerminalView` (SwiftTerm, macOS), `CLISessionView` (resume),
+  `AgentDoctorView`, `BrainDashboard`. Opt-in un-sandboxed build
+  (`BASED_AGENTS_SUFFIX = -Agents`) with one-time data migration from the
+  sandbox container.
+- Pass 9 · Diagnostics: `AppDiagnostics` (log setup, report header),
+  `HangWatchdog` (250 ms ping, > 0.5 s hang with breadcrumbs), `CrashReporter`
+  (signal/exception marker → alert on next launch), `LayoutAuditor`
+  (`.auditLayout(name)` walks the accessibility tree for overlapping /
+  clipped controls), `DiagnosticsView` (log viewer with filters, hangs,
+  layout issues, environment; ⌥⇧⌘D), Settings → Diagnostics.
+- Pass 9 · Tests: BasedCore 46, BasedBrain 30 green on Linux (zip/HTML
+  fixtures, log, stream-json parsing, CLI index, transcript, local MCP host).
+  UI tests extended (search, palette, tabs, find, chat panel, gutter buttons,
+  agents, brain dashboard, layout overlap/clipping check). App code:
+  `swiftc -parse` clean, model/brain/store member references and type names
+  cross-checked by script; first Xcode build may still need small fixes.

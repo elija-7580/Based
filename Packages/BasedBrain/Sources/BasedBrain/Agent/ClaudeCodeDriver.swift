@@ -1,0 +1,379 @@
+import Foundation
+import BasedCore
+
+/// A running coding agent, whatever the wire protocol (ACP adapter or Claude Code's own stream-json).
+public protocol AgentConnection: AnyObject, Sendable {
+    var sessionID: String? { get }
+    var isRunning: Bool { get }
+    func prompt(_ text: String, resources: [(uri: String, text: String)]) async throws -> ACPStopReason
+    func cancel()
+    func stop()
+}
+
+extension ACPClient: AgentConnection {}
+
+/// One parsed line of `claude --output-format stream-json --verbose`.
+public enum ClaudeStreamEvent: Sendable, Equatable {
+    case initialized(sessionID: String, model: String?, cwd: String?, permissionMode: String?, tools: [String])
+    case text(String)
+    case thinking(String)
+    case toolUse(id: String, name: String, input: JSONValue)
+    case toolResult(id: String, output: String, isError: Bool)
+    case result(sessionID: String?, isError: Bool, text: String?, inputTokens: Int, outputTokens: Int, costUSD: Double?, turns: Int?)
+    case other(String)
+}
+
+public enum ClaudeStream {
+    /// Parses one JSON line into zero or more events.
+    public static func parse(line: String) -> [ClaudeStreamEvent] {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let v = try? JSONValue.parse(trimmed) else { return [] }
+        switch v["type"]?.string ?? "" {
+        case "system":
+            if v["subtype"]?.string == "init" {
+                return [.initialized(sessionID: v["session_id"]?.string ?? "", model: v["model"]?.string, cwd: v["cwd"]?.string,
+                                     permissionMode: v["permissionMode"]?.string, tools: v["tools"]?.stringArray ?? [])]
+            }
+            return [.other(v["subtype"]?.string ?? "system")]
+        case "assistant":
+            var out: [ClaudeStreamEvent] = []
+            for item in v["message"]?["content"]?.array ?? [] {
+                switch item["type"]?.string ?? "" {
+                case "text": if let t = item["text"]?.string, !t.isEmpty { out.append(.text(t)) }
+                case "thinking": if let t = item["thinking"]?.string, !t.isEmpty { out.append(.thinking(t)) }
+                case "tool_use":
+                    out.append(.toolUse(id: item["id"]?.string ?? UUID().uuidString, name: item["name"]?.string ?? "tool", input: item["input"] ?? .object([:])))
+                default: break
+                }
+            }
+            return out
+        case "user":
+            var out: [ClaudeStreamEvent] = []
+            for item in v["message"]?["content"]?.array ?? [] where item["type"]?.string == "tool_result" {
+                out.append(.toolResult(id: item["tool_use_id"]?.string ?? "", output: resultText(item["content"]), isError: item["is_error"]?.bool ?? false))
+            }
+            return out
+        case "result":
+            let usage = v["usage"]
+            func int(_ k: String) -> Int { Int(usage?[k]?.number ?? 0) }
+            return [.result(sessionID: v["session_id"]?.string, isError: v["is_error"]?.bool ?? (v["subtype"]?.string != "success"),
+                            text: v["result"]?.string, inputTokens: int("input_tokens") + int("cache_read_input_tokens") + int("cache_creation_input_tokens"),
+                            outputTokens: int("output_tokens"), costUSD: v["total_cost_usd"]?.number, turns: v["num_turns"]?.number.map { Int($0) })]
+        default:
+            return [.other(v["type"]?.string ?? "?")]
+        }
+    }
+
+    static func resultText(_ v: JSONValue?) -> String {
+        guard let v else { return "" }
+        if let s = v.string { return s }
+        if let a = v.array {
+            return a.compactMap { $0["type"]?.string == "text" ? $0["text"]?.string : ($0["type"]?.string == "image" ? "[image]" : nil) }.joined(separator: "\n")
+        }
+        return (try? String(data: v.encoded(), encoding: .utf8)) ?? ""
+    }
+
+    /// Claude Code tool → ACP tool kind (drives icons and the "allow reads" policy).
+    public static func kind(of tool: String) -> String {
+        switch tool {
+        case "Read", "NotebookRead", "LS": return "read"
+        case "Grep", "Glob", "WebSearch", "ToolSearch": return "search"
+        case "Edit", "MultiEdit", "Write", "NotebookEdit": return "edit"
+        case "Bash", "BashOutput", "KillShell", "KillBash": return "execute"
+        case "WebFetch": return "fetch"
+        case "Task", "Agent": return "think"
+        case "TodoWrite": return "plan"
+        default: return tool.hasPrefix("mcp__") ? "other" : "other"
+        }
+    }
+
+    /// "Bash(ls -la)", "Edit(Sources/App.swift)" — the one-line title Claude Code shows.
+    public static func title(of tool: String, input: JSONValue) -> String {
+        func s(_ k: String) -> String? { input[k]?.string }
+        let arg: String?
+        switch tool {
+        case "Bash": arg = s("command")
+        case "Read", "Edit", "MultiEdit", "Write", "NotebookEdit", "NotebookRead": arg = s("file_path") ?? s("notebook_path")
+        case "Grep": arg = s("pattern").map { p in s("path").map { "\(p) in \($0)" } ?? p }
+        case "Glob": arg = s("pattern")
+        case "LS": arg = s("path")
+        case "WebFetch": arg = s("url")
+        case "WebSearch": arg = s("query")
+        case "Task", "Agent": arg = s("description")
+        case "TodoWrite": arg = nil
+        default: arg = input.object?.values.lazy.compactMap { $0.string }.first
+        }
+        let name = tool.hasPrefix("mcp__") ? tool.split(separator: "_").filter { !$0.isEmpty }.dropFirst().joined(separator: ":") : tool
+        guard let arg, !arg.isEmpty else { return name }
+        let one = arg.replacingOccurrences(of: "\n", with: " ")
+        return "\(name)(\(one.count > 120 ? String(one.prefix(117)) + "…" : one))"
+    }
+
+    /// TodoWrite input → plan lines ("☐ task" / "☒ done").
+    public static func todos(_ input: JSONValue) -> [String] {
+        (input["todos"]?.array ?? []).map { t in
+            let done = t["status"]?.string == "completed"
+            let active = t["status"]?.string == "in_progress"
+            return (done ? "☒ " : active ? "◐ " : "☐ ") + (t["content"]?.string ?? "")
+        }
+    }
+
+    /// Converts stream events to the ACP-style updates the rest of Based understands.
+    public static func updates(for e: ClaudeStreamEvent) -> [ACPUpdate] {
+        switch e {
+        case .initialized(_, let model, _, let mode, _):
+            var out: [ACPUpdate] = []
+            if let model { out.append(.notice("Model: \(model)")) }
+            if let mode { out.append(.modeChanged(mode)) }
+            return out
+        case .text(let t): return [.agentText(t)]
+        case .thinking(let t): return [.agentThought(t)]
+        case .toolUse(let id, let name, let input):
+            if name == "TodoWrite" { return [.plan(todos(input))] }
+            return [.toolCall(id: id, title: title(of: name, input: input), kind: kind(of: name), status: "in_progress")]
+        case .toolResult(let id, let output, let isError):
+            return [.toolCallUpdate(id: id, status: isError ? "failed" : "completed", output: output)]
+        case .result(_, _, _, let i, let o, _, _): return [.usage(input: i, output: o)]
+        case .other: return []
+        }
+    }
+}
+
+/// Drives the real `claude` CLI without an ACP adapter:
+/// `claude -p --input-format stream-json --output-format stream-json --verbose [--resume id]
+///   --permission-mode … --mcp-config <json> --permission-prompt-tool mcp__based__approval`.
+/// One long-lived process per session; each prompt is a JSON line on stdin, a `result` line ends the turn.
+public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
+    public struct Options: Sendable {
+        public var executable: String
+        public var cwd: String
+        public var resume: String?
+        public var permissionMode: String          // default | acceptEdits | plan | bypassPermissions
+        public var model: String?
+        public var mcpConfig: JSONValue?           // {"mcpServers": {...}}
+        public var permissionPromptTool: String?   // "mcp__based__approval"
+        public var appendSystemPrompt: String?
+        public var extraArgs: [String] = []
+        public var environment: [String: String] = [:]
+        public init(executable: String, cwd: String, resume: String? = nil, permissionMode: String = "default", model: String? = nil,
+                    mcpConfig: JSONValue? = nil, permissionPromptTool: String? = nil, appendSystemPrompt: String? = nil) {
+            self.executable = executable; self.cwd = cwd; self.resume = resume; self.permissionMode = permissionMode; self.model = model
+            self.mcpConfig = mcpConfig; self.permissionPromptTool = permissionPromptTool; self.appendSystemPrompt = appendSystemPrompt
+        }
+    }
+
+    public let options: Options
+    public var onUpdate: (@Sendable (ACPUpdate) -> Void)?
+    public var onEvent: (@Sendable (ClaudeStreamEvent) -> Void)?
+    public var onLog: (@Sendable (String) -> Void)?
+
+    private let state = Locked<State>(State())
+    private struct State {
+        var sessionID: String?
+        var buffer = Data()
+        var waiter: CheckedContinuation<ACPStopReason, Error>?
+        var running = false
+        var cancelled = false
+    }
+    #if os(macOS) || os(Linux)
+    private var process: Process?
+    private var stdinPipe: Pipe?
+    #endif
+
+    public init(options: Options) {
+        self.options = options
+        state.sync { $0.sessionID = options.resume }
+    }
+
+    public var sessionID: String? { state.sync { $0.sessionID } }
+    public var isRunning: Bool { state.sync { $0.running } }
+
+    public func arguments() -> [String] {
+        var a = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
+                 "--permission-mode", options.permissionMode]
+        if let r = options.resume { a += ["--resume", r] }
+        if let m = options.model, !m.isEmpty { a += ["--model", m] }
+        if let c = options.mcpConfig, let d = try? c.encoded(), let s = String(data: d, encoding: .utf8) { a += ["--mcp-config", s] }
+        if let t = options.permissionPromptTool { a += ["--permission-prompt-tool", t] }
+        if let s = options.appendSystemPrompt, !s.isEmpty { a += ["--append-system-prompt", s] }
+        return a + options.extraArgs
+    }
+
+    public func start() throws {
+        #if os(macOS) || os(Linux)
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: options.executable)
+        p.arguments = arguments()
+        var env = ShellEnvironment.environment()
+        for (k, v) in options.environment { env[k] = v }
+        env["CLAUDE_CODE_ENTRYPOINT"] = env["CLAUDE_CODE_ENTRYPOINT"] ?? "sdk-based"
+        p.environment = env
+        p.currentDirectoryURL = URL(fileURLWithPath: options.cwd)
+        let input = Pipe(), output = Pipe(), errors = Pipe()
+        p.standardInput = input; p.standardOutput = output; p.standardError = errors
+        output.fileHandleForReading.readabilityHandler = { [weak self] h in
+            let d = h.availableData
+            if d.isEmpty { h.readabilityHandler = nil } else { self?.receive(d) }
+        }
+        errors.fileHandleForReading.readabilityHandler = { [weak self] h in
+            let d = h.availableData
+            if d.isEmpty { h.readabilityHandler = nil } else { self?.onLog?(String(decoding: d, as: UTF8.self)) }
+        }
+        p.terminationHandler = { [weak self] proc in self?.terminated(status: proc.terminationStatus) }
+        try p.run()
+        process = p; stdinPipe = input
+        state.sync { $0.running = true }
+        Log.info("Claude Code started (pid \(p.processIdentifier)) in \(options.cwd)", category: "agents")
+        #else
+        throw JSONRPCPeer.RPCError(code: -32000, message: "Claude Code runs on the Mac or a Based server.")
+        #endif
+    }
+
+    private func receive(_ d: Data) {
+        var lines: [String] = []
+        state.sync { s in
+            s.buffer.append(d)
+            while let nl = s.buffer.firstIndex(of: 0x0A) {
+                let line = s.buffer[s.buffer.startIndex..<nl]
+                s.buffer.removeSubrange(s.buffer.startIndex...nl)
+                lines.append(String(decoding: line, as: UTF8.self))
+            }
+        }
+        for l in lines { for e in ClaudeStream.parse(line: l) { handle(e) } }
+    }
+
+    private func handle(_ e: ClaudeStreamEvent) {
+        onEvent?(e)
+        for u in ClaudeStream.updates(for: e) { onUpdate?(u) }
+        switch e {
+        case .initialized(let sid, _, _, _, _):
+            if !sid.isEmpty { state.sync { $0.sessionID = sid } }
+        case .result(let sid, let isError, let text, _, _, _, _):
+            let (w, cancelled) = state.sync { s -> (CheckedContinuation<ACPStopReason, Error>?, Bool) in
+                if let sid { s.sessionID = sid }
+                let w = s.waiter; s.waiter = nil
+                let c = s.cancelled; s.cancelled = false
+                return (w, c)
+            }
+            if isError, !cancelled, let text, !text.isEmpty { onUpdate?(.notice(text)) }
+            w?.resume(returning: cancelled ? .cancelled : (isError ? .refusal : .end_turn))
+        default: break
+        }
+    }
+
+    private func terminated(status: Int32) {
+        let w = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in
+            s.running = false
+            let w = s.waiter; s.waiter = nil
+            return w
+        }
+        Log.info("Claude Code exited with status \(status)", category: "agents")
+        if let w {
+            if status == 0 || state.sync({ $0.cancelled }) { w.resume(returning: .cancelled) }
+            else { w.resume(throwing: JSONRPCPeer.RPCError(code: Int(status), message: "Claude Code exited with status \(status). Is it installed and logged in? (Settings → Agents → Check setup)")) }
+        }
+    }
+
+    /// Sends one user turn and waits for its `result`.
+    public func prompt(_ text: String, resources: [(uri: String, text: String)] = []) async throws -> ACPStopReason {
+        if !isRunning { try start() }
+        var content: [JSONValue] = [["type": "text", "text": .string(text)]]
+        for r in resources where !r.text.isEmpty {
+            content.append(["type": "text", "text": .string("<context source=\"\(r.uri)\">\n\(r.text)\n</context>")])
+        }
+        let msg: JSONValue = ["type": "user", "message": ["role": "user", "content": .array(content)]]
+        guard var line = try? msg.encoded() else { throw JSONRPCPeer.RPCError.internalError("encode") }
+        line.append(0x0A)
+        return try await withCheckedThrowingContinuation { (c: CheckedContinuation<ACPStopReason, Error>) in
+            let previous = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in
+                let p = s.waiter; s.waiter = c; s.cancelled = false; return p
+            }
+            previous?.resume(returning: .cancelled)
+            #if os(macOS) || os(Linux)
+            stdinPipe?.fileHandleForWriting.write(line)
+            #endif
+        }
+    }
+
+    /// Interrupts the current turn (SIGINT, like pressing Esc in Claude Code). The session resumes on the next prompt.
+    public func cancel() {
+        state.sync { $0.cancelled = true }
+        #if os(macOS) || os(Linux)
+        if let p = process, p.isRunning { p.interrupt() }
+        #endif
+    }
+
+    public func stop() {
+        #if os(macOS) || os(Linux)
+        try? stdinPipe?.fileHandleForWriting.close()
+        if let p = process, p.isRunning { p.terminate() }
+        process = nil; stdinPipe = nil
+        #endif
+        let w = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in s.running = false; let w = s.waiter; s.waiter = nil; return w }
+        w?.resume(returning: .cancelled)
+    }
+}
+
+/// One-shot `claude -p … --output-format json` call. Used by the app's AI chat when no API key is
+/// configured but Claude Code is installed and logged in (the subscription then powers "Ask AI").
+public enum ClaudePrint {
+    public struct Reply: Sendable, Equatable {
+        public var text: String
+        public var sessionID: String?
+        public var isError: Bool
+        public var costUSD: Double?
+        public init(text: String, sessionID: String?, isError: Bool, costUSD: Double?) {
+            self.text = text; self.sessionID = sessionID; self.isError = isError; self.costUSD = costUSD
+        }
+    }
+
+    public static func arguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
+                                 allowedTools: [String] = [], model: String? = nil, maxTurns: Int? = nil) -> [String] {
+        var a = ["-p", prompt, "--output-format", "json"]
+        if let r = resume, !r.isEmpty { a += ["--resume", r] }
+        if let m = model, !m.isEmpty { a += ["--model", m] }
+        if let c = mcpConfig, let d = try? c.encoded(), let s = String(data: d, encoding: .utf8) { a += ["--mcp-config", s] }
+        if !allowedTools.isEmpty { a += ["--allowedTools", allowedTools.joined(separator: ",")] }
+        if let s = appendSystemPrompt, !s.isEmpty { a += ["--append-system-prompt", s] }
+        if let t = maxTurns { a += ["--max-turns", String(t)] }
+        return a
+    }
+
+    /// Parses the final JSON object (`{"type":"result","result":…,"session_id":…}`); tolerates log lines before it.
+    public static func parse(_ data: Data) -> Reply? {
+        let s = String(decoding: data, as: UTF8.self)
+        let candidates = [s.trimmingCharacters(in: .whitespacesAndNewlines)] + s.split(separator: "\n").reversed().map(String.init)
+        for c in candidates {
+            guard c.hasPrefix("{"), let v = try? JSONValue.parse(Data(c.utf8)), v["result"] != nil || v["is_error"] != nil else { continue }
+            return Reply(text: v["result"]?.string ?? "", sessionID: v["session_id"]?.string,
+                         isError: v["is_error"]?.bool ?? false, costUSD: v["total_cost_usd"]?.number ?? v["cost_usd"]?.number)
+        }
+        return nil
+    }
+
+    public struct Failure: Error, CustomStringConvertible { public let description: String }
+
+    /// Runs the CLI off the calling thread. `executable` defaults to `which claude`.
+    public static func ask(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
+                           appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
+                           model: String? = nil, timeout: TimeInterval = 600) async -> Result<Reply, Error> {
+        #if os(macOS) || os(Linux)
+        guard let exe = executable ?? ShellEnvironment.which("claude") else {
+            return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
+        }
+        let args = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+                             allowedTools: allowedTools, model: model)
+        return await Task.detached(priority: .userInitiated) { () -> Result<Reply, Error> in
+            let started = Date()
+            guard let d = ShellEnvironment.run(exe, args, timeout: timeout, environment: ShellEnvironment.environment(), cwd: cwd, stderrToStdout: false) else {
+                return .failure(Failure(description: "claude did not answer within \(Int(timeout)) s"))
+            }
+            Log.info("claude -p finished in \(String(format: "%.1f", Date().timeIntervalSince(started))) s", category: "agents")
+            guard let r = parse(d) else { return .failure(Failure(description: String(decoding: d.prefix(600), as: UTF8.self))) }
+            return r.isError ? .failure(Failure(description: r.text.isEmpty ? "Claude Code reported an error" : r.text)) : .success(r)
+        }.value
+        #else
+        return .failure(Failure(description: "Claude Code runs on the Mac or a Based server."))
+        #endif
+    }
+}

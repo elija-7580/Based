@@ -75,8 +75,10 @@ public final class ConnectionManager: @unchecked Sendable {
     }
 }
 
-/// Happier-style orchestration of ACP coding agents: sessions persisted in Based, streaming transcript, permission
-/// requests routed to the Inbox (answer from any device), switch agent mid-session with a hand-off summary.
+/// Happier-style orchestration of coding agents: sessions persisted in Based, streaming transcript, permission
+/// requests routed to the Inbox (answer from any device), switch agent mid-session with a hand-off summary,
+/// sub-agents reporting back to their parent. Claude Code runs natively (stream-json) when installed; every other
+/// agent speaks ACP.
 public final class HappierRuntime: @unchecked Sendable {
     public enum PermissionPolicy: String, CaseIterable, Sendable { case ask, allowReads, allowAll }
 
@@ -88,37 +90,104 @@ public final class HappierRuntime: @unchecked Sendable {
     public var permissionPolicy: PermissionPolicy = .ask
     /// Command that exposes Based itself as an MCP server to the agents (so they can read/write the workspace).
     public var basedMCPServer: MCPServerConfig?
+    /// HTTP MCP endpoint of this process (app: 127.0.0.1 random port; server: its public port). Enables the
+    /// `approval` tool Claude Code uses for permission prompts, scoped per session: `<base>/mcp/session/<id>`.
+    public var mcpEndpoint: (base: String, token: String)?
+    /// Prefer the real `claude` CLI (stream-json) over the ACP adapter for the "claude" agent.
+    public var preferNativeClaude = true
+    /// Claude Code permission mode per session ("default", "acceptEdits", "plan", "bypassPermissions").
+    public var claudeModes = Locked<[RecordID: String]>([:])
     public var inboxTimeout: TimeInterval = 3600
     public var onUpdate: (@Sendable (RecordID, ACPUpdate) -> Void)?
     public var onLog: (@Sendable (String) -> Void)?
 
-    private let liveBox = Locked<[RecordID: ACPClient]>([:])
+    private let liveBox = Locked<[RecordID: AgentConnection]>([:])
     private let pendingBox = Locked<[RecordID: String]>([:])
+    private let lastTextBox = Locked<[RecordID: String]>([:])
+    private let alwaysAllowed = Locked<[RecordID: Set<String>]>([:])
 
     public init(brain: BrainStore, connections: ConnectionManager?, agents: [AgentDefinition] = AgentDefinition.defaults, machineName: String) {
         self.brain = brain; self.connections = connections; self.agents = agents; self.machineName = machineName
     }
 
-    public func client(for session: RecordID) -> ACPClient? { liveBox.sync { $0[session] } }
+    public func connection(for session: RecordID) -> AgentConnection? { liveBox.sync { $0[session] } }
+    public func client(for session: RecordID) -> ACPClient? { connection(for: session) as? ACPClient }
     public var liveSessionIDs: [RecordID] { liveBox.sync { Array($0.keys) } }
+    public func isNative(_ session: RecordID) -> Bool { connection(for: session) is ClaudeCodeDriver }
 
     /// Start a new session with an agent in a working directory and persist it.
     @discardableResult
-    public func startSession(agentID: String, cwd: String, title: String? = nil) async throws -> RecordID {
+    public func startSession(agentID: String, cwd: String, title: String? = nil, project: String? = nil, parentID: RecordID? = nil) async throws -> RecordID {
         guard let def = agents.first(where: { $0.id == agentID }) else { throw JSONRPCPeer.RPCError.internalError("Unknown agent \(agentID)") }
-        let sid = await MainActor.run { brain.createSession(title: title ?? "\(def.name) · \(URL(fileURLWithPath: cwd).lastPathComponent)", agentID: agentID, machine: machineName, cwd: cwd, encrypted: cipher != nil) }
-        try await attach(session: sid, def: def, cwd: cwd, resume: nil)
+        let name = title ?? "\(def.name) · \(URL(fileURLWithPath: cwd).lastPathComponent)"
+        let proj = project ?? URL(fileURLWithPath: cwd).lastPathComponent
+        let sid = await MainActor.run {
+            brain.createSession(title: name, agentID: agentID, machine: machineName, cwd: cwd, encrypted: cipher != nil, project: proj, parentID: parentID)
+        }
+        Log.info("Session \(sid) started: \(def.name) in \(cwd)", category: "agents")
+        do {
+            try await attach(session: sid, def: def, cwd: cwd, resume: nil)
+        } catch {
+            await MainActor.run {
+                brain.updateSession(sid, status: .failed)
+                brain.appendTranscript(sid, role: "Error", markdown: "Could not start \(def.name): \(error)", cipher: cipher)
+            }
+            Log.error("Could not start \(def.name): \(error)", category: "agents")
+            throw error
+        }
         return sid
     }
 
-    /// Re-attach a persisted session (e.g. after a restart): relaunches the agent and `session/load`s the ACP session when known.
+    /// Re-attach a persisted session (e.g. after a restart): relaunches the agent and resumes its conversation when known.
     public func attach(_ sid: RecordID) async throws {
         guard let s = await MainActor.run(body: { brain.sessions().first { $0.id == sid } }) else { throw JSONRPCPeer.RPCError.internalError("Unknown session \(sid)") }
         guard let def = agents.first(where: { $0.id == s.agentID }) else { throw JSONRPCPeer.RPCError.internalError("Unknown agent \(s.agentID)") }
         try await attach(session: sid, def: def, cwd: s.cwd, resume: s.acpSessionID)
     }
 
+    private func useNative(_ def: AgentDefinition) -> String? {
+        guard preferNativeClaude, def.id == "claude" else { return nil }
+        return ShellEnvironment.which("claude")
+    }
+
     private func attach(session sid: RecordID, def: AgentDefinition, cwd: String, resume: String?) async throws {
+        let conns = await MainActor.run { brain.connections() }
+        var servers = connections.map { $0.mcpServers(for: conns) } ?? []
+        if let exe = useNative(def) {
+            // Native Claude Code: our session ids are stored as "claude:<uuid>".
+            let resumeID = resume.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
+            var mcp: [String: JSONValue] = [:]
+            var promptTool: String?
+            if let ep = mcpEndpoint {
+                mcp["based"] = ["type": "http", "url": .string("\(ep.base)/mcp/session/\(sid)"), "headers": ["Authorization": .string("Bearer \(ep.token)")]]
+                promptTool = "mcp__based__approval"
+            } else if let b = basedMCPServer {
+                mcp["based"] = ["command": .string(b.command), "args": .array(b.args.map(JSONValue.string))]
+            }
+            for sv in servers {
+                mcp[sv.name] = ["command": .string(sv.command), "args": .array(sv.args.map(JSONValue.string)),
+                                "env": .object(sv.env.mapValues(JSONValue.string))]
+            }
+            var mode = claudeModes.sync { $0[sid] } ?? "default"
+            if permissionPolicy == .allowAll && mode == "default" { mode = "bypassPermissions" }
+            if promptTool == nil && mode == "default" { mode = "acceptEdits" }
+            let context = await MainActor.run { brain.systemContext(query: "") }
+            let driver = ClaudeCodeDriver(options: .init(executable: exe, cwd: cwd, resume: resumeID, permissionMode: mode,
+                                                         mcpConfig: .object(["mcpServers": .object(mcp)]), permissionPromptTool: promptTool,
+                                                         appendSystemPrompt: context.isEmpty ? nil : "Context from the user's Based workspace (use the based MCP tools for more):\n" + String(context.prefix(6000))))
+            driver.onUpdate = { [weak self] u in self?.handle(sid, u) }
+            driver.onLog = { [weak self] line in self?.onLog?("[claude] \(line)") }
+            let brain = self.brain
+            driver.onEvent = { e in
+                if case .initialized(let csid, _, _, _, _) = e, !csid.isEmpty {
+                    Task { await MainActor.run { brain.updateSession(sid, acpSessionID: "claude:" + csid) } }
+                }
+            }
+            try driver.start()
+            liveBox.sync { $0[sid] = driver }
+            await MainActor.run { brain.updateSession(sid, status: .idle, agentID: def.id) }
+            return
+        }
         let client = ACPClient(definition: def)
         client.allowedRoots = [cwd]
         client.onLog = { [weak self] in self?.onLog?("[\(def.id)] \($0)") }
@@ -126,11 +195,9 @@ public final class HappierRuntime: @unchecked Sendable {
         client.onPermission = { [weak self] req in await self?.decide(sid, req) }
         try client.start(cwd: cwd)
         try await client.initialize()
-        let conns = await MainActor.run { brain.connections() }
-        var servers = connections.map { $0.mcpServers(for: conns) } ?? []
         if let b = basedMCPServer { servers.insert(b, at: 0) }
         let acpID: String
-        if let resume {
+        if let resume, !resume.hasPrefix("claude:") {
             try await client.loadSession(resume, cwd: cwd, mcpServers: servers)
             acpID = resume
         } else {
@@ -142,35 +209,43 @@ public final class HappierRuntime: @unchecked Sendable {
 
     /// Send a user prompt to a session (starting the agent process again if needed).
     public func prompt(_ sid: RecordID, _ text: String) async throws -> ACPStopReason {
-        var client = self.client(for: sid)
-        if client == nil {
-            guard let s = await MainActor.run(body: { brain.sessions().first { $0.id == sid } }), let def = agents.first(where: { $0.id == s.agentID }) else {
-                throw JSONRPCPeer.RPCError.internalError("Session not found")
-            }
-            try await attach(session: sid, def: def, cwd: s.cwd, resume: s.acpSessionID)
-            client = self.client(for: sid)
+        var conn = self.connection(for: sid)
+        if conn == nil || conn?.isRunning == false && !(conn is ClaudeCodeDriver) {
+            try await attach(sid)
+            conn = self.connection(for: sid)
         }
-        guard let client else { throw JSONRPCPeer.RPCError.internalError("No agent") }
+        guard let conn else { throw JSONRPCPeer.RPCError.internalError("No agent") }
         await MainActor.run { brain.appendTranscript(sid, role: "You", markdown: text, cipher: cipher); brain.updateSession(sid, status: .running) }
-        let context = await MainActor.run { brain.systemContext(query: text) }
+        let context = conn is ClaudeCodeDriver ? "" : await MainActor.run { brain.systemContext(query: text) }
         do {
-            let stop = try await client.prompt(text, resources: [("based://brain", context)])
+            let stop = try await conn.prompt(text, resources: context.isEmpty ? [] : [("based://brain", context)])
             flush(sid)
             await MainActor.run { brain.updateSession(sid, status: stop == .cancelled ? .idle : .done) }
+            await reportToParent(sid)
             return stop
         } catch {
             flush(sid)
             await MainActor.run { brain.updateSession(sid, status: .failed); brain.appendTranscript(sid, role: "Error", markdown: "\(error)", cipher: cipher) }
+            Log.error("Prompt failed in \(sid): \(error)", category: "agents")
             throw error
         }
     }
 
-    public func cancel(_ sid: RecordID) { client(for: sid)?.cancel() }
+    public func cancel(_ sid: RecordID) { connection(for: sid)?.cancel() }
 
     public func stop(_ sid: RecordID) {
         let c = liveBox.sync { $0.removeValue(forKey: sid) }
         c?.stop()
         Task { await MainActor.run { brain.updateSession(sid, status: .idle) } }
+    }
+
+    /// Changes Claude Code's permission mode (default / acceptEdits / plan / bypassPermissions); applies from the next turn.
+    public func setClaudeMode(_ sid: RecordID, _ mode: String) {
+        claudeModes.sync { $0[sid] = mode }
+        if let d = connection(for: sid) as? ClaudeCodeDriver, d.options.permissionMode != mode {
+            liveBox.sync { _ = $0.removeValue(forKey: sid) }
+            d.stop()   // relaunched with --resume and the new mode on the next prompt
+        }
     }
 
     /// Switch a running session to another agent: the new agent receives the transcript so far as context.
@@ -182,10 +257,65 @@ public final class HappierRuntime: @unchecked Sendable {
         try await attach(session: sid, def: def, cwd: s.cwd, resume: nil)
         let history = await MainActor.run { brain.transcript(sid, cipher: cipher) }
         await MainActor.run { brain.appendTranscript(sid, role: "System", markdown: "Switched to \(def.name).", cipher: cipher) }
-        if let c = client(for: sid) {
+        if let c = connection(for: sid) {
             _ = try await c.prompt("You are taking over an ongoing session from another agent. Here is the transcript so far; acknowledge briefly and continue when the user speaks.",
                                    resources: [("based://session/\(sid)/transcript", String(history.suffix(60_000)))])
             flush(sid)
+        }
+    }
+
+    // MARK: Sub-agents
+
+    /// When a child session finishes a turn, its last answer is posted to the parent session.
+    private func reportToParent(_ sid: RecordID) async {
+        let info = await MainActor.run { () -> (RecordID, String)? in
+            guard let s = brain.sessions().first(where: { $0.id == sid }), let parent = s.parentID else { return nil }
+            return (parent, s.title)
+        }
+        guard let (parent, title) = info else { return }
+        let last = lastTextBox.sync { $0[sid] } ?? "(no answer)"
+        await MainActor.run {
+            brain.appendTranscript(parent, role: "Notice", markdown: "Sub-agent **\(title)** finished:\n\n\(String(last.suffix(3000)))", cipher: cipher)
+        }
+    }
+
+    /// Tools that let an agent (the built-in AI, or any MCP client) spawn and steer coding agents.
+    public static let subAgentSpecs: [ToolSpec] = [
+        ToolSpec(name: "spawn_agent", description: "Start a coding-agent session (Claude Code, Codex, Gemini …) in a directory with a task. Runs in the background; its answer is reported back to the parent session. Returns the session id.",
+                 inputSchema: .schema(["agent": .str("Agent id: claude | codex | gemini | opencode"), "cwd": .str("Absolute working directory"), "prompt": .str("Task for the agent"), "title": .str("Short session title"), "parent_session_id": .str("Optional parent session id")], required: ["agent", "cwd", "prompt"])),
+        ToolSpec(name: "agent_sessions", description: "List coding-agent sessions with status, directory and parent.", inputSchema: .schema([:])),
+        ToolSpec(name: "read_agent_session", description: "Read the latest transcript of a coding-agent session.",
+                 inputSchema: .schema(["session_id": .str("Session id"), "max_chars": .num("Default 6000")], required: ["session_id"])),
+        ToolSpec(name: "message_agent", description: "Send a follow-up prompt to a running coding-agent session (runs in the background).",
+                 inputSchema: .schema(["session_id": .str("Session id"), "prompt": .str("Message")], required: ["session_id", "prompt"])),
+    ]
+
+    public func hostTool(_ name: String, _ args: JSONValue) async -> AgentTools.ToolResult? {
+        switch name {
+        case "spawn_agent":
+            let agent = args["agent"]?.string ?? "claude", cwd = args["cwd"]?.string ?? NSHomeDirectory(), prompt = args["prompt"]?.string ?? ""
+            do {
+                let sid = try await startSession(agentID: agent, cwd: cwd, title: args["title"]?.string, parentID: args["parent_session_id"]?.string)
+                Task { _ = try? await self.prompt(sid, prompt) }
+                return .init(text: "Started session \(sid) (\(agent) in \(cwd)). Use read_agent_session to follow it.", isError: false)
+            } catch { return .init(text: "Could not start \(agent): \(error)", isError: true) }
+        case "agent_sessions":
+            let list = await MainActor.run { brain.sessions() }
+            let live = liveSessionIDs
+            let text = list.prefix(50).map { s in
+                "- \(s.id) · \(s.title) · \(s.agentID) · \(s.status.rawValue)\(live.contains(s.id) ? " · live" : "") · \(s.cwd)" + (s.parentID.map { " · parent \($0)" } ?? "")
+            }.joined(separator: "\n")
+            return .init(text: text.isEmpty ? "No sessions." : text, isError: false)
+        case "read_agent_session":
+            guard let sid = args["session_id"]?.string else { return .init(text: "session_id required", isError: true) }
+            let n = Int(args["max_chars"]?.number ?? 6000)
+            let md = await MainActor.run { brain.transcript(sid, cipher: cipher) }
+            return .init(text: String(md.suffix(n)), isError: false)
+        case "message_agent":
+            guard let sid = args["session_id"]?.string, let p = args["prompt"]?.string else { return .init(text: "session_id and prompt required", isError: true) }
+            Task { _ = try? await self.prompt(sid, p) }
+            return .init(text: "Sent.", isError: false)
+        default: return nil
         }
     }
 
@@ -195,10 +325,14 @@ public final class HappierRuntime: @unchecked Sendable {
         onUpdate?(sid, u)
         switch u {
         case .agentText(let t): pendingBox.sync { $0[sid, default: ""] += t }
+        case .agentThought(let t):
+            flush(sid); append(sid, role: "Thought", t)
         case .toolCall(_, let title, let kind, _):
             flush(sid); append(sid, role: "Tool", "`\(kind)` \(title)")
         case .toolCallUpdate(_, let status, let output):
-            if let output, status == "completed" { append(sid, role: "Tool result", "```\n\(output.prefix(4000))\n```") }
+            if status == "completed" || status == "failed" {
+                append(sid, role: status == "failed" ? "Tool failed" : "Tool result", "```\n\((output ?? "").prefix(4000))\n```")
+            }
         case .plan(let items): flush(sid); append(sid, role: "Plan", items.map { "- \($0)" }.joined(separator: "\n"))
         case .usage(let i, let o): Task { await MainActor.run { brain.updateSession(sid, addTokens: i + o) } }
         case .notice(let n): append(sid, role: "Notice", n)
@@ -208,12 +342,39 @@ public final class HappierRuntime: @unchecked Sendable {
 
     private func flush(_ sid: RecordID) {
         let t = pendingBox.sync { $0.removeValue(forKey: sid) }
-        if let t, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { append(sid, role: "Agent", t) }
+        if let t, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            lastTextBox.sync { $0[sid] = t }
+            append(sid, role: "Agent", t)
+        }
     }
 
     private func append(_ sid: RecordID, role: String, _ md: String) {
         let cipher = self.cipher
         Task { await MainActor.run { brain.appendTranscript(sid, role: role, markdown: md, cipher: cipher) } }
+    }
+
+    /// Routes a permission request to the Inbox and waits for a decision from any device.
+    /// Returns the chosen option id (nil = timeout / rejected without option).
+    public func requestApproval(_ sid: RecordID, title: String, kind: String, detail: String,
+                                options: [(id: String, label: String)]) async -> (approved: Bool, option: String?) {
+        flush(sid)
+        let item = await MainActor.run {
+            brain.updateSession(sid, status: .waiting)
+            return brain.addInbox(title: title, kind: .permission, sessionID: sid,
+                                  detail: "Agent wants to run **\(kind)**: \(title)\n\n```\n\(detail.prefix(6000))\n```", options: options)
+        }
+        Log.info("Permission requested in \(sid): \(title)", category: "agents")
+        let deadline = Date().addingTimeInterval(inboxTimeout)
+        while Date() < deadline {
+            try? await Task.sleep(nanoseconds: 700_000_000)
+            let decided = await MainActor.run { brain.inbox().first { $0.id == item } }
+            if let d = decided, d.status != .pending {
+                await MainActor.run { brain.updateSession(sid, status: .running) }
+                return (d.status == .approved, d.decision)
+            }
+        }
+        await MainActor.run { brain.resolveInbox(item, decision: "timeout", status: .rejected); brain.updateSession(sid, status: .running) }
+        return (false, nil)
     }
 
     private func decide(_ sid: RecordID, _ req: ACPPermissionRequest) async -> String? {
@@ -225,25 +386,29 @@ public final class HappierRuntime: @unchecked Sendable {
         case .allowReads where req.toolKind == "read" || req.toolKind == "search" || req.toolKind == "fetch": return allow
         default: break
         }
-        // Route to the Inbox and wait for a decision from any device.
-        flush(sid)
-        let item = await MainActor.run {
-            brain.updateSession(sid, status: .waiting)
-            return brain.addInbox(title: "\(req.toolTitle)", kind: .permission, sessionID: sid,
-                                  detail: "Agent wants to run **\(req.toolKind)**: \(req.toolTitle)\n\n```\n\(req.detail)\n```",
-                                  options: req.options.map { ($0.id, $0.name) })
+        let r = await requestApproval(sid, title: req.toolTitle, kind: req.toolKind, detail: req.detail, options: req.options.map { ($0.id, $0.name) })
+        if !r.approved { return reject }
+        return r.option.flatMap { dec in req.options.first { $0.id == dec }?.id } ?? allow
+    }
+
+    /// Claude Code `--permission-prompt-tool` handler (MCP tool `approval` on `/mcp/session/<id>`).
+    /// Returns the JSON Claude Code expects: `{"behavior":"allow","updatedInput":…}` or `{"behavior":"deny","message":…}`.
+    public func claudeApproval(session sid: RecordID, tool: String, input: JSONValue) async -> JSONValue {
+        let kind = ClaudeStream.kind(of: tool)
+        let allow: JSONValue = ["behavior": "allow", "updatedInput": input]
+        if permissionPolicy == .allowAll { return allow }
+        if permissionPolicy == .allowReads, ["read", "search", "fetch"].contains(kind) { return allow }
+        if alwaysAllowed.sync({ $0[sid]?.contains(tool) ?? false }) { return allow }
+        let detail: String
+        if tool == "Bash" { detail = input["command"]?.string ?? "" }
+        else if let d = try? input.encoded(pretty: true) { detail = String(decoding: d, as: UTF8.self) }
+        else { detail = "" }
+        let r = await requestApproval(sid, title: ClaudeStream.title(of: tool, input: input), kind: kind, detail: detail,
+                                      options: [("allow_once", "Allow"), ("allow_always", "Always allow \(tool) in this session"), ("reject_once", "Deny")])
+        if r.approved {
+            if r.option == "allow_always" { alwaysAllowed.sync { $0[sid, default: []].insert(tool) } }
+            return allow
         }
-        let deadline = Date().addingTimeInterval(inboxTimeout)
-        while Date() < deadline {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            let decided = await MainActor.run { brain.inbox().first { $0.id == item } }
-            if let d = decided, d.status != .pending {
-                await MainActor.run { brain.updateSession(sid, status: .running) }
-                if d.status == .rejected { return reject ?? nil }
-                return d.decision.flatMap { dec in req.options.first { $0.id == dec }?.id } ?? allow
-            }
-        }
-        await MainActor.run { brain.resolveInbox(item, decision: "timeout", status: .rejected); brain.updateSession(sid, status: .running) }
-        return reject
+        return ["behavior": "deny", "message": .string(r.option == "timeout" ? "No answer from the user in time." : "The user denied this action.")]
     }
 }

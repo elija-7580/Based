@@ -46,7 +46,19 @@ public final class AgentTools {
                      inputSchema: .schema(["page_id": .str("Page id"), "mermaid": .str("Mermaid source")], required: ["page_id", "mermaid"])),
             ToolSpec(name: "list_connections", description: "List connected external services (MCP servers) and their tools. External tools are called directly by name.", inputSchema: .schema([:])),
             ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
-        ] + externalSpecs
+        ] + hostSpecs + externalSpecs
+    }
+
+    /// Tools provided by the host runtime (sub-agents …), executed asynchronously through `hostCall`.
+    public var hostSpecs: [ToolSpec] = []
+    public var hostCall: (@Sendable (String, JSONValue) async -> ToolResult?)?
+    public func isHost(_ name: String) -> Bool { hostSpecs.contains { $0.name == name } }
+
+    /// Runs any tool — built-in (sync), host or external (async).
+    public func callAsync(_ name: String, _ args: JSONValue) async -> ToolResult {
+        if isHost(name), let h = hostCall, let r = await h(name, args) { return r }
+        if isExternal(name), let e = externalCall, let r = await e(name, args) { return r }
+        return call(name, args)
     }
 
     public struct ToolResult: Sendable { public var text: String; public var isError: Bool }

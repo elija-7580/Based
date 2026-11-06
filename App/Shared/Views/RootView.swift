@@ -1,38 +1,46 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import BasedCore
+import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
 
-/// Window content: sidebar + page navigation stack + peeks and global sheets.
+/// Window content: sidebar + a detail shell (tabs, page / dashboard, find bar, right panel for side peek or AI chat)
+/// and the global overlays (⌘K search, ⌘N command palette, import progress).
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @State private var columns = NavigationSplitViewVisibility.all
     @State private var importSummary: String?
+    @State private var importProgress: Double?
+    @State private var crash: CrashReporter.Info? = CrashReporter.previousCrash
 
     var body: some View {
         @Bindable var model = model
         NavigationSplitView(columnVisibility: $columns) {
             SidebarView()
-                .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 380)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
         } detail: {
-            NavigationStack(path: $model.path) {
-                detailRoot
-                    .navigationDestination(for: RecordID.self) { id in
-                        PageScreen(pageID: id, model: model).id(id)
-                    }
+            DetailShell()
+        }
+        .overlay {
+            if model.showQuickFind {
+                ModalBackdrop { model.showQuickFind = false } content: { SearchOverlay() }
+            } else if model.showCommandPalette {
+                ModalBackdrop { model.showCommandPalette = false } content: { CommandPalette() }
             }
         }
-        .inspector(isPresented: sidePeekShown) {
-            if case .side(let id)? = model.peek {
-                PeekView(pageID: id, mode: .sidePeek)
-                    .inspectorColumnWidth(min: 360, ideal: 520, max: 900)
+        .overlay {
+            if let p = importProgress {
+                ImportProgressCard(progress: p)
             }
         }
-        .sheet(item: centerPeek) { peek in
-            PeekView(pageID: peek.id, mode: .centerPeek).environment(model)
-        }
-        .sheet(isPresented: $model.showQuickFind) { QuickFindView().environment(model) }
-        .sheet(isPresented: $model.showAI) { AIPanel().environment(model).environment(model.brain).environment(model.brain.happier) }
+        .auditLayout("window")
+        #if os(macOS)
+        .background(WindowAccessor { model.mainWindow = $0 })
+        #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
+        .sheet(isPresented: $model.showNewSession) { NewSessionSheet().environment(model.brain.happier) }
         .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
         .sheet(item: $model.moveRequest) { req in
             PagePicker(purpose: .move(req.ids)) { model.moveRequest = nil }.environment(model)
@@ -40,8 +48,11 @@ struct RootView: View {
         #if os(iOS)
         .sheet(isPresented: $model.showSettings) { NavigationStack { SettingsView() }.environment(model).environment(model.brain).environment(model.brain.happier) }
         #endif
-        .fileImporter(isPresented: $model.showImport, allowedContentTypes: [.folder, .item], allowsMultipleSelection: true) { result in
-            if case .success(let urls) = result { importFiles(urls) }
+        .fileImporter(isPresented: $model.showImport, allowedContentTypes: [.folder, .zip, .item], allowsMultipleSelection: true) { result in
+            switch result {
+            case .success(let urls): importFiles(urls)
+            case .failure(let e): Log.error("import picker failed: \(e.localizedDescription)", category: "import")
+            }
         }
         .fileExporter(isPresented: exportShown, document: exportDocument, contentType: exportType,
                       defaultFilename: exportName) { result in
@@ -54,35 +65,16 @@ struct RootView: View {
         .alert("Import finished", isPresented: Binding(get: { importSummary != nil }, set: { if !$0 { importSummary = nil } })) {
             Button("OK") { importSummary = nil }
         } message: { Text(importSummary ?? "") }
+        .alert("Based quit unexpectedly last time", isPresented: Binding(get: { crash != nil }, set: { if !$0 { crash = nil; CrashReporter.dismissPreviousCrash() } })) {
+            Button("Show diagnostics") { model.selection = .diagnostics; crash = nil; CrashReporter.dismissPreviousCrash() }
+            Button("Dismiss", role: .cancel) { crash = nil; CrashReporter.dismissPreviousCrash() }
+        } message: { Text(crash?.summary ?? "") }
+        .onChange(of: model.errorMessage) { _, m in if let m { Log.error("alert: \(m)", category: "ui") } }
         .onOpenURL { url in
             guard url.scheme == "based" else { return }
             let id = url.lastPathComponent
             if url.host == "page" { model.open(id) }
         }
-    }
-
-    @ViewBuilder
-    private var detailRoot: some View {
-        switch model.selection {
-        case .page(let id)?: PageScreen(pageID: id, model: model).id(id)
-        case .trash?: TrashView()
-        case .settings?: SettingsView()
-        case .sessions?: SessionsView().environment(model.brain.happier)
-        case .inbox?: InboxView().environment(model.brain.happier)
-        default: HomeView()
-        }
-    }
-
-    // MARK: Peek bindings
-
-    private var sidePeekShown: Binding<Bool> {
-        Binding(get: { if case .side? = model.peek { return true }; return false },
-                set: { if !$0, case .side? = model.peek { model.peek = nil } })
-    }
-
-    private var centerPeek: Binding<Peek?> {
-        Binding(get: { if case .center? = model.peek { return model.peek }; return nil },
-                set: { v in if v == nil, case .center? = model.peek { model.peek = nil } })
     }
 
     private var errorShown: Binding<Bool> {
@@ -91,17 +83,42 @@ struct RootView: View {
 
     // MARK: Import / export
 
+    /// Unzips / converts in the background (big Notion exports take seconds), then imports on the main actor.
     private func importFiles(_ urls: [URL]) {
         let scoped = urls.map { $0.startAccessingSecurityScopedResource() }
-        defer { for (u, s) in zip(urls, scoped) where s { u.stopAccessingSecurityScopedResource() } }
-        do {
-            let r = try NotionImporter(store: model.store, assets: model.assets).importItems(urls, into: .workspace)
-            var s = "\(r.pages) pages, \(r.databases) databases, \(r.rows) rows, \(r.assets) files imported."
-            if !r.warnings.isEmpty { s += "\n\n" + r.warnings.prefix(8).joined(separator: "\n") }
-            importSummary = s
-            if let first = r.rootIDs.first { model.openRoot(first) }
-        } catch {
-            model.errorMessage = "Import failed: \(error.localizedDescription)"
+        Log.notice("import: \(urls.map(\.lastPathComponent).joined(separator: ", "))", category: "import")
+        importProgress = 0
+        let store = model.store, assets = model.assets
+        Task { @MainActor in
+            defer {
+                for (u, s) in zip(urls, scoped) where s { u.stopAccessingSecurityScopedResource() }
+                importProgress = nil
+            }
+            do {
+                let prepared = try await Task.detached(priority: .userInitiated) {
+                    try NotionImporter.prepare(urls) { p in Task { @MainActor in importProgress = p * 0.6 } }
+                }.value
+                defer { prepared.cleanup() }
+                importProgress = 0.7
+                await Task.yield()
+                let r = try Log.measure("import", category: "import", warnAfter: 2) {
+                    try NotionImporter(store: store, assets: assets).importItems(prepared.urls, into: .workspace)
+                }
+                var s = "\(r.pages) pages, \(r.databases) databases, \(r.rows) rows, \(r.assets) files imported."
+                let notes = prepared.notes + r.warnings
+                if !notes.isEmpty { s += "\n\n" + notes.prefix(10).joined(separator: "\n") }
+                if notes.count > 10 { s += "\n… \(notes.count - 10) more (see Diagnostics → Log)" }
+                for w in r.warnings { Log.warning(w, category: "import") }
+                Log.notice("import done: \(r.pages) pages, \(r.databases) dbs, \(r.rows) rows", category: "import")
+                importSummary = s
+                if r.pages + r.databases == 0 {
+                    importSummary = "Nothing was imported.\n\nChoose a Notion export (.zip, folder, Markdown/CSV or HTML files)." + (notes.isEmpty ? "" : "\n\n" + notes.prefix(6).joined(separator: "\n"))
+                }
+                if let first = r.rootIDs.first { model.openRoot(first) }
+            } catch {
+                Log.error("import failed: \(error)", category: "import")
+                model.errorMessage = "Import failed: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -131,6 +148,252 @@ struct RootView: View {
     }
 }
 
+#if os(macOS)
+/// Reports the hosting NSWindow once the view is in a window.
+struct WindowAccessor: NSViewRepresentable {
+    let onWindow: (NSWindow) -> Void
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        DispatchQueue.main.async { if let w = v.window { onWindow(w) } }
+        return v
+    }
+    func updateNSView(_ v: NSView, context: Context) {
+        if let w = v.window { DispatchQueue.main.async { onWindow(w) } }
+    }
+}
+#endif
+
+/// Dimmed backdrop for the ⌘K / ⌘N overlays: click outside or Esc closes.
+struct ModalBackdrop<Content: View>: View {
+    let dismiss: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.opacity(0.18)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture(perform: dismiss)
+            content()
+                .background(RoundedRectangle(cornerRadius: 12).fill(.background).shadow(color: .black.opacity(0.22), radius: 24, y: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
+                .padding(.top, 70)
+                .padding(.horizontal, 24)
+            Button("", action: dismiss).keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
+        }
+        .transition(.opacity)
+    }
+}
+
+struct ImportProgressCard: View {
+    let progress: Double
+    var body: some View {
+        VStack(spacing: 10) {
+            ProgressView(value: min(1, max(0, progress))).frame(width: 240)
+            Text(progress < 0.65 ? "Unpacking export…" : "Importing pages…").font(.callout).foregroundStyle(Theme.secondary)
+        }
+        .padding(20)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.regularMaterial))
+        .accessibilityIdentifier("import.progress")
+    }
+}
+
+// MARK: - Detail shell
+
+/// Tab strip + content + right panel (side peek or docked AI chat). Content is keyed by the current item only,
+/// so navigating swaps one flat view (no nested NavigationStack on macOS — that caused the shifted / clipped
+/// layout and the toolbar jumping on open).
+struct DetailShell: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("rightPanelWidth") private var panelWidth: Double = 420
+
+    var body: some View {
+        let _ = model.registry.workspace.structureRevision   // window title / breadcrumb follow renames
+        #if os(macOS)
+        GeometryReader { geo in
+            // Docked panel next to the content when there's room (content keeps ≥ 380 pt); in narrow windows it
+            // floats over the content instead of squeezing / clipping it.
+            let docked = geo.size.width >= 380 + 300
+            let maxPanel = docked ? max(300, geo.size.width - 380) : max(260, geo.size.width - 40)
+            let width = min(max(docked ? 300 : 260, panelWidth), maxPanel)
+            HStack(spacing: 0) {
+                VStack(spacing: 0) {
+                    TabStrip()
+                    Divider()
+                    DetailContent()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .overlay(alignment: .topTrailing) {
+                            if model.showFind { FindBar().padding(.top, 8).padding(.trailing, 16) }
+                        }
+                }
+                .frame(minWidth: docked ? 380 : 0, maxWidth: .infinity)
+                .overlay { centerPeekOverlay(geo.size) }
+                if docked, let panel = rightPanel {
+                    PanelResizeHandle(width: $panelWidth, range: 300...maxPanel)
+                    panel
+                        .frame(width: width)
+                        .frame(maxHeight: .infinity)
+                        .transition(.move(edge: .trailing))
+                }
+            }
+            .overlay(alignment: .trailing) {
+                if !docked, let panel = rightPanel {
+                    panel
+                        .frame(width: width)
+                        .frame(maxHeight: .infinity)
+                        .shadow(color: .black.opacity(0.2), radius: 12, x: -4)
+                        .transition(.move(edge: .trailing))
+                }
+            }
+            .animation(.easeOut(duration: 0.18), value: panelKey)
+        }
+        .toolbar { shellToolbar }
+        .navigationTitle(model.currentTitle)
+        .navigationSubtitle(model.currentBreadcrumb)
+        #else
+        @Bindable var model = model
+        NavigationStack(path: $model.path) {
+            DetailContent(rootOnly: true)
+                .navigationDestination(for: RecordID.self) { id in PageScreen(pageID: id, model: model).id(id) }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { model.toggleChatPanel() } label: { Image(systemName: "sparkles") }
+                            .accessibilityIdentifier("toolbar.chat")
+                    }
+                }
+        }
+        .overlay(alignment: .top) { if model.showFind { FindBar().padding(.top, 8) } }
+        .sheet(item: peekBinding) { p in
+            PeekView(pageID: p.id, mode: .centerPeek).environment(model)
+        }
+        .sheet(isPresented: $model.showChatPanel) {
+            ChatPanel().environment(model).environment(model.brain).environment(model.brain.happier)
+                .presentationDetents([.medium, .large])
+        }
+        #endif
+    }
+
+    private var panelKey: String {
+        if case .side(let id)? = model.peek { return "peek-" + id }
+        return model.showChatPanel ? "chat" : "none"
+    }
+
+    private var rightPanel: AnyView? {
+        if case .side(let id)? = model.peek {
+            return AnyView(PeekView(pageID: id, mode: .sidePeek).id(id).accessibilityIdentifier("peek.side"))
+        }
+        if model.showChatPanel { return AnyView(ChatPanel().accessibilityIdentifier("chat.panel")) }
+        return nil
+    }
+
+    @ViewBuilder
+    private func centerPeekOverlay(_ size: CGSize) -> some View {
+        if case .center(let id)? = model.peek {
+            ZStack {
+                Color.black.opacity(0.2).contentShape(Rectangle()).onTapGesture { model.peek = nil }
+                PeekView(pageID: id, mode: .centerPeek).id(id)
+                    .frame(width: min(960, max(360, size.width - 80)), height: max(300, size.height - 70))
+                    .background(RoundedRectangle(cornerRadius: 10).fill(.background).shadow(color: .black.opacity(0.25), radius: 20, y: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .accessibilityIdentifier("peek.center")
+                Button("") { model.peek = nil }.keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
+            }
+            .transition(.opacity)
+        }
+    }
+
+    #if os(iOS)
+    private var peekBinding: Binding<Peek?> {
+        Binding(get: { model.peek }, set: { v in if v == nil { model.peek = nil } })
+    }
+    #endif
+
+    @ToolbarContentBuilder
+    private var shellToolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigation) {
+            Button { model.goBack() } label: { Image(systemName: "chevron.left") }
+                .disabled(!model.canGoBack).help("Back (⌘[)").accessibilityIdentifier("toolbar.back")
+            Button { model.goForward() } label: { Image(systemName: "chevron.right") }
+                .disabled(!model.canGoForward).help("Forward (⌘])").accessibilityIdentifier("toolbar.forward")
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button { model.toggleChatPanel() } label: {
+                Image(systemName: model.showChatPanel ? "sparkles.rectangle.stack.fill" : "sparkles")
+            }
+            .help("AI chat (⌘J)")
+            .accessibilityIdentifier("toolbar.chat")
+        }
+    }
+}
+
+/// The current item's screen. On macOS everything (including sub-pages) renders here; on iOS sub-pages are
+/// pushed onto the NavigationStack, so `rootOnly` shows the sidebar selection.
+struct DetailContent: View {
+    var rootOnly = false
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let item: SidebarItem = (rootOnly ? nil : model.path.last.map { SidebarItem.page($0) }) ?? model.selection ?? .home
+        content(item)
+            .id(key(item))
+            .auditLayout("content")
+    }
+
+    /// Chats share one key so "New chat" → saved chat doesn't rebuild the screen mid-conversation.
+    private func key(_ item: SidebarItem) -> String {
+        switch item {
+        case .chat: return "chat"
+        case .sessions, .projects: return "agents"
+        case .page(let id): return "page-" + id
+        default: return "\(item)"
+        }
+    }
+
+    @ViewBuilder
+    private func content(_ item: SidebarItem) -> some View {
+        switch item {
+        case .page(let id): PageScreen(pageID: id, model: model)
+        case .home: HomeView()
+        case .trash: TrashView()
+        case .settings: SettingsView()
+        case .sessions, .projects: AgentsScreen()
+        case .inbox: InboxView()
+        case .brain: BrainDashboard()
+        case .chat: ChatFullPage()
+        case .diagnostics: DiagnosticsView()
+        }
+    }
+}
+
+/// 1-pt divider with an 8-pt drag area that resizes the right panel.
+struct PanelResizeHandle: View {
+    @Binding var width: Double
+    let range: ClosedRange<Double>
+    @State private var start: Double?
+
+    var body: some View {
+        Rectangle()
+            .fill(Color(Theme.divider))
+            .frame(width: 1)
+            .overlay {
+                Color.clear
+                    .frame(width: 9)
+                    .contentShape(Rectangle())
+                    #if os(macOS)
+                    .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
+                    #endif
+                    .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                        .onChanged { v in
+                            if start == nil { start = min(max(width, range.lowerBound), range.upperBound) }
+                            width = min(max(range.lowerBound, (start ?? width) - v.translation.width), range.upperBound)
+                        }
+                        .onEnded { _ in start = nil })
+            }
+            .accessibilityIdentifier("panel.resize")
+    }
+}
+
 /// Plain text file for `.fileExporter` (Markdown / CSV).
 struct TextDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.plainText, .commaSeparatedText] }
@@ -147,202 +410,13 @@ struct TextDocument: FileDocument {
     }
 }
 
-// MARK: - Sidebar
-
-struct SidebarView: View {
-    @Environment(AppModel.self) private var model
-    @State private var renaming = false
-
-    var body: some View {
-        @Bindable var model = model
-        let _ = model.registry.workspace.revision
-        let store = model.store
-        List(selection: $model.selection) {
-            Section {
-                Button { model.showQuickFind = true } label: { Label("Search", systemImage: "magnifyingglass") }
-                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.search")
-                Button { model.showAI = true } label: { Label("Ask AI", systemImage: "sparkles") }
-                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.askAI")
-                Label("Home", systemImage: "house").tag(SidebarItem.home).accessibilityIdentifier("sidebar.home")
-                Label("Agent Brain", systemImage: "brain").tag(SidebarItem.page(model.brain.brain.rootID))
-                Label("Sessions", systemImage: "terminal").tag(SidebarItem.sessions)
-                    .accessibilityIdentifier("sidebar.sessions")
-                HStack {
-                    Label("Inbox", systemImage: "tray")
-                    Spacer()
-                    if model.brain.happier.pendingCount > 0 {
-                        Text("\(model.brain.happier.pendingCount)").font(.caption2.bold()).foregroundStyle(.white)
-                            .padding(.horizontal, 6).padding(.vertical, 1).background(Capsule().fill(Color.orange))
-                    }
-                }
-                .tag(SidebarItem.inbox)
-                .accessibilityIdentifier("sidebar.inbox")
-            } header: {
-                WorkspaceHeader()
-            }
-            let favorites = store.favoritePages()
-            if !favorites.isEmpty {
-                Section("Favorites") {
-                    ForEach(favorites, id: \.id) { PageTreeRow(page: $0) }
-                }
-            }
-            Section("Private") {
-                ForEach(store.topLevelPages(), id: \.id) { PageTreeRow(page: $0) }
-                    .onMove { from, to in movePages(from: from, to: to) }
-                Button { model.newPage() } label: { Label("Add a page", systemImage: "plus") }
-                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.addPage")
-                    .foregroundStyle(Theme.secondary)
-            }
-            Section {
-                Menu {
-                    Button("Page", systemImage: "doc") { model.newPage() }
-                    Button("Database (table)", systemImage: "tablecells") { newDatabase(.table) }
-                    Button("Database (board)", systemImage: "rectangle.split.3x1") { newDatabase(.board) }
-                    Button("Database (calendar)", systemImage: "calendar") { newDatabase(.calendar) }
-                } label: { Label("New", systemImage: "square.and.pencil") }
-                .menuStyle(.borderlessButton)
-                Button { model.showImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
-                    .buttonStyle(.plain)
-                Label("Trash", systemImage: "trash").tag(SidebarItem.trash).accessibilityIdentifier("sidebar.trash")
-                #if os(iOS)
-                Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings).accessibilityIdentifier("sidebar.settings")
-                #endif
-            }
-        }
-        .listStyle(.sidebar)
-        .accessibilityIdentifier("sidebar")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button { model.newPage() } label: { Image(systemName: "square.and.pencil") }.accessibilityIdentifier("toolbar.newPage")
-                    .help("New page")
-            }
-        }
-        #if os(iOS)
-        .navigationTitle(store.workspace.name)
-        #endif
-    }
-
-    private func newDatabase(_ type: ViewType) {
-        let c = model.store.createDatabase(in: .workspace, inline: false, viewType: type)
-        model.openRoot(c.blockID)
-    }
-
-    private func movePages(from: IndexSet, to: Int) {
-        let pages = model.store.topLevelPages()
-        let ids = from.map { pages[$0].id }
-        if to >= pages.count {
-            model.store.moveBlocks(ids, to: .workspace, at: .end)
-        } else {
-            model.store.moveBlocks(ids, to: .workspace, at: .before(pages[to].id))
-        }
-    }
-}
-
-struct WorkspaceHeader: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        let w = model.store.workspace
-        HStack(spacing: 8) {
-            Text(String(w.name.prefix(1)).uppercased())
-                .font(.system(size: 12, weight: .semibold))
-                .frame(width: 22, height: 22)
-                .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.1)))
-            Text(w.name).font(.system(size: 14, weight: .semibold)).lineLimit(1)
-            Spacer()
-            Text(model.syncStatus).font(.caption2).foregroundStyle(Theme.secondary).lineLimit(1)
-        }
-        .textCase(nil)
-        .foregroundStyle(Theme.primary)
-    }
-}
-
-/// One page in the sidebar tree, with lazily expanded sub-pages.
-struct PageTreeRow: View {
-    let page: Block
-    @Environment(AppModel.self) private var model
-    @State private var targeted = false
-    @State private var hover = false
-
-    var body: some View {
-        let store = model.store
-        let subs = store.subpages(of: page.id)
-        if subs.isEmpty {
-            label(hasChildren: false)
-        } else {
-            DisclosureGroup(isExpanded: expanded) {
-                ForEach(subs, id: \.id) { PageTreeRow(page: $0) }
-            } label: {
-                label(hasChildren: true)
-            }
-        }
-    }
-
-    private var expanded: Binding<Bool> {
-        Binding(get: { model.expanded.contains(page.id) },
-                set: { if $0 { model.expanded.insert(page.id) } else { model.expanded.remove(page.id) } })
-    }
-
-    private func label(hasChildren: Bool) -> some View {
-        let store = model.store
-        return HStack(spacing: 6) {
-            PageIconView(icon: page.props.icon, isDatabase: page.type == .databasePage || page.type == .databaseInline, size: 16)
-            Text(store.title(of: page.id)).lineLimit(1)
-            Spacer(minLength: 0)
-            if hover, page.type == .page {
-                Button { model.newPage(in: .block(page.id)) } label: { Image(systemName: "plus") }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.secondary)
-                    .help("Add a page inside")
-            }
-        }
-        .contentShape(Rectangle())
-        .tag(SidebarItem.page(page.id))
-        .onHover { hover = $0 }
-        .background(RoundedRectangle(cornerRadius: 4).stroke(Color.accentColor, lineWidth: targeted ? 2 : 0))
-        .onDrag {
-            model.draggedBlocks = [page.id]
-            return NSItemProvider(object: page.id as NSString)
-        }
-        .onDrop(of: [.text], isTargeted: $targeted) { _ in
-            let ids = model.draggedBlocks.filter { $0 != page.id && !store.isDescendant(page.id, of: $0) }
-            model.draggedBlocks = []
-            guard !ids.isEmpty, page.type == .page else { return false }
-            if ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
-                for id in ids { store.movePage(id, to: .block(page.id)) }
-            } else {
-                store.moveBlocks(ids, to: .block(page.id), at: .end)
-            }
-            model.expanded.insert(page.id)
-            return true
-        }
-        .contextMenu {
-            Button("Open", systemImage: "arrow.up.right.square") { model.openRoot(page.id) }
-            Button("Open in side peek", systemImage: "sidebar.right") { model.open(page.id, mode: .sidePeek) }
-            Divider()
-            if page.type == .page {
-                Button("Add a page inside", systemImage: "plus") { model.newPage(in: .block(page.id)) }
-            }
-            Button(store.isFavorite(page.id) ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") {
-                store.toggleFavorite(page.id)
-            }
-            Button("Duplicate", systemImage: "plus.square.on.square") { _ = store.duplicateBlocks([page.id]) }
-            Button("Move to…", systemImage: "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: [page.id]) }
-            Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + page.id) }
-            Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
-            Divider()
-            Button("Delete", systemImage: "trash", role: .destructive) { model.trash(page.id) }
-        }
-    }
-}
-
 // MARK: - Home
 
 struct HomeView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let _ = model.registry.workspace.revision
+        let _ = model.registry.workspace.structureRevision
         let store = model.store
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
@@ -378,7 +452,7 @@ struct HomeView: View {
                 section("Get started", symbol: "sparkles") {
                     HStack(spacing: 10) {
                         Button("New page") { model.newPage() }
-                        Button("Search ⌘P") { model.showQuickFind = true }
+                        Button("Search ⌘K") { model.showQuickFind = true }
                         Button("Import from Notion…") { model.showImport = true }
                     }
                     .buttonStyle(.bordered)
@@ -388,7 +462,9 @@ struct HomeView: View {
             .frame(maxWidth: 900)
             .frame(maxWidth: .infinity)
         }
+        #if os(iOS)
         .navigationTitle("Home")
+        #endif
     }
 
     private var greeting: String {
@@ -436,106 +512,6 @@ struct HomeCard: View {
     }
 }
 
-// MARK: - Quick find
-
-struct QuickFindView: View {
-    @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    @State private var query = ""
-    @State private var titleOnly = false
-    @State private var sort: SearchSort = .bestMatch
-    @State private var highlighted = 0
-    @FocusState private var fieldFocused: Bool
-
-    var body: some View {
-        let hits = results
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary)
-                TextField("Search or jump to…", text: $query).accessibilityIdentifier("quickfind.field")
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 17))
-                    .focused($fieldFocused)
-                    .onSubmit { if highlighted < hits.count { open(hits[highlighted]) } }
-                    .onKeyPress(.downArrow) { highlighted = min(hits.count - 1, highlighted + 1); return .handled }
-                    .onKeyPress(.upArrow) { highlighted = max(0, highlighted - 1); return .handled }
-            }
-            .padding(14)
-            HStack(spacing: 10) {
-                Toggle("Title only", isOn: $titleOnly).toggleStyle(.button)
-                Picker("Sort", selection: $sort) {
-                    Text("Best match").tag(SearchSort.bestMatch)
-                    Text("Last edited: newest").tag(SearchSort.lastEditedNewest)
-                    Text("Last edited: oldest").tag(SearchSort.lastEditedOldest)
-                    Text("Created: newest").tag(SearchSort.createdNewest)
-                    Text("Created: oldest").tag(SearchSort.createdOldest)
-                }
-                .fixedSize()
-                Spacer()
-            }
-            .font(.system(size: 12))
-            .padding(.horizontal, 14)
-            .padding(.bottom, 8)
-            Divider()
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        if query.isEmpty { Text("Recent").font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, 14).padding(.top, 8) }
-                        if hits.isEmpty, !query.isEmpty { Text("No results").foregroundStyle(Theme.secondary).padding(14) }
-                        ForEach(Array(hits.enumerated()), id: \.element.pageID) { i, h in
-                            Button { open(h) } label: { row(h, highlighted: i == highlighted) }
-                                .buttonStyle(.plain)
-                                .id(h.pageID)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-                .onChange(of: highlighted) { _, i in if i < hits.count { proxy.scrollTo(hits[i].pageID) } }
-            }
-        }
-        .frame(minWidth: 560, minHeight: 420)
-        .onAppear { fieldFocused = true }
-        .onChange(of: query) { _, _ in highlighted = 0 }
-    }
-
-    private var results: [SearchHit] {
-        if query.trimmingCharacters(in: .whitespaces).isEmpty {
-            return model.store.recentPages(limit: 15).map { SearchHit(pageID: $0.id, score: 0, snippet: nil, blockID: nil) }
-        }
-        var f = SearchFilters()
-        f.titleOnly = titleOnly
-        return SearchEngine(store: model.store).search(query, filters: f, sort: sort, limit: 50)
-    }
-
-    private func row(_ h: SearchHit, highlighted: Bool) -> some View {
-        let store = model.store
-        let path = store.ancestors(of: h.pageID).filter { $0.type.isPageLike }.reversed().map { store.title(of: $0.id) }
-        return HStack(alignment: .top, spacing: 10) {
-            PageIconView(icon: store.icon(of: h.pageID), isDatabase: store.blocks[h.pageID]?.type == .databasePage, size: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(store.title(of: h.pageID)).font(.system(size: 14, weight: .medium)).lineLimit(1)
-                    if !path.isEmpty { Text("— " + path.joined(separator: " / ")).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
-                }
-                if let s = h.snippet, !s.isEmpty { Text(s).font(.caption).foregroundStyle(Theme.secondary).lineLimit(2) }
-            }
-            Spacer()
-            if let b = store.blocks[h.pageID] {
-                Text(b.updatedAt.formatted(date: .abbreviated, time: .omitted)).font(.caption2).foregroundStyle(Theme.secondary)
-            }
-        }
-        .padding(.horizontal, 14).padding(.vertical, 7)
-        .background(highlighted ? Color.primary.opacity(0.07) : Color.clear)
-        .contentShape(Rectangle())
-    }
-
-    private func open(_ h: SearchHit) {
-        dismiss()
-        model.showQuickFind = false
-        model.open(h.pageID)
-    }
-}
-
 // MARK: - Trash
 
 struct TrashView: View {
@@ -546,7 +522,7 @@ struct TrashView: View {
     @State private var confirmEmpty = false
 
     var body: some View {
-        let _ = model.registry.workspace.revision
+        let _ = model.registry.workspace.structureRevision
         let store = model.store
         let items = store.trashedPages().filter { query.isEmpty || store.title(of: $0.id).localizedCaseInsensitiveContains(query) }
         VStack(alignment: .leading, spacing: 8) {

@@ -17,6 +17,12 @@ public struct AgentSession: Sendable, Identifiable, Equatable {
     public var startedAt: Date
     public var updatedAt: Date
     public var encrypted: Bool
+    /// Project the session belongs to (defaults to the working directory's name).
+    public var project: String = ""
+    /// Parent session for sub-agents.
+    public var parentID: RecordID?
+    /// "based" = built-in AI chat; otherwise a coding agent id.
+    public var isChat: Bool { agentID == "based" }
 }
 
 public struct InboxItem: Sendable, Identifiable, Equatable {
@@ -103,7 +109,13 @@ extension BrainStore {
         return (ids.sessions, ids.inbox, ids.connections)
     }
 
-    public var sessionsDB: RecordID { ensureHappier().sessions }
+    public var sessionsDB: RecordID {
+        let db = ensureHappier().sessions
+        // Columns added in Pass 9 (project dashboard, sub-agents).
+        if propID(db, "Project") == nil { _ = store.addProperty(to: db, name: "Project", type: .text) }
+        if propID(db, "Parent") == nil { _ = store.addProperty(to: db, name: "Parent", type: .text) }
+        return db
+    }
     public var inboxDB: RecordID { ensureHappier().inbox }
     public var connectionsDB: RecordID { ensureHappier().connections }
 
@@ -137,26 +149,37 @@ extension BrainStore {
             var tokens = 0
             if let p = propID(db, "Tokens"), case .number(let n)? = row.values[p] { tokens = Int(n) }
             let acp = text(row, db, "ACP session")
+            let parent = text(row, db, "Parent")
+            let cwd = text(row, db, "Directory")
+            var project = text(row, db, "Project")
+            if project.isEmpty { project = cwd.isEmpty ? "" : URL(fileURLWithPath: cwd).lastPathComponent }
             return AgentSession(id: row.id, title: row.title, agentID: text(row, db, "Agent"),
                                 status: AgentSession.Status(rawValue: selectName(row, db, "Status") ?? "") ?? .idle,
-                                machine: text(row, db, "Machine"), cwd: text(row, db, "Directory"), acpSessionID: acp.isEmpty ? nil : acp,
-                                tokens: tokens, startedAt: started, updatedAt: row.updatedAt, encrypted: bool(row, db, "Encrypted", default: false))
+                                machine: text(row, db, "Machine"), cwd: cwd, acpSessionID: acp.isEmpty ? nil : acp,
+                                tokens: tokens, startedAt: started, updatedAt: row.updatedAt, encrypted: bool(row, db, "Encrypted", default: false),
+                                project: project, parentID: parent.isEmpty ? nil : parent)
         }.sorted { $0.updatedAt > $1.updatedAt }
     }
 
     @discardableResult
-    public func createSession(title: String, agentID: String, machine: String, cwd: String, encrypted: Bool) -> RecordID {
+    public func createSession(title: String, agentID: String, machine: String, cwd: String, encrypted: Bool,
+                              project: String? = nil, parentID: RecordID? = nil) -> RecordID {
         let db = sessionsDB
         let id = store.addRow(to: db, title: RichText(title))
         setText(id, db, "Agent", agentID); setText(id, db, "Machine", machine); setText(id, db, "Directory", cwd)
+        if let project, !project.isEmpty { setText(id, db, "Project", project) }
+        if let parentID { setText(id, db, "Parent", parentID) }
         setSelect(id, db, "Status", AgentSession.Status.idle.rawValue)
         if let p = propID(db, "Started") { store.setValue(id, p, .date(DateValue(start: Date(), includeTime: true))) }
         setBool(id, db, "Encrypted", encrypted)
         return id
     }
 
-    public func updateSession(_ id: RecordID, status: AgentSession.Status? = nil, acpSessionID: String? = nil, addTokens: Int = 0, agentID: String? = nil) {
+    public func updateSession(_ id: RecordID, status: AgentSession.Status? = nil, acpSessionID: String? = nil, addTokens: Int = 0,
+                              agentID: String? = nil, title: String? = nil, project: String? = nil) {
         let db = sessionsDB
+        if let title, !title.isEmpty, store.blocks[id] != nil { store.setText(id, RichText(title)) }
+        if let project { setText(id, db, "Project", project) }
         if let status { setSelect(id, db, "Status", status.rawValue) }
         if let acpSessionID { setText(id, db, "ACP session", acpSessionID) }
         if let agentID { setText(id, db, "Agent", agentID) }

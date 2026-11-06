@@ -222,19 +222,42 @@ public extension WorkspaceStore {
 
     // MARK: Links
 
-    /// Pages that mention or link to `id`.
+    /// Pages that mention or link to `id` (served from an incrementally maintained index).
     func backlinks(to id: RecordID) -> [RecordID] {
+        if !linkIndexBuilt {
+            for b in blocks.values { reindexLinks(b.id) }
+            linkIndexBuilt = true
+        }
         var pages: [RecordID] = []
         var seen = Set<RecordID>()
-        for b in blocks.values where b.trashedAt == nil {
-            let links = b.text.mentionedPages.contains(id) || b.props.linkTarget == id ||
-                (b.props.cells ?? []).contains { $0.mentionedPages.contains(id) } ||
-                b.values.values.contains { if case .text(let t) = $0 { return t.mentionedPages.contains(id) } else { return false } }
-            guard links, let page = containingPage(of: b.id), page != id, !seen.contains(page), !isTrashed(page) else { continue }
+        for src in linkSources[id] ?? [] {
+            guard let b = blocks[src], b.trashedAt == nil, let page = containingPage(of: b.id), page != id,
+                  !seen.contains(page), !isTrashed(page) else { continue }
             seen.insert(page)
             pages.append(page)
         }
         return pages.sorted { title(of: $0).localizedCaseInsensitiveCompare(title(of: $1)) == .orderedAscending }
+    }
+
+    /// Pages a block links to (mentions, link-to-page, table cells, text properties).
+    static func linkedPages(of b: Block) -> Set<RecordID> {
+        var out = Set(b.text.mentionedPages)
+        if let t = b.props.linkTarget { out.insert(t) }
+        for c in b.props.cells ?? [] { out.formUnion(c.mentionedPages) }
+        for v in b.values.values { if case .text(let t) = v { out.formUnion(t.mentionedPages) } }
+        return out
+    }
+
+    func reindexLinks(_ id: RecordID) {
+        let new = blocks[id].map(Self.linkedPages) ?? []
+        let old = linkTargets[id] ?? []
+        guard new != old else { return }
+        for t in old.subtracting(new) {
+            linkSources[t]?.remove(id)
+            if linkSources[t]?.isEmpty == true { linkSources[t] = nil }
+        }
+        for t in new.subtracting(old) { linkSources[t, default: []].insert(id) }
+        linkTargets[id] = new.isEmpty ? nil : new
     }
 
     /// Pages ordered by last edit, for "Recents" and Quick Find without a query.

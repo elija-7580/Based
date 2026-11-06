@@ -27,6 +27,15 @@ final class HappierModel {
     var busy: Set<RecordID> = []
     var lastError: String?
     var connectionStatus: [RecordID: String] = [:]
+    /// Bumped when a session's transcript (its page body) changes — views read this instead of the whole store.
+    var transcriptRevision: [RecordID: Int] = [:]
+    /// Claude Code permission mode per session (default / acceptEdits / plan / bypassPermissions).
+    var modes: [RecordID: String] = [:]
+    /// The app's private MCP endpoint (agents started here get the workspace tools + Inbox approvals).
+    @ObservationIgnored private var mcpHost: LocalMCPHost?
+    var mcpBaseURL: String?
+    @ObservationIgnored private var happierIDs: Set<RecordID> = []
+    @ObservationIgnored private var sessionIDSet: Set<RecordID> = []
 
     struct SessionEvent: Identifiable, Hashable {
         var id = UUID()
@@ -93,14 +102,94 @@ final class HappierModel {
         runtime.onLog = { [weak self] line in Task { @MainActor in self?.events[":log", default: []].append(.init(icon: "terminal", text: line, status: "")) } }
         connections.onStatus = { [weak self] id, status in Task { @MainActor in self?.connectionStatus[id] = status; self?.brain.setConnectionStatus(id, status) } }
         refresh()
-        token = store.observe { [weak self] _ in self?.refresh() }
+        token = store.observe { [weak self] change in self?.storeChanged(change) }
         Task { await connections.reload() }
+        #if os(macOS)
+        // Resolve the login-shell PATH early (claude / node / npx live in ~/.local/bin, Homebrew, nvm …).
+        Task.detached(priority: .utility) {
+            let env = ShellEnvironment.environment()
+            Log.info("Shell environment ready (\(env["PATH"]?.split(separator: ":").count ?? 0) PATH entries) — \(ShellEnvironment.note)", category: "agents")
+        }
+        if !AppDiagnostics.isUITesting { startLocalMCP() }
+        #endif
+    }
+
+    /// Starts the loopback MCP server agents use to reach the workspace, the Inbox and sub-agents.
+    func startLocalMCP() {
+        guard mcpHost == nil else { return }
+        let host = LocalMCPHost(tools: tools, runtime: runtime)
+        do {
+            mcpBaseURL = try host.start(runtime: runtime)
+            mcpHost = host
+        } catch {
+            Log.error("Local MCP endpoint failed to start: \(error)", category: "mcp")
+        }
+    }
+
+    /// Only Sessions / Inbox / Connections changes (and session transcripts) refresh this model —
+    /// typing in a normal page no longer re-reads every session row.
+    private func storeChanged(_ change: ChangeSet) {
+        var relevant = false
+        for p in change.parents {
+            let id = String(p.dropFirst(2))
+            if p.hasPrefix("d:"), happierIDs.contains(id) { relevant = true }
+            if p.hasPrefix("b:"), sessionIDSet.contains(id) { transcriptRevision[id, default: 0] += 1; relevant = true }
+        }
+        for key in change.keys {
+            switch key.kind {
+            case .database where happierIDs.contains(key.id): relevant = true
+            case .block:
+                if let b = store.blocks[key.id] {
+                    switch b.parent {
+                    case .database(let d) where happierIDs.contains(d): relevant = true
+                    case .block(let p) where sessionIDSet.contains(p): transcriptRevision[p, default: 0] += 1
+                    default: break
+                    }
+                } else if sessionIDSet.contains(key.id) { relevant = true }
+            default: break
+            }
+        }
+        if relevant { refresh() }
     }
 
     func refresh() {
-        sessions = brain.sessions().sorted { $0.updatedAt > $1.updatedAt }
-        inbox = brain.inbox().sorted { $0.createdAt > $1.createdAt }
-        connectionList = brain.connections()
+        Log.measure("HappierModel.refresh", warnAfter: 0.05) {
+            let ids = brain.ensureHappier()
+            happierIDs = [ids.sessions, ids.inbox, ids.connections]
+            let s = brain.sessions().sorted { $0.updatedAt > $1.updatedAt }
+            if s != sessions { sessions = s; sessionIDSet = Set(s.map(\.id)) }
+            let i = brain.inbox().sorted { $0.createdAt > $1.createdAt }
+            if i != inbox { inbox = i }
+            let c = brain.connections()
+            if c != connectionList { connectionList = c }
+        }
+    }
+
+    /// `--mcp-config` JSON giving Claude Code the workspace tools for one session/chat.
+    func mcpConfig(session: RecordID) -> JSONValue? { mcpHost?.claudeConfig(session: session) }
+
+    /// Chats with the built-in assistant (agent id "based"), newest first.
+    var chats: [AgentSession] { sessions.filter(\.isChat) }
+    /// Coding-agent sessions (Claude Code, Codex …).
+    var agentSessions: [AgentSession] { sessions.filter { !$0.isChat } }
+    func pendingInbox(for sid: RecordID) -> [InboxItem] { inbox.filter { $0.sessionID == sid && $0.status == .pending } }
+
+    func mode(_ sid: RecordID) -> String { modes[sid] ?? runtime.claudeModes.sync { $0[sid] } ?? "default" }
+    func setMode(_ sid: RecordID, _ mode: String) {
+        modes[sid] = mode
+        runtime.setClaudeMode(sid, mode)
+        Log.breadcrumb("mode \(mode) for session \(sid.prefix(6))")
+    }
+    static let claudeModes: [(id: String, title: String, footer: String)] = [
+        ("default", "Ask before edits", "? for shortcuts"),
+        ("acceptEdits", "Accept edits", "⏵⏵ accept edits on (shift+tab to cycle)"),
+        ("plan", "Plan mode", "⏸ plan mode on (shift+tab to cycle)"),
+        ("bypassPermissions", "Bypass permissions", "⏵⏵ bypass permissions on (shift+tab to cycle)"),
+    ]
+    func cycleMode(_ sid: RecordID) {
+        let ids = Self.claudeModes.map(\.id)
+        let i = ids.firstIndex(of: mode(sid)) ?? 0
+        setMode(sid, ids[(i + 1) % ids.count])
     }
 
     var pendingCount: Int { inbox.filter { $0.status == .pending }.count }
@@ -149,6 +238,9 @@ final class HappierModel {
                     if let e = r["error"]?.string { throw ServerError(e) }
                 } else {
                     let sid = try await runtime.startSession(agentID: agentID, cwd: cwd, title: title)
+                    Log.info("Started \(agentID) session \(sid) in \(cwd)", category: "agents")
+                    refresh()
+                    onSessionStarted?(sid)
                     if !prompt.isEmpty { send(sid, prompt) }
                 }
                 refresh()
@@ -156,8 +248,12 @@ final class HappierModel {
         }
     }
 
+    /// Called with the new session id (the app opens it).
+    @ObservationIgnored var onSessionStarted: ((RecordID) -> Void)?
+
     func send(_ sid: RecordID, _ text: String) {
         guard !text.isEmpty else { return }
+        Log.breadcrumb("prompt → session \(sid.prefix(6))")
         busy.insert(sid); liveText[sid] = ""; thoughts[sid] = nil; lastError = nil
         Task {
             defer { busy.remove(sid); liveText[sid] = nil; refresh() }
@@ -169,7 +265,7 @@ final class HappierModel {
                     if !isLive(sid) { try await runtime.attach(sid) }
                     _ = try await runtime.prompt(sid, text)
                 }
-            } catch { lastError = "\(error)" }
+            } catch { lastError = "\(error)"; Log.error("Session \(sid) failed: \(error)", category: "agents") }
         }
     }
 

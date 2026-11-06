@@ -22,6 +22,9 @@ packages:
     path: Packages/BasedCore
   BasedBrain:
     path: Packages/BasedBrain
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: 1.2.0
 targets:
   Based-macOS:
     type: application
@@ -33,12 +36,13 @@ targets:
       - package: BasedCore
       - package: BasedBrain
         product: BasedBrain
+      - package: SwiftTerm   # real terminal for Claude Code / Codex sessions (macOS only)
     settings:
       base:
         PRODUCT_NAME: Based
         PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID)
         INFOPLIST_FILE: App/macOS/Info.plist
-        CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX).entitlements
+        CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX)$(BASED_AGENTS_SUFFIX).entitlements
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
   Based-iOS:

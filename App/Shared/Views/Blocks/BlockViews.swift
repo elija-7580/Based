@@ -55,7 +55,8 @@ struct BlockRow: View {
     @State private var hovering = false
     @State private var showMenu = false
     @State private var dropEdge: DropEdge?
-    @State private var size = CGSize(width: 600, height: 30)
+    /// Last measured size, read by the drop delegate. A plain box (not observed) so resizing doesn't re-render.
+    @State private var geometry = SizeBox()
 
     var body: some View {
         let node = model.registry.block(id)
@@ -65,6 +66,8 @@ struct BlockRow: View {
     }
 
     private var store: WorkspaceStore { model.store }
+    /// Width of the + / ⋮⋮ gutter left of every block (inside the page's horizontal padding).
+    static let gutter: CGFloat = 44
 
     private func rendersChildrenBelow(_ b: Block) -> Bool {
         guard store.showsChildrenInline(b) else { return false }
@@ -89,18 +92,27 @@ struct BlockRow: View {
             .padding(.top, b.type == .heading1 ? 10 : 0)
             .background(RoundedRectangle(cornerRadius: 4).fill(background(b, selected: selected)))
             .anchorPreference(key: MenuAnchorKey.self, value: .bounds) { menuHere ? $0 : nil }
+            #if os(macOS)
+            // The hover / hit area includes the 44-pt gutter on the left, so moving the pointer onto the
+            // + and ⋮⋮ buttons keeps them visible and clickable (they used to vanish on the way there).
+            .padding(.leading, Self.gutter)
+            .overlay(alignment: .topLeading) { handle(b) }
+            .contentShape(Rectangle())
+            .onHover { hovering = $0 }
+            .padding(.leading, -Self.gutter)
+            #else
+            .overlay(alignment: .topLeading) { handle(b) }
+            #endif
             if rendersChildrenBelow(b), !node.children.isEmpty {
                 BlockList(parentID: id, editor: editor, listDepth: nested)
                     .padding(.leading, Theme.indent)
             }
         }
-        .id(b.type.isHeading ? b.id : nil)
-        .overlay(alignment: .topLeading) { handle(b) }
+        .id(b.id)
         .overlay(alignment: dropAlignment) { dropIndicator }
-        .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { size = $0 })
+        .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { geometry.size = $0 })
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
-        .onDrop(of: [.text], delegate: BlockDropDelegate(target: b, model: model, editor: editor, size: size, edge: $dropEdge))
+        .onDrop(of: [.text], delegate: BlockDropDelegate(target: b, model: model, editor: editor, box: geometry, edge: $dropEdge))
         .contextMenu { BlockMenuItems(ids: menuTargets, editor: editor) }
         .popover(isPresented: linkBinding) { LinkEditorView(editor: editor, blockID: id) }
     }
@@ -131,10 +143,11 @@ struct BlockRow: View {
                 editor.menu = InlineMenu(kind: .slash, blockID: nid, anchor: 0, query: "")
                 editor.focus(FocusTarget(nid, 1))
             } label: {
-                Image(systemName: "plus").frame(width: 18, height: 22)
+                Image(systemName: "plus").frame(width: 18, height: 22).contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .help("Click to add below")
+            .accessibilityIdentifier("block.add")
             Image(systemName: "circle.grid.2x3.fill")
                 .font(.system(size: 9))
                 .frame(width: 16, height: 22)
@@ -153,13 +166,17 @@ struct BlockRow: View {
                     return NSItemProvider(object: id as NSString)
                 }
                 .help("Drag to move\nClick to open menu")
+                .accessibilityIdentifier("block.handle")
                 .popover(isPresented: $showMenu, arrowEdge: .leading) {
                     BlockMenuView(ids: menuTargets, editor: editor) { showMenu = false }
                 }
         }
         .foregroundStyle(Theme.secondary)
+        .padding(.leading, 6)
+        .offset(y: handleOffset(b))
         .opacity(visible ? 1 : 0)
-        .offset(x: -38, y: handleOffset(b))
+        .allowsHitTesting(visible)
+        .accessibilityHidden(!visible)
         #else
         if editor.focusedID == id || editor.selectedBlocks.contains(id) {
             Image(systemName: "circle.grid.2x3.fill")
@@ -209,12 +226,19 @@ struct BlockRow: View {
     }
 }
 
+/// Mutable size holder that SwiftUI doesn't observe (see `BlockRow.geometry`).
+final class SizeBox {
+    var size = CGSize(width: 600, height: 30)
+}
+
 struct BlockDropDelegate: DropDelegate {
     let target: Block
     let model: AppModel
     let editor: EditorController
-    let size: CGSize
+    let box: SizeBox
     @Binding var edge: DropEdge?
+
+    private var size: CGSize { box.size }
 
     private func edge(at p: CGPoint) -> DropEdge {
         if p.x > size.width - 48, target.type != .column, target.parent != .workspace { return .right }
@@ -520,7 +544,7 @@ struct ColumnsView: View {
     var body: some View {
         let cols = model.registry.block(block.id).children
         let ratios = cols.map { model.store.blocks[$0]?.props.ratio ?? 1 }
-        ColumnsLayout(ratios: ratios, spacing: 24) {
+        ColumnsLayout(ratios: ratios, spacing: BlockRow.gutter + 2) {
             ForEach(cols, id: \.self) { cid in
                 ColumnView(id: cid, editor: editor)
             }
@@ -588,7 +612,7 @@ struct PageLinkView: View {
 
     var body: some View {
         let node = model.registry.block(pageID)
-        let _ = model.registry.workspace.revision
+        let _ = model.registry.workspace.structureRevision
         Button {
             model.open(pageID)
         } label: {
@@ -751,21 +775,23 @@ struct BreadcrumbView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let _ = model.registry.workspace.revision
-        let chain = model.store.ancestors(of: pageID).filter { $0.type.isPageLike }.reversed() + [model.store.blocks[pageID]].compactMap { $0 }
+        let _ = model.registry.workspace.structureRevision
+        let full = model.store.ancestors(of: pageID).filter { $0.type.isPageLike }.reversed() + [model.store.blocks[pageID]].compactMap { $0 }
+        let chain = Array(full.suffix(3))   // long paths would push the peek buttons out of the header
         HStack(spacing: 4) {
+            if full.count > chain.count { Text("… /").foregroundStyle(Theme.secondary) }
             ForEach(Array(chain.enumerated()), id: \.offset) { i, b in
                 if i > 0 { Text("/").foregroundStyle(Theme.secondary) }
                 Button { model.open(b.id) } label: {
                     HStack(spacing: 3) {
                         PageIconView(icon: b.props.icon, isDatabase: b.type == .databasePage, size: 14)
-                        Text(b.title.isEmpty ? "Untitled" : b.title).lineLimit(1)
+                        Text(b.title.isEmpty ? "Untitled" : b.title).lineLimit(1).truncationMode(.middle)
                     }
                 }
                 .buttonStyle(.plain)
             }
         }
-        .font(.system(size: 14))
+        .font(.system(size: 13))
         .foregroundStyle(Theme.secondary)
     }
 }

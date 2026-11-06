@@ -60,7 +60,13 @@ struct PageScreen: View {
                 .frame(maxWidth: .infinity)
             }
             .overlay(alignment: .topTrailing) {
-                if page.type != .databasePage, format?.hideOutline != true { PageOutline(pageID: pageID, scroll: scroll) }
+                if page.type != .databasePage, format?.hideOutline != true, !model.showFind { PageOutline(pageID: pageID, scroll: scroll) }
+            }
+            .onChange(of: model.findTarget) { _, target in
+                // ⌘F: scroll the current match into view and mark it.
+                guard !isPeek, let target, model.store.containingPage(of: target) == pageID else { return }
+                withAnimation(.easeOut(duration: 0.15)) { scroll.scrollTo(target, anchor: .center) }
+                editor.selectedBlocks = [target]
             }
             }
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
@@ -99,16 +105,6 @@ struct PageScreen: View {
             PagePicker(purpose: purpose) { editor.picker = nil }
         }
         .toolbar {
-            #if os(macOS)
-            ToolbarItemGroup(placement: .navigation) {
-                if !isPeek {
-                    Button { model.goBack() } label: { Image(systemName: "chevron.left") }
-                        .disabled(!model.canGoBack).help("Back (⌘[)")
-                    Button { model.goForward() } label: { Image(systemName: "chevron.right") }
-                        .disabled(!model.canGoForward).help("Forward (⌘])")
-                }
-            }
-            #endif
             ToolbarItemGroup(placement: .primaryAction) {
                 if !isPeek {
                     FavoriteButton(pageID: page.id)
@@ -116,9 +112,8 @@ struct PageScreen: View {
                 }
             }
         }
-        #if os(macOS)
+        #if os(iOS)
         .navigationTitle(isPeek ? "" : model.store.title(of: pageID))
-        #else
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .onAppear {
@@ -131,7 +126,7 @@ struct PageScreen: View {
 
     private var horizontalPadding: CGFloat {
         #if os(macOS)
-        return isPeek ? 36 : 72
+        return isPeek ? 52 : 72
         #else
         return 20
         #endif
@@ -242,7 +237,7 @@ struct PageHeader: View {
 
     private var horizontalPadding: CGFloat {
         #if os(macOS)
-        return isPeek ? 36 : 72
+        return isPeek ? 52 : 72
         #else
         return 20
         #endif
@@ -417,7 +412,7 @@ struct FavoriteButton: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let _ = model.registry.workspace.revision
+        let _ = model.registry.workspace.structureRevision
         let fav = model.store.isFavorite(pageID)
         Button { model.store.toggleFavorite(pageID) } label: { Image(systemName: fav ? "star.fill" : "star") }
             .help(fav ? "Remove from Favorites" : "Add to Favorites")
@@ -471,35 +466,59 @@ struct PageMenu: View {
 
 // MARK: - Peek
 
-/// Side / center peek around a page.
+/// Side / center peek around a page. Rows opened from a database get ↑ / ↓ to step through the view.
 struct PeekView: View {
     let pageID: RecordID
     let mode: OpenMode
     @Environment(AppModel.self) private var model
 
     var body: some View {
+        let siblings = model.peekSiblings
+        let index = siblings.firstIndex(of: pageID)
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Button { model.peek = nil } label: { Image(systemName: mode == .sidePeek ? "chevron.right.2" : "xmark") }
-                    .help("Close")
+                    .help("Close (Esc)")
+                    .accessibilityIdentifier("peek.close")
                 Button { model.open(pageID, mode: .fullPage) } label: { Image(systemName: "arrow.up.left.and.arrow.down.right") }
                     .help("Open as full page")
                 Button {
                     model.peek = mode == .sidePeek ? .center(pageID) : .side(pageID)
                 } label: { Image(systemName: mode == .sidePeek ? "rectangle.center.inset.filled" : "sidebar.right") }
                 .help(mode == .sidePeek ? "Center peek" : "Side peek")
-                Spacer()
+                if let index {
+                    Divider().frame(height: 14)
+                    Button { step(siblings, index - 1) } label: { Image(systemName: "chevron.up") }
+                        .disabled(index == 0).help("Previous row")
+                        .keyboardShortcut(.upArrow, modifiers: [.control, .shift])
+                    Button { step(siblings, index + 1) } label: { Image(systemName: "chevron.down") }
+                        .disabled(index >= siblings.count - 1).help("Next row")
+                        .keyboardShortcut(.downArrow, modifiers: [.control, .shift])
+                }
+                Spacer(minLength: 8)
                 BreadcrumbView(pageID: pageID)
+                    .lineLimit(1)
+                    .layoutPriority(-1)
+                FavoriteButton(pageID: pageID)
+                Button { model.openInNewTab(pageID) } label: { Image(systemName: "plus.square.on.square") }
+                    .help("Open in new tab")
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.secondary)
-            .padding(.horizontal, 12).padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .frame(height: 40)
             Divider()
             PageScreen(pageID: pageID, model: model, isPeek: true)
                 .id(pageID)
         }
+        .background(.background)
         #if os(macOS)
-        .frame(minWidth: mode == .centerPeek ? 760 : 360, minHeight: mode == .centerPeek ? 560 : 300)
+        .frame(minWidth: 300, minHeight: 240)
         #endif
+    }
+
+    private func step(_ siblings: [RecordID], _ i: Int) {
+        guard siblings.indices.contains(i) else { return }
+        model.peek = mode == .sidePeek ? .side(siblings[i]) : .center(siblings[i])
     }
 }

@@ -13,7 +13,7 @@ struct SettingsView: View {
 
     enum SettingsPage: String, CaseIterable, Identifiable {
         case myAccount, mySettings, myNotifications, myConnections, languageRegion
-        case workspace, people, teamspaces, security, agents, connections, importData, sync, billing, about
+        case workspace, people, teamspaces, security, agents, connections, importData, sync, billing, diagnostics, about
         var id: String { rawValue }
         var title: String {
             switch self {
@@ -31,6 +31,7 @@ struct SettingsView: View {
             case .importData: return "Import"
             case .sync: return "Sync & server"
             case .billing: return "Billing"
+            case .diagnostics: return "Diagnostics"
             case .about: return "About"
             }
         }
@@ -50,11 +51,12 @@ struct SettingsView: View {
             case .importData: return "square.and.arrow.down"
             case .sync: return "arrow.triangle.2.circlepath.icloud"
             case .billing: return "creditcard"
+            case .diagnostics: return "stethoscope"
             case .about: return "info.circle"
             }
         }
         static let account: [SettingsPage] = [.myAccount, .mySettings, .myNotifications, .myConnections, .languageRegion]
-        static let workspace: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .about]
+        static let workspace: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .diagnostics, .about]
     }
 
     var body: some View {
@@ -101,12 +103,14 @@ struct SettingsView: View {
             case .teamspaces: TeamspacesSettings()
             case .security: SecuritySettings()
             case .agents:
+                AgentSetupSection().environment(model.brain.happier)
                 AgentsSettingsView().environment(model.brain.happier)
                 AISettingsView()
             case .connections: ConnectionsSettingsView().environment(model.brain.happier)
             case .importData: ImportSettings()
             case .sync: SyncSettings()
             case .billing: BillingSettings()
+            case .diagnostics: DiagnosticsSettings()
             case .about: AboutSettings()
             }
         }
@@ -399,6 +403,64 @@ struct BillingSettings: View {
         }
         Section("AI usage") {
             Text("Tokens used by the Agent Brain are logged in Agent Brain → Runs.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+    }
+}
+
+/// Settings → Agents & AI: the setup / diagnosis entry point.
+struct AgentSetupSection: View {
+    @Environment(AppModel.self) private var model
+    @State private var showDoctor = false
+
+    var body: some View {
+        Section("Setup") {
+            if AppDiagnostics.isSandboxed {
+                Label("Sandboxed build — local agents can't start. Set BASED_AGENTS_SUFFIX = -Agents in Config/Local.xcconfig, or use a Based server.", systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(.orange)
+            }
+            HStack {
+                Text("Check Node, Claude Code, Codex and the ACP adapters, see what's missing and test each agent.")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+                Spacer()
+                Button("Agent setup & diagnosis…") { showDoctor = true }
+                    .accessibilityIdentifier("settings.agentDoctor")
+            }
+        }
+        .sheet(isPresented: $showDoctor) { AgentDoctorView().environment(model.brain.happier).environment(model) }
+    }
+}
+
+/// Settings → Diagnostics: log level, layout audit, where logs live.
+struct DiagnosticsSettings: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("log.level") private var level = ""
+    @State private var autoAudit = LayoutAuditor.autoAuditEnabled
+
+    var body: some View {
+        Section("Logging") {
+            Picker("Log level", selection: $level) {
+                Text("Default").tag("")
+                Text("Debug (everything)").tag("debug")
+                Text("Info").tag("info")
+                Text("Warnings and errors").tag("warning")
+            }
+            .onChange(of: level) { _, v in
+                Log.shared.minimumLevel = LogLevel(name: v) ?? .info
+                Log.notice("log level → \(v.isEmpty ? "default" : v)", category: "app")
+            }
+            Toggle("Check layout automatically (overlapping, clipped or off-screen controls)", isOn: $autoAudit)
+                .onChange(of: autoAudit) { _, v in LayoutAuditor.autoAuditEnabled = v }
+            LabeledContent("Log folder") {
+                Text(AppDiagnostics.logDirectory.path).font(.caption.monospaced()).textSelection(.enabled).lineLimit(2)
+            }
+            LabeledContent("Main-thread hangs this session", value: "\(HangWatchdog.shared.hangCount)")
+            HStack {
+                Button("Open Diagnostics") { model.selection = .diagnostics }
+                    .accessibilityIdentifier("settings.openDiagnostics")
+                #if os(macOS)
+                Button("Show logs in Finder") { NSWorkspace.shared.activateFileViewerSelecting([AppDiagnostics.logDirectory]) }
+                #endif
+            }
         }
     }
 }

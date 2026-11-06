@@ -8,24 +8,32 @@ public final class MCPServer: @unchecked Sendable {
     public let tools: AgentTools
     public let serverName: String
     public let version: String
+    /// Claude Code permission prompts (`--permission-prompt-tool mcp__based__approval`), scoped to a session
+    /// by the endpoint path `/mcp/session/<id>`. Receives (session, tool_name, input) and returns the decision JSON.
+    public var approval: (@Sendable (String, String, JSONValue) async -> JSONValue)?
+
     public init(tools: AgentTools, serverName: String = "based", version: String = "0.1.0") {
         self.tools = tools; self.serverName = serverName; self.version = version
     }
 
+    static let approvalSpec = ToolSpec(name: "approval", description: "Asks the Based user to approve a tool call (permission prompt). Used by Claude Code.",
+                                       inputSchema: .schema(["tool_name": .str("Tool that wants to run"), "input": ["type": "object", "description": "Tool input"],
+                                                             "tool_use_id": .str("Tool use id")], required: ["tool_name", "input"]))
+
     /// Handle one JSON-RPC message (request, notification or batch). Returns nil for notifications.
-    public func handle(_ raw: Data) async -> Data? {
+    public func handle(_ raw: Data, session: String? = nil) async -> Data? {
         guard let msg = try? JSONValue.parse(raw) else {
             return try? error(id: .null, code: -32700, "Parse error").encoded()
         }
         if let batch = msg.array {
             var out: [JSONValue] = []
-            for m in batch { if let r = await handle(message: m) { out.append(r) } }
+            for m in batch { if let r = await handle(message: m, session: session) { out.append(r) } }
             return out.isEmpty ? nil : try? JSONValue.array(out).encoded()
         }
-        return await handle(message: msg).flatMap { try? $0.encoded() }
+        return await handle(message: msg, session: session).flatMap { try? $0.encoded() }
     }
 
-    public func handle(message m: JSONValue) async -> JSONValue? {
+    public func handle(message m: JSONValue, session: String? = nil) async -> JSONValue? {
         let id = m["id"] ?? .null
         guard let method = m["method"]?.string else { return error(id: id, code: -32600, "Invalid request") }
         let params = m["params"] ?? .object([:])
@@ -33,7 +41,7 @@ public final class MCPServer: @unchecked Sendable {
             return nil
         }
         do {
-            let result = try await dispatch(method, params)
+            let result = try await dispatch(method, params, session: session)
             return ["jsonrpc": "2.0", "id": id, "result": result]
         } catch let e as RPCError {
             return error(id: id, code: e.code, e.message)
@@ -48,7 +56,7 @@ public final class MCPServer: @unchecked Sendable {
         ["jsonrpc": "2.0", "id": id, "error": ["code": .number(Double(code)), "message": .string(message)]]
     }
 
-    private func dispatch(_ method: String, _ p: JSONValue) async throws -> JSONValue {
+    private func dispatch(_ method: String, _ p: JSONValue, session: String?) async throws -> JSONValue {
         switch method {
         case "initialize":
             return ["protocolVersion": .string(p["protocolVersion"]?.string ?? "2025-03-26"),
@@ -57,12 +65,18 @@ public final class MCPServer: @unchecked Sendable {
                     "instructions": "Based is the user's personal workspace (pages, databases, memories, skills). Use search/read_page before writing. Save durable facts with memory_save. Load a skill with load_skill before following it."]
         case "ping": return .object([:])
         case "tools/list":
-            let specs = await MainActor.run { tools.specs }
+            var specs = await MainActor.run { tools.specs }
+            if session != nil, approval != nil { specs.insert(Self.approvalSpec, at: 0) }
             return ["tools": .array(specs.map { ["name": .string($0.name), "description": .string($0.description), "inputSchema": $0.inputSchema] })]
         case "tools/call":
             guard let name = p["name"]?.string else { throw RPCError(code: -32602, message: "name required") }
             let args = p["arguments"] ?? .object([:])
-            let r = await MainActor.run { tools.call(name, args) }
+            if name == "approval", let session, let approval {
+                let decision = await approval(session, args["tool_name"]?.string ?? "tool", args["input"] ?? .object([:]))
+                let text = (try? decision.encoded()).map { String(decoding: $0, as: UTF8.self) } ?? "{\"behavior\":\"deny\",\"message\":\"error\"}"
+                return ["content": [["type": "text", "text": .string(text)]]]
+            }
+            let r = await tools.callAsync(name, args)
             return ["content": [["type": "text", "text": .string(r.text)]], "isError": .bool(r.isError)]
         case "resources/list":
             let items: [JSONValue] = await MainActor.run {

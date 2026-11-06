@@ -173,6 +173,12 @@ public final class WorkspaceStore {
     public var onLocalChange: (([RecordKey]) -> Void)?
 
     private var observers: [UUID: (ChangeSet) -> Void] = [:]
+    /// Backlink index (built lazily on first `backlinks(to:)`): block → linked pages, page → linking blocks.
+    var linkTargets: [RecordID: Set<RecordID>] = [:]
+    var linkSources: [RecordID: Set<RecordID>] = [:]
+    var linkIndexBuilt = false
+    /// Transactions slower than this are logged as warnings (perf diagnostics).
+    public var slowTransactionThreshold: TimeInterval = 0.05
     private var undoStack: [UndoEntry] = []
     private var redoStack: [UndoEntry] = []
     public var undoCoalesceInterval: TimeInterval = 1.5
@@ -254,9 +260,15 @@ public final class WorkspaceStore {
     public func transact<T>(_ name: String, coalesce: String? = nil, undoable: Bool = true,
                             _ body: (Tx) throws -> T) rethrows -> T {
         let tx = Tx(store: self)
+        let start = DispatchTime.now().uptimeNanoseconds
         do {
             let result = try body(tx)
             commit(tx, name: name, coalesce: coalesce, origin: .local, undoable: undoable)
+            let ms = Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+            if ms > slowTransactionThreshold * 1000 {
+                Log.warning("Slow transaction “\(name)”: \(Int(ms)) ms, \(tx.order.count) records", category: "store",
+                            metadata: ["ms": String(Int(ms)), "records": String(tx.order.count)])
+            }
             return result
         } catch {
             rollback(tx)
@@ -338,7 +350,13 @@ public final class WorkspaceStore {
             onLocalChange?(Array(change.keys))
         }
         revision &+= 1
+        if linkIndexBuilt { for k in change.keys where k.kind == .block { reindexLinks(k.id) } }
+        let observeStart = DispatchTime.now().uptimeNanoseconds
         for handler in observers.values { handler(change) }
+        let observeMs = Double(DispatchTime.now().uptimeNanoseconds - observeStart) / 1_000_000
+        if observeMs > slowTransactionThreshold * 1000 {
+            Log.warning("Store observers took \(Int(observeMs)) ms for “\(name)”", category: "store")
+        }
     }
 
     private func stamped(_ r: Record, now: Date) -> Record {

@@ -44,6 +44,7 @@ public final class AgentRuntime: @unchecked Sendable {
                 onProgress?("\(call.name) \(call.arguments.text.prefix(80))")
                 let res: AgentTools.ToolResult
                 if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
+                else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }), let r = await host(call.name, call.arguments) { res = r }
                 else { res = await MainActor.run { tools.call(call.name, call.arguments) } }
                 messages.append(ChatMessage(role: .tool, content: String(res.text.prefix(24_000)), toolCallID: call.id))
             }

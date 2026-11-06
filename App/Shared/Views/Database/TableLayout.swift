@@ -1,5 +1,8 @@
 import SwiftUI
 import BasedCore
+#if os(macOS)
+import AppKit
+#endif
 
 extension CalculationType {
     static func options(for type: PropertyType) -> [CalculationType] {
@@ -76,65 +79,166 @@ struct TableLayout: View {
     let ctx: DBContext
     @State private var limitBoost = 0
     @State private var collapsed: Set<String> = []
+    /// Multi-selected rows (hover checkbox, ⇧-click for a range) for bulk actions.
+    @State private var selection: Set<RecordID> = []
+    @State private var anchor: RecordID?
+
+    /// Width of the checkbox gutter left of each row.
+    static let gutter: CGFloat = 28
 
     var body: some View {
         let props = ctx.visibleProperties
-        ScrollView(.horizontal, showsIndicators: true) {
-            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-                TableHeader(ctx: ctx, properties: props)
-                if let groups = ctx.visibleGroups {
-                    ForEach(groups) { g in
-                        GroupHeader(ctx: ctx, group: g, collapsed: collapsed.contains(g.id)) {
-                            if collapsed.contains(g.id) { collapsed.remove(g.id) } else { collapsed.insert(g.id) }
-                        }
-                        if !collapsed.contains(g.id) {
-                            rows(g.rows, props: props)
-                            newRow(values: ctx.groupValues(g.id))
-                            CalculationRow(ctx: ctx, properties: props, rows: g.rows)
-                        }
+        let ordered = displayedRows
+        VStack(alignment: .leading, spacing: 0) {
+            if !selection.isEmpty { bulkBar(ordered) }
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+                    HStack(spacing: 0) {
+                        selectAll(ordered)
+                        TableHeader(ctx: ctx, properties: props)
                     }
-                    HiddenGroupsFooter(ctx: ctx)
-                } else {
-                    let limit = (ctx.view.loadLimit ?? 50) + limitBoost
-                    rows(Array(ctx.result.rows.prefix(limit)), props: props)
-                    if ctx.result.rows.count > limit {
-                        HStack(spacing: 12) {
-                            Button("Load \(min(50, ctx.result.rows.count - limit)) more") { limitBoost += 50 }
-                            Button("Load all (\(ctx.result.rows.count))") { limitBoost = ctx.result.rows.count }
-                            Text("\(limit) of \(ctx.result.rows.count)").foregroundStyle(.tertiary)
+                    if let groups = ctx.visibleGroups {
+                        ForEach(groups) { g in
+                            GroupHeader(ctx: ctx, group: g, collapsed: collapsed.contains(g.id)) {
+                                if collapsed.contains(g.id) { collapsed.remove(g.id) } else { collapsed.insert(g.id) }
+                            }
+                            if !collapsed.contains(g.id) {
+                                rows(g.rows, props: props, ordered: ordered)
+                                newRow(values: ctx.groupValues(g.id))
+                                CalculationRow(ctx: ctx, properties: props, rows: g.rows).padding(.leading, Self.gutter)
+                            }
                         }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary).font(.callout).padding(6)
-                        .accessibilityIdentifier("table.loadMore")
+                        HiddenGroupsFooter(ctx: ctx)
+                    } else {
+                        let limit = (ctx.view.loadLimit ?? 50) + limitBoost
+                        rows(Array(ctx.result.rows.prefix(limit)), props: props, ordered: ordered)
+                        if ctx.result.rows.count > limit {
+                            HStack(spacing: 12) {
+                                Button("Load \(min(50, ctx.result.rows.count - limit)) more") { limitBoost += 50 }
+                                Button("Load all (\(ctx.result.rows.count))") { limitBoost = ctx.result.rows.count }
+                                Text("\(limit) of \(ctx.result.rows.count)").foregroundStyle(.tertiary)
+                            }
+                            .buttonStyle(.plain).foregroundStyle(Theme.secondary).font(.callout).padding(6)
+                            .padding(.leading, Self.gutter)
+                            .accessibilityIdentifier("table.loadMore")
+                        }
+                        newRow(values: [:])
+                        CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows).padding(.leading, Self.gutter)
                     }
-                    newRow(values: [:])
-                    CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows)
                 }
+                .padding(.bottom, 4)
             }
-            .padding(.bottom, 4)
+        }
+        .onKeyPress(.escape) {
+            guard !selection.isEmpty else { return .ignored }
+            selection = []
+            return .handled
+        }
+        .onChange(of: ctx.result.rows.map(\.id)) { _, ids in
+            // Drop rows that were deleted / filtered away.
+            let alive = Set(ids)
+            if !selection.isSubset(of: alive) { selection.formIntersection(alive) }
         }
     }
 
-    private func rows(_ rows: [Block], props: [PropertySchema]) -> some View {
+    /// Rows in display order (groups flattened, collapsed groups skipped) — used for ⇧-click ranges.
+    private var displayedRows: [RecordID] {
+        if let groups = ctx.visibleGroups {
+            return groups.filter { !collapsed.contains($0.id) }.flatMap(\.rows).map(\.id)
+        }
+        return ctx.result.rows.prefix((ctx.view.loadLimit ?? 50) + limitBoost).map(\.id)
+    }
+
+    private func rows(_ rows: [Block], props: [PropertySchema], ordered: [RecordID]) -> some View {
         ForEach(rows, id: \.id) { row in
-            HStack(spacing: 0) {
-                ForEach(props) { p in
-                    Group {
-                        if p.type == .title {
-                            RowTitleCell(ctx: ctx, row: row)
-                        } else {
-                            PropertyCell(db: ctx.db, row: row, property: p, value: ctx.value(row, p),
-                                         locked: ctx.locked, wrap: ctx.view.wrapCells == true)
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .frame(width: TableHeader.width(ctx, p), alignment: .leading)
-                    .overlay(alignment: .trailing) { Rectangle().fill(Color(Theme.divider)).frame(width: 1) }
+            TableRowView(ctx: ctx, row: row, props: props, selected: selection.contains(row.id),
+                         selectionActive: !selection.isEmpty) { shift in
+                toggle(row.id, shift: shift, ordered: ordered)
+            }
+            .contextMenu {
+                if selection.count > 1, selection.contains(row.id) {
+                    bulkMenu(ordered)
+                } else {
+                    RowMenuItems(ctx: ctx, row: row)
                 }
             }
-            .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1) }
-            .contextMenu { RowMenuItems(ctx: ctx, row: row) }
         }
+    }
+
+    private func toggle(_ id: RecordID, shift: Bool, ordered: [RecordID]) {
+        if shift, let a = anchor, let i = ordered.firstIndex(of: a), let j = ordered.firstIndex(of: id) {
+            selection.formUnion(ordered[min(i, j)...max(i, j)])
+        } else if selection.contains(id) {
+            selection.remove(id)
+        } else {
+            selection.insert(id)
+        }
+        anchor = id
+    }
+
+    private func selectAll(_ ordered: [RecordID]) -> some View {
+        let all = !ordered.isEmpty && selection.count == ordered.count
+        return Button {
+            selection = all ? [] : Set(ordered)
+        } label: {
+            Image(systemName: all ? "checkmark.square.fill" : (selection.isEmpty ? "square" : "minus.square.fill"))
+                .foregroundStyle(selection.isEmpty ? Theme.secondary.opacity(0.5) : Color.accentColor)
+                .frame(width: Self.gutter, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(all ? "Deselect all" : "Select all rows")
+        .accessibilityIdentifier("table.selectAll")
+    }
+
+    private func bulkBar(_ ordered: [RecordID]) -> some View {
+        HStack(spacing: 12) {
+            Text("\(selection.count) selected").font(.system(size: 13, weight: .medium)).foregroundStyle(Color.accentColor)
+            Divider().frame(height: 14)
+            Menu { bulkMenu(ordered) } label: { Label("Actions", systemImage: "ellipsis.circle") }
+                .menuStyle(.borderlessButton).fixedSize()
+            if !ctx.locked {
+                Button { bulkDuplicate(ordered) } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
+                Button(role: .destructive) { bulkDelete() } label: { Label("Delete", systemImage: "trash") }
+                    .accessibilityIdentifier("table.bulkDelete")
+            }
+            Spacer()
+            Button { selection = [] } label: { Image(systemName: "xmark") }.help("Clear selection (Esc)")
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 13))
+        .foregroundStyle(Theme.secondary)
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.08)))
+        .padding(.bottom, 4)
+        .accessibilityIdentifier("table.bulkBar")
+    }
+
+    @ViewBuilder
+    private func bulkMenu(_ ordered: [RecordID]) -> some View {
+        let ids = ordered.filter { selection.contains($0) }
+        Button("Open \(ids.count) in new tabs", systemImage: "plus.square.on.square") {
+            for id in ids { ctx.model.openInNewTab(id, activate: false) }
+        }
+        Button("Copy links", systemImage: "link") { Clipboard.copy(ids.map { "based://page/" + $0 }.joined(separator: "\n")) }
+        if !ctx.locked {
+            Divider()
+            Button("Duplicate \(ids.count)", systemImage: "plus.square.on.square") { bulkDuplicate(ordered) }
+            Button("Delete \(ids.count)", systemImage: "trash", role: .destructive) { bulkDelete() }
+        }
+    }
+
+    private func bulkDuplicate(_ ordered: [RecordID]) {
+        let ids = ordered.filter { selection.contains($0) }
+        _ = ctx.store.duplicateBlocks(ids)
+        selection = []
+    }
+
+    private func bulkDelete() {
+        let ids = Array(selection)
+        Log.info("table: delete \(ids.count) rows", category: "database")
+        ctx.store.trash(ids)
+        selection = []
     }
 
     @ViewBuilder
@@ -145,8 +249,59 @@ struct TableLayout: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
-            .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1) }
+            .padding(.leading, Self.gutter)
+            .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.leading, Self.gutter) }
         }
+    }
+}
+
+/// One table row: checkbox gutter (on hover / while selecting) + cells.
+struct TableRowView: View {
+    let ctx: DBContext
+    let row: Block
+    let props: [PropertySchema]
+    let selected: Bool
+    let selectionActive: Bool
+    let toggle: (_ shift: Bool) -> Void
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Button {
+                #if os(macOS)
+                toggle(NSEvent.modifierFlags.contains(.shift))
+                #else
+                toggle(false)
+                #endif
+            } label: {
+                Image(systemName: selected ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(selected ? Color.accentColor : Theme.secondary)
+                    .frame(width: TableLayout.gutter, height: 28)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(hover || selectionActive ? 1 : 0)
+            .help("Select row (⇧-click for a range)")
+            .accessibilityIdentifier("table.rowSelect")
+            ForEach(props) { p in
+                Group {
+                    if p.type == .title {
+                        RowTitleCell(ctx: ctx, row: row)
+                    } else {
+                        PropertyCell(db: ctx.db, row: row, property: p, value: ctx.value(row, p),
+                                     locked: ctx.locked, wrap: ctx.view.wrapCells == true)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .frame(width: TableHeader.width(ctx, p), alignment: .leading)
+                .overlay(alignment: .trailing) { Rectangle().fill(Color(Theme.divider)).frame(width: 1) }
+            }
+        }
+        .background(selected ? Color.accentColor.opacity(0.1) : Color.clear)
+        .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.leading, TableLayout.gutter) }
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
     }
 }
 
@@ -275,6 +430,8 @@ struct CalculationRow: View {
     let ctx: DBContext
     let properties: [PropertySchema]
     let rows: [Block]
+    /// "Calculate ⌄" labels only show on hover (like Notion) so empty footers don't clutter the table.
+    @State private var hovering = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -298,6 +455,7 @@ struct CalculationRow: View {
                             Text(s).font(.system(size: 13))
                         } else {
                             Text("Calculate").font(.system(size: 12)).foregroundStyle(Theme.secondary.opacity(0.6))
+                                .opacity(hovering ? 1 : 0)
                         }
                     }
                     .padding(.horizontal, 8).padding(.vertical, 5)
@@ -307,6 +465,8 @@ struct CalculationRow: View {
                 .frame(width: TableHeader.width(ctx, p))
             }
         }
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
     }
 }
 

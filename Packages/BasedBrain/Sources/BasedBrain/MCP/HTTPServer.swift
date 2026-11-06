@@ -35,11 +35,17 @@ public final class HTTPServer: @unchecked Sendable {
 
     public let port: UInt16
     public let handler: Handler
+    /// Bind to 127.0.0.1 only (the app's private endpoint for local agents).
+    public let loopbackOnly: Bool
     private var fd: Int32 = -1
     private var thread: Thread?
     public private(set) var isRunning = false
+    /// Actual port (differs from `port` when started with port 0 = random free port).
+    public private(set) var boundPort: UInt16 = 0
 
-    public init(port: UInt16, handler: @escaping Handler) { self.port = port; self.handler = handler }
+    public init(port: UInt16, loopbackOnly: Bool = false, handler: @escaping Handler) {
+        self.port = port; self.loopbackOnly = loopbackOnly; self.handler = handler
+    }
 
     public func start() throws {
         fd = socket(AF_INET, Int32(SOCK_STREAM.rawValue), 0)
@@ -49,9 +55,13 @@ public final class HTTPServer: @unchecked Sendable {
         var addr = sockaddr_in()
         addr.sin_family = sa_family_t(AF_INET)
         addr.sin_port = port.bigEndian
-        addr.sin_addr = in_addr(s_addr: INADDR_ANY)
+        addr.sin_addr = in_addr(s_addr: loopbackOnly ? UInt32(0x7F00_0001).bigEndian : INADDR_ANY)
         let bound = withUnsafePointer(to: &addr) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
         guard bound == 0, listen(fd, 64) == 0 else { close(fd); throw NSError(domain: "http", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot listen on port \(port)"]) }
+        var actual = sockaddr_in()
+        var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+        _ = withUnsafeMutablePointer(to: &actual) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &len) } }
+        boundPort = UInt16(bigEndian: actual.sin_port)
         isRunning = true
         let t = Thread { [self] in
             while isRunning {

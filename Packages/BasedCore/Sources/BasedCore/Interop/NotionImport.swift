@@ -9,7 +9,19 @@ public struct ImportReport: Sendable {
     public var rootIDs: [RecordID] = []
 }
 
-/// Imports a Notion "Markdown & CSV" export (unzipped folder), single .md files or .csv files.
+/// Expanded import sources: ZIP archives unpacked and HTML exports converted in a temporary folder.
+public struct PreparedImport: Sendable {
+    public var urls: [URL]
+    public var temporaryDirectories: [URL] = []
+    public var notes: [String] = []
+
+    public func cleanup() {
+        for d in temporaryDirectories { try? FileManager.default.removeItem(at: d) }
+    }
+}
+
+/// Imports a Notion export — the downloaded `.zip` (also nested "Part-1.zip" archives), an unzipped
+/// folder, "Markdown & CSV" or "HTML" flavour — or single .md / .csv / .html files.
 @MainActor
 public final class NotionImporter {
     public let store: WorkspaceStore
@@ -36,7 +48,71 @@ public final class NotionImporter {
 
     static func key(_ url: URL) -> String { url.standardizedFileURL.path }
 
+    /// True when `prepare` has work to do (archives or HTML).
+    nonisolated public static func needsPreparation(_ urls: [URL]) -> Bool {
+        urls.contains { u in
+            let ext = u.pathExtension.lowercased()
+            if ext == "zip" || ext == "html" || ext == "htm" { return true }
+            var isDir: ObjCBool = false
+            return FileManager.default.fileExists(atPath: u.path, isDirectory: &isDir) && isDir.boolValue && HTMLExportConverter.containsHTML(u)
+        }
+    }
+
+    /// Unzips archives and converts HTML exports into a temporary folder. Thread-safe; call it off
+    /// the main thread for large exports, then pass `urls` to `importItems` and `cleanup()` afterwards.
+    nonisolated public static func prepare(_ urls: [URL], progress: (@Sendable (Double) -> Void)? = nil) throws -> PreparedImport {
+        let fm = FileManager.default
+        var out = PreparedImport(urls: [])
+        func tempDir() throws -> URL {
+            let d = fm.temporaryDirectory.appendingPathComponent("based-import-" + UUID().uuidString, isDirectory: true)
+            try fm.createDirectory(at: d, withIntermediateDirectories: true)
+            out.temporaryDirectories.append(d)
+            return d
+        }
+        for (i, u) in urls.enumerated() {
+            let ext = u.pathExtension.lowercased()
+            var isDir: ObjCBool = false
+            let exists = fm.fileExists(atPath: u.path, isDirectory: &isDir)
+            if exists, !isDir.boolValue, ext == "zip" || (ext.isEmpty && ZipArchive.isZip(u)) {
+                let dir = try tempDir()
+                let archive = try ZipArchive(url: u)
+                let n = try archive.extractAll(to: dir) { p in progress?((Double(i) + p * 0.9) / Double(urls.count)) }
+                let pages = HTMLExportConverter.containsHTML(dir) ? HTMLExportConverter.convertFolder(dir) : 0
+                out.notes.append("Unpacked \(u.lastPathComponent): \(n) files" + (pages > 0 ? ", \(pages) HTML pages converted" : ""))
+                out.urls.append(dir)
+            } else if exists, isDir.boolValue, HTMLExportConverter.containsHTML(u) {
+                let dir = try tempDir()
+                let copy = dir.appendingPathComponent(u.lastPathComponent, isDirectory: true)
+                try fm.copyItem(at: u, to: copy)
+                HTMLExportConverter.convertFolder(copy)
+                out.urls.append(copy)
+            } else if exists, ext == "html" || ext == "htm" {
+                let dir = try tempDir()
+                try fm.copyItem(at: u, to: dir.appendingPathComponent(u.lastPathComponent))
+                let sibling = u.deletingPathExtension()
+                if fm.fileExists(atPath: sibling.path) {
+                    try? fm.copyItem(at: sibling, to: dir.appendingPathComponent(sibling.lastPathComponent, isDirectory: true))
+                }
+                HTMLExportConverter.convertFolder(dir)
+                let base = dir.appendingPathComponent(sibling.lastPathComponent)
+                let md = base.appendingPathExtension("md"), csv = base.appendingPathExtension("csv")
+                out.urls.append(fm.fileExists(atPath: csv.path) ? csv : md)
+            } else {
+                out.urls.append(u)
+            }
+            progress?(Double(i + 1) / Double(urls.count))
+        }
+        return out
+    }
+
     public func importItems(_ urls: [URL], into parent: ParentRef = .workspace) throws -> ImportReport {
+        if Self.needsPreparation(urls) {
+            let prepared = try Self.prepare(urls)
+            defer { prepared.cleanup() }
+            var r = try importItems(prepared.urls, into: parent)
+            r.warnings.insert(contentsOf: prepared.notes, at: 0)
+            return r
+        }
         report = ImportReport()
         ids = [:]; consumed = []
         for u in urls { assignIDs(u) }
@@ -68,6 +144,8 @@ public final class NotionImporter {
             guard !target.contains("://"), let decoded = target.removingPercentEncoding else { return nil }
             let u = dir.appendingPathComponent(decoded)
             if let id = ids[Self.key(u)] { return id }
+            // HTML exports link pages that became databases (".md" → ".csv").
+            if u.pathExtension == "md", let id = ids[Self.key(u.deletingPathExtension().appendingPathExtension("csv"))] { return id }
             // CSV links in newer exports point to "X.csv" while rows live in "X_all.csv"
             if u.pathExtension == "csv" {
                 let all = u.deletingPathExtension().appendingPathExtension("csv")
@@ -98,7 +176,10 @@ public final class NotionImporter {
         case "md", "markdown", "txt": return importPage(url, parent: parent, sortKey: sortKey, tx: tx)
         case "csv": return importDatabase(url, parent: parent, sortKey: sortKey, inline: false, tx: tx)
         default:
-            report.warnings.append("Skipped \(url.lastPathComponent)")
+            if ["png", "jpg", "jpeg", "gif", "webp", "heic", "pdf", "svg", "mp4", "mov", "mp3", "m4a"].contains(url.pathExtension.lowercased()) {
+                return nil   // stray attachments are imported with the page that references them
+            }
+            report.warnings.append("Skipped \(url.lastPathComponent) (not a Markdown, CSV, HTML or ZIP file)")
             return nil
         }
     }
@@ -171,7 +252,11 @@ public final class NotionImporter {
         for (b, k) in zip(blocks, keys) {
             lastKey = k
             if let target = b.linkTarget, let decoded = target.removingPercentEncoding, !target.contains("://") {
-                let u = dir.appendingPathComponent(decoded)
+                var u = dir.appendingPathComponent(decoded)
+                if u.pathExtension.lowercased() == "md", !FileManager.default.fileExists(atPath: u.path) {
+                    let csv = u.deletingPathExtension().appendingPathExtension("csv")
+                    if FileManager.default.fileExists(atPath: csv.path) { u = csv }
+                }
                 let ext = u.pathExtension.lowercased()
                 if ext == "md", FileManager.default.fileExists(atPath: u.path), !consumed.contains(Self.key(u)) {
                     importPage(u, parent: .block(id), sortKey: k, tx: tx); continue

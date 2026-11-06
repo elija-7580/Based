@@ -7,214 +7,7 @@ import AppKit
 import UIKit
 #endif
 
-// MARK: - Sessions
-
-/// Happier‑style list of coding‑agent sessions (Claude Code, Codex, Gemini …) with live status.
-struct SessionsView: View {
-    @Environment(HappierModel.self) private var happier
-    @State private var showNew = false
-    @State private var selected: RecordID?
-
-    var body: some View {
-        @Bindable var happier = happier
-        NavigationStack {
-            Group {
-                if happier.sessions.isEmpty {
-                    ContentUnavailableView {
-                        Label("No sessions yet", systemImage: "terminal")
-                    } description: {
-                        Text("Start Claude Code, Codex or Gemini in a folder and control it from any device. Approvals land in your Inbox.")
-                    } actions: {
-                        Button("New session") { showNew = true }.buttonStyle(.borderedProminent)
-                    }
-                } else {
-                    List(happier.sessions, selection: $selected) { s in
-                        NavigationLink(value: s.id) { SessionRow(session: s) }
-                            .contextMenu {
-                                Button("Stop agent") { happier.stop(s.id) }
-                                Button("Delete", role: .destructive) { happier.deleteSession(s.id) }
-                            }
-                    }
-                    .listStyle(.inset)
-                }
-            }
-            .navigationTitle("Sessions")
-            .navigationDestination(for: RecordID.self) { SessionDetailView(sessionID: $0) }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { showNew = true } label: { Label("New session", systemImage: "plus") }
-                        .accessibilityIdentifier("sessions.new")
-                }
-            }
-            .sheet(isPresented: $showNew) { NewSessionSheet().environment(happier) }
-            .alert("Agent error", isPresented: Binding(get: { happier.lastError != nil }, set: { if !$0 { happier.lastError = nil } })) {
-                Button("OK") { happier.lastError = nil }
-            } message: { Text(happier.lastError ?? "") }
-        }
-        .accessibilityIdentifier("sessions.list")
-    }
-}
-
-struct SessionRow: View {
-    @Environment(HappierModel.self) private var happier
-    let session: AgentSession
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: happier.agent(session.agentID)?.icon ?? "terminal").frame(width: 22)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.title).lineLimit(1)
-                HStack(spacing: 6) {
-                    Circle().fill(statusColor).frame(width: 7, height: 7)
-                    Text(session.status.rawValue)
-                    Text("·").foregroundStyle(.tertiary)
-                    Text(session.machine).lineLimit(1)
-                    if session.encrypted { Image(systemName: "lock.fill").font(.caption2) }
-                }
-                .font(.caption).foregroundStyle(Theme.secondary)
-            }
-            Spacer()
-            if happier.busy.contains(session.id) { ProgressView().controlSize(.small) }
-            else if session.tokens > 0 { Text("\(session.tokens / 1000)k").font(.caption.monospacedDigit()).foregroundStyle(.tertiary) }
-        }
-        .padding(.vertical, 2)
-    }
-    var statusColor: Color {
-        switch session.status {
-        case .idle: return .gray
-        case .running: return .blue
-        case .waiting: return .orange
-        case .done: return .green
-        case .failed: return .red
-        }
-    }
-}
-
-/// One session: transcript, live stream, tool‑call feed and the prompt box; switch agents mid‑session.
-struct SessionDetailView: View {
-    @Environment(HappierModel.self) private var happier
-    let sessionID: RecordID
-    @State private var input = ""
-    @State private var showEvents = true
-    @FocusState private var focused: Bool
-
-    var session: AgentSession? { happier.sessions.first { $0.id == sessionID } }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 12) {
-                        ForEach(turns) { TranscriptTurnView(turn: $0) }
-                        if let live = happier.liveText[sessionID], !live.isEmpty {
-                            TranscriptTurnView(turn: .init(role: "agent", text: live))
-                        }
-                        if let th = happier.thoughts[sessionID], !th.isEmpty {
-                            DisclosureGroup("Thinking…") { Text(th).font(.caption).foregroundStyle(Theme.secondary) }.font(.caption)
-                        }
-                        if happier.busy.contains(sessionID) { ProgressView().controlSize(.small).id("end") } else { Color.clear.frame(height: 1).id("end") }
-                    }
-                    .padding(16)
-                }
-                .onChange(of: happier.liveText[sessionID]) { _, _ in proxy.scrollTo("end") }
-            }
-            if showEvents, let ev = happier.events[sessionID], !ev.isEmpty {
-                Divider()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(ev.suffix(30)) { e in
-                            HStack(alignment: .top, spacing: 6) {
-                                Image(systemName: e.icon).frame(width: 14)
-                                Text(e.text).lineLimit(3)
-                                Spacer()
-                                if !e.status.isEmpty { Text(e.status).foregroundStyle(.tertiary) }
-                            }
-                            .font(.caption.monospaced())
-                        }
-                    }
-                    .padding(10)
-                }
-                .frame(maxHeight: 140)
-                .background(Color(Theme.codeBackground))
-            }
-            Divider()
-            HStack(alignment: .bottom, spacing: 8) {
-                TextField("Message the agent… (⏎ to send)", text: $input, axis: .vertical)
-                    .textFieldStyle(.plain).lineLimit(1...8).focused($focused)
-                    .onSubmit { send() }
-                    .accessibilityIdentifier("session.input")
-                if happier.busy.contains(sessionID) {
-                    Button { happier.cancel(sessionID) } label: { Image(systemName: "stop.circle").font(.title2) }.buttonStyle(.plain)
-                } else {
-                    Button { send() } label: { Image(systemName: "arrow.up.circle.fill").font(.title2) }
-                        .buttonStyle(.plain).disabled(input.isEmpty).foregroundStyle(Color.accentColor)
-                        .accessibilityIdentifier("session.send")
-                }
-            }
-            .padding(12)
-        }
-        .navigationTitle(session?.title ?? "Session")
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                if let s = session {
-                    Menu {
-                        ForEach(happier.agents.filter(\.enabled)) { a in
-                            Button { happier.switchAgent(sessionID, to: a.id) } label: {
-                                Label(a.name, systemImage: a.icon)
-                            }.disabled(a.id == s.agentID)
-                        }
-                    } label: { Label(happier.agent(s.agentID)?.name ?? s.agentID, systemImage: happier.agent(s.agentID)?.icon ?? "terminal") }
-                    .help("Switch agent (the transcript is handed over)")
-                    Toggle(isOn: $showEvents) { Image(systemName: "list.bullet.rectangle") }.help("Tool calls")
-                    Button { happier.stop(sessionID) } label: { Image(systemName: "power") }.help("Stop the agent process").disabled(!happier.isLive(sessionID))
-                    if s.cwd.hasPrefix("/") {
-                        Text(s.cwd).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1)
-                    }
-                }
-            }
-        }
-        .onAppear { focused = true }
-    }
-
-    struct Turn: Identifiable { var id = UUID(); var role: String; var text: String }
-
-    /// Parses the stored transcript ("**role**\n\ntext" blocks) back into turns.
-    var turns: [Turn] {
-        let md = happier.transcript(sessionID)
-        var out: [Turn] = []
-        for chunk in md.components(separatedBy: "\n**") {
-            var c = chunk
-            if c.hasPrefix("**") { c.removeFirst(2) }
-            guard let end = c.range(of: "**") else { if !c.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { out.append(Turn(role: "note", text: c)) }; continue }
-            let role = String(c[..<end.lowerBound])
-            let text = String(c[end.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            if !text.isEmpty { out.append(Turn(role: role, text: text)) }
-        }
-        return out
-    }
-
-    func send() {
-        let t = input; input = ""
-        happier.send(sessionID, t)
-    }
-}
-
-struct TranscriptTurnView: View {
-    let turn: SessionDetailView.Turn
-    var body: some View {
-        if turn.role == "user" {
-            Text(turn.text).padding(10).background(RoundedRectangle(cornerRadius: 10).fill(Color(Theme.codeBackground)))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        } else {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(turn.role.capitalized).font(.caption2).foregroundStyle(.tertiary)
-                Text(markdown(turn.text)).textSelection(.enabled)
-            }
-        }
-    }
-    func markdown(_ s: String) -> AttributedString {
-        (try? AttributedString(markdown: s, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(s)
-    }
-}
+// MARK: - New session
 
 /// Agent picker + working directory + first prompt.
 struct NewSessionSheet: View {
@@ -280,18 +73,20 @@ struct InboxView: View {
     var items: [InboxItem] { showResolved ? happier.inbox : happier.inbox.filter { $0.status == .pending } }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if items.isEmpty {
-                    ContentUnavailableView("Inbox zero", systemImage: "tray", description: Text("Agents ask here before doing anything sensitive."))
-                } else {
-                    List(items) { item in InboxRow(item: item) }
-                        .listStyle(.inset)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Inbox").font(.system(size: 22, weight: .bold))
+                Spacer()
+                Toggle("Show resolved", isOn: $showResolved).toggleStyle(.switch).controlSize(.small)
             }
-            .navigationTitle("Inbox")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) { Toggle("Show resolved", isOn: $showResolved).toggleStyle(.switch).controlSize(.small) }
+            .padding(.horizontal, 24).padding(.vertical, 14)
+            Divider()
+            if items.isEmpty {
+                ContentUnavailableView("Inbox zero", systemImage: "tray", description: Text("Agents ask here before doing anything sensitive."))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(items) { item in InboxRow(item: item) }
+                    .listStyle(.inset)
             }
         }
         .accessibilityIdentifier("inbox.list")

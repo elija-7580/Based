@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 import Observation
 import BasedCore
 
@@ -20,6 +23,62 @@ enum SidebarItem: Hashable {
     case home
     case sessions   // Happier-style coding-agent sessions
     case inbox      // approvals / questions from agents
+    case brain      // Agent Brain dashboard (About / Memories / Skills / Agents / Connections)
+    case projects   // overview of all agent sessions grouped by project (+ Claude/Codex CLI history)
+    case chat(RecordID?)   // full-page AI chat (nil = new chat)
+    case diagnostics       // logs, hangs, layout audit
+
+    /// Short label for tabs, breadcrumbs and logs.
+    @MainActor func title(in model: AppModel) -> String {
+        switch self {
+        case .page(let id): return model.store.title(of: id).nonEmptyOr("Untitled")
+        case .trash: return "Trash"
+        case .settings: return "Settings"
+        case .home: return "Home"
+        case .sessions: return "Sessions"
+        case .inbox: return "Inbox"
+        case .brain: return "Agent Brain"
+        case .projects: return "Agents"
+        case .chat(let id): return id.map { model.store.title(of: $0).nonEmptyOr("Chat") } ?? "New chat"
+        case .diagnostics: return "Diagnostics"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .page: return "doc.text"
+        case .trash: return "trash"
+        case .settings: return "gearshape"
+        case .home: return "house"
+        case .sessions: return "terminal"
+        case .inbox: return "tray"
+        case .brain: return "brain"
+        case .projects: return "square.grid.2x2"
+        case .chat: return "bubble.left"
+        case .diagnostics: return "stethoscope"
+        }
+    }
+
+    var isPage: Bool { if case .page = self { return true }; return false }
+}
+
+/// One browser-style tab (⌘T). The active tab's state lives in `AppModel.selection/path/history`;
+/// inactive tabs keep a snapshot here.
+struct BrowserTab: Identifiable, Equatable {
+    let id: UUID
+    var selection: SidebarItem?
+    var path: [RecordID]
+    var back: [NavSnapshot] = []
+    var forward: [NavSnapshot] = []
+
+    init(id: UUID = UUID(), selection: SidebarItem?, path: [RecordID] = []) {
+        self.id = id; self.selection = selection; self.path = path
+    }
+
+    var current: SidebarItem? {
+        if let last = path.last { return .page(last) }
+        return selection
+    }
 }
 
 @MainActor @Observable
@@ -36,17 +95,34 @@ final class AppModel {
 
     // Navigation
     var selection: SidebarItem? = .home {
-        didSet { if oldValue != selection { path = [] }; noteNavigation() }
+        didSet {
+            if oldValue != selection { path = [] }
+            noteNavigation()
+            if let s = selection, !restoringHistory, sidebarSelection != [s] { sidebarSelection = [s] }
+        }
     }
     var path: [RecordID] = [] { didSet { noteNavigation() } }
+    /// Sidebar multi-selection (⌘/⇧-click); a single item also drives `selection`.
+    var sidebarSelection: Set<SidebarItem> = [.home]
+    /// Browser-style tabs; `activeTabID` is the tab whose state is live in `selection` / `path`.
+    var tabs: [BrowserTab] = []
+    var activeTabID = UUID()
     /// Back / forward history across sidebar roots and the navigation stack (⌘[ / ⌘]).
     private(set) var backHistory: [NavSnapshot] = []
     private(set) var forwardHistory: [NavSnapshot] = []
     @ObservationIgnored private var lastSnapshot = NavSnapshot(selection: .home, path: [])
     @ObservationIgnored private var restoringHistory = false
     var peek: Peek?
+    /// ⌘K / ⌘P search overlay.
     var showQuickFind = false
-    var showAI = false
+    /// Notion-style AI chat docked on the right (⌘J); `chatID` is the conversation shown there.
+    var showChatPanel = false
+    /// ⌘N command palette (new page / chat / meeting note / database).
+    var showCommandPalette = false
+    /// ⌘F find bar for the current page.
+    var showFind = false
+    var findQuery = ""
+    var findIndex = 0
     var showSettings = false
     /// Agent Brain (memories, skills, agents, AI providers, server sync).
     @ObservationIgnored private(set) var brain: BrainModel!
@@ -62,6 +138,10 @@ final class AppModel {
     var lastSyncDate: Date?
     /// Editor of the page that last had keyboard focus (menu commands are routed there).
     @ObservationIgnored weak var activeEditor: EditorController?
+    #if os(macOS)
+    /// The main window (⌘W closes tabs there, other windows close normally).
+    @ObservationIgnored weak var mainWindow: NSWindow?
+    #endif
     /// Blocks/pages being dragged inside the app (drop targets read this instead of decoding providers).
     @ObservationIgnored var draggedBlocks: [RecordID] = []
 
@@ -81,7 +161,29 @@ final class AppModel {
         return nil
     }
 
+    /// Window title: the page / screen shown in the active tab.
+    var currentTitle: String { (path.last.map { SidebarItem.page($0) } ?? selection)?.title(in: self) ?? "Based" }
+
+    /// "Parent / Grandparent" path of the current page (window subtitle, Notion-style breadcrumb).
+    var currentBreadcrumb: String {
+        guard let id = currentPageID else { return "" }
+        return store.ancestors(of: id).filter { $0.type.isPageLike }.reversed()
+            .map { store.title(of: $0.id).nonEmptyOr("Untitled") }.joined(separator: " / ")
+    }
+
+    /// ⌘F on a full-page database focuses its search field instead of the page find bar.
+    var dbSearchRequest = 0
+    /// Rows of the database a peek was opened from (peek ↑ / ↓ buttons).
+    var peekSiblings: [RecordID] = []
+    /// Block the find bar jumped to (pages scroll to it).
+    var findTarget: RecordID?
+    /// Bumped by ⌘F while the find bar is already open (refocuses its field).
+    var findFocusRequest = 0
+
     init(inMemory: Bool = false) {
+        // Before anything touches Application Support: move data out of the old sandbox container
+        // (builds ≤ Pass 8 were sandboxed) and start the log file.
+        AppDiagnostics.bootstrap()
         let fm = FileManager.default
         let base = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
             ?? fm.temporaryDirectory
@@ -99,9 +201,14 @@ final class AppModel {
         queryCache = QueryCache(store: store)
         if store.blocks.isEmpty { Onboarding.seed(store) }
         brain = BrainModel(store: store)
-        if let first = store.topLevelPages().first { selection = .page(first.id) }
+        if let first = store.topLevelPages().first(where: { $0.id != brain.brain.rootID }) { selection = .page(first.id) }
+        tabs = [BrowserTab(id: activeTabID, selection: selection)]
+        lastSnapshot = NavSnapshot(selection: selection, path: [])
+        backHistory = []
         store.purgeTrash()
         startSyncIfConfigured()
+        brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
+        Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases", category: "app")
     }
 
     static func deviceNodeID() -> String {
@@ -190,7 +297,7 @@ final class AppModel {
             peek = nil
             if case .page(let root)? = selection, root == id, path.isEmpty { return }
             if path.last == id { return }
-            if selection == nil || selection == .trash || selection == .settings || selection == .home || selection == .sessions || selection == .inbox {
+            if selection?.isPage != true {
                 selection = .page(id)
             } else {
                 path.append(id)
@@ -291,6 +398,7 @@ final class AppModel {
         guard !restoringHistory else { return }
         let cur = NavSnapshot(selection: selection, path: path)
         guard cur != lastSnapshot else { return }
+        Log.breadcrumb("navigate → \((path.last.map { SidebarItem.page($0) } ?? selection)?.title(in: self) ?? "nothing")")
         backHistory.append(lastSnapshot)
         if backHistory.count > 100 { backHistory.removeFirst() }
         forwardHistory.removeAll()
@@ -307,6 +415,141 @@ final class AppModel {
 
     func undo() { store.undo() }
     func redo() { store.redo() }
+
+    // MARK: Tabs (⌘T / ⌘W / ⌃Tab / ⌘1…9)
+
+    var activeTabIndex: Int { tabs.firstIndex { $0.id == activeTabID } ?? 0 }
+
+    /// Title + icon for a tab (the active tab reflects live navigation).
+    func tabInfo(_ tab: BrowserTab) -> (title: String, item: SidebarItem?) {
+        let item = tab.id == activeTabID ? (path.last.map { SidebarItem.page($0) } ?? selection) : tab.current
+        return (item?.title(in: self) ?? "New tab", item)
+    }
+
+    private func stashActiveTab() {
+        guard let i = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+        tabs[i].selection = selection
+        tabs[i].path = path
+        tabs[i].back = backHistory
+        tabs[i].forward = forwardHistory
+    }
+
+    func selectTab(_ id: UUID) {
+        guard id != activeTabID, let t = tabs.first(where: { $0.id == id }) else { return }
+        stashActiveTab()
+        activeTabID = id
+        restoringHistory = true
+        peek = nil
+        selection = t.selection
+        path = t.path
+        backHistory = t.back
+        forwardHistory = t.forward
+        restoringHistory = false
+        lastSnapshot = NavSnapshot(selection: selection, path: path)
+        if let s = selection { sidebarSelection = [s] }
+        Log.breadcrumb("tab → \(tabInfo(t).title)")
+    }
+
+    func newTab(_ item: SidebarItem? = .home, path newPath: [RecordID] = [], activate: Bool = true) {
+        let t = BrowserTab(selection: item, path: newPath)
+        let at = min(tabs.count, activeTabIndex + 1)
+        tabs.insert(t, at: at)
+        if activate { selectTab(t.id) }
+    }
+
+    func openInNewTab(_ id: RecordID, activate: Bool = true) {
+        guard store.blocks[id] != nil else { return }
+        newTab(.page(id), activate: activate)
+    }
+
+    func closeTab(_ id: UUID? = nil) {
+        let target = id ?? activeTabID
+        guard let i = tabs.firstIndex(where: { $0.id == target }) else { return }
+        if tabs.count == 1 {
+            // Closing the last tab resets it to Home (the window stays open, like Notion).
+            restoringHistory = true
+            selection = .home; path = []
+            restoringHistory = false
+            lastSnapshot = NavSnapshot(selection: .home, path: [])
+            return
+        }
+        if target == activeTabID {
+            let next = tabs[i == tabs.count - 1 ? i - 1 : i + 1].id
+            selectTab(next)
+        }
+        tabs.removeAll { $0.id == target }
+    }
+
+    func cycleTab(_ delta: Int) {
+        guard tabs.count > 1 else { return }
+        let i = (activeTabIndex + delta + tabs.count) % tabs.count
+        selectTab(tabs[i].id)
+    }
+
+    func selectTab(index: Int) {
+        guard !tabs.isEmpty else { return }
+        let i = index >= 8 ? tabs.count - 1 : min(index, tabs.count - 1)   // ⌘9 = last tab
+        selectTab(tabs[i].id)
+    }
+
+    func moveTab(_ id: UUID, before other: UUID) {
+        guard id != other, let from = tabs.firstIndex(where: { $0.id == id }) else { return }
+        let t = tabs.remove(at: from)
+        let to = tabs.firstIndex { $0.id == other } ?? tabs.count
+        tabs.insert(t, at: to)
+    }
+
+    // MARK: Agent sessions
+
+    /// Session shown in the Agents screen (`.sessions`).
+    var agentSessionID: RecordID?
+    /// ⌘N → "New agent session" sheet.
+    var showNewSession = false
+
+    func openSession(_ sid: RecordID) {
+        agentSessionID = sid
+        peek = nil
+        if selection != .sessions { selection = .sessions }
+    }
+
+    // MARK: Chats
+
+    func openChat(_ id: RecordID?, fullPage: Bool) {
+        brain.openChat(id)
+        if fullPage {
+            peek = nil
+            showChatPanel = false
+            selection = .chat(id)
+        } else {
+            if case .side? = peek { peek = nil }
+            showChatPanel = true
+        }
+    }
+
+    /// ⌘J: toggle the docked chat (closes a side peek that occupies the same space).
+    func toggleChatPanel() {
+        if showChatPanel { showChatPanel = false; return }
+        if case .side? = peek { peek = nil }
+        showChatPanel = true
+    }
+
+    // MARK: Bulk page actions (sidebar multi-select, database rows)
+
+    var selectedPageIDs: [RecordID] {
+        sidebarSelection.compactMap { if case .page(let id) = $0 { return id }; return nil }
+    }
+
+    func trash(_ ids: [RecordID]) {
+        for id in ids { trash(id) }
+        sidebarSelection = selection.map { [$0] } ?? []
+    }
+
+    func duplicate(_ ids: [RecordID]) { _ = store.duplicateBlocks(ids) }
+
+    func toggleFavorite(_ ids: [RecordID]) {
+        let allFav = ids.allSatisfy { store.isFavorite($0) }
+        for id in ids where store.isFavorite(id) == allFav { store.toggleFavorite(id) }
+    }
 }
 
 /// First-run content: a short tour of what the app can do.

@@ -87,6 +87,7 @@ final class BrainModel {
         reloadProviders()
         configureScheduler()
         startServerSyncIfConfigured()
+        detectClaude()
     }
 
     // MARK: Providers
@@ -109,31 +110,108 @@ final class BrainModel {
         registry.all.flatMap { p in p.models.map { "\(p.id)/\($0)" } }
     }
 
-    // MARK: Chat (⌘J)
+    // MARK: Chat (⌘J panel and full-page chat)
+
+    /// The conversation shown in the chat panel; persisted as a session with agent id "based".
+    var chatID: RecordID?
+    /// Which engine answered last ("Claude Code", "anthropic/claude-…", …) — shown under the composer.
+    var chatEngine: String {
+        if hasProvider { return defaultModel.isEmpty ? (registry.all.first?.displayName ?? "AI") : defaultModel }
+        return claudeAvailable ? "Claude Code" : "No AI configured"
+    }
+    /// Claude Code installed (used for chat when no API key is configured — runs on the user's subscription).
+    /// Resolved in the background at launch (the login-shell PATH lookup can take seconds).
+    var claudeAvailable = false
+
+    func detectClaude() {
+        #if os(macOS)
+        Task.detached(priority: .utility) { [weak self] in
+            let path = ShellEnvironment.which("claude")
+            await MainActor.run { self?.claudeAvailable = path != nil }
+        }
+        #endif
+    }
+
+    func newChat() { chatID = nil; turns = []; isRunning = false }
+
+    func openChat(_ id: RecordID?) {
+        guard let id else { newChat(); return }
+        guard id != chatID || turns.isEmpty else { return }
+        chatID = id
+        turns = TranscriptParser.parse(brain.transcript(id)).compactMap { item in
+            switch item.kind {
+            case .user: return ChatTurn(role: .user, text: item.text)
+            case .agent: return ChatTurn(role: .assistant, text: item.text)
+            case .error: return ChatTurn(role: .assistant, text: "⚠️ " + item.text)
+            case .tool: return nil
+            default: return nil
+            }
+        }
+    }
 
     func ask(_ prompt: String, pageContext: RecordID? = nil) {
-        guard !prompt.trimmingCharacters(in: .whitespaces).isEmpty, !isRunning else { return }
-        var p = prompt
+        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !isRunning else { return }
+        var p = trimmed
         if let pageContext { p += "\n\n(The user is currently looking at page id \(pageContext): \"\(store.title(of: pageContext))\".)" }
-        turns.append(ChatTurn(role: .user, text: prompt))
+        // Persist: the first message creates the chat.
+        let sid: RecordID
+        if let c = chatID, store.blocks[c] != nil { sid = c } else {
+            sid = brain.createSession(title: String(trimmed.prefix(60)), agentID: "based", machine: happier.machineName, cwd: "", encrypted: false)
+            chatID = sid
+        }
+        brain.appendTranscript(sid, role: "You", markdown: trimmed)
+        brain.updateSession(sid, status: .running)
+        Log.breadcrumb("ask AI (\(trimmed.count) chars)")
+        turns.append(ChatTurn(role: .user, text: trimmed))
         turns.append(ChatTurn(role: .assistant, text: ""))
         isRunning = true
         let history: [ChatMessage] = turns.dropLast(2).map { ChatMessage(role: $0.role, content: $0.text) }
         let rt = runtime, model = defaultModel
         let idx = turns.count - 1
-        rt.onProgress = { [weak self] line in Task { @MainActor in self?.turns[idx].progress.append(line) } }
+        rt.onProgress = { [weak self] line in Task { @MainActor in if let self, idx < self.turns.count { self.turns[idx].progress.append(line) } } }
+        let useClaude = !hasProvider && claudeAvailable
+        let resume = brain.sessions().first { $0.id == sid }?.acpSessionID.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
+        let context = useClaude ? brain.systemContext(query: trimmed) : ""
+        let mcp = useClaude ? happier.mcpConfig(session: sid) : nil
         Task {
+            var answer = ""
             do {
-                let o = try await rt.run(prompt: p, modelRef: model.isEmpty ? nil : model, history: history)
-                turns[idx].text = o.text.isEmpty ? "(done)" : o.text
+                if hasProvider {
+                    let o = try await rt.run(prompt: p, modelRef: model.isEmpty ? nil : model, history: history)
+                    answer = o.text.isEmpty ? "(done)" : o.text
+                } else if useClaude {
+                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown.\n\n" + String(context.prefix(6000))
+                    switch await ClaudePrint.ask(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp, allowedTools: mcp == nil ? [] : ["mcp__based"]) {
+                    case .success(let r):
+                        answer = r.text.isEmpty ? "(done)" : r.text
+                        if let cs = r.sessionID { brain.updateSession(sid, acpSessionID: "claude:" + cs) }
+                    case .failure(let e): throw e
+                    }
+                } else {
+                    throw ChatError.noEngine
+                }
+                if idx < turns.count { turns[idx].text = answer }
+                brain.appendTranscript(sid, role: "Agent", markdown: answer)
+                brain.updateSession(sid, status: .done)
             } catch {
-                turns[idx].text = "⚠️ \(error)"
+                if idx < turns.count { turns[idx].text = "⚠️ \(error)" }
+                brain.appendTranscript(sid, role: "Error", markdown: "\(error)")
+                brain.updateSession(sid, status: .failed)
+                Log.error("Chat failed: \(error)", category: "ai")
             }
             isRunning = false
         }
     }
 
-    func clearChat() { turns = [] }
+    enum ChatError: Error, CustomStringConvertible {
+        case noEngine
+        var description: String {
+            "No AI is configured. Add an API key (Settings → Agent Brain) or install Claude Code (`npm install -g @anthropic-ai/claude-code`, then `claude` once to log in)."
+        }
+    }
+
+    func clearChat() { newChat() }
 
     // MARK: Agents & scheduler
 
