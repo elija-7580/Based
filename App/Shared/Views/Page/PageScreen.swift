@@ -93,6 +93,16 @@ struct PageScreen: View {
             PagePicker(purpose: purpose) { editor.picker = nil }
         }
         .toolbar {
+            #if os(macOS)
+            ToolbarItemGroup(placement: .navigation) {
+                if !isPeek {
+                    Button { model.goBack() } label: { Image(systemName: "chevron.left") }
+                        .disabled(!model.canGoBack).help("Back (⌘[)")
+                    Button { model.goForward() } label: { Image(systemName: "chevron.right") }
+                        .disabled(!model.canGoForward).help("Forward (⌘])")
+                }
+            }
+            #endif
             ToolbarItemGroup(placement: .primaryAction) {
                 if !isPeek {
                     FavoriteButton(pageID: page.id)

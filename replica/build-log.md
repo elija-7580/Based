@@ -26,7 +26,8 @@
   SwiftUI stub harness (`/data/stubcheck`, not in repo) — zero errors.
   RichTextView.swift reviewed by hand (AppKit/UIKit API signatures checked)
   but never compiled. **First real Xcode build is the next milestone.**
-- Parity: 107 yes / 25 partial / 15 no / 2 skip of 149 tracked features.
+- Pass 6 · Back/forward history (⌘[ ⌘], Mac toolbar buttons).
+- Parity: 108 yes / 24 partial / 15 no / 2 skip of 149 tracked features.
 - Not done: open-source inspiration (AppFlowy AGPL, AFFiNE MIT, Anytype
   ASAL) was evaluated for architecture only; no code copied (license mix and
   Rust/TS → Swift gap).

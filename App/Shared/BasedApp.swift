@@ -75,7 +75,8 @@ struct BasedCommands: Commands {
         }
         CommandMenu("Go") {
             Button("Search…") { model.showQuickFind = true }.keyboardShortcut("p")
-            Button("Back") { model.goBack() }.keyboardShortcut("[")
+            Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
+            Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)
             Button("Home") { model.selection = .home }.keyboardShortcut("h", modifiers: [.command, .shift])
             Button("Trash") { model.showTrash = true }
             Divider()

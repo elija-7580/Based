@@ -8,6 +8,11 @@ enum Peek: Identifiable, Equatable {
     var id: RecordID { switch self { case .side(let i), .center(let i): return i } }
 }
 
+struct NavSnapshot: Equatable {
+    var selection: SidebarItem?
+    var path: [RecordID]
+}
+
 enum SidebarItem: Hashable {
     case page(RecordID)
     case trash
@@ -26,8 +31,15 @@ final class AppModel {
     #endif
 
     // Navigation
-    var selection: SidebarItem? = .home { didSet { if oldValue != selection { path = [] } } }
-    var path: [RecordID] = []
+    var selection: SidebarItem? = .home {
+        didSet { if oldValue != selection { path = [] }; noteNavigation() }
+    }
+    var path: [RecordID] = [] { didSet { noteNavigation() } }
+    /// Back / forward history across sidebar roots and the navigation stack (⌘[ / ⌘]).
+    private(set) var backHistory: [NavSnapshot] = []
+    private(set) var forwardHistory: [NavSnapshot] = []
+    @ObservationIgnored private var lastSnapshot = NavSnapshot(selection: .home, path: [])
+    @ObservationIgnored private var restoringHistory = false
     var peek: Peek?
     var showQuickFind = false
     var showSettings = false
@@ -209,9 +221,42 @@ final class AppModel {
         exportRequest = ExportRequest(pageID: id)
     }
 
+    var canGoBack: Bool { !backHistory.isEmpty || !path.isEmpty || peek != nil }
+    var canGoForward: Bool { !forwardHistory.isEmpty }
+
     func goBack() {
         if peek != nil { peek = nil; return }
-        if !path.isEmpty { path.removeLast() }
+        guard let prev = backHistory.popLast() else {
+            if !path.isEmpty { path.removeLast() }
+            return
+        }
+        forwardHistory.append(lastSnapshot)
+        restore(prev)
+    }
+
+    func goForward() {
+        guard let next = forwardHistory.popLast() else { return }
+        peek = nil
+        backHistory.append(lastSnapshot)
+        restore(next)
+    }
+
+    private func noteNavigation() {
+        guard !restoringHistory else { return }
+        let cur = NavSnapshot(selection: selection, path: path)
+        guard cur != lastSnapshot else { return }
+        backHistory.append(lastSnapshot)
+        if backHistory.count > 100 { backHistory.removeFirst() }
+        forwardHistory.removeAll()
+        lastSnapshot = cur
+    }
+
+    private func restore(_ s: NavSnapshot) {
+        restoringHistory = true
+        selection = s.selection
+        path = s.path
+        restoringHistory = false
+        lastSnapshot = s
     }
 
     func undo() { store.undo() }

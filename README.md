@@ -4,7 +4,7 @@ Native, local-first notes for **macOS and iPhone**: pages, a block editor and
 databases, synced through your own iCloud. It's modeled on Notion's
 note-taking features and built clean-room from public documentation.
 
-> Prototype. 107 of 149 tracked Notion features are implemented, 25 partially;
+> Prototype. 108 of 149 tracked Notion features are implemented, 24 partially;
 > see [`replica/features.csv`](replica/features.csv) for the parity matrix and
 > [`replica/build-log.md`](replica/build-log.md) for progress.
 > The core package is unit-tested on Linux. The SwiftUI app has been

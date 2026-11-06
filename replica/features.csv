@@ -16,7 +16,7 @@ Favorites,navigation,must,yes,yes,
 Sidebar page tree with expand/collapse,navigation,must,yes,yes,
 Drag and drop pages in sidebar,navigation,should,yes,yes,
 Breadcrumbs,navigation,should,yes,yes,
-Back / forward history,navigation,must,yes,partial,back only (⌘[); no forward stack
+Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)"
 Open page in new window (Mac),navigation,should,yes,partial,native macOS window tabs/new window via system; no menu item
 Tabs (Mac),navigation,could,yes,partial,native macOS window tabs; native window tabs
 Quick Find search (titles + content),search,must,yes,yes,
@@ -139,7 +139,7 @@ Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
 Export as HTML / PDF,export,should,yes,no,
 Dark mode (system + toggle),app,must,yes,yes,
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,partial,"⌘N ⌘P ⌘[ ⇧⌘L ⌘⇧H; no ⌘\ sidebar toggle shortcut, no ⌘]"
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,partial,⌘N ⌘P ⌘[ ⌘] ⇧⌘L ⌘⇧H; no ⌘\ sidebar toggle shortcut
 Settings,app,must,yes,yes,
 iPhone keyboard toolbar,mobile,must,yes,yes,
 iPhone long-press block menu,mobile,must,yes,yes,
