@@ -577,10 +577,16 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @State private var name = ""
     @State private var syncOn = true
+    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
 
     var body: some View {
         let store = model.store
         Form {
+            Section("Appearance") {
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(Appearance.allCases) { a in Text(a.title).tag(a.rawValue) }
+                }
+            }
             Section("Workspace") {
                 TextField("Name", text: $name)
                     .onSubmit { if !name.isEmpty { store.renameWorkspace(name) } }

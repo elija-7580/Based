@@ -4,11 +4,13 @@ import BasedCore
 @main
 struct BasedApp: App {
     @State private var model = AppModel()
+    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(model)
+                .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
                 #if os(macOS)
                 .frame(minWidth: 760, minHeight: 480)
                 #endif
@@ -18,6 +20,7 @@ struct BasedApp: App {
         Settings {
             SettingsView()
                 .environment(model)
+                .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
                 .frame(width: 520, height: 460)
         }
         #endif
@@ -67,6 +70,9 @@ struct BasedCommands: Commands {
             Divider()
             Button("Expand / Collapse Toggles") { model.activeEditor?.toggleAllToggles() }.keyboardShortcut("t", modifiers: [.command, .option])
         }
+        CommandGroup(after: .toolbar) {
+            Button("Toggle Dark Mode") { Appearance.toggle() }.keyboardShortcut("l", modifiers: [.command, .shift])
+        }
         CommandMenu("Go") {
             Button("Search…") { model.showQuickFind = true }.keyboardShortcut("p")
             Button("Back") { model.goBack() }.keyboardShortcut("[")
@@ -75,5 +81,34 @@ struct BasedCommands: Commands {
             Divider()
             Button("Sync Now") { model.syncNow() }.keyboardShortcut("r", modifiers: [.command, .shift])
         }
+    }
+}
+
+/// Light / dark / follow-system appearance, stored in UserDefaults (Notion: ⇧⌘L).
+enum Appearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    static let key = "appearance"
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .system: return "Use system setting"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+    static var current: Appearance {
+        get { Appearance(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: key) }
+    }
+    /// Cycles light → dark → light (system resolves to the opposite of the current look).
+    static func toggle() {
+        current = current == .dark ? .light : .dark
     }
 }
