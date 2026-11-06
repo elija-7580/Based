@@ -36,8 +36,7 @@ struct ChromeIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: size, weight: .regular))
+            SymbolImage(name: symbol, size: size)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(hover && !disabled ? Chrome.hover : (active ? Chrome.selected : .clear)))
                 .contentShape(Rectangle())
@@ -293,14 +292,12 @@ struct NotionSidebar: View {
         let order = visibleOrder(favorites: favorites, teamspaces: teamspaces, privatePages: privatePages)
         VStack(spacing: 0) {
             SidebarWorkspaceRow(floating: floating)
+            SidebarModeSwitcher()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 1) {
+                    if model.sidebarMode == .notes {
                     SidebarSearchRow()
                     SidebarNavRow(item: .home, title: "Home", symbol: "house").accessibilityIdentifier("sidebar.home")
-                    SidebarNavRow(item: .chat(nil), title: "Chat", symbol: "sparkles").accessibilityIdentifier("sidebar.askAI")
-                    SidebarNavRow(item: .projects, title: "Agents", symbol: "square.grid.2x2").accessibilityIdentifier("sidebar.sessions")
-                    SidebarNavRow(item: .inbox, title: "Inbox", symbol: "tray", badge: happier.pendingCount).accessibilityIdentifier("sidebar.inbox")
-                    SidebarNavRow(item: .brain, title: "Agent Brain", symbol: "brain").accessibilityIdentifier("sidebar.brain")
 
                     if !favorites.isEmpty {
                         SidebarSectionHeader(title: "Favorites", open: $favoritesOpen)
@@ -336,20 +333,28 @@ struct NotionSidebar: View {
                             .accessibilityIdentifier("sidebar.addPage")
                     }
 
+                    } else {
+                    SidebarNavRow(item: .chat(nil), title: "New chat", symbol: SymbolImage.ai).accessibilityIdentifier("sidebar.askAI")
+                    SidebarNavRow(item: .projects, title: "Agents", symbol: "square.grid.2x2").accessibilityIdentifier("sidebar.sessions")
+                    SidebarNavRow(item: .inbox, title: "Inbox", symbol: "tray", badge: happier.pendingCount).accessibilityIdentifier("sidebar.inbox")
+                    SidebarNavRow(item: .brain, title: "Agent Brain", symbol: "brain").accessibilityIdentifier("sidebar.brain")
+
                     SidebarSectionHeader(title: "Chats", open: $chatsOpen, addHelp: "New chat") { model.openChat(nil, fullPage: true) }
                     if chatsOpen {
-                        ForEach(happier.chats.prefix(8)) { c in
+                        ForEach(happier.chats.prefix(40)) { c in
                             SidebarNavRow(item: .chat(c.id), title: c.title.isEmpty ? "New chat" : c.title, symbol: "bubble.left", order: order)
                         }
-                        if happier.chats.count > 8 {
+                        if happier.chats.count > 40 {
                             SidebarActionRow(title: "View all", symbol: "ellipsis") { model.selection = .projects }
                         }
                     }
                 }
+                    }
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)
             }
             .scrollIndicators(.never)
+            .acceptsFileDrops { model.dropFilesOnWorkspace($0, intoOpenPage: false) }
             SidebarFooter()
         }
         .background(Chrome.sidebarBackground)
@@ -389,7 +394,10 @@ struct NotionSidebar: View {
 
     /// Visible rows top to bottom (⇧-click range selection).
     private func visibleOrder(favorites: [Block], teamspaces: [Teamspace], privatePages: [Block]) -> [SidebarItem] {
-        var out: [SidebarItem] = [.home, .chat(nil), .projects, .inbox, .brain]
+        if model.sidebarMode == .ai {
+            return [.chat(nil), .projects, .inbox, .brain] + (chatsOpen ? happier.chats.prefix(40).map { .chat($0.id) } : [])
+        }
+        var out: [SidebarItem] = [.home]
         func walk(_ pages: [Block], scope: String) {
             for p in pages {
                 out.append(.page(p.id))
@@ -403,9 +411,42 @@ struct NotionSidebar: View {
             }
         }
         if privateOpen { walk(privatePages, scope: "") }
-        if chatsOpen { out += happier.chats.prefix(8).map { .chat($0.id) } }
         out += [.library, .trash, .settings]
         return out
+    }
+}
+
+/// Notes | AI switch under the workspace row. Each side keeps its own place; ⌥⌘\\ toggles.
+struct SidebarModeSwitcher: View {
+    @Environment(AppModel.self) private var model
+    @Environment(HappierModel.self) private var happier
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(SidebarMode.allCases) { m in
+                let on = model.sidebarMode == m
+                Button { model.switchSidebar(to: m) } label: {
+                    HStack(spacing: 6) {
+                        SymbolImage(name: m.symbol, size: 13)
+                        Text(m.title).font(.system(size: 13, weight: on ? .semibold : .medium))
+                        if m == .ai, happier.pendingCount > 0 {
+                            Circle().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))).frame(width: 6, height: 6)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 26)
+                    .foregroundStyle(on ? Theme.primary : Chrome.sidebarText)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(on ? Chrome.selected : .clear))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("sidebar.mode." + m.rawValue)
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.045)))
+        .padding(.horizontal, 10)
+        .padding(.bottom, 6)
     }
 }
 
@@ -629,31 +670,23 @@ struct SidebarWorkspaceRow: View {
     @Environment(AppModel.self) private var model
     @State private var hover = false
 
+    @State private var showMenu = false
+
     var body: some View {
         let w = model.store.workspace
         HStack(spacing: 4) {
-            Menu {
-                Text(w.name)
-                if model.syncStatus != "Off" && model.syncStatus != "Not configured" { Text("Sync: \(model.syncStatus)") }
-                Divider()
-                Button("Settings", systemImage: "gearshape") { model.selection = .settings }
-                Button("Import from Notion…", systemImage: "square.and.arrow.down.on.square") { model.showNotionImport = true }
-                Button("Export workspace…", systemImage: "square.and.arrow.up") { model.showExportAll = true }
-                Button("Sync now", systemImage: "arrow.triangle.2.circlepath") { model.syncNow() }
-            } label: {
+            // A Button + popover instead of `Menu`: macOS menu buttons only render the label's first text,
+            // which showed just the initial ("M") and nothing to rename.
+            Button { showMenu.toggle() } label: {
                 HStack(spacing: 8) {
-                    Text(String(w.name.prefix(1)).uppercased())
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 22, height: 22)
-                        .background(RoundedRectangle(cornerRadius: 5).fill(Color(Theme.dynamic(light: 0x787774, dark: 0x5A5A5A))))
+                    WorkspaceBadge(workspace: w, size: 22)
                     Text(w.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.primary).lineLimit(1)
                     Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Chrome.sidebarText)
                 }
+                .contentShape(Rectangle())
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
+            .buttonStyle(.plain)
+            .popover(isPresented: $showMenu, arrowEdge: .bottom) { WorkspaceMenu { showMenu = false } }
             .accessibilityIdentifier("sidebar.workspace")
             Spacer(minLength: 4)
             if hover && !floating {
@@ -666,6 +699,73 @@ struct SidebarWorkspaceRow: View {
         .frame(height: 46)
         .contentShape(Rectangle())
         .onHover { hover = $0 }
+    }
+}
+
+/// Workspace icon: its emoji / image, else the first letter of the name.
+struct WorkspaceBadge: View {
+    let workspace: Workspace
+    var size: CGFloat = 22
+
+    var body: some View {
+        if let icon = workspace.icon {
+            PageIconView(icon: icon, size: size * 0.8).frame(width: size, height: size)
+        } else {
+            Text(String(workspace.name.prefix(1)).uppercased())
+                .font(.system(size: size * 0.55, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: size, height: size)
+                .background(RoundedRectangle(cornerRadius: size * 0.23).fill(Color(Theme.dynamic(light: 0x787774, dark: 0x5A5A5A))))
+        }
+    }
+}
+
+/// Workspace popover: rename in place, icon, settings, import / export, sync.
+struct WorkspaceMenu: View {
+    let close: () -> Void
+    @Environment(AppModel.self) private var model
+    @State private var name = ""
+    @FocusState private var nameFocused: Bool
+
+    var body: some View {
+        let w = model.store.workspace
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 10) {
+                IconPickerButton(icon: w.icon) { model.setWorkspaceIcon($0) }
+                TextField("Workspace name", text: $name)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($nameFocused)
+                    .onSubmit { commit(); close() }
+                    .onChange(of: name) { _, _ in commit() }
+                    .accessibilityIdentifier("workspace.name")
+            }
+            .padding(.bottom, 6)
+            if model.syncStatus != "Off" && model.syncStatus != "Not configured" {
+                Text("Sync: \(model.syncStatus)").font(.caption).foregroundStyle(Theme.secondary).padding(.bottom, 4)
+            }
+            Divider().padding(.vertical, 4)
+            row("Settings", "gearshape") { model.openSettings() }
+            row("Import from Notion…", "square.and.arrow.down.on.square") { model.showNotionImport = true }
+            row("Import file…", "square.and.arrow.down") { model.showImport = true }
+            row("Export workspace…", "square.and.arrow.up") { model.showExportAll = true }
+            row("Sync now", "arrow.triangle.2.circlepath") { model.syncNow() }
+        }
+        .padding(12)
+        .frame(width: 280)
+        .onAppear { name = w.name }
+    }
+
+    private func commit() {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !n.isEmpty, n != model.store.workspace.name { model.store.renameWorkspace(n) }
+    }
+
+    private func row(_ title: String, _ symbol: String, _ action: @escaping () -> Void) -> some View {
+        Button { close(); action() } label: {
+            Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 6).padding(.vertical, 5).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -707,7 +807,7 @@ struct SidebarNavRow: View {
     var body: some View {
         let selected = SidebarClick.isHighlighted(item, model: model)
         HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 15)).frame(width: 20, height: 20)
+            SymbolImage(name: symbol, size: 15).frame(width: 20, height: 20)
             Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
             if badge > 0 {
@@ -1053,7 +1153,7 @@ struct PageTopBar: View {
             .menuIndicator(.hidden)
             .fixedSize()
             .accessibilityIdentifier("page.share")
-            ChromeIconButton(symbol: "sparkles", size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
+            ChromeIconButton(symbol: SymbolImage.ai, size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
                 .accessibilityIdentifier("toolbar.chat")
             FavoriteButton(pageID: page.id)
                 .buttonStyle(.plain)
@@ -1134,7 +1234,7 @@ struct ScreenTopBar: View {
             Text(item.title(in: model)).font(.system(size: 14)).foregroundStyle(Theme.primary).lineLimit(1)
             Spacer(minLength: 8)
             if case .chat = item {} else {
-                ChromeIconButton(symbol: "sparkles", size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
+                ChromeIconButton(symbol: SymbolImage.ai, size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
                     .accessibilityIdentifier("toolbar.chat")
             }
         }

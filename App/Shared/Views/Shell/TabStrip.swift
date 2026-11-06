@@ -4,6 +4,11 @@ import BasedCore
 /// Browser-style tabs above the content (⌘T new, ⌘W close, ⌃Tab / ⌘1…9 switch, drag to reorder).
 struct TabStrip: View {
     @Environment(AppModel.self) private var model
+    /// Tab frames in the strip's coordinate space (for live reordering while dragging).
+    @State private var frames: [UUID: CGRect] = [:]
+    @State private var drag: TabDrag?
+
+    struct TabDrag: Equatable { var id: UUID; var grabOffset: CGFloat; var pointerX: CGFloat }
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision   // titles / icons
@@ -23,10 +28,47 @@ struct TabStrip: View {
     private var tabRow: some View {
         HStack(spacing: 2) {
             ForEach(model.tabs) { tab in
+                let dragged = drag?.id == tab.id
                 TabButton(tab: tab, active: tab.id == model.activeTabID, closable: model.tabs.count > 1)
+                    .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named("tabs")) }) { frames[tab.id] = $0 }
+                    // The dragged tab follows the pointer; the others slide into place as it passes them.
+                    .offset(x: dragged ? dragOffset(tab.id) : 0)
+                    .zIndex(dragged ? 1 : 0)
+                    .shadow(color: .black.opacity(dragged ? 0.18 : 0), radius: 6, y: 2)
+                    .gesture(reorderGesture(tab.id))
             }
         }
         .padding(.horizontal, 2)
+        .coordinateSpace(.named("tabs"))
+        .animation(.spring(duration: 0.22), value: model.tabs.map(\.id))
+    }
+
+    private func dragOffset(_ id: UUID) -> CGFloat {
+        guard let d = drag, let f = frames[id] else { return 0 }
+        return d.pointerX - d.grabOffset - f.minX
+    }
+
+    /// Own drag instead of system drag & drop: the title bar's window-drag area and the system drag session
+    /// fought over the gesture, drops only worked "before" a tab, and nothing moved until the drop.
+    private func reorderGesture(_ id: UUID) -> some Gesture {
+        DragGesture(minimumDistance: 4, coordinateSpace: .named("tabs"))
+            .onChanged { v in
+                if drag?.id != id {
+                    let f = frames[id] ?? .zero
+                    drag = TabDrag(id: id, grabOffset: v.startLocation.x - f.minX, pointerX: v.location.x)
+                    if id != model.activeTabID { model.selectTab(id) }
+                }
+                drag?.pointerX = v.location.x
+                // Move past a neighbour once the pointer crosses its middle.
+                guard let from = model.tabs.firstIndex(where: { $0.id == id }) else { return }
+                let x = v.location.x
+                if from + 1 < model.tabs.count, let next = frames[model.tabs[from + 1].id], x > next.midX {
+                    model.moveTab(id, toIndex: from + 1)
+                } else if from > 0, let prev = frames[model.tabs[from - 1].id], x < prev.midX {
+                    model.moveTab(id, toIndex: from - 1)
+                }
+            }
+            .onEnded { _ in withAnimation(.spring(duration: 0.22)) { drag = nil } }
     }
 }
 
@@ -36,7 +78,6 @@ struct TabButton: View {
     let closable: Bool
     @Environment(AppModel.self) private var model
     @State private var hover = false
-    @State private var dropTarget = false
 
     var body: some View {
         let info = model.tabInfo(tab)
@@ -67,16 +108,9 @@ struct TabButton: View {
                 .shadow(color: .black.opacity(active ? 0.08 : 0), radius: 1.5, y: 0.5)
         }
         .overlay { if active { RoundedRectangle(cornerRadius: 8).stroke(Chrome.border, lineWidth: 0.5) } }
-        .overlay(alignment: .leading) { if dropTarget { Rectangle().fill(Color.accentColor).frame(width: 2) } }
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture { model.selectTab(tab.id) }
-        .draggable(tab.id.uuidString)
-        .dropDestination(for: String.self) { items, _ in
-            guard let s = items.first, let id = UUID(uuidString: s) else { return false }
-            model.moveTab(id, before: tab.id)
-            return true
-        } isTargeted: { dropTarget = $0 }
         .contextMenu {
             Button("New tab", systemImage: "plus") { model.newTab() }
             Button("Duplicate tab", systemImage: "plus.square.on.square") { model.newTab(info.item, path: tab.id == model.activeTabID ? [] : tab.path) }
@@ -98,7 +132,7 @@ struct TabButton: View {
             PageIconView(icon: model.store.icon(of: id), isDatabase: model.store.blocks[id]?.type == .databasePage, size: 14)
                 .frame(width: 16, height: 16)
         } else {
-            Image(systemName: item?.symbol ?? "house").font(.system(size: 11)).frame(width: 16, height: 16)
+            SymbolImage(name: item.map { $0.mode == .ai && $0 == .chat(nil) ? SymbolImage.ai : $0.symbol } ?? "house", size: 11).frame(width: 16, height: 16)
         }
     }
 }

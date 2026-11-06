@@ -73,7 +73,14 @@ public struct NSLayoutPriority: RawRepresentable, Hashable, Sendable, Expressibl
     public static let required = NSLayoutPriority(1000), defaultHigh = NSLayoutPriority(750), defaultLow = NSLayoutPriority(250), fittingSizeCompression = NSLayoutPriority(50) }
 extension NSLayoutConstraint { public enum Orientation: Int, Sendable { case horizontal, vertical }; public typealias Priority = NSLayoutPriority }
 
+public struct NSDragOperation: OptionSet, Sendable { public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }
+    public static let copy = NSDragOperation(rawValue: 1), link = NSDragOperation(rawValue: 2), generic = NSDragOperation(rawValue: 4), move = NSDragOperation(rawValue: 16), every = NSDragOperation(rawValue: .max) }
+@MainActor public protocol NSDraggingInfo { var draggingPasteboard: NSPasteboard { get }; var draggingLocation: NSPoint { get } }
 @preconcurrency @MainActor open class NSView: NSResponder {
+    @discardableResult open func autoscroll(with event: NSEvent) -> Bool { false }
+    open func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { [] }
+    open func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { [] }
+    open func performDragOperation(_ sender: NSDraggingInfo) -> Bool { false }
     public override init() {}
     public init(frame: NSRect) {}
     public required init?(coder: NSCoder) {}
@@ -588,7 +595,8 @@ open class NSPasteboard: NSObject {
     public struct PasteboardType: RawRepresentable, Hashable, Sendable { public var rawValue: String; public init(rawValue: String) { self.rawValue = rawValue }; public init(_ s: String) { rawValue = s }
         public static let string = PasteboardType("public.utf8-plain-text"), html = PasteboardType("public.html"), rtf = PasteboardType("public.rtf"), URL = PasteboardType("public.url"), fileURL = PasteboardType("public.file-url"), png = PasteboardType("public.png"), tiff = PasteboardType("public.tiff"), pdf = PasteboardType("com.adobe.pdf"), tabularText = PasteboardType("public.utf8-tab-separated-values-text"), multipleTextSelection = PasteboardType("m"), color = PasteboardType("c"), sound = PasteboardType("s"), textFinderOptions = PasteboardType("t") }
     public struct Name: RawRepresentable, Hashable, Sendable { public var rawValue: String; public init(rawValue: String) { self.rawValue = rawValue }; public static let general = Name(rawValue: "g"), drag = Name(rawValue: "d"), find = Name(rawValue: "f") }
-    public typealias ReadingOptionKey = String
+    public struct ReadingOptionKey: Hashable, RawRepresentable, Sendable { public let rawValue: String; public init(rawValue: String) { self.rawValue = rawValue }
+        public static let urlReadingFileURLsOnly = ReadingOptionKey(rawValue: "f") }
     open class var general: NSPasteboard { NSPasteboard() }
     public init(name: Name) {}
     public override init() {}
@@ -630,6 +638,7 @@ public struct NSWindowStyleMask: OptionSet, Sendable { public let rawValue: UInt
 @preconcurrency @MainActor open class NSToolbar: NSObject { open var isVisible = true; open var showsBaselineSeparator = true; open var displayMode: Int = 0 }
 @preconcurrency @MainActor open class NSButton: NSView { open var isEnabled = true; open var title = ""; open var target: AnyObject?; open var action: Selector? }
 @preconcurrency @MainActor open class NSWindow: NSResponder {
+    open func nextEvent(matching mask: NSEvent.EventTypeMask) -> NSEvent? { nil }
     open func performMiniaturize(_ sender: Any?) {}
     open func performZoom(_ sender: Any?) {}
     open func performDrag(with event: NSEvent) {}

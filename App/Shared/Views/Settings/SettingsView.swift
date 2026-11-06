@@ -273,7 +273,9 @@ struct WorkspaceSettings: View {
         Section("Workspace settings") {
             HStack {
                 IconPickerButton(icon: store.workspace.icon) { model.setWorkspaceIcon($0) }
-                TextField("Name", text: $name).onSubmit { if !name.isEmpty { store.renameWorkspace(name) } }
+                TextField("Name", text: $name)
+                    .onSubmit { commitName() }
+                    .onChange(of: name) { _, _ in commitName() }
                     .accessibilityIdentifier("settings.workspaceName")
             }
             LabeledContent("Pages", value: "\(store.allPages().count)")
@@ -297,6 +299,11 @@ struct WorkspaceSettings: View {
                 }
         }
         .onAppear { name = store.workspace.name }
+    }
+
+    private func commitName() {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !n.isEmpty, n != model.store.workspace.name { model.store.renameWorkspace(n) }
     }
 }
 

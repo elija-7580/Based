@@ -21,8 +21,10 @@ struct PageOutline: View {
     }
 
     var body: some View {
+        // Observe edits: the rail appears as soon as the page has headings (before, it was computed once).
+        let _ = model.registry.workspace.revision
         let items = entries
-        if items.count >= 2 {
+        if !items.isEmpty {
             VStack(alignment: .leading, spacing: expanded ? 2 : 6) {
                 ForEach(items) { e in
                     if expanded {
@@ -40,8 +42,8 @@ struct PageOutline: View {
                         .background(RoundedRectangle(cornerRadius: 6).fill(Color.clear))
                     } else {
                         RoundedRectangle(cornerRadius: 1.5)
-                            .fill(Color(Theme.textSecondary).opacity(e.level == 1 ? 0.55 : 0.3))
-                            .frame(width: e.level == 1 ? 18 : e.level == 2 ? 12 : 8, height: 3)
+                            .fill(Color(Theme.textSecondary).opacity(e.level == 1 ? 0.8 : 0.55))
+                            .frame(width: e.level == 1 ? 20 : e.level == 2 ? 14 : 9, height: 3)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }

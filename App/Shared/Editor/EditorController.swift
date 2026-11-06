@@ -1,6 +1,9 @@
 import SwiftUI
 import Observation
 import BasedCore
+#if os(macOS)
+import AppKit
+#endif
 
 /// What a text view exposes to the editor.
 @MainActor
@@ -109,6 +112,27 @@ final class EditorController {
     }
 
     func host(_ id: RecordID) -> (any TextHost)? { hosts[id]?.host }
+
+    #if os(macOS)
+    /// Drag-selection across paragraphs (see `BasedNSTextView.mouseDown`): selects every block between
+    /// `from` and the paragraph nearest to the pointer, in page order.
+    func selectBlockRange(from: RecordID, toWindowPoint p: CGPoint, in window: NSWindow) {
+        var best: (id: RecordID, distance: CGFloat)?
+        for (id, weak) in hosts {
+            guard let c = weak.host as? TextCoordinator, let v = c.view, v.window === window else { continue }
+            let f = v.convert(v.bounds, to: nil)
+            let d = p.y < f.minY ? f.minY - p.y : p.y > f.maxY ? p.y - f.maxY : 0
+            if best == nil || d < best!.distance { best = (id, d) }
+        }
+        guard let target = best?.id else { return }
+        let order = store.visibleOrder(in: pageID)
+        guard let a = order.firstIndex(of: from), let b = order.firstIndex(of: target) else { selectedBlocks = [from]; return }
+        let range = order[min(a, b)...max(a, b)]
+        // Children of a selected block go with it; keep the selection to the outermost blocks.
+        let set = Set(range)
+        selectedBlocks = Set(range.filter { id in !set.contains { $0 != id && store.isDescendant(id, of: $0) } })
+    }
+    #endif
 
     func focus(_ target: FocusTarget?) {
         guard let target else { return }

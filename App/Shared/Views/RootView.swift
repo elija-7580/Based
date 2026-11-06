@@ -61,7 +61,7 @@ struct RootView: View {
         #endif
         .fileImporter(isPresented: $model.showImport, allowedContentTypes: [.folder, .zip, .item], allowsMultipleSelection: true) { result in
             switch result {
-            case .success(let urls): importFiles(urls)
+            case .success(let urls): importFiles(urls, into: .workspace)
             case .failure(let e): Log.error("import picker failed: \(e.localizedDescription)", category: "import")
             }
         }
@@ -82,6 +82,11 @@ struct RootView: View {
             Button("Dismiss", role: .cancel) { crash = nil; CrashReporter.dismissPreviousCrash() }
         } message: { Text(crash?.summary ?? "") }
         .onChange(of: model.errorMessage) { _, m in if let m { Log.error("alert: \(m)", category: "ui") } }
+        .onChange(of: model.pendingImport) { _, p in
+            guard let p else { return }
+            model.pendingImport = nil
+            importFiles(p.urls, into: p.parent)
+        }
         .onOpenURL { url in
             guard url.scheme == "based" else { return }
             let id = url.lastPathComponent
@@ -96,7 +101,7 @@ struct RootView: View {
     // MARK: Import / export
 
     /// Unzips / converts in the background (big Notion exports take seconds), then imports on the main actor.
-    private func importFiles(_ urls: [URL]) {
+    private func importFiles(_ urls: [URL], into parent: ParentRef) {
         let scoped = urls.map { $0.startAccessingSecurityScopedResource() }
         Log.notice("import: \(urls.map(\.lastPathComponent).joined(separator: ", "))", category: "import")
         importProgress = 0
@@ -115,7 +120,7 @@ struct RootView: View {
                 importProgress = 0.85
                 await Task.yield()
                 let r = try Log.measure("import", category: "import", warnAfter: 2) {
-                    try NotionImporter(store: store, assets: assets).importPrepared(prepared, into: .workspace)
+                    try NotionImporter(store: store, assets: assets).importPrepared(prepared, into: parent)
                 }
                 var s = "\(r.pages) pages, \(r.databases) databases, \(r.rows) rows, \(r.assets) files imported."
                 let notes = prepared.notes + r.warnings
@@ -274,7 +279,7 @@ struct DetailShell: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) { HistoryButtons(size: 15) }
                     ToolbarItem(placement: .primaryAction) {
-                        Button { model.toggleChatPanel() } label: { Image(systemName: "sparkles") }
+                        Button { model.toggleChatPanel() } label: { AIGlyph(size: 18) }
                             .accessibilityIdentifier("toolbar.chat")
                     }
                 }

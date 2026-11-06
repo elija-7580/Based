@@ -121,7 +121,7 @@ struct AutofillButton: View {
         Button {
             running = true
             Task { await brain.autofill(databaseID: databaseID, propertyID: propertyID, rows: rows); running = false }
-        } label: { Label(running ? "Filling…" : "Autofill with AI", systemImage: "sparkles") }
+        } label: { Label { Text(running ? "Filling…" : "Autofill with AI") } icon: { AIGlyph(size: 14) } }
         .disabled(running || !brain.hasProvider)
     }
 }

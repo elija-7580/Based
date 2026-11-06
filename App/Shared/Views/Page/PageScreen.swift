@@ -88,6 +88,7 @@ struct PageScreen: View {
                 editor.selectedBlocks = [target]
             }
             }
+            .acceptsFileDrops { model.dropFiles($0, onto: pageID) }
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
             .overlayPreferenceValue(MenuAnchorKey.self) { anchor in
                 GeometryReader { geo in

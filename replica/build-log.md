@@ -388,3 +388,35 @@ Scope: feedback round ("chat answers nonsense", "Agent Brain page in Trash", bac
   The XCTest suites compile but the Linux 6.2 runner aborts while listing them (`Could not cast … @MainActor`
   test methods) — they need a Mac (`make test`).
 
+## Pass 17 — file drops, one Settings, workspace name, cross-block selection, Notes / AI sidebar, tabs, AI glyph
+
+- **Files from Finder** (`App/Shared/Editor/FileDrop.swift`): onto page text (`BasedNSTextView` drag overrides),
+  onto the page canvas (`acceptsFileDrops`) and ⌘V of copied files → images / PDF / video / audio become media
+  blocks after the block under the pointer, other files file blocks; Markdown, HTML, CSV, `.zip`, folders are
+  imported as sub-pages (`AppModel.pendingImport` → RootView's import pipeline, now with a parent). Sidebar drop
+  imports at the top level.
+- **No floating Settings window**: the SwiftUI `Settings` scene is gone; ⌘, (`CommandGroup(replacing: .appSettings)`)
+  and the workspace menu open Settings inside the main window (`AppModel.openSettings`).
+- **Workspace name**: the sidebar header was a `Menu` — macOS renders only the label's first text, so it showed
+  "M". Now a button + popover (`WorkspaceMenu`): rename in place, icon picker, settings, import, export, sync;
+  `WorkspaceBadge` shows the icon or initial. Settings → Workspace saves the name while typing.
+- **Selection across paragraphs**: `BasedNSTextView.mouseDown` runs its own tracking loop — text selection inside the
+  paragraph, block selection (`EditorController.selectBlockRange(from:toWindowPoint:in:)`, nearest text block by
+  window position, outermost blocks only) as soon as the pointer leaves it, with autoscroll. Links, mentions,
+  equations, clicks inside a selection, double/triple and modifier clicks keep AppKit's handling.
+- **Outline rail** (`PageOutline`): observes edits (was computed once → missing on pages that got headings later),
+  shows from one heading, stronger bars.
+- **Sidebar Notes | AI** (`SidebarModeSwitcher`, `SidebarMode`, `AppModel.sidebarMode`, `switchSidebar`,
+  `lastItem`): Notes = Search, Home, Favorites, Teamspaces, Private; AI = New chat, Agents, Inbox, Agent Brain,
+  Chats (40). Each mode remembers its last screen; navigating into the other world switches the sidebar; ⌥⌘\.
+- **Tabs**: own `DragGesture` reordering (live, neighbours slide, works in both directions, selects the dragged tab)
+  instead of `draggable`/`dropDestination`; `AppModel.moveTab(_:toIndex:)`.
+- **AI glyph** (`AIGlyph`, `AISpark`, `SymbolImage`): custom-drawn mark replaces SF `sparkles` in the top bar,
+  sidebar, iOS toolbar, chat empty state, search and Autofill.
+- Stubs: `NSDraggingInfo`, `NSDragOperation`, drag methods and `autoscroll` on `NSView`, `NSWindow.nextEvent`,
+  `ReadingOptionKey.urlReadingFileURLsOnly`. `bash ci/typecheck/run.sh` → typecheck OK.
+- Research (two sub-agents): native Swift building blocks and web Claude-UI clones → Notion page
+  "Chat-UI-Recherche (Claude-/Claude-Code-Stil)". Recommendation: Textual (or SwiftStreamingMarkdown) for message
+  Markdown, HighlightSwift, SwiftMath, Speech framework; UI references opencode (MIT), Clarc (Apache-2.0),
+  21st-dev/1code, LibreChat; ACP as the single internal event model.
+

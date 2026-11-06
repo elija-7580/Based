@@ -229,6 +229,11 @@ final class TextCoordinator: NSObject, TextHost {
         #endif
     }
 
+    /// Files dropped or pasted into this block's text: added after the block (see `FileDrop`).
+    func dropFiles(_ urls: [URL]) {
+        controller.model.dropFiles(urls, onto: controller.pageID, after: id)
+    }
+
     func paste(_ string: String) -> Bool {
         guard view != nil else { return false }
         return controller.paste(string, into: id, selection: viewSelection)
@@ -337,6 +342,56 @@ final class BasedNSTextView: NSTextView {
 
     var isFocused: Bool { window?.firstResponder === self }
 
+    /// Notion-style selection across blocks: a drag that starts in this paragraph selects text as usual,
+    /// but once the pointer leaves the paragraph vertically it switches to selecting whole blocks — from this
+    /// one to the block under the pointer (the page autoscrolls). Double/triple clicks and ⇧/⌘/⌥-clicks keep
+    /// AppKit's own tracking.
+    override func mouseDown(with event: NSEvent) {
+        let mods = event.modifierFlags.intersection([.shift, .command, .option, .control])
+        guard event.clickCount == 1, mods.isEmpty, let window, let c = coordinator, isEditable else {
+            super.mouseDown(with: event); return
+        }
+        let local = convert(event.locationInWindow, from: nil)
+        let start = characterIndexForInsertion(at: local)
+        // Links, mentions and equations keep their click handling; a click inside the current selection may
+        // start a text drag — both go to AppKit.
+        if let storage = textStorage, storage.length > 0, let lm = layoutManager, let tc = textContainer {
+            let p = NSPoint(x: local.x - textContainerOrigin.x, y: local.y - textContainerOrigin.y)
+            let i = min(max(0, lm.characterIndex(for: p, in: tc, fractionOfDistanceBetweenInsertionPoints: nil)), storage.length - 1)
+            let attrs = storage.attributes(at: i, effectiveRange: nil)
+            if attrs[.link] != nil || attrs[.basedMention] != nil || attrs[.basedEquation] != nil { super.mouseDown(with: event); return }
+        }
+        let sel = selectedRange()
+        if sel.length > 0, start >= sel.location, start <= sel.location + sel.length { super.mouseDown(with: event); return }
+        if window.firstResponder !== self { window.makeFirstResponder(self) }
+        setSelectedRange(NSRange(location: start, length: 0))
+        c.controller.selectedBlocks = []
+        var blockMode = false
+        while let e = window.nextEvent(matching: [.leftMouseDragged, .leftMouseUp]) {
+            let p = convert(e.locationInWindow, from: nil)
+            if e.type == .leftMouseUp { break }
+            let outside = p.y < bounds.minY - 4 || p.y > bounds.maxY + 4
+            if outside || blockMode {
+                if !blockMode {
+                    blockMode = true
+                    setSelectedRange(NSRange(location: start, length: 0))
+                    window.makeFirstResponder(nil)
+                }
+                if !outside {
+                    // Back inside the starting paragraph: just this block.
+                    c.controller.selectedBlocks = [c.id]
+                } else {
+                    c.controller.selectBlockRange(from: c.id, toWindowPoint: e.locationInWindow, in: window)
+                }
+                autoscroll(with: e)
+            } else {
+                let i = characterIndexForInsertion(at: p)
+                setSelectedRange(NSRange(location: min(start, i), length: abs(i - start)))
+                autoscroll(with: e)
+            }
+        }
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard string.isEmpty, !placeholder.isEmpty, showsPlaceholderAlways || isFocused else { return }
@@ -346,7 +401,27 @@ final class BasedNSTextView: NSTextView {
                                        withAttributes: [.font: font, .foregroundColor: NSColor.placeholderTextColor])
     }
 
+    // Files from Finder: dropping onto text used to insert nothing (NSTextView took the drag but has no
+    // file handling here). They now become blocks after this one.
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if !FileDrop.fileURLs(on: sender.draggingPasteboard).isEmpty { return .copy }
+        return super.draggingEntered(sender)
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if !FileDrop.fileURLs(on: sender.draggingPasteboard).isEmpty { return .copy }
+        return super.draggingUpdated(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = FileDrop.fileURLs(on: sender.draggingPasteboard)
+        if !urls.isEmpty, let c = coordinator { c.dropFiles(urls); return true }
+        return super.performDragOperation(sender)
+    }
+
     override func paste(_ sender: Any?) {
+        let files = FileDrop.fileURLs(on: NSPasteboard.general)
+        if !files.isEmpty, let c = coordinator { c.dropFiles(files); return }
         guard let s = NSPasteboard.general.string(forType: .string) else { super.paste(sender); return }
         if coordinator?.paste(s) == true { return }
         insertText(s, replacementRange: selectedRange())

@@ -30,16 +30,7 @@ struct BasedApp: App {
         .windowStyle(.hiddenTitleBar)
         #endif
         .commands { BasedCommands(model: model) }
-        #if os(macOS)
-        Settings {
-            SettingsView()
-                .environment(model)
-                .environment(model.brain)
-                .environment(model.brain.happier)
-                .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
-                .frame(width: 760, height: 640)
-        }
-        #endif
+        // No separate Settings window: ⌘, opens Settings inside the main window (see BasedCommands).
     }
 }
 
@@ -53,6 +44,10 @@ struct BasedCommands: Commands {
     }
 
     var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") { run("⌘,") { model.openSettings() } }
+                .keyboardShortcut(",")
+        }
         CommandGroup(replacing: .newItem) {
             Button("New…") { run("⌘N") { model.showQuickFind = false; model.showCommandPalette.toggle() } }
                 .keyboardShortcut("n")
@@ -144,6 +139,10 @@ struct BasedCommands: Commands {
             Button("Open Parent Page") { model.openParent() }.keyboardShortcut("u", modifiers: [.command, .shift])
             #if os(macOS)
             Button(model.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar") { model.toggleSidebar() }.keyboardShortcut("\\")
+            Button(model.sidebarMode == .notes ? "Switch Sidebar to AI" : "Switch Sidebar to Notes") {
+                model.switchSidebar(to: model.sidebarMode == .notes ? .ai : .notes)
+            }
+            .keyboardShortcut("\\", modifiers: [.command, .option])
             #endif
             Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
             Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)

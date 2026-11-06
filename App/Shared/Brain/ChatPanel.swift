@@ -115,9 +115,7 @@ struct ChatEmptyState: View {
 
     var body: some View {
         VStack(spacing: compact ? 12 : 18) {
-            Image(systemName: "sparkles")
-                .font(.system(size: compact ? 26 : 34))
-                .foregroundStyle(Color.accentColor)
+            AIGlyph(size: compact ? 30 : 40, vivid: true)
             Text(compact ? "How can I help?" : "What can I fetch for you?")
                 .font(.system(size: compact ? 18 : 28, weight: .semibold))
             if !brain.hasProvider && !brain.claudeAvailable {

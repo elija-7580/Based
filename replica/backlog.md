@@ -110,3 +110,16 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | HTML-Block im Slash-Menü | ✅ | /html, /mermaid |
 | Export als HTML | ✅ | Seite + ganzer Workspace; PDF fehlt noch |
 
+## Pass 17
+| Anforderung | Status | Notiz |
+|---|---|---|
+| Dateien hineinziehen | 🟡 | Seite, Text, Sidebar, ⌘V; am Mac prüfen |
+| Kein schwebendes Settings-Fenster | ✅ | |
+| Workspace-Name sichtbar + umbenennbar | ✅ | Popover in der Sidebar, Einstellungen |
+| Mehrere Absätze auswählen | 🟡 | Ziehen über Absätze → Blockauswahl; ⇧↑/↓ über Blockgrenzen fehlt noch |
+| Outline-Balken | 🟡 | reagiert jetzt auf Änderungen; am Mac prüfen |
+| Sidebar Notes / AI mit zwei Homes | ✅ | |
+| Tabs ziehen | 🟡 | eigene Geste; am Mac prüfen |
+| Eigenes AI-Icon | ✅ | |
+| Chat-UI wie Claude Code | ❌ | Recherche fertig (Notion), Umsetzung offen |
+

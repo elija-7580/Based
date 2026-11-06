@@ -63,6 +63,24 @@ enum SidebarItem: Hashable {
     }
 
     var isPage: Bool { if case .page = self { return true }; return false }
+
+    /// Which sidebar mode the item belongs to (AI: chats, agents, inbox, Agent Brain; Notes: everything else).
+    var mode: SidebarMode {
+        switch self {
+        case .chat, .sessions, .projects, .inbox, .brain: return .ai
+        default: return .notes
+        }
+    }
+}
+
+/// The sidebar's two worlds, each with its own Home: Notes (pages, your Home page, Library) and AI
+/// (chat, chats, agents, inbox, Agent Brain — Home is a new chat).
+enum SidebarMode: String, CaseIterable, Identifiable {
+    case notes, ai
+    var id: String { rawValue }
+    var title: String { self == .notes ? "Notes" : "AI" }
+    var symbol: String { self == .notes ? "doc.text" : SymbolImage.ai }
+    var home: SidebarItem { self == .notes ? .home : .chat(nil) }
 }
 
 /// One browser-style tab (⌘T). The active tab's state lives in `AppModel.selection/path/history`;
@@ -100,11 +118,32 @@ final class AppModel {
     var selection: SidebarItem? = .home {
         didSet {
             if oldValue != selection { path = [] }
+            // The sidebar follows navigation into the other world (e.g. ⌘J full page, a chat link, Inbox).
+            if let s = selection, s != .settings, s != .diagnostics {
+                if s.mode != sidebarMode { sidebarMode = s.mode }
+                lastItem[s.mode.rawValue] = s
+            }
             noteNavigation()
             if let s = selection, !restoringHistory, sidebarSelection != [s] { sidebarSelection = [s] }
         }
     }
     var path: [RecordID] = [] { didSet { noteNavigation() } }
+    /// Notes / AI sidebar (persisted).
+    var sidebarMode: SidebarMode = SidebarMode(rawValue: UserDefaults.standard.string(forKey: "sidebar.mode") ?? "") ?? .notes {
+        didSet { UserDefaults.standard.set(sidebarMode.rawValue, forKey: "sidebar.mode") }
+    }
+    /// Last screen visited in each mode, so switching back returns there.
+    @ObservationIgnored var lastItem: [String: SidebarItem] = [:]
+
+    /// The switcher at the top of the sidebar: show that world and go to where you were in it (or its Home).
+    func switchSidebar(to mode: SidebarMode) {
+        guard mode != sidebarMode || selection?.mode != mode else { return }
+        sidebarMode = mode
+        let target = lastItem[mode.rawValue] ?? mode.home
+        peek = nil
+        if case .chat(let id) = target { openChat(id, fullPage: true) } else { selection = target }
+    }
+
     /// Sidebar multi-selection (⌘/⇧-click); a single item also drives `selection`.
     var sidebarSelection: Set<SidebarItem> = [.home]
     /// Last plain / ⌘-clicked sidebar row (start of a ⇧-click range).
@@ -172,6 +211,14 @@ final class AppModel {
         var pageID: RecordID
         var format: Format = .markdown
     }
+
+    /// Documents dropped onto a page / the sidebar, waiting for RootView's import pipeline.
+    struct PendingImport: Identifiable, Equatable {
+        let id = UUID()
+        var urls: [URL]
+        var parent: ParentRef
+    }
+    var pendingImport: PendingImport?
 
     struct MoveRequest: Identifiable {
         let id = UUID()
@@ -379,6 +426,16 @@ final class AppModel {
 
     /// Moves a page (and everything inside it) to the Trash and offers Undo.
     func trash(_ id: RecordID) { trash([id]) }
+
+    /// ⌘, and the workspace menu: Settings live inside the main window (no separate Settings window).
+    func openSettings() {
+        #if os(macOS)
+        peek = nil
+        selection = .settings
+        #else
+        showSettings = true
+        #endif
+    }
 
     // MARK: Home page
 
@@ -628,6 +685,12 @@ final class AppModel {
         guard !tabs.isEmpty else { return }
         let i = index >= 8 ? tabs.count - 1 : min(index, tabs.count - 1)   // ⌘9 = last tab
         selectTab(tabs[i].id)
+    }
+
+    func moveTab(_ id: UUID, toIndex index: Int) {
+        guard let from = tabs.firstIndex(where: { $0.id == id }), tabs.indices.contains(index), from != index else { return }
+        let t = tabs.remove(at: from)
+        tabs.insert(t, at: index)
     }
 
     func moveTab(_ id: UUID, before other: UUID) {

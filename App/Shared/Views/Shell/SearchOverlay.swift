@@ -171,7 +171,7 @@ struct SearchOverlay: View {
         HStack(alignment: .center, spacing: 10) {
             switch r.kind {
             case .ask(let q):
-                Image(systemName: "sparkles").foregroundStyle(Color.accentColor).frame(width: 20)
+                AIGlyph(size: 17).foregroundStyle(Color.accentColor).frame(width: 20)
                 Text("Ask AI: ").foregroundStyle(Theme.secondary) + Text("“\(q)”").fontWeight(.medium)
             case .chat(let c):
                 Image(systemName: "bubble.left").foregroundStyle(Theme.secondary).frame(width: 20)
