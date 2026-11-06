@@ -14,7 +14,7 @@ typealias PlatformImage = UIImage
 
 enum Theme {
     static let bodySize: CGFloat = 16
-    static let contentWidth: CGFloat = 720
+    static let contentWidth: CGFloat = 708
     static let indent: CGFloat = 26
     static let blockSpacing: CGFloat = 2
 
@@ -114,7 +114,8 @@ enum Theme {
 
     static func baseFont(for type: BlockType, format: PageFormat?) -> PlatformFont {
         let size = fontSize(for: type, small: format?.smallText == true)
-        let weight: PlatformFont.Weight = (type.isHeading || type == .page) ? .bold : .regular
+        // Notion: page title 700, headings 600.
+        let weight: PlatformFont.Weight = type == .page ? .bold : (type.isHeading ? .semibold : .regular)
         if type == .code { return PlatformFont.monospacedSystemFont(ofSize: size, weight: .regular) }
         let base = PlatformFont.systemFont(ofSize: size, weight: weight)
         switch format?.font ?? .default {
@@ -238,6 +239,9 @@ extension ViewType {
         case .calendar: return "calendar"
         case .timeline: return "chart.bar.xaxis"
         case .chart: return "chart.pie"
+        case .form: return "list.clipboard"
+        case .dashboard: return "rectangle.3.group"
+        case .map: return "map"
         default: return "square.stack"
         }
     }

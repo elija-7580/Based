@@ -1,0 +1,852 @@
+import SwiftUI
+import BasedCore
+import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
+
+/// Window chrome colours and metrics taken from Notion's desktop app (light / dark).
+enum Chrome {
+    static let titleBarHeight: CGFloat = 40
+    /// Room for the traffic lights at the left of the title bar.
+    static let trafficInset: CGFloat = 80
+    static let topBarHeight: CGFloat = 44
+    static let rowHeight: CGFloat = 30
+    static let indentPerLevel: CGFloat = 12
+    static let appBackground = Color(Theme.dynamic(light: 0xFFFFFF, dark: 0x191919))
+    static let sidebarBackground = Color(Theme.dynamic(light: 0xF8F8F7, dark: 0x202020))
+    static let titleBarBackground = Color(Theme.dynamic(light: 0xF2F1EE, dark: 0x1C1C1C))
+    static let sidebarText = Color(Theme.dynamic(light: 0x5F5E5B, dark: 0x9B9B9B))
+    static let sectionText = Color(Theme.dynamic(light: 0x91918E, dark: 0x7F7F7F))
+    static let hover = Color(Theme.dynamic(light: 0xEFEFED, dark: 0x2C2C2C))
+    static let selected = Color(Theme.dynamic(light: 0xEAEAE8, dark: 0x323232))
+    static let accent = Color(Theme.dynamic(light: 0x2383E2, dark: 0x2383E2))
+    static let border = Color(Theme.dynamic(light: 0xE9E9E7, dark: 0x2F2F2F))
+}
+
+/// Small borderless icon button used in the title bar, sidebar and page top bar (Notion's 28 pt hover squares).
+struct ChromeIconButton: View {
+    let symbol: String
+    var size: CGFloat = 15
+    var help: String = ""
+    var disabled = false
+    var active = false
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: size, weight: .regular))
+                .frame(width: 28, height: 28)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hover && !disabled ? Chrome.hover : (active ? Chrome.selected : .clear)))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(disabled ? Chrome.sidebarText.opacity(0.4) : Chrome.sidebarText)
+        .disabled(disabled)
+        .onHover { hover = $0 }
+        .help(help)
+    }
+}
+
+#if os(macOS)
+
+// MARK: - Shell
+
+/// macOS window layout like Notion's desktop app: a full-width title bar (traffic lights, sidebar toggle,
+/// back / forward, tabs), a custom sidebar (resizable, collapsible with ⌘\, peeks in when hovering the left
+/// edge while collapsed) and the detail shell.
+struct MacShell: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage("sidebarWidth") private var sidebarWidth: Double = 248
+    @State private var peekSidebar = false
+
+    var body: some View {
+        let width = min(max(sidebarWidth, 200), 480)
+        VStack(spacing: 0) {
+            MacTitleBar(peekSidebar: $peekSidebar)
+            Rectangle().fill(Chrome.border).frame(height: 1)
+            HStack(spacing: 0) {
+                if !model.sidebarCollapsed {
+                    NotionSidebar()
+                        .frame(width: width)
+                        .transition(.move(edge: .leading))
+                    SidebarResizeHandle(width: $sidebarWidth)
+                }
+                DetailShell()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Chrome.appBackground)
+            }
+            .overlay(alignment: .topLeading) { collapsedPeek(width) }
+        }
+        .background(Chrome.sidebarBackground)
+        .ignoresSafeArea(.container, edges: .top)
+        .animation(.easeOut(duration: 0.18), value: model.sidebarCollapsed)
+        .animation(.easeOut(duration: 0.15), value: peekSidebar)
+        .onChange(of: model.sidebarCollapsed) { _, collapsed in if !collapsed { peekSidebar = false } }
+    }
+
+    /// Collapsed sidebar: hovering the left edge (or the toggle button) slides a floating sidebar in.
+    @ViewBuilder
+    private func collapsedPeek(_ width: CGFloat) -> some View {
+        if model.sidebarCollapsed {
+            ZStack(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 8)
+                    .frame(maxHeight: .infinity)
+                    .contentShape(Rectangle())
+                    .onHover { if $0 { peekSidebar = true } }
+                if peekSidebar {
+                    NotionSidebar(floating: true)
+                        .frame(width: width)
+                        .frame(maxHeight: .infinity)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Chrome.sidebarBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Chrome.border))
+                        .shadow(color: .black.opacity(0.16), radius: 16, x: 4, y: 6)
+                        .padding(.top, 6).padding(.bottom, 12).padding(.leading, 6)
+                        .onHover { if !$0 { peekSidebar = false } }
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .accessibilityIdentifier("sidebar.peek")
+                }
+            }
+        }
+    }
+}
+
+/// Title bar: traffic-light inset, sidebar toggle, back / forward, browser-style tabs. Empty space drags the
+/// window (double-click zooms), like a native title bar.
+struct MacTitleBar: View {
+    @Binding var peekSidebar: Bool
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Color.clear.frame(width: Chrome.trafficInset, height: 1)
+            ChromeIconButton(symbol: "sidebar.left", size: 15, help: model.sidebarCollapsed ? "Show sidebar (⌘\\)" : "Close sidebar (⌘\\)") {
+                model.toggleSidebar()
+            }
+            .onHover { if $0 && model.sidebarCollapsed { peekSidebar = true } }
+            .accessibilityIdentifier("toolbar.sidebar")
+            ChromeIconButton(symbol: "arrow.left", size: 14, help: "Back (⌘[)", disabled: !model.canGoBack) { model.goBack() }
+                .accessibilityIdentifier("toolbar.back")
+            ChromeIconButton(symbol: "arrow.right", size: 14, help: "Forward (⌘])", disabled: !model.canGoForward) { model.goForward() }
+                .accessibilityIdentifier("toolbar.forward")
+            TabStrip()
+                .padding(.leading, 6)
+            Spacer(minLength: 40)
+        }
+        .padding(.trailing, 8)
+        .frame(height: Chrome.titleBarHeight)
+        .frame(maxWidth: .infinity)
+        .background(WindowDragArea())
+        .background(Chrome.titleBarBackground)
+    }
+}
+
+/// 1-pt divider with a wide invisible drag area that resizes the sidebar (Notion: 200…480 pt).
+struct SidebarResizeHandle: View {
+    @Binding var width: Double
+    @State private var start: Double?
+    @State private var hover = false
+
+    var body: some View {
+        Rectangle()
+            .fill(hover || start != nil ? Chrome.accent.opacity(0.5) : Chrome.border)
+            .frame(width: hover || start != nil ? 2 : 1)
+            .overlay {
+                Color.clear
+                    .frame(width: 9)
+                    .contentShape(Rectangle())
+                    .onHover { inside in
+                        hover = inside
+                        if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+                    }
+                    .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                        .onChanged { v in
+                            if start == nil { start = width }
+                            width = min(max(200, (start ?? width) + v.translation.width), 480)
+                        }
+                        .onEnded { _ in start = nil })
+                    .onTapGesture(count: 2) { width = 248 }
+            }
+            .accessibilityIdentifier("sidebar.resize")
+    }
+}
+
+/// Transparent NSView behind the title bar: drags the window and zooms / minimises on double-click
+/// (honours the system "double-click a window's title bar" setting).
+struct WindowDragArea: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { DragView() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+        override func mouseDown(with event: NSEvent) {
+            if event.clickCount == 2 {
+                let action = UserDefaults.standard.string(forKey: "AppleActionOnDoubleClick") ?? "Maximize"
+                if action == "Minimize" { window?.performMiniaturize(nil) } else if action != "None" { window?.performZoom(nil) }
+                return
+            }
+            window?.performDrag(with: event)
+        }
+    }
+}
+
+/// Hidden-title-bar window setup and traffic lights vertically centred in the 40 pt title bar.
+@MainActor
+enum WindowChrome {
+    private static var configured = Set<ObjectIdentifier>()
+
+    static func configure(_ w: NSWindow) {
+        w.titlebarAppearsTransparent = true
+        w.titleVisibility = .hidden
+        w.styleMask.insert(.fullSizeContentView)
+        positionTrafficLights(w)
+        let key = ObjectIdentifier(w)
+        guard !configured.contains(key) else { return }
+        configured.insert(key)
+        let names: [Notification.Name] = [NSWindow.didResizeNotification, NSWindow.didEndLiveResizeNotification,
+                                          NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification,
+                                          NSWindow.didExitFullScreenNotification]
+        for name in names {
+            NotificationCenter.default.addObserver(forName: name, object: w, queue: .main) { [weak w] _ in
+                MainActor.assumeIsolated { if let w { positionTrafficLights(w) } }
+            }
+        }
+    }
+
+    static func positionTrafficLights(_ w: NSWindow) {
+        guard !w.styleMask.contains(.fullScreen) else { return }
+        let types: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
+        for (i, t) in types.enumerated() {
+            guard let b = w.standardWindowButton(t), let container = b.superview else { continue }
+            let h = b.frame.height
+            let y = container.isFlipped ? Chrome.titleBarHeight / 2 - h / 2
+                                        : container.bounds.height - Chrome.titleBarHeight / 2 - h / 2
+            b.setFrameOrigin(NSPoint(x: 16 + CGFloat(i) * 20, y: max(0, y)))
+        }
+    }
+}
+
+// MARK: - Sidebar
+
+/// Click handling shared by sidebar rows: plain click navigates, ⌘-click toggles, ⇧-click selects a range.
+@MainActor
+enum SidebarClick {
+    static func click(_ item: SidebarItem, model: AppModel, order: [SidebarItem]) {
+        let flags = NSEvent.modifierFlags
+        if flags.contains(.command) {
+            var s = model.sidebarSelection
+            if let cur = model.currentSidebarItem, s.count <= 1 { s = [cur] }
+            if s.contains(item) { s.remove(item) } else { s.insert(item) }
+            model.sidebarSelection = s
+            model.sidebarAnchor = item
+            return
+        }
+        if flags.contains(.shift), let a = model.sidebarAnchor ?? model.currentSidebarItem,
+           let i = order.firstIndex(of: a), let j = order.firstIndex(of: item) {
+            model.sidebarSelection = Set(order[min(i, j)...max(i, j)])
+            return
+        }
+        model.sidebarAnchor = item
+        navigate(item, model: model)
+    }
+
+    static func navigate(_ item: SidebarItem, model: AppModel) {
+        if case .chat(let id) = item { model.openChat(id, fullPage: true); return }
+        model.peek = nil
+        if model.selection != item || !model.path.isEmpty {
+            model.selection = item
+            model.path = []
+        }
+        model.sidebarSelection = [item]
+    }
+
+    static func isHighlighted(_ item: SidebarItem, model: AppModel) -> Bool {
+        if model.sidebarSelection.count > 1 { return model.sidebarSelection.contains(item) }
+        return model.currentSidebarItem == item
+    }
+}
+
+/// Notion's sidebar: workspace switcher, search, Home / Chat / Agents / Inbox / Agent Brain, Favorites,
+/// Private page tree (hover chevrons, "…" and "+", drag to reorder / nest), Chats, Settings / Import / Trash.
+struct NotionSidebar: View {
+    var floating = false
+    @Environment(AppModel.self) private var model
+    @Environment(HappierModel.self) private var happier
+    @AppStorage("sidebar.favoritesOpen") private var favoritesOpen = true
+    @AppStorage("sidebar.privateOpen") private var privateOpen = true
+    @AppStorage("sidebar.chatsOpen") private var chatsOpen = true
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        let _ = model.registry.workspace.structureRevision
+        let store = model.store
+        let brainRoot = model.brain.brain.rootID
+        let favorites = store.favoritePages()
+        let privatePages = store.topLevelPages().filter { $0.id != brainRoot }
+        let order = visibleOrder(favorites: favorites, privatePages: privatePages)
+        VStack(spacing: 0) {
+            SidebarWorkspaceRow(floating: floating)
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 1) {
+                    SidebarSearchRow()
+                    SidebarNavRow(item: .home, title: "Home", symbol: "house").accessibilityIdentifier("sidebar.home")
+                    SidebarNavRow(item: .chat(nil), title: "Chat", symbol: "sparkles").accessibilityIdentifier("sidebar.askAI")
+                    SidebarNavRow(item: .projects, title: "Agents", symbol: "square.grid.2x2").accessibilityIdentifier("sidebar.sessions")
+                    SidebarNavRow(item: .inbox, title: "Inbox", symbol: "tray", badge: happier.pendingCount).accessibilityIdentifier("sidebar.inbox")
+                    SidebarNavRow(item: .brain, title: "Agent Brain", symbol: "brain").accessibilityIdentifier("sidebar.brain")
+
+                    if !favorites.isEmpty {
+                        SidebarSectionHeader(title: "Favorites", open: $favoritesOpen)
+                        if favoritesOpen {
+                            ForEach(favorites, id: \.id) { SidebarPageRow(page: $0, depth: 0, order: order) }
+                        }
+                    }
+
+                    SidebarSectionHeader(title: "Private", open: $privateOpen) { model.newPage() }
+                    if privateOpen {
+                        ForEach(privatePages, id: \.id) { SidebarPageRow(page: $0, depth: 0, order: order) }
+                        SidebarActionRow(title: "Add new", symbol: "plus") { model.newPage() }
+                            .accessibilityIdentifier("sidebar.addPage")
+                    }
+
+                    SidebarSectionHeader(title: "Chats", open: $chatsOpen) { model.openChat(nil, fullPage: true) }
+                    if chatsOpen {
+                        ForEach(happier.chats.prefix(8)) { c in
+                            SidebarNavRow(item: .chat(c.id), title: c.title.isEmpty ? "New chat" : c.title, symbol: "bubble.left", order: order)
+                        }
+                        if happier.chats.count > 8 {
+                            SidebarActionRow(title: "View all", symbol: "ellipsis") { model.selection = .projects }
+                        }
+                    }
+
+                    Color.clear.frame(height: 14)
+                    SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
+                    SidebarImportRow()
+                    SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
+                }
+                .padding(.horizontal, 8)
+                .padding(.bottom, 14)
+            }
+            .scrollIndicators(.never)
+        }
+        .background(Chrome.sidebarBackground)
+        .focusable()
+        .focused($focused)
+        .focusEffectDisabled()
+        .onDeleteCommand { model.trash(model.selectedPageIDs) }
+        .onKeyPress(.escape) {
+            guard model.sidebarSelection.count > 1, let cur = model.currentSidebarItem else { return .ignored }
+            model.sidebarSelection = [cur]
+            return .handled
+        }
+        .onChange(of: model.currentPageID) { _, id in
+            // Reveal the open page in the tree, like Notion.
+            guard let id else { return }
+            for a in model.store.ancestors(of: id) { model.expanded.insert(a.id) }
+        }
+        .accessibilityIdentifier("sidebar")
+    }
+
+    /// Visible rows top to bottom (⇧-click range selection).
+    private func visibleOrder(favorites: [Block], privatePages: [Block]) -> [SidebarItem] {
+        var out: [SidebarItem] = [.home, .chat(nil), .projects, .inbox, .brain]
+        func walk(_ pages: [Block]) {
+            for p in pages {
+                out.append(.page(p.id))
+                if model.expanded.contains(p.id) { walk(model.store.subpages(of: p.id)) }
+            }
+        }
+        if favoritesOpen { walk(favorites) }
+        if privateOpen { walk(privatePages) }
+        if chatsOpen { out += happier.chats.prefix(8).map { .chat($0.id) } }
+        out += [.settings, .trash]
+        return out
+    }
+}
+
+/// Workspace switcher row at the top of the sidebar, with "collapse" (on hover) and "new page".
+struct SidebarWorkspaceRow: View {
+    var floating = false
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        let w = model.store.workspace
+        HStack(spacing: 4) {
+            Menu {
+                Text(w.name)
+                if model.syncStatus != "Off" && model.syncStatus != "Not configured" { Text("Sync: \(model.syncStatus)") }
+                Divider()
+                Button("Settings", systemImage: "gearshape") { model.selection = .settings }
+                Button("Import from Notion…", systemImage: "square.and.arrow.down.on.square") { model.showNotionImport = true }
+                Button("Export workspace…", systemImage: "square.and.arrow.up") { model.showExportAll = true }
+                Button("Sync now", systemImage: "arrow.triangle.2.circlepath") { model.syncNow() }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(String(w.name.prefix(1)).uppercased())
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 22, height: 22)
+                        .background(RoundedRectangle(cornerRadius: 5).fill(Color(Theme.dynamic(light: 0x787774, dark: 0x5A5A5A))))
+                    Text(w.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.primary).lineLimit(1)
+                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Chrome.sidebarText)
+                }
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityIdentifier("sidebar.workspace")
+            Spacer(minLength: 4)
+            if hover && !floating {
+                ChromeIconButton(symbol: "chevron.left.2", size: 12, help: "Close sidebar (⌘\\)") { model.toggleSidebar() }
+            }
+            ChromeIconButton(symbol: "square.and.pencil", size: 15, help: "New page") { model.newPage() }
+                .accessibilityIdentifier("toolbar.newPage")
+        }
+        .padding(.leading, 14).padding(.trailing, 10)
+        .frame(height: 46)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+    }
+}
+
+/// "Search ⌘K" row.
+struct SidebarSearchRow: View {
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").font(.system(size: 14)).frame(width: 22, height: 22)
+            Text("Search").font(.system(size: 14, weight: .medium))
+            Spacer(minLength: 4)
+            if hover { Text("⌘K").font(.system(size: 12)).foregroundStyle(Chrome.sectionText) }
+        }
+        .foregroundStyle(Chrome.sidebarText)
+        .padding(.horizontal, 8)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { model.showQuickFind = true }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("sidebar.search")
+    }
+}
+
+/// A fixed sidebar destination (Home, Inbox, Settings, a chat…).
+struct SidebarNavRow: View {
+    let item: SidebarItem
+    let title: String
+    let symbol: String
+    var badge = 0
+    var order: [SidebarItem] = []
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        let selected = SidebarClick.isHighlighted(item, model: model)
+        HStack(spacing: 8) {
+            Image(systemName: symbol).font(.system(size: 14)).frame(width: 22, height: 22)
+            Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).truncationMode(.tail)
+            Spacer(minLength: 4)
+            if badge > 0 {
+                Text("\(badge)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+                    .padding(.horizontal, 6).frame(height: 16)
+                    .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
+            }
+        }
+        .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
+        .padding(.horizontal, 8)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hover ? Chrome.hover : .clear)))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture {
+            if order.isEmpty { SidebarClick.navigate(item, model: model) } else { SidebarClick.click(item, model: model, order: order) }
+        }
+        .contextMenu {
+            if case .chat(let id?) = item {
+                SidebarContextMenu(items: model.sidebarSelection.contains(item) && model.sidebarSelection.count > 1 ? Array(model.sidebarSelection) : [.chat(id)])
+            } else {
+                Button("Open in new tab", systemImage: "plus.rectangle.on.rectangle") { model.newTab(item) }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
+/// Secondary action row ("Add new", "View all").
+struct SidebarActionRow: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol).font(.system(size: 12)).frame(width: 22, height: 22)
+            Text(title).font(.system(size: 14))
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Chrome.sectionText)
+        .padding(.horizontal, 8)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture(perform: action)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Import menu row (Notion API / file export).
+struct SidebarImportRow: View {
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        Menu {
+            Button("From Notion (API)…", systemImage: "square.and.arrow.down.on.square") { model.showNotionImport = true }
+            Button("From file (Notion export, Markdown, CSV, HTML)…", systemImage: "doc.zipper") { model.showImport = true }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "square.and.arrow.down").font(.system(size: 14)).frame(width: 22, height: 22)
+                Text("Import").font(.system(size: 14, weight: .medium))
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(Chrome.sidebarText)
+            .padding(.horizontal, 8)
+            .frame(height: Chrome.rowHeight)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .onHover { hover = $0 }
+        .accessibilityIdentifier("sidebar.import")
+    }
+}
+
+/// Section title ("Favorites", "Private", "Chats"): click folds, hover shows a "+" when there's an add action.
+struct SidebarSectionHeader: View {
+    let title: String
+    @Binding var open: Bool
+    var onAdd: (() -> Void)?
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(title).font(.system(size: 12, weight: .medium))
+            if hover {
+                Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 8, weight: .bold))
+            }
+            Spacer(minLength: 0)
+            if hover, let onAdd {
+                Button(action: onAdd) {
+                    Image(systemName: "plus").font(.system(size: 12)).frame(width: 22, height: 22).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Add")
+            }
+        }
+        .foregroundStyle(Chrome.sectionText)
+        .padding(.horizontal, 8)
+        .frame(height: 28)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { open.toggle() }
+        .padding(.top, 14)
+        .accessibilityIdentifier("sidebar.section." + title.lowercased())
+    }
+}
+
+/// Where a dragged page lands relative to a sidebar row.
+enum SidebarDropZone { case before, inside, after }
+
+/// One page in the sidebar tree: icon (turns into a disclosure chevron on hover), title, "…" menu and "+".
+/// Drag onto the middle nests the page inside, onto the top / bottom edge reorders.
+struct SidebarPageRow: View {
+    let page: Block
+    let depth: Int
+    let order: [SidebarItem]
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+    @State private var zone: SidebarDropZone?
+
+    var body: some View {
+        let node = model.registry.block(page.id)
+        let _ = node.children
+        let current = node.block ?? page
+        let isOpen = model.expanded.contains(page.id)
+        VStack(alignment: .leading, spacing: 1) {
+            row(current, isOpen: isOpen)
+            if isOpen && current.type == .page {
+                let subs = model.store.subpages(of: page.id)
+                if subs.isEmpty {
+                    Text("No pages inside")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Chrome.sectionText)
+                        .padding(.leading, 8 + CGFloat(depth + 1) * Chrome.indentPerLevel + 28)
+                        .frame(height: 26)
+                } else {
+                    ForEach(subs, id: \.id) { SidebarPageRow(page: $0, depth: depth + 1, order: order) }
+                }
+            }
+        }
+    }
+
+    private var menuItems: [SidebarItem] {
+        let item = SidebarItem.page(page.id)
+        let s = model.sidebarSelection
+        return s.count > 1 && s.contains(item) ? Array(s) : [item]
+    }
+
+    private func toggle() {
+        if model.expanded.contains(page.id) { model.expanded.remove(page.id) } else { model.expanded.insert(page.id) }
+    }
+
+    private func row(_ page: Block, isOpen: Bool) -> some View {
+        let store = model.store
+        let item = SidebarItem.page(page.id)
+        let isDB = page.type == .databasePage || page.type == .databaseInline
+        if isDB, let db = page.props.databaseID { let _ = model.registry.database(db).revision }
+        let selected = SidebarClick.isHighlighted(item, model: model)
+        let expandable = page.type == .page
+        return HStack(spacing: 0) {
+            ZStack {
+                if hover && expandable {
+                    Button(action: toggle) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .rotationEffect(.degrees(isOpen ? 90 : 0))
+                            .frame(width: 22, height: 22)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.selected))
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(isOpen ? "Collapse" : "Expand")
+                } else {
+                    PageIconView(icon: page.props.icon, isDatabase: isDB, size: 18)
+                }
+            }
+            .frame(width: 22, height: 22)
+            Text(store.title(of: page.id).nonEmptyOr("Untitled"))
+                .font(.system(size: 14, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.leading, 6)
+            Spacer(minLength: 4)
+            if hover {
+                Menu { SidebarContextMenu(items: menuItems) } label: {
+                    Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).frame(width: 20, height: 20)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help("Delete, duplicate, and more…")
+                if page.type == .page {
+                    Button { model.newPage(in: .block(page.id)) } label: {
+                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).frame(width: 20, height: 20).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Add a page inside")
+                }
+            }
+        }
+        .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
+        .padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel)
+        .padding(.trailing, 6)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(zone == .inside ? Chrome.accent.opacity(0.18) : (selected ? Chrome.selected : (hover ? Chrome.hover : .clear))))
+        .overlay(alignment: zone == .after ? .bottom : .top) {
+            if zone == .before || zone == .after {
+                Rectangle().fill(Chrome.accent).frame(height: 2).padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel)
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { SidebarClick.click(item, model: model, order: order) }
+        .contextMenu { SidebarContextMenu(items: menuItems) }
+        .onDrag {
+            let selected = model.selectedPageIDs
+            model.draggedBlocks = selected.contains(page.id) ? selected : [page.id]
+            return NSItemProvider(object: page.id as NSString)
+        }
+        .onDrop(of: [.text], delegate: SidebarDropDelegate(page: page, model: model, zone: $zone))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier("sidebar.page")
+    }
+}
+
+struct SidebarDropDelegate: DropDelegate {
+    let page: Block
+    let model: AppModel
+    @Binding var zone: SidebarDropZone?
+
+    private func zone(at y: CGFloat) -> SidebarDropZone {
+        let canNest = page.type == .page
+        if !canNest { return y < Chrome.rowHeight / 2 ? .before : .after }
+        if y < 8 { return .before }
+        if y > Chrome.rowHeight - 8 { return .after }
+        return .inside
+    }
+
+    func validateDrop(info: DropInfo) -> Bool { !model.draggedBlocks.isEmpty }
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        zone = zone(at: info.location.y)
+        return DropProposal(operation: .move)
+    }
+    func dropExited(info: DropInfo) { zone = nil }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let z = zone(at: info.location.y)
+        zone = nil
+        let store = model.store
+        let ids = model.draggedBlocks.filter { $0 != page.id && !store.isDescendant(page.id, of: $0) }
+        model.draggedBlocks = []
+        guard !ids.isEmpty else { return false }
+        switch z {
+        case .inside:
+            if ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
+                for id in ids { store.movePage(id, to: .block(page.id)) }
+            } else {
+                store.moveBlocks(ids, to: .block(page.id), at: .end)
+            }
+            model.expanded.insert(page.id)
+        case .before, .after:
+            if case .database = page.parent { return false }
+            store.moveBlocks(ids, to: page.parent, at: z == .before ? .before(page.id) : .after(page.id))
+        }
+        return true
+    }
+}
+
+// MARK: - Top bars
+
+/// Notion's page top bar: breadcrumb, "Edited …", Share, AI, favourite and the "•••" menu.
+struct PageTopBar: View {
+    let page: Block
+    let editor: EditorController
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        HStack(spacing: 2) {
+            PageBreadcrumb(pageID: page.id)
+            Spacer(minLength: 8)
+            ViewThatFits(in: .horizontal) {
+                Text("Edited \(page.updatedAt.formatted(.relative(presentation: .named)))")
+                    .font(.system(size: 13)).foregroundStyle(Chrome.sectionText).lineLimit(1).padding(.trailing, 6)
+                Color.clear.frame(width: 0, height: 0)
+            }
+            Menu {
+                Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + page.id) }
+                Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
+            } label: {
+                Text("Share").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.primary)
+                    .padding(.horizontal, 8).frame(height: 28)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityIdentifier("page.share")
+            ChromeIconButton(symbol: "sparkles", size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
+                .accessibilityIdentifier("toolbar.chat")
+            FavoriteButton(pageID: page.id)
+                .buttonStyle(.plain)
+                .font(.system(size: 15))
+                .foregroundStyle(Chrome.sidebarText)
+                .frame(width: 28, height: 28)
+            PageMenu(page: page, editor: editor)
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .frame(width: 28, height: 28)
+        }
+        .padding(.leading, 12).padding(.trailing, 10)
+        .frame(height: Chrome.topBarHeight)
+        .background(Chrome.appBackground)
+        .accessibilityIdentifier("page.topbar")
+    }
+}
+
+/// "Workspace / Parent / Page" with icons; middle levels collapse to "…" when deep.
+struct PageBreadcrumb: View {
+    let pageID: RecordID
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let store = model.store
+        let chain = store.ancestors(of: pageID).filter { $0.type.isPageLike }.reversed() + [store.blocks[pageID]].compactMap { $0 }
+        let shown: [Block?] = chain.count > 4 ? [chain.first] + [nil] + chain.suffix(2).map { Optional($0) } : chain.map { Optional($0) }
+        HStack(spacing: 0) {
+            ForEach(Array(shown.enumerated()), id: \.offset) { i, b in
+                if i > 0 { Text("/").font(.system(size: 13)).foregroundStyle(Chrome.sectionText).padding(.horizontal, 2) }
+                if let b {
+                    BreadcrumbItem(page: b, isLast: i == shown.count - 1)
+                } else {
+                    Text("…").font(.system(size: 14)).foregroundStyle(Chrome.sidebarText).padding(.horizontal, 4)
+                }
+            }
+        }
+        .lineLimit(1)
+        .accessibilityIdentifier("page.breadcrumb")
+    }
+}
+
+struct BreadcrumbItem: View {
+    let page: Block
+    let isLast: Bool
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            PageIconView(icon: page.props.icon, isDatabase: page.type == .databasePage, size: 16)
+            Text(model.store.title(of: page.id).nonEmptyOr("Untitled"))
+                .font(.system(size: 14))
+                .foregroundStyle(isLast ? Theme.primary : Chrome.sidebarText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+        .padding(.horizontal, 6)
+        .frame(height: 26)
+        .frame(maxWidth: 220, alignment: .leading)
+        .fixedSize(horizontal: true, vertical: false)
+        .background(RoundedRectangle(cornerRadius: 5).fill(hover ? Chrome.hover : .clear))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { if !isLast { model.open(page.id) } }
+    }
+}
+
+/// Top bar for non-page screens (Home, Agents, Inbox, Settings…).
+struct ScreenTopBar: View {
+    let item: SidebarItem
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: item.symbol).font(.system(size: 13)).foregroundStyle(Chrome.sidebarText)
+            Text(item.title(in: model)).font(.system(size: 14)).foregroundStyle(Theme.primary).lineLimit(1)
+            Spacer(minLength: 8)
+            if case .chat = item {} else {
+                ChromeIconButton(symbol: "sparkles", size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
+                    .accessibilityIdentifier("toolbar.chat")
+            }
+        }
+        .padding(.leading, 18).padding(.trailing, 10)
+        .frame(height: Chrome.topBarHeight)
+        .background(Chrome.appBackground)
+    }
+}
+#endif

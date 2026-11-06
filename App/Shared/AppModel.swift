@@ -104,6 +104,12 @@ final class AppModel {
     var path: [RecordID] = [] { didSet { noteNavigation() } }
     /// Sidebar multi-selection (⌘/⇧-click); a single item also drives `selection`.
     var sidebarSelection: Set<SidebarItem> = [.home]
+    /// Last plain / ⌘-clicked sidebar row (start of a ⇧-click range).
+    @ObservationIgnored var sidebarAnchor: SidebarItem?
+    /// macOS: sidebar hidden (⌘\); hovering the left edge peeks it in.
+    var sidebarCollapsed = UserDefaults.standard.bool(forKey: "sidebarCollapsed") {
+        didSet { UserDefaults.standard.set(sidebarCollapsed, forKey: "sidebarCollapsed") }
+    }
     /// Browser-style tabs; `activeTabID` is the tab whose state is live in `selection` / `path`.
     var tabs: [BrowserTab] = []
     var activeTabID = UUID()
@@ -156,6 +162,11 @@ final class AppModel {
         let id = UUID()
         var ids: [RecordID]
     }
+
+    /// The item shown in the active tab (highlighted in the sidebar).
+    var currentSidebarItem: SidebarItem? { path.last.map { SidebarItem.page($0) } ?? selection }
+
+    func toggleSidebar() { sidebarCollapsed.toggle() }
 
     var currentPageID: RecordID? {
         if let last = path.last { return last }

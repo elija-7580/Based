@@ -169,6 +169,8 @@ struct DatabaseBlockView: View {
         case .calendar: CalendarLayout(ctx: ctx)
         case .timeline: TimelineLayout(ctx: ctx)
         case .chart: ChartLayout(ctx: ctx)
+        case .dashboard: DashboardLayout(ctx: ctx)
+        case .form: FormLayout(ctx: ctx)
         default: TableLayout(ctx: ctx)
         }
     }
@@ -194,7 +196,7 @@ struct DatabaseBlockView: View {
                 }
             }
             Spacer(minLength: 8)
-            toolbar(ctx)
+            if ctx.view.type != .dashboard { toolbar(ctx) }
         }
         .font(.system(size: 14))
     }
@@ -222,7 +224,7 @@ struct DatabaseBlockView: View {
                 if !ctx.locked {
                     Button("Rename", systemImage: "pencil") { viewName = v.name; renamingView = v.id }
                     Menu("Layout") {
-                        ForEach(ViewType.available, id: \.self) { t in
+                        ForEach(ViewType.available.filter { $0 != .dashboard && v.type != .dashboard }, id: \.self) { t in
                             Button(t.displayName, systemImage: t.symbol) { model.store.updateView(v.id, name: "Change layout") { $0.type = t } }
                         }
                     }

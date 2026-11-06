@@ -6,6 +6,8 @@ import BasedCore
 /// Aggregation runs in BasedCore (`ChartData`), rendering in Swift Charts.
 struct ChartLayout: View {
     let ctx: DBContext
+    /// Inside a dashboard widget: no axis caption row, height from the widget.
+    var compact = false
     @State private var hovered: String?
 
     private var config: ChartConfig { ctx.view.chart ?? ChartConfig(xPropertyID: defaultX?.id) }
@@ -22,24 +24,62 @@ struct ChartLayout: View {
     private var xTitle: String { config.xPropertyID.flatMap { ctx.db.property($0)?.name } ?? "All" }
 
     var body: some View {
+        if config.kind == .number {
+            numberView
+        } else {
+            chartBody
+        }
+    }
+
+    /// Notion "Number" chart: one big aggregate value.
+    private var numberView: some View {
+        let value = ChartData(engine: ctx.engine).number(rows: ctx.result.rows, db: ctx.db, config: config)
+        return VStack(alignment: compact ? .leading : .center, spacing: 4) {
+            Text(format(value))
+                .font(.system(size: compact ? 40 : 56, weight: .semibold))
+                .foregroundStyle(themeColor ?? Theme.primary)
+                .monospacedDigit()
+                .accessibilityIdentifier("chart.number")
+            Text(yTitle).font(.callout).foregroundStyle(Theme.secondary)
+            if let c = config.caption { Text(c).font(.caption).foregroundStyle(Theme.secondary) }
+        }
+        .frame(maxWidth: .infinity, alignment: compact ? .leading : .center)
+        .padding(.vertical, compact ? 10 : 30)
+    }
+
+    /// Single colour for bars / lines when the view has a Notion colour theme ("auto" / "colorful" keep per-category colours).
+    private var lineColor: Color { themeColor ?? Color.accentColor }
+
+    private var themeColor: Color? {
+        switch config.colorTheme {
+        case nil, "auto"?, "colorful"?: return nil
+        case "teal"?: return Color(Theme.dynamic(light: 0x2A9D8F, dark: 0x4FB3A7))
+        case let name?: return TColor(rawValue: name).map { Theme.color($0) }
+        }
+    }
+
+    private var chartBody: some View {
         let pts = points
-        VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 8) {
             if pts.isEmpty {
                 ContentUnavailableView("Nothing to chart", systemImage: "chart.bar", description: Text("Add rows, or pick an x‑axis property in the view settings."))
                     .frame(height: 220)
             } else {
                 chart(pts)
-                    .frame(height: 280)
+                    .frame(height: compact ? min(CGFloat(config.heightPoints), 300) : CGFloat(config.heightPoints))
                     .padding(.horizontal, 8)
                     .accessibilityIdentifier("chart.canvas")
-                HStack {
+                if let c = config.caption {
+                    Text(c).font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, 8)
+                }
+                if !compact { HStack {
                     Text("\(xTitle) · \(yTitle)").font(.caption).foregroundStyle(Theme.secondary)
                     Spacer()
                     if let h = hovered, let p = pts.first(where: { $0.key == h }) {
                         Text("\(p.label): \(format(p.value))").font(.caption.monospacedDigit())
                     }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 8) }
             }
         }
         .padding(.vertical, 6)
@@ -72,20 +112,22 @@ struct ChartLayout: View {
             Chart(pts) { p in
                 if config.kind == .area {
                     AreaMark(x: .value(xTitle, p.label), y: .value(yTitle, p.value))
-                        .foregroundStyle(LinearGradient(colors: [Color.accentColor.opacity(0.35), Color.accentColor.opacity(0.02)], startPoint: .top, endPoint: .bottom))
+                        .foregroundStyle(LinearGradient(colors: [lineColor.opacity(0.35), lineColor.opacity(0.02)], startPoint: .top, endPoint: .bottom))
                         .interpolationMethod(.catmullRom)
                 }
                 LineMark(x: .value(xTitle, p.label), y: .value(yTitle, p.value))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(lineColor)
                     .interpolationMethod(.catmullRom)
                     .lineStyle(StrokeStyle(lineWidth: 2))
                 PointMark(x: .value(xTitle, p.label), y: .value(yTitle, p.value))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(lineColor)
                     .symbolSize(hovered == p.key ? 90 : 30)
                     .annotation(position: .top) { if config.showValues { Text(format(p.value)).font(.caption2).foregroundStyle(Theme.secondary) } }
             }
             .chartXScale(domain: pts.map(\.label))
             .chartOverlay { proxy in hoverOverlay(proxy, pts, horizontal: false) }
+        case .number:
+            EmptyView()
         case .pie, .donut:
             HStack(alignment: .center, spacing: 16) {
                 Chart(pts) { p in
@@ -140,6 +182,7 @@ struct ChartLayout: View {
     }
 
     private func color(_ p: ChartPoint) -> Color {
+        if let t = themeColor { return t }
         if let c = p.color, c != .default { return Theme.color(c) }
         let stable = p.key.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0x7fffffff }
         return Theme.chartPalette[stable % Theme.chartPalette.count]

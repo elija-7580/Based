@@ -8,6 +8,8 @@ struct PageScreen: View {
     @Environment(AppModel.self) private var model
     @State private var editor: EditorController
     @FocusState private var keyFocus: Bool
+    /// Width of the scroll area (Notion: 708 pt text column with 96 pt side padding, less in narrow windows).
+    @State private var availableWidth: CGFloat = 1000
 
     init(pageID: RecordID, model: AppModel, isPeek: Bool = false) {
         self.pageID = pageID
@@ -31,6 +33,9 @@ struct PageScreen: View {
         let format = page.props.format
         let fullWidth = format?.fullWidth == true || page.type == .databasePage
         VStack(spacing: 0) {
+            #if os(macOS)
+            if !isPeek { PageTopBar(page: page, editor: editor) }
+            #endif
             if model.store.isTrashed(pageID) { TrashBanner(pageID: pageID) }
             if page.props.isTemplate == true { TemplateBanner(page: page) }
             ScrollViewReader { scroll in
@@ -59,6 +64,11 @@ struct PageScreen: View {
                 .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
                 .frame(maxWidth: .infinity)
             }
+            .background(GeometryReader { g in
+                Color.clear
+                    .onAppear { availableWidth = g.size.width }
+                    .onChange(of: g.size.width) { _, w in availableWidth = w }
+            })
             .overlay(alignment: .topTrailing) {
                 if page.type != .databasePage, format?.hideOutline != true, !model.showFind { PageOutline(pageID: pageID, scroll: scroll) }
             }
@@ -104,6 +114,7 @@ struct PageScreen: View {
         .sheet(item: $ed.picker) { purpose in
             PagePicker(purpose: purpose) { editor.picker = nil }
         }
+        #if os(iOS)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 if !isPeek {
@@ -112,7 +123,6 @@ struct PageScreen: View {
                 }
             }
         }
-        #if os(iOS)
         .navigationTitle(isPeek ? "" : model.store.title(of: pageID))
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -126,7 +136,8 @@ struct PageScreen: View {
 
     private var horizontalPadding: CGFloat {
         #if os(macOS)
-        return isPeek ? 52 : 72
+        if isPeek { return max(24, min(52, (availableWidth - Theme.contentWidth) / 2)) }
+        return max(24, min(96, (availableWidth - Theme.contentWidth) / 2))
         #else
         return 20
         #endif

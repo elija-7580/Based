@@ -26,6 +26,72 @@ final class ChartAndCacheTests: XCTestCase {
         return Fixture(store: s, dbID: c.databaseID, viewID: c.viewID, status: status, amount: amount, due: due, open: open, done: done)
     }
 
+    func testNumberChart() {
+        let f = fixture()
+        let engine = QueryEngine(store: f.store)
+        let rows = engine.run(f.store.views[f.viewID]!).rows
+        let data = ChartData(engine: engine)
+        XCTAssertEqual(data.number(rows: rows, db: f.store.databases[f.dbID]!, config: ChartConfig(kind: .number)), 6)
+        XCTAssertEqual(data.number(rows: rows, db: f.store.databases[f.dbID]!, config: ChartConfig(kind: .number, yPropertyID: f.amount, aggregate: .sum)), 210)
+        XCTAssertEqual(ChartConfig(kind: .number).heightPoints, 280)
+    }
+
+    func testDashboardLayoutOps() {
+        var c = DashboardConfig()
+        c.insert("a", rowIndex: nil, newRow: true)
+        c.insert("b", rowIndex: 0, newRow: false)
+        c.insert("c", rowIndex: 0, newRow: false)
+        XCTAssertEqual(c.rows.count, 1)
+        XCTAssertEqual(c.rows[0].widgets.map(\.width), [4, 4, 4])
+        c.insert("d", rowIndex: 0, newRow: false)
+        c.insert("e", rowIndex: 0, newRow: false)   // row full (4) → new row
+        XCTAssertEqual(c.rows.map { $0.widgets.map(\.viewID) }, [["a", "b", "c", "d"], ["e"]])
+        c.setWidth(viewID: "a", 5)
+        XCTAssertEqual(c.rows[0].widgets.map(\.width), [5, 1, 3, 3])
+        c.remove(viewID: "b")
+        XCTAssertEqual(c.rows[0].widgets.map(\.width), [4, 4, 4])
+        c.move(viewID: "e", toRow: 0, index: 0)
+        XCTAssertEqual(c.rows.map { $0.widgets.map(\.viewID) }, [["e", "a", "c", "d"]], "empty row removed")
+        c.move(viewID: "d", toRow: 1, newRow: true)
+        XCTAssertEqual(c.rows.map { $0.widgets.map(\.viewID) }, [["e", "a", "c"], ["d"]])
+        XCTAssertEqual(c.widgetViewIDs, ["e", "a", "c", "d"])
+    }
+
+    func testDashboardStoreOps() throws {
+        let f = fixture()
+        let s = f.store
+        let block = s.views[f.viewID]!.blockID
+        let dashID = try XCTUnwrap(s.addView(to: block, type: .dashboard))
+        let dash = try XCTUnwrap(s.views[dashID])
+        XCTAssertEqual(dash.type, .dashboard)
+        XCTAssertEqual(s.views(forBlock: block).map(\.type), [.table, .dashboard], "widgets aren't tabs")
+        let widgets = dash.dashboard!.widgetViewIDs
+        XCTAssertEqual(widgets.count, 3)
+        XCTAssertEqual(s.views[widgets[0]]?.chart?.kind, .number)
+        let x = try XCTUnwrap(s.views[widgets[1]]?.chart?.xPropertyID)
+        XCTAssertTrue([.status, .select].contains(s.databases[f.dbID]?.property(x)?.type))
+        XCTAssertTrue(widgets.allSatisfy { s.views[$0]?.widgetOf == dashID })
+
+        // A widget over another database
+        let other = s.createDatabase(title: RichText("Other"), in: .workspace, inline: false, sampleRows: 0)
+        let w = try XCTUnwrap(s.addDashboardWidget(dashID, type: .board, databaseID: other.databaseID, rowIndex: 1, newRow: false))
+        XCTAssertEqual(s.views[w]?.databaseID, other.databaseID)
+        XCTAssertEqual(s.views[dashID]?.dashboard?.rows[1].widgets.count, 2)
+        s.setDashboardWidgetWidth(dashID, widget: w, width: 4)
+        XCTAssertEqual(s.views[dashID]?.dashboard?.rows[1].widgets.map(\.width), [8, 4])
+        s.deleteView(w)   // deleting a widget view removes it from the layout
+        XCTAssertNil(s.views[w])
+        XCTAssertEqual(s.views[dashID]?.dashboard?.rows[1].widgets.map(\.width), [12])
+        XCTAssertNil(s.addDashboardWidget(dashID, type: .dashboard), "no nested dashboards")
+
+        s.deleteView(dashID)
+        XCTAssertNil(s.views[dashID])
+        XCTAssertTrue(widgets.allSatisfy { s.views[$0] == nil }, "widgets go with their dashboard")
+        s.undo()
+        XCTAssertNotNil(s.views[dashID])
+        XCTAssertEqual(s.views(forBlock: block).count, 2)
+    }
+
     func testChartCountBySelect() {
         let f = fixture()
         let db = f.store.databases[f.dbID]!

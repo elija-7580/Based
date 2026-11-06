@@ -12,10 +12,12 @@ final class NotionImportRun {
     var summary: String?
     var error: String?
     var rootID: RecordID?
+    /// Plain-text diagnostic report (no token / content) for "Copy diagnostic report".
+    var report: String?
     @ObservationIgnored private var task: Task<Void, Never>?
 
     func start(token: String, targets: [NotionTarget], options: NotionImportOptions, store: WorkspaceStore, assets: AssetStore) {
-        running = true; summary = nil; error = nil; rootID = nil
+        running = true; summary = nil; error = nil; rootID = nil; report = nil
         progress = 0; message = "Connecting to Notion…"
         Log.notice("notion api import: \(targets.isEmpty ? "everything shared" : "\(targets.count) link(s)")", category: "import")
         let imp = NotionWorkspaceImport(token: token, options: options)
@@ -30,8 +32,13 @@ final class NotionImportRun {
             do {
                 let r = try await imp.run(targets, into: store, assets: assets)
                 self?.finish(r)
+                let rep = await imp.diagnosticReport(targets: targets, error: nil, warnings: r.warnings)
+                self?.report = rep
             } catch {
                 self?.fail(error)
+                let rep = await imp.diagnosticReport(targets: targets, error: error, warnings: [])
+                Log.error(rep, category: "import")
+                self?.report = rep
             }
         }
     }
@@ -78,6 +85,19 @@ struct NotionImportSheet: View {
     @State private var run = NotionImportRun()
 
     private var targets: [NotionTarget] { NotionTarget.parseList(links) }
+    /// What to do about the most common failures.
+    private func hint(for error: String) -> String {
+        let e = error.lowercased()
+        if e.contains("token") || e.contains("unauthorized") { return "Check the token at notion.so/profile/integrations (Internal integration secret, starts with ntn_ or secret_)." }
+        if e.contains("not found") || e.contains("object_not_found") || e.contains("not shared") {
+            return "Open the page in Notion → ••• → Connections → add your integration. Sub-pages inherit access; linked databases need their own connection."
+        }
+        if e.contains("restricted") || e.contains("lacks access") { return "Give the integration “Read content” capability (integration settings → Capabilities)." }
+        if e.contains("429") || e.contains("rate") { return "Notion is rate-limiting; wait a minute and import again — already imported pages are updated in place." }
+        if e.contains("offline") || e.contains("network") || e.contains("internet") { return "No connection to api.notion.com." }
+        return "Use “Copy diagnostic report” and send it along with a screenshot."
+    }
+
     private var canStart: Bool { !token.isEmpty && !run.running && (everything || !targets.isEmpty) }
 
     var body: some View {
@@ -161,9 +181,17 @@ struct NotionImportSheet: View {
                 }
                 if let e = run.error {
                     Text(e).font(.caption).foregroundStyle(.red).textSelection(.enabled)
+                    Text(hint(for: e)).font(.caption).foregroundStyle(Theme.secondary)
                 }
                 if let s = run.summary {
                     Text(s).font(.caption).textSelection(.enabled)
+                }
+                if let rep = run.report, !run.running {
+                    Button("Copy diagnostic report", systemImage: "doc.on.doc") { Clipboard.copy(rep) }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                        .help("Copies API version, the failed request and all warnings (no token, no page content) — paste it into a bug report.")
+                        .accessibilityIdentifier("notionImport.copyReport")
                 }
 
                 HStack {

@@ -239,21 +239,23 @@ formula expressions. *Markdown & CSV* exports work too but lose formatting.
 
 ## Status
 
-The app has not yet been compiled with Apple's toolchain in this repository
-(the agent sandbox is Linux). `App/Shared` type-checks against SwiftUI API
-stubs; `App/Shared/Editor/RichTextView.swift` (AppKit/UIKit text views) was
-reviewed but not compiled. Expect a handful of fixes on the first Xcode run.
-Copy `ci/github-actions-ci.yml` to `.github/workflows/ci.yml` to get macOS +
-iOS simulator builds on every push; failures are written to the `ci-logs`
-branch so they can be fixed iteratively. Pass 8, 9 and 10 (shell, tabs,
-agent console, diagnostics, Notion import sheet) were written without the stub harness (lost in a
-sandbox reset) — syntax-checked with `swiftc -parse`, symbol references
-cross-checked by script and reviewed by hand.
+**Pass 11 found that the app had not compiled since Pass 8/9** (duplicate
+`hasTextSelection`, a `SettingsPage.workspace` redeclaration, main-actor
+`Commands` calls). These are fixed, and `ci/typecheck/run.sh` now
+type-checks all of `App/Shared` on Linux against signature stubs of SwiftUI,
+AppKit, Combine, Charts, WebKit, … (`ci/typecheck/stubs`) plus the real
+BasedCore/BasedBrain modules — current result: *typecheck OK*. The stubs
+can't prove the code builds with Apple's SDK, so expect a few fixes on the
+first Xcode run. Copy `ci/github-actions-ci.yml` to
+`.github/workflows/ci.yml` to get macOS + iOS simulator builds on every push.
 
-Tests on Linux: `make test` → BasedCore 50, BasedBrain 35 (incl. Notion
-API import against a fake API — blocks, databases, views, filters, relations,
-formulas, files, rate limiting, re-import — HTML export fidelity fixtures,
-zip import, log rotation, Claude Code stream parsing, CLI
+Honest status of every requirement: [`replica/backlog.md`](replica/backlog.md).
+
+Tests on Linux: `make test` → BasedCore 53, BasedBrain 36 (incl. Notion
+API import against a fake API — blocks, databases, views, dashboards with
+widgets from other databases, filters, relations, formulas, files, rate
+limiting, re-import — HTML export fidelity fixtures, zip import, dashboard
+layout ops, number charts, log rotation, Claude Code stream parsing, CLI
 session index, transcript parser, local MCP host, RFC 8439
 ChaCha20-Poly1305 vector, JSON-RPC framing, Happier store CRUD, chart
 aggregation, query cache, fractional index, 50k-row benchmark).

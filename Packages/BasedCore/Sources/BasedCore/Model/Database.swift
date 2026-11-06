@@ -244,12 +244,14 @@ public struct Database: Codable, Hashable, Identifiable, Sendable {
 // MARK: - Views
 
 public enum ViewType: String, Codable, CaseIterable, Sendable {
-    case table, board, list, gallery, calendar, timeline, chart, feed, map, form
+    case table, board, list, gallery, calendar, timeline, chart, feed, map, form, dashboard
 
     public var displayName: String { rawValue.capitalized }
 
     /// View types implemented in this build.
-    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart]
+    public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart, .form, .dashboard]
+    /// Types a dashboard widget can have (dashboards can't be nested).
+    public static let widgetTypes: [ViewType] = [.chart, .table, .board, .list, .gallery, .calendar, .timeline]
 }
 
 public enum Combinator: String, Codable, Sendable { case and, or }
@@ -414,6 +416,11 @@ public struct DatabaseView: Codable, Hashable, Identifiable, Sendable {
     public var showIcons: Bool?
     public var loadLimit: Int?
     public var chart: ChartConfig?
+    /// Dashboard layout (rows of widgets) when `type == .dashboard`.
+    public var dashboard: DashboardConfig?
+    /// Set on widget views: the dashboard view that shows them. Widget views aren't listed in the block's view
+    /// tabs and may show another database (`databaseID`).
+    public var widgetOf: RecordID?
     public var sortKey: String
     public var createdAt: Date
     public var updatedAt: Date

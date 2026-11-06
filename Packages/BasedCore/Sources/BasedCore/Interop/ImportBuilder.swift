@@ -177,7 +177,7 @@ public final class ImportBuilder: @unchecked Sendable {
         views.append(v)
     }
 
-    public func views(forBlock id: RecordID) -> [DatabaseView] { views.filter { $0.blockID == id } }
+    public func views(forBlock id: RecordID) -> [DatabaseView] { views.filter { $0.blockID == id && $0.widgetOf == nil } }
 
     // MARK: Assets
 

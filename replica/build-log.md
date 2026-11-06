@@ -172,3 +172,31 @@
   generic HTML kept, ids), BasedBrain 35 (fake Notion API: full import incl.
   views / filters evaluated by the query engine, live formula + rollup
   values, files, 429 retry, re-import, search mode, link parsing, 401).
+
+## Pass 11 — compile fixes, Notion chrome, dashboards, forms, import diagnostics
+
+- **Compile errors since Pass 8/9 fixed** (duplicate `hasTextSelection` in `EditorCommands`, `SettingsPage`
+  static/case clash, `BasedCommands` main-actor calls, `ChatComposer` expression too complex). New
+  `ci/typecheck/` harness: preprocesses `App/Shared` (os(macOS) → true, @objc / #selector stripped) and
+  type-checks it on Linux against stubs of SwiftUI / AppKit / Combine / Charts / WebKit / AVKit / PDFKit /
+  SwiftTerm / MetricKit / Security / UTType and the real packages.
+- **Notion window chrome (macOS)**: `.hiddenTitleBar`, `MacShell` replaces `NavigationSplitView` — full-width
+  40 pt title bar (traffic lights re-centred, sidebar toggle with hover peek, back / forward, Notion-style
+  tabs with a white active tab, "+"), drag / double-click-zoom area; custom `NotionSidebar` (workspace menu
+  + new page, Search ⌘K, Home / Chat / Agents / Inbox badge / Agent Brain, foldable Favorites / Private /
+  Chats sections, 30 pt rows, icon → chevron on hover, "•••" + "+" on hover, "No pages inside", drag to
+  reorder (top / bottom edge) or nest (middle), ⌘ / ⇧-click multi-select, Delete, Esc, auto-reveal of the
+  open page, Settings / Import / Trash), resizable 200–480 pt, ⌘\ collapses; `PageTopBar` (breadcrumb
+  with icons, "Edited …", Share menu, AI, favourite, •••) and `ScreenTopBar` replace the window toolbar.
+  Text column 708 pt with up to 96 pt padding (shrinks in narrow windows), headings semibold.
+- **Dashboards**: `ViewType.dashboard`, `DashboardConfig` (rows of ≤ 4 widgets on 12 columns, row heights),
+  widget views (`widgetOf`, may show another database, not listed as tabs), store ops (add with defaults,
+  add / remove / resize / move widgets, cascade delete, undo), `DashboardLayout` UI (cards, "•••": rename,
+  layout, chart type, data source, width, move, duplicate, remove; "+" per row; "Add widget" incl. other
+  databases). Notion API: dashboards mapped with their widgets (missing widget views fetched, widget
+  databases followed). Charts: `number` kind, caption, colour theme, height presets.
+- **Form view**: questions from visible properties, submit adds a row; Notion forms import as forms.
+- **Import diagnostics**: API errors name the failed request (`[GET /v1/… , code]`), "Copy diagnostic
+  report" (version, options, requests, last failure, warnings — no token / content) and fix hints in the
+  import sheet; per-view read failures become warnings.
+- `replica/backlog.md`: every requirement with honest status.

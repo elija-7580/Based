@@ -26,7 +26,8 @@ struct BasedApp: App {
         #if os(macOS)
         .defaultSize(width: 1240, height: 820)
         .windowResizability(.contentMinSize)
-        .windowToolbarStyle(.unified(showsTitle: true))
+        // Notion-style chrome: content runs under the (hidden) title bar; MacTitleBar draws tabs + controls.
+        .windowStyle(.hiddenTitleBar)
         #endif
         .commands { BasedCommands(model: model) }
         #if os(macOS)
@@ -140,7 +141,7 @@ struct BasedCommands: Commands {
             .keyboardShortcut("k")
             Button("Open Parent Page") { model.openParent() }.keyboardShortcut("u", modifiers: [.command, .shift])
             #if os(macOS)
-            Button("Toggle Sidebar") { NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil) }.keyboardShortcut("\\")
+            Button(model.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar") { model.toggleSidebar() }.keyboardShortcut("\\")
             #endif
             Button("Back") { model.goBack() }.keyboardShortcut("[").disabled(!model.canGoBack)
             Button("Forward") { model.goForward() }.keyboardShortcut("]").disabled(!model.canGoForward)

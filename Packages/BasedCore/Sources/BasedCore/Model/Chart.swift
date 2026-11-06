@@ -3,9 +3,10 @@ import Foundation
 /// Configuration of a chart view (Notion "Chart" layout).
 public struct ChartConfig: Codable, Hashable, Sendable {
     public enum Kind: String, Codable, CaseIterable, Sendable {
-        case bar, horizontalBar, line, area, pie, donut
+        case bar, horizontalBar, line, area, pie, donut, number
         public var displayName: String {
             switch self {
+            case .number: return "Number"
             case .bar: return "Vertical bar"
             case .horizontalBar: return "Horizontal bar"
             case .line: return "Line"
@@ -34,6 +35,22 @@ public struct ChartConfig: Codable, Hashable, Sendable {
     public var showValues: Bool
     public var sortByValue: Bool
     public var limit: Int?
+    /// Text shown under the chart (Notion `caption`).
+    public var caption: String?
+    /// Notion colour theme: gray, blue, yellow, green, purple, teal, orange, pink, red, auto, colorful.
+    public var colorTheme: String?
+    /// small / medium / large / extra_large.
+    public var height: String?
+
+    /// Chart height in points for Notion's height presets.
+    public var heightPoints: Double {
+        switch height {
+        case "small"?: return 200
+        case "large"?: return 400
+        case "extra_large"?: return 520
+        default: return 280
+        }
+    }
 
     public init(kind: Kind = .bar, xPropertyID: String? = nil, yPropertyID: String? = nil, aggregate: Aggregate = .count,
                 dateBucket: DateBucket = .month, showLegend: Bool = true, showValues: Bool = true, sortByValue: Bool = false, limit: Int? = nil) {
@@ -96,6 +113,13 @@ public struct ChartData {
             pts = Array(pts.prefix(limit)) + [ChartPoint(key: "__other", label: "Other", value: rest, color: .gray)]
         }
         return pts
+    }
+
+    /// Single value for "Number" charts: the aggregate over all rows (count when no y property).
+    public func number(rows: [Block], db: Database, config: ChartConfig) -> Double {
+        guard let yProp = config.yPropertyID.flatMap({ db.property($0) }) else { return Double(rows.count) }
+        let xs = rows.compactMap { engine.value($0, yProp, db).number }
+        return reduce(xs, config.aggregate, countRows: false)
     }
 
     private struct Bucket { var key: String; var label: String; var color: TColor?; var date: Date? }
@@ -165,6 +189,109 @@ public struct ChartData {
         case .median:
             let s = xs.sorted(); let m = s.count / 2
             return s.count % 2 == 0 ? (s[m - 1] + s[m]) / 2 : s[m]
+        }
+    }
+}
+
+/// Notion dashboard layout: rows (max. 4 widgets each) on a 12-column grid. Each widget shows a view.
+public struct DashboardConfig: Codable, Hashable, Sendable {
+    public struct Widget: Codable, Hashable, Sendable, Identifiable {
+        public var id: String
+        public var viewID: RecordID
+        /// Columns out of 12.
+        public var width: Int
+        public init(id: String = RecordIDs.make(), viewID: RecordID, width: Int = 12) {
+            self.id = id; self.viewID = viewID; self.width = width
+        }
+    }
+    public struct Row: Codable, Hashable, Sendable, Identifiable {
+        public var id: String
+        public var widgets: [Widget]
+        /// Fixed row height in points (nil = automatic).
+        public var height: Double?
+        public init(id: String = RecordIDs.make(), widgets: [Widget], height: Double? = nil) {
+            self.id = id; self.widgets = widgets; self.height = height
+        }
+    }
+    public static let columns = 12
+    public static let maxWidgetsPerRow = 4
+
+    public var rows: [Row]
+    public init(rows: [Row] = []) { self.rows = rows }
+
+    public var widgetViewIDs: [RecordID] { rows.flatMap { $0.widgets.map(\.viewID) } }
+
+    /// Splits 12 columns evenly (remainder to the first widgets).
+    public static func evenWidths(_ n: Int) -> [Int] {
+        guard n > 0 else { return [] }
+        let base = columns / n, extra = columns % n
+        return (0..<n).map { base + ($0 < extra ? 1 : 0) }
+    }
+
+    /// Adds a widget in a new row (`rowIndex` nil or ≥ count / row full) or next to the widgets of `rowIndex`.
+    public mutating func insert(_ viewID: RecordID, rowIndex: Int?, newRow: Bool) {
+        if !newRow, let r = rowIndex, rows.indices.contains(r), rows[r].widgets.count < Self.maxWidgetsPerRow {
+            rows[r].widgets.append(Widget(viewID: viewID))
+            let w = Self.evenWidths(rows[r].widgets.count)
+            for i in rows[r].widgets.indices { rows[r].widgets[i].width = w[i] }
+        } else {
+            let row = Row(widgets: [Widget(viewID: viewID, width: Self.columns)])
+            // newRow: insert at rowIndex; a full existing row: put the new row right below it.
+            let at = rowIndex.map { newRow ? $0 : $0 + 1 }
+            if let r = at, r >= 0, r <= rows.count { rows.insert(row, at: r) } else { rows.append(row) }
+        }
+    }
+
+    /// Removes a widget; its row's remaining widgets share the freed columns, empty rows disappear.
+    public mutating func remove(viewID: RecordID) {
+        for r in rows.indices.reversed() {
+            guard let i = rows[r].widgets.firstIndex(where: { $0.viewID == viewID }) else { continue }
+            rows[r].widgets.remove(at: i)
+            if rows[r].widgets.isEmpty { rows.remove(at: r); continue }
+            let w = Self.evenWidths(rows[r].widgets.count)
+            for j in rows[r].widgets.indices { rows[r].widgets[j].width = w[j] }
+        }
+    }
+
+    /// Sets a widget's width (1…12); the neighbour to its right (or left) absorbs the difference so the row
+    /// keeps filling 12 columns.
+    public mutating func setWidth(viewID: RecordID, _ width: Int) {
+        for r in rows.indices {
+            guard let i = rows[r].widgets.firstIndex(where: { $0.viewID == viewID }) else { continue }
+            let n = rows[r].widgets.count
+            if n == 1 { rows[r].widgets[i].width = Self.columns; return }
+            let j = i + 1 < n ? i + 1 : i - 1
+            let pair = rows[r].widgets[i].width + rows[r].widgets[j].width
+            let w = min(max(1, width), pair - 1)
+            rows[r].widgets[i].width = w
+            rows[r].widgets[j].width = pair - w
+            return
+        }
+    }
+
+    /// Moves a widget into row `toRow` at `index` (or into a new row at `toRow` when `newRow`).
+    public mutating func move(viewID: RecordID, toRow: Int, index: Int? = nil, newRow: Bool = false) {
+        guard let from = rows.firstIndex(where: { $0.widgets.contains { $0.viewID == viewID } }) else { return }
+        let target = rows[from].id
+        let destID = rows.indices.contains(toRow) ? rows[toRow].id : nil
+        if !newRow, destID == target, let i = index {
+            var ws = rows[from].widgets
+            guard let cur = ws.firstIndex(where: { $0.viewID == viewID }) else { return }
+            let w = ws.remove(at: cur)
+            ws.insert(w, at: min(max(0, i > cur ? i - 1 : i), ws.count))
+            rows[from].widgets = ws
+            return
+        }
+        if !newRow, let d = destID, let dest = rows.firstIndex(where: { $0.id == d }), rows[dest].widgets.count >= Self.maxWidgetsPerRow { return }
+        remove(viewID: viewID)
+        if newRow || destID == nil {
+            let at = min(max(0, toRow), rows.count)
+            rows.insert(Row(widgets: [Widget(viewID: viewID, width: Self.columns)]), at: at)
+        } else if let d = destID, let dest = rows.firstIndex(where: { $0.id == d }) {
+            let at = min(max(0, index ?? rows[dest].widgets.count), rows[dest].widgets.count)
+            rows[dest].widgets.insert(Widget(viewID: viewID), at: at)
+            let w = Self.evenWidths(rows[dest].widgets.count)
+            for j in rows[dest].widgets.indices { rows[dest].widgets[j].width = w[j] }
         }
     }
 }

@@ -17,11 +17,17 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView(columnVisibility: $columns) {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
-        } detail: {
-            DetailShell()
+        Group {
+            #if os(macOS)
+            MacShell()
+            #else
+            NavigationSplitView(columnVisibility: $columns) {
+                SidebarView()
+                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
+            } detail: {
+                DetailShell()
+            }
+            #endif
         }
         .overlay {
             if model.showQuickFind {
@@ -37,7 +43,7 @@ struct RootView: View {
         }
         .auditLayout("window")
         #if os(macOS)
-        .background(WindowAccessor { model.mainWindow = $0 })
+        .background(WindowAccessor { model.mainWindow = $0; WindowChrome.configure($0) })
         #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .sheet(isPresented: $model.showNewSession) { NewSessionSheet().environment(model.brain.happier) }
@@ -224,8 +230,6 @@ struct DetailShell: View {
             let width = min(max(docked ? 300 : 260, panelWidth), maxPanel)
             HStack(spacing: 0) {
                 VStack(spacing: 0) {
-                    TabStrip()
-                    Divider()
                     DetailContent()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .overlay(alignment: .topTrailing) {
@@ -253,9 +257,7 @@ struct DetailShell: View {
             }
             .animation(.easeOut(duration: 0.18), value: panelKey)
         }
-        .toolbar { shellToolbar }
         .navigationTitle(model.currentTitle)
-        .navigationSubtitle(model.currentBreadcrumb)
         #else
         @Bindable var model = model
         NavigationStack(path: $model.path) {
@@ -313,23 +315,6 @@ struct DetailShell: View {
         Binding(get: { model.peek }, set: { v in if v == nil { model.peek = nil } })
     }
     #endif
-
-    @ToolbarContentBuilder
-    private var shellToolbar: some ToolbarContent {
-        ToolbarItemGroup(placement: .navigation) {
-            Button { model.goBack() } label: { Image(systemName: "chevron.left") }
-                .disabled(!model.canGoBack).help("Back (⌘[)").accessibilityIdentifier("toolbar.back")
-            Button { model.goForward() } label: { Image(systemName: "chevron.right") }
-                .disabled(!model.canGoForward).help("Forward (⌘])").accessibilityIdentifier("toolbar.forward")
-        }
-        ToolbarItem(placement: .primaryAction) {
-            Button { model.toggleChatPanel() } label: {
-                Image(systemName: model.showChatPanel ? "sparkles.rectangle.stack.fill" : "sparkles")
-            }
-            .help("AI chat (⌘J)")
-            .accessibilityIdentifier("toolbar.chat")
-        }
-    }
 }
 
 /// The current item's screen. On macOS everything (including sub-pages) renders here; on iOS sub-pages are
@@ -340,9 +325,19 @@ struct DetailContent: View {
 
     var body: some View {
         let item: SidebarItem = (rootOnly ? nil : model.path.last.map { SidebarItem.page($0) }) ?? model.selection ?? .home
+        #if os(macOS)
+        VStack(spacing: 0) {
+            if !item.isPage { ScreenTopBar(item: item) }
+            content(item)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .id(key(item))
+        .auditLayout("content")
+        #else
         content(item)
             .id(key(item))
             .auditLayout("content")
+        #endif
     }
 
     /// Chats share one key so "New chat" → saved chat doesn't rebuild the screen mid-conversation.

@@ -735,16 +735,25 @@ public final class NotionAPIMapper {
     /// Maps the views of `dbID` that show `ds` onto `container`; returns their ids in order.
     private func mapViews(container: String, dbID: String, ds: String, primary: Bool) -> [String] {
         let all = snap.views[dbID] ?? []
-        var vs = all.filter { NotionSnapshot.id($0["data_source_id"]) == ds || ($0["data_source_id"] == nil && primary) }
-        vs = vs.filter { $0["type"]?.string != "dashboard" }
-        if all.contains(where: { $0["type"]?.string == "dashboard" }) {
-            builder.notes.append("Dashboard views aren't supported yet; their widgets were imported as separate views.")
+        let widgets = widgetViewIDs
+        var vs = all.filter { v in
+            let vds = NotionSnapshot.id(v["data_source_id"])
+            return vds == ds || (vds == nil && primary)
         }
+        // Widget views live inside their dashboard's layout, not as tabs.
+        vs = vs.filter { v in NotionSnapshot.id(v["id"]).map { !widgets.contains($0) } ?? false }
         var ids: [String] = []
         var key: String?
         for v in vs {
             guard let vid = NotionSnapshot.id(v["id"]) else { continue }
             key = FractionalIndex.between(key, nil)
+            if v["type"]?.string == "dashboard" {
+                if let dash = mapDashboard(v, id: vid, container: container, ds: ds, sortKey: key!) {
+                    builder.addView(dash)
+                    ids.append(dash.id)
+                }
+                continue
+            }
             if let view = mapView(v, id: vid, container: container, ds: ds, sortKey: key!) {
                 builder.addView(view)
                 ids.append(view.id)
@@ -760,11 +769,75 @@ public final class NotionAPIMapper {
         return ids
     }
 
+    /// Ids of all widget views (they have `dashboard_view_id`, or a dashboard's layout lists them).
+    private var widgetIDCache: Set<String>?
+    private var widgetViewIDs: Set<String> {
+        if let c = widgetIDCache { return c }
+        var out = Set<String>()
+        for list in snap.views.values {
+            for v in list {
+                if NotionSnapshot.id(v["dashboard_view_id"]) != nil, let id = NotionSnapshot.id(v["id"]) { out.insert(id) }
+                for row in v["configuration"]?["rows"]?.array ?? [] {
+                    for w in row["widgets"]?.array ?? [] { if let id = NotionSnapshot.id(w["view_id"]) { out.insert(id) } }
+                }
+            }
+        }
+        widgetIDCache = out
+        return out
+    }
+
+    private func notionView(_ id: String) -> JSONValue? {
+        for list in snap.views.values { if let v = list.first(where: { NotionSnapshot.id($0["id"]) == id }) { return v } }
+        return nil
+    }
+
+    /// Dashboard view → rows of widgets on a 12-column grid; each widget becomes a widget view (possibly of another
+    /// imported data source).
+    private func mapDashboard(_ v: JSONValue, id: String, container: String, ds: String, sortKey: String) -> DatabaseView? {
+        var name = v["name"]?.string ?? ""
+        if name.isEmpty { name = "Dashboard" }
+        var dash = DatabaseView(id: id, databaseID: ds, blockID: container, name: name, type: .dashboard, sortKey: sortKey)
+        if let t = time(v["created_time"]) { dash.createdAt = t }
+        dash.updatedAt = time(v["last_edited_time"]) ?? dash.createdAt
+        var config = DashboardConfig()
+        for (ri, row) in (v["configuration"]?["rows"]?.array ?? []).enumerated() {
+            var widgets: [DashboardConfig.Widget] = []
+            for (wi, w) in (row["widgets"]?.array ?? []).enumerated() {
+                guard let wid = NotionSnapshot.id(w["view_id"]) else { continue }
+                guard let wjson = notionView(wid) else {
+                    builder.notes.append("Dashboard “\(name)”: a widget view wasn't returned by the API and was skipped.")
+                    continue
+                }
+                let wds = NotionSnapshot.id(wjson["data_source_id"]) ?? ds
+                guard schemas[wds] != nil else {
+                    builder.notes.append("Dashboard “\(name)”: widget “\(wjson["name"]?.string ?? wid)” shows a database that isn't shared with the integration — skipped.")
+                    continue
+                }
+                guard var wv = mapView(wjson, id: wid, container: container, ds: wds, sortKey: FractionalIndex.first) else { continue }
+                wv.widgetOf = id
+                builder.addView(wv)
+                let width = w["width"]?.number.map { Int($0) } ?? 0
+                widgets.append(DashboardConfig.Widget(id: w["id"]?.string ?? ImportIDs.derived(id, "w\(ri)-\(wi)"), viewID: wv.id,
+                                                      width: width > 0 ? min(width, DashboardConfig.columns) : 0))
+            }
+            guard !widgets.isEmpty else { continue }
+            // Missing / zero widths → share the row evenly.
+            if widgets.contains(where: { $0.width == 0 }) || widgets.reduce(0, { $0 + $1.width }) > DashboardConfig.columns {
+                let even = DashboardConfig.evenWidths(widgets.count)
+                for i in widgets.indices { widgets[i].width = even[i] }
+            }
+            config.rows.append(DashboardConfig.Row(id: row["id"]?.string ?? ImportIDs.derived(id, "row\(ri)"), widgets: widgets,
+                                                   height: row["height"]?.number))
+        }
+        dash.dashboard = config
+        return dash
+    }
+
     private func mapView(_ v: JSONValue, id: String, container: String, ds: String, sortKey: String) -> DatabaseView? {
         let ntype = v["type"]?.string ?? "table"
         let cfg = v["configuration"]
         var type = ViewType(rawValue: ntype) ?? .table
-        if !ViewType.available.contains(type) {
+        if !ViewType.available.contains(type) || type == .dashboard {
             builder.notes.append("“\(v["name"]?.string ?? ntype)” is a \(ntype) view in Notion — imported as a table.")
             type = .table
         }
@@ -840,8 +913,12 @@ public final class NotionAPIMapper {
         case "bar"?: c.kind = .horizontalBar
         case "line"?: c.kind = cfg?["hide_line_fill_area"]?.bool == false ? .area : .line
         case "donut"?: c.kind = .donut
-        default: c.kind = .bar
+        case "number"?: c.kind = .number
+        default: c.kind = .bar          // "column"
         }
+        if let t = cfg?["color_theme"]?.string { c.colorTheme = t }
+        if let h = cfg?["height"]?.string { c.height = h }
+        if let cap = cfg?["caption"]?.string, !cap.isEmpty { c.caption = cap }
         if let x = cfg?["x_axis"], !x.isNull {
             c.xPropertyID = prop(ds, ref: x["property_id"]?.string)?.id
             switch x["group_by"]?.string {

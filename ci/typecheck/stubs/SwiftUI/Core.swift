@@ -97,6 +97,7 @@ public struct GeometryProxy {
     public func bounds(of s: NamedCoordinateSpace) -> CGRect? { nil }
     public subscript<T>(anchor: Anchor<T>) -> T { fatalError() }
 }
+public struct ViewThatFits<Content: View>: _PrimitiveView { public init(in axes: Axis.Set = [.horizontal, .vertical], @ViewBuilder content: () -> Content) {} }
 public struct GeometryReader<Content: View>: _PrimitiveView { public init(@ViewBuilder content: @escaping (GeometryProxy) -> Content) {} }
 
 // MARK: Color, Font, ShapeStyle

@@ -8,26 +8,25 @@ struct TabStrip: View {
     var body: some View {
         let _ = model.registry.workspace.structureRevision   // titles / icons
         HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
-                    ForEach(model.tabs) { tab in
-                        TabButton(tab: tab, active: tab.id == model.activeTabID, closable: model.tabs.count > 1)
-                    }
-                }
-                .padding(.horizontal, 6)
+            // Tabs only scroll when they don't fit, so the free title-bar space stays draggable.
+            ViewThatFits(in: .horizontal) {
+                tabRow
+                ScrollView(.horizontal, showsIndicators: false) { tabRow }
             }
-            Button { model.newTab() } label: {
-                Image(systemName: "plus").frame(width: 26, height: 24).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Theme.secondary)
-            .help("New tab (⌘T)")
-            .accessibilityIdentifier("tabs.new")
-            .padding(.trailing, 6)
+            ChromeIconButton(symbol: "plus", size: 13, help: "New tab (⌘T)") { model.newTab() }
+                .accessibilityIdentifier("tabs.new")
         }
-        .frame(height: 32)
-        .background(Color.primary.opacity(0.025))
+        .frame(height: 30)
         .accessibilityIdentifier("tabs")
+    }
+
+    private var tabRow: some View {
+        HStack(spacing: 2) {
+            ForEach(model.tabs) { tab in
+                TabButton(tab: tab, active: tab.id == model.activeTabID, closable: model.tabs.count > 1)
+            }
+        }
+        .padding(.horizontal, 2)
     }
 }
 
@@ -44,7 +43,7 @@ struct TabButton: View {
         HStack(spacing: 6) {
             icon(info.item)
             Text(info.title).lineLimit(1).truncationMode(.tail)
-                .font(.system(size: 12.5, weight: active ? .medium : .regular))
+                .font(.system(size: 13, weight: active ? .medium : .regular))
             Spacer(minLength: 0)
             if closable {
                 Button { model.closeTab(tab.id) } label: {
@@ -57,11 +56,17 @@ struct TabButton: View {
                 .help("Close tab (⌘W)")
             }
         }
-        .foregroundStyle(active ? Theme.primary : Theme.secondary)
+        .foregroundStyle(active ? Theme.primary : Chrome.sidebarText)
         .padding(.leading, 10).padding(.trailing, 6)
-        .frame(minWidth: 90, idealWidth: 180, maxWidth: 220, minHeight: 24, maxHeight: 24)
+        .frame(minWidth: 90, idealWidth: 180, maxWidth: 220, minHeight: 28, maxHeight: 28)
         .fixedSize(horizontal: true, vertical: false)
-        .background(RoundedRectangle(cornerRadius: 6).fill(active ? Color.primary.opacity(0.08) : (hover ? Color.primary.opacity(0.04) : .clear)))
+        .background {
+            // Active tab: white "card" like Notion's desktop tabs; others highlight on hover.
+            RoundedRectangle(cornerRadius: 8)
+                .fill(active ? Chrome.appBackground : (hover ? Chrome.hover : .clear))
+                .shadow(color: .black.opacity(active ? 0.08 : 0), radius: 1.5, y: 0.5)
+        }
+        .overlay { if active { RoundedRectangle(cornerRadius: 8).stroke(Chrome.border, lineWidth: 0.5) } }
         .overlay(alignment: .leading) { if dropTarget { Rectangle().fill(Color.accentColor).frame(width: 2) } }
         .contentShape(Rectangle())
         .onHover { hover = $0 }

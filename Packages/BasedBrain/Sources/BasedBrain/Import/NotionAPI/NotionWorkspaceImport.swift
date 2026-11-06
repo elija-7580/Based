@@ -23,6 +23,31 @@ public final class NotionWorkspaceImport: @unchecked Sendable {
         self.client = client
     }
 
+    /// Plain-text report for bug reports: API version, options, request count, the last failed request and the
+    /// error / warnings. Contains no token or page content.
+    public func diagnosticReport(targets: [NotionTarget], error: Error?, warnings: [String]) async -> String {
+        let requests = await client.requestCount
+        let last = await client.lastFailure
+        var lines = [
+            "Based — Notion API import report",
+            "Date: \(ISO8601DateFormatter().string(from: Date()))",
+            "Notion-Version: \(NotionClient.version)",
+            "Targets: \(targets.isEmpty ? "everything shared with the integration" : targets.map { "\($0.id.prefix(8))…" }.joined(separator: ", "))",
+            "Options: subpages=\(options.subpages) files=\(options.downloadFiles)",
+            "Requests: \(requests)",
+        ]
+        if let last { lines.append("Last failed request: \(last)") }
+        if let error {
+            lines.append("Error: \(error.localizedDescription)")
+            lines.append("Error detail: \(String(describing: error))")
+        }
+        if !warnings.isEmpty {
+            lines.append("Warnings (\(warnings.count)):")
+            lines += warnings.prefix(200).map { "  • " + $0 }
+        }
+        return lines.joined(separator: "\n")
+    }
+
     /// Fetches the targets (everything shared with the integration when empty) and maps them.
     public func fetch(_ targets: [NotionTarget]) async throws -> ImportBuilder {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("notion-api-" + UUID().uuidString, isDirectory: true)

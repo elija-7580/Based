@@ -418,6 +418,7 @@ public extension WorkspaceStore {
     @discardableResult
     func addView(to blockID: RecordID, type: ViewType, name: String? = nil) -> RecordID? {
         guard let b = blocks[blockID], let dbID = b.props.databaseID, let db = databases[dbID] else { return nil }
+        if type == .dashboard { return addDashboard(to: blockID, db: db, name: name) }
         let existing = views(forBlock: blockID)
         var v = DatabaseView(databaseID: dbID, blockID: blockID, name: name ?? type.defaultViewName, type: type,
                              sortKey: FractionalIndex.between(existing.last?.sortKey, nil))
@@ -458,10 +459,103 @@ public extension WorkspaceStore {
     }
 
     func deleteView(_ id: RecordID) {
-        guard let v = views[id], views(forBlock: v.blockID).count > 1 else { return }
+        guard let v = views[id] else { return }
+        if let dash = v.widgetOf { removeDashboardWidget(dash, widget: id); return }
+        guard views(forBlock: v.blockID).count > 1 else { return }
+        let widgets = v.dashboard?.widgetViewIDs ?? []
         transact("Delete view") { tx in
             tx.remove(RecordKey(.view, id))
+            for w in widgets where views[w] != nil { tx.remove(RecordKey(.view, w)) }
             tx.update(v.blockID) { $0.props.viewIDs?.removeAll { $0 == id } }
+        }
+    }
+
+    // MARK: Dashboards
+
+    /// A widget view record (not listed in the block's view tabs) with sensible defaults for its type.
+    func makeWidgetView(dashboard: DatabaseView, type: ViewType, db: Database, name: String? = nil) -> DatabaseView {
+        var v = DatabaseView(databaseID: db.id, blockID: dashboard.blockID, name: name ?? type.defaultViewName, type: type,
+                             sortKey: FractionalIndex.first)
+        v.widgetOf = dashboard.id
+        switch type {
+        case .board:
+            v.groupBy = (db.properties.first { $0.type == .status } ?? db.properties.first { $0.type == .select }).map { GroupRule(propertyID: $0.id) }
+        case .calendar, .timeline:
+            v.datePropertyID = db.properties.first { $0.type == .date }?.id
+        case .gallery:
+            v.cardCover = .pageContent
+        case .chart:
+            let x = db.properties.first { $0.type == .status } ?? db.properties.first { $0.type == .select }
+                ?? db.properties.first { [.multiSelect, .checkbox, .date].contains($0.type) }
+            v.chart = ChartConfig(kind: x == nil ? .number : .bar, xPropertyID: x?.id)
+            if x == nil { v.name = "Total" }
+        default: break
+        }
+        return v
+    }
+
+    /// New dashboard view: a "Total" number chart next to a chart by status/select, and a table below.
+    private func addDashboard(to blockID: RecordID, db: Database, name: String?) -> RecordID? {
+        let existing = views(forBlock: blockID)
+        var dash = DatabaseView(databaseID: db.id, blockID: blockID, name: name ?? "Dashboard", type: .dashboard,
+                                sortKey: FractionalIndex.between(existing.last?.sortKey, nil))
+        var total = makeWidgetView(dashboard: dash, type: .chart, db: db, name: "Total")
+        total.chart = ChartConfig(kind: .number)
+        let chart = makeWidgetView(dashboard: dash, type: .chart, db: db, name: "By " + (db.properties.first { [.status, .select].contains($0.type) }?.name ?? "group"))
+        let table = makeWidgetView(dashboard: dash, type: .table, db: db, name: db.title.plainText.isEmpty ? "Table" : db.title.plainText)
+        var config = DashboardConfig()
+        config.insert(total.id, rowIndex: nil, newRow: true)
+        if chart.chart?.kind != .number { config.insert(chart.id, rowIndex: 0, newRow: false) }
+        config.insert(table.id, rowIndex: nil, newRow: true)
+        dash.dashboard = config
+        let d = dash, ws = chart.chart?.kind != .number ? [total, chart, table] : [total, table]
+        return transact("Add dashboard") { tx in
+            for w in ws { tx.put(w) }
+            tx.put(d)
+            tx.update(blockID) { $0.props.viewIDs = ($0.props.viewIDs ?? []) + [d.id] }
+            return d.id
+        }
+    }
+
+    /// Adds a widget showing `databaseID` (default: the dashboard's database) to a dashboard: in a new row, or next
+    /// to the widgets of row `rowIndex` (max. 4 per row).
+    @discardableResult
+    func addDashboardWidget(_ dashboardID: RecordID, type: ViewType, databaseID: RecordID? = nil,
+                            rowIndex: Int? = nil, newRow: Bool = true) -> RecordID? {
+        guard let dash = views[dashboardID], dash.type == .dashboard, ViewType.widgetTypes.contains(type),
+              let db = databases[databaseID ?? dash.databaseID] else { return nil }
+        let w = makeWidgetView(dashboard: dash, type: type, db: db)
+        return transact("Add widget") { tx in
+            tx.put(w)
+            tx.updateView(dashboardID) { v in
+                var c = v.dashboard ?? DashboardConfig()
+                c.insert(w.id, rowIndex: rowIndex, newRow: newRow)
+                v.dashboard = c
+            }
+            return w.id
+        }
+    }
+
+    func removeDashboardWidget(_ dashboardID: RecordID, widget viewID: RecordID) {
+        guard views[dashboardID] != nil else { return }
+        transact("Remove widget") { tx in
+            tx.updateView(dashboardID) { v in v.dashboard?.remove(viewID: viewID) }
+            if views[viewID] != nil { tx.remove(RecordKey(.view, viewID)) }
+        }
+    }
+
+    func setDashboardWidgetWidth(_ dashboardID: RecordID, widget viewID: RecordID, width: Int) {
+        updateView(dashboardID, name: "Resize widget") { $0.dashboard?.setWidth(viewID: viewID, width) }
+    }
+
+    func moveDashboardWidget(_ dashboardID: RecordID, widget viewID: RecordID, toRow: Int, index: Int? = nil, newRow: Bool = false) {
+        updateView(dashboardID, name: "Move widget") { $0.dashboard?.move(viewID: viewID, toRow: toRow, index: index, newRow: newRow) }
+    }
+
+    func setDashboardRowHeight(_ dashboardID: RecordID, row: String, height: Double?) {
+        updateView(dashboardID, name: "Resize row") { v in
+            guard let i = v.dashboard?.rows.firstIndex(where: { $0.id == row }) else { return }
+            v.dashboard?.rows[i].height = height
         }
     }
 
@@ -543,6 +637,7 @@ public extension ViewType {
         case .gallery: return "Gallery"
         case .calendar: return "Calendar"
         case .timeline: return "Timeline"
+        case .dashboard: return "Dashboard"
         default: return rawValue.capitalized
         }
     }

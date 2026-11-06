@@ -117,6 +117,8 @@ extension NSLayoutConstraint { public enum Orientation: Int, Sendable { case hor
     open func removeTrackingArea(_ t: NSTrackingArea) {}
     open var trackingAreas: [NSTrackingArea] { [] }
     open var isFlipped: Bool { false }
+    open var mouseDownCanMoveWindow: Bool { false }
+    open func setFrameOrigin(_ p: NSPoint) {}
     open func scrollToVisible(_ r: NSRect) -> Bool { true }
     open var visibleRect: NSRect { .zero }
     open var topAnchor: NSLayoutYAxisAnchor { .init() }
@@ -626,6 +628,14 @@ public struct NSWindowStyleMask: OptionSet, Sendable { public let rawValue: UInt
 @preconcurrency @MainActor open class NSToolbar: NSObject { open var isVisible = true; open var showsBaselineSeparator = true; open var displayMode: Int = 0 }
 @preconcurrency @MainActor open class NSButton: NSView { open var isEnabled = true; open var title = ""; open var target: AnyObject?; open var action: Selector? }
 @preconcurrency @MainActor open class NSWindow: NSResponder {
+    open func performMiniaturize(_ sender: Any?) {}
+    open func performZoom(_ sender: Any?) {}
+    open func performDrag(with event: NSEvent) {}
+    public static let didResizeNotification = Notification.Name("NSWindowDidResizeNotification")
+    public static let didEndLiveResizeNotification = Notification.Name("NSWindowDidEndLiveResizeNotification")
+    public static let didBecomeKeyNotification = Notification.Name("NSWindowDidBecomeKeyNotification")
+    public static let didResignKeyNotification = Notification.Name("NSWindowDidResignKeyNotification")
+    public static let didExitFullScreenNotification = Notification.Name("NSWindowDidExitFullScreenNotification")
     public enum TitleVisibility: Int, Sendable { case visible = 0, hidden = 1 }
     public enum ButtonType: UInt, Sendable { case closeButton, miniaturizeButton, zoomButton, toolbarButton, documentIconButton, documentVersionsButton }
     public enum TabbingMode: Int, Sendable { case automatic, preferred, disallowed }

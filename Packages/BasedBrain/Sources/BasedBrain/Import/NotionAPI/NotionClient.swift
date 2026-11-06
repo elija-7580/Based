@@ -78,6 +78,9 @@ public actor NotionClient {
         return c.url!
     }
 
+    /// Last failed request ("HTTP 404 [GET /v1/pages/…]: message") for diagnostic reports.
+    public private(set) var lastFailure: String?
+
     public func request(_ method: String, _ path: String, query: [String: String] = [:], body: JSONValue? = nil) async throws -> JSONValue {
         let headers = ["Authorization": "Bearer \(token)", "Notion-Version": Self.version, "Content-Type": "application/json"]
         let data = try body?.encoded()
@@ -109,11 +112,14 @@ public actor NotionClient {
                 nextSlot = Date().addingTimeInterval(wait)
                 continue
             }
+            // Which request failed (no token / body) — makes user-reported errors actionable.
+            let where_ = " [\(method) /v1/\(path)\(query.isEmpty ? "" : "?" + query.keys.sorted().joined(separator: "&"))\(code.isEmpty ? "" : ", " + code)]"
+            lastFailure = "HTTP \(r.status)\(where_): \(message)"
             switch r.status {
             case 401: throw NotionAPIError.unauthorized(message)
-            case 404: throw NotionAPIError.notFound(message)
-            case 403: throw NotionAPIError.restricted(message)
-            default: throw NotionAPIError.http(r.status, message)
+            case 404: throw NotionAPIError.notFound(message + where_)
+            case 403: throw NotionAPIError.restricted(message + where_)
+            default: throw NotionAPIError.http(r.status, message + where_)
             }
         }
     }

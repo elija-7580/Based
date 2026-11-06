@@ -470,7 +470,13 @@ public final class WorkspaceStore {
     func _setView(_ v: DatabaseView, _ parents: inout Set<String>) {
         let old = views[v.id]
         views[v.id] = v
-        if old?.blockID != v.blockID || old?.sortKey != v.sortKey {
+        if v.widgetOf != nil {
+            // Dashboard widgets aren't tabs of the block; they're reached through their dashboard's layout.
+            if let old { viewIndex[old.blockID]?.removeAll { $0 == old.id } }
+            parents.insert("b:" + v.blockID)
+            return
+        }
+        if old?.blockID != v.blockID || old?.sortKey != v.sortKey || old?.widgetOf != nil {
             if let old { viewIndex[old.blockID]?.removeAll { $0 == old.id } }
             var list = viewIndex[v.blockID] ?? []
             list.removeAll { $0 == v.id }

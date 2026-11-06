@@ -291,7 +291,25 @@ public final class NotionCrawler: @unchecked Sendable {
         var full: [JSONValue] = []
         for r in refs {
             guard let vid = r["id"]?.string else { continue }
-            if let v = try? await client.get("views/\(vid)") { full.append(v) }
+            do { full.append(try await client.get("views/\(vid)")) }
+            catch { o.warnings.append("View \(r["name"]?.string ?? vid) of database \(dbID) couldn't be read (\(error.localizedDescription)).") }
+        }
+        // Dashboards: make sure every widget view is loaded, and import the databases widgets show.
+        var have = Set(full.compactMap { NotionSnapshot.id($0["id"]) })
+        for v in full where v["type"]?.string == "dashboard" {
+            for row in v["configuration"]?["rows"]?.array ?? [] {
+                for w in row["widgets"]?.array ?? [] {
+                    guard let wid = NotionSnapshot.id(w["view_id"]), !have.contains(wid) else { continue }
+                    have.insert(wid)
+                    do { full.append(try await client.get("views/\(wid)")) }
+                    catch { o.warnings.append("Dashboard widget \(wid) couldn't be read (\(error.localizedDescription)).") }
+                }
+            }
+        }
+        for v in full where NotionSnapshot.id(v["dashboard_view_id"]) != nil {
+            if let other = NotionSnapshot.id(v["parent"]?["database_id"]), other != NotionSnapshot.id(.string(dbID)) {
+                o.next.append(.database(other))
+            }
         }
         o.views.append((dbID, full))
         // Manual row order comes from an unfiltered, unsorted view (preferably a table).

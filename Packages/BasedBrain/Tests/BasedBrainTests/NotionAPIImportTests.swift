@@ -340,6 +340,52 @@ final class NotionAPIImportTests: XCTestCase {
         XCTAssertEqual(store.rows(of: projDS).map(\.title), ["Website"])
     }
 
+    func testDashboardImport() async throws {
+        let f = makeFake()
+        let dash = "99999999-9999-4999-8999-000000000003", w1 = "99999999-9999-4999-8999-000000000004"
+        let w2 = "99999999-9999-4999-8999-000000000005", w3 = "99999999-9999-4999-8999-000000000006"
+        f.routes["GET views?database_id=\(tasksDB)"] = list([["object": "view", "id": .string(viewAll)], ["object": "view", "id": .string(viewBoard)],
+                                                             ["object": "view", "id": .string(dash)], ["object": "view", "id": .string(w1)]])
+        f.routes["GET views/\(dash)"] = ["object": "view", "id": .string(dash), "name": "Overview", "type": "dashboard", "data_source_id": .null,
+            "parent": ["type": "database_id", "database_id": .string(tasksDB)],
+            "configuration": ["type": "dashboard", "rows": [
+                ["id": "r1", "height": 320, "widgets": [["id": "x1", "view_id": .string(w1), "width": 4, "row_index": 0],
+                                                        ["id": "x2", "view_id": .string(w2), "width": 8, "row_index": 0]]],
+                ["id": "r2", "widgets": [["id": "x3", "view_id": .string(w3), "row_index": 1]]]]]]
+        f.routes["GET views/\(w1)"] = ["object": "view", "id": .string(w1), "name": "Total", "type": "chart", "data_source_id": .string(tasksDS),
+            "dashboard_view_id": .string(dash), "parent": ["type": "database_id", "database_id": .string(tasksDB)],
+            "configuration": ["type": "chart", "chart_type": "number", "caption": "All tasks", "color_theme": "green", "height": "small"]]
+        f.routes["GET views/\(w2)"] = ["object": "view", "id": .string(w2), "name": "Projects", "type": "table", "data_source_id": .string(projDS),
+            "dashboard_view_id": .string(dash), "parent": ["type": "database_id", "database_id": .string(projDB)]]
+        f.routes["GET views/\(w3)"] = ["object": "view", "id": .string(w3), "name": "By status", "type": "chart", "data_source_id": .string(tasksDS),
+            "dashboard_view_id": .string(dash), "parent": ["type": "database_id", "database_id": .string(tasksDB)],
+            "configuration": ["type": "chart", "chart_type": "column", "x_axis": ["type": "status", "property_id": "st%3A1", "group_by": "option"]]]
+        let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
+        let assets = FileAssetStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("nd-" + UUID().uuidString))
+        let report = try await importer(f).run([NotionTarget("https://www.notion.so/\(hub.replacingOccurrences(of: "-", with: ""))")!], into: store, assets: assets)
+        XCTAssertEqual(f.count("GET views/\(w2)"), 1, "widget views missing from the list are fetched")
+
+        let container = try XCTUnwrap(store.blocks.values.first { $0.props.databaseID == tasksDS && $0.type == .databaseInline })
+        let tabs = store.views(forBlock: container.id)
+        XCTAssertEqual(tabs.map(\.name), ["All tasks", "Board", "Overview"], "widgets aren't tabs")
+        let d = try XCTUnwrap(store.views[dash])
+        XCTAssertEqual(d.type, .dashboard)
+        let rows = try XCTUnwrap(d.dashboard?.rows)
+        XCTAssertEqual(rows.map { $0.widgets.map(\.width) }, [[4, 8], [12]])
+        XCTAssertEqual(rows.first?.height, 320)
+        XCTAssertEqual(rows.flatMap { $0.widgets.map(\.viewID) }, [w1, w2, w3])
+        let total = try XCTUnwrap(store.views[w1])
+        XCTAssertEqual(total.widgetOf, dash)
+        XCTAssertEqual(total.chart?.kind, .number)
+        XCTAssertEqual(total.chart?.caption, "All tasks")
+        XCTAssertEqual(total.chart?.colorTheme, "green")
+        XCTAssertEqual(total.chart?.height, "small")
+        XCTAssertEqual(store.views[w2]?.databaseID, projDS, "widget over another database")
+        XCTAssertEqual(store.views[w3]?.chart?.kind, .bar)
+        XCTAssertNotNil(store.views[w3]?.chart?.xPropertyID)
+        XCTAssertFalse(report.warnings.contains { $0.contains("Dashboard") }, report.warnings.joined(separator: "\n"))
+    }
+
     func testReimportUpdatesInPlace() async throws {
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         let target = [NotionTarget(hub)!]

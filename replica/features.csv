@@ -96,7 +96,7 @@ Gallery view with card preview,databases,should,yes,yes,
 Calendar view,databases,should,yes,partial,"month grid, drag to reschedule; no week view"
 Timeline view,databases,could,yes,partial,simplified bars; no dependencies
 Chart view,databases,could,yes,yes,see Chart view row (Pass 8)
-Form view,databases,could,yes,no,
+Form view,databases,could,yes,yes,Pass 11: questions from properties; submit adds a row
 Feed / map views,databases,could,yes,no,
 Multiple views per database,databases,must,yes,yes,
 Filters (and/or groups),databases,must,yes,yes,
@@ -178,7 +178,14 @@ Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcr
 CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal
 Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning"
 "Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D"
-"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views; dashboards/forms/maps → table
+"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views incl. dashboards (widgets) and forms; maps → table
 Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; removed content → trash; original timestamps and authors kept
 Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression"
 Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store
+Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import
+Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11
+Map view,databases,could,yes,no,imported as table
+Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom
+Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS)
+Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11
+Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token
