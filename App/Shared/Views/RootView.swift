@@ -41,6 +41,7 @@ struct RootView: View {
                 ImportProgressCard(progress: p)
             }
         }
+        .overlay(alignment: .bottom) { ToastHost() }
         .auditLayout("window")
         #if os(macOS)
         .background(WindowAccessor { model.mainWindow = $0; WindowChrome.configure($0) })
@@ -52,7 +53,7 @@ struct RootView: View {
         .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
         .sheet(isPresented: $model.showNotionImport) { NotionImportSheet().environment(model) }
         .sheet(item: $model.moveRequest) { req in
-            PagePicker(purpose: .move(req.ids)) { model.moveRequest = nil }.environment(model)
+            MovePicker(ids: req.ids) { model.moveRequest = nil }.environment(model)
         }
         #if os(iOS)
         .sheet(isPresented: $model.showSettings) { NavigationStack { SettingsView() }.environment(model).environment(model.brain).environment(model.brain.happier) }
@@ -365,6 +366,7 @@ struct DetailContent: View {
         case .brain: BrainDashboard()
         case .chat: ChatFullPage()
         case .diagnostics: DiagnosticsView()
+        case .library: LibraryView()
         }
     }
 }
@@ -517,56 +519,4 @@ struct HomeCard: View {
 
 // MARK: - Trash
 
-struct TrashView: View {
-    var sheet = false
-    @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    @State private var query = ""
-    @State private var confirmEmpty = false
-
-    var body: some View {
-        let _ = model.registry.workspace.structureRevision
-        let store = model.store
-        let items = store.trashedPages().filter { query.isEmpty || store.title(of: $0.id).localizedCaseInsensitiveContains(query) }
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Trash").font(.title2.bold())
-                Spacer()
-                if sheet { Button("Done") { dismiss() }.keyboardShortcut(.cancelAction) }
-            }
-            TextField("Filter by page title…", text: $query).textFieldStyle(.roundedBorder)
-            if items.isEmpty {
-                ContentUnavailableView("Trash is empty", systemImage: "trash", description: Text("Pages in Trash are deleted after 30 days."))
-            } else {
-                List {
-                    ForEach(items, id: \.id) { b in
-                        HStack {
-                            PageIconView(icon: b.props.icon, isDatabase: b.type == .databasePage, size: 16)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(store.title(of: b.id)).lineLimit(1)
-                                if let t = b.trashedAt {
-                                    Text("Deleted \(t.formatted(.relative(presentation: .named)))").font(.caption).foregroundStyle(Theme.secondary)
-                                }
-                            }
-                            Spacer()
-                            Button { store.restore([b.id]) } label: { Image(systemName: "arrow.uturn.backward") }
-                                .help("Restore")
-                            Button(role: .destructive) { store.deleteForever([b.id]) } label: { Image(systemName: "trash") }
-                                .help("Delete permanently")
-                        }
-                        .buttonStyle(.borderless)
-                        .contentShape(Rectangle())
-                        .onTapGesture { if sheet { dismiss() }; model.open(b.id) }
-                    }
-                }
-                Button("Empty Trash", role: .destructive) { confirmEmpty = true }
-                    .confirmationDialog("Permanently delete all pages in Trash?", isPresented: $confirmEmpty) {
-                        Button("Delete all", role: .destructive) { store.emptyTrash() }
-                    }
-            }
-        }
-        .padding(16)
-        .frame(minWidth: 420, minHeight: 420)
-    }
-}
 

@@ -109,8 +109,10 @@ public extension WorkspaceStore {
 
     func icon(of id: RecordID) -> PageIcon? { blocks[id]?.props.icon }
 
+    /// Top-level pages and databases in sidebar order. Never lists a record twice, even if the index did.
     func topLevelPages() -> [Block] {
-        childBlocks(of: .workspace).filter { $0.trashedAt == nil && $0.type.isPageLike }
+        var seen = Set<RecordID>()
+        return childBlocks(of: .workspace).filter { $0.trashedAt == nil && $0.type.isPageLike && seen.insert($0.id).inserted }
     }
 
     /// Pages and databases nested in a page's content (any depth, not crossing into other pages).
@@ -137,25 +139,8 @@ public extension WorkspaceStore {
         }
     }
 
-    /// Restore from trash. Pages whose parent no longer exists move to the top level.
-    func restore(_ ids: [RecordID]) {
-        transact("Restore") { tx in
-            for id in ids {
-                guard let b = tx.block(id) else { continue }
-                var parentGone = false
-                switch b.parent {
-                case .workspace: break
-                case .block(let pid): parentGone = blocks[pid] == nil
-                case .database(let did): parentGone = databases[did] == nil
-                }
-                let key = parentGone ? tx.sortKey(in: .workspace, .end) : b.sortKey
-                tx.update(id) { blk in
-                    blk.trashedAt = nil
-                    if parentGone { blk.parent = .workspace; blk.sortKey = key }
-                }
-            }
-        }
-    }
+    /// Restore from trash (see `restorePages`: orphaned pages move to the top level).
+    func restore(_ ids: [RecordID]) { restorePages(ids) }
 
     func deleteForever(_ ids: [RecordID]) {
         transact("Delete forever") { tx in

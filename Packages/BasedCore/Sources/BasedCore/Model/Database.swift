@@ -455,6 +455,9 @@ public struct Workspace: Codable, Hashable, Identifiable, Sendable {
     public var name: String
     public var icon: PageIcon?
     public var favorites: [RecordID]
+    /// Teamspaces shown as their own sidebar sections (nil = none). Top-level pages join one through
+    /// `BlockProps.teamspace`; everything else at the top level is Private.
+    public var teamspaces: [Teamspace]?
     public var createdAt: Date
     public var updatedAt: Date
     public var stamp: Stamp
@@ -464,6 +467,18 @@ public struct Workspace: Codable, Hashable, Identifiable, Sendable {
     public init(id: RecordID = Workspace.mainID, name: String = "My Workspace") {
         self.id = id; self.name = name; self.favorites = []
         self.createdAt = Date(); self.updatedAt = createdAt; self.stamp = .zero
+    }
+}
+
+/// A named group of top-level pages (Notion's teamspace). Single-user: purely organisational.
+public struct Teamspace: Codable, Hashable, Identifiable, Sendable {
+    public var id: RecordID
+    public var name: String
+    public var icon: PageIcon?
+    public var createdAt: Date
+
+    public init(id: RecordID = RecordIDs.make(), name: String, icon: PageIcon? = nil, createdAt: Date = Date()) {
+        self.id = id; self.name = name; self.icon = icon; self.createdAt = createdAt
     }
 }
 

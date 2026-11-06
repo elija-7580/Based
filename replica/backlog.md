@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 14. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 15. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -29,6 +29,10 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | Outline rechts | ✅ | `PageOutline` |
 | Mehrere Seiten auswählen (⌘/⇧-Klick, Bulk-Aktionen) | ✅ | Pass 11 in der neuen Sidebar neu umgesetzt |
 | Gute Sidebar (Hover-Chevrons, „…" & „+", Drag zum Sortieren/Verschachteln, Breite ziehen, ⌘\\ einklappen + Hover-Peek) | ✅ | Pass 11 |
+| Sidebar wie Notion (28-pt-Zeilen, 14 pt, Favorites / Teamspaces / Private, Footer Library · Trash · Settings, Inline-Umbenennen, Kontextmenü) | 🟡 | Pass 15; Type-Check OK, UI-Tests + Screenshots geschrieben (`SidebarLibraryUITests`), auf dem Mac noch nicht gelaufen. „Shared" fehlt bewusst (kein Teilen-Modell) |
+| Löschen → Papierkorb mit Undo-Toast, Wiederherstellen, endgültig löschen (mit Bestätigung), Unterseiten gehen mit | ✅ | Pass 15; Store-Flows per Swift-Testing-Test geprüft, UI-Flow nur als XCUITest geschrieben |
+| Library (alle Seiten/Datenbanken/Zeilen/Memories/Skills, Suche, Filter, Sortierung, Mehrfachauswahl, Bulk-Aktionen) | 🟡 | Pass 15; Filter/Sortierung getestet, UI auf dem Mac ungeprüft |
+| Teamspaces | 🟡 | Pass 15: eigene Teamspaces anlegen/umbenennen/löschen (Seiten → Private); Notion-Import ordnet nicht automatisch zu (API liefert keine Teamspace-ID) |
 | Tabs, ⌘K-Suche, ⌘N-Palette, ⌘F | ✅ | |
 
 ## Datenbanken
@@ -86,6 +90,7 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 | „Logs kopieren"-Button | ✅ Pass 13: Diagnostics → *Copy logs* (Bericht / gezeigte Einträge / alle Log-Dateien), Hilfe → *Copy Diagnostic Report*, Button im Absturz-Hinweis, *Copy line* pro Zeile, Kopieren pro Hänger |
 | Hänger mit Ort (Stacktrace) | 🟡 Pass 13: Hauptthread-Stack wird während des Hängers gesampelt (Mach, ohne Signale) und symbolisiert; Mach-Teil nur gegen nachgebaute Header geprüft — braucht einen echten Hänger auf dem Mac |
 | Falscher Absturz-Alarm nach Xcode-Stopp | ✅ Pass 13: Debugger-Flag im Marker → nur Notiz statt Alert |
+| Doppelte Sidebar-Einträge („Teamspace Home" ×5, „AI Conversation Log" ×2) | 🟡 Pass 15: Ursache für „Teamspace Home" belegt (6 echte Seiten aus 6 Notion-Teamspaces, API liefert keine Teamspace-Zuordnung) → Teamspaces + Library-Filter „Same title"; „AI Conversation Log" in Notion nicht auffindbar, mögliche Ursachen in `replica/sidebar-duplicates.md` |
 
 ## Später
 | Anforderung | Status |

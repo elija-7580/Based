@@ -175,7 +175,7 @@ public final class HappierRuntime: @unchecked Sendable {
             var mode = claudeModes.sync { $0[sid] } ?? "default"
             if permissionPolicy == .allowAll && mode == "default" { mode = "bypassPermissions" }
             if promptTool == nil && mode == "default" { mode = "acceptEdits" }
-            let context = await MainActor.run { brain.systemContext(query: "") }
+            let context = await MainActor.run { self.brain.systemContext(query: "") }
             var system = mcp["based"] != nil ? await orchestrationPrompt(for: sid) : ""
             if !context.isEmpty { system += "\n\nContext from the user's Based workspace (use the based MCP tools for more):\n" + String(context.prefix(6000)) }
             let driver = ClaudeCodeDriver(options: .init(executable: exe, cwd: cwd, resume: resumeID, permissionMode: mode,

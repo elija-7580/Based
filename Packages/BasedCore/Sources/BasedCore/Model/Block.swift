@@ -268,6 +268,8 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var width: Double?
     public var isTemplate: Bool?
     public var buttonLabel: String?
+    /// Top-level pages only: the teamspace whose sidebar section lists the page (nil = Private).
+    public var teamspace: RecordID?
 
     public init() {}
 }

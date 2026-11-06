@@ -34,7 +34,7 @@ final class BasedUITests: XCTestCase {
     }
 
     func testSidebarHasAllEntries() {
-        for id in ["sidebar.search", "sidebar.askAI", "sidebar.home", "sidebar.sessions", "sidebar.inbox", "sidebar.brain", "sidebar.addPage", "sidebar.trash"] {
+        for id in ["sidebar.search", "sidebar.askAI", "sidebar.home", "sidebar.sessions", "sidebar.inbox", "sidebar.brain", "sidebar.addPage", "sidebar.library", "sidebar.trash", "sidebar.settings"] {
             wait(app.descendants(matching: .any)[id])
         }
     }

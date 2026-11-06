@@ -220,7 +220,7 @@ struct PagePicker: View {
             List {
                 if case .move(let ids) = purpose, ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
                     Button {
-                        for id in ids { store.movePage(id, to: .workspace) }
+                        model.move(ids, to: .privateTop)
                         done()
                     } label: {
                         Label("Workspace (top level)", systemImage: "square.stack.3d.up")
@@ -306,11 +306,11 @@ struct PagePicker: View {
         case .move(let ids):
             let pages = ids.filter { store.blocks[$0]?.type.isPageLike == true }
             if pages.count == ids.count {
-                for id in ids { store.movePage(id, to: .block(target)) }
+                model.move(ids, to: .page(target))
             } else {
                 store.moveBlocks(ids, to: .block(target), at: .end)
+                model.expanded.insert(target)
             }
-            model.expanded.insert(target)
         }
         done()
     }

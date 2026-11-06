@@ -11,7 +11,7 @@ enum Chrome {
     /// Room for the traffic lights at the left of the title bar.
     static let trafficInset: CGFloat = 80
     static let topBarHeight: CGFloat = 44
-    static let rowHeight: CGFloat = 30
+    static let rowHeight: CGFloat = 28
     static let indentPerLevel: CGFloat = 12
     static let appBackground = Color(Theme.dynamic(light: 0xFFFFFF, dark: 0x191919))
     static let sidebarBackground = Color(Theme.dynamic(light: 0xF8F8F7, dark: 0x202020))
@@ -270,24 +270,30 @@ enum SidebarClick {
     }
 }
 
-/// Notion's sidebar: workspace switcher, search, Home / Chat / Agents / Inbox / Agent Brain, Favorites,
-/// Private page tree (hover chevrons, "…" and "+", drag to reorder / nest), Chats, Settings / Import / Trash.
+/// Notion's sidebar: workspace switcher, search, Home / Chat / Agents / Inbox / Agent Brain, then the page
+/// sections — Favorites, Teamspaces (one collapsible row per teamspace with its page tree), Private — and
+/// Chats. Library, Trash and Settings stay pinned at the bottom. Rows: 28 pt, 14 pt text, 16 pt icons.
+/// "Shared" is not shown: Based has no sharing model (single local user).
 struct NotionSidebar: View {
     var floating = false
     @Environment(AppModel.self) private var model
     @Environment(HappierModel.self) private var happier
     @AppStorage("sidebar.favoritesOpen") private var favoritesOpen = true
+    @AppStorage("sidebar.teamspacesOpen") private var teamspacesOpen = true
     @AppStorage("sidebar.privateOpen") private var privateOpen = true
     @AppStorage("sidebar.chatsOpen") private var chatsOpen = true
     @FocusState private var focused: Bool
+    @State private var privateDrop = false
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision
         let store = model.store
         let brainRoot = model.brain.brain.rootID
         let favorites = store.favoritePages()
-        let privatePages = store.topLevelPages().filter { $0.id != brainRoot }
-        let order = visibleOrder(favorites: favorites, privatePages: privatePages)
+        let teamspaces = store.teamspaces
+        let privatePages = store.topLevelPages(in: .privatePages).filter { $0.id != brainRoot }
+        let dupes = Self.duplicateTitles(store.topLevelPages(), store: store)
+        let order = visibleOrder(favorites: favorites, teamspaces: teamspaces, privatePages: privatePages)
         VStack(spacing: 0) {
             SidebarWorkspaceRow(floating: floating)
             ScrollView {
@@ -302,18 +308,38 @@ struct NotionSidebar: View {
                     if !favorites.isEmpty {
                         SidebarSectionHeader(title: "Favorites", open: $favoritesOpen)
                         if favoritesOpen {
-                            ForEach(favorites, id: \.id) { SidebarPageRow(page: $0, depth: 0, order: order) }
+                            // Favorites list the page a second time on purpose (like Notion); the "fav:" scope keeps
+                            // the two rows' identity, expansion and rename state apart.
+                            ForEach(favorites, id: \.id) {
+                                SidebarPageRow(page: $0, depth: 0, order: order, scope: "fav:", duplicateTitles: dupes).id("fav:" + $0.id)
+                            }
                         }
                     }
 
-                    SidebarSectionHeader(title: "Private", open: $privateOpen) { model.newPage() }
+                    SidebarSectionHeader(title: "Teamspaces", open: $teamspacesOpen, addHelp: "Create a teamspace") { createTeamspace() }
+                    if teamspacesOpen {
+                        ForEach(teamspaces, id: \.id) { t in
+                            SidebarTeamspaceRow(teamspace: t, order: order, duplicateTitles: dupes).id("ts:" + t.id)
+                        }
+                        if teamspaces.isEmpty {
+                            SidebarActionRow(title: "Create a teamspace", symbol: "plus") { createTeamspace() }
+                                .accessibilityIdentifier("sidebar.addTeamspace")
+                        }
+                    }
+
+                    SidebarSectionHeader(title: "Private", open: $privateOpen, addHelp: "Add a page", dropTargeted: privateDrop) {
+                        model.newTopLevelPage(in: .privatePages)
+                    }
+                    .onDrop(of: [.text], delegate: SidebarSectionDropDelegate(destination: .privateTop, model: model, targeted: $privateDrop))
                     if privateOpen {
-                        ForEach(privatePages, id: \.id) { SidebarPageRow(page: $0, depth: 0, order: order) }
-                        SidebarActionRow(title: "Add new", symbol: "plus") { model.newPage() }
+                        ForEach(privatePages, id: \.id) {
+                            SidebarPageRow(page: $0, depth: 0, order: order, scope: "", duplicateTitles: dupes).id($0.id)
+                        }
+                        SidebarActionRow(title: "Add new", symbol: "plus") { model.newTopLevelPage(in: .privatePages) }
                             .accessibilityIdentifier("sidebar.addPage")
                     }
 
-                    SidebarSectionHeader(title: "Chats", open: $chatsOpen) { model.openChat(nil, fullPage: true) }
+                    SidebarSectionHeader(title: "Chats", open: $chatsOpen, addHelp: "New chat") { model.openChat(nil, fullPage: true) }
                     if chatsOpen {
                         ForEach(happier.chats.prefix(8)) { c in
                             SidebarNavRow(item: .chat(c.id), title: c.title.isEmpty ? "New chat" : c.title, symbol: "bubble.left", order: order)
@@ -322,22 +348,18 @@ struct NotionSidebar: View {
                             SidebarActionRow(title: "View all", symbol: "ellipsis") { model.selection = .projects }
                         }
                     }
-
-                    Color.clear.frame(height: 14)
-                    SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
-                    SidebarImportRow()
-                    SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
                 }
                 .padding(.horizontal, 8)
-                .padding(.bottom, 14)
+                .padding(.bottom, 10)
             }
             .scrollIndicators(.never)
+            SidebarFooter()
         }
         .background(Chrome.sidebarBackground)
         .focusable()
         .focused($focused)
         .focusEffectDisabled()
-        .onDeleteCommand { model.trash(model.selectedPageIDs) }
+        .onDeleteCommand { if model.renamingID == nil { model.trash(model.selectedPageIDs) } }
         .onKeyPress(.escape) {
             guard model.sidebarSelection.count > 1, let cur = model.currentSidebarItem else { return .ignored }
             model.sidebarSelection = [cur]
@@ -347,24 +369,260 @@ struct NotionSidebar: View {
             // Reveal the open page in the tree, like Notion.
             guard let id else { return }
             for a in model.store.ancestors(of: id) { model.expanded.insert(a.id) }
+            if let top = (model.store.ancestors(of: id).last ?? model.store.blocks[id]), let t = top.props.teamspace {
+                model.expanded.remove(SidebarTeamspaceRow.closedKey(t))
+            }
         }
         .accessibilityIdentifier("sidebar")
     }
 
+    private func createTeamspace() {
+        let id = model.store.createTeamspace(name: "New teamspace")
+        teamspacesOpen = true
+        model.renamingID = "ts:" + id
+    }
+
+    /// Lower-cased titles used by more than one top-level page: those rows get a tooltip with location and
+    /// creation date so look-alike entries (e.g. several "Teamspace Home" pages) can be told apart.
+    static func duplicateTitles(_ pages: [Block], store: WorkspaceStore) -> Set<String> {
+        var count: [String: Int] = [:]
+        for p in pages { count[store.title(of: p.id).trimmingCharacters(in: .whitespaces).lowercased(), default: 0] += 1 }
+        return Set(count.filter { $0.value > 1 }.keys)
+    }
+
     /// Visible rows top to bottom (⇧-click range selection).
-    private func visibleOrder(favorites: [Block], privatePages: [Block]) -> [SidebarItem] {
+    private func visibleOrder(favorites: [Block], teamspaces: [Teamspace], privatePages: [Block]) -> [SidebarItem] {
         var out: [SidebarItem] = [.home, .chat(nil), .projects, .inbox, .brain]
-        func walk(_ pages: [Block]) {
+        func walk(_ pages: [Block], scope: String) {
             for p in pages {
                 out.append(.page(p.id))
-                if model.expanded.contains(p.id) { walk(model.store.subpages(of: p.id)) }
+                if model.expanded.contains(scope + p.id) { walk(model.store.subpages(of: p.id), scope: scope) }
             }
         }
-        if favoritesOpen { walk(favorites) }
-        if privateOpen { walk(privatePages) }
+        if favoritesOpen { walk(favorites, scope: "fav:") }
+        if teamspacesOpen {
+            for t in teamspaces where !model.expanded.contains(SidebarTeamspaceRow.closedKey(t.id)) {
+                walk(model.store.topLevelPages(in: .teamspace(t.id)), scope: "")
+            }
+        }
+        if privateOpen { walk(privatePages, scope: "") }
         if chatsOpen { out += happier.chats.prefix(8).map { .chat($0.id) } }
-        out += [.settings, .trash]
+        out += [.library, .trash, .settings]
         return out
+    }
+}
+
+/// Pinned bottom of the sidebar: Library, Trash, Settings (outside the scroll view, like Notion).
+struct SidebarFooter: View {
+    var body: some View {
+        VStack(spacing: 1) {
+            SidebarNavRow(item: .library, title: "Library", symbol: "books.vertical").accessibilityIdentifier("sidebar.library")
+            SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
+            SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(alignment: .top) { Rectangle().fill(Chrome.border).frame(height: 1) }
+        .accessibilityIdentifier("sidebar.footer")
+    }
+}
+
+/// A teamspace in the "Teamspaces" section: icon, name, hover chevron / "…" (rename, delete) / "+", and its
+/// top-level pages underneath. Dropping pages onto the row moves them into the teamspace.
+struct SidebarTeamspaceRow: View {
+    let teamspace: Teamspace
+    let order: [SidebarItem]
+    let duplicateTitles: Set<String>
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+    @State private var dropTargeted = false
+    @State private var confirmDelete = false
+
+    /// Teamspaces start open; the set stores the closed ones.
+    static func closedKey(_ id: RecordID) -> String { "teamspace.closed:" + id }
+
+    var body: some View {
+        let store = model.store
+        let open = !model.expanded.contains(Self.closedKey(teamspace.id))
+        let pages = store.topLevelPages(in: .teamspace(teamspace.id))
+        VStack(alignment: .leading, spacing: 1) {
+            header(open: open, count: pages.count)
+            if open {
+                if pages.isEmpty {
+                    SidebarEmptyRow(depth: 1)
+                } else {
+                    ForEach(pages, id: \.id) {
+                        SidebarPageRow(page: $0, depth: 1, order: order, scope: "", duplicateTitles: duplicateTitles).id($0.id)
+                    }
+                }
+            }
+        }
+        .confirmationDialog("Delete teamspace “\(teamspace.name)”?", isPresented: $confirmDelete) {
+            Button("Delete teamspace", role: .destructive) { store.deleteTeamspace(teamspace.id) }
+        } message: {
+            Text("Its \(pages.count) page\(pages.count == 1 ? "" : "s") move to Private. No page is deleted.")
+        }
+    }
+
+    private func toggle() {
+        let key = Self.closedKey(teamspace.id)
+        if model.expanded.contains(key) { model.expanded.remove(key) } else { model.expanded.insert(key) }
+    }
+
+    private func header(open: Bool, count: Int) -> some View {
+        HStack(spacing: 0) {
+            ZStack {
+                if hover {
+                    SidebarChevron(open: open, action: toggle)
+                } else {
+                    TeamspaceIcon(teamspace: teamspace)
+                }
+            }
+            .frame(width: 20, height: 20)
+            if model.renamingID == "ts:" + teamspace.id {
+                SidebarRenameField(initial: teamspace.name) { name in
+                    if !name.isEmpty { model.store.renameTeamspace(teamspace.id, to: name) }
+                }
+                .padding(.leading, 8)
+            } else {
+                Text(teamspace.name.nonEmptyOr("Untitled teamspace"))
+                    .font(.system(size: 14, weight: .medium))
+                    .lineLimit(1).truncationMode(.tail)
+                    .padding(.leading, 8)
+            }
+            Spacer(minLength: 4)
+            if hover {
+                Menu {
+                    Button("Rename teamspace", systemImage: "pencil") { model.renamingID = "ts:" + teamspace.id }
+                    Button("Add a page", systemImage: "plus") { model.newTopLevelPage(in: .teamspace(teamspace.id)) }
+                    Divider()
+                    Button("Delete teamspace…", systemImage: "trash", role: .destructive) { confirmDelete = true }
+                } label: { SidebarHoverIcon(symbol: "ellipsis") }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .help("Teamspace settings")
+                Button { model.newTopLevelPage(in: .teamspace(teamspace.id)) } label: { SidebarHoverIcon(symbol: "plus") }
+                    .buttonStyle(.plain)
+                    .help("Add a page to \(teamspace.name)")
+            }
+        }
+        .foregroundStyle(Chrome.sidebarText)
+        .padding(.leading, 8).padding(.trailing, 4)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover : .clear)))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture(perform: toggle)
+        .contextMenu {
+            Button("Rename teamspace", systemImage: "pencil") { model.renamingID = "ts:" + teamspace.id }
+            Button("Add a page", systemImage: "plus") { model.newTopLevelPage(in: .teamspace(teamspace.id)) }
+            Divider()
+            Button("Delete teamspace…", systemImage: "trash", role: .destructive) { confirmDelete = true }
+        }
+        .onDrop(of: [.text], delegate: SidebarSectionDropDelegate(destination: .teamspace(teamspace.id), model: model, targeted: $dropTargeted))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("Teamspace \(teamspace.name), \(count) pages")
+        .accessibilityIdentifier("sidebar.teamspace")
+    }
+}
+
+struct TeamspaceIcon: View {
+    let teamspace: Teamspace
+    var body: some View {
+        if let icon = teamspace.icon {
+            PageIconView(icon: icon, isDatabase: false, size: 16)
+        } else {
+            Text(String(teamspace.name.prefix(1)).uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.dynamic(light: 0x9B9A97, dark: 0x5A5A5A))))
+        }
+    }
+}
+
+/// Disclosure chevron shown in the icon slot while hovering a row.
+struct SidebarChevron: View {
+    let open: Bool
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .rotationEffect(.degrees(open ? 90 : 0))
+                .frame(width: 20, height: 20)
+                .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.selected))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(open ? "Collapse" : "Expand")
+        .accessibilityIdentifier("sidebar.toggle")
+    }
+}
+
+/// 20 pt hover icon ("…" and "+") at the right of a row.
+struct SidebarHoverIcon: View {
+    let symbol: String
+    @State private var hover = false
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 12, weight: .semibold))
+            .frame(width: 20, height: 20)
+            .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Chrome.selected : .clear))
+            .contentShape(Rectangle())
+            .onHover { hover = $0 }
+    }
+}
+
+/// "No pages inside" under an expanded page / teamspace without sub-pages.
+struct SidebarEmptyRow: View {
+    let depth: Int
+    var body: some View {
+        Text("No pages inside")
+            .font(.system(size: 13))
+            .foregroundStyle(Chrome.sectionText)
+            .padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel + 28)
+            .frame(height: 26)
+            .accessibilityIdentifier("sidebar.noPagesInside")
+    }
+}
+
+/// Inline rename field (context menu → Rename). Return or leaving the field commits, Esc cancels.
+struct SidebarRenameField: View {
+    let initial: String
+    let commit: (String) -> Void
+    @Environment(AppModel.self) private var model
+    @State private var text = ""
+    @State private var done = false
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        TextField("Untitled", text: $text)
+            .textFieldStyle(.plain)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(Theme.primary)
+            .padding(.horizontal, 4)
+            .frame(height: 22)
+            .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.appBackground))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Chrome.accent.opacity(0.6)))
+            .focused($focused)
+            .onAppear { text = initial; focused = true }
+            .onSubmit(finish)
+            .onChange(of: focused) { _, f in if !f { finish() } }
+            .onKeyPress(.escape) {
+                done = true
+                model.renamingID = nil
+                return .handled
+            }
+            .accessibilityIdentifier("sidebar.renameField")
+    }
+
+    private func finish() {
+        guard !done else { return }
+        done = true
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t != initial { commit(t) }
+        model.renamingID = nil
     }
 }
 
@@ -421,7 +679,7 @@ struct SidebarSearchRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").font(.system(size: 14)).frame(width: 22, height: 22)
+            Image(systemName: "magnifyingglass").font(.system(size: 15)).frame(width: 20, height: 20)
             Text("Search").font(.system(size: 14, weight: .medium))
             Spacer(minLength: 4)
             if hover { Text("⌘K").font(.system(size: 12)).foregroundStyle(Chrome.sectionText) }
@@ -452,7 +710,7 @@ struct SidebarNavRow: View {
     var body: some View {
         let selected = SidebarClick.isHighlighted(item, model: model)
         HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 14)).frame(width: 22, height: 22)
+            Image(systemName: symbol).font(.system(size: 15)).frame(width: 20, height: 20)
             Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
             if badge > 0 {
@@ -536,10 +794,13 @@ struct SidebarImportRow: View {
     }
 }
 
-/// Section title ("Favorites", "Private", "Chats"): click folds, hover shows a "+" when there's an add action.
+/// Section title ("Favorites", "Teamspaces", "Private", "Chats"): small gray label, click folds, hover shows
+/// the chevron and a "+" when the section has an add action.
 struct SidebarSectionHeader: View {
     let title: String
     @Binding var open: Bool
+    var addHelp = "Add"
+    var dropTargeted = false
     var onAdd: (() -> Void)?
     @State private var hover = false
 
@@ -551,54 +812,52 @@ struct SidebarSectionHeader: View {
             }
             Spacer(minLength: 0)
             if hover, let onAdd {
-                Button(action: onAdd) {
-                    Image(systemName: "plus").font(.system(size: 12)).frame(width: 22, height: 22).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("Add")
+                Button(action: onAdd) { SidebarHoverIcon(symbol: "plus") }
+                    .buttonStyle(.plain)
+                    .help(addHelp)
+                    .accessibilityIdentifier("sidebar.section." + title.lowercased() + ".add")
             }
         }
         .foregroundStyle(Chrome.sectionText)
-        .padding(.horizontal, 8)
-        .frame(height: 28)
+        .padding(.leading, 8).padding(.trailing, 4)
+        .frame(height: 26)
+        .background(RoundedRectangle(cornerRadius: 6).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover.opacity(0.6) : .clear)))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture { open.toggle() }
-        .padding(.top, 14)
+        .padding(.top, 12)
         .accessibilityIdentifier("sidebar.section." + title.lowercased())
     }
 }
 
-/// Where a dragged page lands relative to a sidebar row.
-enum SidebarDropZone { case before, inside, after }
-
 /// One page in the sidebar tree: icon (turns into a disclosure chevron on hover), title, "…" menu and "+".
-/// Drag onto the middle nests the page inside, onto the top / bottom edge reorders.
+/// Drag onto the middle nests the page inside, onto the top / bottom edge reorders. `scope` separates the
+/// Favorites copy of a row ("fav:") from the tree row ("") for expansion and inline rename.
 struct SidebarPageRow: View {
     let page: Block
     let depth: Int
     let order: [SidebarItem]
+    var scope = ""
+    var duplicateTitles: Set<String> = []
     @Environment(AppModel.self) private var model
     @State private var hover = false
-    @State private var zone: SidebarDropZone?
+    @State private var zone: PageDropZone?
 
     var body: some View {
         let node = model.registry.block(page.id)
         let _ = node.children
         let current = node.block ?? page
-        let isOpen = model.expanded.contains(page.id)
+        let isOpen = model.expanded.contains(scope + page.id)
         VStack(alignment: .leading, spacing: 1) {
             row(current, isOpen: isOpen)
             if isOpen && current.type == .page {
                 let subs = model.store.subpages(of: page.id)
                 if subs.isEmpty {
-                    Text("No pages inside")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Chrome.sectionText)
-                        .padding(.leading, 8 + CGFloat(depth + 1) * Chrome.indentPerLevel + 28)
-                        .frame(height: 26)
+                    SidebarEmptyRow(depth: depth + 1)
                 } else {
-                    ForEach(subs, id: \.id) { SidebarPageRow(page: $0, depth: depth + 1, order: order) }
+                    ForEach(subs, id: \.id) {
+                        SidebarPageRow(page: $0, depth: depth + 1, order: order, scope: scope).id(scope + $0.id)
+                    }
                 }
             }
         }
@@ -611,7 +870,17 @@ struct SidebarPageRow: View {
     }
 
     private func toggle() {
-        if model.expanded.contains(page.id) { model.expanded.remove(page.id) } else { model.expanded.insert(page.id) }
+        let key = scope + page.id
+        if model.expanded.contains(key) { model.expanded.remove(key) } else { model.expanded.insert(key) }
+    }
+
+    /// Tooltip for look-alike rows: where the page lives and when it was created.
+    private func disambiguation(_ page: Block, title: String) -> String {
+        guard depth == 0 || page.parent == .workspace,
+              duplicateTitles.contains(title.trimmingCharacters(in: .whitespaces).lowercased()) else { return "" }
+        let store = model.store
+        let section = page.props.teamspace.flatMap { store.teamspace($0)?.name } ?? "Private"
+        return "\(title) — \(section), created \(page.createdAt.formatted(date: .abbreviated, time: .shortened))"
     }
 
     private func row(_ page: Block, isOpen: Bool) -> some View {
@@ -621,50 +890,46 @@ struct SidebarPageRow: View {
         if isDB, let db = page.props.databaseID { let _ = model.registry.database(db).revision }
         let selected = SidebarClick.isHighlighted(item, model: model)
         let expandable = page.type == .page
+        let title = store.title(of: page.id)
+        let renaming = model.renamingID == scope + page.id
         return HStack(spacing: 0) {
             ZStack {
-                if hover && expandable {
-                    Button(action: toggle) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
-                            .rotationEffect(.degrees(isOpen ? 90 : 0))
-                            .frame(width: 22, height: 22)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.selected))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(isOpen ? "Collapse" : "Expand")
+                if hover && expandable && !renaming {
+                    SidebarChevron(open: isOpen, action: toggle)
                 } else {
-                    PageIconView(icon: page.props.icon, isDatabase: isDB, size: 18)
+                    PageIconView(icon: page.props.icon, isDatabase: isDB, size: 16)
                 }
             }
-            .frame(width: 22, height: 22)
-            Text(store.title(of: page.id).nonEmptyOr("Untitled"))
-                .font(.system(size: 14, weight: .medium))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .padding(.leading, 6)
+            .frame(width: 20, height: 20)
+            if renaming {
+                SidebarRenameField(initial: title) { store.renamePage(page.id, to: $0) }
+                    .padding(.leading, 6)
+            } else {
+                Text(title.nonEmptyOr("Untitled"))
+                    .font(.system(size: 14, weight: .medium))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .padding(.leading, 8)
+            }
             Spacer(minLength: 4)
-            if hover {
-                Menu { SidebarContextMenu(items: menuItems) } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).frame(width: 20, height: 20)
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .help("Delete, duplicate, and more…")
+            if hover && !renaming {
+                Menu { SidebarContextMenu(items: menuItems, scope: scope) } label: { SidebarHoverIcon(symbol: "ellipsis") }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("Delete, duplicate, and more…")
+                    .accessibilityIdentifier("sidebar.page.more")
                 if page.type == .page {
-                    Button { model.newPage(in: .block(page.id)) } label: {
-                        Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).frame(width: 20, height: 20).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help("Add a page inside")
+                    Button { model.newPage(in: .block(page.id)) } label: { SidebarHoverIcon(symbol: "plus") }
+                        .buttonStyle(.plain)
+                        .help("Add a page inside")
+                        .accessibilityIdentifier("sidebar.page.add")
                 }
             }
         }
         .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
         .padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel)
-        .padding(.trailing, 6)
+        .padding(.trailing, 4)
         .frame(height: Chrome.rowHeight)
         .background(RoundedRectangle(cornerRadius: 6).fill(zone == .inside ? Chrome.accent.opacity(0.18) : (selected ? Chrome.selected : (hover ? Chrome.hover : .clear))))
         .overlay(alignment: zone == .after ? .bottom : .top) {
@@ -674,30 +939,35 @@ struct SidebarPageRow: View {
         }
         .contentShape(Rectangle())
         .onHover { hover = $0 }
-        .onTapGesture { SidebarClick.click(item, model: model, order: order) }
-        .contextMenu { SidebarContextMenu(items: menuItems) }
+        .onTapGesture { if !renaming { SidebarClick.click(item, model: model, order: order) } }
+        .contextMenu { SidebarContextMenu(items: menuItems, scope: scope) }
+        .help(disambiguation(page, title: title))
         .onDrag {
             let selected = model.selectedPageIDs
             model.draggedBlocks = selected.contains(page.id) ? selected : [page.id]
             return NSItemProvider(object: page.id as NSString)
         }
-        .onDrop(of: [.text], delegate: SidebarDropDelegate(page: page, model: model, zone: $zone))
+        .onDrop(of: [.text], delegate: SidebarDropDelegate(page: page, model: model, zone: $zone, scope: scope))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityIdentifier("sidebar.page")
     }
 }
 
+/// Drop on a page row: middle third nests (pages only), top / bottom edge reorders next to it, keeping the
+/// target's section (Private / teamspace / parent page). Page moves go through `WorkspaceStore.dropPages`
+/// (one undo step, cycle-safe); dragged non-page blocks are appended inside the target page.
 struct SidebarDropDelegate: DropDelegate {
     let page: Block
     let model: AppModel
-    @Binding var zone: SidebarDropZone?
+    @Binding var zone: PageDropZone?
+    var scope = ""
 
-    private func zone(at y: CGFloat) -> SidebarDropZone {
+    private func zone(at y: CGFloat) -> PageDropZone {
         let canNest = page.type == .page
         if !canNest { return y < Chrome.rowHeight / 2 ? .before : .after }
-        if y < 8 { return .before }
-        if y > Chrome.rowHeight - 8 { return .after }
+        if y < 7 { return .before }
+        if y > Chrome.rowHeight - 7 { return .after }
         return .inside
     }
 
@@ -715,18 +985,36 @@ struct SidebarDropDelegate: DropDelegate {
         let ids = model.draggedBlocks.filter { $0 != page.id && !store.isDescendant(page.id, of: $0) }
         model.draggedBlocks = []
         guard !ids.isEmpty else { return false }
-        switch z {
-        case .inside:
-            if ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
-                for id in ids { store.movePage(id, to: .block(page.id)) }
-            } else {
-                store.moveBlocks(ids, to: .block(page.id), at: .end)
-            }
-            model.expanded.insert(page.id)
-        case .before, .after:
-            if case .database = page.parent { return false }
-            store.moveBlocks(ids, to: page.parent, at: z == .before ? .before(page.id) : .after(page.id))
+        if ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
+            guard store.dropPages(ids, onto: page.id, zone: z) else { return false }
+        } else {
+            guard z == .inside, page.type == .page else { return false }
+            store.moveBlocks(ids, to: .block(page.id), at: .end)
         }
+        if z == .inside { model.expanded.insert(scope + page.id) }
+        return true
+    }
+}
+
+/// Drop on a section header ("Private") or a teamspace row: moves the dragged pages to its top level.
+struct SidebarSectionDropDelegate: DropDelegate {
+    let destination: PageDestination
+    let model: AppModel
+    @Binding var targeted: Bool
+
+    func validateDrop(info: DropInfo) -> Bool {
+        !model.draggedBlocks.isEmpty && model.draggedBlocks.allSatisfy { model.store.blocks[$0]?.type.isPageLike == true }
+    }
+    func dropEntered(info: DropInfo) { targeted = true }
+    func dropExited(info: DropInfo) { targeted = false }
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+    func performDrop(info: DropInfo) -> Bool {
+        targeted = false
+        let ids = model.draggedBlocks
+        model.draggedBlocks = []
+        guard !ids.isEmpty else { return false }
+        model.store.movePages(ids, to: destination)
+        if case .teamspace(let t) = destination { model.expanded.remove(SidebarTeamspaceRow.closedKey(t)) }
         return true
     }
 }

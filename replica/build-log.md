@@ -318,3 +318,31 @@ Notion".
   before / after / first child / nest, outdent, columns), BasedBrain 51 — all green; `bash
   ci/typecheck/run.sh` → typecheck OK (stubs: `onContinuousHover(coordinateSpace: some
   CoordinateSpaceProtocol)`, `SecKeychainSetUserInteractionAllowed`).
+
+## Pass 15 — sidebar, page management, Trash, Library
+
+Scope: sidebar, page tree, page CRUD, Trash, new Library view. Page rendering (cover, title, blocks) untouched.
+
+- **Data model** (back-compatible, no migration): `Workspace.teamspaces: [Teamspace]?`, `BlockProps.teamspace`
+  (top-level pages; nil = Private).
+- **BasedCore `PageManagement.swift`**: `PageDestination`, `PageDropZone`, `SidebarSectionID`; teamspace CRUD
+  (delete moves pages to Private), `createTopLevelPage(in:)`, `trashPages` (one undo step, nested ids skipped),
+  `restorePages` (orphans → top level), `trashedDescendantPages`, `movePages` (one transaction, cycle-safe,
+  section-aware), `dropPages`, `duplicatePages`, `renamePage`, `setFavorite`. `moveBlocks` now shares
+  `planMove`. `topLevelPages()` de-duplicates by id.
+- **BasedCore `LibraryOps.swift`**: `libraryItems`, `filterLibrary` (text, type, location, edited/created
+  ranges, same-title, sort), `childIndexDuplicates`, `duplicateTitleReport` (cause per group).
+- **App**: sidebar rebuilt (28-pt rows, 14-pt text, 16-pt icons, Favorites / Teamspaces / Private / Chats,
+  section-scoped row ids, persisted expansion, inline rename, "…"/"+" on hover, drop on rows / Private header
+  / teamspace rows, pinned footer Library · Trash · Settings, tooltip for look-alike titles); context menu
+  (Favorites, Duplicate, Rename, Move to…, Copy link, Open in new tab, side peek, add inside, export, Delete;
+  bulk variant); toast with Undo; new `TrashView` (search, Restore, Delete permanently + confirmation, Empty
+  Trash, "N pages inside"); `MovePicker` (Private, teamspaces, pages, search); `LibraryView` with
+  multi-select (click, ⇧/⌘-click, ⌘A, Esc, ⌫), action bar and bulk Move / Duplicate / Favorite / Export / Delete.
+- Root cause of duplicate entries: `replica/sidebar-duplicates.md`.
+- Also: `HappierRuntime.swift` line 178 used the local `brain` before its declaration (Swift 6.2 error) →
+  `self.brain`; `ci/typecheck/run.sh` also searches `.build/debug/Modules` (Swift 6.2 layout).
+- Tests: BasedCore `PageManagementTests` (Swift Testing, 12, green on Linux, Swift 6.2). The XCTest suites
+  compile but cannot run on the Linux toolchain (main-actor test classes). `bash ci/typecheck/run.sh` →
+  typecheck OK. `App/UITests/SidebarLibraryUITests.swift` (screenshots + delete/undo/restore/delete-forever,
+  move one / several, drag-nest) — written, not run (needs a Mac).

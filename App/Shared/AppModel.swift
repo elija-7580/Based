@@ -27,6 +27,7 @@ enum SidebarItem: Hashable {
     case projects   // overview of all agent sessions grouped by project (+ Claude/Codex CLI history)
     case chat(RecordID?)   // full-page AI chat (nil = new chat)
     case diagnostics       // logs, hangs, layout audit
+    case library           // every page / database / memory / skill / file, with bulk actions
 
     /// Short label for tabs, breadcrumbs and logs.
     @MainActor func title(in model: AppModel) -> String {
@@ -41,6 +42,7 @@ enum SidebarItem: Hashable {
         case .projects: return "Agents"
         case .chat(let id): return id.map { model.store.title(of: $0).nonEmptyOr("Chat") } ?? "New chat"
         case .diagnostics: return "Diagnostics"
+        case .library: return "Library"
         }
     }
 
@@ -56,6 +58,7 @@ enum SidebarItem: Hashable {
         case .projects: return "square.grid.2x2"
         case .chat: return "bubble.left"
         case .diagnostics: return "stethoscope"
+        case .library: return "books.vertical"
         }
     }
 
@@ -140,7 +143,17 @@ final class AppModel {
     var exportAllMessage: String?
     var exportRequest: ExportRequest?
     var moveRequest: MoveRequest?
-    var expanded: Set<RecordID> = []
+    /// Sidebar rows whose sub-pages are shown; persisted so the tree reopens the way it was left.
+    var expanded: Set<RecordID> = Set(UserDefaults.standard.stringArray(forKey: "sidebar.expanded") ?? []) {
+        didSet {
+            guard expanded != oldValue else { return }
+            UserDefaults.standard.set(Array(expanded.prefix(4000)), forKey: "sidebar.expanded")
+        }
+    }
+    /// Sidebar row (page id or teamspace id) currently showing an inline rename field.
+    var renamingID: RecordID?
+    /// Bottom toast ("Moved to Trash · Undo"); replaced by the next one, dismissed after a few seconds.
+    var toast: Toast?
     var errorMessage: String?
     var syncStatus = "Off"
     var lastSyncDate: Date?
@@ -161,6 +174,15 @@ final class AppModel {
     struct MoveRequest: Identifiable {
         let id = UUID()
         var ids: [RecordID]
+    }
+
+    struct Toast: Identifiable, Equatable {
+        let id = UUID()
+        var message: String
+        var actionTitle: String?
+        /// Pages the action restores (Undo of a delete).
+        var restoreIDs: [RecordID] = []
+        static func == (a: Toast, b: Toast) -> Bool { a.id == b.id }
     }
 
     /// The item shown in the active tab (highlighted in the sidebar).
@@ -343,16 +365,61 @@ final class AppModel {
         return id
     }
 
-    func trash(_ id: RecordID) {
-        store.trash([id])
-        if currentPageID == id || store.isTrashed(currentPageID ?? "") {
-            if !path.isEmpty { path.removeAll { store.isTrashed($0) } }
-            if case .page(let r)? = selection, store.isTrashed(r) {
-                selection = store.topLevelPages().first.map { .page($0.id) } ?? .home
-            }
+    /// "+" on a sidebar section header / teamspace row: new top-level page in that section.
+    @discardableResult
+    func newTopLevelPage(in section: SidebarSectionID) -> RecordID {
+        let id = store.createTopLevelPage(in: section)
+        if case .teamspace(let t) = section { expanded.remove("teamspace.closed:" + t) }
+        openRoot(id)
+        return id
+    }
+
+    /// Moves a page (and everything inside it) to the Trash and offers Undo.
+    func trash(_ id: RecordID) { trash([id]) }
+
+    /// Leaves trashed pages that are on screen (selection, navigation stack, peek).
+    private func leaveTrashedPages() {
+        if !path.isEmpty { path.removeAll { store.isTrashed($0) } }
+        if case .page(let r)? = selection, store.isTrashed(r) {
+            selection = store.topLevelPages().first.map { .page($0.id) } ?? .home
         }
         if case .side(let p)? = peek, store.isTrashed(p) { peek = nil }
         if case .center(let p)? = peek, store.isTrashed(p) { peek = nil }
+        tabs = tabs.map { t in
+            var t = t
+            if case .page(let r)? = t.selection, store.isTrashed(r) { t.selection = .home; t.path = [] }
+            t.path.removeAll { store.isTrashed($0) }
+            return t
+        }
+    }
+
+    func showToast(_ message: String, actionTitle: String? = nil, restoreIDs: [RecordID] = []) {
+        let t = Toast(message: message, actionTitle: actionTitle, restoreIDs: restoreIDs)
+        toast = t
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 6_000_000_000)
+            if self?.toast?.id == t.id { self?.toast = nil }
+        }
+    }
+
+    /// Toast action: Undo of a delete restores exactly the pages it trashed (not whatever was edited last).
+    func performToastAction() {
+        guard let t = toast else { return }
+        toast = nil
+        if !t.restoreIDs.isEmpty { restore(t.restoreIDs, announce: false) }
+    }
+
+    func restore(_ ids: [RecordID], announce: Bool = true) {
+        store.restorePages(ids)
+        for id in ids { for a in store.ancestors(of: id) { expanded.insert(a.id) } }
+        if announce { showToast(ids.count == 1 ? "Restored “\(store.title(of: ids[0]))”" : "Restored \(ids.count) pages") }
+    }
+
+    /// Trash → Delete permanently (the caller confirms first).
+    func deleteForever(_ ids: [RecordID]) {
+        let n = ids.count
+        store.deleteForever(ids)
+        showToast(n == 1 ? "Deleted permanently" : "Deleted \(n) pages permanently")
     }
 
     func setWorkspaceIcon(_ icon: PageIcon?) {
@@ -361,6 +428,12 @@ final class AppModel {
 
     /// Settings → Export all: every page as Markdown (databases as CSV + page folders) into one directory.
     func exportWorkspace(to directory: URL) {
+        let count = writeExport(store.topLevelPages(), to: directory)
+        exportAllMessage = "Exported \(count) pages to \(directory.path)"
+    }
+
+    /// Writes pages as Markdown and databases as CSV, sub-pages in folders named after their parent.
+    func writeExport(_ pages: [Block], to directory: URL) -> Int {
         let exporter = MarkdownExporter(store: store)
         let fm = FileManager.default
         var count = 0
@@ -378,8 +451,8 @@ final class AppModel {
             }
         }
         try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
-        store.topLevelPages().forEach { write($0, into: directory) }
-        exportAllMessage = "Exported \(count) pages to \(directory.path)"
+        pages.forEach { write($0, into: directory) }
+        return count
     }
 
     func exportCurrentPage() {
@@ -574,17 +647,59 @@ final class AppModel {
         sidebarSelection.compactMap { if case .page(let id) = $0 { return id }; return nil }
     }
 
+    /// Moves pages to the Trash in one undoable step (children go with their parent) and shows an Undo toast.
     func trash(_ ids: [RecordID]) {
-        for id in ids { trash(id) }
+        let done = store.trashPages(ids)
+        guard !done.isEmpty else { return }
+        leaveTrashedPages()
         sidebarSelection = selection.map { [$0] } ?? []
+        let title = done.count == 1 ? "“\(store.title(of: done[0]))” moved to Trash" : "\(done.count) pages moved to Trash"
+        showToast(title, actionTitle: "Undo", restoreIDs: done)
     }
 
-    func duplicate(_ ids: [RecordID]) { _ = store.duplicateBlocks(ids) }
+    func duplicate(_ ids: [RecordID]) {
+        let copies = store.duplicatePages(ids)
+        if !copies.isEmpty { showToast(copies.count == 1 ? "Duplicated" : "Duplicated \(copies.count) pages") }
+    }
 
     func toggleFavorite(_ ids: [RecordID]) {
         let allFav = ids.allSatisfy { store.isFavorite($0) }
-        for id in ids where store.isFavorite(id) == allFav { store.toggleFavorite(id) }
+        store.setFavorite(ids, !allFav)
     }
+
+    func move(_ ids: [RecordID], to destination: PageDestination) {
+        store.movePages(ids, to: destination)
+        if case .page(let p) = destination { expanded.insert(p); for a in store.ancestors(of: p) { expanded.insert(a.id) } }
+        let where_: String
+        switch destination {
+        case .privateTop: where_ = "Private"
+        case .teamspace(let t): where_ = store.teamspace(t)?.name ?? "Teamspace"
+        case .page(let p): where_ = store.title(of: p)
+        }
+        showToast(ids.count == 1 ? "Moved to \(where_)" : "Moved \(ids.count) pages to \(where_)")
+    }
+
+    /// Markdown (pages) / CSV (databases) files for `ids` and their sub-pages, into `directory`.
+    @discardableResult
+    func exportPages(_ ids: [RecordID], to directory: URL) -> Int {
+        let pages = ids.compactMap { store.blocks[$0] }
+        let n = writeExport(pages, to: directory)
+        showToast("Exported \(n) files to \(directory.lastPathComponent)")
+        return n
+    }
+
+    #if os(macOS)
+    /// Library → Export: choose a folder, then write the selection there.
+    func exportPagesWithPanel(_ ids: [RecordID]) {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.prompt = "Export"
+        panel.message = "Choose a folder for \(ids.count) exported item\(ids.count == 1 ? "" : "s")"
+        if panel.runModal() == .OK, let url = panel.url { exportPages(ids, to: url) }
+    }
+    #endif
 }
 
 /// First-run content: a short tour of what the app can do.

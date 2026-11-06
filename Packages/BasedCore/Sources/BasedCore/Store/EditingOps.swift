@@ -338,11 +338,22 @@ public extension WorkspaceStore {
 
     /// Move blocks (keeping their relative order) to a new location.
     func moveBlocks(_ ids: [RecordID], to parent: ParentRef, at position: InsertPosition, name: String = "Move") {
+        let plan = planMove(ids, to: parent, at: position)
+        guard !plan.isEmpty else { return }
+        transact(name) { tx in
+            for (id, k) in plan {
+                tx.update(id) { $0.parent = parent; $0.sortKey = k }
+            }
+        }
+    }
+
+    /// Document-ordered ids with their new sort keys for a move into `parent` at `position` (no writes).
+    internal func planMove(_ ids: [RecordID], to parent: ParentRef, at position: InsertPosition) -> [(RecordID, String)] {
         let ordered = documentOrder(ids).filter { id in
             if case .block(let pid) = parent, pid == id || isDescendant(pid, of: id) { return false }
             return true
         }
-        guard !ordered.isEmpty else { return }
+        guard !ordered.isEmpty else { return [] }
         let moving = Set(ordered)
         // Never anchor on a block that is being moved: walk to the nearest stable sibling.
         var pos = position
@@ -375,11 +386,7 @@ public extension WorkspaceStore {
             else { hi = remaining.first.flatMap(key) }
         }
         let keys = FractionalIndex.keys(count: ordered.count, between: lo, hi)
-        transact(name) { tx in
-            for (id, k) in zip(ordered, keys) {
-                tx.update(id) { $0.parent = parent; $0.sortKey = k }
-            }
-        }
+        return Array(zip(ordered, keys))
     }
 
     func moveUp(_ id: RecordID) {

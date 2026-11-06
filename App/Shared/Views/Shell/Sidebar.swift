@@ -41,8 +41,13 @@ struct SidebarView: View {
                     ForEach(favorites, id: \.id) { PageTreeRow(page: $0) }
                 }
             }
+            ForEach(store.teamspaces, id: \.id) { t in
+                Section(t.name) {
+                    ForEach(store.topLevelPages(in: .teamspace(t.id)), id: \.id) { PageTreeRow(page: $0) }
+                }
+            }
             Section("Private") {
-                ForEach(store.topLevelPages().filter { $0.id != brainRoot }, id: \.id) { PageTreeRow(page: $0) }
+                ForEach(store.topLevelPages(in: .privatePages).filter { $0.id != brainRoot }, id: \.id) { PageTreeRow(page: $0) }
                     .onMove { from, to in movePages(from: from, to: to) }
                 Button { model.newPage() } label: { Label("Add a page", systemImage: "plus") }
                     .buttonStyle(.plain).accessibilityIdentifier("sidebar.addPage")
@@ -78,6 +83,7 @@ struct SidebarView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .accessibilityIdentifier("sidebar.import")
+                Label("Library", systemImage: "books.vertical").tag(SidebarItem.library).accessibilityIdentifier("sidebar.library")
                 Label("Trash", systemImage: "trash").tag(SidebarItem.trash).accessibilityIdentifier("sidebar.trash")
                 #if os(iOS)
                 Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings).accessibilityIdentifier("sidebar.settings")
@@ -132,19 +138,17 @@ struct SidebarView: View {
 
     private func movePages(from: IndexSet, to: Int) {
         let brainRoot = model.brain.brain.rootID
-        let pages = model.store.topLevelPages().filter { $0.id != brainRoot }
+        let pages = model.store.topLevelPages(in: .privatePages).filter { $0.id != brainRoot }
         let ids = from.map { pages[$0].id }
-        if to >= pages.count {
-            model.store.moveBlocks(ids, to: .workspace, at: .end)
-        } else {
-            model.store.moveBlocks(ids, to: .workspace, at: .before(pages[to].id))
-        }
+        model.store.movePages(ids, to: .privateTop, at: to >= pages.count ? .end : .before(pages[to].id))
     }
 }
 
-/// Context menu for one or many selected sidebar items.
+/// Context menu for one or many selected sidebar items (right-click or the row's "…" button).
+/// `scope` is the row's section scope ("fav:" for Favorites) so Rename edits the row that was clicked.
 struct SidebarContextMenu: View {
     let items: [SidebarItem]
+    var scope = ""
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -152,26 +156,28 @@ struct SidebarContextMenu: View {
         let pages = items.compactMap { item -> RecordID? in if case .page(let id) = item { return id }; return nil }
         let chats = items.compactMap { item -> RecordID? in if case .chat(let id?) = item { return id }; return nil }
         if pages.count == 1, let id = pages.first, let page = store.blocks[id] {
-            Button("Open", systemImage: "arrow.up.right.square") { model.openRoot(id) }
+            Button(store.isFavorite(id) ? "Remove from Favorites" : "Add to Favorites",
+                   systemImage: store.isFavorite(id) ? "star.slash" : "star") { model.toggleFavorite([id]) }
+            Divider()
+            Button("Duplicate", systemImage: "plus.square.on.square") { model.duplicate([id]) }
+            Button("Rename", systemImage: "pencil") { model.renamingID = scope + id }
+            Button("Move to…", systemImage: "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: [id]) }
+            Divider()
+            Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + id) }
             Button("Open in new tab", systemImage: "plus.rectangle.on.rectangle") { model.openInNewTab(id) }
             Button("Open in side peek", systemImage: "sidebar.right") { model.open(id, mode: .sidePeek) }
-            Divider()
             if page.type == .page {
                 Button("Add a page inside", systemImage: "plus") { model.newPage(in: .block(id)) }
             }
-            Button(store.isFavorite(id) ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") { store.toggleFavorite(id) }
-            Button("Duplicate", systemImage: "plus.square.on.square") { model.duplicate([id]) }
-            Button("Move to…", systemImage: "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: [id]) }
-            Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + id) }
             Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: id) }
             Divider()
-            Button("Delete", systemImage: "trash", role: .destructive) { model.trash(id) }
+            Button("Delete", systemImage: "trash", role: .destructive) { model.trash([id]) }
         } else if pages.count > 1 {
             Text("\(pages.count) pages selected")
-            Button("Open in new tabs", systemImage: "plus.rectangle.on.rectangle") { for id in pages { model.openInNewTab(id, activate: false) } }
             Button(pages.allSatisfy { store.isFavorite($0) } ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") { model.toggleFavorite(pages) }
             Button("Duplicate", systemImage: "plus.square.on.square") { model.duplicate(pages) }
             Button("Move to…", systemImage: "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: pages) }
+            Button("Open in new tabs", systemImage: "plus.rectangle.on.rectangle") { for id in pages { model.openInNewTab(id, activate: false) } }
             Divider()
             Button("Delete \(pages.count) pages", systemImage: "trash", role: .destructive) { model.trash(pages) }
         }
@@ -291,7 +297,7 @@ struct PageTreeRow: View {
             model.draggedBlocks = []
             guard !ids.isEmpty, page.type == .page else { return false }
             if ids.allSatisfy({ store.blocks[$0]?.type.isPageLike == true }) {
-                for id in ids { store.movePage(id, to: .block(page.id)) }
+                store.movePages(ids, to: .page(page.id))
             } else {
                 store.moveBlocks(ids, to: .block(page.id), at: .end)
             }
