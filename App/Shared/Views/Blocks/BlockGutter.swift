@@ -296,6 +296,10 @@ extension EditorController {
     func clickHandle(_ id: RecordID, shift: Bool) {
         if shift { selectedBlocks.formSymmetricDifference([id]); return }
         focusedID.flatMap { host($0) }?.endEditing()
+        // A table cell (or other inline text view) may still hold the caret; ⌫ / Entf must reach the selection.
+        #if os(macOS)
+        if let w = NSApp.keyWindow, w.firstResponder is NSTextView { w.makeFirstResponder(nil) }
+        #endif
         if !selectedBlocks.contains(id) { selectedBlocks = [id] }
         gutter.menuFor = id
     }

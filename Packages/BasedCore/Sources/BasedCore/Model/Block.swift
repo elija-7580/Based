@@ -274,6 +274,11 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var tableHeaderRow: Bool?
     public var tableHeaderColumn: Bool?
     public var cells: [RichText]?
+    /// Simple table: column widths in points (missing = default), column background colours.
+    public var tableColumnWidths: [Double]?
+    public var tableColumnColors: [TColor?]?
+    /// Table row: background colour per cell (the row's own colour is `color`).
+    public var cellColors: [TColor?]?
     public var databaseID: RecordID?
     public var viewIDs: [RecordID]?
     public var linkTarget: RecordID?
