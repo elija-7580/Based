@@ -369,6 +369,7 @@ struct ViewSettingsView: View {
                                                                   set: { k in update("Card preview") { $0.cardCover = cover(fromKey: k) } })) {
                             Text("None").tag("none")
                             Text("Page cover").tag("cover")
+                            Text("Page icon").tag("icon")
                             Text("Page content").tag("content")
                             ForEach(ctx.db.properties.filter { $0.type == .files }) { Text($0.name).tag("p:" + $0.id) }
                         }
@@ -533,6 +534,7 @@ struct ViewSettingsView: View {
         case .none: return "none"
         case .pageCover: return "cover"
         case .pageContent: return "content"
+        case .pageIcon: return "icon"
         case .property(let p): return "p:" + p
         }
     }
@@ -542,6 +544,7 @@ struct ViewSettingsView: View {
         case "none": return CardCover.none
         case "cover": return .pageCover
         case "content": return .pageContent
+        case "icon": return .pageIcon
         default: return .property(String(k.dropFirst(2)))
         }
     }

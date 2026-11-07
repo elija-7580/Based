@@ -379,6 +379,8 @@ public struct ViewProperty: Codable, Hashable, Sendable, Identifiable {
 
 public enum CardCover: Codable, Hashable, Sendable {
     case none, pageCover, pageContent
+    /// The page icon, large and centred (no image).
+    case pageIcon
     case property(String)
 }
 

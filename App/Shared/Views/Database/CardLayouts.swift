@@ -13,7 +13,7 @@ struct RowCard: View {
             if showCover { cover.frame(height: coverHeight).clipped() }
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
-                    if ctx.view.showIcons != false { PageIconView(icon: row.props.icon, size: 18) }
+                    if ctx.view.showIcons != false, !(showCover && ctx.view.cardCover == .pageIcon) { PageIconView(icon: row.props.icon, size: 18) }
                     Text(row.title.isEmpty ? "Untitled" : row.title).font(.system(size: 14, weight: .medium)).lineLimit(ctx.view.wrapCells == true ? nil : 2)
                 }
                 ForEach(ctx.cardProperties) { p in
@@ -69,6 +69,12 @@ struct RowCard: View {
             }
         case .pageContent:
             contentPreview
+        case .pageIcon:
+            // Gallery of icons: the page icon large in the middle of a soft tile (title stays below).
+            ZStack {
+                Color.primary.opacity(0.03)
+                PageIconView(icon: row.props.icon, size: coverHeight * 0.42)
+            }
         }
     }
 
