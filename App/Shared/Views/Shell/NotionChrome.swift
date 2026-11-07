@@ -437,12 +437,14 @@ struct NotionSidebar: View {
 struct SidebarModeSwitcher: View {
     @Environment(AppModel.self) private var model
     @Environment(HappierModel.self) private var happier
+    /// The highlight slides between Notes and AI (one shared background, matched geometry).
+    @Namespace private var ns
 
     var body: some View {
         HStack(spacing: 2) {
             ForEach(SidebarMode.allCases) { m in
                 let on = model.sidebarMode == m
-                Button { model.switchSidebar(to: m) } label: {
+                Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { model.switchSidebar(to: m) } } label: {
                     HStack(spacing: 6) {
                         SymbolImage(name: m.symbol, size: 13)
                         Text(m.title).font(.system(size: 13, weight: on ? .semibold : .medium))
@@ -453,7 +455,12 @@ struct SidebarModeSwitcher: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 26)
                     .foregroundStyle(on ? Theme.primary : Chrome.sidebarText)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(on ? Chrome.selected : .clear))
+                    .background {
+                        if on {
+                            RoundedRectangle(cornerRadius: 6).fill(Chrome.selected)
+                                .matchedGeometryEffect(id: "sidebar.mode", in: ns)
+                        }
+                    }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
