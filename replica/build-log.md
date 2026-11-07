@@ -463,3 +463,39 @@ Scope: feedback round ("chat answers nonsense", "Agent Brain page in Trash", bac
 - Tests: `ChatArtifactTests` (extraction, titles, React document, screenshot → card). BasedBrain Swift Testing 11
   green; `bash ci/typecheck/run.sh` → typecheck OK.
 
+
+## Pass 20 — Feel like Notion / Claude Code, multi-CLI chat, sync v2, faster open (autonomous night run)
+
+Checked in the running app with a debug-only URL driver (`based://debug/...`, `App/Shared/Diagnostics/DebugDriver.swift`)
+that renders the window offscreen — screenshots work with a locked screen.
+
+**Editor / pages**
+- Title and blocks share one left edge (header used 72 pt, blocks up to 96 pt → blocks sat 24 pt right).
+- Cover spans the full page width (was clipped to the 708 pt column); hover shows Change cover · Remove.
+- **One main window on macOS**: every `based://` URL opened another window through `WindowGroup`; both shared one
+  AppModel but had their own editors, so the active editor, the / menu, focus and the gutter jumped between an
+  invisible and the visible page. Now a single `Window` scene.
+- ⋮⋮ grip was an SF Symbol that doesn't exist (`circle.grid.2x3.fill`) → nothing to grab. Drawn six dots now.
+- / menu: stays open when opened programmatically (caret briefly at 0 closed it), opens below with 160 pt room,
+  height fits the room.
+- Page ••• → Notion-style panel (search, Ag font tiles, switches, actions). Block ⋮⋮ menu in Notion's order.
+- Code blocks: syntax highlighting (`SyntaxHighlighter` in BasedCore, tested).
+- Database tables: one-line 34 pt rows, pills clip at the cell edge, imported HTML shown as text.
+- ⌘K / ⌘N spring in; sidebar sections fold with a spring.
+
+**AI chat (Claude Code app feel)**
+- Engine / model / effort / permission picker (Claude Code, Codex, Gemini CLI, OpenCode, API, on device).
+- Codex `exec --json`, Gemini `-o stream-json`, OpenCode `run --format json` streamed into the same parts as
+  Claude Code (thinking, text, tool cards, to-dos), sessions resume per engine.
+- Inline permission prompts (Claude Code `--permission-prompt-tool` → approval card in the chat).
+- Edit / Write diffs in tool cards (+N −M), "N files changed" summary, file names first.
+- Animated parts, smooth auto-scroll, centred ↓ button, Claude-style send / stop button.
+- Fixed: Inbox details showed the row's properties ("Kind: … Status: …").
+
+**Architecture**
+- Workspace open 866 → 487 ms (debug app; release core 800 → 320 ms): parallel JSON decoding, bulk child index.
+- **Sync v2**: server-sequenced, paged, resumable; persistent change log (`changes` table) — fixes lost changes
+  from devices that were offline and unpushed changes lost on quit. `docs/sync-protocol.md`, `docs/platforms.md`.
+
+Tests: BasedCore + BasedBrain green (new: CLIChatTests, ToolDiffTests, InboxDetailTests, SyncV2Tests,
+ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
