@@ -589,7 +589,7 @@ struct SessionConsole: View {
                     .help(c.task.isEmpty ? c.title : c.task)
                 }
                 Button { model.newSubAgent(of: s.id) } label: { Image(systemName: "plus") }
-                    .buttonStyle(.plain).foregroundStyle(Theme.secondary).help("New sub-agent…")
+                    .buttonStyle(.quiet).foregroundStyle(Theme.secondary).help("New sub-agent…")
             }
             .font(.system(size: 11.5))
             .padding(.horizontal, 16).padding(.vertical, 6)
@@ -717,10 +717,10 @@ struct SessionConsole: View {
                     .accessibilityIdentifier("session.input")
                 if busy {
                     Button { happier.cancel(sessionID) } label: { Image(systemName: "stop.fill") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary).help("Interrupt (esc)")
+                        .buttonStyle(.quiet).foregroundStyle(Theme.secondary).help("Interrupt (esc)")
                 } else {
                     Button(action: send) { Image(systemName: "arrow.up.circle.fill").font(.system(size: 16)) }
-                        .buttonStyle(.plain).foregroundStyle(input.isEmpty ? Theme.secondary : Color.accentColor)
+                        .buttonStyle(.plain).foregroundStyle(input.isEmpty ? Theme.secondary : Theme.accentBlue)
                         .disabled(input.isEmpty)
                         .accessibilityIdentifier("session.send")
                 }
@@ -1006,7 +1006,7 @@ struct ConsoleItemView: View {
                     Button { model.openSession(sid) } label: {
                         Label("Open sub-agent", systemImage: "arrow.up.right.square")
                     }
-                    .buttonStyle(.plain).foregroundStyle(Color.accentColor).font(.system(size: 11))
+                    .buttonStyle(.plain).foregroundStyle(Theme.accentBlue).font(.system(size: 11))
                 }
             }
         case .error:
@@ -1130,9 +1130,9 @@ struct PermissionPrompt: View {
             ForEach(Array(opts.enumerated()), id: \.offset) { i, o in
                 Button { happier.resolve(item, decision: o.id) } label: {
                     HStack(spacing: 6) {
-                        Text(i == (hovered ?? 0) ? "❯" : " ").foregroundStyle(Color.accentColor)
+                        Text(i == (hovered ?? 0) ? "❯" : " ").foregroundStyle(Theme.accentBlue)
                         Text("\(i + 1). \(o.label)")
-                            .foregroundStyle(i == (hovered ?? 0) ? Color.accentColor : Theme.primary)
+                            .foregroundStyle(i == (hovered ?? 0) ? Theme.accentBlue : Theme.primary)
                         Spacer(minLength: 0)
                     }
                     .contentShape(Rectangle())

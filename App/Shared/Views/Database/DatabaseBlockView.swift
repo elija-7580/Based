@@ -148,7 +148,7 @@ struct DatabaseBlockView: View {
             if (view.filter?.isEmpty == false) || (view.sorts?.isEmpty == false) {
                 ActiveRulesBar(ctx: ctx, showFilter: $showFilter, showSort: $showSort)
             }
-            Divider()
+            Rectangle().fill(Theme.gridLine).frame(height: 1)
             if fullPage {
                 layout(ctx)
             } else {
@@ -196,11 +196,16 @@ struct DatabaseBlockView: View {
                                     if let id = model.store.addView(to: blockID, type: t) { activeViewID = id }
                                 }
                             }
-                        } label: { Image(systemName: "plus").foregroundStyle(Theme.secondary) }
+                        } label: { ToolbarIcon("plus", size: 12) }
                         .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
                         .fixedSize()
+                        .frame(width: 24, height: 24)
+                        .hoverHighlight(opacity: 0.065)
+                        .help("Add a view")
                     }
                 }
+                .padding(.vertical, 1)
             }
             Spacer(minLength: 8)
             if ctx.view.type != .dashboard { toolbar(ctx) }
@@ -220,13 +225,16 @@ struct DatabaseBlockView: View {
                     renamingView = nil
                 }
         } else {
-            Button { activeViewID = v.id } label: {
-                Label(v.name, systemImage: v.type.symbol)
-                    .padding(.horizontal, 6).padding(.vertical, 4)
-                    .foregroundStyle(active ? Theme.primary : Theme.secondary)
-                    .overlay(alignment: .bottom) { if active { Rectangle().fill(Theme.primary).frame(height: 2) } }
+            // Notion: views are pills — the active one filled, the others quiet until hovered.
+            Button { withAnimation(.easeOut(duration: 0.12)) { activeViewID = v.id } } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: v.type.symbol).font(.system(size: 12, weight: .regular))
+                    Text(v.name).font(.system(size: 14, weight: active ? .medium : .regular)).lineLimit(1)
+                }
+                .padding(.horizontal, 4)
+                .foregroundStyle(active ? Theme.primary : Theme.secondary)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.quiet(padding: 4, cornerRadius: 14, minSize: 26, selected: active))
             .contextMenu {
                 if !ctx.locked {
                     Button("Rename", systemImage: "pencil") { viewName = v.name; renamingView = v.id }
@@ -251,45 +259,63 @@ struct DatabaseBlockView: View {
     }
 
     private func toolbar(_ ctx: DBContext) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 1) {
             Button { showFilter.toggle() } label: {
-                Image(systemName: "line.3.horizontal.decrease")
-                    .foregroundStyle(ctx.view.filter?.isEmpty == false ? Color.accentColor : Theme.secondary)
+                ToolbarIcon("line.3.horizontal.decrease", active: ctx.view.filter?.isEmpty == false)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.quiet)
             .help("Filter")
             .popover(isPresented: $showFilter) { FilterEditor(ctx: ctx) }
             Button { showSort.toggle() } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .foregroundStyle(ctx.view.sorts?.isEmpty == false ? Color.accentColor : Theme.secondary)
+                ToolbarIcon("arrow.up.arrow.down", active: ctx.view.sorts?.isEmpty == false)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.quiet)
             .help("Sort")
             .popover(isPresented: $showSort) { SortEditor(ctx: ctx) }
             if searching {
-                TextField("Type to search…", text: $search)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 180)
-                    .focused($searchFocused)
-                    .onAppear { searchFocused = true }
-                    .onKeyPress(.escape) { searching = false; search = ""; return .handled }
-                    .accessibilityIdentifier("db.search")
-                Button { searching = false; search = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                HStack(spacing: 4) {
+                    ToolbarIcon("magnifyingglass", size: 12)
+                    TextField("Type to search…", text: $search)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                        .frame(width: 150)
+                        .focused($searchFocused)
+                        .onAppear { searchFocused = true }
+                        .onKeyPress(.escape) { searching = false; search = ""; return .handled }
+                        .accessibilityIdentifier("db.search")
+                    Button { searching = false; search = "" } label: { ToolbarIcon("xmark", size: 10) }
+                        .buttonStyle(.quiet(padding: 2, minSize: 18))
+                }
+                .padding(.leading, 6).padding(.trailing, 2)
+                .frame(height: 26)
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.primary.opacity(0.055)))
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
             } else {
-                Button { searching = true } label: { Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary) }
-                    .buttonStyle(.plain)
+                Button { withAnimation(.easeOut(duration: 0.15)) { searching = true } } label: { ToolbarIcon("magnifyingglass") }
+                    .buttonStyle(.quiet)
                     .help("Search (⌘F)")
                     .accessibilityIdentifier("db.searchButton")
             }
-            Button { showSettings.toggle() } label: { Image(systemName: "ellipsis").foregroundStyle(Theme.secondary) }
-                .buttonStyle(.plain)
+            if !fullPage, let source = expandTarget(ctx) {
+                Button { model.open(source, mode: .fullPage) } label: { ToolbarIcon("arrow.up.left.and.arrow.down.right", size: 12) }
+                    .buttonStyle(.quiet)
+                    .help("Open as full page (⌘-click: new tab)")
+            }
+            Button { showSettings.toggle() } label: { ToolbarIcon("slider.horizontal.3") }
+                .buttonStyle(.quiet)
                 .help("View settings")
                 .popover(isPresented: $showSettings) { ViewSettingsView(ctx: ctx) }
             if !ctx.locked {
-                NewRowButton(ctx: ctx)
+                NewRowButton(ctx: ctx).padding(.leading, 6)
             }
         }
+    }
+
+    /// The full-page database behind an inline / linked view, if it has one (Notion's ↗ "open as page").
+    private func expandTarget(_ ctx: DBContext) -> RecordID? {
+        if ctx.block.type == .databasePage { return nil }
+        if let src = model.store.blocks[ctx.db.blockID], src.type == .databasePage { return src.id }
+        return nil
     }
 }
 
@@ -299,7 +325,10 @@ struct NewRowButton: View {
 
     var body: some View {
         let templates = ctx.store.templates(of: ctx.db.id)
-        Menu {
+        PrimarySplitButton(title: "New") {
+            let id = ctx.addRow()
+            if ctx.view.type != .table { ctx.open(id) }
+        } menu: {
             Section("Templates") {
                 ForEach(templates, id: \.id) { t in
                     Button {
@@ -331,15 +360,7 @@ struct NewRowButton: View {
                     }
                 }
             }
-        } label: {
-            Text("New")
-        } primaryAction: {
-            let id = ctx.addRow()
-            if ctx.view.type != .table { ctx.open(id) }
         }
-        .menuStyle(.button)
-        .buttonStyle(.bordered)
-        .fixedSize()
     }
 }
 
@@ -402,8 +423,8 @@ struct ActiveRulesBar: View {
         Button(action: action) {
             Label(text, systemImage: symbol)
                 .padding(.horizontal, 8).padding(.vertical, 3)
-                .background(Capsule().fill(Color.accentColor.opacity(0.12)))
-                .foregroundStyle(Color.accentColor)
+                .background(Capsule().fill(Theme.accentBlue.opacity(0.12)))
+                .foregroundStyle(Theme.accentBlue)
         }
         .buttonStyle(.plain)
     }

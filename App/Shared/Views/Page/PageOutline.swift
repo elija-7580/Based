@@ -1,8 +1,9 @@
 import SwiftUI
 import BasedCore
 
-/// Floating outline on the right edge of a page (like Notion's table of contents rail):
-/// collapsed to small bars, expands on hover/tap to show headings, click scrolls to the heading.
+/// Floating outline on the right edge of a page (ChatGPT / Notion style): a column of thin, soft, rounded
+/// lines — one per heading — that brighten under the pointer and, after a short hover, morph into a panel
+/// with the headings. Click a line or a heading to scroll there.
 struct PageOutline: View {
     let pageID: RecordID
     let scroll: ScrollViewProxy
@@ -10,61 +11,127 @@ struct PageOutline: View {
     var topInset: CGFloat = 72
     @Environment(AppModel.self) private var model
     @State private var expanded = false
+    @State private var hoverRail = false
+    @State private var hoverTask: Task<Void, Never>?
 
-    struct Entry: Identifiable { let id: RecordID; let title: String; let level: Int }
+    struct Entry: Identifiable, Equatable { let id: RecordID; let level: Int }
 
     private var entries: [Entry] {
         let store = model.store
         return store.visibleOrder(in: pageID).compactMap { id in
             guard let b = store.blocks[id], b.type.isHeading, b.trashedAt == nil else { return nil }
             let level = b.type == .heading1 ? 1 : b.type == .heading2 ? 2 : 3
-            return Entry(id: id, title: b.title.isEmpty ? "Untitled heading" : b.title, level: level)
+            return Entry(id: id, level: level)
         }
     }
 
     var body: some View {
-        // Observe edits: the rail appears as soon as the page has headings (before, it was computed once).
-        let _ = model.registry.workspace.revision
+        // Headings come and go with structural changes (new block, type change); their titles are observed per
+        // heading below, so typing elsewhere on the page doesn't rebuild the outline.
+        let _ = model.registry.workspace.structureRevision
         let items = entries
         if !items.isEmpty {
-            VStack(alignment: .leading, spacing: expanded ? 2 : 6) {
-                ForEach(items) { e in
-                    if expanded {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.25)) { scroll.scrollTo(e.id, anchor: .top) }
-                        } label: {
-                            Text(e.title).font(.system(size: 13)).lineLimit(1)
-                                .foregroundStyle(e.level == 1 ? Theme.primary : Theme.secondary)
-                                .padding(.vertical, 4).padding(.horizontal, 8)
-                                .padding(.leading, CGFloat(e.level - 1) * 12)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.clear))
-                    } else {
-                        RoundedRectangle(cornerRadius: 1.5)
-                            .fill(Color(Theme.textSecondary).opacity(e.level == 1 ? 0.8 : 0.55))
-                            .frame(width: e.level == 1 ? 20 : e.level == 2 ? 14 : 9, height: 3)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                }
-            }
-            .padding(expanded ? 8 : 10)
-            .frame(width: expanded ? 240 : 38, alignment: .leading)
-            .background {
+            ZStack(alignment: .topTrailing) {
+                rail(items)
+                    .opacity(expanded ? 0 : 1)
+                    .scaleEffect(x: expanded ? 0.6 : 1, y: 1, anchor: .trailing)
                 if expanded {
-                    RoundedRectangle(cornerRadius: 10).fill(.regularMaterial)
-                        .shadow(color: .black.opacity(0.12), radius: 14, y: 4)
+                    panel(items)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .topTrailing)).combined(with: .offset(x: 6)),
+                            removal: .opacity.combined(with: .scale(scale: 0.98, anchor: .topTrailing))))
                 }
             }
             .contentShape(Rectangle())
-            .onHover { h in withAnimation(.spring(duration: 0.28)) { expanded = h } }
-            .onTapGesture { withAnimation(.spring(duration: 0.28)) { expanded.toggle() } }
-            .padding(.trailing, 8)
+            .onHover(perform: hover)
+            .padding(.trailing, 10)
             .padding(.top, topInset)
-            .animation(.spring(duration: 0.28), value: expanded)
+            .animation(.spring(response: 0.3, dampingFraction: 0.86), value: expanded)
+            .animation(.easeOut(duration: 0.15), value: hoverRail)
             .accessibilityLabel("Page outline")
+            .onDisappear { hoverTask?.cancel() }
         }
+    }
+
+    /// Short delay before the panel opens, so passing over the rail with the pointer doesn't flash it.
+    private func hover(_ inside: Bool) {
+        hoverTask?.cancel()
+        hoverRail = inside
+        if inside {
+            hoverTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(140))
+                if !Task.isCancelled { expanded = true }
+            }
+        } else {
+            hoverTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(120))
+                if !Task.isCancelled { expanded = false }
+            }
+        }
+    }
+
+    private func jump(_ id: RecordID) {
+        withAnimation(.smooth(duration: 0.35)) { scroll.scrollTo(id, anchor: .top) }
+    }
+
+    private func rail(_ items: [Entry]) -> some View {
+        VStack(alignment: .trailing, spacing: 9) {
+            ForEach(items) { e in
+                Capsule(style: .continuous)
+                    .fill(Theme.primary.opacity(hoverRail ? (e.level == 1 ? 0.55 : 0.4) : (e.level == 1 ? 0.28 : 0.18)))
+                    .frame(width: e.level == 1 ? 16 : e.level == 2 ? 11 : 7, height: 2)
+                    .frame(width: 24, alignment: .trailing)
+                    .contentShape(Rectangle().inset(by: -4))
+                    .onTapGesture { jump(e.id) }
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+    }
+
+    private func panel(_ items: [Entry]) -> some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 1) {
+                ForEach(items) { e in
+                    OutlineRow(id: e.id, level: e.level) { jump(e.id) }
+                }
+            }
+            .padding(6)
+        }
+        .frame(width: 248)
+        .frame(maxHeight: 460)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.regularMaterial)
+                .shadow(color: .black.opacity(0.14), radius: 18, y: 6)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.primary.opacity(0.07)))
+    }
+}
+
+/// One heading in the expanded outline; observes only its own block, so it follows renames.
+private struct OutlineRow: View {
+    let id: RecordID
+    let level: Int
+    let action: () -> Void
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        let title = model.registry.block(id).block?.title ?? ""
+        Button(action: action) {
+            Text(title.isEmpty ? "Untitled heading" : title)
+                .font(.system(size: 13, weight: level == 1 ? .medium : .regular))
+                .lineLimit(1)
+                .foregroundStyle(level == 1 ? Theme.primary : Theme.secondary)
+                .padding(.vertical, 5).padding(.horizontal, 8)
+                .padding(.leading, CGFloat(level - 1) * 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.primary.opacity(hover ? 0.07 : 0)))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { h in withAnimation(.easeOut(duration: 0.08)) { hover = h } }
     }
 }

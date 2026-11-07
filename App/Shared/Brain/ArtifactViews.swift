@@ -49,8 +49,8 @@ struct ArtifactCardView: View {
                 Image(systemName: artifact.symbol)
                     .font(.system(size: 16))
                     .frame(width: 38, height: 38)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.accentColor.opacity(0.12)))
-                    .foregroundStyle(Color.accentColor)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.accentBlue.opacity(0.12)))
+                    .foregroundStyle(Theme.accentBlue)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(artifact.title).font(.system(size: 13.5, weight: .semibold)).lineLimit(1)
                     Text(open ? "\(artifact.kindLabel) · open" : "\(artifact.kindLabel) · Click to open")
@@ -61,7 +61,7 @@ struct ArtifactCardView: View {
             }
             .padding(10)
             .background(RoundedRectangle(cornerRadius: 12).fill(hover || open ? Color.primary.opacity(0.05) : Color.primary.opacity(0.025)))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(open ? Color.accentColor.opacity(0.6) : Color(Theme.divider)))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(open ? Theme.accentBlue.opacity(0.6) : Color(Theme.divider)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -83,7 +83,7 @@ struct ArtifactPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: artifact.symbol).foregroundStyle(Color.accentColor)
+                Image(systemName: artifact.symbol).foregroundStyle(Theme.accentBlue)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(artifact.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                     Text(artifact.kindLabel).font(.system(size: 11)).foregroundStyle(Theme.secondary)
@@ -102,7 +102,7 @@ struct ArtifactPanel: View {
                 } label: { Image(systemName: copied ? "checkmark" : "ellipsis") }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                 Button { brain.artifact = nil } label: { Image(systemName: "xmark") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.quiet)
                     .help("Close")
                     .accessibilityIdentifier("artifact.close")
             }

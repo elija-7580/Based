@@ -158,31 +158,21 @@ struct MacTitleBar: View {
     }
 }
 
-/// 1-pt divider with a wide invisible drag area that resizes the sidebar (Notion: 200…480 pt).
+/// 1-pt divider with a 12-pt drag area that resizes the sidebar (Notion: 200…480 pt). Resize cursor and a blue
+/// line while hovered or dragged; double-click resets the width.
 struct SidebarResizeHandle: View {
     @Binding var width: Double
     @State private var start: Double?
-    @State private var hover = false
 
     var body: some View {
         Rectangle()
-            .fill(hover || start != nil ? Chrome.accent.opacity(0.5) : Chrome.border)
-            .frame(width: hover || start != nil ? 2 : 1)
+            .fill(Chrome.border)
+            .frame(width: 1)
             .overlay {
-                Color.clear
-                    .frame(width: 9)
-                    .contentShape(Rectangle())
-                    .onHover { inside in
-                        hover = inside
-                        if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
-                    }
-                    .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
-                        .onChanged { v in
-                            if start == nil { start = width }
-                            width = min(max(200, (start ?? width) + v.translation.width), 480)
-                        }
-                        .onEnded { _ in start = nil })
-                    .onTapGesture(count: 2) { width = 248 }
+                ResizeHandle(onBegan: { start = width },
+                             onChanged: { dx in width = min(max(200, (start ?? width) + Double(dx)), 480) },
+                             onEnded: { start = nil },
+                             onDoubleClick: { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { width = 248 } })
             }
             .accessibilityIdentifier("sidebar.resize")
     }
@@ -245,11 +235,20 @@ enum WindowChrome {
 
 // MARK: - Sidebar
 
-/// Click handling shared by sidebar rows: plain click navigates, ⌘-click toggles, ⇧-click selects a range.
+/// Click handling shared by sidebar rows: plain click navigates, ⌘-click opens a page in a new tab (⌘⇧: and
+/// switches to it), ⌘⌥-click toggles the row in the selection, ⇧-click selects a range.
 @MainActor
 enum SidebarClick {
     static func click(_ item: SidebarItem, model: AppModel, order: [SidebarItem]) {
         let flags = NSEvent.modifierFlags
+        if flags.contains(.command), !flags.contains(.option) {
+            switch item {
+            case .page(let id): model.openInNewTab(id, activate: flags.contains(.shift))
+            case .chat(let id): model.openChat(id, fullPage: true)
+            default: model.newTab(item, activate: flags.contains(.shift))
+            }
+            return
+        }
         if flags.contains(.command) {
             var s = model.sidebarSelection
             if let cur = model.currentSidebarItem, s.count <= 1 { s = [cur] }

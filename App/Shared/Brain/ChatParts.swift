@@ -139,7 +139,7 @@ struct ThinkingView: View {
         VStack(alignment: .leading, spacing: 6) {
             Button { if hasText { withAnimation(.spring(response: 0.3, dampingFraction: 0.88)) { open.toggle() } } } label: {
                 HStack(spacing: 6) {
-                    AIGlyph(size: 13).foregroundStyle(running ? Color.accentColor : Theme.secondary)
+                    AIGlyph(size: 13).foregroundStyle(running ? Theme.accentBlue : Theme.secondary)
                         .symbolEffectPulse(running)
                     if running { ShimmerText(text: "Thinking…") }
                     else { Text(label).foregroundStyle(Theme.secondary).transition(.opacity) }
@@ -199,7 +199,7 @@ struct ChatWorkingIndicator: View {
     let label: String
     var body: some View {
         HStack(spacing: 6) {
-            AIGlyph(size: 13).foregroundStyle(Color.accentColor)
+            AIGlyph(size: 13).foregroundStyle(Theme.accentBlue)
             ShimmerText(text: label).font(.system(size: 13))
         }
     }
@@ -411,14 +411,14 @@ struct TodoCardView: View {
             }
             ProgressView(value: Double(done), total: Double(max(1, todos.count)))
                 .progressViewStyle(.linear)
-                .tint(Color.accentColor)
+                .tint(Theme.accentBlue)
             VStack(alignment: .leading, spacing: 5) {
                 ForEach(todos) { t in
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Group {
                             switch t.status {
-                            case .completed: Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
-                            case .inProgress: Image(systemName: "circle.dotted").foregroundStyle(Color.accentColor)
+                            case .completed: Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accentBlue)
+                            case .inProgress: Image(systemName: "circle.dotted").foregroundStyle(Theme.accentBlue)
                             case .pending: Image(systemName: "circle").foregroundStyle(Theme.secondary)
                             }
                         }
@@ -515,8 +515,7 @@ struct MarkdownBlockView: View {
             let n = siblings[..<index].reversed().prefix { $0.type == .numberedList }.count + 1
             Text("\(n).").font(.system(size: 14)).foregroundStyle(Theme.secondary)
         case .todo:
-            Image(systemName: block.props.checked == true ? "checkmark.square.fill" : "square")
-                .font(.system(size: 13)).foregroundStyle(block.props.checked == true ? Color.accentColor : Theme.secondary)
+            TodoCheckbox(checked: block.props.checked == true).scaleEffect(0.85)
         default:
             Text("•").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.secondary)
         }
@@ -546,9 +545,9 @@ enum MarkdownInline {
             a.font = font
             if run.marks.strikethrough { a.strikethroughStyle = .single }
             if run.marks.underline { a.underlineStyle = .single }
-            if let l = run.marks.link, let url = URL(string: l) { a.link = url; a.foregroundColor = Color.accentColor }
-            if case .page(let id)? = run.mention { a.link = URL(string: "based://page/" + id); a.foregroundColor = Color.accentColor }
-            if case .link(let l)? = run.mention, let url = URL(string: l) { a.link = url; a.foregroundColor = Color.accentColor }
+            if let l = run.marks.link, let url = URL(string: l) { a.link = url; a.foregroundColor = Theme.accentBlue }
+            if case .page(let id)? = run.mention { a.link = URL(string: "based://page/" + id); a.foregroundColor = Theme.accentBlue }
+            if case .link(let l)? = run.mention, let url = URL(string: l) { a.link = url; a.foregroundColor = Theme.accentBlue }
             out += a
         }
         return out
@@ -670,7 +669,7 @@ struct DictationButton: View {
                 NSApp.sendAction(Selector(("startDictation:")), to: nil, from: nil)
             }
         } label: { Image(systemName: "mic") }
-        .buttonStyle(.plain)
+        .buttonStyle(.quiet)
         .help("Dictate (or press the dictation key)")
         .accessibilityIdentifier("ai.dictate")
         #else

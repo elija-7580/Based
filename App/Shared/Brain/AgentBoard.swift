@@ -142,7 +142,7 @@ struct AgentBoardView: View {
                 Spacer()
                 if c.status == nil || c.status == .running {
                     Button { model.showNewSession = true } label: { Image(systemName: "plus") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary).help("New session")
+                        .buttonStyle(.quiet).foregroundStyle(Theme.secondary).help("New session")
                 }
             }
             .padding(.horizontal, 4)
@@ -556,7 +556,7 @@ struct CanvasNode: View {
         }
         .background(RoundedRectangle(cornerRadius: 9).fill(Chrome.appBackground))
         .clipShape(RoundedRectangle(cornerRadius: 9))
-        .overlay(RoundedRectangle(cornerRadius: 9).stroke(selected ? Color.accentColor : (node.status == .running ? Color.blue.opacity(0.55) : Color(Theme.divider)), lineWidth: selected ? 2 : 1))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(selected ? Theme.accentBlue : (node.status == .running ? Color.blue.opacity(0.55) : Color(Theme.divider)), lineWidth: selected ? 2 : 1))
         .shadow(color: node.status == .running ? Color.blue.opacity(0.25) : .black.opacity(hover ? 0.15 : 0.06), radius: node.status == .running ? 8 : (hover ? 6 : 2), y: 1)
         .onHover { hover = $0 }
         .contextMenu { AgentSessionMenu(session: s) }

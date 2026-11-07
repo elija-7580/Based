@@ -6,13 +6,14 @@ struct RowCard: View {
     let ctx: DBContext
     let row: Block
     var showCover = false
+    @State private var hover = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if showCover { cover.frame(height: coverHeight).clipped() }
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
-                    if ctx.view.showIcons != false, let icon = row.props.icon { icon.view(size: 16, assets: ctx.model.assets).frame(width: 18, height: 18) }
+                    if ctx.view.showIcons != false { PageIconView(icon: row.props.icon, size: 18) }
                     Text(row.title.isEmpty ? "Untitled" : row.title).font(.system(size: 14, weight: .medium)).lineLimit(ctx.view.wrapCells == true ? nil : 2)
                 }
                 ForEach(ctx.cardProperties) { p in
@@ -26,10 +27,13 @@ struct RowCard: View {
             .padding(10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 6).fill(.background).shadow(color: .black.opacity(0.12), radius: 1.5, y: 1))
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider)))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primary.opacity(hover ? 0.035 : 0)).allowsHitTesting(false))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.gridLine))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: .black.opacity(hover ? 0.14 : 0.07), radius: hover ? 4 : 1.5, y: hover ? 2 : 1)
         .contentShape(Rectangle())
+        .onHover { h in withAnimation(.easeOut(duration: 0.12)) { hover = h } }
         .onTapGesture { ctx.open(row.id) }
         .contextMenu { RowMenuItems(ctx: ctx, row: row) }
         .onDrag {
@@ -162,7 +166,7 @@ struct BoardColumn: View {
                 .fixedSize()
                 if !ctx.locked {
                     Button { ctx.open(ctx.addRow(values: ctx.groupValues(group.id))) } label: { Image(systemName: "plus") }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.quiet)
                 }
             }
             .font(.system(size: 13, weight: .medium))
@@ -182,7 +186,7 @@ struct BoardColumn: View {
         .padding(8)
         .frame(width: 260, alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: 8).fill(group.color.map { Theme.optionBackground($0).opacity(0.35) } ?? Color.primary.opacity(0.03)))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor, lineWidth: targeted ? 2 : 0))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
         .onDrop(of: [.text], isTargeted: $targeted) { _ in
             guard !ctx.locked else { return false }
             let ids = ctx.model.draggedBlocks

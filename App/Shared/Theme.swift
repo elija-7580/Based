@@ -97,6 +97,11 @@ enum Theme {
     /// Notion's hover fill for quiet buttons and menu rows (rgba(55,53,47,0.08) light).
     static let hoverFillColor = dynamic(light: 0xEFEFEE, dark: 0x2C2C2C)
     static var hoverFill: Color { Color(hoverFillColor) }
+    /// Table grid / row separators — lighter than block dividers (Notion: rgba(55,53,47,0.09)).
+    /// Small floating controls over content (row "Open" pill): page white / a slightly raised dark gray.
+    static let pageBackgroundColor = dynamic(light: 0xFFFFFF, dark: 0x2A2A2A)
+    static let gridLineColor = dynamic(light: 0xEDEDEC, dark: 0x2B2B2B)
+    static var gridLine: Color { Color(gridLineColor) }
     static var dividerColor: Color { Color(divider) }
 
     /// Code highlighting (light: Notion's Prism-like palette; dark: a softer Material-like one).
@@ -114,6 +119,9 @@ enum Theme {
 
     /// Checked to-do fill (Notion blue; document colour, not the system accent).
     static var todoBlue: Color { Color(dynamic(light: 0x2383E2, dark: 0x2383E2)) }
+
+    /// Notion's interface blue (primary "New" button, resize lines, active toolbar icons).
+    static var accentBlue: Color { Color(dynamic(light: 0x2383E2, dark: 0x2383E2)) }
 
     /// Drag & drop target line (Notion blue, independent of the system accent colour).
     static var dropIndicator: Color { Color(dynamic(light: 0x2383E2, dark: 0x529CCA)).opacity(0.85) }

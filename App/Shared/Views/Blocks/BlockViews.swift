@@ -29,7 +29,9 @@ struct BlockList: View {
 
     var body: some View {
         let node = model.registry.block(parentID)
-        let _ = model.registry.workspace.structureRevision
+        // Only this list's own children matter (order via `children`, numbering via `childRevision`); reading the
+        // workspace-wide structure revision re-rendered every list on the page for each page-title keystroke.
+        let _ = node.childRevision
         let ids = node.children
         let numbers = listNumbers(ids)
         if lazyWhenLong && ids.count > Self.lazyThreshold {
@@ -560,46 +562,27 @@ struct ColumnsView: View {
                     let avail = max(1, geo.size.width - spacing * CGFloat(cols.count - 1))
                     ForEach(0..<(cols.count - 1), id: \.self) { i in
                         let x = fr[...i].reduce(0, +) * avail + spacing * CGFloat(i) + spacing / 2
-                        ColumnDivider()
-                            .frame(width: 8, height: geo.size.height)
+                        ResizeHandle(hitWidth: 12,
+                                     onBegan: {},
+                                     onChanged: { dx in
+                                         var f = fr
+                                         let base = ColumnsLayout.fractions(stored, count: cols.count)
+                                         let d = Double(dx / avail)
+                                         let pair = base[i] + base[i + 1]
+                                         let left = min(max(0.1, base[i] + d), pair - 0.1)
+                                         f[i] = left; f[i + 1] = pair - left
+                                         draft = f
+                                     },
+                                     onEnded: {
+                                         if let f = draft { model.store.setColumnRatios(cols, f) }
+                                         draft = nil
+                                     })
+                            .frame(height: geo.size.height)
                             .position(x: x, y: geo.size.height / 2)
-                            .gesture(DragGesture(minimumDistance: 1)
-                                .onChanged { v in
-                                    var f = fr
-                                    let base = ColumnsLayout.fractions(stored, count: cols.count)
-                                    let d = Double(v.translation.width / avail)
-                                    let pair = base[i] + base[i + 1]
-                                    let left = min(max(0.1, base[i] + d), pair - 0.1)
-                                    f[i] = left; f[i + 1] = pair - left
-                                    draft = f
-                                }
-                                .onEnded { _ in
-                                    if let f = draft { model.store.setColumnRatios(cols, f) }
-                                    draft = nil
-                                })
                     }
                 }
             }
         }
-    }
-}
-
-/// The invisible gap between two columns; shows a thin line and a resize cursor on hover (Notion).
-private struct ColumnDivider: View {
-    @State private var hover = false
-
-    var body: some View {
-        Rectangle()
-            .fill(Color.clear)
-            .overlay(Rectangle().fill(Theme.dropIndicator.opacity(hover ? 0.6 : 0)).frame(width: 2))
-            .contentShape(Rectangle())
-            #if os(macOS)
-            .onHover { inside in
-                hover = inside
-                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
-            }
-            #endif
-            .animation(.easeOut(duration: 0.12), value: hover)
     }
 }
 

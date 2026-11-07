@@ -170,7 +170,7 @@ private struct EngineTab: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                if current { Circle().fill(Color.accentColor).frame(width: 5, height: 5) }
+                if current { Circle().fill(Theme.accentBlue).frame(width: 5, height: 5) }
                 Text(title).font(.system(size: 12, weight: selected ? .semibold : .regular))
             }
             .padding(.horizontal, 9).padding(.vertical, 5)
@@ -214,7 +214,7 @@ struct ModelRow: View {
                 Spacer(minLength: 6)
                 Image(systemName: "checkmark")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Theme.accentBlue)
                     .opacity(selected ? 1 : 0)
                     .scaleEffect(selected ? 1 : 0.6)
             }

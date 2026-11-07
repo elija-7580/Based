@@ -100,7 +100,7 @@ struct MapLayout: View {
                 ForEach(all) { pin in
                     if let e = pin.emoji {
                         Marker(pin.title, monogram: Text(e), coordinate: CLLocationCoordinate2D(latitude: pin.place.lat ?? 0, longitude: pin.place.lon ?? 0))
-                            .tint(Color.accentColor)
+                            .tint(Theme.accentBlue)
                             .tag(pin.id)
                     } else {
                         Marker(pin.title, systemImage: "mappin", coordinate: CLLocationCoordinate2D(latitude: pin.place.lat ?? 0, longitude: pin.place.lon ?? 0))
@@ -128,7 +128,7 @@ struct MapLayout: View {
                 Text("\(all.count) on map").fontWeight(.medium)
                 if locating > 0 { ProgressView().controlSize(.mini); Text("Locating \(locating)…") }
                 Button { withAnimation { position = .automatic } } label: { Image(systemName: "scope") }
-                    .buttonStyle(.plain).help("Show all pins")
+                    .buttonStyle(.quiet).help("Show all pins")
             }
             .font(.system(size: 11.5))
             .padding(.horizontal, 8).padding(.vertical, 4)

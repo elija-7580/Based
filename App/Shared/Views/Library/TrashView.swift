@@ -159,7 +159,7 @@ struct ToastHost: View {
                             .accessibilityIdentifier("toast.action")
                     }
                     Button { model.toast = nil } label: { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.quiet)
                         .foregroundStyle(.white.opacity(0.7))
                         .help("Dismiss")
                 }

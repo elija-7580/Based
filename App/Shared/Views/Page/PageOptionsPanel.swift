@@ -171,13 +171,13 @@ private struct FontTile: View {
             VStack(spacing: 2) {
                 Text("Ag")
                     .font(sample)
-                    .foregroundStyle(selected ? Color.accentColor : Theme.primary)
+                    .foregroundStyle(selected ? Theme.accentBlue : Theme.primary)
                 Text(title).font(.system(size: 11)).foregroundStyle(Theme.secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(selected ? Color.accentColor.opacity(0.6) : .clear, lineWidth: 1.5))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(selected ? Theme.accentBlue.opacity(0.6) : .clear, lineWidth: 1.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -224,7 +224,7 @@ struct MiniSwitch: View {
     let on: Bool
     var body: some View {
         Capsule()
-            .fill(on ? Color.accentColor : Theme.secondary.opacity(0.3))
+            .fill(on ? Theme.accentBlue : Theme.secondary.opacity(0.3))
             .frame(width: 26, height: 15)
             .overlay(alignment: on ? .trailing : .leading) {
                 Circle().fill(.white).frame(width: 11, height: 11).padding(2)

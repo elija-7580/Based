@@ -23,8 +23,7 @@ struct PropertyValueView: View {
                 FlowRow(wrap: wrap) { ForEach(ids, id: \.self) { id in if let o = property.option(id) { OptionPill(name: o.name, color: o.color) } } }
             }
         case .checkbox:
-            Image(systemName: value.bool ? "checkmark.square.fill" : "square")
-                .foregroundStyle(value.bool ? Color.accentColor : Theme.secondary)
+            TodoCheckbox(checked: value.bool)
         case .relation:
             if case .relation(let ids)? = row.values[property.id] {
                 FlowRow(wrap: wrap) {
@@ -92,7 +91,7 @@ struct PropertyValueView: View {
     private var computed: some View {
         switch value {
         case .bool(let b):
-            Image(systemName: b ? "checkmark.square.fill" : "square").foregroundStyle(b ? Color.accentColor : Theme.secondary)
+            TodoCheckbox(checked: b)
         case .number(let n):
             Text(CellFormatter.number(n, property.numberFormat)).monospacedDigit()
         case .date(let d):
@@ -197,6 +196,8 @@ struct PropertyCell: View {
                     PropertyValueView(property: property, value: value, row: row)
                 }
                 .buttonStyle(.plain)
+                .frame(minWidth: 24, minHeight: 24)
+                .contentShape(Rectangle())
                 .disabled(locked)
             } else {
                 ZStack(alignment: .leading) {
@@ -326,7 +327,7 @@ struct OptionsEditor: View {
                     if let o = s.option(id) {
                         HStack(spacing: 2) {
                             OptionPill(name: o.name, color: o.color)
-                            Button { toggle(id) } label: { Image(systemName: "xmark").font(.system(size: 9)) }.buttonStyle(.plain)
+                            Button { toggle(id) } label: { Image(systemName: "xmark").font(.system(size: 9)) }.buttonStyle(.quiet(padding: 1, minSize: 14))
                         }
                     }
                 }
@@ -483,7 +484,7 @@ struct RelationEditor: View {
                         PageIconView(icon: store.icon(of: id), size: 14)
                         Text(store.title(of: id)).lineLimit(1)
                         Spacer()
-                        Button { remove(id) } label: { Image(systemName: "minus.circle") }.buttonStyle(.plain)
+                        Button { remove(id) } label: { Image(systemName: "minus.circle") }.buttonStyle(.quiet)
                     }
                     .padding(.vertical, 2)
                 }
@@ -544,7 +545,7 @@ struct FilesEditor: View {
                     Image(systemName: "paperclip")
                     if let u = f.url, let url = URL(string: u) { Link(f.name, destination: url) } else { Text(f.name) }
                     Spacer()
-                    Button { var list = files; list.remove(at: i); save(list) } label: { Image(systemName: "trash") }.buttonStyle(.plain)
+                    Button { var list = files; list.remove(at: i); save(list) } label: { Image(systemName: "trash") }.buttonStyle(.quiet)
                 }
             }
             Button("Upload file…") { importing = true }
@@ -591,7 +592,7 @@ struct PersonEditor: View {
                 HStack {
                     Label(p, systemImage: "person.crop.circle")
                     Spacer()
-                    Button { save(people.filter { $0 != p }) } label: { Image(systemName: "xmark") }.buttonStyle(.plain)
+                    Button { save(people.filter { $0 != p }) } label: { Image(systemName: "xmark") }.buttonStyle(.quiet)
                 }
             }
             TextField("Add a person…", text: $name).textFieldStyle(.roundedBorder)

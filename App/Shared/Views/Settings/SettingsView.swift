@@ -132,7 +132,7 @@ struct MyAccountSettings: View {
         Section("Profile") {
             HStack(spacing: 14) {
                 ZStack {
-                    Circle().fill(Color.accentColor.opacity(0.2)).frame(width: 56, height: 56)
+                    Circle().fill(Theme.accentBlue.opacity(0.2)).frame(width: 56, height: 56)
                     Text(initials.isEmpty ? String(name.prefix(1)).uppercased() : initials).font(.title2.bold())
                 }
                 VStack(alignment: .leading) {

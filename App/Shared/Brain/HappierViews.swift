@@ -199,7 +199,7 @@ struct ConnectionsSettingsView: View {
                         Spacer()
                         Toggle("Agents", isOn: Binding(get: { c.exposeToAgents }, set: { happier.setConnection(c, expose: $0) })).toggleStyle(.button).controlSize(.mini).font(.caption).help("Pass to Claude Code / Codex sessions as MCP server")
                         Button(happier.hasSecret(c) ? "Secret ✓" : "Secret…") { secretFor = c }.font(.caption)
-                        Button(role: .destructive) { happier.deleteConnection(c) } label: { Image(systemName: "trash") }.buttonStyle(.plain)
+                        Button(role: .destructive) { happier.deleteConnection(c) } label: { Image(systemName: "trash") }.buttonStyle(.quiet)
                     }
                 }
                 .padding(.vertical, 2)

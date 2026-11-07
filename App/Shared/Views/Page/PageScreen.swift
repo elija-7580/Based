@@ -545,7 +545,7 @@ struct TemplateBanner: View {
         }
         .font(.system(size: 13))
         .padding(.horizontal, 14).padding(.vertical, 8)
-        .background(Color.accentColor.opacity(0.12))
+        .background(Theme.accentBlue.opacity(0.12))
     }
 }
 
@@ -558,7 +558,12 @@ struct FavoriteButton: View {
     var body: some View {
         let _ = model.registry.workspace.structureRevision
         let fav = model.store.isFavorite(pageID)
-        Button { model.store.toggleFavorite(pageID) } label: { Image(systemName: fav ? "star.fill" : "star") }
+        // Notion: outline star, a warm yellow fill once the page is a favourite (the grey filled star looked heavy).
+        Button { model.store.toggleFavorite(pageID) } label: {
+            Image(systemName: fav ? "star.fill" : "star")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(fav ? Color(Theme.dynamic(light: 0xF5B83D, dark: 0xF2C14E)) : Theme.secondary)
+        }
             .help(fav ? "Remove from Favorites" : "Add to Favorites")
     }
 }

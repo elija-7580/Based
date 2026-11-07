@@ -48,7 +48,7 @@ struct ChartLayout: View {
     }
 
     /// Single colour for bars / lines when the view has a Notion colour theme ("auto" / "colorful" keep per-category colours).
-    private var lineColor: Color { themeColor ?? Color.accentColor }
+    private var lineColor: Color { themeColor ?? Theme.accentBlue }
 
     private var themeColor: Color? {
         switch config.colorTheme {

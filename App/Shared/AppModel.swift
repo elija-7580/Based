@@ -392,6 +392,11 @@ final class AppModel {
     /// Open a page: rows honour their database's "open pages in" setting unless forced.
     func open(_ id: RecordID, mode: OpenMode? = nil) {
         guard store.blocks[id] != nil else { return }
+        #if os(macOS)
+        // ⌘-click on any page link, row, card, mention or breadcrumb: open it in a new tab (⌘⇧: and switch to it).
+        let intent = ClickIntent.newTab
+        if intent.open { openInNewTab(id, activate: intent.activate); return }
+        #endif
         let m = mode ?? .fullPage
         switch m {
         case .sidePeek: peek = .side(id)
@@ -410,6 +415,10 @@ final class AppModel {
     }
 
     func openRoot(_ id: RecordID) {
+        #if os(macOS)
+        let intent = ClickIntent.newTab
+        if intent.open, store.blocks[id] != nil { openInNewTab(id, activate: intent.activate); return }
+        #endif
         peek = nil
         selection = .page(id)
         path = []

@@ -151,7 +151,7 @@ struct LibraryView: View {
                     .accessibilityIdentifier("library.search")
                 if !query.text.isEmpty {
                     Button { query.text = "" } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)) }
-                        .buttonStyle(.plain).foregroundStyle(Chrome.sectionText)
+                        .buttonStyle(.quiet).foregroundStyle(Chrome.sectionText)
                 }
             }
             .padding(.horizontal, 8).frame(width: 260, height: 28)

@@ -356,7 +356,7 @@ struct ChatComposer: View {
             }
             HStack(spacing: 8) {
                 Button { pickFiles = true } label: { Image(systemName: "plus") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.quiet)
                     .help("Attach files (or drop them here)")
                     .accessibilityIdentifier("ai.attach")
                 if let page = model.currentPageID {
@@ -365,10 +365,10 @@ struct ChatComposer: View {
                             .lineLimit(1)
                             .font(.system(size: 11.5))
                             .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(Capsule().fill(usePage ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.05)))
+                            .background(Capsule().fill(usePage ? Theme.accentBlue.opacity(0.12) : Color.primary.opacity(0.05)))
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(usePage ? Color.accentColor : Theme.secondary)
+                    .foregroundStyle(usePage ? Theme.accentBlue : Theme.secondary)
                     .help(usePage ? "The current page is shared as context" : "Not sharing the current page")
                 }
                 Menu {

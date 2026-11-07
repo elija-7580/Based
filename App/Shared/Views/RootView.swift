@@ -410,7 +410,7 @@ struct DetailContent: View {
     }
 }
 
-/// 1-pt divider with an 8-pt drag area that resizes the right panel.
+/// 1-pt divider with a 12-pt drag area that resizes the right panel (side peek, chat, artifacts).
 struct PanelResizeHandle: View {
     @Binding var width: Double
     let range: ClosedRange<Double>
@@ -421,19 +421,11 @@ struct PanelResizeHandle: View {
             .fill(Color(Theme.divider))
             .frame(width: 1)
             .overlay {
-                Color.clear
-                    .frame(width: 9)
-                    .contentShape(Rectangle())
-                    #if os(macOS)
-                    .onHover { inside in if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() } }
-                    #endif
-                    .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
-                        .onChanged { v in
-                            if start == nil { start = min(max(width, range.lowerBound), range.upperBound) }
-                            width = min(max(range.lowerBound, (start ?? width) - v.translation.width), range.upperBound)
-                        }
-                        .onEnded { _ in start = nil })
+                ResizeHandle(onBegan: { start = min(max(width, range.lowerBound), range.upperBound) },
+                             onChanged: { dx in width = min(max(range.lowerBound, (start ?? width) - Double(dx)), range.upperBound) },
+                             onEnded: { start = nil })
             }
+            .zIndex(10)
             .accessibilityIdentifier("panel.resize")
     }
 }
@@ -485,7 +477,7 @@ struct HomeChooser: View {
                                 PageIconView(icon: p.props.icon, isDatabase: p.type == .databasePage, size: 16)
                                 Text(store.title(of: p.id).nonEmptyOr("Untitled")).lineLimit(1)
                                 Spacer()
-                                Text("Set as Home").font(.caption).foregroundStyle(Color.accentColor)
+                                Text("Set as Home").font(.caption).foregroundStyle(Theme.accentBlue)
                             }
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .contentShape(Rectangle())

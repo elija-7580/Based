@@ -1,5 +1,5 @@
 # Requires Xcode 16+, XcodeGen (brew install xcodegen) and Python 3 with Pillow (for the icon).
-.PHONY: project icons test uitest server mac ios clean
+.PHONY: project icons test uitest server mac ios clean install
 
 project: icons
 	xcodegen generate
@@ -23,6 +23,9 @@ server:
 
 mac: project
 	xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Debug build
+
+install:
+	scripts/install-mac.sh
 
 ios: project
 	xcodebuild -project Based.xcodeproj -scheme Based-iOS -configuration Debug -destination 'generic/platform=iOS Simulator' build

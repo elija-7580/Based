@@ -36,42 +36,95 @@ struct RowMenuItems: View {
     }
 }
 
-/// Title cell: inline editable title + "Open" on hover.
+/// Title cell (Notion): icon + title; clicking the title opens the page (⌘-click: new tab), the pencil renames
+/// it in place, and "Open" floats over the right edge on hover — visible even when the title is long.
 struct RowTitleCell: View {
     let ctx: DBContext
     let row: Block
     @State private var draft = ""
     @State private var hover = false
+    @State private var editing = false
+    @FocusState private var focused: Bool
 
     var body: some View {
         HStack(spacing: 6) {
-            if let icon = row.props.icon, ctx.view.showIcons != false { icon.view(size: 16, assets: ctx.model.assets).frame(width: 18, height: 18) }
-            else if ctx.view.showIcons != false { Image(systemName: "doc").font(.system(size: 12)).foregroundStyle(Theme.secondary) }
-            if ctx.locked {
-                Text(row.title.isEmpty ? "Untitled" : row.title).fontWeight(.medium).lineLimit(ctx.view.wrapCells == true ? nil : 1)
-            } else {
+            if ctx.view.showIcons != false {
+                PageIconView(icon: row.props.icon, size: 18)
+            }
+            if !ctx.locked && (editing || row.title.isEmpty) {
                 TextField("Untitled", text: $draft)
                     .textFieldStyle(.plain)
-                    .fontWeight(.medium)
+                    .font(.system(size: 14, weight: .medium))
+                    .focused($focused)
+                    .onSubmit { editing = false }
                     .onChange(of: draft) { _, v in if v != row.title { ctx.store.setText(row.id, RichText(v)) } }
+                    .onChange(of: focused) { _, f in if !f { editing = false } }
+                    .onAppear { if editing { focused = true } }
+            } else {
+                Text(row.title.isEmpty ? "Untitled" : row.title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(row.title.isEmpty ? Theme.secondary : Theme.primary)
+                    .lineLimit(ctx.view.wrapCells == true ? nil : 1)
+                    .underline(hover, color: Theme.secondary.opacity(0.35))
+                    .contentShape(Rectangle())
+                    .onTapGesture { ctx.open(row.id) }
+                    .accessibilityIdentifier("table.rowTitle")
             }
             Spacer(minLength: 0)
-            if hover {
-                Button { ctx.open(row.id) } label: {
-                    Label("Open", systemImage: "arrow.up.left.and.arrow.down.right")
-                        .font(.system(size: 11))
-                        .padding(.horizontal, 5).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 4).fill(.background).shadow(radius: 1))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .overlay(alignment: .trailing) {
+            if hover && !editing {
+                HStack(spacing: 4) {
+                    if !ctx.locked {
+                        Button { draft = row.title; editing = true; focused = true } label: {
+                            Image(systemName: "pencil").font(.system(size: 11))
+                                .frame(width: 22, height: 22)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Rename")
+                    }
+                    Button { ctx.open(row.id) } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 10))
+                            Text("Open").font(.system(size: 12, weight: .medium))
+                        }
+                        .padding(.horizontal, 6)
+                        .frame(height: 22)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Open (⌘-click: new tab)")
+                    .accessibilityIdentifier("table.rowOpen")
                 }
-                .buttonStyle(.plain)
+                .foregroundStyle(Theme.secondary)
+                .background(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(Color(Theme.pageBackgroundColor))
+                        .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
+                )
+                .padding(.trailing, 2)
+                .transition(.opacity)
             }
         }
-        .onHover { hover = $0 }
+        .onHover { h in withAnimation(.easeOut(duration: 0.1)) { hover = h } }
         .onAppear { draft = row.title }
         .onChange(of: row.title) { _, v in if v != draft { draft = v } }
         #if os(iOS)
         .onLongPressGesture { ctx.open(row.id) }
         #endif
+    }
+}
+
+/// Live column widths while a header edge is dragged, so the whole column follows the pointer (not just the header).
+@Observable
+final class TableColumnWidths {
+    var live: [String: CGFloat] = [:]
+
+    @MainActor
+    func width(_ ctx: DBContext, _ p: PropertySchema) -> CGFloat {
+        live[p.id] ?? TableHeader.width(ctx, p)
     }
 }
 
@@ -82,6 +135,7 @@ struct TableLayout: View {
     /// Multi-selected rows (hover checkbox, ⇧-click for a range) for bulk actions.
     @State private var selection: Set<RecordID> = []
     @State private var anchor: RecordID?
+    @State private var columns = TableColumnWidths()
 
     /// Width of the checkbox gutter left of each row.
     static let gutter: CGFloat = 28
@@ -97,7 +151,7 @@ struct TableLayout: View {
                 LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
                     HStack(spacing: 0) {
                         selectAll(ordered)
-                        TableHeader(ctx: ctx, properties: props)
+                        TableHeader(ctx: ctx, properties: props, columns: columns)
                     }
                     if let groups = ctx.visibleGroups {
                         ForEach(groups) { g in
@@ -107,7 +161,7 @@ struct TableLayout: View {
                             if !collapsed.contains(g.id) {
                                 rows(g.rows, props: props, ordered: ordered)
                                 newRow(values: ctx.groupValues(g.id))
-                                CalculationRow(ctx: ctx, properties: props, rows: g.rows).padding(.leading, Self.gutter)
+                                CalculationRow(ctx: ctx, properties: props, rows: g.rows, columns: columns).padding(.leading, Self.gutter)
                             }
                         }
                         HiddenGroupsFooter(ctx: ctx)
@@ -125,7 +179,7 @@ struct TableLayout: View {
                             .accessibilityIdentifier("table.loadMore")
                         }
                         newRow(values: [:])
-                        CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows).padding(.leading, Self.gutter)
+                        CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows, columns: columns).padding(.leading, Self.gutter)
                     }
                 }
                 .padding(.bottom, 4)
@@ -153,7 +207,7 @@ struct TableLayout: View {
 
     private func rows(_ rows: [Block], props: [PropertySchema], ordered: [RecordID]) -> some View {
         ForEach(rows, id: \.id) { row in
-            TableRowView(ctx: ctx, row: row, props: props, selected: selection.contains(row.id),
+            TableRowView(ctx: ctx, row: row, props: props, columns: columns, selected: selection.contains(row.id),
                          selectionActive: !selection.isEmpty) { shift in
                 toggle(row.id, shift: shift, ordered: ordered)
             }
@@ -179,23 +233,15 @@ struct TableLayout: View {
     }
 
     private func selectAll(_ ordered: [RecordID]) -> some View {
-        let all = !ordered.isEmpty && selection.count == ordered.count
-        return Button {
+        SelectAllBox(all: !ordered.isEmpty && selection.count == ordered.count, any: !selection.isEmpty) {
+            let all = !ordered.isEmpty && selection.count == ordered.count
             selection = all ? [] : Set(ordered)
-        } label: {
-            Image(systemName: all ? "checkmark.square.fill" : (selection.isEmpty ? "square" : "minus.square.fill"))
-                .foregroundStyle(selection.isEmpty ? Theme.secondary.opacity(0.5) : Color.accentColor)
-                .frame(width: Self.gutter, height: 28)
-                .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .help(all ? "Deselect all" : "Select all rows")
-        .accessibilityIdentifier("table.selectAll")
     }
 
     private func bulkBar(_ ordered: [RecordID]) -> some View {
         HStack(spacing: 12) {
-            Text("\(selection.count) selected").font(.system(size: 13, weight: .medium)).foregroundStyle(Color.accentColor)
+            Text("\(selection.count) selected").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.accentBlue)
             Divider().frame(height: 14)
             Menu { bulkMenu(ordered) } label: { Label("Actions", systemImage: "ellipsis.circle") }
                 .menuStyle(.borderlessButton).fixedSize()
@@ -207,11 +253,11 @@ struct TableLayout: View {
             Spacer()
             Button { selection = [] } label: { Image(systemName: "xmark") }.help("Clear selection (Esc)")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.quiet)
         .font(.system(size: 13))
         .foregroundStyle(Theme.secondary)
         .padding(.horizontal, 8).padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.accentColor.opacity(0.08)))
+        .background(RoundedRectangle(cornerRadius: 6).fill(Theme.accentBlue.opacity(0.08)))
         .padding(.bottom, 4)
         .accessibilityIdentifier("table.bulkBar")
     }
@@ -247,21 +293,53 @@ struct TableLayout: View {
     private func newRow(values: [String: PropertyValue]) -> some View {
         if !ctx.locked {
             Button { ctx.addRow(values: values) } label: {
-                Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary).padding(.vertical, 6).padding(.horizontal, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 6) {
+                    Image(systemName: "plus").font(.system(size: 12))
+                    Text("New page").font(.system(size: 14))
+                }
+                .foregroundStyle(Theme.secondary)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .hoverHighlight(cornerRadius: 0, opacity: 0.035)
             .padding(.leading, Self.gutter)
-            .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.leading, Self.gutter) }
+            .overlay(alignment: .bottom) { Rectangle().fill(Theme.gridLine).frame(height: 1).padding(.leading, Self.gutter) }
+            .accessibilityIdentifier("table.newRow")
         }
     }
 }
 
-/// One table row: checkbox gutter (on hover / while selecting) + cells.
+/// Header checkbox: invisible until the header is hovered or rows are selected.
+private struct SelectAllBox: View {
+    let all: Bool
+    let any: Bool
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: all ? "checkmark.square.fill" : (any ? "minus.square.fill" : "square"))
+                .font(.system(size: 13, weight: .light))
+                .foregroundStyle(any ? Theme.accentBlue : Theme.secondary)
+                .frame(width: TableLayout.gutter, height: 32)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .opacity(hover || any ? 1 : 0)
+        .onHover { hover = $0 }
+        .help(all ? "Deselect all" : "Select all rows")
+        .accessibilityIdentifier("table.selectAll")
+    }
+}
+
+/// One table row: checkbox gutter (on hover / while selecting) + cells, soft highlight under the pointer.
 struct TableRowView: View {
     let ctx: DBContext
     let row: Block
     let props: [PropertySchema]
+    let columns: TableColumnWidths
     let selected: Bool
     let selectionActive: Bool
     let toggle: (_ shift: Bool) -> Void
@@ -277,8 +355,8 @@ struct TableRowView: View {
                 toggle(false)
                 #endif
             } label: {
-                Image(systemName: selected ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(selected ? Color.accentColor : Theme.secondary)
+                TodoCheckbox(checked: selected)
+                    .scaleEffect(0.85)
                     .frame(width: TableLayout.gutter, height: 28)
                     .contentShape(Rectangle())
             }
@@ -286,26 +364,30 @@ struct TableRowView: View {
             .opacity(hover || selectionActive ? 1 : 0)
             .help("Select row (⇧-click for a range)")
             .accessibilityIdentifier("table.rowSelect")
-            ForEach(props) { p in
-                Group {
-                    if p.type == .title {
-                        RowTitleCell(ctx: ctx, row: row)
-                    } else {
-                        PropertyCell(db: ctx.db, row: row, property: p, value: ctx.value(row, p),
-                                     locked: ctx.locked, wrap: ctx.view.wrapCells == true)
+            HStack(spacing: 0) {
+                ForEach(Array(props.enumerated()), id: \.element.id) { i, p in
+                    Group {
+                        if p.type == .title {
+                            RowTitleCell(ctx: ctx, row: row)
+                        } else {
+                            PropertyCell(db: ctx.db, row: row, property: p, value: ctx.value(row, p),
+                                         locked: ctx.locked, wrap: ctx.view.wrapCells == true)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, wrap ? 6 : 0)
+                    // Notion: without "Wrap cells" every row is one line high (33 pt) and cells clip.
+                    .frame(width: columns.width(ctx, p), height: wrap ? nil : TableLayout.rowHeight, alignment: .leading)
+                    .clipped()
+                    .overlay(alignment: .trailing) {
+                        if i < props.count - 1 { Rectangle().fill(Theme.gridLine).frame(width: 1) }
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, wrap ? 6 : 0)
-                // Notion: without "Wrap cells" every row is one line high (33 pt) and cells clip.
-                .frame(width: TableHeader.width(ctx, p), height: wrap ? nil : TableLayout.rowHeight, alignment: .leading)
-                .clipped()
-                .overlay(alignment: .trailing) { Rectangle().fill(Color(Theme.divider)).frame(width: 1) }
             }
+            .background(selected ? Theme.accentBlue.opacity(0.12) : (hover ? Theme.primary.opacity(0.03) : Color.clear))
         }
         .frame(minHeight: TableLayout.rowHeight)
-        .background(selected ? Color.accentColor.opacity(0.1) : Color.clear)
-        .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.leading, TableLayout.gutter) }
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.gridLine).frame(height: 1).padding(.leading, TableLayout.gutter) }
         .contentShape(Rectangle())
         .onHover { hover = $0 }
     }
@@ -314,6 +396,7 @@ struct TableRowView: View {
 struct TableHeader: View {
     let ctx: DBContext
     let properties: [PropertySchema]
+    let columns: TableColumnWidths
     @State private var adding = false
 
     static func width(_ ctx: DBContext, _ p: PropertySchema) -> CGFloat {
@@ -323,47 +406,69 @@ struct TableHeader: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(properties) { p in HeaderCell(ctx: ctx, property: p) }
-                .accessibilityIdentifier("table.header")
+            // Earlier cells sit above later ones, so each resize edge (which overhangs the border by half its
+            // width) is never covered by the next header.
+            ForEach(Array(properties.enumerated()), id: \.element.id) { i, p in
+                HeaderCell(ctx: ctx, property: p, columns: columns, last: i == properties.count - 1)
+                    .zIndex(Double(properties.count - i))
+            }
+            .accessibilityIdentifier("table.header")
             if !ctx.locked {
-                Button { adding = true } label: { Image(systemName: "plus").padding(8) }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.secondary)
+                Button { adding = true } label: { ToolbarIcon("plus", size: 12) }
+                    .buttonStyle(.quiet(padding: 4, minSize: 28))
+                    .padding(.leading, 2)
+                    .help("Add a property")
                     .popover(isPresented: $adding) { AddPropertyMenu(ctx: ctx) { adding = false } }
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: 14))
         .foregroundStyle(Theme.secondary)
-        .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1) }
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.gridLine).frame(height: 1) }
     }
 }
 
-/// Column header: click for the property menu, drag the right edge to resize.
+/// Column header (Notion): gray type icon + name, hover fill; click for the property menu. The right edge is a
+/// 12 pt resize handle with the resize cursor and a blue line, and the whole column follows the drag live.
 struct HeaderCell: View {
     let ctx: DBContext
     let property: PropertySchema
+    let columns: TableColumnWidths
+    var last = false
     @State private var editing = false
-    @State private var liveWidth: CGFloat?
+    @State private var hover = false
+    @State private var start: CGFloat?
 
     var body: some View {
-        let w = liveWidth ?? TableHeader.width(ctx, property)
+        let w = columns.width(ctx, property)
         Button { editing = true } label: {
-            Label(property.name, systemImage: property.type.symbol)
-                .lineLimit(1)
-                .padding(.horizontal, 8).padding(.vertical, 7)
-                .frame(width: w, alignment: .leading)
-                .contentShape(Rectangle())
+            HStack(spacing: 6) {
+                Image(systemName: property.type.symbol)
+                    .font(.system(size: 12, weight: .regular))
+                    .frame(width: 16)
+                Text(property.name).lineLimit(1)
+            }
+            .padding(.horizontal, 8)
+            .frame(width: w, height: 33, alignment: .leading)
+            .background(Theme.primary.opacity(hover || editing ? 0.045 : 0))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { h in withAnimation(.easeOut(duration: 0.1)) { hover = h } }
         .overlay(alignment: .trailing) {
-            Rectangle().fill(Color(Theme.divider)).frame(width: 1)
-                .overlay(Color.clear.frame(width: 8).contentShape(Rectangle())
-                    .gesture(DragGesture(minimumDistance: 1)
-                        .onChanged { g in liveWidth = max(80, TableHeader.width(ctx, property) + g.translation.width) }
-                        .onEnded { _ in
-                            if let lw = liveWidth { ctx.store.setColumnWidth(ctx.view.id, property.id, Double(lw)) }
-                            liveWidth = nil
-                        }))
+            ZStack {
+                if !last { Rectangle().fill(Theme.gridLine).frame(width: 1) }
+                if !ctx.locked {
+                    ResizeHandle(onBegan: { start = TableHeader.width(ctx, property) },
+                                 onChanged: { dx in columns.live[property.id] = max(80, (start ?? w) + dx) },
+                                 onEnded: {
+                                     if let lw = columns.live[property.id] { ctx.store.setColumnWidth(ctx.view.id, property.id, Double(lw)) }
+                                     columns.live[property.id] = nil
+                                     start = nil
+                                 })
+                }
+            }
+            .frame(width: 12)
+            .offset(x: 6)
         }
         .popover(isPresented: $editing) {
             PropertyHeaderMenu(ctx: ctx, property: property) { editing = false }
@@ -436,6 +541,7 @@ struct CalculationRow: View {
     let ctx: DBContext
     let properties: [PropertySchema]
     let rows: [Block]
+    let columns: TableColumnWidths
     /// "Calculate ⌄" labels only show on hover (like Notion) so empty footers don't clutter the table.
     @State private var hovering = false
 
@@ -461,18 +567,19 @@ struct CalculationRow: View {
                             Text(s).font(.system(size: 13))
                         } else {
                             Text("Calculate").font(.system(size: 12)).foregroundStyle(Theme.secondary.opacity(0.6))
-                                .opacity(hovering ? 1 : 0)
                         }
                     }
                     .padding(.horizontal, 8).padding(.vertical, 5)
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
-                .frame(width: TableHeader.width(ctx, p))
+                .frame(width: columns.width(ctx, p))
+                // Menu labels ignore opacity inside them on macOS, so the whole empty menu fades instead.
+                .opacity(fn != .none || hovering ? 1 : 0)
             }
         }
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
+        .onHover { h in withAnimation(.easeOut(duration: 0.12)) { hovering = h } }
     }
 }
 
@@ -493,9 +600,18 @@ struct ListLayout: View {
                 ForEach(ctx.result.rows.prefix(ctx.view.loadLimit ?? 100), id: \.id) { row in ListRow(ctx: ctx, row: row) }
             }
             if !ctx.locked {
-                Button { ctx.open(ctx.addRow()) } label: { Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary) }
-                    .buttonStyle(.plain)
-                    .padding(.vertical, 6)
+                Button { ctx.open(ctx.addRow()) } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus").font(.system(size: 12)).frame(width: 18)
+                        Text("New page").font(.system(size: 14))
+                    }
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.horizontal, 6)
+                    .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .hoverHighlight()
             }
         }
     }
@@ -507,8 +623,11 @@ struct ListRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            PageIconView(icon: row.props.icon, size: 16)
-            Text(row.title.isEmpty ? "Untitled" : row.title).fontWeight(.medium).lineLimit(1)
+            PageIconView(icon: row.props.icon, size: 18)
+            Text(row.title.isEmpty ? "Untitled" : row.title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(row.title.isEmpty ? Theme.secondary : Theme.primary)
+                .lineLimit(1)
             Spacer(minLength: 12)
             ForEach(ctx.cardProperties) { p in
                 let v = ctx.value(row, p)
@@ -517,11 +636,13 @@ struct ListRow: View {
                 }
             }
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
+        .padding(.vertical, 5)
+        .padding(.horizontal, 6)
+        .frame(minHeight: 32)
         .contentShape(Rectangle())
+        .hoverHighlight()
         .onTapGesture { ctx.open(row.id) }
         .contextMenu { RowMenuItems(ctx: ctx, row: row) }
-        .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1) }
+        .accessibilityIdentifier("list.row")
     }
 }

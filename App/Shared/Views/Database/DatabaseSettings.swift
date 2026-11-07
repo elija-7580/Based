@@ -122,7 +122,7 @@ struct FilterConditionRow: View {
                 FilterValueField(ctx: ctx, property: p, value: condition.value) { v in var c = condition; c.value = v; onChange(c) }
             }
             Spacer(minLength: 0)
-            Button { onChange(nil) } label: { Image(systemName: "trash") }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
+            Button { onChange(nil) } label: { Image(systemName: "trash") }.buttonStyle(.quiet).foregroundStyle(Theme.secondary)
         }
         .font(.system(size: 13))
     }
@@ -243,9 +243,9 @@ struct SortEditor: View {
                     .fixedSize()
                     Spacer()
                     if i > 0 {
-                        Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up") }.buttonStyle(.plain)
+                        Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up") }.buttonStyle(.quiet)
                     }
-                    Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark") }.buttonStyle(.plain)
+                    Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark") }.buttonStyle(.quiet)
                 }
             }
             HStack {
@@ -430,7 +430,7 @@ struct ViewSettingsView: View {
                     Label(p.name, systemImage: p.type.symbol)
                     Spacer()
                     if visible.contains(p.id), i > 0 {
-                        Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up") }.buttonStyle(.plain)
+                        Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up") }.buttonStyle(.quiet)
                     }
                     if p.type != .title {
                         Button { store.setPropertyVisible(v.id, p.id, !visible.contains(p.id)) } label: {
@@ -446,7 +446,7 @@ struct ViewSettingsView: View {
                 Button("Hide all") { for p in ctx.db.properties where p.type != .title { store.setPropertyVisible(v.id, p.id, false) } }
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(Theme.accentBlue)
         }
     }
 
@@ -724,7 +724,7 @@ struct PropertyConfigEditor: View {
                         .menuStyle(.borderlessButton)
                         .fixedSize()
                     }
-                    Button { store.deleteOption(db.id, p.id, o.id) } label: { Image(systemName: "trash") }.buttonStyle(.plain)
+                    Button { store.deleteOption(db.id, p.id, o.id) } label: { Image(systemName: "trash") }.buttonStyle(.quiet)
                 }
             }
             TextField("Add an option…", text: $newOption)

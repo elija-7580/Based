@@ -75,7 +75,7 @@ struct SearchOverlay: View {
                     .accessibilityIdentifier("quickfind.field")
                 if !query.isEmpty {
                     Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                        .buttonStyle(.quiet).foregroundStyle(Theme.secondary)
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
@@ -171,7 +171,7 @@ struct SearchOverlay: View {
         HStack(alignment: .center, spacing: 10) {
             switch r.kind {
             case .ask(let q):
-                AIGlyph(size: 17).foregroundStyle(Color.accentColor).frame(width: 20)
+                AIGlyph(size: 17).foregroundStyle(Theme.accentBlue).frame(width: 20)
                 Text("Ask AI: ").foregroundStyle(Theme.secondary) + Text("“\(q)”").fontWeight(.medium)
             case .chat(let c):
                 Image(systemName: "bubble.left").foregroundStyle(Theme.secondary).frame(width: 20)

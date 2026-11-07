@@ -519,3 +519,21 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - **Web client v0** at `based-server /app`: page tree and pages over sync v2, live updates (long poll), editing of
   plain text blocks and titles. Verified in a browser against a local server.
 - Sidebar Notes | AI switch slides; AI panel springs in.
+
+## Pass 21 — Notion-style databases, ⌘-click tabs, interaction feedback (2026-11-07)
+- **⌘-click opens in a new tab** everywhere pages are opened (sidebar, database rows, cards, links via `AppModel.open`);
+  ⌘⇧-click opens and switches to it; multi-select in the sidebar moved to ⌘⌥-click (⇧ range unchanged).
+- **Resizing**: one `ResizeHandle` for sidebar, side panel, columns and table columns — 12 pt hit area, resize cursor
+  on hover, blue line while dragging, drag in global coordinates (no jitter). Table columns: the whole column
+  (header, rows, calculation row) follows the drag live.
+- **Databases in pages** look like Notion: pill view tabs, thin toolbar icons (filter / sort / search / open as
+  full page / settings), blue "New ⌄" split button, lighter grid lines, row hover, select boxes only on hover,
+  Notion-blue checkboxes, hover-lift cards. Row titles: click opens the page, hover shows "Open" and a rename
+  pencil — rows whose titles filled the cell couldn't be opened before.
+- **Outline rail** (right edge): thin rounded lines at low contrast that brighten on hover and morph into the
+  heading list after a short delay (like the ChatGPT Mac app).
+- **Hover feedback**: `QuietButtonStyle` (hover fill, press state, ≥ 24 pt hit target) for icon buttons across the app;
+  favourite star yellow when set.
+- **Performance**: `BlockList` observes its own node's `childRevision` instead of the global structure revision, so
+  editing one block no longer re-renders every list on the page. Hang watchdog pings every 100 ms, reports from 250 ms.
+- `make install` / `scripts/install-mac.sh`: Release build → /Applications, removes old Debug/Release builds.

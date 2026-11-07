@@ -283,7 +283,7 @@ struct PageTreeRow: View {
             Spacer(minLength: 0)
             if hover, page.type == .page {
                 Button { model.newPage(in: .block(page.id)) } label: { Image(systemName: "plus") }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.quiet)
                     .foregroundStyle(Theme.secondary)
                     .help("Add a page inside")
             }
@@ -291,7 +291,7 @@ struct PageTreeRow: View {
         .contentShape(Rectangle())
         .tag(SidebarItem.page(page.id))
         .onHover { hover = $0 }
-        .background(RoundedRectangle(cornerRadius: 4).stroke(Color.accentColor, lineWidth: targeted ? 2 : 0))
+        .background(RoundedRectangle(cornerRadius: 4).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
         .onDrag {
             let selected = model.selectedPageIDs
             model.draggedBlocks = selected.contains(page.id) ? selected : [page.id]

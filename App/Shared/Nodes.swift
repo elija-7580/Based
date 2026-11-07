@@ -9,6 +9,9 @@ final class BlockNode {
     var block: Block?
     var children: [RecordID] = []
     var viewIDs: [RecordID] = []
+    /// Bumped when a child's type or open state changes (list numbering, toggles) — lets a block list
+    /// re-render for its own children instead of on every structural change in the workspace.
+    var childRevision = 0
     init(id: RecordID) { self.id = id }
 }
 
@@ -84,7 +87,10 @@ final class Registry {
                 if let n = blocks[key.id] {
                     let old = n.block
                     if old != b { n.block = b }
-                    if old?.type != b?.type || old?.props.isOpen != b?.props.isOpen { structural = true }
+                    if old?.type != b?.type || old?.props.isOpen != b?.props.isOpen {
+                        structural = true
+                        if case .block(let p)? = b?.parent ?? old?.parent { blocks[p]?.childRevision += 1 }
+                    }
                     if case .database(let d)? = old?.parent { dbs[d]?.revision += 1 }
                 }
                 if case .database(let d)? = b?.parent { dbs[d]?.revision += 1 }

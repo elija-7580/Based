@@ -44,9 +44,9 @@ struct CalendarLayout: View {
                 HStack {
                     Text(month.formatted(.dateTime.month(.wide).year())).font(.system(size: 15, weight: .semibold))
                     Spacer()
-                    Button { shift(-1) } label: { Image(systemName: "chevron.left") }.buttonStyle(.plain)
+                    Button { shift(-1) } label: { Image(systemName: "chevron.left") }.buttonStyle(.quiet)
                     Button("Today") { month = cal.date(from: cal.dateComponents([.year, .month], from: Date())) ?? Date() }.buttonStyle(.plain)
-                    Button { shift(1) } label: { Image(systemName: "chevron.right") }.buttonStyle(.plain)
+                    Button { shift(1) } label: { Image(systemName: "chevron.right") }.buttonStyle(.quiet)
                 }
                 let symbols = weekdaySymbols
                 HStack(spacing: 0) {
@@ -133,7 +133,7 @@ struct CalendarDayCell: View {
                             ctx.open(ctx.addRow(values: [p.id: .date(DateValue(start: Calendar.current.startOfDay(for: day)))]))
                         }
                     } label: { Image(systemName: "plus").font(.system(size: 10)) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.quiet)
                 }
                 Spacer()
                 Text("\(Calendar.current.component(.day, from: day))")
@@ -162,7 +162,7 @@ struct CalendarDayCell: View {
         .padding(4)
         .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
         .background(inMonth ? Color.clear : Color.primary.opacity(0.03))
-        .background(targeted ? Color.accentColor.opacity(0.1) : Color.clear)
+        .background(targeted ? Theme.accentBlue.opacity(0.1) : Color.clear)
         .overlay(Rectangle().stroke(Color(Theme.divider), lineWidth: 0.5))
         .onHover { hover = $0 }
         .onDrop(of: [.text], isTargeted: $targeted) { _ in
@@ -196,9 +196,9 @@ struct TimelineLayout: View {
                     Picker("", selection: $scale) { ForEach(Scale.allCases, id: \.self) { Text($0.rawValue).tag($0) } }
                         .pickerStyle(.segmented).labelsHidden().frame(width: 200)
                     Spacer()
-                    Button { move(-7) } label: { Image(systemName: "chevron.left") }.buttonStyle(.plain)
+                    Button { move(-7) } label: { Image(systemName: "chevron.left") }.buttonStyle(.quiet)
                     Button("Today") { start = cal.date(byAdding: .day, value: -7, to: cal.startOfDay(for: Date())) ?? Date() }.buttonStyle(.plain)
-                    Button { move(7) } label: { Image(systemName: "chevron.right") }.buttonStyle(.plain)
+                    Button { move(7) } label: { Image(systemName: "chevron.right") }.buttonStyle(.quiet)
                 }
                 let rows = ctx.result.rows
                 HStack(alignment: .top, spacing: 0) {

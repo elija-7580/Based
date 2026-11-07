@@ -153,7 +153,7 @@ struct DiagnosticsView: View {
         return Group {
             if list.isEmpty {
                 ContentUnavailableView("No hangs recorded", systemImage: "checkmark.seal",
-                                       description: Text("The main thread is watched every 250 ms. Blocks longer than 0.5 s appear here with what you were doing and where the main thread was stuck."))
+                                       description: Text("The main thread is watched every 100 ms. Blocks longer than 0.25 s appear here with what you were doing and where the main thread was stuck."))
             } else {
                 List(Array(list)) { h in
                     VStack(alignment: .leading, spacing: 4) {

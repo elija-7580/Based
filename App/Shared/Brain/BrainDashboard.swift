@@ -28,7 +28,7 @@ struct BrainDashboard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 14) {
-                Image(systemName: "brain").font(.system(size: 26)).foregroundStyle(Color.accentColor)
+                Image(systemName: "brain").font(.system(size: 26)).foregroundStyle(Theme.accentBlue)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Agent Brain").font(.system(size: 24, weight: .bold))
                     Text("What your AI chat and coding agents know about you. Everything here is a normal page you can edit.")

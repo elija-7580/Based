@@ -6,7 +6,7 @@ import AppKit
 import UIKit
 #endif
 
-/// Detects main-thread hangs: a background thread pings the main queue every 250 ms; when the
+/// Detects main-thread hangs: a background thread pings the main queue every 100 ms; when the
 /// main thread answers late (> `threshold`), the hang is logged with its duration, the latest
 /// breadcrumbs (what the user just did) and — new in Pass 13 — the main thread's call stack,
 /// sampled while it was still blocked (`MainThreadSampler`), so a report says *where* it hangs.
@@ -29,9 +29,9 @@ final class HangWatchdog: @unchecked Sendable {
         }
     }
 
-    var threshold: Double = 0.5
+    var threshold: Double = 0.25
     /// First stack sample this long into a block (below `threshold`, so reportable hangs have one).
-    var sampleAfter: Double = 0.3
+    var sampleAfter: Double = 0.15
     private let lock = NSLock()
     private var pingSentAt: UInt64 = 0
     private var pingID = 0
@@ -64,7 +64,7 @@ final class HangWatchdog: @unchecked Sendable {
             lock.lock()
             if !waiting {
                 idleTicks += 1
-                guard idleTicks >= 5 else { lock.unlock(); continue }   // ping every ~250 ms
+                guard idleTicks >= 2 else { lock.unlock(); continue }   // ping every ~100 ms
                 idleTicks = 0
                 waiting = true
                 pingSentAt = now
@@ -77,7 +77,7 @@ final class HangWatchdog: @unchecked Sendable {
             }
             let id = pingID
             let waited = Double(now - pingSentAt) / 1e9
-            // Samples at 0.3 s, then every second while still blocked (at most 5).
+            // Samples at 0.15 s, then every second while still blocked (at most 5).
             let due = stacks.count < 5 && waited >= sampleAfter + Double(stacks.count)
             let report = waited > 2 && !reportedOngoing
             let ongoing = reportedOngoing
