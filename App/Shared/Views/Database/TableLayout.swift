@@ -183,7 +183,7 @@ struct TableLayout: View {
                                 Button("Load all (\(ctx.result.rows.count))") { limitBoost = ctx.result.rows.count }
                                 Text("\(limit) of \(ctx.result.rows.count)").foregroundStyle(.tertiary)
                             }
-                            .buttonStyle(.plain).foregroundStyle(Theme.secondary).font(.callout).padding(6)
+                            .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary).font(.callout).padding(6)
                             .padding(.leading, Self.gutter)
                             .accessibilityIdentifier("table.loadMore")
                         }
@@ -496,7 +496,7 @@ struct GroupHeader: View {
             Button(action: toggle) {
                 Image(systemName: collapsed ? "chevron.right" : "chevron.down").font(.system(size: 11))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             GroupTitle(group: group, property: ctx.groupProperty)
             Text("\(group.rows.count)").foregroundStyle(Theme.secondary)
             Spacer()

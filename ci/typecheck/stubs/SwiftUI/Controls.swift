@@ -418,3 +418,5 @@ extension ForEach where Content: View {
     public func onDelete(perform action: ((IndexSet) -> Void)?) -> ForEach { self }
     public func onInsert(of types: [UTType], perform action: @escaping (Int, [NSItemProvider]) -> Void) -> ForEach { self }
 }
+
+public struct PointerStyle { public static var link: PointerStyle { .init() } }

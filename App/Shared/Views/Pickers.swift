@@ -46,7 +46,7 @@ struct IconPicker: View {
                             Button { onPick(.emoji(e.0)) } label: {
                                 Text(e.0).font(.system(size: 22)).frame(width: 32, height: 32)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.hoverFill)
                             .help(e.1)
                         }
                     }
@@ -199,7 +199,7 @@ struct CoverPicker: View {
         Button(action: action) {
             v().frame(height: 56).clipShape(RoundedRectangle(cornerRadius: 4))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
     }
 }
 
@@ -225,7 +225,7 @@ struct PagePicker: View {
                     } label: {
                         Label("Workspace (top level)", systemImage: "square.stack.3d.up")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                 }
                 ForEach(candidates, id: \.id) { b in
                     Button { pick(b.id) } label: {
@@ -242,7 +242,7 @@ struct PagePicker: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                 }
             }
             .frame(minHeight: 280)

@@ -115,6 +115,7 @@ extension View {
     public func symbolVariant(_ v: SymbolVariants) -> _M { .init() }
     public func imageScale(_ s: Image.Scale) -> _M { .init() }
     public func controlSize(_ s: ControlSize) -> _M { .init() }
+    public func pointerStyle(_ s: PointerStyle?) -> _M { .init() }
     public func buttonStyle<S: ButtonStyle>(_ s: S) -> _M { .init() }
     public func buttonStyle<S: PrimitiveButtonStyle>(_ s: S) -> _M { .init() }
     public func buttonBorderShape(_ s: ButtonBorderShape) -> _M { .init() }

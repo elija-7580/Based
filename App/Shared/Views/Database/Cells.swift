@@ -34,7 +34,7 @@ struct PropertyValueView: View {
                                 Text(store.title(of: id)).underline(color: Theme.secondary.opacity(0.4))
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.hoverFill)
                     }
                 }
             }
@@ -195,7 +195,7 @@ struct PropertyCell: View {
                 } label: {
                     PropertyValueView(property: property, value: value, row: row)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .frame(minWidth: 24, minHeight: 24)
                 .contentShape(Rectangle())
                 .disabled(locked)

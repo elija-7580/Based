@@ -190,7 +190,7 @@ struct AgentCard: View {
                 Button { model.openSession(p.id, console: false) } label: {
                     Label(p.title.nonEmptyOr("Untitled"), systemImage: "arrow.turn.left.up").lineLimit(1)
                 }
-                .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                .buttonStyle(.hoverFill).font(.system(size: 11)).foregroundStyle(Theme.secondary)
                 .help("Started by this session")
             }
             if !session.task.isEmpty {
@@ -585,7 +585,7 @@ struct AgentInspector: View {
                         HStack(spacing: 4) { StatusDot(status: st, size: 6); Text(st.rawValue) }.font(.caption).foregroundStyle(Theme.secondary)
                     }
                     Spacer()
-                    Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                    Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
                 }
                 Text(session.cwd).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.secondary).lineLimit(2).truncationMode(.head)
                 HStack {
@@ -636,7 +636,7 @@ struct AgentInspector: View {
                                 }
                                 .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.hoverFill)
                         }
                     }
                 }

@@ -56,7 +56,7 @@ struct ChatPanel: View {
                 .help("Close (⌘J)")
                 .accessibilityIdentifier("chat.close")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .foregroundStyle(Theme.secondary)
         .padding(.horizontal, 14)
         .frame(height: 40)
@@ -367,7 +367,7 @@ struct ChatComposer: View {
                             .padding(.horizontal, 7).padding(.vertical, 3)
                             .background(Capsule().fill(usePage ? Theme.accentBlue.opacity(0.12) : Color.primary.opacity(0.05)))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .foregroundStyle(usePage ? Theme.accentBlue : Theme.secondary)
                     .help(usePage ? "The current page is shared as context" : "Not sharing the current page")
                 }

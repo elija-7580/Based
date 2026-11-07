@@ -152,7 +152,7 @@ struct ToastHost: View {
                         .accessibilityIdentifier("toast.message")
                     if let action = t.actionTitle {
                         Button(action) { model.performToastAction() }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.hoverFill)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color(Theme.dynamic(light: 0x9ECBFF, dark: 0x9ECBFF)))
                             .keyboardShortcut("z", modifiers: .command)
@@ -217,7 +217,7 @@ struct MovePicker: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .accessibilityIdentifier("move.target")
                 }
             }
@@ -244,7 +244,7 @@ struct MovePicker: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .accessibilityIdentifier("move.destination")
     }
 

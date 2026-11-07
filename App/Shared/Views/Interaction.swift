@@ -37,6 +37,7 @@ struct QuietButtonStyle: ButtonStyle {
                 )
                 .contentShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
                 .opacity(enabled ? 1 : 0.45)
+                .clickableCursor()
                 .onHover { hover = $0 }
                 .animation(.easeOut(duration: 0.1), value: hover)
                 .animation(.easeOut(duration: 0.06), value: configuration.isPressed)
@@ -48,6 +49,66 @@ struct QuietButtonStyle: ButtonStyle {
             if style.selected { return hover ? 0.1 : 0.07 }
             return hover ? 0.065 : 0
         }
+    }
+}
+
+/// Drop-in replacement for `.plain`: the layout stays exactly the same, but the area under the pointer
+/// gets a soft rounded fill on hover (a bit darker while pressed) and a pointing-hand cursor.
+/// The fill bleeds `outset` pt past the label so small icon buttons get a comfortable highlight.
+struct HoverFillButtonStyle: ButtonStyle {
+    var cornerRadius: CGFloat = 5
+    var outset: CGFloat = 3
+
+    func makeBody(configuration: Configuration) -> some View {
+        HoverFillBody(configuration: configuration, style: self)
+    }
+
+    private struct HoverFillBody: View {
+        let configuration: ButtonStyleConfiguration
+        let style: HoverFillButtonStyle
+        @State private var hover = false
+        @Environment(\.isEnabled) private var enabled
+
+        var body: some View {
+            configuration.label
+                .padding(style.outset)
+                .background(
+                    RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous)
+                        .fill(Theme.primary.opacity(fillOpacity))
+                )
+                .contentShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
+                .padding(-style.outset)
+                .clickableCursor()
+                .onHover { hover = $0 }
+                .animation(.easeOut(duration: 0.1), value: hover)
+                .animation(.easeOut(duration: 0.06), value: configuration.isPressed)
+        }
+
+        private var fillOpacity: Double {
+            guard enabled else { return 0 }
+            if configuration.isPressed { return 0.13 }
+            return hover ? 0.07 : 0
+        }
+    }
+}
+
+extension ButtonStyle where Self == HoverFillButtonStyle {
+    /// `.plain` + hover fill + pointing hand.
+    static var hoverFill: HoverFillButtonStyle { HoverFillButtonStyle() }
+    static func hoverFill(cornerRadius: CGFloat = 5, outset: CGFloat = 3) -> HoverFillButtonStyle {
+        HoverFillButtonStyle(cornerRadius: cornerRadius, outset: outset)
+    }
+}
+
+extension View {
+    /// Pointing-hand cursor over clickable things (macOS 15+; older systems keep the arrow).
+    @ViewBuilder
+    func clickableCursor() -> some View {
+        #if os(macOS)
+        if #available(macOS 15, *) { self.pointerStyle(.link) } else { self }
+        #else
+        self
+        #endif
     }
 }
 

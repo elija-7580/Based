@@ -51,7 +51,7 @@ struct BrainDashboard: View {
                             .background(RoundedRectangle(cornerRadius: 6).fill(t == tab ? Color.primary.opacity(0.07) : .clear))
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .accessibilityIdentifier("brain.tab.\(t)")
                 }
                 Spacer()

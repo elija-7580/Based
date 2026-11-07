@@ -308,7 +308,7 @@ struct BlockMarker: View {
             } label: {
                 TodoCheckbox(checked: checked)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .frame(width: 22, height: line)
             .disabled(editor.isLocked)
         case .toggle:
@@ -466,7 +466,7 @@ struct CalloutView: View {
                 PageIconView(icon: block.props.icon ?? .emoji("💡"), size: 22)
                     .frame(height: Theme.lineHeight(for: .text, format: editor.format))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .popover(isPresented: $pickingIcon) {
                 IconPicker(current: block.props.icon) { icon in
                     model.store.updateBlock(block.id, name: "Callout icon") { $0.props.icon = icon ?? .emoji("💡") }
@@ -755,7 +755,7 @@ struct ButtonBlockView: View {
                 Button { editing.toggle(); label = block.props.buttonLabel ?? "" } label: {
                     Image(systemName: "gearshape")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .foregroundStyle(Theme.secondary)
                 .help("Configure button")
             }
@@ -810,7 +810,7 @@ struct TableOfContentsView: View {
                         .foregroundStyle(Theme.secondary)
                         .padding(.leading, CGFloat(indent(h.type)) * 16)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
             }
         }
         .padding(.vertical, 4)
@@ -839,7 +839,7 @@ struct BreadcrumbView: View {
                         Text(b.title.isEmpty ? "Untitled" : b.title).lineLimit(1).truncationMode(.middle)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
             }
         }
         .font(.system(size: 13))

@@ -482,7 +482,7 @@ struct HomeChooser: View {
                             .padding(.horizontal, 10).padding(.vertical, 7)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.hoverFill)
                         .accessibilityIdentifier("home.choose." + p.id)
                     }
                 }
@@ -522,6 +522,8 @@ struct HomeOverview: View {
                                 .foregroundStyle(Theme.secondary)
                                 .frame(width: 150, height: 130)
                                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.04)))
+                                .hoverHighlight(cornerRadius: 12, opacity: 0.05)
+                                .clickableCursor()
                         }
                         .buttonStyle(.plain)
                     }
@@ -538,7 +540,7 @@ struct HomeOverview: View {
                                         .padding(.horizontal, 10).padding(.vertical, 6)
                                         .background(Capsule().fill(Color.primary.opacity(0.05)))
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.hoverFill)
                             }
                         }
                     }
@@ -578,6 +580,7 @@ struct HomeOverview: View {
 struct HomeCard: View {
     let page: Block
     @Environment(AppModel.self) private var model
+    @State private var hover = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -600,6 +603,11 @@ struct HomeCard: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(.background))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
+        .overlay(RoundedRectangle(cornerRadius: 12).fill(Theme.primary.opacity(hover ? 0.04 : 0)).allowsHitTesting(false))
+        .shadow(color: .black.opacity(hover ? 0.12 : 0), radius: hover ? 4 : 0, y: hover ? 2 : 0)
+        .clickableCursor()
+        .onHover { hover = $0 }
+        .animation(.easeOut(duration: 0.12), value: hover)
     }
 }
 

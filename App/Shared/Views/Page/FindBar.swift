@@ -42,7 +42,7 @@ struct FindBar: View {
                 .help("Close (Esc)")
                 .accessibilityIdentifier("find.close")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .foregroundStyle(Theme.secondary)
         .font(.system(size: 13))
         .padding(.horizontal, 12).padding(.vertical, 7)

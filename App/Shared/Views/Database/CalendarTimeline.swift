@@ -227,7 +227,7 @@ struct TimelineLayout: View {
                             ctx.open(ctx.addRow(values: [p.id: .date(DateValue(start: cal.startOfDay(for: Date())))]))
                         }
                     } label: { Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                 }
             }
         }

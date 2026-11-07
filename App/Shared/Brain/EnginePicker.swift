@@ -266,7 +266,7 @@ struct EffortRow: View {
                             }
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .foregroundStyle(current == l.id ? Theme.primary : Theme.secondary)
                 }
             }

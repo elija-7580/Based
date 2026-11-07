@@ -55,7 +55,7 @@ struct MediaBlockView: View {
             .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.codeBackground)))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
     }
 
     static func symbol(_ t: BlockType) -> String {
@@ -225,7 +225,7 @@ struct FileRow: View {
             Spacer()
             if let url {
                 #if os(macOS)
-                Button("Open") { openURL(url) }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                Button("Open") { openURL(url) }.buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
                 #else
                 ShareLink(item: url).labelStyle(.iconOnly)
                 #endif
@@ -265,7 +265,7 @@ struct BookmarkCard: View {
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .task(id: url) {
             if meta == nil, !url.isEmpty { await fetch(url) }
         }
@@ -414,7 +414,7 @@ struct EquationBlockView: View {
             .background(RoundedRectangle(cornerRadius: 4).fill(expr.isEmpty ? Color(Theme.codeBackground) : Color.clear))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .disabled(editor.isLocked)
         .popover(isPresented: $editing) {
             VStack(alignment: .trailing, spacing: 8) {

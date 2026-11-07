@@ -218,7 +218,7 @@ struct MapRowCard: View {
                 Text(ctx.store.title(of: row.id).nonEmptyOr("Untitled")).font(.system(size: 15, weight: .semibold)).lineLimit(1)
                 Spacer()
                 Button("Open") { ctx.open(row.id) }.controlSize(.small)
-                Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                Button(action: close) { Image(systemName: "xmark") }.buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
             }
             Label(place.display, systemImage: "mappin.and.ellipse").font(.system(size: 12.5)).foregroundStyle(Theme.secondary).lineLimit(2)
             ForEach(ctx.cardProperties.filter { $0.type != .place }.prefix(4), id: \.id) { p in
@@ -320,7 +320,7 @@ struct PlaceEditor: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
             }
             if !query.trimmingCharacters(in: .whitespaces).isEmpty {
                 Button("Use “\(query)” as typed") { keepTyped() }.buttonStyle(.borderless).font(.caption)

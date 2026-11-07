@@ -113,7 +113,7 @@ struct BoardLayout: View {
                                 Button { ctx.setGroupHidden(g.id, false) } label: {
                                     HStack { GroupTitle(group: g, property: ctx.groupProperty); Text("\(g.rows.count)").foregroundStyle(Theme.secondary) }
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.hoverFill)
                             }
                         }
                         .frame(width: 200, alignment: .leading)
@@ -179,7 +179,7 @@ struct BoardColumn: View {
                 Button { ctx.open(ctx.addRow(values: ctx.groupValues(group.id))) } label: {
                     Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary).frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .padding(.vertical, 4)
             }
         }
@@ -218,7 +218,7 @@ struct NewGroupButton: View {
                 }
         } else {
             Button { adding = true } label: { Label("New group", systemImage: "plus").foregroundStyle(Theme.secondary) }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .frame(width: 200, alignment: .leading)
                 .padding(.top, 8)
         }
@@ -261,7 +261,7 @@ struct GalleryLayout: View {
                         .frame(maxWidth: .infinity, minHeight: 80)
                         .background(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider), style: StrokeStyle(lineWidth: 1, dash: [4])))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
             }
         }
     }
@@ -280,6 +280,6 @@ struct LoadMoreButton: View {
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
     }
 }

@@ -61,9 +61,15 @@ struct BlockMarqueeModifier: ViewModifier {
                 // page background's tap no longer gets these). Not on the + / ⋮⋮ handle.
                 SpatialTapGesture(count: 1, coordinateSpace: BlockCanvas.space).onEnded { v in
                     // The second click of a double-click selects (BlockSelectionKeys) — don't clear it again.
-                    guard (NSApp.currentEvent?.clickCount ?? 1) <= 1 else { return }
-                    guard !editor.selectedBlocks.isEmpty, !onHandle(v.location) else { return }
-                    editor.selectedBlocks = []
+                    guard (NSApp.currentEvent?.clickCount ?? 1) <= 1, !onHandle(v.location) else { return }
+                    if !editor.selectedBlocks.isEmpty { editor.selectedBlocks = []; return }
+                    // A click beside a text block (in the page margin, left or right of the row) puts the caret at the
+                    // start / end of that block, so you don't have to hit the text itself. Clicks inside the row
+                    // belong to the text view and never reach this point.
+                    guard !editor.isLocked, let id = editor.block(at: v.location), let f = editor.gutter.frame(of: id),
+                          let b = editor.store.blocks[id], b.type.isTextEditable else { return }
+                    if v.location.x > f.maxX { editor.focus(FocusTarget(id, b.text.length)) }
+                    else if v.location.x < f.minX { editor.focus(FocusTarget(id, 0)) }
                 }
             )
     }

@@ -70,7 +70,7 @@ struct HistoryButtons: View {
                 .frame(width: 28, height: 28)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .foregroundStyle(enabled ? Theme.primary.opacity(0.75) : Theme.secondary.opacity(0.4))
         .disabled(!enabled)
         .help(help)

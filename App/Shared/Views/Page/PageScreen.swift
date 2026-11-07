@@ -13,6 +13,7 @@ struct PageScreen: View {
     #endif
     /// Width of the scroll area (Notion: 708 pt text column with 96 pt side padding, less in narrow windows).
     @State private var availableWidth: CGFloat = 1000
+    @State private var availableHeight: CGFloat = 0
 
     init(pageID: RecordID, model: AppModel, isPeek: Bool = false) {
         self.pageID = pageID
@@ -82,12 +83,23 @@ struct PageScreen: View {
                 }
                 .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
                 .frame(maxWidth: .infinity)
+                if page.type != .databasePage {
+                    // Everything below the content, edge to edge and down to the bottom of the window (the page is at
+                    // least as tall as the viewport): a click puts the caret at the end of the page, so an empty
+                    // page can be typed on by clicking anywhere, like Notion.
+                    Color.clear
+                        .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                        .onTapGesture { if !editor.isLocked { editor.selectedBlocks = []; editor.focusEndOfPage() } }
                 }
+                }
+                .frame(minHeight: availableHeight, alignment: .top)
             }
             .background(GeometryReader { g in
                 Color.clear
-                    .onAppear { availableWidth = g.size.width }
+                    .onAppear { availableWidth = g.size.width; availableHeight = g.size.height }
                     .onChange(of: g.size.width) { _, w in availableWidth = w }
+                    .onChange(of: g.size.height) { _, h in availableHeight = h }
             })
             .overlay(alignment: .topTrailing) {
                 if page.type != .databasePage, format?.hideOutline != true, !model.showFind {
@@ -256,7 +268,7 @@ struct PageHeader: View {
                     Button { if !locked { iconPicker = true } } label: {
                         icon.view(size: 78, assets: model.assets).frame(width: 84, height: 84, alignment: .leading)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .help(locked ? "" : "Change icon")
                     // With a cover the icon overlaps its bottom edge by half, like Notion.
                     .offset(y: hasCover ? -42 : 0)
@@ -425,7 +437,7 @@ struct RowPropertiesPanel: View {
                 }
                 Button(hideEmpty ? "Show all properties" : "Hide empty properties") { hideEmpty.toggle() }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .font(.system(size: 13))
             .foregroundStyle(Theme.secondary)
             .padding(.top, 4)
@@ -481,7 +493,7 @@ struct BacklinksView: View {
                 Button { open.toggle() } label: {
                     Label("\(links.count) backlink\(links.count == 1 ? "" : "s")", systemImage: "arrow.uturn.left")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .foregroundStyle(Theme.secondary)
                 if open {
                     ForEach(links, id: \.self) { id in
@@ -657,7 +669,7 @@ struct PeekView: View {
                 Button { model.openInNewTab(pageID) } label: { Image(systemName: "plus.square.on.square") }
                     .help("Open in new tab")
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .foregroundStyle(Theme.secondary)
             .padding(.horizontal, 12)
             .frame(height: 40)

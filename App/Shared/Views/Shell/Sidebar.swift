@@ -50,7 +50,7 @@ struct SidebarView: View {
                 ForEach(store.topLevelPages(in: .privatePages).filter { $0.id != brainRoot }, id: \.id) { PageTreeRow(page: $0) }
                     .onMove { from, to in movePages(from: from, to: to) }
                 Button { model.newPage() } label: { Label("Add a page", systemImage: "plus") }
-                    .buttonStyle(.plain).accessibilityIdentifier("sidebar.addPage")
+                    .buttonStyle(.hoverFill).accessibilityIdentifier("sidebar.addPage")
                     .foregroundStyle(Theme.secondary)
             }
             let chats = happier.chats
@@ -215,7 +215,7 @@ struct SearchFieldButton: View {
             .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.05)))
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .accessibilityIdentifier("sidebar.search")
     }
 }

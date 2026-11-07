@@ -90,7 +90,7 @@ struct LibraryView: View {
                 Label("Overview", systemImage: overviewOpen ? "chevron.down" : "chevron.right")
                     .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .accessibilityIdentifier("library.overviewToggle")
             if overviewOpen { HomeOverview() }
         }
@@ -240,7 +240,7 @@ struct LibraryView: View {
                     .frame(width: width)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
             }
         }
         .padding(.horizontal, 16).frame(height: 32)
@@ -302,7 +302,7 @@ struct LibraryActionBar: View {
                 .accessibilityIdentifier("library.delete")
             Spacer()
             Button(action: clear) { Image(systemName: "xmark").font(.system(size: 11, weight: .semibold)).frame(width: 24, height: 24) }
-                .buttonStyle(.plain).foregroundStyle(Chrome.sidebarText).help("Clear selection (Esc)")
+                .buttonStyle(.hoverFill).foregroundStyle(Chrome.sidebarText).help("Clear selection (Esc)")
         }
         .padding(.horizontal, 16).frame(height: 40)
         .background(Chrome.accent.opacity(0.07))
@@ -449,7 +449,7 @@ struct LibraryCheckbox: View {
             .contentShape(Rectangle())
             .opacity(visible || state != .off ? 1 : 0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .accessibilityLabel(state == .on ? "Selected" : "Select")
     }
 }

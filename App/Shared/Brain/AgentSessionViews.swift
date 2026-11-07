@@ -139,7 +139,7 @@ struct AgentsScreen: View {
                 Button { model.selection = .inbox } label: {
                     Label("\(max(waiting, happier.pendingCount)) waiting for you", systemImage: "hand.raised.fill")
                 }
-                .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(.orange)
+                .buttonStyle(.hoverFill).font(.system(size: 12)).foregroundStyle(.orange)
             }
             Spacer()
             Button { showDoctor = true } label: { Image(systemName: "stethoscope") }
@@ -318,7 +318,7 @@ struct AgentsOverview: View {
                 if !running.isEmpty {
                     section("Running now") {
                         ForEach(running) { s in
-                            Button { model.agentSessionID = s.id } label: { AgentSessionRow(session: s) }.buttonStyle(.plain)
+                            Button { model.agentSessionID = s.id } label: { AgentSessionRow(session: s) }.buttonStyle(.hoverFill)
                         }
                     }
                 }
@@ -337,7 +337,7 @@ struct AgentsOverview: View {
                         Button { model.agentSessionID = s.id } label: {
                             HStack { AgentSessionRow(session: s); Text(s.projectName).font(.caption).foregroundStyle(Theme.secondary) }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.hoverFill)
                     }
                 }
             }
@@ -498,7 +498,7 @@ struct SessionConsole: View {
                         }
                         .font(.system(size: 10.5)).foregroundStyle(Theme.secondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
                     .help("Sub-agent of \(p.title) — open the parent session")
                     .accessibilityIdentifier("session.parent")
                 }
@@ -720,7 +720,7 @@ struct SessionConsole: View {
                         .buttonStyle(.quiet).foregroundStyle(Theme.secondary).help("Interrupt (esc)")
                 } else {
                     Button(action: send) { Image(systemName: "arrow.up.circle.fill").font(.system(size: 16)) }
-                        .buttonStyle(.plain).foregroundStyle(input.isEmpty ? Theme.secondary : Theme.accentBlue)
+                        .buttonStyle(.hoverFill).foregroundStyle(input.isEmpty ? Theme.secondary : Theme.accentBlue)
                         .disabled(input.isEmpty)
                         .accessibilityIdentifier("session.send")
                 }
@@ -1006,7 +1006,7 @@ struct ConsoleItemView: View {
                     Button { model.openSession(sid) } label: {
                         Label("Open sub-agent", systemImage: "arrow.up.right.square")
                     }
-                    .buttonStyle(.plain).foregroundStyle(Theme.accentBlue).font(.system(size: 11))
+                    .buttonStyle(.hoverFill).foregroundStyle(Theme.accentBlue).font(.system(size: 11))
                 }
             }
         case .error:
@@ -1025,7 +1025,7 @@ struct ConsoleItemView: View {
                     .textSelection(.enabled)
                 if lines.count > 4 {
                     Button(expanded ? "collapse" : "… +\(lines.count - 4) lines (click to expand)") { expanded.toggle() }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary.opacity(0.8))
+                        .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary.opacity(0.8))
                 }
             }
         }
@@ -1064,7 +1064,7 @@ struct DiffBlock: View {
                 ForEach(shown) { DiffLineRow(line: $0) }
                 if lines.count > Self.limit {
                     Button(expanded ? "collapse" : "… +\(lines.count - shown.count) lines (click to expand)") { expanded.toggle() }
-                        .buttonStyle(.plain).foregroundStyle(Theme.secondary.opacity(0.8)).padding(.top, 2)
+                        .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary.opacity(0.8)).padding(.top, 2)
                 }
             }
         }

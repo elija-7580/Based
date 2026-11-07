@@ -153,7 +153,7 @@ struct ThinkingView: View {
                 .contentShape(Rectangle())
                 .animation(.easeOut(duration: 0.2), value: running)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             if hasText && (open || running) {
                 Text(running ? String(part.text.suffix(600)) : part.text)
                     .font(.system(size: 12.5))
@@ -230,7 +230,7 @@ struct ToolGroupView: View {
                     .padding(.horizontal, 10).padding(.vertical, 8)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 if open || running {
                     Divider()
                     VStack(alignment: .leading, spacing: 0) {
@@ -292,7 +292,7 @@ struct ToolRowView: View {
                 .padding(.horizontal, 10).padding(.vertical, standalone ? 8 : 5)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             .help(part.toolName)
             if open, let diff = part.diff {
                 ScrollView([.vertical, .horizontal]) {
@@ -572,7 +572,7 @@ struct ChatCodeBlockView: View {
                 } label: {
                     Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11.5))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .foregroundStyle(Theme.secondary)
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -631,7 +631,7 @@ struct CopyButton: View {
         } label: {
             Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
         .foregroundStyle(Theme.secondary)
         .help("Copy")
     }
@@ -648,7 +648,7 @@ struct AttachmentChip: View {
             Text(name).font(.system(size: 12)).lineLimit(1).truncationMode(.middle)
             if let onRemove {
                 Button(action: onRemove) { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.hoverFill)
             }
         }
         .foregroundStyle(Theme.secondary)
@@ -726,7 +726,7 @@ struct ChangedFilesCard: View {
                 .padding(.horizontal, 10).padding(.vertical, 8)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.hoverFill)
             if open {
                 Divider()
                 ForEach(files) { f in ChangedFileRow(file: f) }

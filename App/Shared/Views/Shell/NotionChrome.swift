@@ -462,7 +462,7 @@ struct SidebarModeSwitcher: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.hoverFill)
                 .accessibilityIdentifier("sidebar.mode." + m.rawValue)
             }
         }
@@ -788,7 +788,7 @@ struct WorkspaceMenu: View {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 6).padding(.vertical, 5).contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hoverFill)
     }
 }
 
