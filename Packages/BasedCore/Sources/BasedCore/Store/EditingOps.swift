@@ -363,7 +363,8 @@ public extension WorkspaceStore {
     }
 
     /// Removes columns left empty by a move and unwraps a column list that is down to one column.
-    private func collapseColumns(_ columns: Set<RecordID>, moving: Set<RecordID>, into dest: ParentRef, tx: Tx) {
+    private func collapseColumns(_ columns: Set<RecordID>, moving: Set<RecordID>, into dest: ParentRef,
+                                 keepList: RecordID? = nil, tx: Tx) {
         var lists: [RecordID: Set<RecordID>] = [:]   // list → columns removed
         for colID in columns {
             if case .block(let d) = dest, d == colID { continue }
@@ -374,6 +375,8 @@ public extension WorkspaceStore {
         for (listID, removed) in lists {
             guard let list = blocks[listID] else { continue }
             for c in removed { tx.removeBlock(c) }
+            // A list that just gained a column (placeInColumn) keeps its other columns even if only one is left.
+            if listID == keepList { continue }
             let remaining = contentBlocks(of: listID).filter { !removed.contains($0.id) }
             guard remaining.count <= 1 else { continue }
             // Blocks landing in the last column stay put; unwrapping would move them a second time.
@@ -562,6 +565,13 @@ public extension WorkspaceStore {
     /// Drop `ids` beside `target`, creating (or extending) a column list.
     func placeInColumn(_ ids: [RecordID], beside target: RecordID, leading: Bool) {
         guard let t = blocks[target], !ids.contains(target) else { return }
+        let moving = Set(ids)
+        // Columns the blocks leave: emptied ones are removed in the same undo step, like `moveBlocks`
+        // (they used to stay behind as blank columns with their old width and pushed the layout apart).
+        let sourceColumns = Set(ids.compactMap { id -> RecordID? in
+            guard case .block(let pid) = blocks[id]?.parent, blocks[pid]?.type == .column else { return nil }
+            return pid
+        })
         transact("Create columns") { tx in
             if case .block(let colID) = t.parent, let col = blocks[colID], col.type == .column,
                case .block(let listID) = col.parent {
@@ -571,6 +581,9 @@ public extension WorkspaceStore {
                 tx.put(newCol)
                 let keys = FractionalIndex.keys(count: ids.count, between: nil, nil)
                 for (id, k) in zip(ids, keys) { tx.update(id) { $0.parent = .block(newCol.id); $0.sortKey = k } }
+                // Stored widths (often Notion's) no longer fit with a column more: share the row equally again.
+                for c in contentBlocks(of: listID) { tx.update(c.id) { $0.props.ratio = nil } }
+                collapseColumns(sourceColumns, moving: moving, into: .block(newCol.id), keepList: listID, tx: tx)
                 return
             }
             let list = Block(type: .columnList, parent: t.parent, sortKey: tx.sortKey(in: t.parent, .after(target)),
@@ -585,6 +598,7 @@ public extension WorkspaceStore {
             tx.update(target) { $0.parent = .block(targetCol.id); $0.sortKey = FractionalIndex.between(nil, nil) }
             let keys = FractionalIndex.keys(count: ids.count, between: nil, nil)
             for (id, k) in zip(ids, keys) { tx.update(id) { $0.parent = .block(movedCol.id); $0.sortKey = k } }
+            collapseColumns(sourceColumns, moving: moving, into: .block(movedCol.id), tx: tx)
         }
     }
 
