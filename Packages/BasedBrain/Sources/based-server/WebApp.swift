@@ -41,6 +41,8 @@ blockquote.b { border-left:3px solid currentColor; padding-left:14px; margin:6px
 pre.b { background:var(--code); border-radius:6px; padding:16px; overflow:auto; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
 code { background:var(--code); color:#eb5757; border-radius:4px; padding:0 4px; font-size:85%; }
 hr.b { border:0; border-top:1px solid var(--line); margin:12px 0; }
+table.db { border-collapse:collapse; width:100%; font-size:14px; } table.db th { text-align:left; font-weight:500; color:var(--dim); border-bottom:1px solid var(--line); padding:6px 8px; white-space:nowrap; }
+table.db td { border-bottom:1px solid var(--line); padding:6px 8px; white-space:nowrap; max-width:260px; overflow:hidden; text-overflow:ellipsis; }
 table.b { border-collapse:collapse; margin:8px 0; } table.b td { border:1px solid var(--line); padding:6px 10px; font-size:14px; }
 details.b > summary { cursor:pointer; }
 [contenteditable]:focus { outline:none; }
@@ -192,10 +194,47 @@ function render(b, number) {
     case "table": return `<table class="b">${children(k).map(r => `<tr>${((r.props && r.props.cells) || []).map(c => `<td>${rich(c)}</td>`).join("")}</tr>`).join("")}</table>`;
     case "page": case "databasePage": return `<div class="b pagelink" data-open="${b.id}">${icon(b) || "📄"} ${esc(title(b.id))}</div>`;
     case "image": { const u = b.props && b.props.url; return u ? `<img class="b" src="${esc(u)}" style="max-width:100%;border-radius:4px">` : `<div class="b muted">🖼 Image</div>`; }
-    case "databaseInline": return `<div class="b muted">▦ ${esc(title(b.id)) === "Untitled" ? "Database" : esc(title(b.id))} — open in the app</div>`;
+    case "databaseInline": return dbTable(b);
     case "columnList": return `<div class="b" style="display:flex;gap:24px">${children(k).map(c => `<div style="flex:1">${seq(children("b:" + c.id))}</div>`).join("")}</div>`;
     default: return `<div class="b" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${b.id}"` : ""}>${rich(b.text)}</div>${inner()}`;
   }
+}
+
+// Databases (read-only): title column + the first properties, values formatted like the apps.
+const OPTION_BG = { default:"rgba(227,226,224,.5)", gray:"rgba(227,226,224,.8)", brown:"rgba(238,224,218,.9)", orange:"rgba(250,222,201,.9)",
+  yellow:"rgba(253,236,200,.9)", green:"rgba(219,237,219,.9)", blue:"rgba(211,229,239,.9)", purple:"rgba(232,222,238,.9)",
+  pink:"rgba(245,224,233,.9)", red:"rgba(255,226,221,.9)" };
+function pill(o) { return o ? `<span style="background:${OPTION_BG[o.color] || OPTION_BG.default};color:#37352f;border-radius:3px;padding:0 6px;font-size:13px;margin-right:4px;white-space:nowrap">${esc(o.name)}</span>` : ""; }
+function cell(v, p) {
+  if (!v) return "";
+  const [kind, payload] = Object.entries(v)[0] || [];
+  const x = payload && "_0" in payload ? payload._0 : payload;
+  const opt = (id) => (p.options || []).find(o => o.id === id);
+  switch (kind) {
+    case "text": return rich(x);
+    case "number": return String(x);
+    case "select": case "status": return pill(opt(x));
+    case "multiSelect": return (x || []).map(id => pill(opt(id))).join("");
+    case "checkbox": return x ? "☑︎" : "☐";
+    case "date": { const d = new Date((x.start + 978307200) * 1000); return d.toLocaleDateString(); }
+    case "url": return `<a href="${esc(x)}" target="_blank" rel="noopener">${esc(x)}</a>`;
+    case "email": case "phone": case "place": return esc(x);
+    case "relation": return (x || []).map(id => `<span class="pagelink" data-open="${id}">${esc(title(id))}</span>`).join(", ");
+    case "uniqueID": return (p.idPrefix ? p.idPrefix + "-" : "") + x;
+    default: return "";
+  }
+}
+function dbTable(b) {
+  const dbID = b.props && b.props.databaseID;
+  const db = dbID && S.recs.get("database:" + dbID);
+  if (!db) return `<div class="b muted">▦ Database</div>`;
+  const props = (db.properties || []).filter(p => p.type !== "title").slice(0, 4);
+  const rows = children("d:" + dbID);
+  const name = plain(db.title) || title(b.id);
+  return `<div class="b" style="margin:12px 0"><div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(name)}</div>
+    <div style="overflow-x:auto"><table class="db"><tr><th>${esc((db.properties || []).find(p => p.type === "title")?.name || "Name")}</th>${props.map(p => `<th>${esc(p.name)}</th>`).join("")}</tr>
+    ${rows.slice(0, 200).map(r => `<tr><td><span class="pagelink" data-open="${r.id}">${icon(r) || "📄"} ${esc(title(r.id))}</span></td>${props.map(p => `<td>${cell((r.values || {})[p.id], p)}</td>`).join("")}</tr>`).join("")}
+    </table></div>${rows.length > 200 ? `<div class="muted">${rows.length - 200} more rows in the app</div>` : ""}</div>`;
 }
 
 // Editing (first step): text blocks without inline formatting are editable; saving pushes the record with a
@@ -227,7 +266,7 @@ function showPage(id, keepScroll) {
   tree();
   const main = document.getElementById("main");
   const cover = b.props && b.props.cover ? `<div class="cover"></div>` : "";
-  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${id}"` : ""}>${esc(title(id))}</h1>${seq(children("b:" + id))}</div>`;
+  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${id}"` : ""}>${esc(title(id))}</h1>${b.type === "databasePage" ? dbTable(b) : ""}${seq(children("b:" + id))}</div>`;
   main.scrollTop = keepScroll ? y : 0;
   main.querySelectorAll("[data-edit]").forEach(el => {
     el.onblur = () => saveText(el.dataset.edit, el.innerText.replace(/\n$/, "")).then(tree);
