@@ -78,7 +78,19 @@ final class EditorController {
     let model: AppModel
     var focusedID: RecordID?
     var selectedBlocks: Set<RecordID> = []
-    var menu: InlineMenu?
+    var menu: InlineMenu? {
+        didSet {
+            if oldValue == nil, menu != nil { menuOpenedAt = Date() }
+            #if DEBUG
+            if oldValue != nil, menu == nil {
+                Log.notice("menu closed: " + Thread.callStackSymbols.dropFirst(1).prefix(6).map { String($0.split(separator: " ", omittingEmptySubsequences: true).dropFirst(3).prefix(1).joined()) }.joined(separator: " ← "), category: "debug")
+            }
+            #endif
+        }
+    }
+    /// When the "/" / "@" menu opened. Focusing a new line (gutter +, ⌘/ …) briefly reports the caret at 0 —
+    /// before the trigger — which used to close the menu again right away ("sometimes the menu doesn't stay").
+    @ObservationIgnored private var menuOpenedAt = Date.distantPast
     var hasTextSelection = false
     var picker: PickerPurpose?
     var linkEditor: RecordID?
@@ -161,7 +173,7 @@ final class EditorController {
 
     func selectionChanged(_ id: RecordID, _ r: NSRange) {
         hasTextSelection = r.length > 0
-        if let m = menu, m.blockID == id, r.location <= m.anchor { menu = nil }
+        if let m = menu, m.blockID == id, r.location <= m.anchor, Date().timeIntervalSince(menuOpenedAt) > 0.35 { menu = nil }
     }
 
     /// Click below the last block: focus the last text block or add one.

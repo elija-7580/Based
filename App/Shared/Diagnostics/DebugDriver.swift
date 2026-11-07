@@ -19,8 +19,11 @@ import BasedBrain
 /// - `appearance?mode=light|dark`
 @MainActor
 enum DebugDriver {
+    static weak var model: AppModel?
+
     static func handle(_ url: URL, model: AppModel) -> Bool {
         guard url.scheme == "based", url.host == "debug" else { return false }
+        Self.model = model
         let cmd = url.lastPathComponent
         let q = Dictionary(uniqueKeysWithValues: (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? [])
             .map { ($0.name, $0.value ?? "") })
@@ -68,6 +71,35 @@ enum DebugDriver {
             } else {
                 Log.notice("debug hover: no active editor", category: "debug")
             }
+        case "slash":
+            // Opens the "/" menu on a new line after the n-th block (like clicking + in the gutter).
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let i = Int(q["index"] ?? "0") ?? 0
+                if ids.indices.contains(i) { ed.addFromGutter(ids[i], above: false) }
+                Log.notice("debug slash on editor \(ObjectIdentifier(ed).hashValue): menu \(String(describing: ed.menu?.kind))", category: "debug")
+                if let qy = q["query"], let m = ed.menu {
+                    model.store.setText(m.blockID, RichText("/" + qy))
+                    ed.menu?.query = qy
+                }
+            }
+        case "blockmenu":
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let i = Int(q["index"] ?? "0") ?? 0
+                if ids.indices.contains(i) { ed.gutter.hovered = ids[i]; ed.clickHandle(ids[i], shift: false) }
+            }
+        case "cleanslash":
+            // Removes leftover "/" lines (from slash tests) on the open page.
+            if let ed = model.activeEditor {
+                ed.menu = nil
+                let ids = model.store.descendants(of: ed.pageID, includeRows: false)
+                    .filter { model.store.blocks[$0]?.type == .text && model.store.blocks[$0]?.text.plainText == "/" }
+                model.store.deleteBlocks(ids)
+            }
+        case "escape":
+            model.activeEditor?.menu = nil
+            model.activeEditor?.gutter.menuFor = nil
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":
@@ -120,6 +152,9 @@ enum DebugDriver {
     }
 
     static func snapshot(to path: String) {
+        if let m = (NSApp.delegate as AnyObject?) as? NSObject { _ = m }
+        Log.notice("debug windows: " + NSApp.windows.map { "\($0.className) visible=\($0.isVisible) \(Int($0.frame.width))x\(Int($0.frame.height)) title=\($0.title)" }.joined(separator: " | "), category: "debug")
+        Log.notice("debug snapshot state: editor \(DebugDriver.model?.activeEditor.map { "\(ObjectIdentifier($0).hashValue)" } ?? "nil") menu \(String(describing: DebugDriver.model?.activeEditor?.menu?.kind)) hovered \(DebugDriver.model?.activeEditor?.gutter.hovered ?? "-")", category: "debug")
         guard let win = mainWindow(), let view = win.contentView?.superview ?? win.contentView else {
             Log.error("debug snapshot: no window", category: "debug")
             return

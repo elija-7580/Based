@@ -11,26 +11,34 @@ struct BasedApp: App {
     @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
 
     var body: some Scene {
-        WindowGroup {
-            RootView()
-                .environment(model)
-                .environment(model.brain)
-                .environment(model.brain.happier)
-                .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
-                #if os(macOS)
-                // Small enough for split-screen; the window can't shrink below it (contentMinSize), so nothing is
-                // clipped or shifted when the window opens at its restored size.
-                .frame(minWidth: 640, minHeight: 420)
-                #endif
-        }
         #if os(macOS)
-        .defaultSize(width: 1240, height: 820)
-        .windowResizability(.contentMinSize)
-        // Notion-style chrome: content runs under the (hidden) title bar; MacTitleBar draws tabs + controls.
-        .windowStyle(.hiddenTitleBar)
+        // One main window: the app has one model (tabs, active editor, chat), so a second window showed the
+        // same page with its own editor — and every based:// link (deep links, the debug driver) opened
+        // another one through WindowGroup. `Window` is single-instance and receives the URLs itself.
+        Window("Based", id: "main") { root }
+            .defaultSize(width: 1240, height: 820)
+            .windowResizability(.contentMinSize)
+            // Notion-style chrome: content runs under the (hidden) title bar; MacTitleBar draws tabs + controls.
+            .windowStyle(.hiddenTitleBar)
+            .commands { BasedCommands(model: model) }
+        #else
+        WindowGroup { root }
+            .commands { BasedCommands(model: model) }
         #endif
-        .commands { BasedCommands(model: model) }
         // No separate Settings window: ⌘, opens Settings inside the main window (see BasedCommands).
+    }
+
+    private var root: some View {
+        RootView()
+            .environment(model)
+            .environment(model.brain)
+            .environment(model.brain.happier)
+            .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
+            #if os(macOS)
+            // Small enough for split-screen; the window can't shrink below it (contentMinSize), so nothing is
+            // clipped or shifted when the window opens at its restored size.
+            .frame(minWidth: 640, minHeight: 420)
+            #endif
     }
 }
 

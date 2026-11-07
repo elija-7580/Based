@@ -289,6 +289,8 @@ struct LinkEditorView: View {
 /// The slash / @ / [[ / : menu shown under the block being typed in.
 struct InlineMenuView: View {
     let editor: EditorController
+    /// Room available on the side the menu opens to (the menu never runs off the page).
+    var maxHeight: CGFloat = 360
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -320,10 +322,11 @@ struct InlineMenuView: View {
             }
         }
         .frame(width: 320)
-        .frame(maxHeight: 360)
+        .frame(maxHeight: min(max(120, maxHeight), 360))
         .fixedSize(horizontal: false, vertical: true)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.background).shadow(color: .black.opacity(0.18), radius: 10, y: 4))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(Theme.divider)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(.background).shadow(color: .black.opacity(0.18), radius: 12, y: 5))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(Theme.divider)))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private func sectionHeader(_ items: [MenuItem], _ i: Int) -> String? {

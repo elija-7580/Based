@@ -100,12 +100,19 @@ struct PageScreen: View {
                 GeometryReader { geo in
                     if let anchor, editor.menu != nil {
                         let r = geo[anchor]
-                        let below = r.maxY + 4
-                        let fitsBelow = below + 360 < geo.size.height
-                        InlineMenuView(editor: editor)
+                        // Notion: below the line whenever there's reasonable room, otherwise above; the height
+                        // shrinks to the room on that side (it used to flip up early and cover the text).
+                        let spaceBelow = geo.size.height - r.maxY - 12
+                        let spaceAbove = r.minY - 12
+                        let below = spaceBelow >= 160 || spaceBelow >= spaceAbove
+                        let room = below ? spaceBelow : spaceAbove
+                        let h = min(max(120, room), 360)
+                        InlineMenuView(editor: editor, maxHeight: room)
                             .accessibilityIdentifier("slash.menu")
+                            .frame(height: h, alignment: below ? .top : .bottom)
                             .offset(x: min(max(0, r.minX + 24), max(0, geo.size.width - 330)),
-                                    y: fitsBelow ? below : max(0, r.minY - 364))
+                                    y: below ? r.maxY + 4 : r.minY - 4 - h)
+                            .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: below ? .top : .bottom)))
                     }
                 }
             }
@@ -145,9 +152,17 @@ struct PageScreen: View {
         .onAppear {
             editor.format = format
             model.activeEditor = editor
+            #if DEBUG
+            Log.notice("PageScreen appear \(pageID.prefix(8)) peek \(isPeek) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
+            #endif
         }
         .onChange(of: page.props.format) { _, f in editor.format = f }
-        .onDisappear { if model.activeEditor === editor { model.activeEditor = nil } }
+        .onDisappear {
+            #if DEBUG
+            Log.notice("PageScreen disappear \(pageID.prefix(8)) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
+            #endif
+            if model.activeEditor === editor { model.activeEditor = nil }
+        }
     }
 
     private var horizontalPadding: CGFloat {
