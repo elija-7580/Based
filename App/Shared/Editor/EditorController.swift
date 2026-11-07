@@ -668,7 +668,21 @@ final class EditorController {
             }
             return false
         }
-        var items = MarkdownImporter(resolveLink: { _ in nil }).parse(trimmed)
+        return paste(blocks: MarkdownImporter(resolveLink: { _ in nil }).parse(trimmed), into: id, selection: selection)
+    }
+
+    /// Rich clipboard content (Notion, web pages) as blocks. Returns false when the HTML is just inline text,
+    /// so the caller falls back to the plain-text paste.
+    func pasteHTML(_ html: String, into id: RecordID, selection: NSRange) -> Bool {
+        guard let b = store.blocks[id], b.type != .code, b.type != .page, ClipboardHTMLImporter.isStructured(html) else { return false }
+        let store = self.store
+        let items = ClipboardHTMLImporter(resolvePage: ClipboardHTMLImporter.pageResolver { store.blocks[$0] != nil }).parse(html)
+        return paste(blocks: items, into: id, selection: selection)
+    }
+
+    func paste(blocks pasted: [ImportedBlock], into id: RecordID, selection: NSRange) -> Bool {
+        guard let b = store.blocks[id] else { return false }
+        var items = pasted
         guard !items.isEmpty else { return false }
         let (head, tail) = b.text.split(at: selection.location)
         let tailEnd = b.text.slice(min(b.text.length, selection.location + selection.length), b.text.length)
@@ -721,4 +735,63 @@ final class EditorController {
         let blocks = store.documentOrder(Array(selectedBlocks)).compactMap { store.blocks[$0] }
         return MarkdownExporter(store: store).exportBlocks(blocks, indent: 0)
     }
+
+    #if os(macOS)
+    /// ⌘C on selected blocks: Markdown as text (Notion, Obsidian, any editor), HTML (Notion pastes it as blocks with
+    /// colours, toggles, callouts, tables) and Based's own block ids (pasting in Based copies them losslessly).
+    func copySelectedBlocks() {
+        let ids = store.documentOrder(Array(selectedBlocks))
+        let blocks = ids.compactMap { store.blocks[$0] }
+        guard !blocks.isEmpty else { return }
+        let store = self.store
+        var exporter = HTMLExporter(store: store, pageLink: { id in (store.title(of: id), PageLink.url(id)) })
+        exporter.headingOffset = 0
+        let html = exporter.blocks(blocks)
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(MarkdownExporter(store: store).exportBlocks(blocks, indent: 0), forType: .string)
+        pb.setString("<meta charset=\"utf-8\">" + html, forType: .html)
+        pb.setString(ids.joined(separator: "\n"), forType: Self.blocksPasteboardType)
+    }
+
+    func cutSelectedBlocks() {
+        copySelectedBlocks()
+        deleteSelection()
+    }
+
+    /// ⌘V while blocks are selected: insert after the last selected block — Based blocks as exact copies,
+    /// otherwise HTML or Markdown from other apps.
+    func pasteAfterSelection() {
+        let order = store.documentOrder(Array(selectedBlocks))
+        guard let last = order.last, let anchor = store.blocks[last] else { return }
+        let pb = NSPasteboard.general
+        if let raw = pb.string(forType: Self.blocksPasteboardType) {
+            let src = raw.split(separator: "\n").compactMap { store.blocks[String($0)] }.filter { $0.trashedAt == nil }
+            if !src.isEmpty {
+                var newIDs: [RecordID] = []
+                store.transact("Paste blocks") { tx in
+                    let keys = tx.sortKeys(src.count, in: anchor.parent, .after(last))
+                    for (b, k) in zip(src, keys) { newIDs.append(store.copySubtree(b, parent: anchor.parent, sortKey: k, tx: tx)) }
+                }
+                selectedBlocks = Set(newIDs)
+                return
+            }
+        }
+        var items: [ImportedBlock] = []
+        if let html = pb.string(forType: .html), ClipboardHTMLImporter.isStructured(html) {
+            let store = self.store
+            items = ClipboardHTMLImporter(resolvePage: ClipboardHTMLImporter.pageResolver { store.blocks[$0] != nil }).parse(html)
+        }
+        if items.isEmpty, let s = pb.string(forType: .string) { items = MarkdownImporter(resolveLink: { _ in nil }).parse(s) }
+        guard !items.isEmpty else { return }
+        var newIDs: [RecordID] = []
+        store.transact("Paste") { tx in
+            let keys = tx.sortKeys(items.count, in: anchor.parent, .after(last))
+            for (item, k) in zip(items, keys) { newIDs.append(store.putImported(item, parent: anchor.parent, sortKey: k, tx: tx)) }
+        }
+        selectedBlocks = Set(newIDs)
+    }
+
+    static let blocksPasteboardType = NSPasteboard.PasteboardType("com.friedrich-ulrich.based.blocks")
+    #endif
 }

@@ -66,6 +66,12 @@ final class BlockSelectionKeys {
             ed.moveBlockSelection(down: e.keyCode == 125, extend: mods.contains(.shift)); return true
         case 2 where mods == .command:                  // ⌘D
             ed.duplicateSelection(); return true
+        case 8 where mods == .command:                  // ⌘C
+            ed.copySelectedBlocks(); return true
+        case 7 where mods == .command:                  // ⌘X
+            ed.cutSelectedBlocks(); return true
+        case 9 where mods == .command:                  // ⌘V
+            ed.pasteAfterSelection(); return true
         default:
             return false
         }

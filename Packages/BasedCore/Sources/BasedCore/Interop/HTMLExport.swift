@@ -9,6 +9,9 @@ public struct HTMLExporter {
     /// How links to other pages are written (default: relative "<Title>.html").
     public var pageLink: (RecordID) -> (title: String, url: String)?
 
+    /// Pages put their title in <h1>, so block headings start at <h2>; clipboard HTML keeps H1 = h1 (offset 0).
+    public var headingOffset = 1
+
     public init(store: WorkspaceStore, pageLink: ((RecordID) -> (title: String, url: String)?)? = nil) {
         self.store = store
         self.pageLink = pageLink ?? { id in
@@ -110,7 +113,7 @@ public struct HTMLExporter {
         case .text:
             return text.isEmpty ? "<p class=\"empty\"></p>\n" + children(b) : "<p\(colorClass(b))>\(text)</p>\n" + indented(b)
         case .heading1, .heading2, .heading3, .heading4:
-            let level = b.type == .heading1 ? 2 : b.type == .heading2 ? 3 : b.type == .heading3 ? 4 : 5
+            let level = (b.type == .heading1 ? 1 : b.type == .heading2 ? 2 : b.type == .heading3 ? 3 : 4) + headingOffset
             if b.props.toggleable == true {
                 return "<details\(b.props.isOpen == true ? " open" : "")><summary><h\(level)>\(text)</h\(level)></summary>\(children(b))</details>\n"
             }

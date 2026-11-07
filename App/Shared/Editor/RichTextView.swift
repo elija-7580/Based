@@ -258,6 +258,11 @@ final class TextCoordinator: NSObject, TextHost {
         controller.model.dropFiles(urls, onto: controller.pageID, after: id)
     }
 
+    func pasteHTML(_ html: String) -> Bool {
+        guard view != nil else { return false }
+        return controller.pasteHTML(html, into: id, selection: viewSelection)
+    }
+
     func paste(_ string: String) -> Bool {
         guard view != nil else { return false }
         return controller.paste(string, into: id, selection: viewSelection)
@@ -455,6 +460,8 @@ final class BasedNSTextView: NSTextView {
     override func paste(_ sender: Any?) {
         let files = FileDrop.fileURLs(on: NSPasteboard.general)
         if !files.isEmpty, let c = coordinator { c.dropFiles(files); return }
+        // Notion / web pages: their HTML keeps toggles, callouts, to-dos, tables, colours and page links.
+        if let html = NSPasteboard.general.string(forType: .html), coordinator?.pasteHTML(html) == true { return }
         guard let s = NSPasteboard.general.string(forType: .string) else { super.paste(sender); return }
         if coordinator?.paste(s) == true { return }
         insertText(s, replacementRange: selectedRange())
