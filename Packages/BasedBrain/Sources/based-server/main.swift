@@ -194,6 +194,9 @@ let server = HTTPServer(port: opts.port) { req in
         guard let p = try? JSONDecoder().decode(SyncPush.self, from: req.body) else { return .json(["error": "bad push"], status: 400) }
         let reply = await MainActor.run { sync.pushV2(p) }
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(reply)) ?? Data())
+    case ("GET", "/app"), ("GET", "/app/"):
+        // Web client (read-only for now): loads the workspace through /sync/v2/pull. The token is entered in the page.
+        return HTTPServer.Response(status: 200, headers: ["Content-Type": "text/html; charset=utf-8"], body: Data(WebApp.html.utf8))
     case ("GET", "/sync/v2/wait"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let after = req.query["after"].flatMap { Int64($0) } ?? 0
