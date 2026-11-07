@@ -275,13 +275,35 @@ public struct BlockProps: Codable, Hashable, Sendable {
 }
 
 /// Every piece of content is a block; pages and database rows too.
+/// Reference storage for `Block.props` (see there). Value semantics: equality and hashing by value, and
+/// `Block` only mutates it in place when it holds the only reference.
+final class PropsStorage: Hashable, @unchecked Sendable {
+    var value: BlockProps
+    init(_ v: BlockProps) { value = v }
+    static let empty = PropsStorage(BlockProps())
+    static func make(_ v: BlockProps) -> PropsStorage { v == BlockProps() ? empty : PropsStorage(v) }
+    static func == (a: PropsStorage, b: PropsStorage) -> Bool { a === b || a.value == b.value }
+    func hash(into h: inout Hasher) { h.combine(value) }
+}
+
 public struct Block: Codable, Hashable, Identifiable, Sendable {
     public var id: RecordID
     public var type: BlockType
     public var parent: ParentRef
     public var sortKey: String
     public var text: RichText
-    public var props: BlockProps
+    /// Block properties (icon, cover, colour, checked, caption …). Stored copy-on-write behind a reference:
+    /// `BlockProps` is ~500 bytes and empty for most blocks, so every empty block shares one instance
+    /// (71k-block workspace: −35 MB). Reading and writing `props` works exactly like a stored property.
+    public var props: BlockProps {
+        get { _props.value }
+        set {
+            if newValue == BlockProps() { _props = PropsStorage.empty }
+            else if isKnownUniquelyReferenced(&_props), _props !== PropsStorage.empty { _props.value = newValue }
+            else { _props = PropsStorage(newValue) }
+        }
+    }
+    private var _props: PropsStorage
     /// Database row values keyed by property id.
     public var values: [String: PropertyValue]
     public var createdAt: Date
@@ -296,7 +318,7 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
                 text: RichText = RichText(), props: BlockProps = BlockProps(), values: [String: PropertyValue] = [:],
                 createdAt: Date = Date(), createdBy: String? = nil) {
         self.id = id; self.type = type; self.parent = parent; self.sortKey = sortKey
-        self.text = text; self.props = props; self.values = values
+        self.text = text; self._props = PropsStorage.make(props); self.values = values
         self.createdAt = createdAt; self.updatedAt = createdAt
         self.createdBy = createdBy; self.updatedBy = createdBy
         self.trashedAt = nil; self.stamp = .zero
@@ -313,7 +335,7 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
         parent = try c.decode(ParentRef.self, forKey: .parent)
         sortKey = try c.decode(String.self, forKey: .sortKey)
         text = try c.decodeIfPresent(RichText.self, forKey: .text) ?? RichText()
-        props = try c.decodeIfPresent(BlockProps.self, forKey: .props) ?? BlockProps()
+        _props = PropsStorage.make(try c.decodeIfPresent(BlockProps.self, forKey: .props) ?? BlockProps())
         values = try c.decodeIfPresent([String: PropertyValue].self, forKey: .values) ?? [:]
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         updatedAt = try c.decode(Date.self, forKey: .updatedAt)
