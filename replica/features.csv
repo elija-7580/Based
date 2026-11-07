@@ -39,7 +39,7 @@ Toggle headings,blocks,should,yes,yes,
 Quote,blocks,must,yes,yes,
 Callout with icon and color,blocks,must,yes,yes,
 Divider,blocks,must,yes,yes,
-Code block with language + syntax highlight,blocks,must,yes,partial,language picker + mono; no syntax colouring
+Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …)
 Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network
 Inline equation,blocks,should,yes,partial,inline TeX kept as monospace chip
 Image block (upload / link) with caption,blocks,must,yes,yes,
@@ -137,7 +137,7 @@ Publish to web,collaboration,could,yes,no,
 Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended"
 Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
-Export as HTML / PDF,export,should,yes,partial,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing"
+Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing"
 Dark mode (system + toggle),app,must,yes,yes,
 Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9"
 Settings,app,must,yes,yes,
@@ -200,3 +200,7 @@ CI build on every push,infra,should,n/a,partial,workflow ready in ci/github-acti
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library"
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)"
 Agent Brain can't be deleted,ai,must,n/a,yes,"store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens"
+Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine
+Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS)
+Lossless workspace archive export/import,export,should,no,yes,.based.jsonl in sync-protocol shape (WorkspaceArchive)
+Web client,platforms,should,yes,partial,based-server /app: tree + pages over sync v2, live updates, plain-text editing
