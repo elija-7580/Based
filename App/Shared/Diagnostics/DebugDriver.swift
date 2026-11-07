@@ -100,6 +100,12 @@ enum DebugDriver {
         case "escape":
             model.activeEditor?.menu = nil
             model.activeEditor?.gutter.menuFor = nil
+        case "overlay":
+            switch q["name"] {
+            case "quickfind": model.showQuickFind = true
+            case "palette": model.showCommandPalette = true
+            default: model.showQuickFind = false; model.showCommandPalette = false
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":

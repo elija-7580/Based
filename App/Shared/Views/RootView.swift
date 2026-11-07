@@ -194,14 +194,19 @@ struct WindowAccessor: NSViewRepresentable {
 struct ModalBackdrop<Content: View>: View {
     let dismiss: () -> Void
     @ViewBuilder let content: () -> Content
+    /// Springs in like Notion's ⌘K / Claude's palette: a soft fade of the scrim and a slight scale-up.
+    @State private var shown = false
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.black.opacity(0.18)
+            Color.black.opacity(shown ? 0.28 : 0)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture(perform: dismiss)
             content()
+                .scaleEffect(shown ? 1 : 0.97, anchor: .top)
+                .opacity(shown ? 1 : 0)
+                .offset(y: shown ? 0 : -6)
                 .background(RoundedRectangle(cornerRadius: 12).fill(.background).shadow(color: .black.opacity(0.22), radius: 24, y: 10))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
@@ -209,7 +214,8 @@ struct ModalBackdrop<Content: View>: View {
                 .padding(.horizontal, 24)
             Button("", action: dismiss).keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
         }
-        .transition(.opacity)
+        .transition(.opacity.animation(.easeOut(duration: 0.12)))
+        .onAppear { withAnimation(.spring(response: 0.26, dampingFraction: 0.86)) { shown = true } }
     }
 }
 
