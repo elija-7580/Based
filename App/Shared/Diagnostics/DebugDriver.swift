@@ -52,6 +52,22 @@ enum DebugDriver {
         case "engine":
             let kind = ChatEngineSpec.Kind(rawValue: q["kind"] ?? "auto") ?? .auto
             model.brain.engineSpec = ChatEngineSpec(kind: kind, model: q["model"] ?? "", effort: q["effort"] ?? "", permission: q["permission"] ?? "")
+        case "hover":
+            // Shows the gutter handle of the n-th block of the open page (document order).
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let i = Int(q["index"] ?? "0") ?? 0
+                if ids.indices.contains(i) { ed.gutter.hovered = ids[i]; if q["pin"] == "1" { ed.gutter.menuFor = ids[i] } }
+                Log.notice("debug hover: \(ids.count) frames, hovered \(ed.gutter.hovered ?? "-")", category: "debug")
+                if let out = q["out"] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        Log.notice("debug hover at snapshot: \(ed.gutter.hovered ?? "-") editor \(ObjectIdentifier(ed).hashValue) frame \(ed.gutter.hovered.flatMap { ed.gutter.frame(of: $0) }.map { "\($0)" } ?? "nil") locked \(ed.isLocked) same \(model.activeEditor === ed)", category: "debug")
+                        snapshot(to: out)
+                    }
+                }
+            } else {
+                Log.notice("debug hover: no active editor", category: "debug")
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":
@@ -108,6 +124,12 @@ enum DebugDriver {
             Log.error("debug snapshot: no window", category: "debug")
             return
         }
+        // A locked screen / occluded window gets no display-link ticks: force SwiftUI to commit pending updates.
+        func touch(_ v: NSView) { v.needsLayout = true; v.needsDisplay = true; v.subviews.forEach(touch) }
+        if let cv = win.contentView { touch(cv) }
+        win.contentView?.layoutSubtreeIfNeeded()
+        win.display()
+        CATransaction.flush()
         view.layoutSubtreeIfNeeded()
         let bounds = view.bounds
         guard let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }
