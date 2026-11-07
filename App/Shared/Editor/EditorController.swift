@@ -15,6 +15,8 @@ protocol TextHost: AnyObject {
     func endEditing()
     func setTypingMarks(_ marks: Marks)
     func currentTypingMarks() -> Marks
+    /// Re-reports the selection (selection-driven UI follows scrolling).
+    func reportSelection()
 }
 
 final class WeakHost {

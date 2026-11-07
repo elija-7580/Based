@@ -117,6 +117,12 @@ struct PageScreen: View {
                 }
                 .animation(.easeOut(duration: 0.12), value: editor.selectionRect != nil)
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSView.boundsDidChangeNotification)) { n in
+                // The toolbar follows its selection while the page scrolls.
+                guard let sel = editor.selectionRect, let clip = editor.gutter.scrollView?.contentView,
+                      (n.object as? NSView) === clip else { return }
+                editor.host(sel.blockID)?.reportSelection()
+            }
             #endif
             .acceptsFileDrops { model.dropFiles($0, onto: pageID) }
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })

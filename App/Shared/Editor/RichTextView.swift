@@ -225,6 +225,8 @@ final class TextCoordinator: NSObject, TextHost {
         #endif
     }
 
+    func reportSelection() { handleSelectionChange() }
+
     func handleSelectionChange() {
         guard !isApplying, let v = view else { return }
         controller.selectionChanged(id, viewSelection)
