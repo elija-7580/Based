@@ -15,6 +15,13 @@ Notion's features and built clean-room from public documentation.
 
 ## What works
 
+**New (Pass 20):** chat engine/model/effort/permission picker for Claude Code, Codex, Gemini CLI, OpenCode and API
+models, with live thinking, tool cards, inline diffs, approval prompts, a working folder, `@` mentions and `/` commands;
+inline AI ("space" on an empty line) and a floating formatting toolbar in the editor; syntax-highlighted code; Notion-
+style menus, drag handle and drop line; **Sync v2** (server-sequenced, paged, resumable, long poll; see
+[`docs/sync-protocol.md`](docs/sync-protocol.md)); faster open (−50 %) and less memory (−45 %); a lossless
+workspace archive; and a first **web client** at `based-server /app` ([`docs/platforms.md`](docs/platforms.md)).
+
 - **Pages**: tree in sidebar, drag & drop, icons (emoji/image), covers, fonts,
   small text, full width, lock, duplicate, move, favorites, trash with restore,
   backlinks, deep links (`based://page/<id>`), search (⌘K / ⌘P), Home.
