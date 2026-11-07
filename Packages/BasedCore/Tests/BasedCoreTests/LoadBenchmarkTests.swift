@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(SQLite3)
+import SQLite3
+#endif
 import Testing
 @testable import BasedCore
 
@@ -43,5 +46,39 @@ struct BulkLoadTests {
             #expect(bulk.children(of: .block(p)) == incremental.children(of: .block(p)))
         }
         #expect(bulk.blocks.count == 3_000)
+    }
+}
+
+struct ChangeLogTests {
+    @Test @MainActor func existingDatabaseGetsBackfilledLog() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("cl-\(UUID().uuidString).sqlite")
+        // A database written by an older build: no `changes` table.
+        do {
+            let p = try SQLitePersistence(url: url)
+            let s = WorkspaceStore(persistence: p, node: "x")
+            _ = s.createPage(title: RichText("Old page"))
+        }
+        // Simulate the old schema by dropping the log, then reopen.
+        do {
+            var db: OpaquePointer?
+            #expect(sqlite3_open(url.path, &db) == SQLITE_OK)
+            sqlite3_exec(db, "DROP TABLE changes", nil, nil, nil)
+            sqlite3_close(db)
+        }
+        let p = try SQLitePersistence(url: url)
+        let entries = try p.changes(after: 0, limit: 100)
+        #expect(entries.count >= 2)                       // workspace + page
+        #expect(entries.allSatisfy { $0.local && !$0.deleted })
+        let s = WorkspaceStore(persistence: p, node: "x")
+        let before = p.lastChangeSeq
+        let id = s.createPage(title: RichText("New"))
+        let after = try p.changes(after: before, limit: 100)
+        #expect(after.contains { $0.key.id == id && $0.local })
+        // Remote writes are logged but not as local.
+        var b = s.blocks[id]!; b.text = RichText("Remote edit"); b.stamp = Stamp(millis: b.stamp.millis + 10_000, counter: 0, node: "zz")
+        s.applyRemote([.block(b)])
+        #expect(try p.changes(after: before, limit: 100).first { $0.key.id == id }?.local == false)
+        // One row per record: the latest change.
+        #expect(try p.changes(after: 0, limit: 1000).filter { $0.key.id == id }.count == 1)
     }
 }

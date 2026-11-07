@@ -13,7 +13,7 @@ public enum PersistenceError: Error, CustomStringConvertible {
 private let SQLITE_TRANSIENT_PTR = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
 /// Local database: one row per record (JSON payload) plus a key/value meta table.
-public final class SQLitePersistence: Persistence {
+public final class SQLitePersistence: ChangeLogging {
     private var db: OpaquePointer?
     public let url: URL?
 
@@ -30,6 +30,26 @@ public final class SQLitePersistence: Persistence {
         try exec("""
         CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, data BLOB NOT NULL, PRIMARY KEY(kind, id));
         CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value BLOB);
+        """)
+        try migrateChangeLog()
+    }
+
+    /// Sync v2 change log. Created once; existing records are entered as local changes so a first v2 push
+    /// uploads them and a server can serve them from sequence 0.
+    private func migrateChangeLog() throws {
+        let exists: Bool = {
+            guard let st = try? prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='changes'") else { return false }
+            defer { sqlite3_finalize(st) }
+            return sqlite3_step(st) == SQLITE_ROW
+        }()
+        guard !exists else { return }
+        try exec("""
+        BEGIN IMMEDIATE;
+        CREATE TABLE changes (seq INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, id TEXT NOT NULL,
+                              deleted INTEGER NOT NULL DEFAULT 0, local INTEGER NOT NULL DEFAULT 1);
+        CREATE UNIQUE INDEX changes_key ON changes(kind, id);
+        INSERT INTO changes(kind, id, deleted, local) SELECT kind, id, 0, 1 FROM records ORDER BY kind, id;
+        COMMIT;
         """)
     }
 
@@ -89,10 +109,31 @@ public final class SQLitePersistence: Persistence {
     }
 
     public func write(upserts: [Record], deletions: [RecordKey]) throws {
+        try write(upserts: upserts, deletions: deletions, local: true)
+    }
+
+    public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
         try exec("BEGIN IMMEDIATE")
         do {
             let ins = try prepare("INSERT OR REPLACE INTO records(kind, id, data) VALUES(?, ?, ?)")
             defer { sqlite3_finalize(ins) }
+            // A record keeps one log row: its newest change (delete + insert gives it a new, higher seq).
+            let unlog = try prepare("DELETE FROM changes WHERE kind = ? AND id = ?")
+            defer { sqlite3_finalize(unlog) }
+            let log = try prepare("INSERT INTO changes(kind, id, deleted, local) VALUES(?, ?, ?, ?)")
+            defer { sqlite3_finalize(log) }
+            func logChange(_ k: RecordKey, deleted: Bool) throws {
+                sqlite3_reset(unlog)
+                sqlite3_bind_text(unlog, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(unlog, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
+                guard sqlite3_step(unlog) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                sqlite3_reset(log)
+                sqlite3_bind_text(log, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(log, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_int(log, 3, deleted ? 1 : 0)
+                sqlite3_bind_int(log, 4, local ? 1 : 0)
+                guard sqlite3_step(log) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            }
             for r in upserts {
                 let data = try r.encoded()
                 sqlite3_reset(ins)
@@ -100,6 +141,7 @@ public final class SQLitePersistence: Persistence {
                 sqlite3_bind_text(ins, 2, r.key.id, -1, SQLITE_TRANSIENT_PTR)
                 _ = data.withUnsafeBytes { sqlite3_bind_blob(ins, 3, $0.baseAddress, Int32($0.count), SQLITE_TRANSIENT_PTR) }
                 guard sqlite3_step(ins) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                try logChange(r.key, deleted: false)
             }
             let del = try prepare("DELETE FROM records WHERE kind = ? AND id = ?")
             defer { sqlite3_finalize(del) }
@@ -108,12 +150,34 @@ public final class SQLitePersistence: Persistence {
                 sqlite3_bind_text(del, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
                 sqlite3_bind_text(del, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
                 guard sqlite3_step(del) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                try logChange(k, deleted: true)
             }
             try exec("COMMIT")
         } catch {
             try? exec("ROLLBACK")
             throw error
         }
+    }
+
+    public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
+        let st = try prepare("SELECT seq, kind, id, deleted, local FROM changes WHERE seq > ? ORDER BY seq LIMIT ?")
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_int64(st, 1, after)
+        sqlite3_bind_int64(st, 2, Int64(limit))
+        var out: [ChangeEntry] = []
+        while sqlite3_step(st) == SQLITE_ROW {
+            guard let k = sqlite3_column_text(st, 1), let kind = RecordKind(rawValue: String(cString: k)),
+                  let i = sqlite3_column_text(st, 2) else { continue }
+            out.append(ChangeEntry(seq: sqlite3_column_int64(st, 0), key: RecordKey(kind, String(cString: i)),
+                                   deleted: sqlite3_column_int(st, 3) != 0, local: sqlite3_column_int(st, 4) != 0))
+        }
+        return out
+    }
+
+    public var lastChangeSeq: Int64 {
+        guard let st = try? prepare("SELECT COALESCE(MAX(seq), 0) FROM changes") else { return 0 }
+        defer { sqlite3_finalize(st) }
+        return sqlite3_step(st) == SQLITE_ROW ? sqlite3_column_int64(st, 0) : 0
     }
 
     public func meta(_ key: String) -> Data? {
@@ -153,17 +217,26 @@ public final class SQLitePersistence: Persistence {
 }
 
 /// In-memory persistence for previews and tests.
-public final class MemoryPersistence: Persistence {
+public final class MemoryPersistence: ChangeLogging {
     public private(set) var records: [RecordKey: Record] = [:]
     public private(set) var metaValues: [String: Data] = [:]
     public private(set) var writes = 0
-    public init(_ initial: [Record] = []) { for r in initial { records[r.key] = r } }
-    public func loadAll() throws -> [Record] { Array(records.values) }
-    public func write(upserts: [Record], deletions: [RecordKey]) throws {
-        writes += 1
-        for r in upserts { records[r.key] = r }
-        for k in deletions { records[k] = nil }
+    private var log: [RecordKey: ChangeEntry] = [:]
+    private var seq: Int64 = 0
+    public init(_ initial: [Record] = []) {
+        for r in initial { records[r.key] = r; seq += 1; log[r.key] = ChangeEntry(seq: seq, key: r.key, deleted: false, local: true) }
     }
+    public func loadAll() throws -> [Record] { Array(records.values) }
+    public func write(upserts: [Record], deletions: [RecordKey]) throws { try write(upserts: upserts, deletions: deletions, local: true) }
+    public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
+        writes += 1
+        for r in upserts { records[r.key] = r; seq += 1; log[r.key] = ChangeEntry(seq: seq, key: r.key, deleted: false, local: local) }
+        for k in deletions { records[k] = nil; seq += 1; log[k] = ChangeEntry(seq: seq, key: k, deleted: true, local: local) }
+    }
+    public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
+        Array(log.values.filter { $0.seq > after }.sorted { $0.seq < $1.seq }.prefix(limit))
+    }
+    public var lastChangeSeq: Int64 { seq }
     public func meta(_ key: String) -> Data? { metaValues[key] }
     public func setMeta(_ key: String, _ value: Data?) { metaValues[key] = value }
 }

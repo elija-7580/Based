@@ -13,6 +13,41 @@ public struct SyncEnvelope: Codable, Sendable {
     public init(records: [Record], deletions: [RecordKey], cursor: Stamp) { self.records = records; self.deletions = deletions; self.cursor = cursor }
 }
 
+// MARK: - Sync v2 (paged, server-sequenced)
+//
+// v1 used the clients' HLC stamps as the pull cursor: a change that arrived late with an older stamp (a device
+// that was offline) was never pulled by others, and local changes not yet pushed lived only in memory.
+// v2: the server numbers every change it stores (`ChangeLogging.changes`), clients page through
+// "everything after N", and clients push from their own persistent change log. Records stay last-writer-wins
+// by HLC stamp. Spec: docs/sync-protocol.md.
+
+/// `GET /sync/v2/pull?after=<seq>&limit=<n>` response.
+public struct SyncPage: Codable, Sendable, Equatable {
+    public var records: [Record]
+    public var deletions: [RecordKey]
+    /// Pass as `after` for the next page.
+    public var next: Int64
+    /// More pages are waiting.
+    public var more: Bool
+    public init(records: [Record], deletions: [RecordKey], next: Int64, more: Bool) {
+        self.records = records; self.deletions = deletions; self.next = next; self.more = more
+    }
+}
+
+/// `POST /sync/v2/push` body.
+public struct SyncPush: Codable, Sendable {
+    public var records: [Record]
+    public var deletions: [RecordKey]
+    public init(records: [Record], deletions: [RecordKey]) { self.records = records; self.deletions = deletions }
+}
+
+/// `POST /sync/v2/push` reply: server copies that are newer than what was pushed (the client takes them).
+public struct SyncPushReply: Codable, Sendable {
+    public var newer: [Record]
+    public var seq: Int64
+    public init(newer: [Record], seq: Int64) { self.newer = newer; self.seq = seq }
+}
+
 /// Wire encoding: {"kind": "...", "data": {...}}.
 extension Record: Codable {
     enum CK: String, CodingKey { case kind, data }
@@ -73,7 +108,35 @@ public final class SyncServer {
             store.persistence?.setMeta(Self.tombKey, try? JSONEncoder().encode(enc))
         }
         let newer = stale.compactMap { store.record($0) }
-        return SyncEnvelope(records: newer, deletions: [], cursor: pull(since: nil).cursor)
+        // (Clients don't use this cursor; scanning every record per push made pushes O(workspace).)
+        return SyncEnvelope(records: newer, deletions: [], cursor: store.clock.current)
+    }
+}
+
+// MARK: Server v2
+
+extension SyncServer {
+    /// Changes after `after` (server sequence), oldest first, at most `limit` records + deletions per page.
+    public func pullPage(after: Int64, limit: Int = 500) -> SyncPage {
+        guard let log = store.persistence as? ChangeLogging else {
+            // No change log (in-memory server): one page with everything newer than nothing.
+            let all = pull(since: nil)
+            return SyncPage(records: all.records, deletions: all.deletions, next: 0, more: false)
+        }
+        let limit = max(1, min(limit, 5_000))
+        let entries = (try? log.changes(after: after, limit: limit + 1)) ?? []
+        let page = entries.prefix(limit)
+        var records: [Record] = [], deletions: [RecordKey] = []
+        for e in page {
+            if !e.deleted, let r = store.record(e.key) { records.append(r) } else { deletions.append(e.key) }
+        }
+        return SyncPage(records: records, deletions: deletions, next: page.last?.seq ?? after, more: entries.count > limit)
+    }
+
+    /// Merges a client's changes (last writer wins); returns server copies that are newer than the pushed ones.
+    public func pushV2(_ p: SyncPush) -> SyncPushReply {
+        let env = push(SyncEnvelope(records: p.records, deletions: p.deletions, cursor: .zero))
+        return SyncPushReply(newer: env.records, seq: (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0)
     }
 }
 
@@ -121,9 +184,79 @@ public final class ServerSync {
     }
     public func stop() { observer?.cancel(); timer?.cancel() }
 
+    /// Server speaks v2 (paged, sequenced); nil until the first sync found out.
+    public private(set) var usesV2: Bool?
+    static let pushedKey = "sync.v2.pushed"     // local change-log seq up to which local changes are pushed
+    static let pulledKey = "sync.v2.pulled"     // server seq up to which changes are pulled
+    /// Records / deletions per request.
+    public var pageSize = 500
+
     public func syncNow() async {
         guard !syncing else { return }
         syncing = true; defer { syncing = false }
+        do {
+            if usesV2 != false, store.persistence is ChangeLogging {
+                do {
+                    try await syncV2()
+                    usesV2 = true
+                    return
+                } catch let AIError.http(code, _) where code == 404 {
+                    usesV2 = false   // older server: fall back to v1
+                }
+            }
+            try await syncV1()
+        } catch {
+            lastError = "\(error)"; onStatus?("Sync error: \(error)")
+        }
+    }
+
+    /// v2: push local changes from the persistent change log in pages, then pull server pages until done.
+    private func syncV2() async throws {
+        guard let log = store.persistence as? ChangeLogging else { return }
+        // Push: every local change after the last pushed seq (survives restarts; no in-memory pending set).
+        var pushed = readSeq(Self.pushedKey)
+        while true {
+            let entries = try log.changes(after: pushed, limit: pageSize)
+            guard let last = entries.last else { break }
+            let mine = entries.filter(\.local)
+            if !mine.isEmpty {
+                var records: [Record] = [], deletions: [RecordKey] = []
+                for e in mine {
+                    if !e.deleted, let r = store.record(e.key) { records.append(r) } else { deletions.append(e.key) }
+                }
+                let reply: SyncPushReply = try await post("sync/v2/push", SyncPush(records: records, deletions: deletions))
+                if !reply.newer.isEmpty { store.applyRemote(reply.newer) }
+            }
+            pushed = last.seq
+            writeSeq(Self.pushedKey, pushed)
+            if entries.count < pageSize { break }
+        }
+        // Pull
+        var after = readSeq(Self.pulledKey)
+        var received = 0
+        while true {
+            var c = URLComponents(url: baseURL.appendingPathComponent("sync/v2/pull"), resolvingAgainstBaseURL: false)!
+            c.queryItems = [URLQueryItem(name: "after", value: String(after)), URLQueryItem(name: "limit", value: String(pageSize))]
+            let page: SyncPage = try await get(c.url!)
+            if !page.records.isEmpty || !page.deletions.isEmpty {
+                // Pulled changes are logged as remote (local = false), so they're never pushed back.
+                _ = store.applyRemote(page.records, deletions: page.deletions)
+                received += page.records.count + page.deletions.count
+            }
+            after = page.next
+            writeSeq(Self.pulledKey, after)
+            if !page.more { break }
+        }
+        lastSync = Date(); lastError = nil
+        onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))" + (received > 0 ? " · \(received) changes" : ""))
+    }
+
+    private func readSeq(_ key: String) -> Int64 {
+        store.persistence?.meta(key).flatMap { Int64(String(decoding: $0, as: UTF8.self)) } ?? 0
+    }
+    private func writeSeq(_ key: String, _ v: Int64) { store.persistence?.setMeta(key, Data(String(v).utf8)) }
+
+    private func syncV1() async throws {
         do {
             // Push
             if !pending.isEmpty || !pendingDeletions.isEmpty || cursor == nil {
@@ -138,10 +271,7 @@ public final class ServerSync {
             if let cursor, let d = try? JSONEncoder().encode(cursor), let s = String(data: d, encoding: .utf8) {
                 var c = URLComponents(url: url, resolvingAgainstBaseURL: false)!; c.queryItems = [URLQueryItem(name: "since", value: s)]; url = c.url!
             }
-            var req = URLRequest(url: url); req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            let (data, resp) = try await URLSession.shared.data(for: req)
-            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.http((resp as? HTTPURLResponse)?.statusCode ?? 0, String(decoding: data, as: UTF8.self)) }
-            let env = try JSONDecoder().decode(SyncEnvelope.self, from: data)
+            let env: SyncEnvelope = try await get(url)
             if !env.records.isEmpty || !env.deletions.isEmpty {
                 let stale = store.applyRemote(env.records, deletions: env.deletions)
                 pending.formUnion(stale)
@@ -150,9 +280,27 @@ public final class ServerSync {
             store.persistence?.setMeta(Self.cursorKey, try? JSONEncoder().encode(env.cursor))
             lastSync = Date(); lastError = nil
             onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))")
-        } catch {
-            lastError = "\(error)"; onStatus?("Sync error: \(error)")
         }
+    }
+
+    /// Test hook: replaces URLSession (path, method, body) → (status, data).
+    public var transport: ((URLRequest) async throws -> (Int, Data))?
+
+    private func send(_ req: URLRequest) async throws -> Data {
+        let (status, data): (Int, Data)
+        if let transport { (status, data) = try await transport(req) }
+        else {
+            let (d, resp) = try await URLSession.shared.data(for: req)
+            (status, data) = ((resp as? HTTPURLResponse)?.statusCode ?? 0, d)
+        }
+        guard status == 200 else { throw AIError.http(status, String(decoding: data.prefix(500), as: UTF8.self)) }
+        return data
+    }
+
+    private func get<T: Decodable>(_ url: URL) async throws -> T {
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        return try JSONDecoder().decode(T.self, from: try await send(req))
     }
 
     private func post<T: Decodable>(_ path: String, _ body: some Encodable) async throws -> T {
@@ -161,8 +309,6 @@ public final class ServerSync {
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.http((resp as? HTTPURLResponse)?.statusCode ?? 0, String(decoding: data, as: UTF8.self)) }
-        return try JSONDecoder().decode(T.self, from: data)
+        return try JSONDecoder().decode(T.self, from: try await send(req))
     }
 }

@@ -3,7 +3,7 @@ import BasedCore
 import BasedBrain
 
 // based-server: always-on home for your workspace.
-//   • HTTP sync endpoint for the Mac/iPhone apps      POST /sync/push, GET /sync/pull
+//   • HTTP sync endpoint for the Mac/iPhone apps      v2: GET /sync/v2/pull, POST /sync/v2/push (v1: /sync/push, /sync/pull)
 //   • MCP server for Claude / ChatGPT / Cursor …      POST /mcp   (Streamable HTTP)  or  --stdio
 //   • Agent scheduler (runs agents on their schedule)
 //   • Health                                          GET /health
@@ -182,6 +182,22 @@ let server = HTTPServer(port: opts.port) { req in
         guard let env = try? JSONDecoder().decode(SyncEnvelope.self, from: req.body) else { return .json(["error": "bad envelope"], status: 400) }
         let reply = await MainActor.run { sync.push(env) }
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(reply)) ?? Data())
+    case ("GET", "/sync/v2/pull"):
+        // Sync v2 (docs/sync-protocol.md): page through the server's change log.
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let after = req.query["after"].flatMap { Int64($0) } ?? 0
+        let limit = req.query["limit"].flatMap { Int($0) } ?? 500
+        let page = await MainActor.run { sync.pullPage(after: after, limit: limit) }
+        return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(page)) ?? Data())
+    case ("POST", "/sync/v2/push"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        guard let p = try? JSONDecoder().decode(SyncPush.self, from: req.body) else { return .json(["error": "bad push"], status: 400) }
+        let reply = await MainActor.run { sync.pushV2(p) }
+        return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(reply)) ?? Data())
+    case ("GET", "/sync/v2/info"):
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let seq = await MainActor.run { (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0 }
+        return .json(["protocol": 2, "seq": .number(Double(seq))])
     case ("POST", "/agents/run"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let name = (try? JSONValue.parse(req.body))?["agent"]?.string ?? ""

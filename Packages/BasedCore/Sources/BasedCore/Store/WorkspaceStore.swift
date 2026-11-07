@@ -153,6 +153,27 @@ public protocol Persistence: AnyObject {
     func setMeta(_ key: String, _ value: Data?)
 }
 
+/// One entry of the persistent change log: the latest change of a record, numbered by a per-database sequence.
+/// A record appears at most once (its newest change). `local` = made on this device (not received by sync).
+public struct ChangeEntry: Sendable, Equatable {
+    public var seq: Int64
+    public var key: RecordKey
+    public var deleted: Bool
+    public var local: Bool
+    public init(seq: Int64, key: RecordKey, deleted: Bool, local: Bool) {
+        self.seq = seq; self.key = key; self.deleted = deleted; self.local = local
+    }
+}
+
+/// Persistence with a change log (Sync v2): every write is numbered, so a server can page through
+/// "everything after N" and a client knows which local changes it hasn't pushed yet — across restarts.
+public protocol ChangeLogging: Persistence {
+    func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws
+    /// Entries with `seq > after`, ascending, at most `limit`.
+    func changes(after: Int64, limit: Int) throws -> [ChangeEntry]
+    var lastChangeSeq: Int64 { get }
+}
+
 /// In-memory record cache with indexes, transactions, undo/redo, observers.
 @MainActor
 public final class WorkspaceStore {
@@ -329,7 +350,13 @@ public final class WorkspaceStore {
         guard !change.isEmpty else { return }
 
         if let persistence {
-            do { try persistence.write(upserts: upserts, deletions: deletions) }
+            do {
+                if let log = persistence as? ChangeLogging {
+                    try log.write(upserts: upserts, deletions: deletions, local: origin != .remote && origin != .load)
+                } else {
+                    try persistence.write(upserts: upserts, deletions: deletions)
+                }
+            }
             catch { lastError = error }
         }
 
