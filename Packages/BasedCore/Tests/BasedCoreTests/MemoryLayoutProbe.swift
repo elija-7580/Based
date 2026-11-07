@@ -33,3 +33,33 @@ struct PropsStorageTests {
         #expect(!String(decoding: try JSONEncoder().encode(a), as: UTF8.self).contains("\"props\""))
     }
 }
+
+struct WorkspaceArchiveTests {
+    @Test @MainActor func losslessRoundTrip() throws {
+        let a = WorkspaceStore(persistence: nil, node: "a")
+        let page = a.createPage(title: RichText("Plans"))
+        a.setPageCover(page, .gradient(3))
+        _ = a.insertBlock(.todo, text: RichText("Ship it"), in: .block(page), at: .end)
+        let db = a.createDatabase(title: RichText("Tasks"), in: .block(page), inline: true, viewType: .board, sampleRows: 2)
+        _ = a.addView(to: db.blockID, type: .table, name: "All")
+
+        let data = try WorkspaceArchive.write(a)
+        let text = String(decoding: data, as: UTF8.self)
+        #expect(text.hasPrefix("{"))
+        #expect(text.contains("\"format\":\"based-archive\""))
+
+        let b = WorkspaceStore(persistence: nil, node: "b")
+        let r = try WorkspaceArchive.importArchive(data, into: b)
+        #expect(r.skipped == 0 && r.keptNewer == 0)
+        // Every record arrives unchanged.
+        for rec in a.allRecords() where rec.key.kind != .workspace {
+            #expect(b.record(rec.key) == rec)
+        }
+        #expect(b.children(of: .block(page)) == a.children(of: .block(page)))
+        #expect(b.viewIDs(forBlock: db.blockID).count == 2)
+    }
+
+    @Test func rejectsOtherFiles() {
+        #expect(throws: WorkspaceArchive.ArchiveError.self) { try WorkspaceArchive.read(Data("hello\nworld".utf8)) }
+    }
+}

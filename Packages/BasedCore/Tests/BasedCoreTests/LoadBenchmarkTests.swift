@@ -82,3 +82,15 @@ struct ChangeLogTests {
         #expect(try p.changes(after: 0, limit: 1000).filter { $0.key.id == id }.count == 1)
     }
 }
+
+struct RealArchiveTests {
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["BASED_ARCHIVE"] != nil))
+    @MainActor func importsRealArchive() throws {
+        let data = try Data(contentsOf: URL(fileURLWithPath: ProcessInfo.processInfo.environment["BASED_ARCHIVE"]!))
+        let t = Date()
+        let store = WorkspaceStore(persistence: nil, node: "restore")
+        let r = try WorkspaceArchive.importArchive(data, into: store)
+        print("ARCHIVE imported \(r.imported) kept \(r.keptNewer) skipped \(r.skipped) in \(Int(Date().timeIntervalSince(t) * 1000)) ms; blocks \(store.blocks.count)")
+        #expect(r.skipped == 0)
+    }
+}

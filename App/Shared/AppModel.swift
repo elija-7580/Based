@@ -744,6 +744,35 @@ final class AppModel {
     }
 
     /// ⌘J: toggle the docked chat (closes a side peek that occupies the same space).
+    /// Lossless JSON Lines archive of the whole workspace (WorkspaceArchive).
+    func exportArchive(to url: URL) {
+        do {
+            let data = try WorkspaceArchive.write(store)
+            try data.write(to: url, options: .atomic)
+            exportAllMessage = "Exported \(store.allRecords().count) records (\(ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))) to \(url.lastPathComponent)."
+            Log.notice("archive export: \(data.count) bytes", category: "import")
+        } catch {
+            exportAllMessage = "Export failed: \(error)"
+        }
+    }
+
+    /// Imports a Based archive if `url` is one; returns nil when it isn't (other importers take over).
+    func importArchiveIfPossible(_ url: URL) -> String? {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        let head = h.readData(ofLength: 400); try? h.close()
+        guard String(decoding: head, as: UTF8.self).contains("\"based-archive\"") else { return nil }
+        do {
+            let data = try Data(contentsOf: url)
+            let r = try WorkspaceArchive.importArchive(data, into: store)
+            var s = "\(r.imported) records imported from the Based archive."
+            if r.keptNewer > 0 { s += " \(r.keptNewer) kept (newer here)." }
+            if r.skipped > 0 { s += " \(r.skipped) unreadable lines skipped." }
+            return s
+        } catch {
+            return "Import failed: \(error)"
+        }
+    }
+
     func toggleChatPanel() {
         if showChatPanel { showChatPanel = false; return }
         if case .side? = peek { peek = nil }

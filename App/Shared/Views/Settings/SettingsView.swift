@@ -522,14 +522,16 @@ struct IconPickerButton: View {
 struct ExportAllSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var html = false
+    enum Kind: Hashable { case markdown, html, archive }
+    @State private var kind: Kind = .markdown
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Export all workspace content").font(.headline)
-            Text("Every page becomes a Markdown file, every database a CSV, nested pages become folders — the same structure Notion exports.").font(.callout).foregroundStyle(Theme.secondary)
-            Picker("Format", selection: $html) {
-                Text("Markdown & CSV").tag(false)
-                Text("HTML").tag(true)
+            Text(explanation).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+            Picker("Format", selection: $kind) {
+                Text("Markdown & CSV").tag(Kind.markdown)
+                Text("HTML").tag(Kind.html)
+                Text("Based archive").tag(Kind.archive)
             }
             .pickerStyle(.segmented)
             .accessibilityIdentifier("settings.exportFormat")
@@ -537,20 +539,39 @@ struct ExportAllSheet: View {
             HStack {
                 Spacer()
                 Button("Close") { dismiss() }
-                Button("Export…") {
-                    #if os(macOS)
-                    let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.prompt = "Export here"
-                    if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true), html: html) }
-                    #else
-                    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                    model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true), html: html)
-                    #endif
-                }
-                .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier("settings.exportAll")
+                Button("Export…") { export() }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("settings.exportAll")
             }
         }
-        .padding(20).frame(minWidth: 420)
+        .padding(20).frame(minWidth: 460)
+    }
+
+    private var explanation: String {
+        switch kind {
+        case .markdown, .html:
+            return "Every page becomes a \(kind == .html ? "HTML" : "Markdown") file, every database a CSV, nested pages become folders — the same structure Notion exports."
+        case .archive:
+            return "One file with everything, lossless: page tree, databases with views, filters and formulas, formatting and history stamps. Use it as a backup, to move to another Mac, or to import into other Based clients (File → Import)."
+        }
+    }
+
+    private func export() {
+        #if os(macOS)
+        if kind == .archive {
+            let p = NSSavePanel()
+            p.nameFieldStringValue = "Based Workspace.based.jsonl"
+            p.prompt = "Export"
+            if p.runModal() == .OK, let u = p.url { model.exportArchive(to: u) }
+            return
+        }
+        let p = NSOpenPanel(); p.canChooseDirectories = true; p.canChooseFiles = false; p.canCreateDirectories = true; p.prompt = "Export here"
+        if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true), html: kind == .html) }
+        #else
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if kind == .archive { model.exportArchive(to: docs.appendingPathComponent("Based Workspace.based.jsonl")); return }
+        model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true), html: kind == .html)
+        #endif
     }
 }
 

@@ -14,6 +14,14 @@ Goal: one workspace on every device, in sync, with Based feeling native wherever
 The data format and the sync protocol (`docs/sync-protocol.md`) are plain JSON with no Apple-only parts.
 CloudKit sync is an optional second channel. The `based-server` channel works everywhere.
 
+## Moving data between systems
+
+- **Based archive** (`*.based.jsonl`, Settings → Export all → Based archive; File → Import reads it): one header line,
+  then one record per line in the sync-protocol shape (`{"kind": …, "data": …}`). Lossless — pages, order, databases
+  with views/filters/formulas, formatting, stamps. Verified on a 71,578-record workspace: export 30 MB, import into an
+  empty workspace in 1.6 s with nothing skipped. Any client that speaks the sync protocol can read it.
+- Markdown + CSV and HTML exports for other tools; Notion import (API or HTML export) for the way in.
+
 ## Recommended route to Web, Windows and Linux
 
 1. **Web client (TypeScript)** served by `based-server` at `/app`:

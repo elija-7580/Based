@@ -105,6 +105,12 @@ struct RootView: View {
 
     /// Unzips / converts in the background (big Notion exports take seconds), then imports on the main actor.
     private func importFiles(_ urls: [URL], into parent: ParentRef) {
+        // Lossless Based archives restore records directly (no conversion).
+        if urls.count == 1 {
+            let scoped = urls[0].startAccessingSecurityScopedResource()
+            defer { if scoped { urls[0].stopAccessingSecurityScopedResource() } }
+            if let summary = model.importArchiveIfPossible(urls[0]) { importSummary = summary; return }
+        }
         let scoped = urls.map { $0.startAccessingSecurityScopedResource() }
         Log.notice("import: \(urls.map(\.lastPathComponent).joined(separator: ", "))", category: "import")
         importProgress = 0
