@@ -122,3 +122,30 @@ struct SyncV2Tests {
         #expect(paths.contains("/sync/push") && paths.contains("/sync/pull"))
     }
 }
+
+@MainActor
+struct SyncWaitTests {
+    @Test func longPollReturnsOnChangeOrTimeout() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("wait-\(UUID().uuidString).sqlite")
+        let store = WorkspaceStore(persistence: try SQLitePersistence(url: url), node: "s")
+        let server = SyncServer(store: store)
+        let now = (store.persistence as! ChangeLogging).lastChangeSeq
+        // Already newer → immediate.
+        var t = Date()
+        #expect(await server.waitForChanges(after: now - 1, timeout: 5) == now)
+        #expect(Date().timeIntervalSince(t) < 0.5)
+        // Nothing new → waits for the timeout.
+        t = Date()
+        #expect(await server.waitForChanges(after: now, timeout: 1) == now)
+        #expect(Date().timeIntervalSince(t) >= 0.9)
+        // A change during the wait wakes it up.
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            _ = store.createPage(title: RichText("new"))
+        }
+        t = Date()
+        let seq = await server.waitForChanges(after: now, timeout: 10)
+        #expect(seq > now)
+        #expect(Date().timeIntervalSince(t) < 3)
+    }
+}

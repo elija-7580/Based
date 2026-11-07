@@ -34,6 +34,12 @@ public struct SyncPage: Codable, Sendable, Equatable {
     }
 }
 
+/// `GET /sync/v2/wait?after=<seq>&timeout=<s>` response.
+public struct SyncWait: Codable, Sendable {
+    public var seq: Int64
+    public init(seq: Int64) { self.seq = seq }
+}
+
 /// `POST /sync/v2/push` body.
 public struct SyncPush: Codable, Sendable {
     public var records: [Record]
@@ -133,6 +139,19 @@ extension SyncServer {
         return SyncPage(records: records, deletions: deletions, next: page.last?.seq ?? after, more: entries.count > limit)
     }
 
+    /// Long poll: returns as soon as the server has changes after `after`, or after `timeout` seconds.
+    /// Clients call it in a loop and sync when it reports a change — near-instant sync without polling every
+    /// few seconds.
+    public func waitForChanges(after: Int64, timeout: TimeInterval = 25) async -> Int64 {
+        let deadline = Date().addingTimeInterval(min(max(timeout, 1), 55))
+        while Date() < deadline {
+            let seq = (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0
+            if seq > after { return seq }
+            try? await Task.sleep(nanoseconds: 400_000_000)
+        }
+        return (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0
+    }
+
     /// Merges a client's changes (last writer wins); returns server copies that are newer than the pushed ones.
     public func pushV2(_ p: SyncPush) -> SyncPushReply {
         let env = push(SyncEnvelope(records: p.records, deletions: p.deletions, cursor: .zero))
@@ -174,6 +193,28 @@ public final class ServerSync {
         observer = store.observe { [weak self] change in
             guard let self, change.origin == .local || change.origin == .undo || change.origin == .redo else { return }
             for k in change.keys { if self.store.record(k) == nil { self.pendingDeletions.insert(k) } else { self.pending.insert(k) } }
+            self.schedulePush()
+        }
+        // v2 servers: wait for remote changes with a long poll and pull right away.
+        listener = Task { [weak self] in
+            var backoff: UInt64 = 2
+            while !Task.isCancelled {
+                guard let self else { return }
+                if self.usesV2 != true {
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    continue
+                }
+                do {
+                    var c = URLComponents(url: self.baseURL.appendingPathComponent("sync/v2/wait"), resolvingAgainstBaseURL: false)!
+                    c.queryItems = [URLQueryItem(name: "after", value: String(self.readSeq(Self.pulledKey))), URLQueryItem(name: "timeout", value: "25")]
+                    let r: SyncWait = try await self.get(c.url!)
+                    backoff = 2
+                    if r.seq > self.readSeq(Self.pulledKey) { await self.syncNow() }
+                } catch {
+                    try? await Task.sleep(nanoseconds: backoff * 1_000_000_000)
+                    backoff = min(backoff * 2, 60)
+                }
+            }
         }
         timer = Task { [weak self] in
             while !Task.isCancelled {
@@ -182,7 +223,20 @@ public final class ServerSync {
             }
         }
     }
-    public func stop() { observer?.cancel(); timer?.cancel() }
+    public func stop() { observer?.cancel(); timer?.cancel(); listener?.cancel(); pushTask?.cancel() }
+
+    private var listener: Task<Void, Never>?
+    private var pushTask: Task<Void, Never>?
+
+    /// Local edits reach the server ~1.5 s after typing pauses (instead of the next 20 s tick).
+    private func schedulePush() {
+        pushTask?.cancel()
+        pushTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !Task.isCancelled else { return }
+            await self?.syncNow()
+        }
+    }
 
     /// Server speaks v2 (paged, sequenced); nil until the first sync found out.
     public private(set) var usesV2: Bool?

@@ -73,6 +73,16 @@ This returns every record changed after server change number `after`, oldest fir
 at most once, in its current version. Pass `next` as `after` for the next page, and repeat while `more`
 is `true`. Start with `after=0` for a full download.
 
+### `GET /sync/v2/wait?after=<seq>&timeout=<seconds>`
+
+```json
+{ "seq": 18241 }
+```
+
+Long poll. It answers as soon as the server has a change after `after`, or after `timeout` seconds (at most
+55). Clients loop on it and run a sync round when `seq > pulled`, so changes from other devices arrive within
+about a second without constant polling.
+
 ## Client algorithm
 
 The client keeps a **local change log**: every local write gets an increasing local sequence number, plus a
@@ -87,6 +97,9 @@ Each sync round:
    `deletions`). Apply `newer` from the reply. Set `pushed` to the last entry of the page.
 2. **Pull:** call `pull?after=pulled` until `more` is false. Apply records (last writer wins) and deletions,
    logging them as *not local* so they are never pushed back. Set `pulled = next` after every page.
+
+Besides the rounds, the client runs `wait` in a loop and syncs when it reports a change. It also pushes
+about 1.5 s after a local edit pauses, so it doesn't wait for the next timer tick (20 s).
 
 Both numbers live in the local database, not in memory. A crash or quit between two rounds therefore loses
 nothing: the next round pushes everything after `pushed` again.

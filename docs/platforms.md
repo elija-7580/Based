@@ -56,5 +56,5 @@ Next steps, in order of payoff:
   quit) and optionally CloudKit.
 - `based-server` runs on a VPS (`deploy/`). It is the always-on hub: it accepts pushes from every client, runs
   scheduled agents and serves MCP to Claude Desktop, ChatGPT and Cursor.
-- Next: a push channel (`GET /sync/v2/events`, server-sent events) so clients pull right away instead of
-  polling.
+- Changes from other devices arrive within about a second (`GET /sync/v2/wait` long poll), and local edits are
+  pushed about 1.5 s after typing pauses.
