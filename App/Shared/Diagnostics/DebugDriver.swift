@@ -183,6 +183,11 @@ enum DebugDriver {
             }
         case "archive":
             if let out = q["out"] { model.exportArchive(to: URL(fileURLWithPath: out)) }
+        case "importarchive":
+            if let path = q["in"] {
+                let summary = model.importArchiveIfPossible(URL(fileURLWithPath: path)) ?? "not a Based archive"
+                Log.notice("debug importarchive: \(summary)", category: "debug")
+            }
         case "pdf":
             if let ed = model.activeEditor, let out = q["out"] {
                 PDFExport.export(pageID: ed.pageID, store: model.store, to: URL(fileURLWithPath: out)) { r in
