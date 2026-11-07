@@ -181,6 +181,8 @@ enum DebugDriver {
             for item in model.brain.happier.inbox where item.status == .pending {
                 model.brain.happier.resolve(item, decision: q["decision"] ?? "allow_once")
             }
+        case "compose":
+            model.chatDraft = q["text"] ?? ""
         case "folder":
             if let p = q["path"] { model.brain.chatFolder = p }
         case "ask":

@@ -302,6 +302,9 @@ struct ChatComposer: View {
     @State private var input = ""
     @State private var usePage = true
     @State private var attachments: [ChatAttachment] = []
+    /// "@" mentions: pages of the workspace and, for coding-agent CLIs, files of the working folder.
+    @State private var mentions: [Mention] = []
+    @State private var mentionQuery: String?
     @State private var pickFiles = false
     @FocusState private var focused: Bool
 
@@ -314,13 +317,27 @@ struct ChatComposer: View {
                     }
                 }
             }
-            TextField(compact ? "Ask AI anything…" : "Ask, search or make anything…", text: $input, axis: .vertical)
+            if !mentions.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(mentions) { m in
+                            AttachmentChip(name: (m.isFile ? "📄 " : "🔗 ") + m.title) { mentions.removeAll { $0.id == m.id } }
+                        }
+                    }
+                }
+            }
+            TextField(compact ? "Ask AI anything… (@ to mention)" : "Ask, search or make anything… (@ to mention)", text: $input, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: compact ? 13.5 : 15))
                 .lineLimit(1...8)
                 .focused($focused)
-                .onSubmit(send)
+                .onSubmit { if mentionQuery != nil, let first = mentionHits.first { pick(first) } else { send() } }
+                .onChange(of: input) { _, v in mentionQuery = MentionPicker.query(in: v) }
                 .accessibilityIdentifier("ai.input")
+            if let q = mentionQuery, !mentionHits.isEmpty {
+                MentionPicker(hits: mentionHits, query: q) { pick($0) }
+                    .transition(.opacity.combined(with: .offset(y: 4)))
+            }
             HStack(spacing: 8) {
                 Button { pickFiles = true } label: { Image(systemName: "plus") }
                     .buttonStyle(.plain)
@@ -377,6 +394,32 @@ struct ChatComposer: View {
         }
     }
 
+    struct Mention: Identifiable, Hashable { let id: String; let title: String; let isFile: Bool; var path: String { id } }
+
+    private var mentionHits: [Mention] {
+        guard let q = mentionQuery else { return [] }
+        var out: [Mention] = []
+        var f = SearchFilters(); f.titleOnly = true
+        let pages = q.isEmpty ? model.store.recentPages(limit: 6).map(\.id)
+                              : SearchEngine(store: model.store).search(q, filters: f, limit: 6).map(\.pageID)
+        for id in pages where !mentions.contains(where: { $0.id == id }) {
+            out.append(Mention(id: id, title: model.store.title(of: id).nonEmptyOr("Untitled"), isFile: false))
+        }
+        if [.claudeCode, .codex, .gemini, .opencode].contains(brain.engineSpec.kind) {
+            for path in MentionPicker.files(in: brain.chatFolder, matching: q).prefix(6) {
+                out.append(Mention(id: path, title: (path as NSString).lastPathComponent, isFile: true))
+            }
+        }
+        return out
+    }
+
+    private func pick(_ m: Mention) {
+        if let r = input.range(of: "@" + (mentionQuery ?? ""), options: .backwards) { input.replaceSubrange(r, with: "") }
+        if !mentions.contains(m) { mentions.append(m) }
+        mentionQuery = nil
+        focused = true
+    }
+
     private func takeDraft() {
         guard let d = model.chatDraft else { return }
         model.chatDraft = nil
@@ -392,7 +435,14 @@ struct ChatComposer: View {
         input = ""
         let files = attachments
         attachments = []
-        brain.ask(text, pageContext: usePage ? model.currentPageID : nil, attachments: files)
+        var prompt = text
+        if !mentions.isEmpty {
+            prompt += "\n\n---\nReferenced:\n" + mentions.map { m in
+                m.isFile ? "- file \(m.path)" : "- page “\(m.title)” (page id \(m.id)) — read it with the tools"
+            }.joined(separator: "\n")
+            mentions = []
+        }
+        brain.ask(prompt, pageContext: usePage ? model.currentPageID : nil, attachments: files)
     }
 
     private func runWithAgent(_ agentID: String) {
@@ -573,5 +623,51 @@ struct PillButtonStyle: ButtonStyle {
                 .animation(.easeOut(duration: 0.12), value: hover)
                 .onHover { hover = $0 }
         }
+    }
+}
+
+
+/// Suggestions for an "@" mention in the chat composer.
+struct MentionPicker: View {
+    let hits: [ChatComposer.Mention]
+    let query: String
+    let pick: (ChatComposer.Mention) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            ForEach(hits) { h in
+                PanelActionRow(title: h.title, symbol: h.isFile ? "doc.text" : "doc.richtext",
+                               shortcut: h.isFile ? FolderChip.short((h.path as NSString).deletingLastPathComponent) : "") { pick(h) }
+            }
+        }
+        .padding(4)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Theme.hoverFill.opacity(0.5)))
+    }
+
+    /// The text after the last "@" when the caret is still inside that word ("see @plan" → "plan").
+    static func query(in text: String) -> String? {
+        guard let at = text.lastIndex(of: "@") else { return nil }
+        if at > text.startIndex, !text[text.index(before: at)].isWhitespace { return nil }   // e-mail addresses
+        let q = String(text[text.index(after: at)...])
+        return q.contains(where: { $0.isWhitespace }) || q.count > 40 ? nil : q
+    }
+
+    /// Files under `folder` whose name contains `q` (depth ≤ 6, skips hidden folders, build output, node_modules).
+    static func files(in folder: String, matching q: String) -> [String] {
+        guard folder != NSHomeDirectory() else { return [] }   // only real project folders
+        let fm = FileManager.default
+        guard let e = fm.enumerator(at: URL(fileURLWithPath: folder), includingPropertiesForKeys: [.isDirectoryKey],
+                                    options: [.skipsHiddenFiles, .skipsPackageDescendants]) else { return [] }
+        var out: [String] = []
+        let skip: Set<String> = ["node_modules", "build", "build-ios", "DerivedData", ".build", "Pods", "dist"]
+        var seen = 0
+        for case let url as URL in e {
+            seen += 1
+            if seen > 8000 || out.count >= 20 { break }
+            if skip.contains(url.lastPathComponent) || e.level > 6 { e.skipDescendants(); continue }
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { continue }
+            if q.isEmpty || url.lastPathComponent.localizedCaseInsensitiveContains(q) { out.append(url.path) }
+        }
+        return out
     }
 }
