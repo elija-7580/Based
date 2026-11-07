@@ -9,6 +9,8 @@ import AppKit
 /// that opens a popover — engine tabs (Claude Code, Codex, Gemini, OpenCode, API), the models with a one-line
 /// description and a check mark, and the effort level. Changes apply to the next message.
 struct EnginePickerButton: View {
+    /// Opens the picker from outside (the /model command).
+    var openRequest: Binding<Bool>? = nil
     @Environment(BrainModel.self) private var brain
     @State private var open = false
     @State private var hover = false
@@ -38,6 +40,9 @@ struct EnginePickerButton: View {
         .popover(isPresented: $open, arrowEdge: .bottom) {
             EnginePickerPanel { open = false }
                 .environment(brain)
+        }
+        .onChange(of: openRequest?.wrappedValue ?? false) { _, v in
+            if v { open = true; openRequest?.wrappedValue = false }
         }
     }
 
@@ -311,11 +316,12 @@ struct FolderChip: View {
                 }
                 Button("Home folder") { brain.chatFolder = NSHomeDirectory() }
                 Divider()
-                Button("Choose folder…") { choose() }
+                Button("Choose folder…") { Self.choose(brain) }
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "folder").font(.system(size: 11))
-                    Text(URL(fileURLWithPath: brain.chatFolder).lastPathComponent).font(.system(size: 12)).lineLimit(1)
+                    Text(brain.chatFolder == NSHomeDirectory() ? "Home" : URL(fileURLWithPath: brain.chatFolder).lastPathComponent)
+                        .font(.system(size: 12)).lineLimit(1)
                 }
                 .foregroundStyle(hover ? Theme.primary : Theme.secondary)
                 .padding(.horizontal, 7).padding(.vertical, 4)
@@ -333,7 +339,7 @@ struct FolderChip: View {
         return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
     }
 
-    private func choose() {
+    static func choose(_ brain: BrainModel) {
         #if os(macOS)
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true

@@ -305,6 +305,8 @@ struct ChatComposer: View {
     /// "@" mentions: pages of the workspace and, for coding-agent CLIs, files of the working folder.
     @State private var mentions: [Mention] = []
     @State private var mentionQuery: String?
+    @State private var openModelPicker = false
+    @State private var chooseFolder = false
     @State private var pickFiles = false
     @FocusState private var focused: Bool
 
@@ -331,9 +333,23 @@ struct ChatComposer: View {
                 .font(.system(size: compact ? 13.5 : 15))
                 .lineLimit(1...8)
                 .focused($focused)
-                .onSubmit { if mentionQuery != nil, let first = mentionHits.first { pick(first) } else { send() } }
+                .onSubmit {
+                    if mentionQuery != nil, let first = mentionHits.first { pick(first) }
+                    else if let c = slashMatches?.first { run(c) }
+                    else { send() }
+                }
                 .onChange(of: input) { _, v in mentionQuery = MentionPicker.query(in: v) }
                 .accessibilityIdentifier("ai.input")
+            if let cmds = slashMatches, !cmds.isEmpty {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(cmds, id: \.name) { c in
+                        PanelActionRow(title: "/" + c.name, symbol: c.symbol, shortcut: c.detail) { run(c) }
+                    }
+                }
+                .padding(4)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.hoverFill.opacity(0.5)))
+                .transition(.opacity.combined(with: .offset(y: 4)))
+            }
             if let q = mentionQuery, !mentionHits.isEmpty {
                 MentionPicker(hits: mentionHits, query: q) { pick($0) }
                     .transition(.opacity.combined(with: .offset(y: 4)))
@@ -367,9 +383,9 @@ struct ChatComposer: View {
                 // Narrow composers (next to an artifact, docked panel): the permission chip shrinks to its icon
                 // so the model name stays readable.
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { FolderChip(); PermissionModeButton(); EnginePickerButton() }
-                    HStack(spacing: 8) { PermissionModeButton(iconOnly: true); EnginePickerButton() }
-                    EnginePickerButton()
+                    HStack(spacing: 8) { FolderChip(); PermissionModeButton(); EnginePickerButton(openRequest: $openModelPicker) }
+                    HStack(spacing: 8) { PermissionModeButton(iconOnly: true); EnginePickerButton(openRequest: $openModelPicker) }
+                    EnginePickerButton(openRequest: $openModelPicker)
                 }
                 DictationButton { focused = true }
                 SendStopButton(running: brain.isRunning, enabled: canSend) {
@@ -389,9 +405,52 @@ struct ChatComposer: View {
         .padding(compact ? 10 : 16)
         .onAppear { focused = true; takeDraft() }
         .onChange(of: model.chatDraft) { _, _ in takeDraft() }
+        .onChange(of: chooseFolder) { _, v in if v { chooseFolder = false; FolderChip.choose(brain) } }
         .fileImporter(isPresented: $pickFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { r in
             if case .success(let urls) = r { attachments += urls.map { ChatAttachment(url: $0) } }
         }
+    }
+
+    /// "/" commands (Claude Code app style): engine, permission mode, effort, folder, new chat.
+    struct SlashCommand { let name: String; let symbol: String; let detail: String; let action: (BrainModel) -> Void }
+
+    private var slashCommands: [SlashCommand] {
+        var out: [SlashCommand] = [
+            SlashCommand(name: "new", symbol: "square.and.pencil", detail: "New chat") { $0.newChat() },
+            SlashCommand(name: "model", symbol: "cpu", detail: "Choose model") { _ in openModelPicker = true },
+        ]
+        if [.claudeCode, .codex, .gemini, .opencode].contains(brain.engineSpec.kind) {
+            out.append(SlashCommand(name: "folder", symbol: "folder", detail: "Working folder") { _ in chooseFolder = true })
+            for m in CLICatalog.permissions(for: brain.engineSpec.kind) {
+                let name: String
+                switch m.id {
+                case "": name = "ask"
+                case "acceptEdits", "workspace-write", "auto_edit": name = "edits"
+                case "plan": name = "plan"
+                default: name = m.id == "bypassPermissions" || m.id == "danger-full-access" || m.id == "yolo" ? "bypass" : m.id
+                }
+                out.append(SlashCommand(name: name, symbol: m.symbol, detail: m.label) { $0.engineSpec.permission = m.id })
+            }
+        }
+        for e in CLICatalog.efforts(for: brain.engineSpec.kind == .auto ? .claudeCode : brain.engineSpec.kind) where !e.id.isEmpty {
+            out.append(SlashCommand(name: "effort " + e.id, symbol: "gauge.with.dots.needle.50percent", detail: "Effort: " + e.label) { b in
+                guard b.engineSpec.kind != .auto else { return }
+                b.engineSpec.effort = e.id
+            })
+        }
+        return out
+    }
+
+    private var slashMatches: [SlashCommand]? {
+        guard input.hasPrefix("/"), !input.contains("\n") else { return nil }
+        let q = input.dropFirst().lowercased()
+        return slashCommands.filter { q.isEmpty || $0.name.hasPrefix(q) || $0.name.contains(q) }
+    }
+
+    private func run(_ c: SlashCommand) {
+        input = ""
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { c.action(brain) }
+        focused = true
     }
 
     struct Mention: Identifiable, Hashable { let id: String; let title: String; let isFile: Bool; var path: String { id } }
