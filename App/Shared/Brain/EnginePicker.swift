@@ -1,6 +1,9 @@
 import SwiftUI
 import BasedCore
 import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
 
 /// Model picker under the composer, modelled on the Claude / Claude Code apps: a quiet button ("Opus 5.5 · High ⌄")
 /// that opens a popover — engine tabs (Claude Code, Codex, Gemini, OpenCode, API), the models with a one-line
@@ -290,4 +293,55 @@ struct PermissionModeButton: View {
     }
 
     private func isRisky(_ id: String) -> Bool { ["bypassPermissions", "danger-full-access", "yolo"].contains(id) }
+}
+
+/// Working folder for coding-agent CLIs ("📁 Based ⌄"): recent folders and "Choose folder…", like the Claude
+/// Code app's project picker. Only shown for CLI engines.
+struct FolderChip: View {
+    @Environment(BrainModel.self) private var brain
+    @State private var hover = false
+
+    var body: some View {
+        if [.claudeCode, .codex, .gemini, .opencode].contains(brain.engineSpec.kind) {
+            Menu {
+                Section("Recent") {
+                    ForEach(brain.recentFolders.filter { $0 != brain.chatFolder }, id: \.self) { f in
+                        Button(Self.short(f)) { brain.chatFolder = f }
+                    }
+                }
+                Button("Home folder") { brain.chatFolder = NSHomeDirectory() }
+                Divider()
+                Button("Choose folder…") { choose() }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "folder").font(.system(size: 11))
+                    Text(URL(fileURLWithPath: brain.chatFolder).lastPathComponent).font(.system(size: 12)).lineLimit(1)
+                }
+                .foregroundStyle(hover ? Theme.primary : Theme.secondary)
+                .padding(.horizontal, 7).padding(.vertical, 4)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))
+            }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .onHover { hover = $0 }
+            .help("Working folder: " + Self.short(brain.chatFolder))
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        }
+    }
+
+    static func short(_ path: String) -> String {
+        let home = NSHomeDirectory()
+        return path.hasPrefix(home) ? "~" + path.dropFirst(home.count) : path
+    }
+
+    private func choose() {
+        #if os(macOS)
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: brain.chatFolder)
+        panel.prompt = "Use folder"
+        if panel.runModal() == .OK, let url = panel.url { brain.chatFolder = url.path }
+        #endif
+    }
 }

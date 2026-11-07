@@ -175,6 +175,19 @@ final class BrainModel {
         registry.byChatPreference.map { p in (p.displayName, p.isOnDevice, p.models.map { m in "\(p.id)/\(m)" }) }
     }
 
+    /// Working folder for coding-agent CLIs in the chat (Claude Code app: the project you work in).
+    var chatFolder: String = UserDefaults.standard.string(forKey: "ai.chatFolder") ?? NSHomeDirectory() {
+        didSet {
+            UserDefaults.standard.set(chatFolder, forKey: "ai.chatFolder")
+            var recent = recentFolders.filter { $0 != chatFolder }
+            recent.insert(chatFolder, at: 0)
+            recentFolders = Array(recent.prefix(6))
+        }
+    }
+    var recentFolders: [String] = UserDefaults.standard.stringArray(forKey: "ai.recentFolders") ?? [] {
+        didSet { UserDefaults.standard.set(recentFolders, forKey: "ai.recentFolders") }
+    }
+
     /// Coding-agent CLIs found on this Mac (login-shell PATH), resolved in the background at launch.
     var installedCLIs: Set<ChatEngineSpec.Kind> = []
     /// Claude Code installed (used for chat when no API key is configured — runs on the user's subscription).
@@ -248,7 +261,8 @@ final class BrainModel {
         // Persist: the first message creates the chat.
         let sid: RecordID
         if let c = chatID, store.blocks[c] != nil { sid = c } else {
-            sid = brain.createSession(title: String(shown.prefix(60)), agentID: "based", machine: happier.machineName, cwd: "", encrypted: false)
+            sid = brain.createSession(title: String(shown.prefix(60)), agentID: "based", machine: happier.machineName,
+                                      cwd: cliSpecForSession(engine) ? chatFolder : "", encrypted: false)
             chatID = sid
         }
         let attachNote = attachments.isEmpty ? "" : "\n\n" + attachments.map { "📎 \($0.name)" }.joined(separator: "  ")
@@ -285,6 +299,11 @@ final class BrainModel {
         let mcp = cliSpec != nil ? happier.mcpConfig(session: sid) : nil
         let engineLabel = chatEngine
         let mcpEndpoint = happier.runtime.mcpEndpoint
+        // The chat keeps the folder it started in (reopened chats resume there).
+        let folder: String = {
+            let saved = brain.sessions().first { $0.id == sid }?.cwd ?? ""
+            return saved.isEmpty ? chatFolder : saved
+        }()
         runningTask = Task {
             var failed = false
             do {
@@ -302,7 +321,7 @@ final class BrainModel {
                     }
                     switch spec.kind {
                     case .claudeCode:
-                        result = await ClaudePrint.stream(p, resume: resume, appendSystemPrompt: system, mcpConfig: mcp,
+                        result = await ClaudePrint.stream(p, resume: resume, cwd: folder, appendSystemPrompt: system, mcpConfig: mcp,
                                                           allowedTools: mcp == nil ? [] : ["mcp__based"],
                                                           model: spec.model.isEmpty ? nil : spec.model,
                                                           effort: spec.effort.isEmpty ? nil : spec.effort,
@@ -310,7 +329,7 @@ final class BrainModel {
                                                           permissionPromptTool: mcp != nil && spec.permission != "bypassPermissions" ? "mcp__based__approval" : nil,
                                                           onEvent: track)
                     default:
-                        result = await Self.runCLI(spec, prompt: p, resume: resume, system: system,
+                        result = await Self.runCLI(spec, prompt: p, resume: resume, system: system, cwd: folder,
                                                    mcp: mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) }, onEvent: track)
                     }
                     switch result {
@@ -353,8 +372,10 @@ final class BrainModel {
         }
     }
 
+    private func cliSpecForSession(_ e: Engine) -> Bool { if case .cli = e { return true }; return false }
+
     /// Codex / Gemini / OpenCode: streamed through `CLIChatRunner` with the matching line parser.
-    nonisolated static func runCLI(_ spec: ChatEngineSpec, prompt: String, resume: String?, system: String,
+    nonisolated static func runCLI(_ spec: ChatEngineSpec, prompt: String, resume: String?, system: String, cwd: String,
                                    mcp: (url: String, token: String)?,
                                    onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<ClaudePrint.Reply, Error> {
         #if os(macOS)
@@ -381,7 +402,8 @@ final class BrainModel {
         default:
             return .failure(ChatError.noEngine)
         }
-        return await CLIChatRunner.run(executable: exe, arguments: args, environment: env, cwd: NSHomeDirectory(),
+        let dir = FileManager.default.fileExists(atPath: cwd) ? cwd : NSHomeDirectory()
+        return await CLIChatRunner.run(executable: exe, arguments: args, environment: env, cwd: dir,
                                        parse: parse, onEvent: onEvent)
         #else
         return .failure(ChatError.noEngine)

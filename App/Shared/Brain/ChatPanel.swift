@@ -350,7 +350,7 @@ struct ChatComposer: View {
                 // Narrow composers (next to an artifact, docked panel): the permission chip shrinks to its icon
                 // so the model name stays readable.
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { PermissionModeButton(); EnginePickerButton() }
+                    HStack(spacing: 8) { FolderChip(); PermissionModeButton(); EnginePickerButton() }
                     HStack(spacing: 8) { PermissionModeButton(iconOnly: true); EnginePickerButton() }
                     EnginePickerButton()
                 }
