@@ -37,7 +37,7 @@ struct RowMenuItems: View {
 }
 
 /// Title cell (Notion): icon + title; clicking the title opens the page (⌘-click: new tab), the pencil renames
-/// it in place, and "Open" floats over the right edge on hover — visible even when the title is long.
+/// it in place, and "Open" appears right after the title on hover — visible even when the column is wider than the viewport.
 struct RowTitleCell: View {
     let ctx: DBContext
     let row: Block
@@ -45,6 +45,42 @@ struct RowTitleCell: View {
     @State private var hover = false
     @State private var editing = false
     @FocusState private var focused: Bool
+
+    /// Rename + Open pills shown while the row is hovered.
+    private var rowActions: some View {
+        HStack(spacing: 2) {
+            if !ctx.locked {
+                Button { draft = row.title; editing = true; focused = true } label: {
+                    Image(systemName: "pencil").font(.system(size: 11))
+                        .frame(width: 24, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .hoverHighlight(cornerRadius: 5, opacity: 0.08)
+                .help("Rename")
+            }
+            Button { ctx.open(row.id) } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 10))
+                    Text("Open").font(.system(size: 12, weight: .medium)).fixedSize()
+                }
+                .padding(.horizontal, 6)
+                .frame(height: 22)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .hoverHighlight(cornerRadius: 5, opacity: 0.08)
+            .help("Open (⌘-click: new tab)")
+            .accessibilityIdentifier("table.rowOpen")
+        }
+        .foregroundStyle(Theme.secondary)
+        .padding(1)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(Theme.pageBackgroundColor))
+                .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
+        )
+    }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -70,44 +106,17 @@ struct RowTitleCell: View {
                     .onTapGesture { ctx.open(row.id) }
                     .accessibilityIdentifier("table.rowTitle")
             }
+            // Actions sit right after the title (not on the cell's trailing edge), so they stay visible
+            // when the column is wider than the table viewport and the table is scrolled sideways.
+            if hover && !editing {
+                rowActions
+                    .layoutPriority(2)
+                    .transition(.opacity)
+            }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .overlay(alignment: .trailing) {
-            if hover && !editing {
-                HStack(spacing: 4) {
-                    if !ctx.locked {
-                        Button { draft = row.title; editing = true; focused = true } label: {
-                            Image(systemName: "pencil").font(.system(size: 11))
-                                .frame(width: 22, height: 22)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Rename")
-                    }
-                    Button { ctx.open(row.id) } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 10))
-                            Text("Open").font(.system(size: 12, weight: .medium))
-                        }
-                        .padding(.horizontal, 6)
-                        .frame(height: 22)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help("Open (⌘-click: new tab)")
-                    .accessibilityIdentifier("table.rowOpen")
-                }
-                .foregroundStyle(Theme.secondary)
-                .background(
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
-                        .fill(Color(Theme.pageBackgroundColor))
-                        .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
-                )
-                .padding(.trailing, 2)
-                .transition(.opacity)
-            }
-        }
         .onHover { h in withAnimation(.easeOut(duration: 0.1)) { hover = h } }
         .onAppear { draft = row.title }
         .onChange(of: row.title) { _, v in if v != draft { draft = v } }

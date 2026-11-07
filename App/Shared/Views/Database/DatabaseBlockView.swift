@@ -108,6 +108,7 @@ struct DatabaseBlockView: View {
     @State private var renamingView: RecordID?
     @State private var viewName = ""
     @FocusState private var searchFocused: Bool
+    @FocusState private var renameFocused: Bool
 
     var body: some View {
         let node = model.registry.block(blockID)
@@ -137,15 +138,18 @@ struct DatabaseBlockView: View {
     private func content(block: Block, db: Database, views: [DatabaseView], view: DatabaseView) -> some View {
         let engine = model.queryCache.queryEngine
         let result = model.queryCache.run(view, search: searching ? search : nil)
+        let nested = !fullPage && isInsideToggle(block)
         let ctx = DBContext(block: block, db: db, view: view, engine: engine, result: result, model: model,
                             locked: db.locked == true || model.store.blocks[model.store.containingPage(of: blockID) ?? ""]?.props.format?.locked == true)
         VStack(alignment: .leading, spacing: 6) {
-            if !fullPage, block.type == .databaseInline {
+            // Under a toggle the toggle's own text already names the database, and the filter / sort chips
+            // would only add noise: hide both there (the toolbar icons still light up when rules are active).
+            if !fullPage, block.type == .databaseInline, !nested {
                 DatabaseTitleField(db: db, linked: db.blockID != block.id,
                                    locked: ctx.locked)
             }
             header(ctx, views: views)
-            if (view.filter?.isEmpty == false) || (view.sorts?.isEmpty == false) {
+            if !nested, (view.filter?.isEmpty == false) || (view.sorts?.isEmpty == false) {
                 ActiveRulesBar(ctx: ctx, showFilter: $showFilter, showSort: $showSort)
             }
             Rectangle().fill(Theme.gridLine).frame(height: 1)
@@ -185,32 +189,67 @@ struct DatabaseBlockView: View {
     // MARK: Header (view tabs + toolbar)
 
     private func header(_ ctx: DBContext, views: [DatabaseView]) -> some View {
-        HStack(spacing: 4) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
-                    ForEach(views) { v in tab(v, active: v.id == ctx.view.id, ctx: ctx, count: views.count) }
-                    if !ctx.locked {
-                        Menu {
-                            ForEach(ViewType.available, id: \.self) { t in
-                                Button(t.displayName, systemImage: t.symbol) {
-                                    if let id = model.store.addView(to: blockID, type: t) { activeViewID = id }
-                                }
-                            }
-                        } label: { ToolbarIcon("plus", size: 12) }
-                        .menuStyle(.borderlessButton)
-                        .menuIndicator(.hidden)
-                        .fixedSize()
-                        .frame(width: 24, height: 24)
-                        .hoverHighlight(opacity: 0.065)
-                        .help("Add a view")
+        // One row when the tabs and the toolbar fit side by side; otherwise the toolbar drops below the tabs
+        // so tab names are never squeezed out (the tab strip scrolls only if it alone is too wide).
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 4) {
+                viewTabs(ctx, views: views)
+                Spacer(minLength: 8)
+                if ctx.view.type != .dashboard { toolbar(ctx) }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    viewTabs(ctx, views: views).padding(.vertical, 1)
+                }
+                if ctx.view.type != .dashboard {
+                    HStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        toolbar(ctx)
                     }
                 }
-                .padding(.vertical, 1)
             }
-            Spacer(minLength: 8)
-            if ctx.view.type != .dashboard { toolbar(ctx) }
         }
         .font(.system(size: 14))
+    }
+
+    private func viewTabs(_ ctx: DBContext, views: [DatabaseView]) -> some View {
+        HStack(spacing: 2) {
+            ForEach(views) { v in tab(v, active: v.id == ctx.view.id, ctx: ctx, count: views.count) }
+            if !ctx.locked {
+                Menu {
+                    ForEach(ViewType.available, id: \.self) { t in
+                        Button(t.displayName, systemImage: t.symbol) {
+                            if let id = model.store.addView(to: blockID, type: t) { activeViewID = id }
+                        }
+                    }
+                } label: { ToolbarIcon("plus", size: 12) }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .frame(width: 24, height: 24)
+                .hoverHighlight(opacity: 0.065)
+                .help("Add a view")
+            }
+        }
+    }
+
+    private func commitRename(_ id: RecordID) {
+        guard renamingView == id else { return }
+        let name = viewName.trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty { model.store.updateView(id, name: "Rename view") { $0.name = name } }
+        renamingView = nil
+    }
+
+    /// True when the block sits (at any depth) under a toggle list or a toggle heading.
+    private func isInsideToggle(_ block: Block) -> Bool {
+        var parent = block.parent
+        var depth = 0
+        while let id = parent.id, depth < 32, let p = model.store.blocks[id] {
+            if p.type == .toggle || (p.type.isHeading && p.props.toggleable == true) { return true }
+            parent = p.parent
+            depth += 1
+        }
+        return false
     }
 
     @ViewBuilder
@@ -219,11 +258,11 @@ struct DatabaseBlockView: View {
             TextField("View name", text: $viewName)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 140)
-                .onSubmit {
-                    let name = viewName.trimmingCharacters(in: .whitespaces)
-                    if !name.isEmpty { model.store.updateView(v.id, name: "Rename view") { $0.name = name } }
-                    renamingView = nil
-                }
+                .focused($renameFocused)
+                .onAppear { renameFocused = true }
+                .onSubmit { commitRename(v.id) }
+                .onKeyPress(.escape) { renamingView = nil; return .handled }
+                .onChange(of: renameFocused) { _, f in if !f { commitRename(v.id) } }
         } else {
             // Notion: views are pills — the active one filled, the others quiet until hovered.
             Button { withAnimation(.easeOut(duration: 0.12)) { activeViewID = v.id } } label: {
@@ -235,6 +274,13 @@ struct DatabaseBlockView: View {
                 .foregroundStyle(active ? Theme.primary : Theme.secondary)
             }
             .buttonStyle(.quiet(padding: 4, cornerRadius: 14, minSize: 26, selected: active))
+            .fixedSize(horizontal: true, vertical: false)
+            .help(ctx.locked ? v.name : "\(v.name) — double-click to rename")
+            .simultaneousGesture(TapGesture(count: 2).onEnded {
+                guard !ctx.locked else { return }
+                viewName = v.name
+                renamingView = v.id
+            })
             .contextMenu {
                 if !ctx.locked {
                     Button("Rename", systemImage: "pencil") { viewName = v.name; renamingView = v.id }
@@ -405,14 +451,13 @@ struct ActiveRulesBar: View {
     @Binding var showSort: Bool
 
     var body: some View {
+        // At most two chips (sort, filter): several rules collapse into a count so the bar stays one quiet line.
         HStack(spacing: 6) {
             if let sorts = ctx.view.sorts, !sorts.isEmpty {
                 chip(sorts.count == 1 ? sortLabel(sorts[0]) : "\(sorts.count) sorts", symbol: "arrow.up.arrow.down") { showSort = true }
             }
-            if let f = ctx.view.filter {
-                ForEach(Array(f.items.enumerated()), id: \.offset) { _, item in
-                    chip(filterLabel(item), symbol: "line.3.horizontal.decrease") { showFilter = true }
-                }
+            if let f = ctx.view.filter, !f.items.isEmpty {
+                chip(f.items.count == 1 ? filterLabel(f.items[0]) : "\(f.items.count) filters", symbol: "line.3.horizontal.decrease") { showFilter = true }
             }
             Spacer()
         }
@@ -422,11 +467,15 @@ struct ActiveRulesBar: View {
     private func chip(_ text: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(text, systemImage: symbol)
+                .lineLimit(1)
+                .frame(maxWidth: 260, alignment: .leading)
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(Capsule().fill(Theme.accentBlue.opacity(0.12)))
                 .foregroundStyle(Theme.accentBlue)
         }
         .buttonStyle(.plain)
+        .hoverHighlight(cornerRadius: 12, opacity: 0.06)
+        .help(text)
     }
 
     private func sortLabel(_ s: SortRule) -> String {
