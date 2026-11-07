@@ -149,7 +149,13 @@ struct DatabaseBlockView: View {
                 ActiveRulesBar(ctx: ctx, showFilter: $showFilter, showSort: $showSort)
             }
             Divider()
-            layout(ctx)
+            if fullPage {
+                layout(ctx)
+            } else {
+                // Inline databases fill in one per frame, so a page with several big boards or calendars
+                // shows up at once instead of freezing while every card is built (Notion loads them progressively too).
+                DeferredContent(id: blockID) { layout(ctx) }
+            }
         }
         .padding(.vertical, 4)
         .onChange(of: model.dbSearchRequest) { _, _ in
@@ -446,6 +452,47 @@ extension RelativeDate {
         case .nextMonth: return "Next month"
         case .pastYear: return "Past year"
         case .nextYear: return "Next year"
+        }
+    }
+}
+/// Builds heavy content a frame after the page appears, one block at a time, holding the last known height meanwhile.
+struct DeferredContent<Content: View>: View {
+    let id: RecordID
+    @ViewBuilder let content: () -> Content
+    @State private var ready = false
+
+    var body: some View {
+        if ready {
+            content()
+                .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { DeferredRender.heights[id] = $0 }
+        } else {
+            Color.clear
+                .frame(height: DeferredRender.heights[id] ?? 120)
+                .onAppear { DeferredRender.enqueue { ready = true } }
+        }
+    }
+}
+
+/// Hands out one "render now" turn per run-loop pass so each deferred block gets its own frame.
+@MainActor
+enum DeferredRender {
+    static var heights: [RecordID: CGFloat] = [:]
+    private static var queue: [() -> Void] = []
+    private static var scheduled = false
+
+    static func enqueue(_ work: @escaping () -> Void) {
+        queue.append(work)
+        schedule()
+    }
+
+    private static func schedule() {
+        guard !scheduled, !queue.isEmpty else { return }
+        scheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.005) {
+            scheduled = false
+            guard !queue.isEmpty else { return }
+            queue.removeFirst()()
+            schedule()
         }
     }
 }

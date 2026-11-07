@@ -33,11 +33,9 @@ final class LayoutAuditor {
 
     static var autoAuditEnabled: Bool {
         get {
-            #if DEBUG
-            return UserDefaults.standard.object(forKey: "diagnostics.autoAudit") as? Bool ?? true
-            #else
-            return UserDefaults.standard.bool(forKey: "diagnostics.autoAudit")
-            #endif
+            // Off unless switched on in Diagnostics → Layout: an audit walks the whole accessibility tree
+            // (hundreds of elements on a page with databases) and ran after every resize, which made big pages lag.
+            UserDefaults.standard.bool(forKey: "diagnostics.autoAudit")
         }
         set { UserDefaults.standard.set(newValue, forKey: "diagnostics.autoAudit") }
     }

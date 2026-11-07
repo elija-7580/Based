@@ -194,6 +194,9 @@ public final class WorkspaceStore {
     public private(set) var lastError: Error?
     /// Monotonic counter bumped on every committed change (local, remote, undo). Use as a cache key.
     public private(set) var revision: Int = 0
+    /// `topLevelPages()` memo (the workspace level also holds every trashed import — thousands of records the
+    /// sidebar re-scanned on each render).
+    var topLevelCache: (revision: Int, pages: [Block])?
 
     /// Called after local, undo and redo commits with the changed keys (sync hook).
     public var onLocalChange: (([RecordKey]) -> Void)?

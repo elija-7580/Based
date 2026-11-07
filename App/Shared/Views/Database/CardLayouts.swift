@@ -125,7 +125,7 @@ struct BoardLayout: View {
                 Text("Group the board by a select, status, person or checkbox property in view settings.")
                     .foregroundStyle(Theme.secondary)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
-                    ForEach(ctx.result.rows, id: \.id) { r in RowCard(ctx: ctx, row: r) }
+                    ForEach(ctx.result.rows.prefix(50), id: \.id) { r in RowCard(ctx: ctx, row: r) }
                 }
             }
         }
@@ -137,6 +137,8 @@ struct BoardColumn: View {
     let group: RowGroup
     let allGroups: [RowGroup]
     @State private var targeted = false
+    /// Notion loads 25 cards per group and offers "Load more"; drawing every card made big boards slow.
+    @State private var shown = 25
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -165,7 +167,10 @@ struct BoardColumn: View {
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Theme.secondary)
-            ForEach(group.rows, id: \.id) { r in RowCard(ctx: ctx, row: r) }
+            ForEach(group.rows.prefix(shown), id: \.id) { r in RowCard(ctx: ctx, row: r) }
+            if group.rows.count > shown {
+                LoadMoreButton(remaining: group.rows.count - shown) { shown += 25 }
+            }
             if !ctx.locked {
                 Button { ctx.open(ctx.addRow(values: ctx.groupValues(group.id))) } label: {
                     Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary).frame(maxWidth: .infinity, alignment: .leading)
@@ -220,6 +225,8 @@ struct NewGroupButton: View {
 
 struct GalleryLayout: View {
     let ctx: DBContext
+    /// Cards drawn per group before "Load more" (Notion: 25).
+    @State private var shown = 25
 
     var body: some View {
         let min: CGFloat = {
@@ -239,7 +246,11 @@ struct GalleryLayout: View {
 
     private func grid(_ rows: [Block], min: CGFloat, values: [String: PropertyValue]) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: min), spacing: 12)], alignment: .leading, spacing: 12) {
-            ForEach(rows, id: \.id) { r in RowCard(ctx: ctx, row: r, showCover: ctx.view.cardCover != CardCover.none) }
+            ForEach(rows.prefix(shown), id: \.id) { r in RowCard(ctx: ctx, row: r, showCover: ctx.view.cardCover != CardCover.none) }
+            if rows.count > shown {
+                LoadMoreButton(remaining: rows.count - shown) { shown += 25 }
+                    .frame(maxWidth: .infinity, minHeight: 80)
+            }
             if !ctx.locked {
                 Button { ctx.open(ctx.addRow(values: values)) } label: {
                     Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary)
@@ -249,5 +260,22 @@ struct GalleryLayout: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+}
+/// "Load more" under a long board column, gallery or list (Notion shows 25 at a time).
+struct LoadMoreButton: View {
+    let remaining: Int
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: { withAnimation(.easeOut(duration: 0.2)) { action() } }) {
+            Label("Load \(min(25, remaining)) more", systemImage: "arrow.down")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }

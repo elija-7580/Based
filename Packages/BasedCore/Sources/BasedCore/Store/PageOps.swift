@@ -124,8 +124,15 @@ public extension WorkspaceStore {
 
     /// Top-level pages and databases in sidebar order. Never lists a record twice, even if the index did.
     func topLevelPages() -> [Block] {
+        if let c = topLevelCache, c.revision == revision { return c.pages }
         var seen = Set<RecordID>()
-        return childBlocks(of: .workspace).filter { $0.trashedAt == nil && $0.type.isPageLike && seen.insert($0.id).inserted }
+        var out: [Block] = []
+        for id in children(of: .workspace) {
+            guard let b = blocks[id], b.trashedAt == nil, b.type.isPageLike, seen.insert(id).inserted else { continue }
+            out.append(b)
+        }
+        topLevelCache = (revision, out)
+        return out
     }
 
     /// Pages and databases nested in a page's content (any depth, not crossing into other pages).

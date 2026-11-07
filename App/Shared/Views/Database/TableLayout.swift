@@ -112,7 +112,7 @@ struct TableLayout: View {
                         }
                         HiddenGroupsFooter(ctx: ctx)
                     } else {
-                        let limit = (ctx.view.loadLimit ?? 50) + limitBoost
+                        let limit = (ctx.view.loadLimit ?? 25) + limitBoost
                         rows(Array(ctx.result.rows.prefix(limit)), props: props, ordered: ordered)
                         if ctx.result.rows.count > limit {
                             HStack(spacing: 12) {
@@ -148,7 +148,7 @@ struct TableLayout: View {
         if let groups = ctx.visibleGroups {
             return groups.filter { !collapsed.contains($0.id) }.flatMap(\.rows).map(\.id)
         }
-        return ctx.result.rows.prefix((ctx.view.loadLimit ?? 50) + limitBoost).map(\.id)
+        return ctx.result.rows.prefix((ctx.view.loadLimit ?? 25) + limitBoost).map(\.id)
     }
 
     private func rows(_ rows: [Block], props: [PropertySchema], ordered: [RecordID]) -> some View {
