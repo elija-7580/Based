@@ -93,8 +93,9 @@ async function api(path) {
   return r.json();
 }
 
+S.after = 0;
 async function sync(status) {
-  let after = 0, n = 0;
+  let after = S.after, n = 0;
   for (;;) {
     const page = await api(`/sync/v2/pull?after=${after}&limit=2000`);
     for (const r of page.records) { S.recs.set(r.kind + ":" + r.data.id, r.data); n++; }
@@ -103,7 +104,18 @@ async function sync(status) {
     if (status) status(`Loading… ${n} records`);
     if (!page.more) break;
   }
+  S.after = after;
   index();
+}
+
+// Live: wait for server changes (long poll), pull them and re-render — edits from other devices appear within ~1 s.
+async function live() {
+  for (;;) {
+    try {
+      const r = await api(`/sync/v2/wait?after=${S.after}&timeout=25`);
+      if (r.seq > S.after) { await sync(); tree(); if (S.current) showPage(S.current, true); }
+    } catch (e) { await new Promise(res => setTimeout(res, 5000)); }
+  }
 }
 
 function login(msg) {
@@ -130,6 +142,7 @@ function shell() {
   tree();
   const first = children("w").find(b => b.type === "page");
   showPage(location.hash.slice(1) || (ws && ws[1].homePageID) || (first && first.id));
+  live();
   window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id && id !== S.current) showPage(id); });
 }
 
@@ -180,15 +193,16 @@ function render(b, number) {
   }
 }
 
-function showPage(id) {
+function showPage(id, keepScroll) {
   const b = block(id); if (!b) return;
+  const main0 = document.getElementById("main"); const y = main0 ? main0.scrollTop : 0;
   S.current = id;
   let p = b; while (p && p.parent && p.parent.startsWith("b:")) { const pid = p.parent.slice(2); S.open.add(pid); p = block(pid); }
   tree();
   const main = document.getElementById("main");
   const cover = b.props && b.props.cover ? `<div class="cover"></div>` : "";
   main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title">${esc(title(id))}</h1>${seq(children("b:" + id))}</div>`;
-  main.scrollTop = 0;
+  main.scrollTop = keepScroll ? y : 0;
   main.querySelectorAll("[data-open]").forEach(el => el.onclick = () => { showPage(el.dataset.open); history.pushState(null, "", "#" + el.dataset.open); });
 }
 
