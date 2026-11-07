@@ -231,7 +231,20 @@ function showPage(id, keepScroll) {
   main.scrollTop = keepScroll ? y : 0;
   main.querySelectorAll("[data-edit]").forEach(el => {
     el.onblur = () => saveText(el.dataset.edit, el.innerText.replace(/\n$/, "")).then(tree);
-    el.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.blur(); } };
+    el.onkeydown = async (e) => {
+      if (e.key !== "Enter" || e.shiftKey) return;
+      e.preventDefault();
+      if (el.tagName === "H1") { el.blur(); return; }
+      // Enter: save this line, then a new line below it (created on the server, like the apps do).
+      await saveText(el.dataset.edit, el.innerText.replace(/\n$/, ""));
+      const r = await fetch("/api/blocks/insert-after", { method: "POST", headers: { Authorization: "Bearer " + S.token, "Content-Type": "application/json" },
+                                                          body: JSON.stringify({ after: el.dataset.edit, text: "" }) });
+      if (!r.ok) return;
+      const { id: newID } = await r.json();
+      await sync(); showPage(S.current, true);
+      const next = document.querySelector(`[data-edit="${newID}"]`);
+      if (next) next.focus();
+    };
   });
   main.querySelectorAll("[data-open]").forEach(el => el.onclick = () => { showPage(el.dataset.open); history.pushState(null, "", "#" + el.dataset.open); });
 }

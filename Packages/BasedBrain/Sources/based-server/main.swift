@@ -194,6 +194,15 @@ let server = HTTPServer(port: opts.port) { req in
         guard let p = try? JSONDecoder().decode(SyncPush.self, from: req.body) else { return .json(["error": "bad push"], status: 400) }
         let reply = await MainActor.run { sync.pushV2(p) }
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(reply)) ?? Data())
+    case ("POST", "/api/blocks/insert-after"):
+        // Web client: new text block after `after` (the server computes the sort key with BasedCore).
+        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        guard let after = body["after"]?.string else { return .json(["error": "missing after"], status: 400) }
+        let text = body["text"]?.string ?? ""
+        let id: String? = await MainActor.run { store.insertBlock(.text, after: after, text: RichText(text)) }
+        guard let id else { return .json(["error": "no such block"], status: 404) }
+        return .json(["id": .string(id)])
     case ("GET", "/app"), ("GET", "/app/"):
         // Web client (read-only for now): loads the workspace through /sync/v2/pull. The token is entered in the page.
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "text/html; charset=utf-8"], body: Data(WebApp.html.utf8))
