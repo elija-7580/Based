@@ -206,6 +206,8 @@ public enum CLIChatArguments {
         a += ["--json", "--skip-git-repo-check"]
         if !spec.model.isEmpty { a += ["-m", spec.model] }
         if !spec.effort.isEmpty { a += ["-c", "model_reasoning_effort=\"\(spec.effort)\""] }
+        // Reasoning summaries → "Thinking" in the chat (Codex only emits reasoning items when asked).
+        a += ["-c", "model_reasoning_summary=\"detailed\""]
         // `resume` doesn't accept --sandbox; the session keeps the one it started with.
         if resume == nil || resume?.isEmpty == true { a += ["-s", spec.permission.isEmpty ? "read-only" : spec.permission] }
         if let u = mcpURL {
