@@ -165,6 +165,8 @@ final class AppModel {
     var showQuickFind = false
     /// Notion-style AI chat docked on the right (⌘J); `chatID` is the conversation shown there.
     var showChatPanel = false
+    /// Text to put into the chat composer (e.g. "Ask AI" on a selection quotes the selected text).
+    var chatDraft: String?
     /// ⌘N command palette (new page / chat / meeting note / database).
     var showCommandPalette = false
     /// ⌘F find bar for the current page.

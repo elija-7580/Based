@@ -146,6 +146,8 @@ final class TextCoordinator: NSObject, TextHost {
     func reload(selection: NSRange?) {
         let text = store.blocks[id]?.text ?? RichText()
         load(config.plain ? RichText(text.plainText) : text, selection: selection ?? currentSelection())
+        // Keep selection-driven UI (formatting toolbar) in step after formatting.
+        if selection != nil { handleSelectionChange() }
     }
 
     func endEditing() {
@@ -226,6 +228,20 @@ final class TextCoordinator: NSObject, TextHost {
     func handleSelectionChange() {
         guard !isApplying, let v = view else { return }
         controller.selectionChanged(id, viewSelection)
+        #if os(macOS)
+        // Notion's formatting toolbar floats above a text selection: report the selection's rect in window
+        // coordinates (top-left origin, like SwiftUI's global space).
+        let sel = viewSelection
+        if sel.length > 0, config.style.type != .code, let window = v.window, let content = window.contentView {
+            var actual = NSRange()
+            let screenRect = v.firstRect(forCharacterRange: sel, actualRange: &actual)
+            let inWindow = window.convertFromScreen(screenRect)
+            let flipped = CGRect(x: inWindow.minX, y: content.bounds.height - inWindow.maxY, width: inWindow.width, height: inWindow.height)
+            controller.selectionRect = SelectionAnchor(blockID: id, rect: flipped)
+        } else if controller.selectionRect?.blockID == id {
+            controller.selectionRect = nil
+        }
+        #endif
         #if os(iOS)
         var ta = v.typingAttributes
         if ta[.basedMention] != nil || ta[.basedEquation] != nil || ta[.link] != nil {

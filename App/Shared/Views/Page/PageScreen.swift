@@ -103,6 +103,21 @@ struct PageScreen: View {
                 editor.selectedBlocks = [target]
             }
             }
+            #if os(macOS)
+            .overlay {
+                GeometryReader { geo in
+                    if let sel = editor.selectionRect, editor.menu == nil, editor.aiPrompt == nil, !editor.isLocked {
+                        let g = geo.frame(in: .global)
+                        let x = min(max(8, sel.rect.minX - g.minX - 8), max(8, geo.size.width - 430))
+                        let y = sel.rect.minY - g.minY - 46
+                        FormatToolbar(editor: editor, blockID: sel.blockID)
+                            .offset(x: x, y: y < 4 ? sel.rect.maxY - g.minY + 8 : y)
+                            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
+                    }
+                }
+                .animation(.easeOut(duration: 0.12), value: editor.selectionRect != nil)
+            }
+            #endif
             .acceptsFileDrops { model.dropFiles($0, onto: pageID) }
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
             .overlayPreferenceValue(MenuAnchorKey.self) { anchor in

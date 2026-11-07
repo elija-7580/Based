@@ -370,10 +370,18 @@ struct ChatComposer: View {
         .animation(.easeOut(duration: 0.18), value: focused)
         .acceptsFileDrops { urls in attachments += urls.map { ChatAttachment(url: $0) } }
         .padding(compact ? 10 : 16)
-        .onAppear { focused = true }
+        .onAppear { focused = true; takeDraft() }
+        .onChange(of: model.chatDraft) { _, _ in takeDraft() }
         .fileImporter(isPresented: $pickFiles, allowedContentTypes: [.item], allowsMultipleSelection: true) { r in
             if case .success(let urls) = r { attachments += urls.map { ChatAttachment(url: $0) } }
         }
+    }
+
+    private func takeDraft() {
+        guard let d = model.chatDraft else { return }
+        model.chatDraft = nil
+        input = d
+        focused = true
     }
 
     private var canSend: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !attachments.isEmpty }

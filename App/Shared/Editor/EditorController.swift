@@ -22,6 +22,11 @@ final class WeakHost {
     init(_ h: any TextHost) { host = h }
 }
 
+struct SelectionAnchor: Equatable {
+    var blockID: RecordID
+    var rect: CGRect
+}
+
 struct InlineMenu: Equatable {
     enum Kind: Equatable { case slash, mention, pageLink, emoji }
     var kind: Kind
@@ -158,6 +163,9 @@ final class EditorController {
         }
     }
 
+    /// Selected text (macOS): where the formatting toolbar floats, in window coordinates.
+    var selectionRect: SelectionAnchor?
+
     /// The empty line where the inline "Ask AI to write…" box is open (space on an empty line).
     var aiPrompt: RecordID?
 
@@ -177,6 +185,7 @@ final class EditorController {
 
     func didEndEditing(_ id: RecordID) {
         if focusedID == id { focusedID = nil; hasTextSelection = false }
+        if selectionRect?.blockID == id, linkEditor == nil { selectionRect = nil }
     }
 
     func selectionChanged(_ id: RecordID, _ r: NSRange) {

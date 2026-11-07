@@ -164,6 +164,17 @@ enum DebugDriver {
                     if ids.indices.contains(i), let nid = model.store.insertBlock(.text, after: ids[i]) { ed.aiPrompt = nid }
                 }
             }
+        case "select":
+            // Selects text `from`..`from+len` in block `index` (shows the formatting toolbar).
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let i = Int(q["index"] ?? "0") ?? 0
+                if ids.indices.contains(i), let h = ed.host(ids[i]) {
+                    h.focus(at: nil)
+                    let r = NSRange(location: Int(q["from"] ?? "0") ?? 0, length: Int(q["len"] ?? "5") ?? 5)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { h.reload(selection: r); (h as? NSObject).map { _ in } }
+                }
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":
