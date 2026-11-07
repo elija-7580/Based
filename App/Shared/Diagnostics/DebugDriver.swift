@@ -189,6 +189,22 @@ enum DebugDriver {
                     Log.notice("debug pdf: \(r)", category: "debug")
                 }
             }
+        case "selectblocks":
+            // Selects blocks by document index ("0,2") like clicking ⋮⋮ / dragging a selection.
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let idx = (q["i"] ?? "0").split(separator: ",").compactMap { Int($0) }
+                ed.focusedID.flatMap { ed.host($0) }?.endEditing()
+                ed.selectedBlocks = Set(idx.filter { ids.indices.contains($0) }.map { ids[$0] })
+            }
+        case "key":
+            // Posts a real key-down into the app's event queue (goes through local monitors like a key press).
+            if let code = UInt16(q["code"] ?? ""), let win = mainWindow(),
+               let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: q["shift"] == "1" ? .shift : [],
+                                        timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: win.windowNumber, context: nil,
+                                        characters: q["chars"] ?? "", charactersIgnoringModifiers: q["chars"] ?? "", isARepeat: false, keyCode: code) {
+                NSApp.postEvent(e, atStart: false)
+            }
         case "picker":
             NotificationCenter.default.post(name: .debugOpenEnginePicker, object: nil)
         case "closewindow":

@@ -8,6 +8,9 @@ struct PageScreen: View {
     @Environment(AppModel.self) private var model
     @State private var editor: EditorController
     @FocusState private var keyFocus: Bool
+    #if os(macOS)
+    @State private var selectionKeys = BlockSelectionKeys()
+    #endif
     /// Width of the scroll area (Notion: 708 pt text column with 96 pt side padding, less in narrow windows).
     @State private var availableWidth: CGFloat = 1000
 
@@ -188,12 +191,18 @@ struct PageScreen: View {
         .onAppear {
             editor.format = format
             model.activeEditor = editor
+            #if os(macOS)
+            selectionKeys.install(editor)
+            #endif
             #if DEBUG
             Log.notice("PageScreen appear \(pageID.prefix(8)) peek \(isPeek) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
             #endif
         }
         .onChange(of: page.props.format) { _, f in editor.format = f }
         .onDisappear {
+            #if os(macOS)
+            selectionKeys.remove()
+            #endif
             #if DEBUG
             Log.notice("PageScreen disappear \(pageID.prefix(8)) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
             #endif
