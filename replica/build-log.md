@@ -512,3 +512,10 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - **Sync**: long poll (`/sync/v2/wait`) + debounced push → changes arrive within ~1 s.
 - Drag: Notion-blue drop line; to-do checkbox Notion-blue; toggles animate; outline rail below the cover;
   settings navigation Notion-style; composer controls adapt to narrow widths. iOS target builds again.
+- **Chat**: `@` mentions (pages, files of the working folder), `/` commands (new, model, folder, ask/edits/plan/bypass,
+  effort), Codex reasoning summaries as Thinking.
+- **Based archive** (`.based.jsonl`): lossless export/import of the whole workspace; real workspace (71,578 records)
+  round-trips in 1.6 s with nothing skipped.
+- **Web client v0** at `based-server /app`: page tree and pages over sync v2, live updates (long poll), editing of
+  plain text blocks and titles. Verified in a browser against a local server.
+- Sidebar Notes | AI switch slides; AI panel springs in.
