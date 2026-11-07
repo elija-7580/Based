@@ -107,6 +107,9 @@ enum Theme {
         }
     }
 
+    /// Checked to-do fill (Notion blue; document colour, not the system accent).
+    static var todoBlue: Color { Color(dynamic(light: 0x2383E2, dark: 0x2383E2)) }
+
     /// Drag & drop target line (Notion blue, independent of the system accent colour).
     static var dropIndicator: Color { Color(dynamic(light: 0x2383E2, dark: 0x529CCA)).opacity(0.85) }
 

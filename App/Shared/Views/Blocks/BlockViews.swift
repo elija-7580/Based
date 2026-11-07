@@ -274,9 +274,7 @@ struct BlockMarker: View {
             Button {
                 model.store.setChecked(block.id, !checked)
             } label: {
-                Image(systemName: checked ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 16))
-                    .foregroundStyle(checked ? Color.accentColor : Theme.secondary)
+                TodoCheckbox(checked: checked)
             }
             .buttonStyle(.plain)
             .frame(width: 22, height: line)
@@ -780,5 +778,29 @@ enum Clipboard {
         #else
         return UIPasteboard.general.string
         #endif
+    }
+}
+
+/// Notion's to-do box: thin grey outline; checked = blue fill with a white check, popping in with a spring.
+struct TodoCheckbox: View {
+    let checked: Bool
+    @State private var hover = false
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 3.5)
+                .fill(checked ? Theme.todoBlue : (hover ? Theme.hoverFill : Color.clear))
+            RoundedRectangle(cornerRadius: 3.5)
+                .strokeBorder(checked ? Color.clear : Theme.secondary.opacity(0.8), lineWidth: 1.4)
+            Image(systemName: "checkmark")
+                .font(.system(size: 10.5, weight: .bold))
+                .foregroundStyle(.white)
+                .scaleEffect(checked ? 1 : 0.3)
+                .opacity(checked ? 1 : 0)
+        }
+        .frame(width: 16, height: 16)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .animation(.spring(response: 0.22, dampingFraction: 0.62), value: checked)
     }
 }
