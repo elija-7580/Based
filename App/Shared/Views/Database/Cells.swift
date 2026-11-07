@@ -142,15 +142,23 @@ struct FlowRow<Content: View>: View {
     }
 }
 
-/// Simple flow layout.
+/// Simple flow layout. An item wider than the available width gets exactly that width (its text wraps or
+/// truncates) — measuring it at its ideal width made the row report a minimum wider than the cell, so the
+/// stack laid it out too short and the next properties were drawn on top of it.
 struct WrapLayout: Layout {
     var spacing: CGFloat = 4
 
+    private func size(_ s: LayoutSubview, maxWidth: CGFloat) -> CGSize {
+        let ideal = s.sizeThatFits(.unspecified)
+        guard ideal.width > maxWidth, maxWidth.isFinite else { return ideal }
+        return s.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
+    }
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 10_000
+        let width = max(proposal.width ?? .infinity, 1)
         var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0, maxX: CGFloat = 0
         for s in subviews {
-            let sz = s.sizeThatFits(.unspecified)
+            let sz = size(s, maxWidth: width)
             if x > 0, x + sz.width > width { x = 0; y += rowH + spacing; rowH = 0 }
             x += sz.width + spacing
             maxX = max(maxX, x - spacing)
@@ -160,9 +168,10 @@ struct WrapLayout: Layout {
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let width = max(bounds.width, 1)
         var x = bounds.minX, y = bounds.minY, rowH: CGFloat = 0
         for s in subviews {
-            let sz = s.sizeThatFits(.unspecified)
+            let sz = size(s, maxWidth: width)
             if x > bounds.minX, x + sz.width > bounds.maxX { x = bounds.minX; y += rowH + spacing; rowH = 0 }
             s.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
             x += sz.width + spacing
