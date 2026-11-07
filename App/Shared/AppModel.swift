@@ -171,6 +171,8 @@ final class AppModel {
     var peek: Peek?
     /// ⌘K / ⌘P search overlay.
     var showQuickFind = false
+    /// The overlay was opened by a new tab (⌘T / "+"): picking a page fills that tab instead of opening another one.
+    var quickFindForNewTab = false
     /// Notion-style AI chat docked on the right (⌘J); `chatID` is the conversation shown there.
     var showChatPanel = false
     /// Text to put into the chat composer (e.g. "Ask AI" on a selection quotes the selected text).
@@ -669,6 +671,14 @@ final class AppModel {
         let at = min(tabs.count, activeTabIndex + 1)
         tabs.insert(t, at: at)
         if activate { selectTab(t.id) }
+    }
+
+    /// ⌘T and "+": a new tab on Home with the ⌘K search on top (Home pinned as row 1, then recent pages / results).
+    func newTabWithSearch() {
+        newTab(.home)
+        showCommandPalette = false
+        quickFindForNewTab = true
+        showQuickFind = true
     }
 
     func openInNewTab(_ id: RecordID, activate: Bool = true) {

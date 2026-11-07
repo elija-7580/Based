@@ -37,7 +37,7 @@ struct SearchOverlay: View {
     enum Scope: String, CaseIterable, Identifiable { case pages = "Pages", chats = "Chats"; var id: String { rawValue } }
 
     struct Row: Identifiable {
-        enum Kind { case page(RecordID, snippet: String?), chat(AgentSession), ask(String) }
+        enum Kind { case home, page(RecordID, snippet: String?), chat(AgentSession), ask(String) }
         let id: String
         let kind: Kind
         let section: String
@@ -72,6 +72,13 @@ struct SearchOverlay: View {
                         return .handled
                     }
                     .onKeyPress(.escape) { close(); return .handled }
+                    .onKeyPress(characters: .decimalDigits) { press in
+                        // With an empty field the digits are shortcuts to the numbered rows (1 = Home).
+                        guard query.isEmpty, let n = Int(press.characters), (1...9).contains(n), rows.indices.contains(n - 1) else { return .ignored }
+                        highlighted = n - 1
+                        activate(newTab: false)
+                        return .handled
+                    }
                     .accessibilityIdentifier("quickfind.field")
                 if !query.isEmpty {
                     Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
@@ -88,6 +95,7 @@ struct SearchOverlay: View {
         .frame(width: 680)
         .frame(minHeight: 300, maxHeight: 560)
         .onAppear { OverlayFocus.grab { focused = true }; recompute() }
+        .onDisappear { model.quickFindForNewTab = false }
         .onChange(of: query) { _, _ in highlighted = 0; recompute() }
         .onChange(of: scope) { _, _ in highlighted = 0; recompute() }
         .onChange(of: titleOnly) { _, _ in recompute() }
@@ -170,6 +178,11 @@ struct SearchOverlay: View {
         let store = model.store
         HStack(alignment: .center, spacing: 10) {
             switch r.kind {
+            case .home:
+                Image(systemName: "house").font(.system(size: 15)).foregroundStyle(Theme.secondary).frame(width: 20)
+                Text("Home").font(.system(size: 14, weight: .medium))
+                Spacer(minLength: 8)
+                if !highlighted { Text("Start page").font(.caption).foregroundStyle(Theme.secondary) }
             case .ask(let q):
                 AIGlyph(size: 17).foregroundStyle(Theme.accentBlue).frame(width: 20)
                 Text("Ask AI: ").foregroundStyle(Theme.secondary) + Text("“\(q)”").fontWeight(.medium)
@@ -195,12 +208,27 @@ struct SearchOverlay: View {
                     Text(b.updatedAt.formatted(date: .abbreviated, time: .omitted)).font(.caption2).foregroundStyle(Theme.secondary)
                 }
             }
-            if case .page = r.kind {} else { Spacer(minLength: 0) }
+            if case .page = r.kind {} else if case .home = r.kind {} else { Spacer(minLength: 0) }
+            if let n = badge(for: r) { numberBadge(n, highlighted: highlighted) }
         }
         .padding(.horizontal, 12).padding(.vertical, 7)
         .background(RoundedRectangle(cornerRadius: 6).fill(highlighted ? Color.primary.opacity(0.07) : Color.clear))
         .padding(.horizontal, 4)
         .contentShape(Rectangle())
+    }
+
+    /// 1…9 on the first nine rows while the field is empty (typing a digit then opens that row).
+    private func badge(for r: Row) -> Int? {
+        guard query.isEmpty, let i = rows.firstIndex(where: { $0.id == r.id }), i < 9 else { return nil }
+        return i + 1
+    }
+
+    private func numberBadge(_ n: Int, highlighted: Bool) -> some View {
+        Text("\(n)")
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundStyle(highlighted ? Theme.primary : Theme.secondary)
+            .frame(width: 20, height: 20)
+            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.primary.opacity(highlighted ? 0.1 : 0.05)))
     }
 
     private func pathText(_ id: RecordID) -> String {
@@ -218,6 +246,7 @@ struct SearchOverlay: View {
         switch scope {
         case .pages:
             if q.isEmpty {
+                out.append(Row(id: "home", kind: .home, section: "Pinned"))
                 for b in model.store.recentPages(limit: 40) where b.id != model.brain.brain.rootID {
                     out.append(Row(id: b.id, kind: .page(b.id, snippet: nil), section: Self.bucket(b.updatedAt)))
                 }
@@ -262,6 +291,9 @@ struct SearchOverlay: View {
         let r = rows[highlighted]
         close()
         switch r.kind {
+        case .home:
+            Log.breadcrumb("search → home")
+            model.goHome()
         case .page(let id, _):
             Log.breadcrumb("search → open \(id.prefix(6))\(newTab ? " (new tab)" : "")")
             if newTab { model.openInNewTab(id) } else { model.open(id) }
@@ -278,11 +310,11 @@ struct SearchOverlay: View {
         switch rows[highlighted].kind {
         case .page(let id, _): Clipboard.copyLinks([id], store: model.store)
         case .chat(let c): Clipboard.copy("based://chat/" + c.id)
-        case .ask: return
+        case .ask, .home: return
         }
     }
 
-    private func close() { model.showQuickFind = false }
+    private func close() { model.showQuickFind = false; model.quickFindForNewTab = false }
 }
 
 // MARK: - ⌘N command palette

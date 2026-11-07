@@ -64,7 +64,7 @@ struct BasedCommands: Commands {
             Button("New AI Chat") { run("⇧⌘N") { model.openChat(nil, fullPage: true) } }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
             Button("New Meeting Notes") { run("meeting") { model.newMeetingNotes() } }
-            Button("New Tab") { run("⌘T") { model.newTab() } }
+            Button("New Tab") { run("⌘T") { model.newTabWithSearch() } }
                 .keyboardShortcut("t")
             Divider()
             Button("Import from Notion…") { model.showNotionImport = true }

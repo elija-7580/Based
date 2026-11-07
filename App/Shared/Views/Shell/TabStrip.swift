@@ -18,7 +18,7 @@ struct TabStrip: View {
                 tabRow
                 ScrollView(.horizontal, showsIndicators: false) { tabRow }
             }
-            ChromeIconButton(symbol: "plus", size: 13, help: "New tab (⌘T)") { model.newTab() }
+            ChromeIconButton(symbol: "plus", size: 13, help: "New tab (⌘T)") { model.newTabWithSearch() }
                 .accessibilityIdentifier("tabs.new")
         }
         .frame(height: 30)
