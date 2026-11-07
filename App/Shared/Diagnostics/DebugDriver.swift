@@ -183,6 +183,12 @@ enum DebugDriver {
             }
         case "archive":
             if let out = q["out"] { model.exportArchive(to: URL(fileURLWithPath: out)) }
+        case "pdf":
+            if let ed = model.activeEditor, let out = q["out"] {
+                PDFExport.export(pageID: ed.pageID, store: model.store, to: URL(fileURLWithPath: out)) { r in
+                    Log.notice("debug pdf: \(r)", category: "debug")
+                }
+            }
         case "closewindow":
             mainWindow()?.performClose(nil)
         case "compose":

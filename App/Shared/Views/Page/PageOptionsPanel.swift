@@ -137,6 +137,11 @@ struct PageOptionsPanel: View {
             Action(id: "html", title: "Export as HTML", symbol: "chevron.left.forwardslash.chevron.right") {
                 model.exportRequest = AppModel.ExportRequest(pageID: page.id, format: .html)
             },
+            Action(id: "pdf", title: "Export as PDF", symbol: "doc.richtext") {
+                #if os(macOS)
+                PDFExport.run(pageID: page.id, store: store) { model.showToast($0) }
+                #endif
+            },
             Action(id: "tab", title: "Open in new tab", symbol: "plus.rectangle.on.rectangle", shortcut: "⌘↵") { model.openInNewTab(page.id) },
         ]
         if !store.containsProtected(page.id) {
