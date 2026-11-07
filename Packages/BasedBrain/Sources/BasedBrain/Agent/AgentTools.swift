@@ -11,6 +11,8 @@ public final class AgentTools {
 
     public var specs: [ToolSpec] {
         [
+            ToolSpec(name: "based_guide", description: "How Based works (read once before bigger edits): topics overview, markdown, databases, safety.",
+                     inputSchema: .schema(["topic": .str("overview | markdown | databases | safety")], required: ["topic"])),
             ToolSpec(name: "search", description: "Search pages and database rows by title and full text. Returns ids, titles and snippets.",
                      inputSchema: .schema(["query": .str("Search text"), "limit": .num("Max results (default 20)")], required: ["query"])),
             ToolSpec(name: "read_page", description: "Read a page as Markdown, including its properties when it is a database row.",
@@ -132,6 +134,9 @@ public final class AgentTools {
 
     private func dispatch(_ name: String, _ a: JSONValue) throws -> String {
         switch name {
+        case "based_guide":
+            let t = a["topic"]?.string ?? "overview"
+            return BasedGuide.doc(t) ?? "Unknown topic. Topics: " + BasedGuide.topics.map(\.name).joined(separator: ", ")
         case "search":
             let hits = SearchEngine(store: store).search(try req(a, "query"), limit: a["limit"]?.int ?? 20)
             return hits.map { h in "- \(store.title(of: h.pageID)) [id: \(h.pageID), link: \(PageLink.url(h.pageID))]" + (h.snippet.map { " — \($0)" } ?? "") }.joined(separator: "\n").nonEmpty ?? "No results."

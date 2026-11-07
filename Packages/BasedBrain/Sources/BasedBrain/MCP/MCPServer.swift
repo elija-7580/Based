@@ -62,7 +62,7 @@ public final class MCPServer: @unchecked Sendable {
             return ["protocolVersion": .string(p["protocolVersion"]?.string ?? "2025-03-26"),
                     "capabilities": ["tools": ["listChanged": false], "resources": ["subscribe": false, "listChanged": false], "prompts": ["listChanged": false]],
                     "serverInfo": ["name": .string(serverName), "version": .string(version)],
-                    "instructions": "Based is the user's personal workspace (pages, databases, memories, skills). Use search/read_page before writing. Save durable facts with memory_save. Load a skill with load_skill before following it."]
+                    "instructions": .string(BasedGuide.instructions)]
         case "ping": return .object([:])
         case "tools/list":
             var specs = await MainActor.run { tools.specs }
@@ -89,6 +89,9 @@ public final class MCPServer: @unchecked Sendable {
                     ["uri": "brain://about", "name": "About the user", "mimeType": "text/markdown"],
                     ["uri": "brain://memories", "name": "All memories", "mimeType": "text/markdown"],
                 ]
+                for t in BasedGuide.topics {
+                    out.append(["uri": .string("based://docs/\(t.name)"), "name": .string("Guide: \(t.title)"), "mimeType": "text/markdown"])
+                }
                 for pg in tools.store.allPages().prefix(500) where !tools.store.isTrashed(pg.id) {
                     out.append(["uri": .string("based://page/\(pg.id)"), "name": .string(pg.title.nonEmpty ?? "Untitled"), "mimeType": "text/markdown"])
                 }
@@ -101,6 +104,7 @@ public final class MCPServer: @unchecked Sendable {
             guard let uri = p["uri"]?.string else { throw RPCError(code: -32602, message: "uri required") }
             let text: String = try await MainActor.run {
                 if uri == "brain://about" { return tools.brain.about }
+                if uri.hasPrefix("based://docs/"), let d = BasedGuide.doc(String(uri.dropFirst("based://docs/".count))) { return d }
                 if uri == "brain://memories" { return tools.brain.memories().map { "## \($0.title) (\($0.kind.rawValue))\n\($0.body)" }.joined(separator: "\n") }
                 if uri.hasPrefix("based://page/") {
                     let id = String(uri.dropFirst("based://page/".count))

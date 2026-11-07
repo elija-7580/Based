@@ -312,7 +312,7 @@ final class BrainModel {
                     try Task.checkCancellation()
                     apply(.result(text: o.text.isEmpty ? "(done)" : o.text, sessionID: nil, costUSD: nil, isError: false))
                 } else if let spec = cliSpec {
-                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + String(context.prefix(6000))
+                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + BasedGuide.instructions + "\n\n" + String(context.prefix(6000))
                     let result: Result<ClaudePrint.Reply, Error>
                     var sessionFromStream: String?
                     let track: @MainActor (ChatEvent) -> Void = { e in
