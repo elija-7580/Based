@@ -85,7 +85,9 @@ struct PageScreen: View {
                     .onChange(of: g.size.width) { _, w in availableWidth = w }
             })
             .overlay(alignment: .topTrailing) {
-                if page.type != .databasePage, format?.hideOutline != true, !model.showFind { PageOutline(pageID: pageID, scroll: scroll) }
+                if page.type != .databasePage, format?.hideOutline != true, !model.showFind {
+                    PageOutline(pageID: pageID, scroll: scroll, topInset: page.props.cover != nil ? (isPeek ? 190 : 300) : 96)
+                }
             }
             .onChange(of: model.findTarget) { _, target in
                 // ⌘F: scroll the current match into view and mark it.

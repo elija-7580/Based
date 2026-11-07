@@ -6,6 +6,8 @@ import BasedCore
 struct PageOutline: View {
     let pageID: RecordID
     let scroll: ScrollViewProxy
+    /// Distance from the top: below the cover when the page has one (the rail used to sit on the cover).
+    var topInset: CGFloat = 72
     @Environment(AppModel.self) private var model
     @State private var expanded = false
 
@@ -44,7 +46,7 @@ struct PageOutline: View {
                         RoundedRectangle(cornerRadius: 1.5)
                             .fill(Color(Theme.textSecondary).opacity(e.level == 1 ? 0.8 : 0.55))
                             .frame(width: e.level == 1 ? 20 : e.level == 2 ? 14 : 9, height: 3)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                 }
             }
@@ -60,7 +62,7 @@ struct PageOutline: View {
             .onHover { h in withAnimation(.spring(duration: 0.28)) { expanded = h } }
             .onTapGesture { withAnimation(.spring(duration: 0.28)) { expanded.toggle() } }
             .padding(.trailing, 8)
-            .padding(.top, 72)
+            .padding(.top, topInset)
             .animation(.spring(duration: 0.28), value: expanded)
             .accessibilityLabel("Page outline")
         }
