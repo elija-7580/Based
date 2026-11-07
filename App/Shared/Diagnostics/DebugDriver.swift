@@ -112,6 +112,12 @@ enum DebugDriver {
                 sv.contentView.scroll(to: NSPoint(x: 0, y: y))
                 sv.reflectScrolledClipView(sv.contentView)
             }
+        case "trash":
+            // Moves pages with this exact title (debug test pages) to the trash.
+            if let t = q["title"] {
+                let ids = model.store.blocks.values.filter { $0.type == .page && $0.trashedAt == nil && $0.text.plainText == t }.map(\.id)
+                model.store.trash(ids)
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":
