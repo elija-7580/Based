@@ -281,7 +281,7 @@ struct BlockGutterOverlay: View {
         ZStack(alignment: .topLeading) {
             if let id = g.hovered ?? g.menuFor, let f = g.frame(of: id), let b = model.store.blocks[id], !editor.isLocked {
                 GutterHandle(block: b, editor: editor)
-                    .offset(x: f.minX - 42, y: f.minY + handleOffset(b))
+                    .offset(x: f.minX - 45, y: f.minY + handleOffset(b))
                     .opacity(g.isDragging ? 0 : 1)
             }
             if let t = g.dropTarget {
@@ -310,7 +310,7 @@ struct BlockGutterOverlay: View {
 
     private func handleOffset(_ b: Block) -> CGFloat {
         let line = Theme.lineHeight(for: b.type, format: editor.format)
-        return max(0, (line - 22) / 2) + (b.type.isHeading ? 6 : 0) + (b.type == .heading1 ? 10 : 0)
+        return max(0, (line - 24) / 2) + (b.type.isHeading ? 6 : 0) + (b.type == .heading1 ? 10 : 0)
     }
 }
 
@@ -327,8 +327,8 @@ private struct GutterHandle: View {
                 editor.addFromGutter(block.id, above: NSEvent.modifierFlags.contains(.option))
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(width: 20, height: 22)
+                    .font(.system(size: 14, weight: .regular))
+                    .frame(width: 22, height: 24)
                     .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(hoverPlus ? 0.08 : 0)))
                     .contentShape(Rectangle())
             }
@@ -337,9 +337,8 @@ private struct GutterHandle: View {
             .help("Click to add below\nOption-click to add above")
             .accessibilityIdentifier("block.add")
 
-            Image(systemName: "circle.grid.2x3.fill")
-                .font(.system(size: 10))
-                .frame(width: 16, height: 22)
+            GripDots()
+                .frame(width: 18, height: 24)
                 .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(hoverGrip ? 0.08 : 0)))
                 .contentShape(Rectangle())
                 .onHover { hoverGrip = $0 }
@@ -373,6 +372,23 @@ private struct GutterHandle: View {
     private var menuBinding: Binding<Bool> {
         Binding(get: { editor.gutter.menuFor == block.id },
                 set: { if !$0, editor.gutter.menuFor == block.id { editor.gutter.menuFor = nil } })
+    }
+}
+
+/// Notion's drag handle: six dots in two columns (drawn, so it never depends on an SF Symbol being present).
+struct GripDots: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let d: CGFloat = 3, gapX: CGFloat = 3, gapY: CGFloat = 3
+            let w = d * 2 + gapX, h = d * 3 + gapY * 2
+            let x0 = (size.width - w) / 2, y0 = (size.height - h) / 2
+            for col in 0..<2 {
+                for row in 0..<3 {
+                    let r = CGRect(x: x0 + CGFloat(col) * (d + gapX), y: y0 + CGFloat(row) * (d + gapY), width: d, height: d)
+                    ctx.fill(Path(ellipseIn: r), with: .foreground)
+                }
+            }
+        }
     }
 }
 
