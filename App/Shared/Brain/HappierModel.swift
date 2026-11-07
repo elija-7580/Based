@@ -172,6 +172,8 @@ final class HappierModel {
                     switch b.parent {
                     case .database(let d) where happierIDs.contains(d): relevant = true
                     case .block(let p) where sessionIDSet.contains(p): transcriptRevision[p, default: 0] += 1
+                    // Inbox details are written right after the row is created — reload so they show up.
+                    case .block(let p) where inbox.contains(where: { $0.id == p }): relevant = true
                     default: break
                     }
                 } else if sessionIDSet.contains(key.id) { relevant = true }

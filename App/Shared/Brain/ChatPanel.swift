@@ -202,6 +202,13 @@ struct ChatTranscriptView: View {
                             .id(t.id)
                             .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 10)), removal: .opacity))
                     }
+                    // Permission requests of this chat (Claude Code's --permission-prompt-tool → Inbox) answered inline.
+                    if let sid = brain.chatID {
+                        ForEach(brain.happier.pendingInbox(for: sid)) { item in
+                            ChatApprovalCard(item: item)
+                                .transition(.asymmetric(insertion: .opacity.combined(with: .scale(scale: 0.97, anchor: .top)), removal: .opacity))
+                        }
+                    }
                     Color.clear.frame(height: 1).id("end")
                         .onAppear { atBottom = true }
                         .onDisappear { atBottom = false }
@@ -224,6 +231,9 @@ struct ChatTranscriptView: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: atBottom)
             .onChange(of: brain.turns.last?.reply) { _, _ in
                 if atBottom { proxy.scrollTo("end", anchor: .bottom) }
+            }
+            .onChange(of: brain.chatID.map { brain.happier.pendingInbox(for: $0).count } ?? 0) { _, n in
+                if n > 0 { withAnimation(.spring(response: 0.4, dampingFraction: 0.9)) { proxy.scrollTo("end", anchor: .bottom) } }
             }
             .onChange(of: brain.turns.count) { _, _ in
                 // A new message always brings the bottom into view (like Claude / ChatGPT).
@@ -405,5 +415,126 @@ extension PlatformColor {
         #else
         return .systemBackground
         #endif
+    }
+}
+
+
+/// "Allow Claude to read …?" — an approval request of the running chat, answered in place (Claude Code app style).
+struct ChatApprovalCard: View {
+    let item: InboxItem
+    @Environment(BrainModel.self) private var brain
+
+    var body: some View {
+        let opts = PermissionPrompt.options(item)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "hand.raised.fill").foregroundStyle(.orange)
+                Text(Self.question(item.title, detail: Self.code(item.detail))).font(.system(size: 13.5, weight: .semibold)).lineLimit(2).truncationMode(.middle)
+            }
+            if !Self.display(Self.code(item.detail)).isEmpty {
+                ScrollView {
+                    Text(Self.display(Self.code(item.detail)))
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundStyle(Theme.secondary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 140)
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
+            }
+            HStack(spacing: 8) {
+                Spacer()
+                ForEach(opts.reversed(), id: \.id) { o in
+                    let primary = o.id == "allow_once"
+                    Button(shortLabel(o)) {
+                        withAnimation(.easeOut(duration: 0.2)) { brain.happier.resolve(item, decision: o.id) }
+                    }
+                    .buttonStyle(PillButtonStyle(prominent: primary))
+                    .keyboardShortcut(primary ? .defaultAction : (o.id.hasPrefix("reject") ? .cancelAction : nil))
+                }
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.35)))
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .accessibilityIdentifier("chat.approval")
+    }
+
+    /// "Read(/a/b/file.txt)" → "Allow reading file.txt?"; "Bash(ls -la)" → "Allow running ls -la?".
+    static func question(_ title: String, detail: String = "") -> String {
+        guard let open = title.firstIndex(of: "("), title.hasSuffix(")") else { return "Allow \(title)?" }
+        let tool = String(title[..<open])
+        var arg = String(title[title.index(after: open)..<title.index(before: title.endIndex)])
+        // The title is shortened ("…"); the tool input has the full path / command.
+        if let v = try? JSONValue.parse(Data(detail.utf8)) {
+            if let p = v["file_path"]?.string ?? v["notebook_path"]?.string ?? v["path"]?.string { arg = p }
+            else if let c = v["command"]?.string { arg = c.count > 60 ? String(c.prefix(60)) + "…" : c }
+            else if let q = v["pattern"]?.string ?? v["query"]?.string ?? v["url"]?.string { arg = q }
+        }
+        if arg.hasPrefix("/") { arg = URL(fileURLWithPath: arg.replacingOccurrences(of: "…", with: "")).lastPathComponent }
+        let verb: String
+        switch tool {
+        case "Read", "NotebookRead": verb = "reading"
+        case "Write": verb = "writing"
+        case "Edit", "MultiEdit", "NotebookEdit": verb = "editing"
+        case "Bash": verb = "running"
+        case "Glob", "Grep": verb = "searching"
+        case "WebFetch": verb = "fetching"
+        case "WebSearch": verb = "searching the web for"
+        default: verb = "using \(tool) on"
+        }
+        return "Allow \(verb) \(arg)?"
+    }
+
+    /// Tool input for people: the command / path / pattern as plain text, other inputs as readable JSON.
+    static func display(_ code: String) -> String {
+        guard let v = try? JSONValue.parse(Data(code.utf8)) else { return code }
+        if let c = v["command"]?.string { return c }
+        if let p = v["file_path"]?.string ?? v["notebook_path"]?.string { return p }
+        if let u = v["url"]?.string { return u }
+        if let q = v["pattern"]?.string ?? v["query"]?.string { return q }
+        return code.replacingOccurrences(of: "\\/", with: "/")
+    }
+
+    /// The fenced part of the Inbox detail (the tool input), without the Markdown lead line.
+    static func code(_ detail: String) -> String {
+        let parts = detail.components(separatedBy: "```")
+        if parts.count >= 3 { return parts[1].trimmingCharacters(in: .newlines) }
+        return detail.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func shortLabel(_ o: (id: String, label: String)) -> String {
+        if o.id.hasPrefix("allow_always") { return "Always allow" }
+        if o.id.hasPrefix("reject") { return "Deny" }
+        if o.id == "allow_once" { return "Allow" }
+        return o.label
+    }
+}
+
+
+/// Rounded pill button: filled (primary action) or quiet grey, with a press/hover response.
+struct PillButtonStyle: ButtonStyle {
+    var prominent = false
+    func makeBody(configuration: Configuration) -> some View {
+        PillBody(configuration: configuration, prominent: prominent)
+    }
+
+    private struct PillBody: View {
+        let configuration: ButtonStyleConfiguration
+        let prominent: Bool
+        @State private var hover = false
+        var body: some View {
+            configuration.label
+                .font(.system(size: 12.5, weight: .medium))
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .foregroundStyle(prominent ? Color(PlatformColor.textBackgroundColorCompat) : Theme.primary)
+                .background(Capsule().fill(prominent ? Theme.primary.opacity(hover ? 0.88 : 1) : Theme.hoverFill.opacity(hover ? 1.6 : 1)))
+                .scaleEffect(configuration.isPressed ? 0.96 : 1)
+                .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
+                .animation(.easeOut(duration: 0.12), value: hover)
+                .onHover { hover = $0 }
+        }
     }
 }

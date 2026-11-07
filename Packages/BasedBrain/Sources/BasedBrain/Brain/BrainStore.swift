@@ -167,7 +167,12 @@ public final class BrainStore {
         guard let pid = propID(db, name), case .checkbox(let b)? = row.values[pid] else { return d }
         return b
     }
-    public func body(of id: RecordID) -> String { MarkdownExporter(store: store).export(page: id, includeTitle: false) }
+    /// The page's content as Markdown — without the property lines a database row would otherwise get
+    /// ("Kind: …, Status: …"), which ended up inside Inbox details and memory bodies.
+    public func body(of id: RecordID) -> String {
+        MarkdownExporter(store: store).exportBlocks(store.contentBlocks(of: id), indent: 0)
+            .trimmingCharacters(in: .newlines)
+    }
 
     public func setBody(_ id: RecordID, markdown: String) {
         let old = store.contentBlocks(of: id).map(\.id)

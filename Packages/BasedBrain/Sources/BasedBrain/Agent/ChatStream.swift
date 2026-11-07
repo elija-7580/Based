@@ -52,6 +52,10 @@ public struct ChatPart: Sendable, Equatable, Identifiable {
     public var provisional = false
     public var started = Date()
     public var finished: Date?
+    /// Edit / Write / MultiEdit: unified diff of the change (shown like Claude Code's diff view).
+    public var diff: String?
+    public var added = 0
+    public var removed = 0
 
     public init(id: String, kind: Kind, text: String = "", status: Status = .done) {
         self.id = id; self.kind = kind; self.text = text; self.status = status
@@ -133,6 +137,11 @@ public struct ChatTurnBuilder: Sendable, Equatable {
             var p = ChatPart(id: id.isEmpty ? nextID("tl") : id, kind: .tool, status: .running)
             p.toolName = name
             p.detail = Self.summary(name: name, input: input)
+            if let d = Self.diff(name: name, input: input) {
+                p.diff = d
+                let c = LineDiff.counts(LineDiff.ops(old: Self.oldText(name, input), new: Self.newText(name, input)))
+                p.added = c.added; p.removed = c.removed
+            }
             if !parts.contains(where: { $0.id == p.id }) { parts.append(p) }
         case .toolResult(let id, let output, let isError):
             guard let i = parts.firstIndex(where: { $0.id == id && $0.kind == .tool }) else { return }
@@ -172,6 +181,25 @@ public struct ChatTurnBuilder: Sendable, Equatable {
 
     private mutating func closeProvisionalText() {
         if let i = parts.indices.last, parts[i].kind == .text, parts[i].status == .running { finish(i) }
+    }
+
+    /// Unified diff for file-changing tools (Claude Code Edit / MultiEdit / Write, Codex apply_patch-like input).
+    static func diff(name: String, input: JSONValue) -> String? {
+        let base = name.components(separatedBy: "__").last ?? name
+        guard ["Edit", "MultiEdit", "Write", "str_replace_based_edit_tool", "write_file", "replace"].contains(base) else { return nil }
+        let old = oldText(name, input), new = newText(name, input)
+        guard !(old.isEmpty && new.isEmpty), old != new else { return nil }
+        return LineDiff.unified(old: old, new: new, context: 2)
+    }
+
+    static func oldText(_ name: String, _ input: JSONValue) -> String {
+        if let edits = input["edits"]?.array { return edits.compactMap { $0["old_string"]?.string }.joined(separator: "\n") }
+        return input["old_string"]?.string ?? input["old_str"]?.string ?? ""
+    }
+
+    static func newText(_ name: String, _ input: JSONValue) -> String {
+        if let edits = input["edits"]?.array { return edits.compactMap { $0["new_string"]?.string }.joined(separator: "\n") }
+        return input["new_string"]?.string ?? input["new_str"]?.string ?? input["content"]?.string ?? ""
     }
 
     /// TodoWrite (whole list) and TaskCreate / TaskUpdate (incremental) → the current to-do list.

@@ -112,3 +112,33 @@ struct CLIChatTests {
         #expect(m[0].detail.contains("gpt-a"))
     }
 }
+
+struct ToolDiffTests {
+    @Test func editGetsDiff() {
+        var b = ChatTurnBuilder()
+        b.apply(.toolUse(id: "e1", name: "Edit", input: ["file_path": "/a.swift", "old_string": "let x = 1\nlet y = 2", "new_string": "let x = 10\nlet y = 2\nlet z = 3"]))
+        let p = b.parts[0]
+        #expect(p.diff?.contains("+let x = 10") == true)
+        #expect(p.diff?.contains("-let x = 1") == true)
+        #expect(p.added == 2 && p.removed == 1)
+        b.apply(.toolUse(id: "w1", name: "Write", input: ["file_path": "/b.txt", "content": "a\nb"]))
+        #expect(b.parts[1].added == 2 && b.parts[1].removed == 0)
+        b.apply(.toolUse(id: "r1", name: "Read", input: ["file_path": "/b.txt"]))
+        #expect(b.parts[2].diff == nil)
+    }
+}
+
+@MainActor
+struct InboxDetailTests {
+    @Test func detailKeepsBodyWithoutProperties() {
+        let store = WorkspaceStore(persistence: nil, node: "t")
+        let brain = BrainStore(store: store)
+        _ = brain.ensureHappier()
+        let id = brain.addInbox(title: "Read(/a/b.txt)", kind: .permission, sessionID: "s1",
+                                detail: "Agent wants to run **read**: Read(/a/b.txt)\n\n```\n{\n  \"file_path\" : \"/a/b.txt\"\n}\n```",
+                                options: [("allow_once", "Allow")])
+        let item = brain.inbox().first { $0.id == id }
+        #expect(item?.detail.contains("file_path") == true)
+        #expect(item?.detail.contains("Status:") == false)
+    }
+}

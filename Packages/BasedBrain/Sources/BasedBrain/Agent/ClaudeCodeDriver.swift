@@ -414,12 +414,14 @@ public extension ClaudePrint {
     /// Arguments for a streamed run: thinking, text deltas, tool calls and results arrive line by line.
     static func streamArguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
                                 allowedTools: [String] = [], model: String? = nil, effort: String? = nil,
-                                permissionMode: String? = nil) -> [String] {
+                                permissionMode: String? = nil, permissionPromptTool: String? = nil) -> [String] {
         var a = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
                           allowedTools: allowedTools, model: model)
         if let i = a.firstIndex(of: "json") { a[i] = "stream-json" }
         if let e = effort, !e.isEmpty { a += ["--effort", e] }
         if let m = permissionMode, !m.isEmpty { a += ["--permission-mode", m] }
+        // Permission prompts (e.g. reading outside the working folder) go to Based instead of failing silently.
+        if let t = permissionPromptTool, !t.isEmpty { a += ["--permission-prompt-tool", t] }
         // Thinking summaries when the CLI provides them (otherwise the chat shows "Thought for N s").
         a += ["--settings", #"{"showThinkingSummaries":true}"#]
         return a + ["--verbose", "--include-partial-messages"]
@@ -430,6 +432,7 @@ public extension ClaudePrint {
     static func stream(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
                        appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
                        model: String? = nil, effort: String? = nil, permissionMode: String? = nil,
+                       permissionPromptTool: String? = nil,
                        onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<Reply, Error> {
         #if os(macOS) || os(Linux)
         guard let exe = executable ?? ShellEnvironment.which("claude") else {
@@ -438,7 +441,8 @@ public extension ClaudePrint {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: exe)
         p.arguments = streamArguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
-                                      allowedTools: allowedTools, model: model, effort: effort, permissionMode: permissionMode)
+                                      allowedTools: allowedTools, model: model, effort: effort, permissionMode: permissionMode,
+                                      permissionPromptTool: permissionPromptTool)
         p.environment = ShellEnvironment.environment()
         p.currentDirectoryURL = URL(fileURLWithPath: cwd)
         let out = Pipe(), err = Pipe()

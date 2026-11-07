@@ -52,6 +52,10 @@ enum DebugDriver {
         case "engine":
             let kind = ChatEngineSpec.Kind(rawValue: q["kind"] ?? "auto") ?? .auto
             model.brain.engineSpec = ChatEngineSpec(kind: kind, model: q["model"] ?? "", effort: q["effort"] ?? "", permission: q["permission"] ?? "")
+        case "approve":
+            for item in model.brain.happier.inbox where item.status == .pending {
+                model.brain.happier.resolve(item, decision: q["decision"] ?? "allow_once")
+            }
         case "ask":
             model.brain.ask(q["text"] ?? "hi", pageContext: nil)
         case "chat":

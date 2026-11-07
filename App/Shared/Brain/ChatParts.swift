@@ -96,7 +96,10 @@ struct AssistantMessageView: View {
     private func groups(_ parts: [ChatPart]) -> [PartGroup] {
         var out: [PartGroup] = []
         for p in parts {
-            if p.kind == .tool, let last = out.last, last.kind == .tool { out[out.count - 1].parts.append(p) }
+            // File edits stand on their own with their diff (Claude Code app); other tools group up.
+            if p.kind == .tool, p.diff == nil, let last = out.last, last.kind == .tool, last.parts.allSatisfy({ $0.diff == nil }) {
+                out[out.count - 1].parts.append(p)
+            }
             else { out.append(PartGroup(id: p.id, kind: p.kind, parts: [p])) }
         }
         return out
@@ -225,11 +228,13 @@ struct ToolRowView: View {
     let part: ChatPart
     var standalone: Bool
     @State private var open = false
+    /// Small edits are shown right away, like the Claude Code app's inline diffs.
+    private var autoOpen: Bool { standalone && part.diff != nil && part.added + part.removed <= 16 }
 
     var body: some View {
         let style = ToolStyle(name: part.toolName)
         VStack(alignment: .leading, spacing: 6) {
-            Button { if part.output?.isEmpty == false || !part.images.isEmpty { withAnimation(.easeOut(duration: 0.15)) { open.toggle() } } } label: {
+            Button { if part.output?.isEmpty == false || !part.images.isEmpty || part.diff != nil { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } } } label: {
                 HStack(spacing: 8) {
                     Group {
                         if style.symbol == SymbolImage.ai { AIGlyph(size: 13) } else { Image(systemName: style.symbol).font(.system(size: 12)) }
@@ -240,6 +245,13 @@ struct ToolRowView: View {
                     Text(part.detail).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.secondary)
                         .lineLimit(1).truncationMode(.middle)
                     Spacer(minLength: 4)
+                    if part.diff != nil {
+                        HStack(spacing: 4) {
+                            Text("+\(part.added)").foregroundStyle(.green)
+                            Text("−\(part.removed)").foregroundStyle(.red.opacity(0.85))
+                        }
+                        .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                    }
                     StatusIcon(status: part.status)
                 }
                 .padding(.horizontal, 10).padding(.vertical, standalone ? 8 : 5)
@@ -247,7 +259,20 @@ struct ToolRowView: View {
             }
             .buttonStyle(.plain)
             .help(part.toolName)
-            if open, let out = part.output, !out.isEmpty {
+            if open, let diff = part.diff {
+                ScrollView([.vertical, .horizontal]) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(LineDiff.parse(diff)) { DiffLineRow(line: $0) }
+                    }
+                    .font(.system(size: 11.5, design: .monospaced))
+                    .padding(.vertical, 6)
+                }
+                .frame(maxHeight: 320)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, 10).padding(.bottom, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else if open, let out = part.output, !out.isEmpty {
                 ScrollView([.vertical, .horizontal]) {
                     Text(String(out.prefix(20_000)))
                         .font(.system(size: 11.5, design: .monospaced))
@@ -263,6 +288,8 @@ struct ToolRowView: View {
             // Browser / computer use: the latest screenshot stays visible, like Claude's browser view.
             if !part.images.isEmpty { ToolImageStrip(images: part.images) }
         }
+        .onAppear { if autoOpen { open = true } }
+        .onChange(of: part.diff) { _, _ in if autoOpen { open = true } }
     }
 }
 

@@ -300,7 +300,9 @@ final class BrainModel {
                                                           allowedTools: mcp == nil ? [] : ["mcp__based"],
                                                           model: spec.model.isEmpty ? nil : spec.model,
                                                           effort: spec.effort.isEmpty ? nil : spec.effort,
-                                                          permissionMode: spec.permission.isEmpty ? nil : spec.permission, onEvent: track)
+                                                          permissionMode: spec.permission.isEmpty ? nil : spec.permission,
+                                                          permissionPromptTool: mcp != nil && spec.permission != "bypassPermissions" ? "mcp__based__approval" : nil,
+                                                          onEvent: track)
                     default:
                         result = await Self.runCLI(spec, prompt: p, resume: resume, system: system,
                                                    mcp: mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) }, onEvent: track)
