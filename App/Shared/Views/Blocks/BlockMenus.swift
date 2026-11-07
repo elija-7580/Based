@@ -118,62 +118,89 @@ struct BlockMenuView: View {
         var shortcut: String?
         var destructive = false
         var opensSub: Sub?
+        var dividerBefore = false
+        var swatch: TColor?
+        var selected = false
         var run: () -> Void
     }
 
     var body: some View {
         let a = BlockActions(ids: ids, editor: editor, model: model)
-        VStack(alignment: .leading, spacing: 2) {
-            TextField("Search actions…", text: $query)
-                .textFieldStyle(.roundedBorder)
-                .padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                TextField("Search actions…", text: $query)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .onSubmit { runFirst(a) }
+            }
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
+            .padding(.horizontal, 8).padding(.top, 8).padding(.bottom, 4)
+            if sub == .main, query.isEmpty, let label = typeLabel(a) {
+                Text(label)
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 2)
+            }
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 1) {
                     switch sub {
                     case .main: rows(actions(a))
                     case .turnInto: backRow; rows(turnActions(a))
                     case .color: backRow; rows(colorActions(a))
                     }
                 }
+                .padding(.horizontal, 6).padding(.bottom, 6)
+                .id(sub)
+                .transition(.asymmetric(insertion: .move(edge: sub == .main ? .leading : .trailing).combined(with: .opacity),
+                                        removal: .opacity))
             }
-            .frame(maxHeight: 380)
+            .frame(maxHeight: 400)
+            .animation(.spring(response: 0.28, dampingFraction: 0.9), value: sub)
             if let b = a.single {
                 Divider()
-                Text("Last edited \(b.updatedAt.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption).foregroundStyle(Theme.secondary).padding(.top, 2)
+                Text("Last edited \(b.updatedAt.formatted(.relative(presentation: .named)))")
+                    .font(.system(size: 11.5)).foregroundStyle(Theme.secondary)
+                    .padding(.horizontal, 14).padding(.vertical, 8)
             }
         }
-        .padding(8)
-        .frame(width: 260)
+        .frame(width: 265)
+    }
+
+    /// "Text", "Heading 2", "3 blocks" — Notion shows what the menu acts on.
+    private func typeLabel(_ a: BlockActions) -> String? {
+        if let b = a.single { return b.type.displayName }
+        return ids.count > 1 ? "\(ids.count) blocks" : nil
+    }
+
+    private func runFirst(_ a: BlockActions) {
+        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+        let list: [Action] = sub == .main ? actions(a) : (sub == .turnInto ? turnActions(a) : colorActions(a))
+        guard let first = (q.isEmpty ? list : list.filter { $0.title.lowercased().contains(q) }).first else { return }
+        if let s = first.opensSub { sub = s; query = ""; return }
+        first.run(); done()
     }
 
     private var backRow: some View {
-        Button { sub = .main; query = "" } label: {
-            Label("Back", systemImage: "chevron.left").frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .buttonStyle(MenuRowStyle())
+        PanelActionRow(title: sub == .color ? "Color" : "Turn into", symbol: "chevron.left") { sub = .main; query = "" }
     }
 
     private func rows(_ list: [Action]) -> some View {
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
         let filtered = q.isEmpty ? list : list.filter { $0.title.lowercased().contains(q) }
         return ForEach(filtered) { item in
-            Button {
-                if let s = item.opensSub { sub = s; query = ""; return }
-                item.run()
-                done()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: item.symbol).frame(width: 18)
-                    Text(item.title)
-                    Spacer()
-                    if let s = item.shortcut { Text(s).font(.caption).foregroundStyle(Theme.secondary) }
-                    if item.opensSub != nil { Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.secondary) }
+            if item.dividerBefore && q.isEmpty { Divider().padding(.vertical, 4).padding(.horizontal, 6) }
+            if let swatch = item.swatch {
+                ColorRow(title: item.title, color: swatch, selected: item.selected) { item.run(); done() }
+            } else {
+                PanelActionRow(title: item.title, symbol: item.symbol, shortcut: item.shortcut ?? (item.opensSub != nil ? "›" : ""),
+                               destructive: item.destructive) {
+                    if let s = item.opensSub { sub = s; query = ""; return }
+                    item.run()
+                    done()
                 }
-                .foregroundStyle(item.destructive ? Color.red : Theme.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .buttonStyle(MenuRowStyle())
         }
     }
 
@@ -181,25 +208,34 @@ struct BlockMenuView: View {
         var out: [Action] = []
         if let b = a.single, b.type.isPageLike {
             out.append(Action(title: "Open", symbol: "arrow.up.right.square") { model.open(b.id) })
+            out.append(Action(title: "Open in side peek", symbol: "sidebar.right") { model.open(b.id, mode: .sidePeek) })
         }
         if !editor.isLocked {
-            out.append(Action(title: "Delete", symbol: "trash", shortcut: "Del", destructive: true) { a.delete() })
-            out.append(Action(title: "Duplicate", symbol: "plus.square.on.square", shortcut: "⌘D") { a.duplicate() })
             if a.canTurnInto { out.append(Action(title: "Turn into", symbol: "arrow.triangle.2.circlepath", opensSub: .turnInto) {}) }
             out.append(Action(title: "Color", symbol: "paintpalette", opensSub: .color) {})
+        }
+        out.append(Action(title: "Copy link to block", symbol: "link", shortcut: "⌥⌘L", dividerBefore: !editor.isLocked) { a.copyLink() })
+        out.append(Action(title: "Copy as Markdown", symbol: "doc.on.doc") { a.copyMarkdown() })
+        if !editor.isLocked {
+            out.append(Action(title: "Duplicate", symbol: "plus.square.on.square", shortcut: "⌘D") { a.duplicate() })
             out.append(Action(title: "Move to", symbol: "arrow.turn.up.right", shortcut: "⌘⇧P") { a.moveTo() })
             out.append(Action(title: "Move up", symbol: "arrow.up", shortcut: "⌘⇧↑") { a.move(up: true) })
             out.append(Action(title: "Move down", symbol: "arrow.down", shortcut: "⌘⇧↓") { a.move(up: false) })
+            out.append(Action(title: "Delete", symbol: "trash", shortcut: "Del", destructive: true) { a.delete() })
         }
-        out.append(Action(title: "Copy as Markdown", symbol: "doc.on.doc") { a.copyMarkdown() })
-        out.append(Action(title: "Copy link", symbol: "link") { a.copyLink() })
+        out.append(Action(title: "Ask AI", symbol: "sparkle", shortcut: "⌘J", dividerBefore: true) {
+            model.showChatPanel = true
+        })
         return out
     }
 
     private func turnActions(_ a: BlockActions) -> [Action] {
-        var out = TurnIntoOptions.types.map { t in Action(title: t.displayName, symbol: t.symbol) { a.turn(into: t) } }
+        let current = a.single?.type
+        var out = TurnIntoOptions.types.map { t in
+            Action(title: t.displayName, symbol: t.symbol, shortcut: t == current ? "✓" : nil) { a.turn(into: t) }
+        }
         if a.supportsToggleHeading, let b = a.single {
-            out.append(Action(title: b.props.toggleable == true ? "Remove toggle" : "Toggle heading", symbol: "chevron.right") {
+            out.append(Action(title: b.props.toggleable == true ? "Remove toggle" : "Toggle heading", symbol: "chevron.right", dividerBefore: true) {
                 a.turn(into: b.type, toggleable: !(b.props.toggleable == true))
             })
         }
@@ -207,9 +243,41 @@ struct BlockMenuView: View {
     }
 
     private func colorActions(_ a: BlockActions) -> [Action] {
-        (TColor.textColors + TColor.backgroundColors).map { c in
-            Action(title: c.displayName, symbol: c.isBackground ? "a.square.fill" : "a.square") { a.color(c) }
+        let current = a.single?.props.color
+        return (TColor.textColors + TColor.backgroundColors).enumerated().map { i, c in
+            Action(title: c.displayName + (c.isBackground ? " background" : ""), symbol: "a.square",
+                   dividerBefore: i == TColor.textColors.count, swatch: c, selected: (current ?? .default) == c) { a.color(c) }
         }
+    }
+}
+
+/// Colour row with Notion's "A" swatch (text colour or tinted background).
+private struct ColorRow: View {
+    let title: String
+    let color: TColor
+    var selected = false
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Text("A")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(color.isBackground ? Theme.primary : Theme.color(color))
+                    .frame(width: 20, height: 20)
+                    .background(RoundedRectangle(cornerRadius: 4).fill(color.isBackground ? Theme.color(color) : Color.clear))
+                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.dividerColor))
+                Text(title).font(.system(size: 13.5)).foregroundStyle(Theme.primary)
+                Spacer()
+                if selected { Image(systemName: "checkmark").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary) }
+            }
+            .padding(.horizontal, 8).frame(height: 30)
+            .background(RoundedRectangle(cornerRadius: 5).fill(hover ? Theme.hoverFill : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
     }
 }
 
