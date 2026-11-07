@@ -771,14 +771,32 @@ struct ButtonBlockView: View {
                 .help(helpText)
                 Button { editing.toggle(); label = block.props.buttonLabel ?? "" } label: {
                     Image(systemName: "gearshape").font(.system(size: 12))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.hoverFill)
                 .foregroundStyle(Theme.secondary)
                 .opacity(hover || editing ? 1 : 0)
                 .help("Edit button")
+                // Notion edits a button in a floating panel next to it, not inline (that pushed into the next column).
+                .popover(isPresented: $editing, arrowEdge: .bottom) {
+                    config.environment(model).arrowlessPopover()
+                }
             }
             .onHover { hover = $0 }
-            if editing { config }
+            // "Insert blocks" keeps its template blocks editable right under the button while the panel is open.
+            if editing, action.kind == .insertBlocks {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Blocks this button inserts").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    if model.registry.block(block.id).children.isEmpty {
+                        Button("Add a block") { editor.focus(FocusTarget(model.store.insertBlock(.todo, in: .block(block.id)), 0)) }
+                            .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
+                    }
+                    BlockList(parentID: block.id, editor: editor)
+                }
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(Theme.divider)))
+            }
         }
     }
 
@@ -806,64 +824,122 @@ struct ButtonBlockView: View {
 
     @ViewBuilder
     private var config: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            TextField("Button name", text: $label)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit { model.store.updateBlock(block.id, name: "Rename button") { $0.props.buttonLabel = label } }
-                .onChange(of: label) { _, v in model.store.updateBlock(block.id, name: "Rename button") { $0.props.buttonLabel = v } }
-            Picker("When clicked", selection: Binding(get: { action.kind }, set: { k in setAction { $0.kind = k; $0.targetID = nil } })) {
-                Text("Insert blocks").tag(ButtonAction.Kind.insertBlocks)
-                Text("Add page to database").tag(ButtonAction.Kind.addPage)
-                Text("Open page").tag(ButtonAction.Kind.openPage)
-            }
-            .pickerStyle(.menu)
-            .fixedSize()
-            switch action.kind {
-            case .insertBlocks:
-                Text("Blocks to insert when clicked:").font(.system(size: 12)).foregroundStyle(Theme.secondary)
-                if model.registry.block(block.id).children.isEmpty {
-                    Button("Add a block") { editor.focus(FocusTarget(model.store.insertBlock(.todo, in: .block(block.id)), 0)) }
-                        .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Edit button").font(.system(size: 13, weight: .semibold)).padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 8)
+            VStack(alignment: .leading, spacing: 12) {
+                field("Name") {
+                    TextField("Button name", text: $label)
+                        .textFieldStyle(.plain)
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.hoverFill))
+                        .onChange(of: label) { _, v in model.store.updateBlock(block.id, name: "Rename button", coalesce: "button-\(block.id)") { $0.props.buttonLabel = v } }
                 }
-                BlockList(parentID: block.id, editor: editor)
-            case .addPage:
-                let dbs = model.store.databases.values.filter { model.store.blocks[$0.blockID]?.trashedAt == nil }
-                    .sorted { $0.title.plainText.localizedCaseInsensitiveCompare($1.title.plainText) == .orderedAscending }
-                Picker("Database", selection: Binding(get: { action.targetID ?? "" }, set: { id in setAction { $0.targetID = id.isEmpty ? nil : id } })) {
-                    Text("Choose…").tag("")
-                    ForEach(dbs, id: \.id) { db in Text(db.title.plainText.isEmpty ? "Untitled" : db.title.plainText).tag(db.id) }
+                field("When clicked") {
+                    Picker("", selection: Binding(get: { action.kind }, set: { k in setAction { $0.kind = k; $0.targetID = nil; $0.values = nil } })) {
+                        Label("Insert blocks", systemImage: "plus.square.on.square").tag(ButtonAction.Kind.insertBlocks)
+                        Label("Add page to database", systemImage: "plus").tag(ButtonAction.Kind.addPage)
+                        Label("Open page", systemImage: "arrow.up.right").tag(ButtonAction.Kind.openPage)
+                    }
+                    .labelsHidden().pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .pickerStyle(.menu)
-                .fixedSize()
-                if let vals = action.values, !vals.isEmpty, let db = model.store.databases[action.targetID ?? ""] {
-                    Text("Sets " + vals.keys.compactMap { db.property($0)?.name }.sorted().joined(separator: ", "))
-                        .font(.system(size: 12)).foregroundStyle(Theme.secondary)
-                }
-                Toggle("Open the new page", isOn: Binding(get: { action.openAfter ?? true }, set: { v in setAction { $0.openAfter = v } }))
-                    .toggleStyle(.checkbox)
-            case .openPage:
-                HStack(spacing: 6) {
-                    if let t = action.targetID { Text(model.store.title(of: t)).fontWeight(.medium) }
-                    TextField("Search pages…", text: $pageQuery).textFieldStyle(.roundedBorder).frame(maxWidth: 260)
-                }
-                if !pageQuery.isEmpty {
-                    let q = pageQuery.lowercased()
-                    ForEach(model.store.allPages().filter { $0.trashedAt == nil && $0.title.lowercased().contains(q) }.prefix(8), id: \.id) { p in
-                        Button { setAction { $0.targetID = p.id }; pageQuery = "" } label: {
-                            HStack(spacing: 6) {
-                                PageIconView(icon: p.props.icon, size: 14)
-                                Text(model.store.title(of: p.id)).lineLimit(1)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                switch action.kind {
+                case .insertBlocks:
+                    Text("Edit the blocks to insert below the button.").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                case .addPage:
+                    let dbs = model.store.databases.values.filter { model.store.blocks[$0.blockID]?.trashedAt == nil }
+                        .sorted { $0.title.plainText.localizedCaseInsensitiveCompare($1.title.plainText) == .orderedAscending }
+                    field("Database") {
+                        Picker("", selection: Binding(get: { action.targetID ?? "" }, set: { id in setAction { $0.targetID = id.isEmpty ? nil : id; $0.values = nil } })) {
+                            Text("Choose…").tag("")
+                            ForEach(dbs, id: \.id) { db in Text(db.title.plainText.isEmpty ? "Untitled" : db.title.plainText).tag(db.id) }
                         }
-                        .buttonStyle(.hoverFill)
+                        .labelsHidden().pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if let db = model.store.databases[action.targetID ?? ""] {
+                        let presets = db.properties.filter { [.select, .status].contains($0.type) }
+                        if !presets.isEmpty {
+                            field("Set properties") {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(presets) { p in presetRow(p) }
+                                }
+                            }
+                        }
+                    }
+                    Toggle("Open the new page", isOn: Binding(get: { action.openAfter ?? true }, set: { v in setAction { $0.openAfter = v } }))
+                        .toggleStyle(.checkbox)
+                case .openPage:
+                    field("Page") {
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let t = action.targetID {
+                                HStack(spacing: 6) {
+                                    PageIconView(icon: model.store.icon(of: t), size: 14)
+                                    Text(model.store.title(of: t)).fontWeight(.medium).lineLimit(1)
+                                }
+                            }
+                            TextField("Search pages…", text: $pageQuery)
+                                .textFieldStyle(.plain)
+                                .padding(.horizontal, 8).padding(.vertical, 6)
+                                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.hoverFill))
+                            if !pageQuery.isEmpty {
+                                let q = pageQuery.lowercased()
+                                ForEach(model.store.allPages().filter { $0.trashedAt == nil && $0.title.lowercased().contains(q) }.prefix(6), id: \.id) { p in
+                                    Button { setAction { $0.targetID = p.id }; pageQuery = "" } label: {
+                                        HStack(spacing: 6) {
+                                            PageIconView(icon: p.props.icon, size: 14)
+                                            Text(model.store.title(of: p.id)).lineLimit(1)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(.hoverFill)
+                                }
+                            }
+                        }
                     }
                 }
             }
+            .padding(.horizontal, 14).padding(.bottom, 14)
+            Rectangle().fill(Theme.gridLine).frame(height: 1)
+            HStack {
+                Button(role: .destructive) { editing = false; model.store.deleteBlocks([block.id]) } label: { Label("Delete button", systemImage: "trash") }
+                    .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
+                Spacer()
+                Button("Done") { editing = false }.keyboardShortcut(.defaultAction).controlSize(.small)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 8)
         }
         .font(.system(size: 13))
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).stroke(Color(Theme.divider)))
+        .frame(width: 320)
+    }
+
+    private func field<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.secondary)
+            content()
+        }
+    }
+
+    /// Preset for one select / status property of the new page ("Status → Not started").
+    private func presetRow(_ p: PropertySchema) -> some View {
+        let current: String? = {
+            switch action.values?[p.id] {
+            case .select(let id)?, .status(let id)?: return id
+            default: return nil
+            }
+        }()
+        return HStack(spacing: 8) {
+            Label(p.name, systemImage: p.type.symbol).lineLimit(1).frame(width: 110, alignment: .leading).foregroundStyle(Theme.secondary)
+            Picker("", selection: Binding(get: { current ?? "" }, set: { id in
+                setAction { a in
+                    var v = a.values ?? [:]
+                    v[p.id] = id.isEmpty ? nil : (p.type == .status ? .status(id) : .select(id))
+                    a.values = v.isEmpty ? nil : v
+                }
+            })) {
+                Text("—").tag("")
+                ForEach(p.options ?? [], id: \.id) { o in Text(o.name).tag(o.id) }
+            }
+            .labelsHidden().pickerStyle(.menu)
+        }
     }
 
     private func run() {

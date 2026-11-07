@@ -145,6 +145,9 @@ struct TableLayout: View {
     @State private var selection: Set<RecordID> = []
     @State private var anchor: RecordID?
     @State private var columns = TableColumnWidths()
+    /// Row frames for drag-selecting (a reference box, so frame updates don't re-render the table).
+    @State private var rowFrames = RowFrameBox()
+    @State private var dragBase: Set<RecordID>?
 
     /// Width of the checkbox gutter left of each row.
     static let gutter: CGFloat = 28
@@ -192,6 +195,22 @@ struct TableLayout: View {
                     }
                 }
                 .padding(.bottom, 4)
+                .coordinateSpace(.named(rowSpace))
+                // Notion: press in the checkbox column and drag over rows to select several at once.
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 3, coordinateSpace: .named(rowSpace))
+                        .onChanged { g in
+                            guard g.startLocation.x <= Self.gutter + 6 else { return }
+                            if dragBase == nil {
+                                dragBase = NSEvent.modifierFlags.contains(.shift) || NSEvent.modifierFlags.contains(.command) ? selection : []
+                            }
+                            let lo = min(g.startLocation.y, g.location.y), hi = max(g.startLocation.y, g.location.y)
+                            let hit = ordered.filter { id in rowFrames.frames[id].map { $0.maxY > lo && $0.minY < hi } ?? false }
+                            selection = (dragBase ?? []).union(hit)
+                            anchor = hit.last ?? anchor
+                        }
+                        .onEnded { _ in dragBase = nil }
+                )
             }
         }
         .onKeyPress(.escape) {
@@ -205,6 +224,8 @@ struct TableLayout: View {
             if !selection.isSubset(of: alive) { selection.formIntersection(alive) }
         }
     }
+
+    private var rowSpace: String { "dbRows-" + ctx.block.id }
 
     /// Rows in display order (groups flattened, collapsed groups skipped) — used for ⇧-click ranges.
     private var displayedRows: [RecordID] {
@@ -220,6 +241,7 @@ struct TableLayout: View {
                          selectionActive: !selection.isEmpty) { shift in
                 toggle(row.id, shift: shift, ordered: ordered)
             }
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .named(rowSpace)) }) { [box = rowFrames, id = row.id] f in box.frames[id] = f }
             .contextMenu {
                 if selection.count > 1, selection.contains(row.id) {
                     bulkMenu(ordered)
@@ -655,3 +677,7 @@ struct ListRow: View {
         .accessibilityIdentifier("list.row")
     }
 }
+
+
+/// Row frames of one table view, kept outside SwiftUI state.
+final class RowFrameBox { var frames: [RecordID: CGRect] = [:] }
