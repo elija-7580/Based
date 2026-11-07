@@ -77,17 +77,17 @@ struct SettingsView: View {
     }
 
     private var sidebar: some View {
-        // Optional selection works on macOS and iOS (non-optional List(selection:) is macOS-only).
-        List(selection: Binding<SettingsPage?>(get: { page }, set: { if let v = $0 { page = v } })) {
-            Section("Account") {
-                ForEach(SettingsPage.accountPages) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
+        // Notion-style rows (quiet grey selection) instead of a List whose selection used the accent colour —
+        // that drew a hard black bar in this app's monochrome accent.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 1) {
+                SettingsSectionLabel("Account")
+                ForEach(SettingsPage.accountPages) { p in SettingsNavRow(page: p, selected: page == p) { page = p } }
+                SettingsSectionLabel("Workspace").padding(.top, 10)
+                ForEach(SettingsPage.workspacePages) { p in SettingsNavRow(page: p, selected: page == p) { page = p } }
             }
-            Section("Workspace") {
-                ForEach(SettingsPage.workspacePages) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
-            }
+            .padding(.horizontal, 8).padding(.vertical, 10)
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
     }
 
     @ViewBuilder
@@ -551,5 +551,40 @@ struct ExportAllSheet: View {
             }
         }
         .padding(20).frame(minWidth: 420)
+    }
+}
+
+
+private struct SettingsSectionLabel: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Text(text).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.secondary)
+            .padding(.horizontal, 8).padding(.bottom, 3)
+    }
+}
+
+private struct SettingsNavRow: View {
+    let page: SettingsView.SettingsPage
+    let selected: Bool
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: page.symbol).font(.system(size: 13)).frame(width: 18)
+                    .foregroundStyle(selected ? Theme.primary : Theme.secondary)
+                Text(page.title).font(.system(size: 13.5, weight: selected ? .medium : .regular))
+                    .foregroundStyle(Theme.primary)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 8).frame(height: 28)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Theme.hoverFill.opacity(1.8) : (hover ? Theme.hoverFill : .clear)))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .accessibilityIdentifier("settings.\(page.rawValue)")
     }
 }
