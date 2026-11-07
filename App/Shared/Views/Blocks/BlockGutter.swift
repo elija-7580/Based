@@ -286,7 +286,8 @@ struct BlockGutterOverlay: View {
             }
             if let t = g.dropTarget {
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor.opacity(0.75))
+                    // Notion's drop line: always a clear blue (the system accent may be graphite → invisible).
+                    .fill(Theme.dropIndicator)
                     .frame(width: t.indicator.width, height: t.indicator.height)
                     .offset(x: t.indicator.minX, y: t.indicator.minY)
                     .allowsHitTesting(false)
@@ -300,8 +301,9 @@ struct BlockGutterOverlay: View {
                     .background(RoundedRectangle(cornerRadius: 5).fill(.regularMaterial))
                     .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.08)))
                     .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
-                    .opacity(0.9)
-                    .offset(x: p.x + 14, y: p.y - 12)
+                    .opacity(0.72)
+                    // Below-right of the pointer, so the line and the text it targets stay visible.
+                    .offset(x: p.x + 16, y: p.y + 10)
                     .allowsHitTesting(false)
             }
         }

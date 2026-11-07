@@ -181,9 +181,9 @@ struct BlockRow: View {
     private var dropIndicator: some View {
         if let e = dropEdge {
             if e == .left || e == .right {
-                Rectangle().fill(Color.accentColor.opacity(0.7)).frame(width: 3)
+                Rectangle().fill(Theme.dropIndicator).frame(width: 3)
             } else {
-                Rectangle().fill(Color.accentColor.opacity(0.7)).frame(height: 3)
+                Rectangle().fill(Theme.dropIndicator).frame(height: 3)
             }
         }
     }

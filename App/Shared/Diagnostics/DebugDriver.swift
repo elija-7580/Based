@@ -118,6 +118,34 @@ enum DebugDriver {
                 let ids = model.store.blocks.values.filter { $0.type == .page && $0.trashedAt == nil && $0.text.plainText == t }.map(\.id)
                 model.store.trash(ids)
             }
+        case "drag":
+            // Drags block `from` (document order) by its handle to the vertical position `y` (fraction of block
+            // `to`: 0 = top edge, 1 = bottom edge) with horizontal offset `dx`; snapshots mid-drag to `out`,
+            // then drops unless `drop=0`.
+            if let ed = model.activeEditor {
+                let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                let fi = Int(q["from"] ?? "0") ?? 0, ti = Int(q["to"] ?? "0") ?? 0
+                guard ids.indices.contains(fi), ids.indices.contains(ti),
+                      let ff = ed.gutter.frame(of: ids[fi]), let tf = ed.gutter.frame(of: ids[ti]) else { break }
+                let start = CGPoint(x: ff.minX - 12, y: ff.minY + 10)
+                let frac = CGFloat(Double(q["y"] ?? "0.75") ?? 0.75)
+                let dx = CGFloat(Double(q["dx"] ?? "0") ?? 0)
+                let end = CGPoint(x: start.x + dx, y: tf.minY + tf.height * frac)
+                ed.beginBlockDrag(from: ids[fi], start: start, at: CGPoint(x: start.x, y: start.y + 4))
+                ed.gutter.updateDrag(CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2))
+                ed.gutter.updateDrag(end)
+                Log.notice("debug drag \(fi)→\(ti) target \(String(describing: ed.gutter.dropTarget?.placement))", category: "debug")
+                let finish = { if q["drop"] != "0" { ed.finishBlockDrag() } }
+                if let out = q["out"] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { snapshot(to: out); finish() }
+                } else { finish() }
+            }
+        case "order":
+            // Writes the open page's top-level block texts in order to `out`.
+            if let ed = model.activeEditor, let out = q["out"] {
+                let lines = model.store.contentBlocks(of: ed.pageID).map { "\($0.type.rawValue)\t\($0.text.plainText)" }
+                try? lines.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":

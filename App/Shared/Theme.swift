@@ -107,6 +107,9 @@ enum Theme {
         }
     }
 
+    /// Drag & drop target line (Notion blue, independent of the system accent colour).
+    static var dropIndicator: Color { Color(dynamic(light: 0x2383E2, dark: 0x529CCA)).opacity(0.85) }
+
     static var secondary: Color { Color(textSecondary) }
     static var primary: Color { Color(textPrimary) }
 
