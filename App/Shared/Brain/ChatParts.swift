@@ -62,7 +62,11 @@ struct AssistantMessageView: View {
             ForEach(groups(parts)) { g in
                 Group {
                     switch g.kind {
-                    case .thinking: ThinkingView(part: g.parts[0])
+                    case .thinking:
+                        // An empty, instant thinking block (Claude Code -p without summaries) is just noise.
+                        if g.parts[0].status == .running || !g.parts[0].text.isEmpty || (g.parts[0].duration ?? 0) >= 1 {
+                            ThinkingView(part: g.parts[0])
+                        }
                     case .text: MarkdownMessageView(markdown: g.parts[0].text, streaming: g.parts[0].status == .running)
                     case .todos: TodoCardView(todos: g.parts[0].todos)
                     case .tool: ToolGroupView(parts: g.parts)
@@ -73,6 +77,10 @@ struct AssistantMessageView: View {
             if turn.isRunning && !turn.reply.isThinking && parts.last?.status != .running {
                 ChatWorkingIndicator(label: parts.isEmpty ? "Thinking…" : "Working…")
                     .transition(.opacity)
+            }
+            if !turn.isRunning, !changedFiles(parts).isEmpty {
+                ChangedFilesCard(files: changedFiles(parts))
+                    .transition(.opacity.combined(with: .offset(y: 4)))
             }
             if !turn.isRunning {
                 HStack(spacing: 10) {
@@ -88,6 +96,19 @@ struct AssistantMessageView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.9), value: parts.map(\.id))
         .animation(.easeOut(duration: 0.2), value: turn.isRunning)
         .animation(.easeOut(duration: 0.15), value: hover)
+    }
+
+    /// Files this reply edited, with summed +/− (Claude Code app's "N files changed").
+    private func changedFiles(_ parts: [ChatPart]) -> [ChangedFile] {
+        var order: [String] = []
+        var sums: [String: (Int, Int)] = [:]
+        for p in parts where p.kind == .tool && p.diff != nil && p.status != .failed {
+            let path = p.detail
+            if sums[path] == nil { order.append(path) }
+            let s = sums[path] ?? (0, 0)
+            sums[path] = (s.0 + p.added, s.1 + p.removed)
+        }
+        return order.map { ChangedFile(path: $0, added: sums[$0]!.0, removed: sums[$0]!.1) }
     }
 
     struct PartGroup: Identifiable { let id: String; let kind: ChatPart.Kind; var parts: [ChatPart] }
@@ -228,6 +249,10 @@ struct ToolRowView: View {
     let part: ChatPart
     var standalone: Bool
     @State private var open = false
+    static func isPath(_ s: String) -> Bool {
+        (s.hasPrefix("/") || s.hasPrefix("~/")) && !s.contains(" ") && s.count > 2
+    }
+
     /// Small edits are shown right away, like the Claude Code app's inline diffs.
     private var autoOpen: Bool { standalone && part.diff != nil && part.added + part.removed <= 16 }
 
@@ -242,8 +267,18 @@ struct ToolRowView: View {
                     .frame(width: 16)
                     .foregroundStyle(Theme.secondary)
                     Text(style.verb(part.status)).font(.system(size: 13, weight: .medium))
-                    Text(part.detail).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.secondary)
-                        .lineLimit(1).truncationMode(.middle)
+                    if Self.isPath(part.detail) {
+                        // Claude Code app: file name first, folder dimmed (and cut from the front).
+                        Text((part.detail as NSString).lastPathComponent)
+                            .font(.system(size: 12.5, weight: .medium, design: .monospaced))
+                            .lineLimit(1)
+                        Text((part.detail as NSString).deletingLastPathComponent)
+                            .font(.system(size: 11.5, design: .monospaced)).foregroundStyle(Theme.secondary.opacity(0.8))
+                            .lineLimit(1).truncationMode(.head)
+                    } else {
+                        Text(part.detail).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.secondary)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
                     Spacer(minLength: 4)
                     if part.diff != nil {
                         HStack(spacing: 4) {
@@ -660,5 +695,76 @@ private struct PulseModifier: ViewModifier {
             .scaleEffect(up ? 1.08 : 0.94)
             .opacity(up ? 1 : 0.7)
             .onAppear { withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { up = true } }
+    }
+}
+
+
+struct ChangedFile: Identifiable, Hashable {
+    var id: String { path }
+    let path: String
+    let added: Int
+    let removed: Int
+}
+
+/// "2 files changed +14 −3" with one row per file; click reveals it in Finder.
+struct ChangedFilesCard: View {
+    let files: [ChangedFile]
+    @State private var open = true
+
+    var body: some View {
+        let added = files.reduce(0) { $0 + $1.added }, removed = files.reduce(0) { $0 + $1.removed }
+        VStack(alignment: .leading, spacing: 0) {
+            Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.badge.ellipsis").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    Text("\(files.count) file\(files.count == 1 ? "" : "s") changed").font(.system(size: 13, weight: .medium))
+                    Text("+\(added)").foregroundStyle(.green).font(.system(size: 12, design: .monospaced))
+                    Text("−\(removed)").foregroundStyle(.red.opacity(0.85)).font(.system(size: 12, design: .monospaced))
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                        .rotationEffect(.degrees(open ? 90 : 0)).foregroundStyle(Theme.secondary)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if open {
+                Divider()
+                ForEach(files) { f in ChangedFileRow(file: f) }
+                    .padding(.vertical, 2)
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.025)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(Theme.divider)))
+    }
+}
+
+private struct ChangedFileRow: View {
+    let file: ChangedFile
+    @State private var hover = false
+
+    var body: some View {
+        Button {
+            #if os(macOS)
+            let url = URL(fileURLWithPath: (file.path as NSString).expandingTildeInPath)
+            if FileManager.default.fileExists(atPath: url.path) { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            #endif
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "doc.text").font(.system(size: 11)).foregroundStyle(Theme.secondary).frame(width: 16)
+                Text(URL(fileURLWithPath: file.path).lastPathComponent).font(.system(size: 12.5, weight: .medium))
+                Text(URL(fileURLWithPath: file.path).deletingLastPathComponent().path)
+                    .font(.system(size: 11.5)).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.head)
+                Spacer(minLength: 6)
+                Text("+\(file.added)").foregroundStyle(.green).font(.system(size: 11.5, design: .monospaced))
+                Text("−\(file.removed)").foregroundStyle(.red.opacity(0.85)).font(.system(size: 11.5, design: .monospaced))
+            }
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(hover ? Theme.hoverFill : .clear)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help("Show in Finder")
     }
 }

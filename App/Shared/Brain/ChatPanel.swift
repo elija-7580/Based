@@ -167,23 +167,47 @@ struct ChatSuggestions: View {
     }
 
     var body: some View {
-        let layout = compact ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
-        layout {
-            ForEach(suggestions.prefix(compact ? 5 : 4), id: \.1) { icon, text in
-                Button {
-                    if text.hasSuffix("…") { return }
-                    brain.ask(text, pageContext: model.currentPageID)
-                } label: {
-                    Label(text, systemImage: icon)
-                        .font(.system(size: 12.5))
-                        .lineLimit(1)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(Capsule().fill(Color.primary.opacity(0.05)))
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.secondary)
+        if compact {
+            VStack(alignment: .leading, spacing: 6) { chips(suggestions.prefix(5)) }
+        } else {
+            // As many chips as fit in one row (they used to run off both edges in narrower windows).
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { chips(suggestions.prefix(4)) }
+                HStack(spacing: 8) { chips(suggestions.prefix(3)) }
+                HStack(spacing: 8) { chips(suggestions.prefix(2)) }
+                HStack(spacing: 8) { chips(suggestions.prefix(1)) }
             }
         }
+    }
+
+    private func chips(_ list: ArraySlice<(String, String)>) -> some View {
+        ForEach(Array(list), id: \.1) { icon, text in SuggestionChip(icon: icon, text: text) {
+            if text.hasSuffix("…") { return }
+            brain.ask(text, pageContext: model.currentPageID)
+        } }
+    }
+}
+
+private struct SuggestionChip: View {
+    let icon: String
+    let text: String
+    let action: () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(text, systemImage: icon)
+                .font(.system(size: 12.5))
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(Capsule().fill(Color.primary.opacity(hover ? 0.09 : 0.05)))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(hover ? Theme.primary : Theme.secondary)
+        .onHover { hover = $0 }
+        .animation(.easeOut(duration: 0.12), value: hover)
     }
 }
 
