@@ -111,7 +111,10 @@ final class BrainModel {
 
     func reloadProviders() {
         let r = ModelRegistry()
-        if let k = Secrets.get("anthropic"), !k.isEmpty { r.register(AnthropicProvider(apiKey: k)) }
+        if let k = Secrets.get("anthropic"), !k.isEmpty {
+            let effort = engineSpec.kind == .api && !engineSpec.effort.isEmpty ? engineSpec.effort : nil
+            r.register(AnthropicProvider(apiKey: k, effort: effort))
+        }
         if let k = Secrets.get("openai"), !k.isEmpty { r.register(OpenAIProvider(apiKey: k)) }
         if let u = URL(string: ollamaURL), !ollamaURL.isEmpty { r.register(OpenAIProvider.ollama(baseURL: u)) }
         if AppleIntelligenceProvider.isAvailable { r.register(AppleIntelligenceProvider()) }
@@ -131,7 +134,10 @@ final class BrainModel {
     /// What answers in the chat (picker under the composer): Auto, a coding-agent CLI with model / effort /
     /// permission mode, or an API model. Stored as JSON; old plain values ("auto", "claude-code", refs) still load.
     var engineSpec: ChatEngineSpec = ChatEngineSpec.decode(UserDefaults.standard.string(forKey: "ai.chatEngine")) {
-        didSet { UserDefaults.standard.set(engineSpec.encoded, forKey: "ai.chatEngine") }
+        didSet {
+            UserDefaults.standard.set(engineSpec.encoded, forKey: "ai.chatEngine")
+            if engineSpec.effort != oldValue.effort || engineSpec.kind != oldValue.kind { reloadProviders() }
+        }
     }
 
     enum Engine: Equatable { case model(String), cli(ChatEngineSpec), none }

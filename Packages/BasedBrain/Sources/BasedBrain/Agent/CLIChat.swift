@@ -116,6 +116,11 @@ public enum CLICatalog {
             return [CLIModelChoice(id: "", label: "Default"), CLIModelChoice(id: "low", label: "Low", detail: "Quick, minimal thinking"),
                     CLIModelChoice(id: "medium", label: "Medium"), CLIModelChoice(id: "high", label: "High", detail: "Thinks longer"),
                     CLIModelChoice(id: "xhigh", label: "Extra high"), CLIModelChoice(id: "max", label: "Max", detail: "Deepest thinking")]
+        case .api:
+            // Anthropic models (output_config.effort); other providers ignore it.
+            return [CLIModelChoice(id: "", label: "Default"), CLIModelChoice(id: "low", label: "Low", detail: "Fast, light thinking"),
+                    CLIModelChoice(id: "medium", label: "Medium"), CLIModelChoice(id: "high", label: "High", detail: "Thinks longer"),
+                    CLIModelChoice(id: "xhigh", label: "Extra high"), CLIModelChoice(id: "max", label: "Max", detail: "Deepest thinking")]
         case .codex:
             return [CLIModelChoice(id: "", label: "Default"), CLIModelChoice(id: "minimal", label: "Minimal"),
                     CLIModelChoice(id: "low", label: "Low"), CLIModelChoice(id: "medium", label: "Medium"),
@@ -179,7 +184,9 @@ public enum CLICatalog {
         case .auto: return "Auto"
         case .api:
             let m = spec.model.split(separator: "/").last.map(String.init) ?? spec.model
-            return spec.model.hasPrefix("apple/") ? "Apple Intelligence" : m
+            if spec.model.hasPrefix("apple/") { return "Apple Intelligence" }
+            if !spec.effort.isEmpty, let e = efforts(for: .api).first(where: { $0.id == spec.effort }) { return m + " · " + e.label }
+            return m
         default:
             let m = models(for: spec.kind, home: home).first { $0.id == spec.model }
             var s = spec.model.isEmpty ? spec.kind.title : (m?.label ?? spec.model)
