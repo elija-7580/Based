@@ -189,6 +189,8 @@ enum DebugDriver {
                     Log.notice("debug pdf: \(r)", category: "debug")
                 }
             }
+        case "picker":
+            NotificationCenter.default.post(name: .debugOpenEnginePicker, object: nil)
         case "closewindow":
             mainWindow()?.performClose(nil)
         case "compose":

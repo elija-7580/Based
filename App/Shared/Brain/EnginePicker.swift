@@ -44,6 +44,9 @@ struct EnginePickerButton: View {
         .onChange(of: openRequest?.wrappedValue ?? false) { _, v in
             if v { open = true; openRequest?.wrappedValue = false }
         }
+        #if DEBUG
+        .onReceive(NotificationCenter.default.publisher(for: .debugOpenEnginePicker)) { _ in open = true }
+        #endif
     }
 
     private var label: String {
@@ -90,7 +93,8 @@ struct EnginePickerPanel: View {
                 .id(tab)
                 .transition(.opacity.combined(with: .offset(y: 4)))
             }
-            .frame(maxHeight: 360)
+            // A ScrollView in a popover has no natural height (the list collapsed to nothing): size it to the rows.
+            .frame(height: listHeight)
             if !CLICatalog.efforts(for: tab).isEmpty {
                 Divider()
                 EffortRow(kind: tab)
@@ -99,6 +103,17 @@ struct EnginePickerPanel: View {
         }
         .frame(width: 320)
         .onAppear { tab = brain.engineSpec.kind == .auto ? .auto : brain.engineSpec.kind }
+    }
+
+    /// ~46 pt per model row (name + description), 24 pt per section label, capped at 380.
+    private var listHeight: CGFloat {
+        let rows: Int, labels: Int
+        switch tab {
+        case .auto: rows = 1; labels = 0
+        case .api: rows = brain.apiModelGroups.reduce(0) { $0 + $1.models.count }; labels = brain.apiModelGroups.count
+        default: rows = CLICatalog.models(for: tab).count; labels = 1
+        }
+        return min(380, CGFloat(rows) * 46 + CGFloat(labels) * 26 + 14)
     }
 
     @ViewBuilder
@@ -351,3 +366,7 @@ struct FolderChip: View {
         #endif
     }
 }
+
+#if DEBUG
+extension Notification.Name { static let debugOpenEnginePicker = Notification.Name("based.debug.enginePicker") }
+#endif
