@@ -257,6 +257,13 @@ enum DebugDriver {
                 model.store.insertImported(MarkdownImporter().parse(md), in: .block(id), name: "Debug")
             }
             model.open(id)
+        case "normalizecolumns":
+            // Removes empty columns (and unwraps single-column lists) on one page; undoable.
+            if let page = q["page"] {
+                let lists = model.store.descendants(of: page, includeRows: false).filter { model.store.blocks[$0]?.type == .columnList }
+                for l in lists { model.store.normalizeColumns(l) }
+                Log.notice("debug normalizecolumns: \(lists.count) column lists checked", category: "debug")
+            }
         case "state":
             let hc = model.brain.happier.chats.count
             let out = q["out"] ?? NSTemporaryDirectory() + "based-state.txt"

@@ -538,17 +538,68 @@ struct ColumnsView: View {
     let block: Block
     let editor: EditorController
     @Environment(AppModel.self) private var model
+    /// Live fractions while a divider is dragged; written to the store when the drag ends.
+    @State private var draft: [Double]?
 
     var body: some View {
         let cols = model.registry.block(block.id).children
-        let ratios = cols.map { model.store.blocks[$0]?.props.ratio ?? 0 }
-        ColumnsLayout(ratios: ratios, spacing: BlockRow.gutter + 2) {
+        let stored = cols.map { model.store.blocks[$0]?.props.ratio ?? 0 }
+        let ratios = draft ?? stored
+        let spacing = BlockRow.gutter + 2
+        ColumnsLayout(ratios: ratios, spacing: spacing) {
             ForEach(cols, id: \.self) { cid in
                 // Wide content (a scrolled board, a table) stays inside its column instead of drawing over the next.
                 ColumnView(id: cid, editor: editor)
                     .clipShape(Rectangle().inset(by: -6))
             }
         }
+        .overlay {
+            if !editor.isLocked, cols.count > 1 {
+                GeometryReader { geo in
+                    let fr = ColumnsLayout.fractions(ratios, count: cols.count)
+                    let avail = max(1, geo.size.width - spacing * CGFloat(cols.count - 1))
+                    ForEach(0..<(cols.count - 1), id: \.self) { i in
+                        let x = fr[...i].reduce(0, +) * avail + spacing * CGFloat(i) + spacing / 2
+                        ColumnDivider()
+                            .frame(width: 8, height: geo.size.height)
+                            .position(x: x, y: geo.size.height / 2)
+                            .gesture(DragGesture(minimumDistance: 1)
+                                .onChanged { v in
+                                    var f = fr
+                                    let base = ColumnsLayout.fractions(stored, count: cols.count)
+                                    let d = Double(v.translation.width / avail)
+                                    let pair = base[i] + base[i + 1]
+                                    let left = min(max(0.1, base[i] + d), pair - 0.1)
+                                    f[i] = left; f[i + 1] = pair - left
+                                    draft = f
+                                }
+                                .onEnded { _ in
+                                    if let f = draft { model.store.setColumnRatios(cols, f) }
+                                    draft = nil
+                                })
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The invisible gap between two columns; shows a thin line and a resize cursor on hover (Notion).
+private struct ColumnDivider: View {
+    @State private var hover = false
+
+    var body: some View {
+        Rectangle()
+            .fill(Color.clear)
+            .overlay(Rectangle().fill(Theme.dropIndicator.opacity(hover ? 0.6 : 0)).frame(width: 2))
+            .contentShape(Rectangle())
+            #if os(macOS)
+            .onHover { inside in
+                hover = inside
+                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            #endif
+            .animation(.easeOut(duration: 0.12), value: hover)
     }
 }
 
@@ -559,15 +610,21 @@ struct ColumnsLayout: Layout {
     var ratios: [Double]
     var spacing: CGFloat
 
-    private func widths(_ total: CGFloat, count: Int) -> [CGFloat] {
-        // Ratios may be stored as fractions or percentages, and new columns have none: missing ones take
-        // the average share, and no column drops below 5% of the row.
+    /// Ratios may be stored as fractions or percentages, and new columns have none: missing ones take the
+    /// average share, and no column drops below 5% of the row. Result sums to 1.
+    static func fractions(_ ratios: [Double], count: Int) -> [Double] {
         let given = (0..<count).map { $0 < ratios.count && ratios[$0] > 0 ? ratios[$0] : nil }
         let known = given.compactMap { $0 }
         let fill = known.isEmpty ? 1 : known.reduce(0, +) / Double(known.count)
         let raw = given.map { $0 ?? fill }
         let rawSum = raw.reduce(0, +)
         let r = raw.map { max(0.05, $0 / rawSum) }
+        let sum = r.reduce(0, +)
+        return r.map { $0 / sum }
+    }
+
+    private func widths(_ total: CGFloat, count: Int) -> [CGFloat] {
+        let r = Self.fractions(ratios, count: count)
         let sum = r.reduce(0, +)
         let avail = max(0, total - spacing * CGFloat(max(0, count - 1)))
         return r.map { avail * CGFloat($0 / sum) }

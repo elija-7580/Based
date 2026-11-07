@@ -279,7 +279,10 @@ struct DetailShell: View {
             // page full of boards and calendars re-laid out on every frame of the slide-in (seconds on big pages).
             .overlay(alignment: .trailing) {
                 if !docked || isSidePeek, let panel = rightPanel {
-                    panel
+                    HStack(spacing: 0) {
+                        PanelResizeHandle(width: $panelWidth, range: (docked ? 300 : 260)...maxPanel)
+                        panel
+                    }
                         .frame(width: width)
                         .frame(maxHeight: .infinity)
                         .shadow(color: .black.opacity(0.2), radius: 12, x: -4)

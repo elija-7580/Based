@@ -155,6 +155,14 @@ public extension WorkspaceStore {
         updateBlock(id, name: checked ? "Check" : "Uncheck") { $0.props.checked = checked }
     }
 
+    /// Column widths as fractions of the row (Notion stores one ratio per column).
+    func setColumnRatios(_ columns: [RecordID], _ ratios: [Double]) {
+        guard columns.count == ratios.count, !columns.isEmpty else { return }
+        transact("Resize columns", coalesce: "colratio:" + columns.joined()) { tx in
+            for (c, r) in zip(columns, ratios) { tx.update(c) { $0.props.ratio = r } }
+        }
+    }
+
     func toggleOpen(_ id: RecordID) {
         guard let b = blocks[id] else { return }
         transact("Toggle", undoable: false) { tx in tx.update(id) { $0.props.isOpen = !(b.props.isOpen ?? false) } }
@@ -586,7 +594,7 @@ public extension WorkspaceStore {
         let cols = contentBlocks(of: listID)
         let empty = cols.filter { contentBlocks(of: $0.id).isEmpty }
         guard !empty.isEmpty || cols.count < 2 else { return }
-        transact("Columns", undoable: false) { tx in
+        transact("Remove empty columns") { tx in
             for c in empty { tx.removeBlock(c.id) }
             let remaining = cols.filter { c in !empty.contains { $0.id == c.id } }
             if remaining.count <= 1 {
