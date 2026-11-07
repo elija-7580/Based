@@ -19,6 +19,9 @@ enum AppDiagnostics {
     #endif
 
     static var supportDirectory: URL {
+        #if DEBUG
+        if let d = ProcessInfo.processInfo.environment["BASED_DATA_DIR"], !d.isEmpty { return URL(fileURLWithPath: d, isDirectory: true) }
+        #endif
         let fm = FileManager.default
         let base = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)) ?? fm.temporaryDirectory
         return base.appendingPathComponent("Based", isDirectory: true)

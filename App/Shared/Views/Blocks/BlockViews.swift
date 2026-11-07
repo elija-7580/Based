@@ -112,7 +112,9 @@ struct BlockRow: View {
             .padding(.vertical, hasFill(b) && !b.type.isHeading ? 2 : 0)
             .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background(b)))
             .padding(.top, b.type == .heading1 ? 10 : 0)
-            .anchorPreference(key: MenuAnchorKey.self, value: .bounds) { menuHere ? $0 : nil }
+            // Only the row with the open slash / mention menu writes the anchor; a preference on every row made
+            // SwiftUI merge hundreds of nil values on each layout pass.
+            .background { if menuHere { Color.clear.anchorPreference(key: MenuAnchorKey.self, value: .bounds) { $0 } } }
             #if os(macOS)
             // The page-level gutter (BlockGutter.swift) hit-tests these frames for the + / ⋮⋮ and for drops.
             .onGeometryChange(for: CGRect.self, of: { $0.frame(in: BlockCanvas.space) }) { f in
@@ -613,19 +615,27 @@ struct ColumnsLayout: Layout {
         return r.map { avail * CGFloat($0 / sum) }
     }
 
-    // No height cache here: a cached height went stale when content inside a column changed
-    // (a moved block, an opened toggle) and the columns drew over each other.
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    /// Heights per proposed width, valid for ONE layout pass: SwiftUI asks for the size several times per pass
+    /// (each time measuring whole databases inside the columns). `updateCache` runs whenever the layout is
+    /// invalidated — also when content inside a column changes — so unlike the old static cache it never goes stale.
+    struct Cache { var heights: [CGFloat: CGFloat] = [:] }
+
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache.heights.removeAll(keepingCapacity: true) }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
         let total = proposal.width ?? 600
+        if let h = cache.heights[total] { return CGSize(width: total, height: h) }
         let w = widths(total, count: subviews.count)
         var h: CGFloat = 0
         for (i, sv) in subviews.enumerated() {
             h = max(h, sv.sizeThatFits(ProposedViewSize(width: w[i], height: nil)).height)
         }
+        cache.heights[total] = h
         return CGSize(width: total, height: h)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
         let w = widths(bounds.width, count: subviews.count)
         var x = bounds.minX
         for (i, sv) in subviews.enumerated() {

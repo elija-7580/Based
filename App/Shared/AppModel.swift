@@ -287,7 +287,11 @@ final class AppModel {
         let fm = FileManager.default
         let base = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
             ?? fm.temporaryDirectory
-        let dir = base.appendingPathComponent("Based", isDirectory: true)
+        var dir = base.appendingPathComponent("Based", isDirectory: true)
+        #if DEBUG
+        // Benchmarks run a second instance on a copy of the workspace (scripts/bench-*.sh).
+        if let d = ProcessInfo.processInfo.environment["BASED_DATA_DIR"], !d.isEmpty { dir = URL(fileURLWithPath: d, isDirectory: true) }
+        #endif
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         assets = FileAssetStore(root: dir.appendingPathComponent("Assets", isDirectory: true))
         var p: SQLitePersistence?

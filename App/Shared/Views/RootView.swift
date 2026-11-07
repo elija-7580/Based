@@ -87,6 +87,15 @@ struct RootView: View {
             model.pendingImport = nil
             importFiles(p.urls, into: p.parent)
         }
+        #if DEBUG && os(macOS)
+        // A benchmark instance (BASED_DATA_DIR set) can't receive based:// URLs — the installed app owns the
+        // scheme — so it takes the same debug commands as distributed notifications ("based.debug.url").
+        .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("based.debug.url"))) { n in
+            guard ProcessInfo.processInfo.environment["BASED_DATA_DIR"] != nil,
+                  let s = n.object as? String, let url = URL(string: s) else { return }
+            _ = DebugDriver.handle(url, model: model)
+        }
+        #endif
         .onOpenURL { url in
             guard url.scheme == "based" else { return }
             #if DEBUG && os(macOS)
@@ -363,22 +372,69 @@ struct DetailShell: View {
 struct DetailContent: View {
     var rootOnly = false
     @Environment(AppModel.self) private var model
+    /// Recently shown pages (keys, oldest first). They stay built but hidden, so going back to one — or home — is
+    /// instant and keeps its scroll position (building a big page's views is most of the cost of opening it).
+    @State private var kept: [String] = []
+    @State private var keptItems: [String: SidebarItem] = [:]
+    private static let keepAlive = 4
+
+    private func isPageItem(_ item: SidebarItem) -> Bool {
+        if case .page = item { return true }
+        return item == .home && model.homePageID != nil
+    }
 
     var body: some View {
         let item: SidebarItem = (rootOnly ? nil : model.path.last.map { SidebarItem.page($0) }) ?? model.selection ?? .home
         #if os(macOS)
-        VStack(spacing: 0) {
-            if !item.isPage && !(item == .home && model.homePageID != nil) { ScreenTopBar(item: item) }
-            content(item)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        let current = key(item)
+        let pages = isPageItem(item) ? kept.filter { $0 != current } + [current] : kept
+        ZStack {
+            ForEach(pages, id: \.self) { k in
+                let active = k == current
+                if let it = k == current ? item : keptItems[k] {
+                    content(it)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(active ? 1 : 0)
+                        .allowsHitTesting(active)
+                        .accessibilityHidden(!active)
+                        .environment(\.pageIsActive, active)
+                        .zIndex(active ? 1 : 0)
+                }
+            }
+            if !isPageItem(item) {
+                VStack(spacing: 0) {
+                    ScreenTopBar(item: item)
+                    content(item)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .id(current)
+                .zIndex(2)
+                .background(Chrome.appBackground)
+            }
         }
-        .id(key(item))
         .auditLayout("content")
+        .onAppear { remember(item) }
+        .onChange(of: current) { _, _ in remember(item) }
+        .onChange(of: model.homePageID) { _, _ in kept = []; keptItems = [:]; remember(item) }
         #else
         content(item)
             .id(key(item))
             .auditLayout("content")
         #endif
+    }
+
+    private func remember(_ item: SidebarItem) {
+        guard isPageItem(item) else { return }
+        let k = key(item)
+        kept.removeAll { $0 == k }
+        kept.append(k)
+        keptItems[k] = item
+        // Drop the oldest, and pages that no longer exist.
+        kept.removeAll { k in
+            if case .page(let id)? = keptItems[k] { return model.store.blocks[id] == nil }
+            return false
+        }
+        while kept.count > Self.keepAlive { keptItems[kept.removeFirst()] = nil }
     }
 
     /// Chats share one key so "New chat" → saved chat doesn't rebuild the screen mid-conversation.

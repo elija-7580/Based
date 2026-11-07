@@ -5,6 +5,7 @@ import BasedCore
 struct PageScreen: View {
     let pageID: RecordID
     var isPeek = false
+    @Environment(\.pageIsActive) private var pageIsActive
     @Environment(AppModel.self) private var model
     @State private var editor: EditorController
     @FocusState private var keyFocus: Bool
@@ -204,24 +205,35 @@ struct PageScreen: View {
         #endif
         .onAppear {
             editor.format = format
-            model.activeEditor = editor
-            #if os(macOS)
-            selectionKeys.install(editor)
-            #endif
-            #if DEBUG
-            Log.notice("PageScreen appear \(pageID.prefix(8)) peek \(isPeek) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
-            #endif
+            if pageIsActive { activate() }
         }
         .onChange(of: page.props.format) { _, f in editor.format = f }
-        .onDisappear {
-            #if os(macOS)
-            selectionKeys.remove()
-            #endif
-            #if DEBUG
-            Log.notice("PageScreen disappear \(pageID.prefix(8)) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
-            #endif
-            if model.activeEditor === editor { model.activeEditor = nil }
-        }
+        .onChange(of: pageIsActive) { _, active in active ? activate() : deactivate() }
+        .onDisappear { deactivate() }
+    }
+
+    /// Kept-alive pages (DetailContent) are hidden instead of torn down, so "appear" / "disappear" are
+    /// "becomes the visible page" / "is hidden or removed".
+    private func activate() {
+        model.activeEditor = editor
+        #if os(macOS)
+        selectionKeys.install(editor)
+        #endif
+        #if DEBUG
+        Log.notice("PageScreen appear \(pageID.prefix(8)) peek \(isPeek) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
+        #endif
+    }
+
+    private func deactivate() {
+        #if os(macOS)
+        selectionKeys.remove()
+        // A hidden page must not keep the caret: typing would go into a page you can't see.
+        if model.activeEditor === editor, let w = NSApp.keyWindow, w.firstResponder is NSTextView { w.makeFirstResponder(nil) }
+        #endif
+        #if DEBUG
+        Log.notice("PageScreen disappear \(pageID.prefix(8)) editor \(ObjectIdentifier(editor).hashValue)", category: "debug")
+        #endif
+        if model.activeEditor === editor { model.activeEditor = nil }
     }
 
     private var horizontalPadding: CGFloat {
@@ -689,5 +701,15 @@ struct PeekView: View {
     private func step(_ siblings: [RecordID], _ i: Int) {
         guard siblings.indices.contains(i) else { return }
         model.peek = mode == .sidePeek ? .side(siblings[i]) : .center(siblings[i])
+    }
+}
+
+
+/// False for a page that DetailContent keeps alive but hides (recently visited pages stay built so going back is instant).
+private struct PageIsActiveKey: EnvironmentKey { static let defaultValue = true }
+extension EnvironmentValues {
+    var pageIsActive: Bool {
+        get { self[PageIsActiveKey.self] }
+        set { self[PageIsActiveKey.self] = newValue }
     }
 }
