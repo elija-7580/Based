@@ -26,16 +26,16 @@ struct PropertyValueView: View {
             TodoCheckbox(checked: value.bool)
         case .relation:
             if case .relation(let ids)? = row.values[property.id] {
-                FlowRow(wrap: wrap) {
-                    ForEach(ids, id: \.self) { id in
-                        Button { model.open(id, mode: .centerPeek) } label: {
-                            HStack(spacing: 3) {
-                                PageIconView(icon: store.icon(of: id), size: 13)
-                                Text(store.title(of: id)).underline(color: Theme.secondary.opacity(0.4))
-                            }
-                        }
-                        .buttonStyle(.hoverFill)
+                if wrap {
+                    // Page property panel: one linked page per line, like Notion. A plain VStack always reports
+                    // its true height (the flow layout could be measured at another width than it was drawn at,
+                    // and long lists then overlapped the properties below).
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(ids, id: \.self) { id in relationLink(id) }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    FlowRow(wrap: false) { ForEach(ids, id: \.self) { id in relationLink(id) } }
                 }
             }
         case .person, .createdBy, .lastEditedBy:
@@ -73,6 +73,18 @@ struct PropertyValueView: View {
         default:
             Text(Self.displayText(CellFormatter.text(value, store: store))).lineLimit(wrap ? nil : 1)
         }
+    }
+
+    private func relationLink(_ id: RecordID) -> some View {
+        Button { model.open(id, mode: .centerPeek) } label: {
+            HStack(spacing: 4) {
+                PageIconView(icon: model.store.icon(of: id), size: 13)
+                Text(model.store.title(of: id)).underline(color: Theme.secondary.opacity(0.4))
+                    .lineLimit(1).truncationMode(.tail)
+            }
+        }
+        .buttonStyle(.hoverFill)
+        .help(model.store.title(of: id))
     }
 
     /// Imported text sometimes carries HTML ("<h2>Abstract</h2><p>…"): show it as plain text in cells.
@@ -218,7 +230,7 @@ struct PropertyCell: View {
                     }
                     PropertyValueView(property: property, value: value, row: row, wrap: wrap)
                 }
-                .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 22, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onTapGesture { if editable { editing = true } }
                 .popover(isPresented: $editing) {

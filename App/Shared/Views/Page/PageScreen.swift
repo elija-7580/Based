@@ -443,6 +443,9 @@ struct RowPropertiesPanel: View {
             .padding(.top, 4)
             Divider().padding(.top, 8)
         }
+        // The page column is proposed a height (it is at least as tall as the window); without this the
+        // stack squeezed long property rows (many relations) and they were drawn over the next ones.
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
