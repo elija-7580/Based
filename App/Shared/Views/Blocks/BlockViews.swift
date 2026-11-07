@@ -498,6 +498,41 @@ struct CodeBlockView: View {
                             "shell", "sql", "swift", "toml", "typescript", "xml", "yaml"]
 
     var body: some View {
+        if CodePreviewToggle.supports(block.props.language), CodePreviewToggle.isPreview(block) {
+            embed
+        } else {
+            codeBlock
+        }
+    }
+
+    /// Preview mode: the rendered result sits in the page like a Notion embed — no code-block box, no header;
+    /// the controls float over its top-right corner while the pointer is on it.
+    private var embed: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HTMLPreview(source: block.text.plainText, language: block.props.language ?? "html",
+                        height: previewHeight(from: block.props.caption) ?? 160)
+            if let cap = block.props.caption, !cap.isEmpty, !cap.plainText.hasPrefix("height=") {
+                Text(cap.plainText).font(.system(size: 13)).foregroundStyle(Theme.secondary)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            HStack(spacing: 2) {
+                CodePreviewToggle(block: block)
+                Button { Clipboard.copy(block.text.plainText) } label: { Image(systemName: "doc.on.doc").font(.system(size: 11)) }
+                    .buttonStyle(.quiet).help("Copy code")
+            }
+            .padding(3)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.regularMaterial))
+            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+            .padding(6)
+            .opacity(hovering ? 1 : 0)
+            .animation(.easeOut(duration: 0.12), value: hovering)
+        }
+        .onHover { hovering = $0 }
+    }
+
+    private var codeBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Menu(block.props.language ?? "plain text") {

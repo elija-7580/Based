@@ -7,13 +7,13 @@ import BasedCore
 struct HTMLPreview: View {
     let source: String
     let language: String
-    var height: CGFloat = 320
+    var height: CGFloat = 160
     @State private var reportedHeight: CGFloat?
 
     var body: some View {
-        WebContentView(html: document, onHeight: { h in if h > 40, abs((reportedHeight ?? 0) - h) > 2 { reportedHeight = min(h, 2000) } })
+        WebContentView(html: document, onHeight: { h in if h > 8, abs((reportedHeight ?? 0) - h) > 2 { reportedHeight = min(h, 2400) } })
             .frame(height: reportedHeight ?? height)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .accessibilityIdentifier("html.preview")
     }
 
@@ -24,8 +24,14 @@ struct HTMLPreview: View {
         let reporter = """
         <script>
         (function(){
-          function report(){ try { window.webkit.messageHandlers.height.postMessage(document.documentElement.scrollHeight); } catch(e){} }
-          new ResizeObserver(report).observe(document.documentElement);
+          // The content's own height (documentElement.scrollHeight never drops below the view's height, so the
+          // block could only grow and kept a big empty area under short content).
+          function report(){ try {
+            var b = document.body, cs = getComputedStyle(b);
+            var h = b.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+            window.webkit.messageHandlers.height.postMessage(Math.ceil(h));
+          } catch(e){} }
+          new ResizeObserver(report).observe(document.body);
           window.addEventListener('load', report); setTimeout(report, 50); setTimeout(report, 500); setTimeout(report, 2000);
         })();
         </script>
@@ -36,7 +42,9 @@ struct HTMLPreview: View {
         <style>
           :root { color-scheme: light dark; }
           html, body { margin: 0; padding: 0; background: transparent; font: 14px -apple-system, system-ui, sans-serif; color: CanvasText; }
-          body { padding: 8px; }
+          html { height: auto; } body { padding: 4px 0; height: auto; overflow: hidden; }
+          pre.mermaid { margin: 0; display: flex; justify-content: center; }
+          pre.mermaid svg { max-width: 100%; height: auto; }
         </style>
         """
         if language == "mermaid" {

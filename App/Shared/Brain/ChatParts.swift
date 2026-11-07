@@ -448,6 +448,7 @@ struct TodoCardView: View {
 struct MarkdownMessageView: View {
     let markdown: String
     var streaming = false
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         let blocks = MarkdownImporter().parse(markdown)
@@ -458,6 +459,16 @@ struct MarkdownMessageView: View {
         }
         .textSelection(.enabled)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Page links in answers: click opens the page here, ⌘-click in a new tab (⌘⇧: and switch to it).
+        .environment(\.openURL, OpenURLAction { url in
+            guard let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil else { return .systemAction }
+            #if os(macOS)
+            let flags = NSEvent.modifierFlags
+            if flags.contains(.command) { model.openInNewTab(id, activate: flags.contains(.shift)); return .handled }
+            #endif
+            model.open(id)
+            return .handled
+        })
     }
 }
 

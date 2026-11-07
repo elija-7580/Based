@@ -244,7 +244,10 @@ enum SidebarClick {
         if flags.contains(.command), !flags.contains(.option) {
             switch item {
             case .page(let id): model.openInNewTab(id, activate: flags.contains(.shift))
-            case .chat(let id): model.openChat(id, fullPage: true)
+            case .chat(let id?):
+                // ⌘-click: the chat in a new tab (⌘⇧: and switch to it), like pages.
+                model.newTab(.chat(id), activate: flags.contains(.shift))
+            case .chat(nil): model.openChat(nil, fullPage: true)
             default: model.newTab(item, activate: flags.contains(.shift))
             }
             return

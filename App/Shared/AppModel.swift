@@ -667,6 +667,8 @@ final class AppModel {
         restoringHistory = false
         lastSnapshot = NavSnapshot(selection: selection, path: path)
         if let s = selection { sidebarSelection = [s] }
+        // A chat tab shows its own conversation (the chat screen is shared, so load it when the tab comes up).
+        if case .chat(let cid?)? = selection, brain.chatID != cid { brain.openChat(cid) }
         Log.breadcrumb("tab → \(tabInfo(t).title)")
     }
 
