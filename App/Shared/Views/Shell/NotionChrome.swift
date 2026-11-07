@@ -25,6 +25,23 @@ enum Chrome {
 }
 
 /// Small borderless icon button used in the title bar, sidebar and page top bar (Notion's 28 pt hover squares).
+/// 28 × 28 icon button with Notion's hover fill — for buttons that bring their own action (star, …).
+struct ChromeHoverButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { HoverBody(configuration: configuration) }
+    private struct HoverBody: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hover = false
+        var body: some View {
+            configuration.label
+                .frame(width: 28, height: 28)
+                .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+                .opacity(configuration.isPressed ? 0.7 : 1)
+                .contentShape(Rectangle())
+                .onHover { hover = $0 }
+        }
+    }
+}
+
 struct ChromeIconButton: View {
     let symbol: String
     var size: CGFloat = 15
@@ -1157,15 +1174,10 @@ struct PageTopBar: View {
             ChromeIconButton(symbol: SymbolImage.ai, size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
                 .accessibilityIdentifier("toolbar.chat")
             FavoriteButton(pageID: page.id)
-                .buttonStyle(.plain)
+                .buttonStyle(ChromeHoverButtonStyle())
                 .font(.system(size: 15))
                 .foregroundStyle(Chrome.sidebarText)
-                .frame(width: 28, height: 28)
-            PageMenu(page: page, editor: editor)
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .frame(width: 28, height: 28)
+            PageOptionsButton(page: page, editor: editor)
         }
         .padding(.leading, 12).padding(.trailing, 10)
         .frame(height: Chrome.topBarHeight)
