@@ -203,6 +203,12 @@ final class TextCoordinator: NSObject, TextHost {
         #endif
         let rt = AttributedBridge.richText(storage, plain: config.plain)
         applied = rt
+        // Code: re-colour while typing (attributes only; the text and selection don't change).
+        if config.style.type == .code {
+            isApplying = true
+            AttributedBridge.highlight(storage, language: config.style.language)
+            isApplying = false
+        }
         let sel = viewSelection
         let inserted = lastWasInsert
         lastWasInsert = false

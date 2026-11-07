@@ -17,6 +17,8 @@ struct TextStyle: Equatable {
     var format: PageFormat?
     var color: TColor?
     var checked = false
+    /// Code blocks: language for syntax highlighting.
+    var language: String?
 }
 
 /// How a block's text view looks and behaves.
@@ -86,11 +88,26 @@ enum AttributedBridge {
         return a
     }
 
+    /// Colours code by `SyntaxHighlighter` tokens (foreground only — text and other attributes stay).
+    static func highlight(_ s: NSMutableAttributedString, language: String?) {
+        let all = NSRange(location: 0, length: s.length)
+        guard all.length > 0, all.length < 200_000 else { return }
+        s.beginEditing()
+        s.addAttribute(.foregroundColor, value: Theme.textPrimary, range: all)
+        for t in SyntaxHighlighter.tokens(s.string, language: language) {
+            let r = NSRange(location: t.location, length: t.length)
+            guard NSMaxRange(r) <= all.length else { continue }
+            s.addAttribute(.foregroundColor, value: Theme.codeColor(t.kind), range: r)
+        }
+        s.endEditing()
+    }
+
     static func attributed(_ rt: RichText, style: TextStyle, store: WorkspaceStore) -> NSAttributedString {
         let out = NSMutableAttributedString(string: "")
         if style.type == .code {
             let a = attributes(.plain, style: style)
             out.append(NSAttributedString(string: rt.plainText, attributes: a))
+            highlight(out, language: style.language)
             return out
         }
         for run in rt.runs {

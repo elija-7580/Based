@@ -94,6 +94,19 @@ enum Theme {
     static var hoverFill: Color { Color(hoverFillColor) }
     static var dividerColor: Color { Color(divider) }
 
+    /// Code highlighting (light: Notion's Prism-like palette; dark: a softer Material-like one).
+    static func codeColor(_ k: SyntaxHighlighter.Kind) -> PlatformColor {
+        switch k {
+        case .keyword: return dynamic(light: 0x0077AA, dark: 0xC792EA)
+        case .string: return dynamic(light: 0x669900, dark: 0xC3E88D)
+        case .comment: return dynamic(light: 0x8A8A86, dark: 0x7E8186)
+        case .number: return dynamic(light: 0x990055, dark: 0xF78C6C)
+        case .function: return dynamic(light: 0xDD4A68, dark: 0x82AAFF)
+        case .type: return dynamic(light: 0x0F7B7B, dark: 0xFFCB6B)
+        case .property: return dynamic(light: 0x905090, dark: 0x89DDFF)
+        }
+    }
+
     static var secondary: Color { Color(textSecondary) }
     static var primary: Color { Color(textPrimary) }
 

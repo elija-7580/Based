@@ -106,6 +106,12 @@ enum DebugDriver {
             case "palette": model.showCommandPalette = true
             default: model.showQuickFind = false; model.showCommandPalette = false
             }
+        case "scroll":
+            if let sv = model.activeEditor?.gutter.scrollView {
+                let y = CGFloat(Double(q["y"] ?? "0") ?? 0)
+                sv.contentView.scroll(to: NSPoint(x: 0, y: y))
+                sv.reflectScrolledClipView(sv.contentView)
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":

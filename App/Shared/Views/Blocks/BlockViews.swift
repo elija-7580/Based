@@ -410,7 +410,9 @@ struct BlockText: View {
         let style = TextStyle(type: block.type, format: editor.format,
                               color: block.props.color.flatMap { $0.isBackground ? nil : $0 },
                               checked: block.type == .todo && block.props.checked == true)
-        var c = RichTextConfig(style: style)
+        var st = style
+        if block.type == .code { st.language = block.props.language }
+        var c = RichTextConfig(style: st)
         c.placeholder = block.type.placeholder
         c.alwaysShowPlaceholder = block.type.isHeading
         c.plain = block.type == .code
