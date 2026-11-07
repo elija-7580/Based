@@ -212,16 +212,7 @@ public final class WorkspaceStore {
         var loadedWorkspace = false
         if let persistence {
             do {
-                for r in try persistence.loadAll() {
-                    clock.observe(r.stamp)
-                    var ignored = Set<String>()
-                    switch r {
-                    case .block(let b): _setBlock(b, &ignored)
-                    case .database(let d): _setDatabase(d)
-                    case .view(let v): _setView(v, &ignored)
-                    case .workspace(let w): _setWorkspace(w); loadedWorkspace = true
-                    }
-                }
+                loadedWorkspace = bulkLoad(try persistence.loadAll())
             } catch {
                 lastError = error
             }
@@ -515,6 +506,40 @@ public final class WorkspaceStore {
         case .workspace:
             break
         }
+    }
+
+    /// Startup path: fills the maps in one go and sorts every child list once, instead of inserting each block
+    /// into its parent's sorted list (binary search + dictionary lookups per block). Same result as `_setBlock`.
+    /// Returns whether a workspace record was among them.
+    func bulkLoad(_ records: [Record]) -> Bool {
+        var loadedWorkspace = false
+        var groups: [String: [(sortKey: String, id: RecordID)]] = [:]
+        blocks.reserveCapacity(blocks.count + records.count)
+        var ignored = Set<String>()
+        for r in records {
+            clock.observe(r.stamp)
+            switch r {
+            case .block(let b):
+                if blocks[b.id] != nil { _setBlock(b, &ignored); continue }   // duplicate row: keep normal semantics
+                blocks[b.id] = b
+                groups[b.parent.key, default: []].append((b.sortKey, b.id))
+            case .database(let d): _setDatabase(d)
+            case .view(let v): _setView(v, &ignored)
+            case .workspace(let w): _setWorkspace(w); loadedWorkspace = true
+            }
+        }
+        for (parent, var list) in groups {
+            list.sort { ($0.sortKey, $0.id) < ($1.sortKey, $1.id) }
+            if var existing = childIndex[parent], !existing.isEmpty {
+                // Merge with blocks that were already indexed (rare: duplicates above).
+                existing += list.map(\.id)
+                existing.sort { (blocks[$0]?.sortKey ?? "", $0) < (blocks[$1]?.sortKey ?? "", $1) }
+                childIndex[parent] = existing
+            } else {
+                childIndex[parent] = list.map(\.id)
+            }
+        }
+        return loadedWorkspace
     }
 
     private func insertIntoIndex(_ b: Block) {
