@@ -43,6 +43,7 @@ code { background:var(--code); color:#eb5757; border-radius:4px; padding:0 4px; 
 hr.b { border:0; border-top:1px solid var(--line); margin:12px 0; }
 table.b { border-collapse:collapse; margin:8px 0; } table.b td { border:1px solid var(--line); padding:6px 10px; font-size:14px; }
 details.b > summary { cursor:pointer; }
+[contenteditable]:focus { outline:none; }
 .pagelink { cursor:pointer; text-decoration:underline; text-decoration-color:var(--line); }
 .muted { color:var(--dim); font-size:14px; }
 #login { max-width:420px; margin:18vh auto; padding:24px; }
@@ -113,7 +114,11 @@ async function live() {
   for (;;) {
     try {
       const r = await api(`/sync/v2/wait?after=${S.after}&timeout=25`);
-      if (r.seq > S.after) { await sync(); tree(); if (S.current) showPage(S.current, true); }
+      if (r.seq > S.after) {
+        await sync(); tree();
+        const editing = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.edit;
+        if (S.current && !editing) showPage(S.current, true);
+      }
     } catch (e) { await new Promise(res => setTimeout(res, 5000)); }
   }
 }
@@ -189,8 +194,29 @@ function render(b, number) {
     case "image": { const u = b.props && b.props.url; return u ? `<img class="b" src="${esc(u)}" style="max-width:100%;border-radius:4px">` : `<div class="b muted">🖼 Image</div>`; }
     case "databaseInline": return `<div class="b muted">▦ ${esc(title(b.id)) === "Untitled" ? "Database" : esc(title(b.id))} — open in the app</div>`;
     case "columnList": return `<div class="b" style="display:flex;gap:24px">${children(k).map(c => `<div style="flex:1">${seq(children("b:" + c.id))}</div>`).join("")}</div>`;
-    default: return `<div class="b">${rich(b.text)}</div>${inner()}`;
+    default: return `<div class="b" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${b.id}"` : ""}>${rich(b.text)}</div>${inner()}`;
   }
+}
+
+// Editing (first step): text blocks without inline formatting are editable; saving pushes the record with a
+// newer HLC stamp (last writer wins on every device).
+const NODE = localStorage.getItem("based.node") || ("web" + Math.random().toString(16).slice(2, 7));
+localStorage.setItem("based.node", NODE);
+function editable(b) { return runs(b.text).every(r => !r.m && !r.mention && !r.eq); }
+function nextStamp(prev) {
+  const now = Date.now();
+  const millis = Math.max(now, (prev && prev.millis) || 0);
+  const counter = prev && prev.millis === millis ? (prev.counter || 0) + 1 : 0;
+  return { millis, counter, node: NODE };
+}
+async function saveText(id, text) {
+  const b = block(id); if (!b || plain(b.text) === text) return;
+  const next = { ...b, text: text, stamp: nextStamp(b.stamp), updatedAt: (Date.now() / 1000) - 978307200, updatedBy: "web" };
+  if (!text) delete next.text;
+  S.recs.set("block:" + id, next);
+  const r = await fetch("/sync/v2/push", { method: "POST", headers: { Authorization: "Bearer " + S.token, "Content-Type": "application/json" },
+                                          body: JSON.stringify({ records: [{ kind: "block", data: next }], deletions: [] }) });
+  if (r.ok) { const reply = await r.json(); for (const n of reply.newer || []) S.recs.set(n.kind + ":" + n.data.id, n.data); }
 }
 
 function showPage(id, keepScroll) {
@@ -201,8 +227,12 @@ function showPage(id, keepScroll) {
   tree();
   const main = document.getElementById("main");
   const cover = b.props && b.props.cover ? `<div class="cover"></div>` : "";
-  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title">${esc(title(id))}</h1>${seq(children("b:" + id))}</div>`;
+  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${id}"` : ""}>${esc(title(id))}</h1>${seq(children("b:" + id))}</div>`;
   main.scrollTop = keepScroll ? y : 0;
+  main.querySelectorAll("[data-edit]").forEach(el => {
+    el.onblur = () => saveText(el.dataset.edit, el.innerText.replace(/\n$/, "")).then(tree);
+    el.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); el.blur(); } };
+  });
   main.querySelectorAll("[data-open]").forEach(el => el.onclick = () => { showPage(el.dataset.open); history.pushState(null, "", "#" + el.dataset.open); });
 }
 

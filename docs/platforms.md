@@ -27,7 +27,8 @@ CloudKit sync is an optional second channel. The `based-server` channel works ev
 1. **Web client** served by `based-server` at `/app`. A first read-only version exists
    (`Sources/based-server/WebApp.swift`, one HTML file with no build step): you enter the token, it pages through
    `/sync/v2/pull`, then shows the page tree and renders pages (text, headings, lists, to-dos, toggles, quotes, callouts,
-   code, tables, columns, images, page links). Next is the full client:
+   code, tables, columns, images, page links), updates live, and lets you edit text blocks without inline formatting
+   (written back with a newer HLC stamp through `/sync/v2/push`). Next is the full client:
    - Data layer: an IndexedDB record store with the same records and the same change-log semantics as
      `SQLitePersistence` (one log row per record, local / remote flag), plus the sync v2 client loop.
    - Editor: a block editor with the same block types, `sk` ordering and Markdown shortcuts. The rules
