@@ -8,7 +8,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DD="${BASED_DERIVED_DATA:-$ROOT/build}"
 cd "$ROOT"
 xcodegen generate >/dev/null
-xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Release -derivedDataPath "$DD" build | tail -3
+xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Release -derivedDataPath "$DD" -skipPackagePluginValidation -skipMacroValidation build | tail -3
 APP="$DD/Build/Products/Release/Based.app"
 [ -d "$APP" ] || { echo "build failed: $APP missing"; exit 1; }
 osascript -e 'tell application id "com.friedrich-ulrich.based" to quit' 2>/dev/null || true

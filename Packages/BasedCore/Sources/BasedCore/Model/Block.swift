@@ -240,6 +240,19 @@ public struct BookmarkMeta: Codable, Hashable, Sendable {
     }
 }
 
+/// Notion button actions.
+public struct ButtonAction: Codable, Hashable, Sendable {
+    public enum Kind: String, Codable, CaseIterable, Sendable { case insertBlocks, addPage, openPage }
+    public var kind: Kind
+    /// Database for `addPage`, page for `openPage`.
+    public var targetID: RecordID?
+    /// `addPage`: open the new page afterwards (default true).
+    public var openAfter: Bool?
+    public init(kind: Kind, targetID: RecordID? = nil, openAfter: Bool? = nil) {
+        self.kind = kind; self.targetID = targetID; self.openAfter = openAfter
+    }
+}
+
 /// Type-specific block data. All optional so the JSON stays compact.
 public struct BlockProps: Codable, Hashable, Sendable {
     public var checked: Bool?
@@ -268,6 +281,8 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var width: Double?
     public var isTemplate: Bool?
     public var buttonLabel: String?
+    /// What a button block does when clicked (nil = insert its child blocks, the original behaviour).
+    public var buttonAction: ButtonAction?
     /// Top-level pages only: the teamspace whose sidebar section lists the page (nil = Private).
     public var teamspace: RecordID?
 

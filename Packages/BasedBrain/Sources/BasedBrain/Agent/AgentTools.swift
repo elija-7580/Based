@@ -45,6 +45,48 @@ public final class AgentTools {
             ToolSpec(name: "add_mermaid", description: "Append a Mermaid diagram (flowchart, sequence, gantt, mindmap …) to a page.",
                      inputSchema: .schema(["page_id": .str("Page id"), "mermaid": .str("Mermaid source")], required: ["page_id", "mermaid"])),
             ToolSpec(name: "list_connections", description: "List connected external services (MCP servers) and their tools. External tools are called directly by name.", inputSchema: .schema([:])),
+            // Notion-parity page tools
+            ToolSpec(name: "update_page", description: "Change a page's title, emoji icon, or remove its icon/cover.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "title": .str("New title"), "icon": .str("Emoji icon, or 'none' to remove"), "remove_cover": .boolean("Remove the cover image")], required: ["page_id"])),
+            ToolSpec(name: "find_replace", description: "Replace text inside a page's blocks (like editing a passage) without rewriting the whole page. Matches are case-sensitive.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "find": .str("Exact text to find"), "replace": .str("Replacement text"), "all": .boolean("Replace every match (default: first only)")], required: ["page_id", "find", "replace"])),
+            ToolSpec(name: "move_page", description: "Move a page under another page, or to the workspace root when parent_id is omitted.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "parent_id": .str("New parent page id")], required: ["page_id"])),
+            ToolSpec(name: "duplicate_page", description: "Duplicate a page with all its content.",
+                     inputSchema: .schema(["page_id": .str("Page id")], required: ["page_id"])),
+            ToolSpec(name: "trash_page", description: "Move a page (or database row) to the Trash. It can be restored.",
+                     inputSchema: .schema(["page_id": .str("Page id")], required: ["page_id"])),
+            ToolSpec(name: "restore_page", description: "Restore a page from the Trash.",
+                     inputSchema: .schema(["page_id": .str("Page id")], required: ["page_id"])),
+            ToolSpec(name: "list_trash", description: "List pages in the Trash.", inputSchema: .schema([:])),
+            ToolSpec(name: "backlinks", description: "List pages that link to or mention a page.",
+                     inputSchema: .schema(["page_id": .str("Page id")], required: ["page_id"])),
+            ToolSpec(name: "set_favorite", description: "Add a page to or remove it from Favorites.",
+                     inputSchema: .schema(["page_id": .str("Page id"), "favorite": .boolean("true to add, false to remove")], required: ["page_id", "favorite"])),
+            // Notion-parity database tools
+            ToolSpec(name: "create_database", description: "Create a database, inline inside a page or as a full page. Properties: name → type (text, number, select, multiSelect, status, date, person, files, checkbox, url, email, phone, relation, place).",
+                     inputSchema: .schema(["title": .str("Database title"), "parent_id": .str("Parent page id (omit for workspace root)"), "inline": .boolean("Embed in the parent page (default true when parent_id is given)"), "properties": ["type": "object", "description": "name → property type"], "view": .str("First view layout: table, board, list, gallery, calendar, timeline")], required: ["title"])),
+            ToolSpec(name: "update_database", description: "Rename a database, or add, rename, retype or delete properties, or add select options.",
+                     inputSchema: .schema(["database_id": .str("Database id"), "title": .str("New title"),
+                                           "add_properties": ["type": "object", "description": "name → type"],
+                                           "rename_properties": ["type": "object", "description": "old name → new name"],
+                                           "change_types": ["type": "object", "description": "name → new type"],
+                                           "delete_properties": ["type": "array", "items": ["type": "string"], "description": "Property names to delete"],
+                                           "add_options": ["type": "object", "description": "select/status property name → array of option names"]], required: ["database_id"])),
+            ToolSpec(name: "list_views", description: "List the views of a database with their layout, filters, sorts and grouping.",
+                     inputSchema: .schema(["database_id": .str("Database id")], required: ["database_id"])),
+            ToolSpec(name: "create_view", description: "Add a view (table, board, list, gallery, calendar, timeline, map, form) to a database, optionally with filters, sorts and grouping.",
+                     inputSchema: .schema(["database_id": .str("Database id"), "type": .str("Layout"), "name": .str("View name"),
+                                           "filters": ["type": "array", "description": "[{property, op, value}] — op: equals, notEquals, contains, notContains, isEmpty, isNotEmpty, greater, less, before, after, onOrBefore, onOrAfter"],
+                                           "filter_mode": .str("and | or (default and)"),
+                                           "sorts": ["type": "array", "description": "[{property, direction: ascending|descending}]"],
+                                           "group_by": .str("Property name to group by")], required: ["database_id", "type"])),
+            ToolSpec(name: "update_view", description: "Change a view's name, layout, filters, sorts or grouping. Passing filters/sorts replaces them; pass [] to clear.",
+                     inputSchema: .schema(["view_id": .str("View id"), "type": .str("Layout"), "name": .str("View name"),
+                                           "filters": ["type": "array", "description": "[{property, op, value}]"], "filter_mode": .str("and | or"),
+                                           "sorts": ["type": "array", "description": "[{property, direction}]"], "group_by": .str("Property name, or '' to ungroup")], required: ["view_id"])),
+            ToolSpec(name: "delete_view", description: "Delete a database view.",
+                     inputSchema: .schema(["view_id": .str("View id")], required: ["view_id"])),
             ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
         ] + hostSpecs + externalSpecs
     }
@@ -176,7 +218,212 @@ public final class AgentTools {
         case "inbox":
             let items = brain.inbox(pendingOnly: true)
             return items.isEmpty ? "Inbox is empty." : items.map { "- [\($0.kind.rawValue)] \($0.title) (id: \($0.id))" }.joined(separator: "\n")
+        case "update_page":
+            let id = try page(a)
+            if let t = a["title"]?.string { store.setText(id, RichText(t)) }
+            if let i = a["icon"]?.string { store.setPageIcon(id, i.lowercased() == "none" || i.isEmpty ? nil : .emoji(i)) }
+            if a["remove_cover"]?.bool == true { store.setPageCover(id, nil) }
+            return "Updated \(id)"
+        case "find_replace":
+            let id = try page(a); let find = try req(a, "find"); let rep = a["replace"]?.string ?? ""
+            let all = a["all"]?.bool == true
+            var count = 0
+            var stack = store.contentBlocks(of: id).map(\.id).reversed() as [RecordID]
+            while let bid = stack.popLast() {
+                guard let b = store.blocks[bid] else { continue }
+                let text = b.text.plainText
+                if text.contains(find), !(b.type == .page || b.type == .databasePage || b.type == .databaseInline) {
+                    let next = all ? text.replacingOccurrences(of: find, with: rep) : text.replacingFirst(find, with: rep)
+                    count += all ? text.components(separatedBy: find).count - 1 : 1
+                    store.setText(bid, RichText(next))
+                    if !all { break }
+                }
+                if b.type != .page && b.type != .databasePage { stack.append(contentsOf: store.contentBlocks(of: bid).map(\.id).reversed()) }
+            }
+            return count == 0 ? "No match for that text in \(id)." : "Replaced \(count) match(es) in \(id)."
+        case "move_page":
+            let id = try page(a)
+            let parent: ParentRef = try a["parent_id"]?.stringValue.map { pid in
+                guard store.blocks[pid] != nil else { throw ToolError("No page \(pid)") }; return .block(pid) } ?? .workspace
+            store.movePage(id, to: parent)
+            return "Moved \(id)"
+        case "duplicate_page":
+            let id = try page(a)
+            guard let copy = store.duplicatePages([id]).first else { throw ToolError("Could not duplicate \(id)") }
+            return "Duplicated as \(copy) [link: \(PageLink.url(copy))]"
+        case "trash_page":
+            let id = try page(a)
+            return store.trashPages([id]).isEmpty ? "Could not trash \(id) (protected or already trashed)." : "Moved \(id) to Trash."
+        case "restore_page":
+            let id = try req(a, "page_id"); store.restorePages([id]); return "Restored \(id)."
+        case "list_trash":
+            return store.trashedPages().map { "- \($0.title.nonEmpty ?? "Untitled") [id: \($0.id)]" }.joined(separator: "\n").nonEmpty ?? "Trash is empty."
+        case "backlinks":
+            let id = try page(a)
+            return store.backlinks(to: id).map { "- \(store.title(of: $0)) [id: \($0)]" }.joined(separator: "\n").nonEmpty ?? "No backlinks."
+        case "set_favorite":
+            let id = try page(a); store.setFavorite([id], a["favorite"]?.bool ?? true); return "Updated favorite for \(id)."
+        case "create_database":
+            let parentID = a["parent_id"]?.stringValue
+            if let parentID, store.blocks[parentID] == nil { throw ToolError("No page \(parentID)") }
+            let parent: ParentRef = parentID.map { .block($0) } ?? .workspace
+            let vt = ViewType(rawValue: a["view"]?.string ?? "") ?? .table
+            let made = store.createDatabase(title: RichText(try req(a, "title")), in: parent, inline: a["inline"]?.bool ?? (parentID != nil), viewType: vt, sampleRows: 0)
+            var added: [String] = []
+            for (name, t) in a["properties"]?.object ?? [:] {
+                guard let type = Self.propertyType(t.stringValue ?? "") else { throw ToolError("Unknown property type '\(t.stringValue ?? "")' for \(name)") }
+                if store.addProperty(to: made.databaseID, name: name, type: type) != nil { added.append(name) }
+            }
+            return "Created database \(made.databaseID) (block \(made.blockID), view \(made.viewID))" + (added.isEmpty ? "" : " with properties: " + added.joined(separator: ", "))
+        case "update_database":
+            let db = try database(a)
+            var log: [String] = []
+            if let t = a["title"]?.string { store.setDatabaseTitle(db.id, RichText(t)); log.append("renamed") }
+            for (name, t) in a["add_properties"]?.object ?? [:] {
+                guard let type = Self.propertyType(t.stringValue ?? "") else { throw ToolError("Unknown type for \(name)") }
+                _ = store.addProperty(to: db.id, name: name, type: type); log.append("added \(name)")
+            }
+            for (old, new) in a["rename_properties"]?.object ?? [:] {
+                let p = try property(db, old); store.renameProperty(db.id, p.id, to: new.stringValue ?? old); log.append("renamed \(old)")
+            }
+            for (name, t) in a["change_types"]?.object ?? [:] {
+                let p = try property(db, name)
+                guard let type = Self.propertyType(t.stringValue ?? "") else { throw ToolError("Unknown type for \(name)") }
+                store.changePropertyType(db.id, p.id, to: type); log.append("retyped \(name)")
+            }
+            for name in a["delete_properties"]?.stringArray ?? [] {
+                let p = try property(db, name)
+                guard p.type != .title else { throw ToolError("The title property cannot be deleted") }
+                store.deleteProperty(db.id, p.id); log.append("deleted \(name)")
+            }
+            for (name, opts) in a["add_options"]?.object ?? [:] {
+                let p = try property(db, name)
+                for o in opts.stringArray ?? [] { _ = store.addOption(db.id, p.id, name: o) }
+                log.append("options for \(name)")
+            }
+            return log.isEmpty ? "Nothing to change." : "Updated database: " + log.joined(separator: ", ")
+        case "list_views":
+            let db = try database(a)
+            let views = store.views(forBlock: db.blockID)
+            return views.map { v in
+                var line = "- \(v.name) [view_id: \(v.id)] \(v.type.rawValue)"
+                if let f = v.filter, !f.isEmpty { line += "; filter(\(f.combinator.rawValue)): " + f.items.map { describe($0, db) }.joined(separator: ", ") }
+                if let s = v.sorts, !s.isEmpty { line += "; sort: " + s.map { "\(db.property($0.propertyID)?.name ?? "?") \($0.ascending ? "asc" : "desc")" }.joined(separator: ", ") }
+                if let g = v.groupBy { line += "; group by \(db.property(g.propertyID)?.name ?? "?")" }
+                return line
+            }.joined(separator: "\n").nonEmpty ?? "(no views)"
+        case "create_view":
+            let db = try database(a)
+            guard let type = ViewType(rawValue: try req(a, "type")) else { throw ToolError("Unknown layout") }
+            guard let vid = store.addView(to: db.blockID, type: type, name: a["name"]?.string) else { throw ToolError("Could not add view") }
+            try applyViewArgs(vid, db, a)
+            return "Created view \(vid)."
+        case "update_view":
+            let vid = try req(a, "view_id")
+            guard let v = store.views[vid], let db = store.databases[v.databaseID] else { throw ToolError("No view \(vid)") }
+            try applyViewArgs(vid, db, a)
+            return "Updated view \(vid)."
+        case "delete_view":
+            let vid = try req(a, "view_id"); guard store.views[vid] != nil else { throw ToolError("No view \(vid)") }
+            store.deleteView(vid); return "Deleted view \(vid)."
         default: throw ToolError("Unknown tool \(name)")
+        }
+    }
+
+    private func page(_ a: JSONValue) throws -> RecordID {
+        let id = try req(a, "page_id")
+        guard store.blocks[id] != nil else { throw ToolError("No page \(id)") }
+        return id
+    }
+
+    private func property(_ db: Database, _ name: String) throws -> PropertySchema {
+        if db.titleProperty.name.caseInsensitiveCompare(name) == .orderedSame { return db.titleProperty }
+        guard let p = db.properties.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) else { throw ToolError("No property '\(name)'") }
+        return p
+    }
+
+    static func propertyType(_ s: String) -> PropertyType? {
+        let k = s.lowercased().replacingOccurrences(of: "_", with: "").replacingOccurrences(of: "-", with: "")
+        if let t = PropertyType.allCases.first(where: { $0.rawValue.lowercased() == k }) { return t }
+        switch k {
+        case "richtext", "string": return .text
+        case "multiselect", "tags": return .multiSelect
+        case "people": return .person
+        case "file": return .files
+        case "link": return .url
+        default: return nil
+        }
+    }
+
+    private func describe(_ item: FilterItem, _ db: Database) -> String {
+        switch item {
+        case .group(let g): return "(" + g.items.map { describe($0, db) }.joined(separator: " \(g.combinator.rawValue) ") + ")"
+        case .condition(let c):
+            let p = db.property(c.propertyID)
+            let v: String
+            switch c.value {
+            case .text(let t)?: v = t
+            case .number(let n)?: v = String(n)
+            case .bool(let b)?: v = String(b)
+            case .date(let d)?: v = ISO8601DateFormatter().string(from: d)
+            case .relative(let r)?: v = r.rawValue
+            case .options(let ids)?: v = ids.map { p?.option($0)?.name ?? $0 }.joined(separator: "|")
+            case nil: v = ""
+            }
+            return "\(p?.name ?? "?") \(c.op.rawValue) \(v)".trimmingCharacters(in: .whitespaces)
+        }
+    }
+
+    /// Filters / sorts / grouping / name / layout from tool arguments, applied to one view.
+    private func applyViewArgs(_ vid: RecordID, _ db: Database, _ a: JSONValue) throws {
+        var filter: FilterGroup?? = nil
+        if let fs = a["filters"]?.array {
+            var items: [FilterItem] = []
+            for f in fs {
+                let p = try property(db, f["property"]?.stringValue ?? "")
+                guard let op = FilterOp(rawValue: f["op"]?.stringValue ?? "equals") else { throw ToolError("Unknown filter op '\(f["op"]?.stringValue ?? "")'") }
+                items.append(.condition(FilterCondition(propertyID: p.id, op: op, value: try filterValue(f["value"], p, db))))
+            }
+            let comb = Combinator(rawValue: a["filter_mode"]?.string ?? "and") ?? .and
+            filter = .some(items.isEmpty ? nil : FilterGroup(combinator: comb, items: items))
+        }
+        var sorts: [SortRule]?? = nil
+        if let ss = a["sorts"]?.array {
+            sorts = .some(try ss.map { s in
+                let p = try property(db, s["property"]?.stringValue ?? "")
+                return SortRule(propertyID: p.id, ascending: !(s["direction"]?.stringValue ?? "").lowercased().hasPrefix("desc"))
+            }.nilIfEmpty)
+        }
+        var group: GroupRule?? = nil
+        if let g = a["group_by"]?.string { group = .some(g.isEmpty ? nil : GroupRule(propertyID: try property(db, g).id)) }
+        let type = a["type"]?.string.flatMap { ViewType(rawValue: $0) }
+        let name = a["name"]?.string
+        store.updateView(vid, name: "Edit view") { v in
+            if let filter { v.filter = filter }
+            if let sorts { v.sorts = sorts }
+            if let group { v.groupBy = group }
+            if let type { v.type = type }
+            if let name, !name.isEmpty { v.name = name }
+        }
+    }
+
+    private func filterValue(_ raw: JSONValue?, _ p: PropertySchema, _ db: Database) throws -> FilterValue? {
+        guard let raw else { return nil }
+        let s = raw.stringValue ?? raw.text
+        switch p.type {
+        case .number: return Double(s).map { .number($0) }
+        case .checkbox: return .bool(["true", "yes", "1", "checked"].contains(s.lowercased()))
+        case .date, .createdTime, .lastEditedTime:
+            if let r = RelativeDate(rawValue: s) { return .relative(r) }
+            return DateParsing.parse(s).map { .date($0.start) }
+        case .select, .status, .multiSelect:
+            let names = raw.stringArray ?? [s]
+            return .options(try names.map { n in
+                guard let o = p.options?.first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw ToolError("No option '\(n)' in \(p.name)") }
+                return o.id
+            })
+        case .relation: return .options(raw.stringArray ?? [s])
+        default: return .text(s)
         }
     }
 
@@ -237,4 +484,11 @@ public final class AgentTools {
     }
 }
 
-extension String { var nonEmpty: String? { isEmpty ? nil : self } }
+extension String {
+    var nonEmpty: String? { isEmpty ? nil : self }
+    func replacingFirst(_ target: String, with rep: String) -> String {
+        guard let r = range(of: target) else { return self }
+        return replacingCharacters(in: r, with: rep)
+    }
+}
+extension Array { var nilIfEmpty: [Element]? { isEmpty ? nil : self } }

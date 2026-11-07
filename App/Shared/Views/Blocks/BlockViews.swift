@@ -734,50 +734,137 @@ struct SyncedBlockView: View {
     }
 }
 
-/// Template button: inserts a copy of its (hidden) child blocks below itself.
+/// Notion button: inserts its (hidden) child blocks, adds a page to a database, or opens a page.
 struct ButtonBlockView: View {
     let block: Block
     let editor: EditorController
     @Environment(AppModel.self) private var model
     @State private var editing = false
     @State private var label = ""
+    @State private var hover = false
+    @State private var pageQuery = ""
+
+    private var action: ButtonAction { block.props.buttonAction ?? ButtonAction(kind: .insertBlocks) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Button {
-                    run()
-                } label: {
-                    Label(block.props.buttonLabel ?? "New button", systemImage: "plus.square.on.square")
+            HStack(spacing: 4) {
+                Button { run() } label: {
+                    Label(block.props.buttonLabel ?? "New button", systemImage: symbol)
                         .font(.system(size: 14, weight: .medium))
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider), lineWidth: 0.5))
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
+                .help(helpText)
                 Button { editing.toggle(); label = block.props.buttonLabel ?? "" } label: {
-                    Image(systemName: "gearshape")
+                    Image(systemName: "gearshape").font(.system(size: 12))
                 }
                 .buttonStyle(.hoverFill)
                 .foregroundStyle(Theme.secondary)
-                .help("Configure button")
+                .opacity(hover || editing ? 1 : 0)
+                .help("Edit button")
             }
-            if editing {
-                VStack(alignment: .leading, spacing: 6) {
-                    TextField("Button name", text: $label)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit { model.store.updateBlock(block.id, name: "Rename button") { $0.props.buttonLabel = label } }
-                    Text("Blocks to insert when clicked:").font(.system(size: 12)).foregroundStyle(Theme.secondary)
-                    if model.registry.block(block.id).children.isEmpty {
-                        Button("Add a block") { editor.focus(FocusTarget(model.store.insertBlock(.todo, in: .block(block.id)), 0)) }
-                            .buttonStyle(.plain).foregroundStyle(Theme.secondary)
-                    }
-                    BlockList(parentID: block.id, editor: editor)
-                }
-                .padding(10)
-                .background(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider)))
-            }
+            .onHover { hover = $0 }
+            if editing { config }
         }
     }
 
+    private var symbol: String {
+        switch action.kind {
+        case .insertBlocks: return "plus.square.on.square"
+        case .addPage: return "plus"
+        case .openPage: return "arrow.up.right"
+        }
+    }
+
+    private var helpText: String {
+        switch action.kind {
+        case .insertBlocks: return "Insert blocks"
+        case .addPage: return "Add a page to " + (action.targetID.flatMap { model.store.databases[$0]?.title.plainText } ?? "a database")
+        case .openPage: return "Open " + (action.targetID.map { model.store.title(of: $0) } ?? "a page")
+        }
+    }
+
+    private func setAction(_ f: (inout ButtonAction) -> Void) {
+        var a = action
+        f(&a)
+        model.store.updateBlock(block.id, name: "Edit button") { $0.props.buttonAction = a }
+    }
+
+    @ViewBuilder
+    private var config: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            TextField("Button name", text: $label)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { model.store.updateBlock(block.id, name: "Rename button") { $0.props.buttonLabel = label } }
+                .onChange(of: label) { _, v in model.store.updateBlock(block.id, name: "Rename button") { $0.props.buttonLabel = v } }
+            Picker("When clicked", selection: Binding(get: { action.kind }, set: { k in setAction { $0.kind = k; $0.targetID = nil } })) {
+                Text("Insert blocks").tag(ButtonAction.Kind.insertBlocks)
+                Text("Add page to database").tag(ButtonAction.Kind.addPage)
+                Text("Open page").tag(ButtonAction.Kind.openPage)
+            }
+            .pickerStyle(.menu)
+            .fixedSize()
+            switch action.kind {
+            case .insertBlocks:
+                Text("Blocks to insert when clicked:").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                if model.registry.block(block.id).children.isEmpty {
+                    Button("Add a block") { editor.focus(FocusTarget(model.store.insertBlock(.todo, in: .block(block.id)), 0)) }
+                        .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
+                }
+                BlockList(parentID: block.id, editor: editor)
+            case .addPage:
+                let dbs = model.store.databases.values.filter { model.store.blocks[$0.blockID]?.trashedAt == nil }
+                    .sorted { $0.title.plainText.localizedCaseInsensitiveCompare($1.title.plainText) == .orderedAscending }
+                Picker("Database", selection: Binding(get: { action.targetID ?? "" }, set: { id in setAction { $0.targetID = id.isEmpty ? nil : id } })) {
+                    Text("Choose…").tag("")
+                    ForEach(dbs, id: \.id) { db in Text(db.title.plainText.isEmpty ? "Untitled" : db.title.plainText).tag(db.id) }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                Toggle("Open the new page", isOn: Binding(get: { action.openAfter ?? true }, set: { v in setAction { $0.openAfter = v } }))
+                    .toggleStyle(.checkbox)
+            case .openPage:
+                HStack(spacing: 6) {
+                    if let t = action.targetID { Text(model.store.title(of: t)).fontWeight(.medium) }
+                    TextField("Search pages…", text: $pageQuery).textFieldStyle(.roundedBorder).frame(maxWidth: 260)
+                }
+                if !pageQuery.isEmpty {
+                    let q = pageQuery.lowercased()
+                    ForEach(model.store.allPages().filter { $0.trashedAt == nil && $0.title.lowercased().contains(q) }.prefix(8), id: \.id) { p in
+                        Button { setAction { $0.targetID = p.id }; pageQuery = "" } label: {
+                            HStack(spacing: 6) {
+                                PageIconView(icon: p.props.icon, size: 14)
+                                Text(model.store.title(of: p.id)).lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.hoverFill)
+                    }
+                }
+            }
+        }
+        .font(.system(size: 13))
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 8).stroke(Color(Theme.divider)))
+    }
+
     private func run() {
+        switch action.kind {
+        case .addPage:
+            guard let dbID = action.targetID, model.store.databases[dbID] != nil else { editing = true; return }
+            let id = model.store.addRow(to: dbID)
+            if action.openAfter ?? true { model.open(id, mode: .centerPeek) }
+            return
+        case .openPage:
+            guard let id = action.targetID, model.store.blocks[id] != nil else { editing = true; return }
+            model.open(id)
+            return
+        case .insertBlocks: break
+        }
         let store = model.store
         let kids = store.contentBlocks(of: block.id)
         guard !kids.isEmpty else { editing = true; return }

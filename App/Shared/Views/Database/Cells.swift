@@ -199,6 +199,9 @@ struct PropertyCell: View {
                 .frame(minWidth: 24, minHeight: 24)
                 .contentShape(Rectangle())
                 .disabled(locked)
+            } else if wrap, editable, InlineScalarField.supports(property.type) {
+                // Page property panel: type straight into text-like fields (Notion), no popover.
+                InlineScalarField(rowID: row.id, property: property, placeholder: placeholder)
             } else {
                 ZStack(alignment: .leading) {
                     if value.isEmpty && !placeholder.isEmpty {
@@ -220,6 +223,78 @@ struct PropertyCell: View {
 }
 
 // MARK: - Editors
+
+/// Text, number, URL, e-mail and phone values edited in place in a page's property panel.
+/// Text is saved while typing; numbers on Return or when the field loses focus.
+struct InlineScalarField: View {
+    let rowID: RecordID
+    let property: PropertySchema
+    var placeholder = "Empty"
+    @Environment(AppModel.self) private var model
+    @State private var draft = ""
+    @State private var hover = false
+    @FocusState private var focused: Bool
+
+    static func supports(_ t: PropertyType) -> Bool { [.text, .number, .url, .email, .phone].contains(t) }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            TextField(placeholder, text: $draft, axis: .vertical)
+                .textFieldStyle(.plain)
+                .lineLimit(1...40)
+                .focused($focused)
+                .foregroundStyle(property.type == .url && !focused ? Color.accentColor : Theme.primary)
+                .monospacedDigit()
+                .onSubmit { commit(); focused = false }
+                .onChange(of: draft) { _, _ in if property.type != .number && focused { commit() } }
+                .onChange(of: focused) { _, f in if !f { commit() } }
+                .accessibilityIdentifier("prop.inline.\(property.name)")
+            if property.type == .url, hover, let url = linkURL {
+                Link(destination: url) { Image(systemName: "arrow.up.right").font(.system(size: 11, weight: .medium)) }
+                    .help("Open link")
+            }
+        }
+        .padding(.horizontal, 4).padding(.vertical, 2)
+        .background(RoundedRectangle(cornerRadius: 5).fill(focused ? Theme.hoverFill.opacity(0.6) : hover ? Theme.hoverFill : .clear))
+        .padding(.horizontal, -4)
+        .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { focused = true }
+        .onAppear { draft = stored }
+        .onChange(of: stored) { _, v in if !focused, v != draft { draft = v } }
+    }
+
+    private var stored: String {
+        guard let v = model.store.blocks[rowID]?.values[property.id] else { return "" }
+        if property.type == .number, case .number(let n) = v { return CellFormatter.number(n, property.numberFormat) }
+        return v.plainString(property)
+    }
+
+    private var linkURL: URL? {
+        let u = draft.trimmingCharacters(in: .whitespaces)
+        guard !u.isEmpty else { return nil }
+        return URL(string: u.contains("://") ? u : "https://" + u)
+    }
+
+    private func commit() {
+        guard draft != stored else { return }
+        let t = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let v: PropertyValue?
+        switch property.type {
+        case .number:
+            let cleaned = t.replacingOccurrences(of: ",", with: "").filter { "0123456789.-eE".contains($0) }
+            v = t.isEmpty ? nil : Double(cleaned).map { property.numberFormat == .percent && t.hasSuffix("%") ? .number($0 / 100) : .number($0) }
+            if !t.isEmpty, v == nil { draft = stored; return }
+        case .url: v = t.isEmpty ? nil : .url(t)
+        case .email: v = t.isEmpty ? nil : .email(t)
+        case .phone: v = t.isEmpty ? nil : .phone(t)
+        default: v = draft.isEmpty ? nil : .text(RichText(draft))
+        }
+        model.store.setValue(rowID, property.id, v)
+    }
+}
+
 
 /// Popover editor for one property value of one row.
 struct PropertyValueEditor: View {
@@ -264,9 +339,12 @@ struct ScalarEditor: View {
 
     var body: some View {
         TextField(property.name, text: $draft, axis: .vertical)
-            .textFieldStyle(.roundedBorder)
-            .frame(width: 280)
-            .lineLimit(1...8)
+            .textFieldStyle(.plain)
+            .font(.system(size: 14))
+            .lineLimit(1...16)
+            .padding(6)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill.opacity(0.5)))
+            .frame(width: 380)
             .onSubmit { commit(); done() }
             .onChange(of: draft) { _, _ in if property.type != .number { commit() } }
             .onDisappear { commit() }
