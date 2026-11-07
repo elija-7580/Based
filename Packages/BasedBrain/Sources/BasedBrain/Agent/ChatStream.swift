@@ -373,7 +373,7 @@ public extension ChatTurnBuilder {
 /// A self-contained result the chat shows in its own panel (like Claude's artifacts): an HTML page, an SVG,
 /// a Mermaid diagram or a React component, taken from a fenced code block of an answer.
 public struct ChatArtifact: Sendable, Equatable, Identifiable {
-    public enum Kind: String, Sendable { case html, svg, mermaid, react }
+    public enum Kind: String, Sendable { case html, svg, mermaid, react, markdown }
     public var id: String { kind.rawValue + ":" + String(source.hashValue) }
     public var kind: Kind
     public var title: String
@@ -387,6 +387,7 @@ public struct ChatArtifact: Sendable, Equatable, Identifiable {
         case "svg": return .svg
         case "mermaid": return .mermaid
         case "jsx", "tsx", "react": return .react
+        case "markdown", "md", "document", "doc": return .markdown
         default: return nil
         }
     }
@@ -396,6 +397,8 @@ public struct ChatArtifact: Sendable, Equatable, Identifiable {
     public static func from(language: String?, code: String) -> ChatArtifact? {
         guard let k = kind(forLanguage: language) else { return nil }
         let lines = code.split(separator: "\n", omittingEmptySubsequences: false).count
+        // A document is worth its own panel once it is more than a short snippet.
+        if k == .markdown { return lines >= 8 ? ChatArtifact(kind: k, title: title(of: code, kind: k), source: code) : nil }
         guard lines >= 5 || code.lowercased().contains("<html") || code.lowercased().contains("<svg") || k == .mermaid else { return nil }
         return ChatArtifact(kind: k, title: title(of: code, kind: k), source: code)
     }
@@ -443,6 +446,13 @@ public struct ChatArtifact: Sendable, Equatable, Identifiable {
                 return String(code[r]).components(separatedBy: .whitespaces).last ?? "Component"
             }
             return "Component"
+        case .markdown:
+            for line in code.split(separator: "\n") {
+                let t = line.trimmingCharacters(in: .whitespaces)
+                if t.hasPrefix("#") { return String(t.drop { $0 == "#" }.trimmingCharacters(in: .whitespaces).prefix(80)) }
+                if !t.isEmpty { return String(t.prefix(60)) }
+            }
+            return "Document"
         }
     }
 
@@ -453,7 +463,7 @@ public struct ChatArtifact: Sendable, Equatable, Identifiable {
             return source
         case .svg:
             return "<!doctype html><html><head><meta charset=\"utf-8\"><style>html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center;background:transparent}svg{max-width:100%;height:auto}</style></head><body>\(source)</body></html>"
-        case .mermaid:
+        case .mermaid, .markdown:
             return source
         case .react:
             var code = source

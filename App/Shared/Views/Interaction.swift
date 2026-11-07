@@ -291,3 +291,34 @@ enum ClickIntent {
     }
 }
 #endif
+
+// MARK: - Arrowless popovers
+
+#if os(macOS)
+/// Notion's menus float next to their anchor without the macOS popover arrow. Put this inside popover content:
+/// once the content is in its popover window it switches the popover's anchor (arrow) off.
+private struct PopoverArrowHider: NSViewRepresentable {
+    final class Probe: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window, window.responds(to: NSSelectorFromString("_popover")),
+                  let popover = window.value(forKey: "_popover") as? NSPopover,
+                  popover.responds(to: NSSelectorFromString("setShouldHideAnchor:")) else { return }
+            popover.setValue(true, forKey: "shouldHideAnchor")
+        }
+    }
+    func makeNSView(context: Context) -> Probe { Probe() }
+    func updateNSView(_ nsView: Probe, context: Context) {}
+}
+#endif
+
+extension View {
+    /// Popover content without the arrow (macOS), like Notion's floating menus.
+    func arrowlessPopover() -> some View {
+        #if os(macOS)
+        background(PopoverArrowHider().frame(width: 0, height: 0))
+        #else
+        self
+        #endif
+    }
+}

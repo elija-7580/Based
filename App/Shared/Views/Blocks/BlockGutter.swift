@@ -406,6 +406,7 @@ private struct GutterHandle: View {
                 .accessibilityIdentifier("block.handle")
                 .popover(isPresented: menuBinding, arrowEdge: .leading) {
                     BlockMenuView(ids: editor.handleTargets(block.id), editor: editor) { editor.gutter.menuFor = nil }
+                        .arrowlessPopover()
                 }
         }
         .foregroundStyle(Theme.secondary)

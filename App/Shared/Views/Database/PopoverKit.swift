@@ -29,6 +29,7 @@ struct PopoverPanel<Content: View>: View {
             content()
         }
         .frame(minWidth: minWidth)
+        .arrowlessPopover()
     }
 }
 

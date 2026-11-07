@@ -236,6 +236,7 @@ struct PropertyCell: View {
                 .popover(isPresented: $editing) {
                     PropertyValueEditor(db: db, rowID: row.id, property: property) { editing = false }
                         .environment(model)
+                        .arrowlessPopover()
                 }
             }
         }

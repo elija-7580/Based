@@ -59,102 +59,81 @@ struct EnginePickerButton: View {
     }
 }
 
+/// One scrolling list like the Claude app's model menu: Auto, then every installed engine as a section with its
+/// models (name, one-line description, check mark), and the effort for the current engine pinned at the bottom.
 struct EnginePickerPanel: View {
     let done: () -> Void
     @Environment(BrainModel.self) private var brain
-    @State private var tab: ChatEngineSpec.Kind = .auto
 
-    private var tabs: [ChatEngineSpec.Kind] {
-        var t: [ChatEngineSpec.Kind] = [.auto]
-        for k in [ChatEngineSpec.Kind.claudeCode, .codex, .gemini, .opencode] where brain.installedCLIs.contains(k) { t.append(k) }
-        if !brain.apiModelGroups.isEmpty { t.append(.api) }
-        return t
+    private var engines: [ChatEngineSpec.Kind] {
+        [ChatEngineSpec.Kind.claudeCode, .codex, .gemini, .opencode].filter { brain.installedCLIs.contains($0) }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Engine tabs
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
-                    ForEach(tabs, id: \.self) { k in
-                        EngineTab(title: k.title, selected: tab == k, current: brain.engineSpec.kind == k) {
-                            withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) { tab = k }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ModelRow(title: "Auto", detail: "Picks the best available · now \(brain.chatEngine)",
+                                 symbol: "sparkles", selected: brain.engineSpec.kind == .auto) {
+                            brain.engineSpec = .auto; done()
+                        }
+                        .id("auto")
+                        ForEach(engines, id: \.self) { k in
+                            SectionLabel(k.title, detail: subtitle(k))
+                            ForEach(CLICatalog.models(for: k)) { m in
+                                let selected = brain.engineSpec.kind == k && brain.engineSpec.model == m.id
+                                ModelRow(title: m.label, detail: m.detail, selected: selected) {
+                                    var spec = brain.engineSpec.kind == k ? brain.engineSpec : ChatEngineSpec(kind: k)
+                                    spec.model = m.id
+                                    brain.engineSpec = spec
+                                    done()
+                                }
+                                .id("\(k.rawValue):\(m.id)")
+                            }
+                        }
+                        ForEach(brain.apiModelGroups, id: \.provider) { g in
+                            SectionLabel(g.provider, detail: g.onDevice ? "On this Mac" : "API key")
+                            ForEach(g.models, id: \.self) { ref in
+                                ModelRow(title: g.onDevice ? "Apple Intelligence" : String(ref.split(separator: "/").last ?? ""),
+                                         detail: g.onDevice ? "Private · no tools" : "",
+                                         selected: brain.engineSpec.kind == .api && brain.engineSpec.model == ref) {
+                                    brain.engineSpec = ChatEngineSpec(kind: .api, model: ref); done()
+                                }
+                                .id("api:\(ref)")
+                            }
                         }
                     }
+                    .padding(6)
                 }
-                .padding(6)
-            }
-            Divider()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 1) {
-                    content
+                .frame(height: listHeight)
+                .onAppear {
+                    let spec = brain.engineSpec
+                    let id = spec.kind == .auto ? "auto" : spec.kind == .api ? "api:\(spec.model ?? "")" : "\(spec.kind.rawValue):\(spec.model ?? "")"
+                    proxy.scrollTo(id, anchor: .center)
                 }
-                .padding(6)
-                .id(tab)
-                .transition(.opacity.combined(with: .offset(y: 4)))
             }
-            // A ScrollView in a popover has no natural height (the list collapsed to nothing): size it to the rows.
-            .frame(height: listHeight)
-            if !CLICatalog.efforts(for: tab).isEmpty {
-                Divider()
-                EffortRow(kind: tab)
-                    .padding(10)
+            if brain.engineSpec.kind != .auto, !CLICatalog.efforts(for: brain.engineSpec.kind).isEmpty {
+                Rectangle().fill(Theme.gridLine).frame(height: 1)
+                EffortRow(kind: brain.engineSpec.kind)
+                    .padding(.horizontal, 12).padding(.vertical, 10)
             }
         }
-        .frame(width: 320)
-        .onAppear { tab = brain.engineSpec.kind == .auto ? .auto : brain.engineSpec.kind }
+        .frame(width: 300)
+        .arrowlessPopover()
     }
 
-    /// ~46 pt per model row (name + description), 24 pt per section label, capped at 380.
+    /// Rows are ~34 pt (title + one-line detail), section labels ~30 pt; capped so the list scrolls.
     private var listHeight: CGFloat {
-        let rows: Int, labels: Int
-        switch tab {
-        case .auto: rows = 1; labels = 0
-        case .api: rows = brain.apiModelGroups.reduce(0) { $0 + $1.models.count }; labels = brain.apiModelGroups.count
-        default: rows = CLICatalog.models(for: tab).count; labels = 1
-        }
-        return min(380, CGFloat(rows) * 46 + CGFloat(labels) * 26 + 14)
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        switch tab {
-        case .auto:
-            ModelRow(title: "Auto", detail: "Best available: API key → Claude Code → Codex → on device. Currently: \(brain.chatEngine)",
-                     selected: brain.engineSpec.kind == .auto) {
-                brain.engineSpec = .auto; done()
-            }
-        case .api:
-            ForEach(brain.apiModelGroups, id: \.provider) { g in
-                SectionLabel(g.provider)
-                ForEach(g.models, id: \.self) { ref in
-                    ModelRow(title: g.onDevice ? "Apple Intelligence" : String(ref.split(separator: "/").last ?? ""),
-                             detail: g.onDevice ? "On device · private · no tools" : ref,
-                             selected: brain.engineSpec.kind == .api && brain.engineSpec.model == ref) {
-                        brain.engineSpec = ChatEngineSpec(kind: .api, model: ref); done()
-                    }
-                }
-            }
-        default:
-            SectionLabel(subtitle(tab))
-            ForEach(CLICatalog.models(for: tab)) { m in
-                ModelRow(title: m.label, detail: m.detail,
-                         selected: brain.engineSpec.kind == tab && brain.engineSpec.model == m.id) {
-                    var s = brain.engineSpec.kind == tab ? brain.engineSpec : ChatEngineSpec(kind: tab)
-                    s.model = m.id
-                    brain.engineSpec = s
-                    done()
-                }
-            }
-        }
+        let rows = 1 + engines.reduce(0) { $0 + CLICatalog.models(for: $1).count } + brain.apiModelGroups.reduce(0) { $0 + $1.models.count }
+        let labels = engines.count + brain.apiModelGroups.count
+        return min(440, CGFloat(rows) * 36 + CGFloat(labels) * 30 + 12)
     }
 
     private func subtitle(_ k: ChatEngineSpec.Kind) -> String {
         switch k {
-        case .claudeCode: return "Claude Code · your Claude subscription"
-        case .codex: return "Codex CLI · your ChatGPT subscription"
-        case .gemini: return "Gemini CLI"
-        case .opencode: return "OpenCode"
+        case .claudeCode: return "Claude subscription"
+        case .codex: return "ChatGPT subscription"
         default: return ""
         }
     }
@@ -185,12 +164,14 @@ private struct EngineTab: View {
 
 struct SectionLabel: View {
     let text: String
-    init(_ text: String) { self.text = text }
+    var detail = ""
+    init(_ text: String, detail: String = "") { self.text = text; self.detail = detail }
     var body: some View {
-        Text(text)
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(Theme.secondary)
-            .padding(.horizontal, 8).padding(.top, 6).padding(.bottom, 3)
+        HStack(spacing: 6) {
+            Text(text).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary)
+            if !detail.isEmpty { Text(detail).font(.system(size: 11)).foregroundStyle(Theme.secondary.opacity(0.7)) }
+        }
+        .padding(.horizontal, 8).padding(.top, 10).padding(.bottom, 3)
     }
 }
 
@@ -198,33 +179,39 @@ struct SectionLabel: View {
 struct ModelRow: View {
     let title: String
     let detail: String
+    var symbol: String? = nil
     let selected: Bool
     let action: () -> Void
     @State private var hover = false
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                if let symbol {
+                    Image(systemName: symbol).font(.system(size: 12)).foregroundStyle(Theme.secondary).frame(width: 16)
+                }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.primary)
+                    Text(title).font(.system(size: 13, weight: selected ? .semibold : .regular)).foregroundStyle(Theme.primary)
                     if !detail.isEmpty {
-                        Text(detail).font(.system(size: 11.5)).foregroundStyle(Theme.secondary).lineLimit(2)
+                        Text(detail).font(.system(size: 11)).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.tail)
                     }
                 }
                 Spacer(minLength: 6)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Theme.accentBlue)
                     .opacity(selected ? 1 : 0)
-                    .scaleEffect(selected ? 1 : 0.6)
             }
-            .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))
+            .padding(.horizontal, 8).padding(.vertical, 5)
+            .frame(minHeight: 32)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(hover ? Theme.hoverFill : (selected ? Theme.hoverFill.opacity(0.5) : .clear)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .clickableCursor()
+        .help(detail)
         .onHover { hover = $0 }
-        .animation(.easeOut(duration: 0.12), value: hover)
+        .animation(.easeOut(duration: 0.1), value: hover)
     }
 }
 

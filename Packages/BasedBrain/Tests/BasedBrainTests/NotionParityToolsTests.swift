@@ -56,3 +56,13 @@ final class NotionParityToolsTests: XCTestCase {
                                                 "database_id": .string(dbID), "properties": ["Status": "Nope"]]).isError)
     }
 }
+
+final class DocumentArtifactTests: XCTestCase {
+    func testMarkdownBlocksBecomeDocuments() {
+        let doc = "# Weekly plan\n\n- Mon: gym\n- Tue: write\n- Wed: read\n- Thu: lab\n- Fri: review\n\nDone."
+        let a = ChatArtifact.extract("Here you go:\n```markdown\n\(doc)\n```\n")
+        XCTAssertEqual(a.first?.kind, .markdown)
+        XCTAssertEqual(a.first?.title, "Weekly plan")
+        XCTAssertNil(ChatArtifact.from(language: "md", code: "short\nsnippet"))
+    }
+}

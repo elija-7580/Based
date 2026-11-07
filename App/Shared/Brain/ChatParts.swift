@@ -78,6 +78,10 @@ struct AssistantMessageView: View {
                 ChatWorkingIndicator(label: parts.isEmpty ? "Thinking…" : "Working…")
                     .transition(.opacity)
             }
+            if !turn.isRunning {
+                TouchedPagesCard(parts: parts)
+                    .transition(.opacity.combined(with: .offset(y: 4)))
+            }
             if !turn.isRunning, !changedFiles(parts).isEmpty {
                 ChangedFilesCard(files: changedFiles(parts))
                     .transition(.opacity.combined(with: .offset(y: 4)))

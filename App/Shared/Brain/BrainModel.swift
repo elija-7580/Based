@@ -443,7 +443,7 @@ final class BrainModel {
     }
 
     /// Tells the model how to produce artifacts the chat can show in its panel.
-    static let artifactHint = "For visual or interactive results (a web page, chart, small app, diagram, illustration) reply with ONE complete fenced block — ```html (self-contained, inline CSS/JS, CDNs allowed), ```svg, ```mermaid or ```jsx (a React component with `export default`, Tailwind classes work) — and keep the text around it short; the app shows it as a live artifact."
+    static let artifactHint = "For visual or interactive results (a web page, chart, small app, diagram, illustration) reply with ONE complete fenced block — ```html (self-contained, inline CSS/JS, CDNs allowed), ```svg, ```mermaid or ```jsx (a React component with `export default`, Tailwind classes work) — and keep the text around it short; the app shows it as a live artifact. For a longer standalone document the user may keep (a plan, report, letter, summary, notes) put it in ONE ```markdown block starting with a # title; the app shows it as a document they can read and save as a page. When you create or edit workspace pages with tools, the app shows them as cards, so do not repeat their content."
 
     enum ChatError: Error, CustomStringConvertible {
         case noEngine
