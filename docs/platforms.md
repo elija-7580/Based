@@ -37,7 +37,8 @@ Measured on a real workspace (71,373 records, 40 MB SQLite, release build):
 |---|---|---|
 | read + decode records | 525 ms | 194 ms (parallel JSON decoding) |
 | build indexes | 273 ms | 122 ms (bulk child index) |
-| open in app (debug build) | 866 ms | 487 ms |
+| open in app (debug build) | 866 ms | 407 ms |
+| app memory after open | 302 MB | 164 MB (`Block.props` copy-on-write, shared when empty) |
 
 Next steps, in order of payoff:
 
