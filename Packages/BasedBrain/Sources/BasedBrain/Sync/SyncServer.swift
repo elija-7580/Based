@@ -302,7 +302,8 @@ public final class ServerSync {
             if !page.more { break }
         }
         lastSync = Date(); lastError = nil
-        onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))" + (received > 0 ? " · \(received) changes" : ""))
+        onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)) · live (protocol v2)"
+                  + (received > 0 ? " · \(received) changes" : ""))
     }
 
     private func readSeq(_ key: String) -> Int64 {
@@ -333,7 +334,7 @@ public final class ServerSync {
             cursor = env.cursor
             store.persistence?.setMeta(Self.cursorKey, try? JSONEncoder().encode(env.cursor))
             lastSync = Date(); lastError = nil
-            onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))")
+            onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)) · older server (protocol v1, every 20 s) — update based-server for live sync")
         }
     }
 
