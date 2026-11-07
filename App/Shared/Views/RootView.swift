@@ -267,7 +267,7 @@ struct DetailShell: View {
                 }
                 .frame(minWidth: docked ? 380 : 0, maxWidth: .infinity)
                 .overlay { centerPeekOverlay(geo.size) }
-                if docked, let panel = rightPanel {
+                if docked, !isSidePeek, let panel = rightPanel {
                     PanelResizeHandle(width: $panelWidth, range: 300...maxPanel)
                     panel
                         .frame(width: width)
@@ -275,8 +275,10 @@ struct DetailShell: View {
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
+            // The side peek floats over the page instead of docking: docking changed the page's width, and a
+            // page full of boards and calendars re-laid out on every frame of the slide-in (seconds on big pages).
             .overlay(alignment: .trailing) {
-                if !docked, let panel = rightPanel {
+                if !docked || isSidePeek, let panel = rightPanel {
                     panel
                         .frame(width: width)
                         .frame(maxHeight: .infinity)
@@ -311,8 +313,14 @@ struct DetailShell: View {
         #endif
     }
 
+    private var isSidePeek: Bool {
+        if case .side? = model.peek { return true }
+        return false
+    }
+
     private var panelKey: String {
-        if case .side(let id)? = model.peek { return "peek-" + id }
+        // One key for every side-peeked row: stepping between rows swaps the content without sliding again.
+        if case .side? = model.peek { return "peek" }
         return model.showChatPanel ? "chat" : "none"
     }
 

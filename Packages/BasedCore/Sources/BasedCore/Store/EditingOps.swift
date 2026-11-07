@@ -340,10 +340,42 @@ public extension WorkspaceStore {
     func moveBlocks(_ ids: [RecordID], to parent: ParentRef, at position: InsertPosition, name: String = "Move") {
         let plan = planMove(ids, to: parent, at: position)
         guard !plan.isEmpty else { return }
+        let moving = Set(plan.map(\.0))
+        // Columns the blocks leave; emptied ones are removed in the same undo step (Notion collapses them).
+        let sourceColumns = Set(plan.compactMap { id, _ -> RecordID? in
+            guard case .block(let pid) = blocks[id]?.parent, blocks[pid]?.type == .column else { return nil }
+            return pid
+        })
         transact(name) { tx in
             for (id, k) in plan {
                 tx.update(id) { $0.parent = parent; $0.sortKey = k }
             }
+            collapseColumns(sourceColumns, moving: moving, into: parent, tx: tx)
+        }
+    }
+
+    /// Removes columns left empty by a move and unwraps a column list that is down to one column.
+    private func collapseColumns(_ columns: Set<RecordID>, moving: Set<RecordID>, into dest: ParentRef, tx: Tx) {
+        var lists: [RecordID: Set<RecordID>] = [:]   // list → columns removed
+        for colID in columns {
+            if case .block(let d) = dest, d == colID { continue }
+            guard let col = blocks[colID], case .block(let listID) = col.parent, blocks[listID]?.type == .columnList else { continue }
+            let left = contentBlocks(of: colID).filter { !moving.contains($0.id) }
+            if left.isEmpty { lists[listID, default: []].insert(colID) }
+        }
+        for (listID, removed) in lists {
+            guard let list = blocks[listID] else { continue }
+            for c in removed { tx.removeBlock(c) }
+            let remaining = contentBlocks(of: listID).filter { !removed.contains($0.id) }
+            guard remaining.count <= 1 else { continue }
+            // Blocks landing in the last column stay put; unwrapping would move them a second time.
+            if case .block(let d) = dest, remaining.contains(where: { $0.id == d }) { continue }
+            let last = remaining.first
+            let kids = last.map { contentBlocks(of: $0.id).map(\.id).filter { !moving.contains($0) } } ?? []
+            let keys = tx.sortKeys(kids.count, in: list.parent, .after(listID))
+            for (k, key) in zip(kids, keys) { tx.update(k) { $0.parent = list.parent; $0.sortKey = key } }
+            if let l = last { tx.removeBlock(l.id) }
+            tx.removeBlock(listID)
         }
     }
 

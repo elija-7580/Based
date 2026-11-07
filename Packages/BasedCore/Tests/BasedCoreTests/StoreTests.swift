@@ -182,4 +182,27 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(s.contentBlocks(of: list.id).count, 2)
         XCTAssertEqual(texts(s, page).filter { !$0.isEmpty }, ["Left", "Right"])
     }
+
+    func testMovingLastBlockOutOfColumnRemovesIt() {
+        let (s, page) = makeStore()
+        let a = s.insertBlock(.text, text: "A", in: .block(page))
+        let b = s.insertBlock(.text, text: "B", in: .block(page))
+        let c = s.insertBlock(.text, text: "C", in: .block(page))
+        s.placeInColumn([b], beside: a, leading: false)
+        let list = s.contentBlocks(of: page).first!
+        s.placeInColumn([c], beside: b, leading: false)
+        XCTAssertEqual(s.contentBlocks(of: list.id).count, 3)
+        // Move B (alone in the middle column) under C: the middle column disappears.
+        s.moveBlocks([b], to: s.blocks[c]!.parent, at: .after(c))
+        XCTAssertEqual(s.contentBlocks(of: list.id).count, 2)
+        // Move C's column content into A's column: one column left, so the list unwraps.
+        s.moveBlocks([c, b], to: s.blocks[a]!.parent, at: .after(a))
+        XCTAssertEqual(s.contentBlocks(of: list.id).count, 1)
+        s.moveBlocks([a, c, b], to: .block(page), at: .end)
+        XCTAssertNil(s.blocks[list.id])
+        XCTAssertEqual(texts(s, page).filter { !$0.isEmpty }, ["A", "C", "B"])
+        // Undo restores the columns in one step.
+        s.undo()
+        XCTAssertNotNil(s.blocks[list.id])
+    }
 }

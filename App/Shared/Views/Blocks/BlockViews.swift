@@ -541,7 +541,7 @@ struct ColumnsView: View {
 
     var body: some View {
         let cols = model.registry.block(block.id).children
-        let ratios = cols.map { model.store.blocks[$0]?.props.ratio ?? 1 }
+        let ratios = cols.map { model.store.blocks[$0]?.props.ratio ?? 0 }
         ColumnsLayout(ratios: ratios, spacing: BlockRow.gutter + 2) {
             ForEach(cols, id: \.self) { cid in
                 // Wide content (a scrolled board, a table) stays inside its column instead of drawing over the next.
@@ -559,31 +559,33 @@ struct ColumnsLayout: Layout {
     var ratios: [Double]
     var spacing: CGFloat
 
-    struct Cache { var heights: [CGFloat: CGFloat] = [:] }
-
-    func makeCache(subviews: Subviews) -> Cache { Cache() }
-    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache.heights.removeAll(keepingCapacity: true) }
-
     private func widths(_ total: CGFloat, count: Int) -> [CGFloat] {
-        let r = (0..<count).map { $0 < ratios.count ? max(0.05, ratios[$0]) : 1 }
+        // Ratios may be stored as fractions or percentages, and new columns have none: missing ones take
+        // the average share, and no column drops below 5% of the row.
+        let given = (0..<count).map { $0 < ratios.count && ratios[$0] > 0 ? ratios[$0] : nil }
+        let known = given.compactMap { $0 }
+        let fill = known.isEmpty ? 1 : known.reduce(0, +) / Double(known.count)
+        let raw = given.map { $0 ?? fill }
+        let rawSum = raw.reduce(0, +)
+        let r = raw.map { max(0.05, $0 / rawSum) }
         let sum = r.reduce(0, +)
         let avail = max(0, total - spacing * CGFloat(max(0, count - 1)))
         return r.map { avail * CGFloat($0 / sum) }
     }
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
-        let total = (proposal.width ?? 600).rounded()
-        if let h = cache.heights[total] { return CGSize(width: total, height: h) }
+    // No height cache here: a cached height went stale when content inside a column changed
+    // (a moved block, an opened toggle) and the columns drew over each other.
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let total = proposal.width ?? 600
         let w = widths(total, count: subviews.count)
         var h: CGFloat = 0
         for (i, sv) in subviews.enumerated() {
             h = max(h, sv.sizeThatFits(ProposedViewSize(width: w[i], height: nil)).height)
         }
-        cache.heights[total] = h
         return CGSize(width: total, height: h)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let w = widths(bounds.width, count: subviews.count)
         var x = bounds.minX
         for (i, sv) in subviews.enumerated() {
