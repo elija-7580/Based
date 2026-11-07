@@ -31,6 +31,8 @@ final class BlockGutterState {
     private(set) var ghostTitle = ""
     @ObservationIgnored private var grabOffset: CGFloat = 0
     @ObservationIgnored private var rows: [BlockLayoutRow] = []
+    /// Recomputes drop rows (blocks rendered while auto-scrolling a lazy page become targets).
+    @ObservationIgnored var rowsProvider: (() -> [BlockLayoutRow])?
     /// Horizontal extent of the blocks; dropping far outside it (sidebar, other pane) cancels the drag.
     @ObservationIgnored private var extent: ClosedRange<CGFloat> = 0...0
     @ObservationIgnored private var clearTask: Task<Void, Never>?
@@ -122,6 +124,7 @@ final class BlockGutterState {
         dragPoint = nil
         dropTarget = nil
         rows = []
+        rowsProvider = nil
         hovered = nil
         #if os(macOS)
         autoScrollTimer?.invalidate(); autoScrollTimer = nil
@@ -161,6 +164,7 @@ final class BlockGutterState {
         clip.scroll(to: origin)
         sv.reflectScrolledClipView(clip)
         let moved = doc.isFlipped ? origin.y - before : before - origin.y
+        if let fresh = rowsProvider?() { rows = fresh }
         if let p = dragPoint { updateDrag(CGPoint(x: p.x, y: p.y + moved)) }
     }
     #endif
@@ -188,6 +192,7 @@ extension EditorController {
             return t.isEmpty ? b.type.displayName : String(t.prefix(60))
         } ?? ""
         let left = gutter.frame(of: id)?.minX ?? start.x
+        gutter.rowsProvider = { [weak self] in self?.dropRows(excluding: ids) ?? [] }
         gutter.startDrag(ids: ids, grabOffset: start.x - left, rows: dropRows(excluding: ids),
                          title: ids.count > 1 ? "\(ids.count) blocks" : title, at: p)
         Log.breadcrumb("drag blocks ×\(ids.count)")

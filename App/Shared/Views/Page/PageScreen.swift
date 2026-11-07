@@ -56,7 +56,7 @@ struct PageScreen: View {
                         if page.type == .databasePage {
                             DatabaseBlockView(blockID: pageID, fullPage: true)
                         } else {
-                            BlockList(parentID: pageID, editor: editor)
+                            BlockList(parentID: pageID, editor: editor, lazyWhenLong: true)
                             Color.clear
                                 .frame(height: 160)
                                 .frame(maxWidth: .infinity)
@@ -88,6 +88,13 @@ struct PageScreen: View {
                 if page.type != .databasePage, format?.hideOutline != true, !model.showFind {
                     PageOutline(pageID: pageID, scroll: scroll, topInset: page.props.cover != nil ? (isPeek ? 190 : 300) : 96)
                 }
+            }
+            .onChange(of: editor.scrollRequest) { _, id in
+                // Keyboard / programmatic focus on a block that isn't rendered yet (lazy long pages).
+                guard let id else { return }
+                editor.scrollRequest = nil
+                guard let top = model.store.topLevelAncestor(of: id, in: pageID) else { return }
+                withAnimation(.easeOut(duration: 0.12)) { scroll.scrollTo(top, anchor: .center) }
             }
             .onChange(of: model.findTarget) { _, target in
                 // ⌘F: scroll the current match into view and mark it.

@@ -153,8 +153,13 @@ final class EditorController {
             DispatchQueue.main.async { h.focus(at: target.offset) }
         } else {
             pendingFocus = target
+            // Long pages render lazily: bring the block on screen so its text view exists and takes focus.
+            scrollRequest = target.id
         }
     }
+
+    /// A block to scroll into view (the page observes it; long pages only render what's visible).
+    var scrollRequest: RecordID?
 
     func focusEnd(_ id: RecordID) {
         focus(FocusTarget(id, store.blocks[id]?.text.length ?? 0))

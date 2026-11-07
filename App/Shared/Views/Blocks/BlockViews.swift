@@ -21,6 +21,10 @@ struct BlockList: View {
     let parentID: RecordID
     let editor: EditorController
     var listDepth = 0
+    /// Top level of a page: render lazily once the page is long (each block owns a text view; a 244-block
+    /// page took ~450 ms to open when every row was built up front).
+    var lazyWhenLong = false
+    static let lazyThreshold = 60
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -28,10 +32,16 @@ struct BlockList: View {
         let _ = model.registry.workspace.structureRevision
         let ids = node.children
         let numbers = listNumbers(ids)
-        VStack(alignment: .leading, spacing: Theme.blockSpacing) {
-            ForEach(ids, id: \.self) { id in
-                BlockRow(id: id, editor: editor, number: numbers[id], listDepth: listDepth)
-            }
+        if lazyWhenLong && ids.count > Self.lazyThreshold {
+            LazyVStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
+        } else {
+            VStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
+        }
+    }
+
+    private func rows(_ ids: [RecordID], _ numbers: [RecordID: Int]) -> some View {
+        ForEach(ids, id: \.self) { id in
+            BlockRow(id: id, editor: editor, number: numbers[id], listDepth: listDepth)
         }
     }
 

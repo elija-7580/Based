@@ -34,6 +34,11 @@ enum DebugDriver {
             // Let SwiftUI settle (animations, async layout) before drawing.
             DispatchQueue.main.asyncAfter(deadline: .now() + (Double(q["delay"] ?? "") ?? 0.6)) { snapshot(to: out) }
         case "open":
+            let t0 = Date()
+            // Rough open time: until the main thread is free again after the page's first layout.
+            DispatchQueue.main.async { DispatchQueue.main.async {
+                Log.notice("debug open took \(Int(Date().timeIntervalSince(t0) * 1000)) ms", category: "debug")
+            } }
             if let id = q["id"] { model.open(id) }
             else if let t = q["title"]?.lowercased(),
                     let id = model.store.blocks.values.first(where: { $0.type == .page && $0.text.plainText.lowercased() == t })?.id {

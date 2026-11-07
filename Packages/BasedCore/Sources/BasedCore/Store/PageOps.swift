@@ -84,6 +84,19 @@ public extension WorkspaceStore {
         return nil
     }
 
+    /// The direct child of `page` that contains `id` (or is `id`) — the row to scroll to on a lazy page.
+    func topLevelAncestor(of id: RecordID, in page: RecordID) -> RecordID? {
+        var cur: RecordID? = id
+        var n = 0
+        while let c = cur, n < 1000 {
+            n += 1
+            guard let b = blocks[c] else { return nil }
+            if case .block(let p) = b.parent, p == page { return c }
+            cur = parentBlock(of: c)?.id
+        }
+        return nil
+    }
+
     /// Breadcrumb trail: page-like ancestors from the top down, excluding `id`.
     func ancestors(of id: RecordID) -> [Block] {
         var out: [Block] = []
