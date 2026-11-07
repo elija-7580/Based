@@ -120,7 +120,7 @@ enum DebugDriver {
         case "trash":
             // Moves pages with this exact title (debug test pages) to the trash.
             if let t = q["title"] {
-                let ids = model.store.blocks.values.filter { $0.type == .page && $0.trashedAt == nil && $0.text.plainText == t }.map(\.id)
+                let ids = model.store.blocks.values.filter { ($0.type == .page || $0.type == .databasePage) && $0.trashedAt == nil && model.store.title(of: $0.id) == t }.map(\.id)
                 model.store.trash(ids)
             }
         case "drag":
@@ -204,6 +204,12 @@ enum DebugDriver {
             var lines = ["happier.chats \(hc)", "sessions \(sessions.count)", "chats(store) \(sessions.filter(\.isChat).count)"]
             lines += sessions.prefix(10).map { "  \($0.agentID) · \($0.title) · \($0.id)" }
             try? lines.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
+        case "newdb":
+            // Full-page database with sample rows: type = table | board | gallery | list | calendar.
+            let vt = ViewType(rawValue: q["type"] ?? "board") ?? .board
+            let created = model.store.createDatabase(title: RichText(q["title"] ?? "DB QA"), in: .workspace, inline: false,
+                                                     viewType: vt, sampleRows: Int(q["rows"] ?? "6") ?? 6)
+            model.open(created.blockID)
         case "pages":
             let out = q["out"] ?? NSTemporaryDirectory() + "based-pages.txt"
             let lines = model.store.blocks.values
