@@ -72,8 +72,20 @@ struct PropertyValueView: View {
             Text(property.name).padding(.horizontal, 6).padding(.vertical, 2)
                 .background(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
         default:
-            Text(CellFormatter.text(value, store: store)).lineLimit(wrap ? nil : 1)
+            Text(Self.displayText(CellFormatter.text(value, store: store))).lineLimit(wrap ? nil : 1)
         }
+    }
+
+    /// Imported text sometimes carries HTML ("<h2>Abstract</h2><p>…"): show it as plain text in cells.
+    /// Display only — the stored value is untouched.
+    static func displayText(_ s: String) -> String {
+        guard s.contains("<"), s.range(of: #"</?[a-zA-Z][^>]*>"#, options: .regularExpression) != nil else { return s }
+        var t = s.replacingOccurrences(of: #"<(br|/p|/h[1-6]|/li|/div)\s*/?>"#, with: " ", options: [.regularExpression, .caseInsensitive])
+        t = t.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
+        for (e, c) in [("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&#39;", "'"), ("&nbsp;", " ")] {
+            t = t.replacingOccurrences(of: e, with: c)
+        }
+        return t.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
     }
 
     @ViewBuilder
@@ -120,7 +132,13 @@ struct FlowRow<Content: View>: View {
         if wrap {
             WrapLayout(spacing: 4) { content() }
         } else {
-            HStack(spacing: 4) { content() }.lineLimit(1)
+            // Notion: pills keep their full width and the cell clips at its edge (instead of every pill
+            // shrinking to "A…").
+            HStack(spacing: 4) { content() }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .clipped()
         }
     }
 }

@@ -85,6 +85,8 @@ struct TableLayout: View {
 
     /// Width of the checkbox gutter left of each row.
     static let gutter: CGFloat = 28
+    /// One-line row height (Notion: 33 pt + 1 pt border).
+    static let rowHeight: CGFloat = 34
 
     var body: some View {
         let props = ctx.visibleProperties
@@ -264,6 +266,7 @@ struct TableRowView: View {
     let selectionActive: Bool
     let toggle: (_ shift: Bool) -> Void
     @State private var hover = false
+    private var wrap: Bool { ctx.view.wrapCells == true }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -293,11 +296,14 @@ struct TableRowView: View {
                     }
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .frame(width: TableHeader.width(ctx, p), alignment: .leading)
+                .padding(.vertical, wrap ? 6 : 0)
+                // Notion: without "Wrap cells" every row is one line high (33 pt) and cells clip.
+                .frame(width: TableHeader.width(ctx, p), height: wrap ? nil : TableLayout.rowHeight, alignment: .leading)
+                .clipped()
                 .overlay(alignment: .trailing) { Rectangle().fill(Color(Theme.divider)).frame(width: 1) }
             }
         }
+        .frame(minHeight: TableLayout.rowHeight)
         .background(selected ? Color.accentColor.opacity(0.1) : Color.clear)
         .overlay(alignment: .bottom) { Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.leading, TableLayout.gutter) }
         .contentShape(Rectangle())
