@@ -39,6 +39,8 @@ final class BlockGutterState {
     #if os(macOS)
     @ObservationIgnored weak var scrollView: NSScrollView?
     @ObservationIgnored private var autoScrollTimer: Timer?
+    /// Last pointer position over the page (canvas coordinates), for double-click selection.
+    @ObservationIgnored var pointer: CGPoint?
     #endif
 
     var isDragging: Bool { !draggingIDs.isEmpty }
@@ -64,6 +66,9 @@ final class BlockGutterState {
         guard !locked else { if hovered != nil { hovered = nil }; return }
         switch phase {
         case .active(let p):
+            #if os(macOS)
+            pointer = p
+            #endif
             let list = frames.compactMap { noHandle.contains($0.key) ? nil : (id: $0.key, frame: $0.value) }
             if let id = BlockGutterGeometry.hoverTarget(at: p, frames: list, slack: Theme.blockSpacing / 2 + 1) {
                 clearTask?.cancel(); clearTask = nil

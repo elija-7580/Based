@@ -276,7 +276,7 @@ struct SearchOverlay: View {
     private func copyLink() {
         guard rows.indices.contains(highlighted) else { return }
         switch rows[highlighted].kind {
-        case .page(let id, _): Clipboard.copy("based://page/" + id)
+        case .page(let id, _): Clipboard.copyLinks([id], store: model.store)
         case .chat(let c): Clipboard.copy("based://chat/" + c.id)
         case .ask: return
         }

@@ -88,7 +88,7 @@ public final class AgentTools {
         switch name {
         case "search":
             let hits = SearchEngine(store: store).search(try req(a, "query"), limit: a["limit"]?.int ?? 20)
-            return hits.map { h in "- \(store.title(of: h.pageID)) [id: \(h.pageID)]" + (h.snippet.map { " — \($0)" } ?? "") }.joined(separator: "\n").nonEmpty ?? "No results."
+            return hits.map { h in "- \(store.title(of: h.pageID)) [id: \(h.pageID), link: \(PageLink.url(h.pageID))]" + (h.snippet.map { " — \($0)" } ?? "") }.joined(separator: "\n").nonEmpty ?? "No results."
         case "read_page":
             let id = try req(a, "page_id")
             guard let b = store.blocks[id] else { throw ToolError("No page \(id)") }
@@ -99,7 +99,7 @@ public final class AgentTools {
             return out + MarkdownExporter(store: store).export(page: id, includeTitle: false)
         case "list_pages":
             let pages = a["parent_id"]?.stringValue.map { store.subpages(of: $0) } ?? store.topLevelPages()
-            return pages.map { "- \($0.title.nonEmpty ?? "Untitled") [id: \($0.id)]" }.joined(separator: "\n").nonEmpty ?? "(none)"
+            return pages.map { "- \($0.title.nonEmpty ?? "Untitled") [id: \($0.id), link: \(PageLink.url($0.id))]" }.joined(separator: "\n").nonEmpty ?? "(none)"
         case "create_page":
             let parent: ParentRef = a["parent_id"]?.stringValue.map { .block($0) } ?? .workspace
             let id = store.createPage(title: RichText(try req(a, "title")), in: parent, icon: a["icon"]?.string.map { .emoji($0) })
@@ -123,7 +123,7 @@ public final class AgentTools {
                 rows = rows.filter { r in (r.title + " " + db.properties.map { propertyText(r, $0, db) }.joined(separator: " ")).lowercased().contains(needle) }
             }
             return rows.prefix(a["limit"]?.int ?? 100).map { r in
-                "- \(r.title.nonEmpty ?? "Untitled") [id: \(r.id)] " + db.properties.filter { $0.type != .title }.compactMap { p in
+                "- \(r.title.nonEmpty ?? "Untitled") [id: \(r.id), link: \(PageLink.url(r.id))] " + db.properties.filter { $0.type != .title }.compactMap { p in
                     let t = propertyText(r, p, db); return t.isEmpty ? nil : "\(p.name)=\(t)" }.joined(separator: "; ")
             }.joined(separator: "\n").nonEmpty ?? "(no rows)"
         case "add_row":

@@ -131,6 +131,11 @@ struct BasedCommands: Commands {
             Button("Expand / Collapse Toggles") { model.activeEditor?.toggleAllToggles() }.keyboardShortcut("t", modifiers: [.command, .option])
         }
         CommandGroup(after: .toolbar) {
+            Button("Zoom In") { model.pageZoom += 0.1 }.keyboardShortcut("+")
+            Button("Zoom In") { model.pageZoom += 0.1 }.keyboardShortcut("=")   // US layouts: ⌘= is ⌘+
+            Button("Zoom Out") { model.pageZoom -= 0.1 }.keyboardShortcut("-")
+            Button("Actual Size") { model.pageZoom = 1 }.keyboardShortcut("0")
+            Divider()
             Button("Toggle Dark Mode") { Appearance.toggle() }.keyboardShortcut("l", modifiers: [.command, .shift])
             Button(model.showChatPanel ? "Hide AI Chat" : "Show AI Chat") { run("⌘J") { model.toggleChatPanel() } }
                 .keyboardShortcut("j")

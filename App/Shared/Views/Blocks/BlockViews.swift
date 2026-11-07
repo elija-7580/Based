@@ -105,9 +105,11 @@ struct BlockRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.vertical, b.type.isHeading ? 6 : 0)
+            // A coloured background gets a little inset so text and the toggle arrow don't touch its edge.
+            .padding(.horizontal, hasFill(b) ? 8 : 0)
+            .padding(.vertical, hasFill(b) && !b.type.isHeading ? 2 : 0)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background(b)))
             .padding(.top, b.type == .heading1 ? 10 : 0)
-            .background(RoundedRectangle(cornerRadius: 4).fill(background(b, selected: selected)))
-            .animation(.easeOut(duration: 0.12), value: selected)
             .anchorPreference(key: MenuAnchorKey.self, value: .bounds) { menuHere ? $0 : nil }
             #if os(macOS)
             // The page-level gutter (BlockGutter.swift) hit-tests these frames for the + / ⋮⋮ and for drops.
@@ -123,6 +125,15 @@ struct BlockRow: View {
                     .padding(.leading, Theme.indent)
                     .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -4)), removal: .opacity))
             }
+        }
+        // Selection tints the whole block — its own background (code, callout) and nested children included — like
+        // Notion's translucent blue wash, instead of replacing the background (which hid code blocks).
+        .overlay {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Theme.dropIndicator.opacity(selected ? 0.16 : 0))
+                .padding(.horizontal, -3)
+                .allowsHitTesting(false)
+                .animation(.easeOut(duration: 0.14), value: selected)
         }
         .id(b.id)
         #if os(macOS)
@@ -146,8 +157,12 @@ struct BlockRow: View {
         Binding(get: { editor.linkEditor == id }, set: { if !$0, editor.linkEditor == id { editor.linkEditor = nil } })
     }
 
-    private func background(_ b: Block, selected: Bool) -> Color {
-        if selected { return Color(Theme.selection) }
+    private func hasFill(_ b: Block) -> Bool {
+        if let c = b.props.color, c.isBackground, b.type != .callout { return true }
+        return false
+    }
+
+    private func background(_ b: Block) -> Color {
         if let c = b.props.color, c.isBackground, b.type != .callout { return Theme.color(c) }
         return Color.clear
     }
@@ -529,16 +544,25 @@ struct ColumnsView: View {
         let ratios = cols.map { model.store.blocks[$0]?.props.ratio ?? 1 }
         ColumnsLayout(ratios: ratios, spacing: BlockRow.gutter + 2) {
             ForEach(cols, id: \.self) { cid in
+                // Wide content (a scrolled board, a table) stays inside its column instead of drawing over the next.
                 ColumnView(id: cid, editor: editor)
+                    .clipShape(Rectangle().inset(by: -6))
             }
         }
     }
 }
 
 /// Lays out columns side by side with widths proportional to their ratios.
+/// Measuring a column means measuring everything in it (whole databases, boards, calendars), and SwiftUI asks
+/// for the size several times per pass, so heights are cached per width until the subviews change.
 struct ColumnsLayout: Layout {
     var ratios: [Double]
     var spacing: CGFloat
+
+    struct Cache { var heights: [CGFloat: CGFloat] = [:] }
+
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache.heights.removeAll(keepingCapacity: true) }
 
     private func widths(_ total: CGFloat, count: Int) -> [CGFloat] {
         let r = (0..<count).map { $0 < ratios.count ? max(0.05, ratios[$0]) : 1 }
@@ -547,17 +571,19 @@ struct ColumnsLayout: Layout {
         return r.map { avail * CGFloat($0 / sum) }
     }
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let total = proposal.width ?? 600
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let total = (proposal.width ?? 600).rounded()
+        if let h = cache.heights[total] { return CGSize(width: total, height: h) }
         let w = widths(total, count: subviews.count)
         var h: CGFloat = 0
         for (i, sv) in subviews.enumerated() {
             h = max(h, sv.sizeThatFits(ProposedViewSize(width: w[i], height: nil)).height)
         }
+        cache.heights[total] = h
         return CGSize(width: total, height: h)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
         let w = widths(bounds.width, count: subviews.count)
         var x = bounds.minX
         for (i, sv) in subviews.enumerated() {
@@ -780,6 +806,26 @@ struct BreadcrumbView: View {
 }
 
 enum Clipboard {
+    /// Copies page links: plain text `based://page/<id>` (what agents and other apps use), plus a titled rich link
+    /// (HTML) and a URL so mail, Slack and editors paste a clickable "Title".
+    @MainActor static func copyLinks(_ ids: [RecordID], store: WorkspaceStore) {
+        let urls = ids.map(PageLink.url)
+        #if os(macOS)
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(urls.joined(separator: "\n"), forType: .string)
+        let html = ids.map { id in
+            let t = store.title(of: id).isEmpty ? "Untitled" : store.title(of: id)
+            let esc = t.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
+            return "<a href=\"\(PageLink.url(id))\">\(esc)</a>"
+        }.joined(separator: "<br>")
+        pb.setString(html, forType: .html)
+        if urls.count == 1 { pb.setString(urls[0], forType: .URL) }
+        #else
+        UIPasteboard.general.string = urls.joined(separator: "\n")
+        #endif
+    }
+
     static func copy(_ s: String) {
         #if os(macOS)
         NSPasteboard.general.clearContents()

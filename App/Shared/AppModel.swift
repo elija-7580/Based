@@ -104,6 +104,14 @@ struct BrowserTab: Identifiable, Equatable {
 
 @MainActor @Observable
 final class AppModel {
+    /// Page text zoom (View → Zoom In/Out, ⌘+ / ⌘- / ⌘0). Pages rebuild their text at the new size.
+    var pageZoom: Double = Double(Theme.zoom) {
+        didSet {
+            pageZoom = min(1.6, max(0.7, (pageZoom * 20).rounded() / 20))
+            Theme.zoom = CGFloat(pageZoom)
+            UserDefaults.standard.set(pageZoom, forKey: "pageZoom")
+        }
+    }
     let store: WorkspaceStore
     let assets: FileAssetStore
     @ObservationIgnored let registry: Registry

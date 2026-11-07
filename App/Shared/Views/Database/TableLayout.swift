@@ -32,7 +32,7 @@ struct RowMenuItems: View {
             Button("Delete", systemImage: "trash", role: .destructive) { ctx.model.trash(row.id) }
         }
         Divider()
-        Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + row.id) }
+        Button("Copy link", systemImage: "link") { Clipboard.copyLinks([row.id], store: ctx.store) }
     }
 }
 
@@ -222,7 +222,7 @@ struct TableLayout: View {
         Button("Open \(ids.count) in new tabs", systemImage: "plus.square.on.square") {
             for id in ids { ctx.model.openInNewTab(id, activate: false) }
         }
-        Button("Copy links", systemImage: "link") { Clipboard.copy(ids.map { "based://page/" + $0 }.joined(separator: "\n")) }
+        Button("Copy links", systemImage: "link") { Clipboard.copyLinks(ids, store: ctx.store) }
         if !ctx.locked {
             Divider()
             Button("Duplicate \(ids.count)", systemImage: "plus.square.on.square") { bulkDuplicate(ordered) }

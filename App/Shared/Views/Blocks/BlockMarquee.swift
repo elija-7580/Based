@@ -60,15 +60,10 @@ struct BlockMarqueeModifier: ViewModifier {
                 // A click in the margin / a gap clears the block selection (the column is hit-testable now, so the
                 // page background's tap no longer gets these). Not on the + / ⋮⋮ handle.
                 SpatialTapGesture(count: 1, coordinateSpace: BlockCanvas.space).onEnded { v in
+                    // The second click of a double-click selects (BlockSelectionKeys) — don't clear it again.
+                    guard (NSApp.currentEvent?.clickCount ?? 1) <= 1 else { return }
                     guard !editor.selectedBlocks.isEmpty, !onHandle(v.location) else { return }
                     editor.selectedBlocks = []
-                }
-            )
-            .simultaneousGesture(
-                SpatialTapGesture(count: 2, coordinateSpace: BlockCanvas.space).onEnded { v in
-                    guard !editor.isLocked, let id = editor.block(at: v.location) else { return }
-                    editor.focusedID.flatMap { editor.host($0) }?.endEditing()
-                    editor.selectedBlocks = [id]
                 }
             )
     }

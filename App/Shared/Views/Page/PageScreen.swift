@@ -24,6 +24,7 @@ struct PageScreen: View {
         let node = model.registry.block(pageID)
         if let page = node.block {
             pageBody(page)
+                .id(model.pageZoom)     // ⌘+ / ⌘-: rebuild the text views at the new font size
         } else {
             ContentUnavailableView("Page not found", systemImage: "doc.questionmark",
                                    description: Text("It may have been deleted permanently."))
@@ -583,7 +584,7 @@ struct PageMenu: View {
             Toggle("Lock page", isOn: Binding(get: { f.locked == true }, set: { v in store.setPageFormat(page.id) { $0.locked = v ? true : nil } }))
             Toggle("Show backlinks", isOn: Binding(get: { f.hideBacklinks != true }, set: { v in store.setPageFormat(page.id) { $0.hideBacklinks = v ? nil : true } }))
             Divider()
-            Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + page.id) }
+            Button("Copy link", systemImage: "link") { Clipboard.copyLinks([page.id], store: model.store) }
             Button("Duplicate", systemImage: "plus.square.on.square") {
                 if let id = store.duplicateBlocks([page.id]).first { model.open(id) }
             }

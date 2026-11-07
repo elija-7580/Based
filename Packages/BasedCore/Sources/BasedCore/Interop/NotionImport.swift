@@ -129,6 +129,10 @@ public final class NotionImporter {
             r.rootIDs += m.rootIDs
         }
         r.warnings.insert(contentsOf: prepared.notes, at: 0)
+        // Nested exports (ZIP in ZIP, folders) re-enter here and carried the same notes up each level — the log
+        // showed one warning hundreds of times. Keep each message once, in order.
+        var seen = Set<String>()
+        r.warnings = r.warnings.filter { seen.insert($0).inserted }
         return r
     }
 

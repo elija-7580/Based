@@ -1168,7 +1168,7 @@ struct PageTopBar: View {
                 Color.clear.frame(width: 0, height: 0)
             }
             Menu {
-                Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + page.id) }
+                Button("Copy link", systemImage: "link") { Clipboard.copyLinks([page.id], store: model.store) }
                 Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
             } label: {
                 Text("Share").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.primary)

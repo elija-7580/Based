@@ -54,6 +54,7 @@ enum DebugDriver {
             case "inbox": model.selection = .inbox
             case "sessions": model.selection = .sessions
             case "trash": model.selection = .trash
+            case "diagnostics": model.selection = .diagnostics
             case "chat": model.openChat(q["id"], fullPage: true)
             default: break
             }

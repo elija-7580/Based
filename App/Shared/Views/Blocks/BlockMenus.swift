@@ -41,7 +41,7 @@ struct BlockActions {
 
     func copyLink() {
         let target = single.flatMap { $0.type.isPageLike ? $0.id : nil } ?? editor.pageID
-        Clipboard.copy("based://page/" + target)
+        Clipboard.copyLinks([target], store: model.store)
     }
 
     func moveTo() { editor.picker = .move(ids) }

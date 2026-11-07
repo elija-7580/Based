@@ -92,8 +92,8 @@ struct RootView: View {
             #if DEBUG && os(macOS)
             if DebugDriver.handle(url, model: model) { return }
             #endif
-            let id = url.lastPathComponent
-            if url.host == "page" { model.open(id) }
+            // based://page/<id> (also based://<id> and Notion-style ids) — the same link agents and other apps use.
+            if let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil { model.open(id) }
         }
     }
 
@@ -132,7 +132,8 @@ struct RootView: View {
                     try NotionImporter(store: store, assets: assets).importPrepared(prepared, into: parent)
                 }
                 var s = "\(r.pages) pages, \(r.databases) databases, \(r.rows) rows, \(r.assets) files imported."
-                let notes = prepared.notes + r.warnings
+                var seenNotes = Set<String>()
+                let notes = (prepared.notes + r.warnings).filter { seenNotes.insert($0).inserted }
                 if !notes.isEmpty { s += "\n\n" + notes.prefix(10).joined(separator: "\n") }
                 if notes.count > 10 { s += "\n… \(notes.count - 10) more (see Diagnostics → Log)" }
                 for w in r.warnings { Log.warning(w, category: "import") }

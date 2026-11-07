@@ -125,7 +125,7 @@ struct PageOptionsPanel: View {
 
     private func actions(_ store: WorkspaceStore) -> [Action] {
         var a: [Action] = [
-            Action(id: "copy", title: "Copy link", symbol: "link", shortcut: "⌥⌘L") { Clipboard.copy("based://page/" + page.id) },
+            Action(id: "copy", title: "Copy link", symbol: "link", shortcut: "⌥⌘L") { Clipboard.copyLinks([page.id], store: model.store) },
             Action(id: "dup", title: "Duplicate", symbol: "plus.square.on.square", shortcut: "⌘D") {
                 if let id = store.duplicateBlocks([page.id]).first { model.open(id) }
             },

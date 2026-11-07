@@ -70,6 +70,8 @@ struct DiagnosticsView: View {
             case .system: system
             }
         }
+        // Fill the pane and pin the toolbar to the top (an empty tab used to centre everything vertically).
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         #if os(iOS)
         .navigationTitle("Diagnostics")
         #endif

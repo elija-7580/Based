@@ -13,7 +13,12 @@ typealias PlatformImage = UIImage
 #endif
 
 enum Theme {
-    static let bodySize: CGFloat = 16
+    /// Page text zoom (⌘+ / ⌘- / ⌘0), 0.7…1.6. Stored per user.
+    nonisolated(unsafe) static var zoom: CGFloat = {
+        let z = UserDefaults.standard.double(forKey: "pageZoom")
+        return z > 0 ? CGFloat(z) : 1
+    }()
+    static var bodySize: CGFloat { 16 * zoom }
     static let contentWidth: CGFloat = 708
     static let indent: CGFloat = 26
     static let blockSpacing: CGFloat = 2
@@ -117,13 +122,13 @@ enum Theme {
     static var primary: Color { Color(textPrimary) }
 
     static func fontSize(for type: BlockType, small: Bool) -> CGFloat {
-        let base: CGFloat = small ? 14 : bodySize
+        let base: CGFloat = small ? 14 * zoom : bodySize
         switch type {
         case .heading1: return base * 1.875
         case .heading2: return base * 1.5
         case .heading3: return base * 1.25
         case .heading4: return base * 1.1
-        case .page: return small ? 34 : 40
+        case .page: return (small ? 34 : 40) * zoom
         case .code: return base * 0.875
         default: return base
         }

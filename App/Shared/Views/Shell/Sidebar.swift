@@ -163,7 +163,7 @@ struct SidebarContextMenu: View {
             Button("Rename", systemImage: "pencil") { model.renamingID = scope + id }
             Button("Move to…", systemImage: "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: [id]) }
             Divider()
-            Button("Copy link", systemImage: "link") { Clipboard.copy("based://page/" + id) }
+            Button("Copy link", systemImage: "link") { Clipboard.copyLinks([id], store: model.store) }
             Button("Open in new tab", systemImage: "plus.rectangle.on.rectangle") { model.openInNewTab(id) }
             Button("Open in side peek", systemImage: "sidebar.right") { model.open(id, mode: .sidePeek) }
             if page.type == .page {
