@@ -12,6 +12,9 @@ public struct ChatMessage: Codable, Sendable, Equatable {
     public var toolCalls: [ToolCall] = []
     /// For role == .tool: the call this message answers.
     public var toolCallID: String?
+    /// Anthropic: the assistant's content blocks exactly as returned (thinking blocks with signatures, text,
+    /// tool_use). Sent back unchanged inside a tool loop — the API needs thinking blocks replayed as-is.
+    public var rawContent: JSONValue?
 
     public init(role: Role, content: String, toolCalls: [ToolCall] = [], toolCallID: String? = nil) {
         self.role = role; self.content = content; self.toolCalls = toolCalls; self.toolCallID = toolCallID
@@ -52,8 +55,10 @@ public struct AIResponse: Sendable, Equatable {
     public var message: ChatMessage
     public var usage: Usage
     public var stopReason: String?
-    public init(message: ChatMessage, usage: Usage = Usage(), stopReason: String? = nil) {
-        self.message = message; self.usage = usage; self.stopReason = stopReason
+    /// Readable thinking summary (Anthropic `display: "summarized"`), empty when the model didn't think.
+    public var thinking: String = ""
+    public init(message: ChatMessage, usage: Usage = Usage(), stopReason: String? = nil, thinking: String = "") {
+        self.message = message; self.usage = usage; self.stopReason = stopReason; self.thinking = thinking
     }
 }
 
@@ -99,7 +104,7 @@ public final class ModelRegistry: @unchecked Sendable {
     /// At least one provider that can call tools (anything but the on-device model).
     public var hasToolCapableProvider: Bool { all.contains { !$0.isOnDevice } }
 
-    /// "anthropic/claude-sonnet-4-5" → provider + model. A bare model name is looked up across providers.
+    /// "anthropic/claude-opus-5-5" → provider + model. A bare model name is looked up across providers.
     public func resolve(_ ref: String) -> (AIProvider, String)? {
         if let slash = ref.firstIndex(of: "/") {
             let pid = String(ref[..<slash]), model = String(ref[ref.index(after: slash)...])

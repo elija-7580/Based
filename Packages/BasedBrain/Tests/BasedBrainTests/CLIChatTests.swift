@@ -142,3 +142,36 @@ struct InboxDetailTests {
         #expect(item?.detail.contains("Status:") == false)
     }
 }
+
+struct AnthropicThinkingTests {
+    @Test func parsesThinkingSummaryToolUseAndKeepsRawBlocks() throws {
+        let json = #"""
+        {"content":[{"type":"thinking","thinking":"Checking the page first.","signature":"sig1"},
+                    {"type":"text","text":"Let me look."},
+                    {"type":"tool_use","id":"tu1","name":"read_page","input":{"page_id":"p"}}],
+         "stop_reason":"tool_use","usage":{"input_tokens":10,"output_tokens":5}}
+        """#
+        let r = try AnthropicProvider.parse(Data(json.utf8))
+        #expect(r.thinking == "Checking the page first.")
+        #expect(r.message.content == "Let me look.")
+        #expect(r.message.toolCalls.first?.name == "read_page")
+        // Raw blocks are kept (thinking with its signature) so the next request replays them unchanged.
+        #expect(r.message.rawContent?.array?.first?["signature"]?.string == "sig1")
+    }
+
+    @Test func refusalBecomesReadableText() throws {
+        let json = #"{"content":[],"stop_reason":"refusal","stop_details":{"type":"refusal","category":"cyber","explanation":null},"usage":{}}"#
+        let r = try AnthropicProvider.parse(Data(json.utf8))
+        #expect(r.stopReason == "refusal")
+        #expect(r.message.content.contains("declined"))
+    }
+
+    @Test func modelsAndCapabilities() {
+        #expect(AnthropicProvider.defaultModels.first == "claude-opus-5-5")
+        #expect(AnthropicProvider.supportsAdaptiveThinking("claude-opus-5-5"))
+        #expect(!AnthropicProvider.supportsAdaptiveThinking("claude-haiku-4-5"))
+        #expect(AnthropicProvider.supportsFallbacks("claude-sonnet-5-5"))
+        #expect(!AnthropicProvider.supportsFallbacks("claude-haiku-5-5"))
+        #expect(AnthropicProvider.current("claude-opus-4-1") == "claude-opus-5-5")
+    }
+}

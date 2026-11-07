@@ -26,7 +26,7 @@ public struct Agent: Sendable, Identifiable, Equatable {
     public var name: String
     public var instructions: String
     public var schedule: String?        // see Schedule.parse
-    public var model: String?           // "anthropic/claude-sonnet-4-5" or bare model
+    public var model: String?           // "anthropic/claude-opus-5-5" or bare model
     public var enabled: Bool
     public var lastRun: Date?
     public var dailyTokenBudget: Int?   // nil = unlimited

@@ -21,7 +21,7 @@ public final class AgentRuntime: @unchecked Sendable {
         public var transcript: [ChatMessage]
     }
 
-    /// `modelRef` like "anthropic/claude-sonnet-4-5"; nil → first registered provider's first model.
+    /// `modelRef` like "anthropic/claude-opus-5-5"; nil → first registered provider's first model.
     /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
                     callerSession: String? = nil) async throws -> Outcome {
@@ -47,6 +47,7 @@ public final class AgentRuntime: @unchecked Sendable {
             let r = try await provider.complete(messages, model: model, tools: specs, maxTokens: maxTokensPerReply)
             usage = usage + r.usage
             messages.append(r.message)
+            if !r.thinking.isEmpty { onEvent?(.thinking(r.thinking)) }
             if r.message.toolCalls.isEmpty { return Outcome(text: r.message.content, usage: usage, steps: steps, transcript: messages) }
             if !r.message.content.isEmpty { onEvent?(.text(r.message.content)) }
             for call in r.message.toolCalls {
