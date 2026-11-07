@@ -372,6 +372,38 @@ final class BrainModel {
         }
     }
 
+    /// Inline AI ("space on an empty line"): writes Markdown to insert into `pageID` with the current engine.
+    /// No chat is saved; the page is passed as context.
+    func write(_ instruction: String, pageID: RecordID) async throws -> String {
+        let title = store.title(of: pageID).nonEmptyOr("Untitled")
+        let body = String(MarkdownExporter(store: store).export(page: pageID, includeTitle: false).prefix(8000))
+        let system = "You write content that goes straight into a page of the user's notes app. Reply with the content only, in Markdown (headings, lists, to-dos, tables, code blocks allowed) — no preamble, no closing remarks, no code fence around the whole answer. Match the page's language unless asked otherwise."
+        let prompt = "Page “\(title)”:\n\n\(body)\n\n---\nTask: \(instruction)"
+        switch resolvedEngine {
+        case .model(let ref):
+            guard let (provider, model) = registry.resolve(ref) else { throw ChatError.noEngine }
+            let r = try await provider.complete([.system(system), .user(prompt)], model: model, tools: [], maxTokens: 4096)
+            return r.message.content
+        case .cli(let spec):
+            if spec.kind == .claudeCode {
+                switch await ClaudePrint.ask(prompt, cwd: chatFolder, appendSystemPrompt: system, model: spec.model.isEmpty ? nil : spec.model) {
+                case .success(let r): return r.text
+                case .failure(let e): throw e
+                }
+            }
+            let collected = TextCollector()
+            let result = await Self.runCLI(spec, prompt: prompt, resume: nil, system: system, cwd: chatFolder, mcp: nil) { e in
+                if case .text(let t) = e { collected.parts.append(t) }
+            }
+            if case .failure(let e) = result { throw e }
+            return collected.parts.joined(separator: "\n\n")
+        case .none:
+            throw ChatError.noEngine
+        }
+    }
+
+    @MainActor final class TextCollector { var parts: [String] = [] }
+
     private func cliSpecForSession(_ e: Engine) -> Bool { if case .cli = e { return true }; return false }
 
     /// Codex / Gemini / OpenCode: streamed through `CLIChatRunner` with the matching line parser.

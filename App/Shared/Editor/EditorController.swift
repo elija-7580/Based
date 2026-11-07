@@ -158,6 +158,9 @@ final class EditorController {
         }
     }
 
+    /// The empty line where the inline "Ask AI to write…" box is open (space on an empty line).
+    var aiPrompt: RecordID?
+
     /// A block to scroll into view (the page observes it; long pages only render what's visible).
     var scrollRequest: RecordID?
 
@@ -200,6 +203,12 @@ final class EditorController {
         if b.type == .page {
             store.setText(id, RichText(text.plainText.replacingOccurrences(of: "\n", with: " ")))
             return nil
+        }
+        // Notion: space on an empty line asks AI to write here.
+        if inserted, b.type == .text, text.plainText == " ", menu == nil {
+            store.setText(id, RichText())
+            aiPrompt = id
+            return EditResult(text: RichText(), selection: NSRange(location: 0, length: 0))
         }
         if inserted, b.type != .code {
             if b.type == .text, caret == text.length,

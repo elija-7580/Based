@@ -93,7 +93,7 @@ struct BlockRow: View {
     @ViewBuilder
     private func content(_ b: Block, node: BlockNode) -> some View {
         let selected = editor.selectedBlocks.contains(id)
-        let menuHere = editor.menu?.blockID == id
+        let menuHere = editor.menu?.blockID == id || editor.aiPrompt == id
         let nested = b.type.isList ? listDepth + 1 : listDepth
         VStack(alignment: .leading, spacing: Theme.blockSpacing) {
             HStack(alignment: .top, spacing: 4) {

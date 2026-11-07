@@ -107,7 +107,13 @@ struct PageScreen: View {
             .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
             .overlayPreferenceValue(MenuAnchorKey.self) { anchor in
                 GeometryReader { geo in
-                    if let anchor, editor.menu != nil {
+                    if let anchor, let line = editor.aiPrompt {
+                        let r = geo[anchor]
+                        InlineAIBox(editor: editor, blockID: line)
+                            .frame(width: min(640, max(320, geo.size.width - r.minX - 40)))
+                            .offset(x: max(0, r.minX - 4), y: r.minY - 6)
+                            .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                    } else if let anchor, editor.menu != nil {
                         let r = geo[anchor]
                         // Notion: below the line whenever there's reasonable room, otherwise above; the height
                         // shrinks to the room on that side (it used to flip up early and cover the text).

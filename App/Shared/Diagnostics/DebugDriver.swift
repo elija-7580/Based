@@ -151,6 +151,19 @@ enum DebugDriver {
                 let lines = model.store.contentBlocks(of: ed.pageID).map { "\($0.type.rawValue)\t\($0.text.plainText)" }
                 try? lines.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
             }
+        case "inlineai":
+            // Opens the inline AI box on a new empty line after block `index`; `prompt` runs it, `insert=1` inserts.
+            if let ed = model.activeEditor {
+                if let p = q["prompt"] {
+                    NotificationCenter.default.post(name: .debugInlineAI, object: nil, userInfo: ["prompt": p])
+                } else if q["insert"] != nil {
+                    NotificationCenter.default.post(name: .debugInlineAI, object: nil, userInfo: ["insert": true])
+                } else {
+                    let ids = model.store.documentOrder(Array(ed.gutter.allFrames.keys))
+                    let i = Int(q["index"] ?? "0") ?? 0
+                    if ids.indices.contains(i), let nid = model.store.insertBlock(.text, after: ids[i]) { ed.aiPrompt = nid }
+                }
+            }
         case "pagemenu":
             NotificationCenter.default.post(name: .debugOpenPageMenu, object: nil)
         case "approve":
