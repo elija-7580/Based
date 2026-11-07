@@ -8,17 +8,21 @@ struct FilterEditor: View {
 
     var body: some View {
         let group = ctx.view.filter ?? FilterGroup()
-        VStack(alignment: .leading, spacing: 8) {
-            if group.items.isEmpty {
-                Text("No filters applied to this view").foregroundStyle(Theme.secondary)
+        PopoverPanel(title: "Filter", symbol: "line.3.horizontal.decrease", minWidth: 480) {
+            VStack(alignment: .leading, spacing: 10) {
+                if group.items.isEmpty {
+                    Text("No filters applied to this view. Add a rule to narrow down the rows that are shown.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.secondary)
+                }
+                FilterGroupEditor(ctx: ctx, group: group, depth: 0) { save($0) }
+                if !group.items.isEmpty {
+                    Rectangle().fill(Theme.gridLine).frame(height: 1)
+                    PopoverActionRow(title: "Delete all filters", symbol: "trash", destructive: true) { save(FilterGroup()) }
+                }
             }
-            FilterGroupEditor(ctx: ctx, group: group, depth: 0) { save($0) }
-            if !group.items.isEmpty {
-                Button("Delete all filters", role: .destructive) { save(FilterGroup()) }.buttonStyle(.plain).foregroundStyle(.red)
-            }
+            .padding(12)
         }
-        .padding(12)
-        .frame(minWidth: 460)
     }
 
     private func save(_ g: FilterGroup) {
@@ -35,43 +39,48 @@ struct FilterGroupEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(Array(group.items.enumerated()), id: \.offset) { i, item in
-                HStack(alignment: .top, spacing: 6) {
-                    combinatorLabel(i).frame(width: 64, alignment: .leading)
+                HStack(alignment: .top, spacing: 8) {
+                    combinatorLabel(i).frame(width: 56, alignment: .leading).padding(.top, 5)
                     switch item {
                     case .condition(let c):
                         FilterConditionRow(ctx: ctx, condition: c) { replace(i, $0.map(FilterItem.condition)) }
                     case .group(let g):
                         FilterGroupEditor(ctx: ctx, group: g, depth: depth + 1) { ng in replace(i, ng.isEmpty ? nil : .group(ng)) }
                             .padding(8)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
+                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primary.opacity(0.04)))
+                            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.gridLine, lineWidth: 1))
                     }
                 }
             }
-            HStack {
-                Menu("Add filter rule") {
+            HStack(spacing: 4) {
+                PopoverAddMenu(title: "Add filter rule") {
                     ForEach(ctx.db.properties) { p in
                         Button(p.name, systemImage: p.type.symbol) { append(.condition(FilterCondition(propertyID: p.id, op: FilterOp.ops(for: p.type).first ?? .contains))) }
                     }
                 }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
                 if depth < 2 {
-                    Button("Add filter group") {
+                    Button {
                         let first = ctx.db.titleProperty
                         append(.group(FilterGroup(combinator: .and, items: [.condition(FilterCondition(propertyID: first.id, op: .contains))])))
+                    } label: {
+                        Label("Add filter group", systemImage: "square.stack.3d.up")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.secondary)
+                            .padding(.horizontal, 8)
+                            .frame(height: 26)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(Theme.secondary)
+                    .hoverHighlight(cornerRadius: 6, opacity: 0.06)
                 }
             }
-            .font(.system(size: 13))
         }
     }
 
     @ViewBuilder
     private func combinatorLabel(_ i: Int) -> some View {
         if i == 0 {
-            Text("Where").foregroundStyle(Theme.secondary)
+            Text("Where").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
         } else if i == 1 {
             Picker("", selection: Binding(get: { group.combinator }, set: { c in var g = group; g.combinator = c; onChange(g) })) {
                 Text("And").tag(Combinator.and)
@@ -79,7 +88,7 @@ struct FilterGroupEditor: View {
             }
             .labelsHidden()
         } else {
-            Text(group.combinator == .and ? "And" : "Or").foregroundStyle(Theme.secondary)
+            Text(group.combinator == .and ? "And" : "Or").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
         }
     }
 
@@ -104,25 +113,32 @@ struct FilterConditionRow: View {
     var body: some View {
         let p = ctx.db.property(condition.propertyID)
         HStack(spacing: 6) {
-            Menu(p?.name ?? "Property") {
+            Menu {
                 ForEach(ctx.db.properties) { np in
                     Button(np.name, systemImage: np.type.symbol) {
                         onChange(FilterCondition(id: condition.id, propertyID: np.id, op: FilterOp.ops(for: np.type).first ?? .contains))
                     }
                 }
-            }
+            } label: { ChipMenuLabel(text: p?.name ?? "Property", symbol: p?.type.symbol) }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
             .fixedSize()
-            Menu(condition.op.displayName) {
+            Menu {
                 ForEach(FilterOp.ops(for: p?.type ?? .text), id: \.self) { op in
                     Button(op.displayName) { var c = condition; c.op = op; if !op.needsValue { c.value = nil }; onChange(c) }
                 }
-            }
+            } label: { ChipMenuLabel(text: condition.op.displayName, emphasized: false) }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
             .fixedSize()
             if condition.op.needsValue, let p {
                 FilterValueField(ctx: ctx, property: p, value: condition.value) { v in var c = condition; c.value = v; onChange(c) }
             }
             Spacer(minLength: 0)
-            Button { onChange(nil) } label: { Image(systemName: "trash") }.buttonStyle(.quiet).foregroundStyle(Theme.secondary)
+            Button { onChange(nil) } label: { Image(systemName: "xmark").font(.system(size: 11)) }
+                .buttonStyle(.quiet(padding: 4, minSize: 26))
+                .foregroundStyle(Theme.secondary)
+                .help("Remove this rule")
         }
         .font(.system(size: 13))
     }
@@ -225,45 +241,62 @@ struct SortEditor: View {
 
     var body: some View {
         let sorts = ctx.view.sorts ?? []
-        VStack(alignment: .leading, spacing: 8) {
-            if sorts.isEmpty { Text("No sorts applied to this view").foregroundStyle(Theme.secondary) }
-            ForEach(Array(sorts.enumerated()), id: \.offset) { i, s in
-                HStack {
-                    Menu(ctx.db.property(s.propertyID)?.name ?? "Property") {
-                        ForEach(ctx.db.properties) { p in
-                            Button(p.name, systemImage: p.type.symbol) { var l = sorts; l[i].propertyID = p.id; save(l) }
+        PopoverPanel(title: "Sort", symbol: "arrow.up.arrow.down", minWidth: 380) {
+            VStack(alignment: .leading, spacing: 10) {
+                if sorts.isEmpty {
+                    Text("No sorts applied to this view. Rows follow their manual order.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.secondary)
+                }
+                ForEach(Array(sorts.enumerated()), id: \.offset) { i, s in
+                    HStack(spacing: 6) {
+                        Text(i == 0 ? "Sort by" : "Then by")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Theme.secondary)
+                            .frame(width: 56, alignment: .leading)
+                        Menu {
+                            ForEach(ctx.db.properties) { p in
+                                Button(p.name, systemImage: p.type.symbol) { var l = sorts; l[i].propertyID = p.id; save(l) }
+                            }
+                        } label: { ChipMenuLabel(text: ctx.db.property(s.propertyID)?.name ?? "Property", symbol: ctx.db.property(s.propertyID)?.type.symbol) }
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                        Menu {
+                            Button("Ascending", systemImage: "arrow.up") { var l = sorts; l[i].ascending = true; save(l) }
+                            Button("Descending", systemImage: "arrow.down") { var l = sorts; l[i].ascending = false; save(l) }
+                        } label: { ChipMenuLabel(text: s.ascending ? "Ascending" : "Descending", emphasized: false) }
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                        Spacer(minLength: 0)
+                        if i > 0 {
+                            Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up").font(.system(size: 11)) }
+                                .buttonStyle(.quiet(padding: 4, minSize: 26))
+                                .foregroundStyle(Theme.secondary)
+                                .help("Move up")
+                        }
+                        Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark").font(.system(size: 11)) }
+                            .buttonStyle(.quiet(padding: 4, minSize: 26))
+                            .foregroundStyle(Theme.secondary)
+                            .help("Remove this sort")
+                    }
+                }
+                let available = ctx.db.properties.filter { p in !sorts.contains { $0.propertyID == p.id } }
+                if !available.isEmpty {
+                    PopoverAddMenu(title: "Add sort") {
+                        ForEach(available) { p in
+                            Button(p.name, systemImage: p.type.symbol) { save(sorts + [SortRule(propertyID: p.id)]) }
                         }
                     }
-                    .fixedSize()
-                    Picker("", selection: Binding(get: { s.ascending }, set: { var l = sorts; l[i].ascending = $0; save(l) })) {
-                        Text("Ascending").tag(true)
-                        Text("Descending").tag(false)
-                    }
-                    .labelsHidden()
-                    .fixedSize()
-                    Spacer()
-                    if i > 0 {
-                        Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up") }.buttonStyle(.quiet)
-                    }
-                    Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark") }.buttonStyle(.quiet)
                 }
-            }
-            HStack {
-                Menu("Add sort") {
-                    ForEach(ctx.db.properties.filter { p in !sorts.contains { $0.propertyID == p.id } }) { p in
-                        Button(p.name, systemImage: p.type.symbol) { save(sorts + [SortRule(propertyID: p.id)]) }
-                    }
-                }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
                 if !sorts.isEmpty {
-                    Button("Delete sort", role: .destructive) { save([]) }.buttonStyle(.plain).foregroundStyle(.red)
+                    Rectangle().fill(Theme.gridLine).frame(height: 1)
+                    PopoverActionRow(title: "Delete sort", symbol: "trash", destructive: true) { save([]) }
                 }
             }
+            .padding(12)
         }
-        .font(.system(size: 13))
-        .padding(12)
-        .frame(minWidth: 340)
     }
 
     private func save(_ l: [SortRule]) {
@@ -281,11 +314,14 @@ struct ViewSettingsView: View {
     private var v: DatabaseView { ctx.view }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                TextField("View name", text: $name)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { if !name.isEmpty { update("Rename view") { $0.name = name } } }
+        PopoverPanel(title: "View settings", symbol: "slider.horizontal.3", minWidth: 360) {
+            Form {
+                section("Name") {
+                    TextField("View name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                        .labelsHidden()
+                        .onSubmit { if !name.isEmpty { update("Rename view") { $0.name = name } } }
+                }
                 section("Layout") {
                     Picker("Layout", selection: Binding(get: { v.type }, set: { t in update("Change layout") { $0.type = t } })) {
                         ForEach(ViewType.available, id: \.self) { Label($0.displayName, systemImage: $0.symbol).tag($0) }
@@ -352,21 +388,20 @@ struct ViewSettingsView: View {
                     }
                     Toggle("Lock database", isOn: Binding(get: { ctx.db.locked == true }, set: { on in store.updateDatabase(ctx.db.id, name: "Lock database") { $0.locked = on ? true : nil } }))
                 }
-                HStack {
-                    Button("Duplicate view") { _ = store.duplicateView(v.id) }
-                    Spacer()
+                section("Actions") {
+                    PopoverActionRow(title: "Duplicate view", symbol: "plus.square.on.square") { _ = store.duplicateView(v.id) }
+                    if ctx.block.id == ctx.db.blockID {
+                        PopoverActionRow(title: "Export as CSV…", symbol: "square.and.arrow.up") { ctx.model.exportRequest = AppModel.ExportRequest(pageID: ctx.block.id) }
+                    }
                     if store.views(forBlock: ctx.block.id).count > 1 {
-                        Button("Delete view", role: .destructive) { store.deleteView(v.id) }
+                        PopoverActionRow(title: "Delete view", symbol: "trash", destructive: true) { store.deleteView(v.id) }
                     }
                 }
-                if ctx.block.id == ctx.db.blockID {
-                    Button("Export as CSV…") { ctx.model.exportRequest = AppModel.ExportRequest(pageID: ctx.block.id) }
-                }
             }
-            .padding(12)
+            .formStyle(.grouped)
+            .font(.system(size: 13))
         }
-        .font(.system(size: 13))
-        .frame(width: 340, height: 520)
+        .frame(height: 560)
         .onAppear { name = v.name }
     }
 
@@ -415,39 +450,63 @@ struct ViewSettingsView: View {
     }
 
     private func section<C: View>(_ title: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.caption).foregroundStyle(Theme.secondary)
+        Section {
             c()
+        } header: {
+            Label(title, systemImage: sectionSymbol(title))
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.secondary)
         }
     }
 
+    private func sectionSymbol(_ title: String) -> String {
+        switch title {
+        case "Name": return "textformat"
+        case "Layout": return "rectangle.3.group"
+        case "Properties": return "list.bullet"
+        case "Group": return "rectangle.stack"
+        case "Options": return "gearshape"
+        case "Cards": return "square.grid.2x2"
+        case "Chart": return "chart.bar"
+        case "Map": return "map"
+        case "Actions": return "ellipsis.circle"
+        default: return "calendar"
+        }
+    }
+
+    @ViewBuilder
     private var propertiesList: some View {
         let visible = v.visiblePropertyIDs(in: ctx.db)
         let ordered = visible.compactMap { ctx.db.property($0) } + ctx.db.properties.filter { !visible.contains($0.id) }
-        return VStack(alignment: .leading, spacing: 2) {
-            ForEach(Array(ordered.enumerated()), id: \.element.id) { i, p in
-                HStack {
-                    Label(p.name, systemImage: p.type.symbol)
-                    Spacer()
-                    if visible.contains(p.id), i > 0 {
-                        Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up") }.buttonStyle(.quiet)
-                    }
-                    if p.type != .title {
-                        Button { store.setPropertyVisible(v.id, p.id, !visible.contains(p.id)) } label: {
-                            Image(systemName: visible.contains(p.id) ? "eye" : "eye.slash")
-                        }
-                        .buttonStyle(.plain)
-                    }
+        ForEach(Array(ordered.enumerated()), id: \.element.id) { i, p in
+            HStack(spacing: 6) {
+                Label(p.name, systemImage: p.type.symbol)
+                    .foregroundStyle(visible.contains(p.id) ? Theme.primary : Theme.secondary)
+                Spacer()
+                if visible.contains(p.id), i > 0 {
+                    Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up").font(.system(size: 11)) }
+                        .buttonStyle(.quiet(padding: 3, minSize: 24))
+                        .foregroundStyle(Theme.secondary)
+                        .help("Move up")
                 }
-                .foregroundStyle(visible.contains(p.id) ? Theme.primary : Theme.secondary)
+                if p.type != .title {
+                    Button { store.setPropertyVisible(v.id, p.id, !visible.contains(p.id)) } label: {
+                        Image(systemName: visible.contains(p.id) ? "eye" : "eye.slash")
+                            .font(.system(size: 12))
+                            .foregroundStyle(visible.contains(p.id) ? Theme.accentBlue : Theme.secondary)
+                    }
+                    .buttonStyle(.quiet(padding: 3, minSize: 24))
+                    .help(visible.contains(p.id) ? "Hide in view" : "Show in view")
+                }
             }
-            HStack {
-                Button("Show all") { for p in ctx.db.properties { store.setPropertyVisible(v.id, p.id, true) } }
-                Button("Hide all") { for p in ctx.db.properties where p.type != .title { store.setPropertyVisible(v.id, p.id, false) } }
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(Theme.accentBlue)
         }
+        HStack(spacing: 8) {
+            Button("Show all") { for p in ctx.db.properties { store.setPropertyVisible(v.id, p.id, true) } }
+            Button("Hide all") { for p in ctx.db.properties where p.type != .title { store.setPropertyVisible(v.id, p.id, false) } }
+            Spacer()
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
     }
 
     @ViewBuilder
@@ -593,13 +652,18 @@ struct AddPropertyMenu: View {
     @State private var created: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        PopoverPanel(title: created == nil ? "New property" : "Configure property", symbol: "plus", minWidth: 280) {
             if let id = created {
                 PropertyConfigEditor(db: ctx.db, propertyID: id)
+                    .padding(10)
             } else {
-                Text("Type").font(.caption).foregroundStyle(Theme.secondary)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
+                        Text("Type")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.bottom, 4)
                         ForEach(PropertyType.creatable, id: \.self) { t in
                             Button {
                                 created = ctx.store.addProperty(to: ctx.db.id, name: t.displayName, type: t, showIn: ctx.view.id)
@@ -610,11 +674,11 @@ struct AddPropertyMenu: View {
                             .buttonStyle(MenuRowStyle())
                         }
                     }
+                    .padding(8)
                 }
-                .frame(maxHeight: 360)
+                .frame(maxHeight: 380)
             }
         }
-        .padding(10)
         .frame(width: 280)
     }
 }
