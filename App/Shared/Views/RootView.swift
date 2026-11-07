@@ -265,7 +265,7 @@ struct DetailShell: View {
                     panel
                         .frame(width: width)
                         .frame(maxHeight: .infinity)
-                        .transition(.move(edge: .trailing))
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
             .overlay(alignment: .trailing) {
@@ -277,7 +277,7 @@ struct DetailShell: View {
                         .transition(.move(edge: .trailing))
                 }
             }
-            .animation(.easeOut(duration: 0.18), value: panelKey)
+            .animation(.spring(response: 0.32, dampingFraction: 0.9), value: panelKey)
         }
         .navigationTitle(model.currentTitle)
         #else
