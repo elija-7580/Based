@@ -41,3 +41,14 @@ struct SyntaxHighlighterTests {
         #expect(sql.map(\.1) == [.keyword, .keyword, .comment])
     }
 }
+
+struct MarkdownAlertTests {
+    @Test func githubAlertsBecomeCallouts() {
+        let b = MarkdownImporter().parse("> [!WARNING] Careful\n> second line\n\n> plain quote")
+        #expect(b.count == 2)
+        #expect(b[0].type == .callout)
+        #expect(b[0].props.color == .yellowBackground)
+        #expect(b[0].text.plainText == "Careful\nsecond line")
+        #expect(b[1].type == .quote)
+    }
+}

@@ -46,6 +46,23 @@ public struct MarkdownImporter {
         InlineMarkdownCodec.decode(s.replacingOccurrences(of: "<br>", with: "\n"), resolveLink: resolveLink)
     }
 
+    /// "[!NOTE] text" / "[!warning]" → callout look (Notion-like icon + background).
+    static func alert(_ line: String) -> (emoji: String, color: TColor, text: String)? {
+        guard line.hasPrefix("[!"), let close = line.firstIndex(of: "]") else { return nil }
+        let kind = line[line.index(line.startIndex, offsetBy: 2)..<close].lowercased()
+        let text = String(line[line.index(after: close)...]).trimmingCharacters(in: .whitespaces)
+        switch kind {
+        case "note", "info": return ("ℹ️", .blueBackground, text)
+        case "tip", "hint", "success": return ("💡", .greenBackground, text)
+        case "important", "abstract", "summary": return ("📌", .purpleBackground, text)
+        case "warning", "caution", "attention": return ("⚠️", .yellowBackground, text)
+        case "danger", "error", "bug", "failure": return ("🚨", .redBackground, text)
+        case "question", "faq", "help": return ("❓", .grayBackground, text)
+        case "example", "quote", "cite": return ("📝", .grayBackground, text)
+        default: return nil
+        }
+    }
+
     static func indentOf(_ l: Substring) -> Int { l.prefix { $0 == " " }.count }
     static func indentOf(_ l: String) -> Int { l.prefix { $0 == " " }.count }
 
@@ -194,6 +211,15 @@ public struct MarkdownImporter {
                     let t = lines[j].trimmingCharacters(in: .whitespaces)
                     guard t.hasPrefix(">") else { break }
                     parts.append(String(t.dropFirst()).trimmingCharacters(in: .whitespaces)); j += 1
+                }
+                // GitHub / Obsidian alerts: "> [!NOTE] text" → callout with an icon and colour.
+                if let first = parts.first, let alert = Self.alert(first) {
+                    var p = BlockProps()
+                    p.icon = .emoji(alert.emoji)
+                    p.color = alert.color
+                    let rest = [alert.text] + parts.dropFirst()
+                    let body = rest.filter { !$0.isEmpty }.joined(separator: "\n")
+                    out.append(ImportedBlock(.callout, text: inline(body), props: p)); i = j; continue
                 }
                 out.append(ImportedBlock(.quote, text: inline(parts.joined(separator: "\n")))); i = j; continue
             }
