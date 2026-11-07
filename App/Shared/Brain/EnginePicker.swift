@@ -16,6 +16,7 @@ struct EnginePickerButton: View {
                 Text(label)
                     .font(.system(size: 12.5, weight: .medium))
                     .lineLimit(1)
+                    .fixedSize()
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8.5, weight: .bold))
                     .rotationEffect(.degrees(open ? 180 : 0))
@@ -254,6 +255,7 @@ struct EffortRow: View {
 
 /// Permission mode chip ("Ask permissions ⌄") next to the model picker — only for coding-agent CLIs.
 struct PermissionModeButton: View {
+    var iconOnly = false
     @Environment(BrainModel.self) private var brain
     @State private var hover = false
 
@@ -273,8 +275,9 @@ struct PermissionModeButton: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: current.symbol).font(.system(size: 10.5))
-                    Text(current.label).font(.system(size: 12))
+                    if !iconOnly { Text(current.label).font(.system(size: 12)).lineLimit(1) }
                 }
+                .help(current.label)
                 .foregroundStyle(isRisky(current.id) ? Color.orange : (hover ? Theme.primary : Theme.secondary))
                 .padding(.horizontal, 7).padding(.vertical, 4)
                 .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))

@@ -347,8 +347,13 @@ struct ChatComposer: View {
                 .help("Hand this prompt to a coding agent in a new session")
                 .accessibilityIdentifier("ai.runWithAgent")
                 Spacer(minLength: 4)
-                PermissionModeButton()
-                EnginePickerButton()
+                // Narrow composers (next to an artifact, docked panel): the permission chip shrinks to its icon
+                // so the model name stays readable.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { PermissionModeButton(); EnginePickerButton() }
+                    HStack(spacing: 8) { PermissionModeButton(iconOnly: true); EnginePickerButton() }
+                    EnginePickerButton()
+                }
                 DictationButton { focused = true }
                 SendStopButton(running: brain.isRunning, enabled: canSend) {
                     if brain.isRunning { brain.stop() } else { send() }
