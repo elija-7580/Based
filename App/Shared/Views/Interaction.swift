@@ -39,15 +39,15 @@ struct QuietButtonStyle: ButtonStyle {
                 .opacity(enabled ? 1 : 0.45)
                 .clickableCursor()
                 .onHover { hover = $0 }
-                .animation(.easeOut(duration: 0.1), value: hover)
-                .animation(.easeOut(duration: 0.06), value: configuration.isPressed)
+                .animation(.easeOut(duration: DS.Motion.hover), value: hover)
+                .animation(.easeOut(duration: DS.Motion.press), value: configuration.isPressed)
         }
 
         private var fillOpacity: Double {
             guard enabled else { return 0 }
-            if configuration.isPressed { return 0.13 }
-            if style.selected { return hover ? 0.1 : 0.07 }
-            return hover ? 0.065 : 0
+            if configuration.isPressed { return DS.Fill.pressed }
+            if style.selected { return hover ? DS.Fill.selected : 0.07 }
+            return hover ? DS.Fill.hover : 0
         }
     }
 }
@@ -80,14 +80,14 @@ struct HoverFillButtonStyle: ButtonStyle {
                 .padding(-style.outset)
                 .clickableCursor()
                 .onHover { hover = $0 }
-                .animation(.easeOut(duration: 0.1), value: hover)
-                .animation(.easeOut(duration: 0.06), value: configuration.isPressed)
+                .animation(.easeOut(duration: DS.Motion.hover), value: hover)
+                .animation(.easeOut(duration: DS.Motion.press), value: configuration.isPressed)
         }
 
         private var fillOpacity: Double {
             guard enabled else { return 0 }
-            if configuration.isPressed { return 0.13 }
-            return hover ? 0.07 : 0
+            if configuration.isPressed { return DS.Fill.pressed }
+            return hover ? DS.Fill.hover : 0
         }
     }
 }

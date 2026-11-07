@@ -443,7 +443,7 @@ struct SidebarModeSwitcher: View {
         HStack(spacing: 2) {
             ForEach(SidebarMode.allCases) { m in
                 let on = model.sidebarMode == m
-                Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { model.switchSidebar(to: m) } } label: {
+                Button { choose(m) } label: {
                     HStack(spacing: 6) {
                         SymbolImage(name: m.symbol, size: 13)
                         Text(m.title).font(.system(size: 13, weight: on ? .semibold : .medium))
@@ -466,10 +466,23 @@ struct SidebarModeSwitcher: View {
                 .accessibilityIdentifier("sidebar.mode." + m.rawValue)
             }
         }
+        // Only the switcher animates (the sliding highlight); the sidebar and the screen change without an
+        // animation transaction, so a click no longer drags the whole window through a spring.
+        .animation(.easeOut(duration: 0.14), value: model.sidebarMode)
         .padding(2)
         .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.045)))
         .padding(.horizontal, 10)
         .padding(.bottom, 6)
+    }
+
+    /// The highlight and the sidebar flip right away (cheap); the screen behind follows on the next run-loop turn,
+    /// so the click never waits for the other world's first screen to build.
+    private func choose(_ m: SidebarMode) {
+        guard m != model.sidebarMode || model.selection?.mode != m else { return }
+        model.sidebarMode = m
+        DispatchQueue.main.async {
+            Log.measure("switch sidebar → \(m.rawValue)", category: "ui", warnAfter: 0.05) { model.switchSidebar(to: m) }
+        }
     }
 }
 

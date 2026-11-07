@@ -19,6 +19,8 @@ enum BlockCanvas {
 final class BlockGutterState {
     @ObservationIgnored private(set) var frames: [RecordID: CGRect] = [:]
     @ObservationIgnored private var noHandle: Set<RecordID> = []
+    /// Frames with handles as an array for hit-testing; rebuilt only after a row registers a new frame (not on every pointer move).
+    @ObservationIgnored private var hoverList: [(id: RecordID, frame: CGRect)]?
     /// Block whose + / ⋮⋮ is visible.
     var hovered: RecordID?
     /// Block whose ⋮⋮ menu is open (keeps the handle in place).
@@ -37,10 +39,25 @@ final class BlockGutterState {
     @ObservationIgnored private var extent: ClosedRange<CGFloat> = 0...0
     @ObservationIgnored private var clearTask: Task<Void, Never>?
     #if os(macOS)
-    @ObservationIgnored weak var scrollView: NSScrollView?
+    @ObservationIgnored weak var scrollView: NSScrollView? { didSet { observeLiveScroll() } }
+    @ObservationIgnored private var scrollObserver: NSObjectProtocol?
+    /// Time of the last live-scroll frame: pointer hover work is skipped while the page is scrolling.
+    @ObservationIgnored private var lastLiveScroll: TimeInterval = 0
     @ObservationIgnored private var autoScrollTimer: Timer?
     /// Last pointer position over the page (canvas coordinates), for double-click selection.
     @ObservationIgnored var pointer: CGPoint?
+    #endif
+
+    #if os(macOS)
+    private var isLiveScrolling: Bool { ProcessInfo.processInfo.systemUptime - lastLiveScroll < 0.1 }
+
+    private func observeLiveScroll() {
+        if let o = scrollObserver { NotificationCenter.default.removeObserver(o); scrollObserver = nil }
+        guard let sv = scrollView else { return }
+        scrollObserver = NotificationCenter.default.addObserver(forName: NSScrollView.didLiveScrollNotification, object: sv, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.lastLiveScroll = ProcessInfo.processInfo.systemUptime }
+        }
+    }
     #endif
 
     var isDragging: Bool { !draggingIDs.isEmpty }
@@ -49,11 +66,13 @@ final class BlockGutterState {
     func frame(of id: RecordID) -> CGRect? { frames[id] }
 
     func register(_ id: RecordID, frame: CGRect, showsHandle: Bool) {
+        if frames[id] != frame || noHandle.contains(id) == showsHandle { hoverList = nil }
         frames[id] = frame
         if showsHandle { noHandle.remove(id) } else { noHandle.insert(id) }
     }
 
     func unregister(_ id: RecordID) {
+        hoverList = nil
         frames[id] = nil
         noHandle.remove(id)
         if hovered == id, !isPinned { hovered = nil }
@@ -64,12 +83,20 @@ final class BlockGutterState {
     func hover(_ phase: HoverPhase, locked: Bool) {
         guard !isPinned else { return }
         guard !locked else { if hovered != nil { hovered = nil }; return }
+        #if os(macOS)
+        // While the page scrolls, blocks stream under a parked pointer; resolving a handle for each is wasted work.
+        if case .active = phase, isLiveScrolling { return }
+        #endif
         switch phase {
         case .active(let p):
             #if os(macOS)
             pointer = p
             #endif
-            let list = frames.compactMap { noHandle.contains($0.key) ? nil : (id: $0.key, frame: $0.value) }
+            let list: [(id: RecordID, frame: CGRect)]
+            if let cached = hoverList { list = cached } else {
+                list = frames.compactMap { noHandle.contains($0.key) ? nil : (id: $0.key, frame: $0.value) }
+                hoverList = list
+            }
             if let id = BlockGutterGeometry.hoverTarget(at: p, frames: list, slack: Theme.blockSpacing / 2 + 1) {
                 clearTask?.cancel(); clearTask = nil
                 if hovered != id { hovered = id }

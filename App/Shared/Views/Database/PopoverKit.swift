@@ -17,14 +17,14 @@ struct PopoverPanel<Content: View>: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.accentBlue)
                     .frame(width: 24, height: 24)
-                    .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.accentBlue.opacity(0.12)))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.accentBlue.opacity(0.12)))
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(DS.Text.ui(.semibold))
                     .foregroundStyle(Theme.primary)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, DS.Space.xl - 2)
+            .padding(.vertical, DS.Space.lg - 2)
             Rectangle().fill(Theme.gridLine).frame(height: 1)
             content()
         }
@@ -44,17 +44,17 @@ struct ChipMenuLabel: View {
                 Image(systemName: symbol).font(.system(size: 11)).foregroundStyle(Theme.secondary)
             }
             Text(text)
-                .font(.system(size: 13, weight: emphasized ? .medium : .regular))
+                .font(DS.Text.body(emphasized ? .medium : .regular))
                 .foregroundStyle(emphasized ? Theme.primary : Theme.secondary)
                 .lineLimit(1)
             Image(systemName: "chevron.up.chevron.down")
                 .font(.system(size: 8, weight: .semibold))
                 .foregroundStyle(Theme.secondary)
         }
-        .padding(.horizontal, 8)
-        .frame(height: 26)
-        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.primary.opacity(0.06)))
-        .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .padding(.horizontal, DS.Space.md)
+        .frame(height: DS.Control.regular)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.primary.opacity(DS.Fill.hover)))
+        .contentShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
     }
 }
 
@@ -68,7 +68,7 @@ struct PopoverActionRow: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 13))
+                .font(DS.Text.body())
                 .foregroundStyle(destructive ? Color.red : Theme.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -86,15 +86,15 @@ struct PopoverAddMenu<Content: View>: View {
             content()
         } label: {
             Label(title, systemImage: "plus")
-                .font(.system(size: 13, weight: .medium))
+                .font(DS.Text.body(.medium))
                 .foregroundStyle(Theme.accentBlue)
-                .padding(.horizontal, 8)
-                .frame(height: 26)
+                .padding(.horizontal, DS.Space.md)
+                .frame(height: DS.Control.regular)
                 .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .hoverHighlight(cornerRadius: 6, opacity: 0.06)
+        .hoverHighlight(cornerRadius: DS.Radius.control, opacity: DS.Fill.hover)
     }
 }

@@ -174,6 +174,7 @@ public struct NSDragOperation: OptionSet, Sendable { public let rawValue: UInt; 
 @preconcurrency @MainActor open class NSClipView: NSView { open var documentVisibleRect: NSRect { .zero }; open func scroll(to p: NSPoint) {}; open var drawsBackground = true }
 @preconcurrency @MainActor open class NSScroller: NSView {}
 @preconcurrency @MainActor open class NSScrollView: NSView {
+    public static let didLiveScrollNotification = Notification.Name("NSScrollViewDidLiveScrollNotification")
     open var documentView: NSView?
     open var contentView: NSClipView { NSClipView() }
     open var hasVerticalScroller = false
