@@ -35,13 +35,16 @@ struct BlockList: View {
         if lazyWhenLong && ids.count > Self.lazyThreshold {
             LazyVStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
         } else {
+            // Moves, inserts and deletes slide into place (Notion animates reordering) instead of jumping.
             VStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
+                .animation(.spring(response: 0.32, dampingFraction: 0.88), value: ids)
         }
     }
 
     private func rows(_ ids: [RecordID], _ numbers: [RecordID: Int]) -> some View {
         ForEach(ids, id: \.self) { id in
             BlockRow(id: id, editor: editor, number: numbers[id], listDepth: listDepth)
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -3)), removal: .opacity))
         }
     }
 
@@ -104,6 +107,7 @@ struct BlockRow: View {
             .padding(.vertical, b.type.isHeading ? 6 : 0)
             .padding(.top, b.type == .heading1 ? 10 : 0)
             .background(RoundedRectangle(cornerRadius: 4).fill(background(b, selected: selected)))
+            .animation(.easeOut(duration: 0.12), value: selected)
             .anchorPreference(key: MenuAnchorKey.self, value: .bounds) { menuHere ? $0 : nil }
             #if os(macOS)
             // The page-level gutter (BlockGutter.swift) hit-tests these frames for the + / ⋮⋮ and for drops.

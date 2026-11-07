@@ -205,6 +205,32 @@ enum DebugDriver {
                                         characters: q["chars"] ?? "", charactersIgnoringModifiers: q["chars"] ?? "", isARepeat: false, keyCode: code) {
                 NSApp.postEvent(e, atStart: false)
             }
+        case "drag2":
+            // Real mouse drag in window points (top-left origin): x1,y1 → x2,y2 in `steps`, posted to the event queue.
+            if let win = mainWindow(), let h = win.contentView?.bounds.height {
+                let p1 = NSPoint(x: Double(q["x1"] ?? "0") ?? 0, y: h - (Double(q["y1"] ?? "0") ?? 0))
+                let p2 = NSPoint(x: Double(q["x2"] ?? "0") ?? 0, y: h - (Double(q["y2"] ?? "0") ?? 0))
+                let steps = Int(q["steps"] ?? "8") ?? 8
+                let count = Int(q["clicks"] ?? "1") ?? 1
+                func post(_ t: NSEvent.EventType, _ p: NSPoint, _ c: Int = 1) {
+                    if let e = NSEvent.mouseEvent(with: t, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                  windowNumber: win.windowNumber, context: nil, eventNumber: 0, clickCount: c, pressure: 1) {
+                        NSApp.postEvent(e, atStart: false)
+                    }
+                }
+                if q["x2"] == nil {        // click(s) only
+                    for c in 1...count { post(.leftMouseDown, p1, c); post(.leftMouseUp, p1, c) }
+                } else {
+                    post(.leftMouseDown, p1)
+                    for i in 1...steps {
+                        let t = Double(i) / Double(steps)
+                        post(.leftMouseDragged, NSPoint(x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t))
+                    }
+                    post(.leftMouseUp, p2)
+                }
+            }
+        case "selection":
+            Log.notice("debug selection: \(model.activeEditor?.selectedBlocks.count ?? -1) blocks", category: "debug")
         case "picker":
             NotificationCenter.default.post(name: .debugOpenEnginePicker, object: nil)
         case "closewindow":

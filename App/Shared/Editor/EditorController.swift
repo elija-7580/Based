@@ -165,6 +165,9 @@ final class EditorController {
         }
     }
 
+    /// Rubber-band selection rectangle while dragging on the page (canvas coordinates).
+    var marquee: CGRect?
+
     /// Selected text (macOS): where the formatting toolbar floats, in window coordinates.
     var selectionRect: SelectionAnchor?
 

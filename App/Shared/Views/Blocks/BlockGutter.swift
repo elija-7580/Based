@@ -288,6 +288,8 @@ struct BlockGutterOverlay: View {
                 GutterHandle(block: b, editor: editor)
                     .offset(x: f.minX - 45, y: f.minY + handleOffset(b))
                     .opacity(g.isDragging ? 0 : 1)
+                    .id(id)
+                    .transition(.opacity.animation(.easeOut(duration: 0.1)))
             }
             if let t = g.dropTarget {
                 RoundedRectangle(cornerRadius: 1.5)
@@ -296,6 +298,7 @@ struct BlockGutterOverlay: View {
                     .frame(width: t.indicator.width, height: t.indicator.height)
                     .offset(x: t.indicator.minX, y: t.indicator.minY)
                     .allowsHitTesting(false)
+                    .animation(.spring(response: 0.18, dampingFraction: 0.85), value: t.indicator)
             }
             if g.isDragging, let p = g.dragPoint {
                 Text(g.ghostTitle)

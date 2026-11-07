@@ -74,6 +74,7 @@ struct PageScreen: View {
                     // of the region, so moving onto the handle keeps it visible.
                     .overlay(alignment: .topLeading) { BlockGutterOverlay(editor: editor) }
                     .onContinuousHover(coordinateSpace: BlockCanvas.space) { editor.gutter.hover($0, locked: editor.isLocked) }
+                    .blockMarquee(editor)
                     .coordinateSpace(BlockCanvas.space)
                     .background(EnclosingScrollViewReader { editor.gutter.scrollView = $0 })
                     #endif
