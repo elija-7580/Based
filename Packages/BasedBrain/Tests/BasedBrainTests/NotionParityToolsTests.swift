@@ -44,5 +44,15 @@ final class NotionParityToolsTests: XCTestCase {
         XCTAssertTrue(store.isTrashed(note))
         _ = ok("restore_page", ["page_id": .string(note)])
         XCTAssertFalse(store.isTrashed(note))
+
+        _ = ok("add_button", ["parent_id": .string(page), "label": "New Task", "action": "add_page",
+                              "database_id": .string(dbID), "properties": ["Status": "Done"], "position": "start"])
+        let button = try XCTUnwrap(store.contentBlocks(of: page).first)
+        XCTAssertEqual(button.type, .button)
+        XCTAssertEqual(button.props.buttonAction?.targetID, dbID)
+        let status = try XCTUnwrap(store.databases[dbID]?.properties.first { $0.name == "Status" })
+        XCTAssertEqual(button.props.buttonAction?.values?[status.id], .select(status.option(named: "Done")!.id))
+        XCTAssertTrue(tools.call("add_button", ["parent_id": .string(page), "label": "x", "action": "add_page",
+                                                "database_id": .string(dbID), "properties": ["Status": "Nope"]]).isError)
     }
 }

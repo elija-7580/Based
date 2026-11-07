@@ -248,8 +248,10 @@ public struct ButtonAction: Codable, Hashable, Sendable {
     public var targetID: RecordID?
     /// `addPage`: open the new page afterwards (default true).
     public var openAfter: Bool?
-    public init(kind: Kind, targetID: RecordID? = nil, openAfter: Bool? = nil) {
-        self.kind = kind; self.targetID = targetID; self.openAfter = openAfter
+    /// `addPage`: property values for the new page (property id → value), like Notion's "Add page to … with".
+    public var values: [String: PropertyValue]?
+    public init(kind: Kind, targetID: RecordID? = nil, openAfter: Bool? = nil, values: [String: PropertyValue]? = nil) {
+        self.kind = kind; self.targetID = targetID; self.openAfter = openAfter; self.values = values
     }
 }
 

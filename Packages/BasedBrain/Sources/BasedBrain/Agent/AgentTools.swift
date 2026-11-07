@@ -85,6 +85,10 @@ public final class AgentTools {
                      inputSchema: .schema(["view_id": .str("View id"), "type": .str("Layout"), "name": .str("View name"),
                                            "filters": ["type": "array", "description": "[{property, op, value}]"], "filter_mode": .str("and | or"),
                                            "sorts": ["type": "array", "description": "[{property, direction}]"], "group_by": .str("Property name, or '' to ungroup")], required: ["view_id"])),
+            ToolSpec(name: "add_button", description: "Add a Notion-style button block to a page. action: add_page (adds a page to database_id with optional property values, then opens it) or open_page (opens target_page_id).",
+                     inputSchema: .schema(["parent_id": .str("Page or block (e.g. a column) to put the button in"), "label": .str("Button text"), "action": .str("add_page | open_page"),
+                                           "database_id": .str("Database for add_page"), "properties": ["type": "object", "description": "add_page: property name → value"],
+                                           "target_page_id": .str("Page for open_page"), "position": .str("start | end (default end)")], required: ["parent_id", "label", "action"])),
             ToolSpec(name: "delete_view", description: "Delete a database view.",
                      inputSchema: .schema(["view_id": .str("View id")], required: ["view_id"])),
             ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
@@ -323,6 +327,28 @@ public final class AgentTools {
             guard let v = store.views[vid], let db = store.databases[v.databaseID] else { throw ToolError("No view \(vid)") }
             try applyViewArgs(vid, db, a)
             return "Updated view \(vid)."
+        case "add_button":
+            let parent = try req(a, "parent_id")
+            guard store.blocks[parent] != nil else { throw ToolError("No block \(parent)") }
+            var action: ButtonAction
+            switch try req(a, "action") {
+            case "add_page":
+                let db = try database(a)
+                var values: [String: PropertyValue] = [:]
+                for (name, raw) in a["properties"]?.object ?? [:] {
+                    let p = try property(db, name)
+                    if let v = try propertyValue(raw, p, db) { values[p.id] = v }
+                }
+                action = ButtonAction(kind: .addPage, targetID: db.id, values: values.isEmpty ? nil : values)
+            case "open_page":
+                let t = try req(a, "target_page_id"); guard store.blocks[t] != nil else { throw ToolError("No page \(t)") }
+                action = ButtonAction(kind: .openPage, targetID: t)
+            default: throw ToolError("action must be add_page or open_page")
+            }
+            var props = BlockProps(); props.buttonLabel = try req(a, "label"); props.buttonAction = action
+            let pos: InsertPosition = a["position"]?.string == "start" ? .start : .end
+            let id = store.insertBlock(.button, props: props, in: .block(parent), at: pos)
+            return "Added button \(id)"
         case "delete_view":
             let vid = try req(a, "view_id"); guard store.views[vid] != nil else { throw ToolError("No view \(vid)") }
             store.deleteView(vid); return "Deleted view \(vid)."
@@ -404,6 +430,26 @@ public final class AgentTools {
             if let group { v.groupBy = group }
             if let type { v.type = type }
             if let name, !name.isEmpty { v.name = name }
+        }
+    }
+
+    /// One property value from a tool argument (select/status options must exist; they are matched by name).
+    private func propertyValue(_ raw: JSONValue, _ p: PropertySchema, _ db: Database) throws -> PropertyValue? {
+        let s = raw.stringValue ?? raw.text
+        func opt(_ n: String) throws -> String {
+            guard let o = p.options?.first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw ToolError("No option '\(n)' in \(p.name)") }
+            return o.id
+        }
+        switch p.type {
+        case .text: return .text(RichText(s))
+        case .number: return Double(s).map { .number($0) }
+        case .checkbox: return .checkbox(["true", "yes", "1"].contains(s.lowercased()))
+        case .url: return .url(s)
+        case .select: return .select(try opt(s))
+        case .status: return .status(try opt(s))
+        case .multiSelect: return .multiSelect(try (raw.stringArray ?? [s]).map(opt))
+        case .date: return DateParsing.parse(s).map { .date($0) }
+        default: throw ToolError("Property '\(p.name)' can't be preset")
         }
     }
 

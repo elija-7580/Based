@@ -825,6 +825,10 @@ struct ButtonBlockView: View {
                 }
                 .pickerStyle(.menu)
                 .fixedSize()
+                if let vals = action.values, !vals.isEmpty, let db = model.store.databases[action.targetID ?? ""] {
+                    Text("Sets " + vals.keys.compactMap { db.property($0)?.name }.sorted().joined(separator: ", "))
+                        .font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                }
                 Toggle("Open the new page", isOn: Binding(get: { action.openAfter ?? true }, set: { v in setAction { $0.openAfter = v } }))
                     .toggleStyle(.checkbox)
             case .openPage:
@@ -856,7 +860,7 @@ struct ButtonBlockView: View {
         switch action.kind {
         case .addPage:
             guard let dbID = action.targetID, model.store.databases[dbID] != nil else { editing = true; return }
-            let id = model.store.addRow(to: dbID)
+            let id = model.store.addRow(to: dbID, values: action.values ?? [:])
             if action.openAfter ?? true { model.open(id, mode: .centerPeek) }
             return
         case .openPage:
