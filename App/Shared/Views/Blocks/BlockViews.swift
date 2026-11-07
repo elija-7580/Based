@@ -107,6 +107,7 @@ struct BlockRow: View {
             if rendersChildrenBelow(b), !node.children.isEmpty {
                 BlockList(parentID: id, editor: editor, listDepth: nested)
                     .padding(.leading, Theme.indent)
+                    .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -4)), removal: .opacity))
             }
         }
         .id(b.id)
@@ -292,16 +293,18 @@ struct BlockMarker: View {
         let open = block.props.isOpen == true
         let empty = model.store.contentBlocks(of: block.id).isEmpty
         return Button {
-            model.store.toggleOpen(block.id)
+            // The arrow turns and the children fold in/out with one spring (Notion animates both).
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) { model.store.toggleOpen(block.id) }
         } label: {
             Image(systemName: "arrowtriangle.right.fill")
                 .font(.system(size: 10))
                 .rotationEffect(.degrees(open ? 90 : 0))
                 .foregroundStyle(empty ? Theme.secondary.opacity(0.5) : Theme.secondary)
                 .frame(width: 22, height: line)
+                .background(RoundedRectangle(cornerRadius: 4).fill(Color.clear))
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ChromeHoverButtonStyleSmall())
     }
 
     /// 1. / a. / i. depending on nesting, like Notion.
@@ -802,5 +805,21 @@ struct TodoCheckbox: View {
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .animation(.spring(response: 0.22, dampingFraction: 0.62), value: checked)
+    }
+}
+
+
+/// Small hover fill for inline controls (toggle arrow).
+struct ChromeHoverButtonStyleSmall: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { HoverBody(configuration: configuration) }
+    private struct HoverBody: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hover = false
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Theme.hoverFill : .clear).padding(2))
+                .opacity(configuration.isPressed ? 0.7 : 1)
+                .onHover { hover = $0 }
+        }
     }
 }
