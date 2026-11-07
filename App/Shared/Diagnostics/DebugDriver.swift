@@ -32,7 +32,7 @@ enum DebugDriver {
         case "snapshot":
             let out = q["out"] ?? NSTemporaryDirectory() + "based-snapshot.png"
             // Let SwiftUI settle (animations, async layout) before drawing.
-            DispatchQueue.main.asyncAfter(deadline: .now() + (Double(q["delay"] ?? "") ?? 0.6)) { snapshot(to: out) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + (Double(q["delay"] ?? "") ?? 0.6)) { snapshot(to: out, contentOnly: q["frame"] != "1") }
         case "open":
             let t0 = Date()
             // Rough open time: until the main thread is free again after the page's first layout.
@@ -235,7 +235,9 @@ enum DebugDriver {
                 win.setFrame(f, display: true)
             }
         case "appearance":
-            NSApp.appearance = q["mode"] == "dark" ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
+            // The app's own setting (light / dark / system), like Settings → Appearance.
+            NSApp.appearance = nil
+            UserDefaults.standard.set(q["mode"] ?? "system", forKey: Appearance.key)
         default:
             return true
         }
@@ -246,11 +248,11 @@ enum DebugDriver {
         NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible && $0.contentView != nil && !$0.isSheet }
     }
 
-    static func snapshot(to path: String) {
+    static func snapshot(to path: String, contentOnly: Bool = false) {
         if let m = (NSApp.delegate as AnyObject?) as? NSObject { _ = m }
         Log.notice("debug windows: " + NSApp.windows.map { "\($0.className) visible=\($0.isVisible) \(Int($0.frame.width))x\(Int($0.frame.height)) title=\($0.title)" }.joined(separator: " | "), category: "debug")
         Log.notice("debug snapshot state: editor \(DebugDriver.model?.activeEditor.map { "\(ObjectIdentifier($0).hashValue)" } ?? "nil") menu \(String(describing: DebugDriver.model?.activeEditor?.menu?.kind)) hovered \(DebugDriver.model?.activeEditor?.gutter.hovered ?? "-")", category: "debug")
-        guard let win = mainWindow(), let view = win.contentView?.superview ?? win.contentView else {
+        guard let win = mainWindow(), let view = contentOnly ? win.contentView : (win.contentView?.superview ?? win.contentView) else {
             Log.error("debug snapshot: no window", category: "debug")
             return
         }
