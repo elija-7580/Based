@@ -499,3 +499,16 @@ that renders the window offscreen — screenshots work with a locked screen.
 
 Tests: BasedCore + BasedBrain green (new: CLIChatTests, ToolDiffTests, InboxDetailTests, SyncV2Tests,
 ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
+
+### Pass 20, continued
+- **Inline AI** like Notion: space on an empty line → "Ask AI to write…" → preview → Insert / Try again / Discard
+  (any engine; the page is context).
+- **Formatting toolbar** over text selections: Ask AI · Turn into · B I U S code · link · colour; follows scrolling.
+- **Working folder** for coding-agent CLIs in the chat (folder chip, recent folders); a chat keeps its folder.
+- **Anthropic API**: Claude 5 models (opus-5-5, sonnet-5-5, haiku-5-5, fable-5-1), adaptive thinking with summaries
+  shown as Thinking, thinking blocks replayed unchanged in the tool loop, refusal fallback, effort in the picker.
+- **Memory** 302 → 164 MB (`Block.props` copy-on-write, shared when empty); **long pages** open ~4× faster
+  (lazy top level from 60 blocks, focus scrolls into view).
+- **Sync**: long poll (`/sync/v2/wait`) + debounced push → changes arrive within ~1 s.
+- Drag: Notion-blue drop line; to-do checkbox Notion-blue; toggles animate; outline rail below the cover;
+  settings navigation Notion-style; composer controls adapt to narrow widths. iOS target builds again.
