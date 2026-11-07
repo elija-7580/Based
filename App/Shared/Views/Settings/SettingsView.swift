@@ -77,7 +77,8 @@ struct SettingsView: View {
     }
 
     private var sidebar: some View {
-        List(selection: $page) {
+        // Optional selection works on macOS and iOS (non-optional List(selection:) is macOS-only).
+        List(selection: Binding<SettingsPage?>(get: { page }, set: { if let v = $0 { page = v } })) {
             Section("Account") {
                 ForEach(SettingsPage.accountPages) { p in Label(p.title, systemImage: p.symbol).tag(p).accessibilityIdentifier("settings.\(p.rawValue)") }
             }

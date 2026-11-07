@@ -163,7 +163,12 @@ struct BasedCommands: Commands {
             Divider()
             Button("Sync Now") { model.syncNow() }.keyboardShortcut("r", modifiers: [.command, .shift])
         }
-        CommandGroup(before: .windowList) {
+        #if os(macOS)
+        let tabPlacement = CommandGroupPlacement.windowList
+        #else
+        let tabPlacement = CommandGroupPlacement.toolbar
+        #endif
+        CommandGroup(before: tabPlacement) {
             Button("Next Tab") { model.cycleTab(1) }.keyboardShortcut(.tab, modifiers: .control)
             Button("Previous Tab") { model.cycleTab(-1) }.keyboardShortcut(.tab, modifiers: [.control, .shift])
             Button("Show Next Tab") { model.cycleTab(1) }.keyboardShortcut("]", modifiers: [.command, .shift])
