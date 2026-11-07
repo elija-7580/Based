@@ -183,6 +183,8 @@ enum DebugDriver {
             }
         case "archive":
             if let out = q["out"] { model.exportArchive(to: URL(fileURLWithPath: out)) }
+        case "closewindow":
+            mainWindow()?.performClose(nil)
         case "compose":
             model.chatDraft = q["text"] ?? ""
         case "folder":
