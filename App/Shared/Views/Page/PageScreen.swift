@@ -218,6 +218,7 @@ struct PageScreen: View {
     /// "becomes the visible page" / "is hidden or removed".
     private func activate() {
         model.activeEditor = editor
+        model.pageHistory?.pageOpened(pageID)
         #if os(macOS)
         selectionKeys.install(editor)
         #endif
@@ -630,6 +631,7 @@ struct PageMenu: View {
             }
             Divider()
             Button("Undo", systemImage: "arrow.uturn.backward") { model.undo() }.disabled(!store.canUndo)
+            Button("Version history", systemImage: "clock.arrow.circlepath") { model.versionHistoryPage = page.id }
             Button("Export as Markdown…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
             Button("Export as HTML…", systemImage: "chevron.left.forwardslash.chevron.right") { model.exportRequest = AppModel.ExportRequest(pageID: page.id, format: .html) }
             Divider()

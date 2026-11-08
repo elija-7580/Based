@@ -143,6 +143,10 @@ final class AppModel {
     var sidebarMode: SidebarMode = SidebarMode(rawValue: UserDefaults.standard.string(forKey: "sidebar.mode") ?? "") ?? .notes {
         didSet { UserDefaults.standard.set(sidebarMode.rawValue, forKey: "sidebar.mode") }
     }
+    /// Page versions (git-like, deduplicated; `history.sqlite` next to the workspace).
+    @ObservationIgnored private(set) var pageHistory: PageHistory!
+    /// Page whose version history is open (page menu → Version history).
+    var versionHistoryPage: RecordID?
     /// Tab shown by the Diagnostics screen (Developer section of the sidebar: Logs / Hangs / Layout / System).
     var diagnosticsTab: DiagnosticsView.Tab = .logs
     /// When the log was last looked at: the sidebar's Logs row counts errors after this.
@@ -317,6 +321,7 @@ final class AppModel {
         store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
         registry = Registry(store: store)
         queryCache = QueryCache(store: store)
+        pageHistory = PageHistory(store: store, directory: inMemory ? nil : dir)
         if store.blocks.isEmpty { Onboarding.seed(store) }
         let storeMS = Int(Date().timeIntervalSince(openStart) * 1000)
         let brainStart = Date()

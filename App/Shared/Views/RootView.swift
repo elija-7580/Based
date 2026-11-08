@@ -53,6 +53,11 @@ struct RootView: View {
         }
         .sheet(isPresented: $model.showExportAll) { ExportAllSheet().environment(model) }
         .sheet(isPresented: $model.showNotionImport) { NotionImportSheet().environment(model) }
+        .sheet(isPresented: Binding(get: { model.versionHistoryPage != nil }, set: { if !$0 { model.versionHistoryPage = nil } })) {
+            if let id = model.versionHistoryPage {
+                VersionHistorySheet(pageID: id) { model.versionHistoryPage = nil }.environment(model)
+            }
+        }
         .sheet(item: $model.moveRequest) { req in
             MovePicker(ids: req.ids) { model.moveRequest = nil }.environment(model)
         }

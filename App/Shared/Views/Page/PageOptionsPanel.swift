@@ -133,6 +133,7 @@ struct PageOptionsPanel: View {
             Action(id: "home", title: model.isHome(page.id) ? "Home page" : "Set as Home page", symbol: "house") { model.setHome(page.id) },
             Action(id: "fav", title: store.isFavorite(page.id) ? "Remove from Favorites" : "Add to Favorites", symbol: "star") { store.toggleFavorite(page.id) },
             Action(id: "undo", title: "Undo", symbol: "arrow.uturn.backward", shortcut: "⌘Z") { model.undo() },
+            Action(id: "history", title: "Version history", symbol: "clock.arrow.circlepath") { model.versionHistoryPage = page.id },
             Action(id: "md", title: "Export as Markdown", symbol: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) },
             Action(id: "html", title: "Export as HTML", symbol: "chevron.left.forwardslash.chevron.right") {
                 model.exportRequest = AppModel.ExportRequest(pageID: page.id, format: .html)
