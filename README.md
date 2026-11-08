@@ -163,6 +163,8 @@ share extension, widgets, watchOS target.
 - `project.yml` — XcodeGen project; `Config/` — build settings
 - `ci/github-actions-ci.yml` — CI template (copy to `.github/workflows/ci.yml`)
 - `replica/` — recon, architecture, parity matrix, build log
+- `docs/` — sync protocol, sharing, platforms; `docs/adr/` — architecture
+  decision records ([index](docs/adr/README.md))
 
 ## Build
 
