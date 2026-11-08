@@ -151,6 +151,36 @@ public protocol Persistence: AnyObject {
     func write(upserts: [Record], deletions: [RecordKey]) throws
     func meta(_ key: String) -> Data?
     func setMeta(_ key: String, _ value: Data?)
+    /// Throws if the storage can't be written right now (used by `WorkspaceStore.retryWrites`).
+    func checkWritable() throws
+}
+
+extension Persistence {
+    public func checkWritable() throws { try write(upserts: [], deletions: []) }
+}
+
+/// Errors of `WorkspaceStore.tryTransact`.
+public enum StoreError: Error, CustomStringConvertible, Equatable {
+    /// The store couldn't write to disk and accepts no changes until `retryWrites()` succeeds.
+    case readOnly(String)
+    public var description: String {
+        switch self {
+        case .readOnly(let m): return "Based can't save changes (\(m))"
+        }
+    }
+}
+
+/// The store couldn't write to its persistence: it's read-only until `retryWrites()` succeeds.
+public struct WriteFailure: Sendable, Equatable {
+    /// The underlying error, as text.
+    public var message: String
+    /// When writing first failed.
+    public var since: Date
+    /// Changes rejected since then (local transactions, undo/redo, remote batches).
+    public var rejected: Int
+    public init(message: String, since: Date = Date(), rejected: Int = 0) {
+        self.message = message; self.since = since; self.rejected = rejected
+    }
 }
 
 /// One entry of the persistent change log: the latest change of a record, numbered by a per-database sequence.
@@ -191,7 +221,20 @@ public final class WorkspaceStore {
     public let clock: StampClock
     public let persistence: Persistence?
     public var userID: String? = "me"
+    /// Last persistence error (load or write). See `writeFailure` for the resulting state.
     public private(set) var lastError: Error?
+    /// Non-nil after a write to disk failed (or the workspace couldn't be loaded): the store is read-only.
+    /// The failed transaction was rolled back in memory, so memory and disk agree; every later change is rejected
+    /// (`transact` rolls it back, `tryTransact` throws `StoreError.readOnly`, remote changes are queued) until
+    /// `retryWrites()` succeeds. Rather block than lose edits silently.
+    public private(set) var writeFailure: WriteFailure?
+    public var isReadOnly: Bool { writeFailure != nil }
+    /// Called when `writeFailure` is set or cleared (UI banner).
+    public var onWriteFailureChanged: (() -> Void)?
+    /// Remote changes that arrived while read-only; applied after `retryWrites()` succeeds.
+    private var deferredRemote: [(records: [Record], deletions: [RecordKey])] = []
+    /// The initial load failed: `retryWrites` loads again before accepting changes.
+    private var loadFailed = false
     /// Monotonic counter bumped on every committed change (local, remote, undo). Use as a cache key.
     public private(set) var revision: Int = 0
     /// `topLevelPages()` memo (the workspace level also holds every trashed import — thousands of records the
@@ -238,7 +281,14 @@ public final class WorkspaceStore {
             do {
                 loadedWorkspace = bulkLoad(try persistence.loadAll())
             } catch {
+                // Don't write anything into a database we couldn't read: start read-only with an in-memory
+                // workspace and let `retryWrites()` load again.
                 lastError = error
+                loadFailed = true
+                writeFailure = WriteFailure(message: "load failed: \(error)")
+                Log.error("Workspace could not be loaded: \(error) — store is read-only", category: "store")
+                _setWorkspace(Workspace())
+                return
             }
         }
         if !loadedWorkspace {
@@ -281,20 +331,41 @@ public final class WorkspaceStore {
     // MARK: Transactions
 
     /// Run mutations as one atomic, undoable unit.
+    /// If the store is read-only (`writeFailure`) or the write fails now, the mutations are rolled back and the
+    /// body's result is returned anyway; use `tryTransact` to get `StoreError.readOnly` instead.
     @discardableResult
     public func transact<T>(_ name: String, coalesce: String? = nil, undoable: Bool = true,
                             _ body: (Tx) throws -> T) rethrows -> T {
+        try perform(name, coalesce: coalesce, undoable: undoable, body).result
+    }
+
+    /// Like `transact`, but throws `StoreError.readOnly` when the change wasn't saved (store read-only or the
+    /// write failed); the body doesn't run at all while the store is read-only.
+    @discardableResult
+    public func tryTransact<T>(_ name: String, coalesce: String? = nil, undoable: Bool = true,
+                               _ body: (Tx) throws -> T) throws -> T {
+        if let f = writeFailure {
+            writeFailure?.rejected += 1
+            throw StoreError.readOnly(f.message)
+        }
+        let (result, saved) = try perform(name, coalesce: coalesce, undoable: undoable, body)
+        if !saved { throw StoreError.readOnly(writeFailure?.message ?? "write failed") }
+        return result
+    }
+
+    private func perform<T>(_ name: String, coalesce: String?, undoable: Bool,
+                            _ body: (Tx) throws -> T) rethrows -> (result: T, saved: Bool) {
         let tx = Tx(store: self)
         let start = DispatchTime.now().uptimeNanoseconds
         do {
             let result = try body(tx)
-            commit(tx, name: name, coalesce: coalesce, origin: .local, undoable: undoable)
+            let saved = commit(tx, name: name, coalesce: coalesce, origin: .local, undoable: undoable)
             let ms = Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
             if ms > slowTransactionThreshold * 1000 {
                 Log.warning("Slow transaction “\(name)”: \(Int(ms)) ms, \(tx.order.count) records", category: "store",
                             metadata: ["ms": String(Int(ms)), "records": String(tx.order.count)])
             }
-            return result
+            return (result, saved)
         } catch {
             rollback(tx)
             throw error
@@ -319,7 +390,15 @@ public final class WorkspaceStore {
         }
     }
 
-    private func commit(_ tx: Tx, name: String, coalesce: String?, origin: ChangeOrigin, undoable: Bool) {
+    /// Writes the transaction and publishes it. Returns false (and rolls the transaction back in memory) if the
+    /// store is read-only or the write failed; undo, observers and `onLocalChange` then don't run.
+    @discardableResult
+    private func commit(_ tx: Tx, name: String, coalesce: String?, origin: ChangeOrigin, undoable: Bool) -> Bool {
+        if persistence != nil, writeFailure != nil, !tx.order.isEmpty {
+            rollback(tx)
+            writeFailure?.rejected += 1
+            return false
+        }
         var upserts: [Record] = []
         var deletions: [RecordKey] = []
         var change = ChangeSet(origin: origin)
@@ -350,7 +429,7 @@ public final class WorkspaceStore {
             after[key] = Snapshot(value: cur)
         }
         change.parents = tx.parents
-        guard !change.isEmpty else { return }
+        guard !change.isEmpty else { return true }
 
         if let persistence {
             do {
@@ -359,8 +438,16 @@ public final class WorkspaceStore {
                 } else {
                     try persistence.write(upserts: upserts, deletions: deletions)
                 }
+            } catch {
+                // Memory must match disk: undo the in-memory change and stop accepting changes.
+                rollback(tx)
+                lastError = error
+                writeFailure = WriteFailure(message: "\(error)", rejected: 1)
+                Log.error("Saving “\(name)” failed: \(error) — store is read-only until a retry succeeds", category: "store",
+                          metadata: ["records": String(upserts.count + deletions.count)])
+                onWriteFailureChanged?()
+                return false
             }
-            catch { lastError = error }
         }
 
         if origin == .local && undoable {
@@ -389,6 +476,46 @@ public final class WorkspaceStore {
         if observeMs > slowTransactionThreshold * 1000 {
             Log.warning("Store observers took \(Int(observeMs)) ms for “\(name)”", category: "store")
         }
+        return true
+    }
+
+    /// Tries to leave the read-only state: checks that the persistence can be written (and loads the workspace
+    /// again if the first load failed), then applies remote changes that arrived meanwhile.
+    /// Returns true if the store accepts changes again.
+    @discardableResult
+    public func retryWrites() -> Bool {
+        guard let failure = writeFailure else { return true }
+        guard let persistence else { writeFailure = nil; onWriteFailureChanged?(); return true }
+        do {
+            try persistence.checkWritable()
+            if loadFailed {
+                let records = try persistence.loadAll()
+                loadFailed = false
+                lastError = nil
+                writeFailure = nil
+                if !bulkLoad(records) {
+                    transact("Create workspace", undoable: false) { tx in tx.put(Workspace()) }
+                }
+                revision &+= 1
+                // A full reload: observers see every parent as changed.
+                var all = ChangeSet(origin: .load)
+                all.keys = Set(allRecords().map(\.key))
+                all.parents = Set(childIndex.keys)
+                for handler in observers.values { handler(all) }
+            }
+        } catch {
+            lastError = error
+            writeFailure = WriteFailure(message: "\(error)", since: failure.since, rejected: failure.rejected)
+            Log.warning("Retrying writes failed: \(error)", category: "store")
+            return false
+        }
+        writeFailure = nil
+        Log.info("Store writable again (\(failure.rejected) changes were rejected while read-only)", category: "store")
+        onWriteFailureChanged?()
+        let queued = deferredRemote
+        deferredRemote = []
+        for batch in queued { applyRemote(batch.records, deletions: batch.deletions) }
+        return writeFailure == nil
     }
 
     private func stamped(_ r: Record, now: Date, keepTimes: Bool = false) -> Record {
@@ -425,7 +552,10 @@ public final class WorkspaceStore {
         guard let entry = undoStack.popLast() else { return }
         let tx = Tx(store: self)
         for (key, snap) in entry.before { apply(snap.value, key, tx) }
-        commit(tx, name: entry.name, coalesce: nil, origin: .undo, undoable: false)
+        guard commit(tx, name: entry.name, coalesce: nil, origin: .undo, undoable: false) else {
+            undoStack.append(entry)   // not saved: keep it undoable
+            return
+        }
         var redone = entry
         redone.after = entry.after.mapValues { snap in Snapshot(value: snap.value) }
         redoStack.append(redone)
@@ -435,7 +565,10 @@ public final class WorkspaceStore {
         guard let entry = redoStack.popLast() else { return }
         let tx = Tx(store: self)
         for (key, snap) in entry.after { apply(snap.value, key, tx) }
-        commit(tx, name: entry.name, coalesce: nil, origin: .redo, undoable: false)
+        guard commit(tx, name: entry.name, coalesce: nil, origin: .redo, undoable: false) else {
+            redoStack.append(entry)
+            return
+        }
         var again = entry
         again.coalesceKey = nil
         undoStack.append(again)
@@ -449,8 +582,16 @@ public final class WorkspaceStore {
 
     /// Merge records from another device (last-writer-wins by stamp).
     /// Returns keys whose local version is newer and should be re-sent.
+    /// While the store is read-only the batch is queued (in memory) and applied after `retryWrites()` succeeds.
     @discardableResult
     public func applyRemote(_ records: [Record], deletions: [RecordKey] = []) -> [RecordKey] {
+        if persistence != nil, writeFailure != nil {
+            if !records.isEmpty || !deletions.isEmpty {
+                deferredRemote.append((records, deletions))
+                writeFailure?.rejected += 1
+            }
+            return []
+        }
         let tx = Tx(store: self)
         var stale: [RecordKey] = []
         for r in records {
@@ -462,7 +603,10 @@ public final class WorkspaceStore {
             tx.put(r)
         }
         for key in deletions { tx.remove(key) }
-        commit(tx, name: "Sync", coalesce: nil, origin: .remote, undoable: false)
+        guard commit(tx, name: "Sync", coalesce: nil, origin: .remote, undoable: false) else {
+            deferredRemote.append((records, deletions))
+            return []
+        }
         return stale
     }
 

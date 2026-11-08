@@ -55,6 +55,22 @@ public final class SQLitePersistence: ChangeLogging {
 
     deinit { sqlite3_close(db) }
 
+    /// SQLite opened the file read-only (e.g. no write permission): every write would fail.
+    public var isReadOnly: Bool { db.map { sqlite3_db_readonly($0, "main") == 1 } ?? true }
+
+    /// Writes a probe value into `meta` inside a transaction; throws if the database can't be written.
+    public func checkWritable() throws {
+        if isReadOnly { throw PersistenceError.sqlite("database is read-only: \(url?.path ?? ":memory:")") }
+        try exec("BEGIN IMMEDIATE")
+        do {
+            try exec("INSERT OR REPLACE INTO meta(key, value) VALUES('write.probe', CAST(strftime('%s','now') AS BLOB))")
+            try exec("COMMIT")
+        } catch {
+            try? exec("ROLLBACK")
+            throw error
+        }
+    }
+
     private func exec(_ sql: String) throws {
         var err: UnsafeMutablePointer<CChar>?
         if sqlite3_exec(db, sql, nil, nil, &err) != SQLITE_OK {

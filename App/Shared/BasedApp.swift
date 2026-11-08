@@ -34,6 +34,8 @@ struct BasedApp: App {
             .environment(model.brain)
             .environment(model.brain.happier)
             .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
+            // The workspace file opens again after the storage error screen's "Try again" (BSD-15).
+            .onChange(of: model.reopenRequest) { _, _ in model = AppModel() }
             #if os(macOS)
             // Small enough for split-screen; the window can't shrink below it (contentMinSize), so nothing is
             // clipped or shifted when the window opens at its restored size.

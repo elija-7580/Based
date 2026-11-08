@@ -247,6 +247,9 @@ public final class ServerSync {
 
     public func syncNow() async {
         guard !syncing else { return }
+        // Can't save locally (WorkspaceStore.writeFailure): don't pull pages whose cursor would advance past
+        // changes that were never stored. Resumes after the store's retryWrites() succeeds.
+        guard !store.isReadOnly else { onStatus?("Sync paused: Based can't save changes on this device"); return }
         syncing = true; defer { syncing = false }
         do {
             if usesV2 != false, store.persistence is ChangeLogging {

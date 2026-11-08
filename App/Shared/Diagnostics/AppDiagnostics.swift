@@ -114,6 +114,11 @@ enum AppDiagnostics {
         ]
         if let model {
             r.facts.append(.init("Workspace", "\(model.store.blocks.count) blocks · \(model.store.databases.count) databases · \(model.tabs.count) tabs"))
+            let storage: String
+            if let e = model.storageError { storage = "cannot open — \(e)" }
+            else if let f = model.store.writeFailure { storage = "read-only since \(f.since.formatted(date: .omitted, time: .standard)) — \(f.message) · \(f.rejected) changes rejected" }
+            else { storage = "writable · \(model.dataDirectory.path)" }
+            r.facts.append(.init("Storage", storage))
         }
         r.previousRun = CrashReporter.previousCrash?.report
         r.hangs = HangWatchdog.shared.hangs.map(\.report)

@@ -18,16 +18,23 @@ struct RootView: View {
     var body: some View {
         @Bindable var model = model
         Group {
-            #if os(macOS)
-            MacShell()
-            #else
-            NavigationSplitView(columnVisibility: $columns) {
-                SidebarView()
-                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
-            } detail: {
-                DetailShell()
+            if let e = model.storageError {
+                StorageErrorView(error: e)
+            } else {
+                #if os(macOS)
+                MacShell()
+                #else
+                NavigationSplitView(columnVisibility: $columns) {
+                    SidebarView()
+                        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 400)
+                } detail: {
+                    DetailShell()
+                }
+                #endif
             }
-            #endif
+        }
+        .overlay(alignment: .top) {
+            if let f = model.storeWriteFailure, model.storageError == nil { StorageWriteBanner(failure: f) }
         }
         .overlay {
             if model.showQuickFind {

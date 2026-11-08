@@ -123,6 +123,15 @@ final class AppModel {
     /// Mac updates: checks GitHub for newer commits and installs them through the updater agent.
     let updater: Updater
     @ObservationIgnored private(set) var persistence: SQLitePersistence?
+    /// Folder of based.sqlite and the assets (Application Support/Based).
+    @ObservationIgnored let dataDirectory: URL
+    /// The workspace file couldn't be opened (BSD-15): RootView shows `StorageErrorView` instead of the shell.
+    /// There's no in-memory fallback — a workspace that is never saved would lose everything typed into it.
+    var storageError: WorkspaceOpener.OpenError?
+    /// Mirrors `store.writeFailure`: saving failed, edits are paused (red banner with "Try again").
+    var storeWriteFailure: WriteFailure?
+    /// Bumped by "Try again" on the storage error screen once the file opens; BasedApp builds a new model.
+    var reopenRequest = 0
     #if canImport(CloudKit)
     @ObservationIgnored private(set) var cloud: CloudSync?
     #endif
@@ -315,19 +324,28 @@ final class AppModel {
         if let d = ProcessInfo.processInfo.environment["BASED_DATA_DIR"], !d.isEmpty { dir = URL(fileURLWithPath: d, isDirectory: true) }
         #endif
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        dataDirectory = dir
         assets = FileAssetStore(root: dir.appendingPathComponent("Assets", isDirectory: true))
         var p: SQLitePersistence?
         if !inMemory {
-            do { p = try SQLitePersistence(url: dir.appendingPathComponent("based.sqlite")) } catch { errorMessage = "\(error)" }
+            switch WorkspaceOpener.open(directory: dir) {
+            case .success(let opened): p = opened
+            case .failure(let e):
+                storageError = e
+                Log.error("Workspace can't be opened: \(e)", category: "store")
+            }
         }
         persistence = p
         let node = Self.deviceNodeID()
+        // In-memory only for previews/tests (`inMemory`) and behind the error screen (nothing is shown or saved).
         store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
+        storeWriteFailure = store.writeFailure
         registry = Registry(store: store)
         queryCache = QueryCache(store: store)
         updater = Updater()
         pageHistory = PageHistory(store: store, directory: inMemory ? nil : dir)
-        if store.blocks.isEmpty { Onboarding.seed(store) }
+        // Never seed over a workspace we couldn't open or read.
+        if store.blocks.isEmpty, storageError == nil, !store.isReadOnly { Onboarding.seed(store) }
         let storeMS = Int(Date().timeIntervalSince(openStart) * 1000)
         let brainStart = Date()
         brain = BrainModel(store: store)
@@ -337,8 +355,17 @@ final class AppModel {
         tabs = [BrowserTab(id: activeTabID, selection: selection)]
         lastSnapshot = NavSnapshot(selection: selection, path: [])
         backHistory = []
-        store.purgeTrash()
-        startSyncIfConfigured()
+        store.onWriteFailureChanged = { [weak self] in
+            guard let self else { return }
+            self.storeWriteFailure = self.store.writeFailure
+        }
+        if storeWriteFailure != nil {
+            Log.error("Workspace opened read-only: \(storeWriteFailure?.message ?? "")", category: "store")
+        }
+        if storageError == nil {
+            store.purgeTrash()
+            startSyncIfConfigured()
+        }
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
         store.prepareLinkIndexInBackground()
         updater.onJustUpdated = { [weak self] in
@@ -347,6 +374,28 @@ final class AppModel {
         }
         updater.start()
         Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms (store \(storeMS) ms, agent brain \(brainMS) ms)", category: "app")
+    }
+
+    /// "Try again" on the storage error screen: if the file opens now, BasedApp replaces this model.
+    func retryOpenWorkspace() {
+        switch WorkspaceOpener.open(directory: dataDirectory) {
+        case .success:
+            Log.info("Workspace file opens again — reloading", category: "store")
+            reopenRequest += 1
+        case .failure(let e):
+            storageError = e
+        }
+    }
+
+    /// "Try again" on the write-failure banner.
+    func retryStoreWrites() {
+        if store.retryWrites() {
+            showToast("Saving works again")
+            #if canImport(CloudKit)
+            if cloud == nil { startSyncIfConfigured() }
+            #endif
+        }
+        storeWriteFailure = store.writeFailure
     }
 
     static func deviceNodeID() -> String {
