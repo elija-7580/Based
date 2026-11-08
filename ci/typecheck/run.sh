@@ -8,12 +8,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TC="$ROOT/ci/typecheck"; OUT="${TYPECHECK_OUT:-/tmp/based-typecheck}"
 mkdir -p "$OUT/mods" "$OUT/src"
-( cd "$ROOT/Packages/BasedBrain" && swift build --build-tests >/dev/null )
+( cd "$ROOT/Packages/BasedBrain" && swift build >/dev/null )
 BRAIN="$ROOT/Packages/BasedBrain/.build/debug"
 CSQL=(-Xcc -fmodule-map-file="$ROOT/Packages/BasedCore/Sources/CSQLite/module.modulemap" -I "$ROOT/Packages/BasedCore/Sources/CSQLite")
 mod() { local name=$1; shift; swiftc -diagnostic-style=llvm -emit-module -parse-as-library -swift-version 5 -suppress-warnings -module-name "$name" \
           -emit-module-path "$OUT/mods/$name.swiftmodule" -I "$OUT/mods" "$@"; }
 mod Combine "$TC/stubs/Combine.swift"
+mod CoreGraphics "$TC/stubs/CoreGraphics.swift"
 
 mod Security "$TC/stubs/Security.swift"
 mod CoreAudio "$TC/stubs/CoreAudio.swift"

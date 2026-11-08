@@ -217,7 +217,7 @@ public struct DragGesture: Gesture {
     public init(minimumDistance: CGFloat = 10, coordinateSpace: some CoordinateSpaceProtocol) {}
 }
 public struct TapGesture: Gesture { public typealias Value = Void; public typealias Body = Never; public init(count: Int = 1) {} }
-public struct SpatialTapGesture: Gesture { public struct Value: Equatable { public var location: CGPoint }; public typealias Body = Never; public init(count: Int = 1, coordinateSpace: CoordinateSpace = .local) {} }
+public struct SpatialTapGesture: Gesture { public struct Value: Equatable { public var location: CGPoint }; public typealias Body = Never; public init(count: Int = 1, coordinateSpace: CoordinateSpace = .local) {}; public init(count: Int = 1, coordinateSpace: some CoordinateSpaceProtocol) {} }
 public struct LongPressGesture: Gesture { public typealias Value = Bool; public typealias Body = Never; public init(minimumDuration: Double = 0.5, maximumDistance: CGFloat = 10) {} }
 public struct MagnifyGesture: Gesture { public struct Value: Equatable { public var magnification: CGFloat }; public typealias Body = Never; public init(minimumScaleDelta: CGFloat = 0.01) {} }
 
@@ -303,4 +303,10 @@ open class FileWrapper: NSObject, @unchecked Sendable {
     @discardableResult open func addFileWrapper(_ w: FileWrapper) -> String { "" }
     @discardableResult open func addRegularFile(withContents: Data, preferredFilename: String) -> String { "" }
     open func write(to url: URL, options: WritingOptions = [], originalContentsURL: URL?) throws {}
+}
+
+@propertyWrapper public struct Namespace: DynamicProperty, Sendable {
+    public struct ID: Hashable, Sendable {}
+    public init() {}
+    public var wrappedValue: ID { ID() }
 }

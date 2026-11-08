@@ -1,8 +1,5 @@
 // Type-check stub of AppKit (subset used by Based). Signatures mirror Apple's API; bodies are dummies.
-@_exported import Foundation
-#if canImport(FoundationNetworking)
-@_exported import FoundationNetworking
-#endif
+@_exported import CoreGraphics
 
 public struct Selector: Hashable, ExpressibleByStringLiteral, @unchecked Sendable {
     public init(_ s: String) {}
@@ -67,7 +64,6 @@ public struct NSAutoresizingMaskOptions: OptionSet, Sendable { public let rawVal
 extension NSView { public typealias AutoresizingMask = NSAutoresizingMaskOptions }
 
 @preconcurrency @MainActor open class CALayer: NSObject { open var cornerRadius: CGFloat = 0; open var backgroundColor: CGColor?; open var masksToBounds = false; open var borderWidth: CGFloat = 0; open var borderColor: CGColor? }
-public final class CGColor: @unchecked Sendable { public static let clear = CGColor() }
 
 public struct NSLayoutPriority: RawRepresentable, Hashable, Sendable, ExpressibleByFloatLiteral { public var rawValue: Float; public init(rawValue: Float) { self.rawValue = rawValue }; public init(_ v: Float) { rawValue = v }; public init(floatLiteral v: Float) { rawValue = v }
     public static let required = NSLayoutPriority(1000), defaultHigh = NSLayoutPriority(750), defaultLow = NSLayoutPriority(250), fittingSizeCompression = NSLayoutPriority(50) }
@@ -142,6 +138,10 @@ public struct NSDragOperation: OptionSet, Sendable { public let rawValue: UInt; 
     open var effectiveAppearance: NSAppearance { NSAppearance() }
     open var appearance: NSAppearance?
     open func isDescendant(of v: NSView) -> Bool { false }
+    open func bitmapImageRepForCachingDisplay(in r: NSRect) -> NSBitmapImageRep? { nil }
+    open func cacheDisplay(in r: NSRect, to rep: NSBitmapImageRep) {}
+    public static let boundsDidChangeNotification = Notification.Name("NSViewBoundsDidChangeNotification")
+    public static let frameDidChangeNotification = Notification.Name("NSViewFrameDidChangeNotification")
 }
 @preconcurrency @MainActor open class NSTrackingArea: NSObject {
     public struct Options: OptionSet, Sendable { public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }
@@ -532,10 +532,11 @@ open class NSImage: NSObject, @unchecked Sendable {
     open func lockFocus() {}
     open func unlockFocus() {}
     open func draw(in r: NSRect) {}
+    open func addRepresentation(_ r: NSImageRep) {}
     open func cgImage(forProposedRect: UnsafeMutablePointer<NSRect>?, context: Any?, hints: [AnyHashable: Any]?) -> CGImage? { nil }
 }
-public final class CGImage: @unchecked Sendable { public var width: Int { 0 }; public var height: Int { 0 } }
-open class NSBitmapImageRep: NSObject, @unchecked Sendable {
+open class NSImageRep: NSObject, @unchecked Sendable { public override init() {} }
+open class NSBitmapImageRep: NSImageRep, @unchecked Sendable {
     public enum FileType: UInt { case tiff, bmp, gif, jpeg, png, jpeg2000 }
     public struct PropertyKey: RawRepresentable, Hashable { public var rawValue: String; public init(rawValue: String) { self.rawValue = rawValue }; public static let compressionFactor = PropertyKey(rawValue: "c") }
     public init?(data: Data) {}
@@ -570,7 +571,10 @@ open class NSEvent: NSObject, @unchecked Sendable {
     open class func addLocalMonitorForEvents(matching m: EventTypeMask, handler: @escaping (NSEvent) -> NSEvent?) -> Any? { nil }
     open class func addGlobalMonitorForEvents(matching m: EventTypeMask, handler: @escaping (NSEvent) -> Void) -> Any? { nil }
     open class func removeMonitor(_ m: Any) {}
+    open class func keyEvent(with type: EventType, location: NSPoint, modifierFlags: ModifierFlags, timestamp: TimeInterval, windowNumber: Int, context: NSGraphicsContext?, characters: String, charactersIgnoringModifiers: String, isARepeat: Bool, keyCode: UInt16) -> NSEvent? { nil }
+    open class func mouseEvent(with type: EventType, location: NSPoint, modifierFlags: ModifierFlags, timestamp: TimeInterval, windowNumber: Int, context: NSGraphicsContext?, eventNumber: Int, clickCount: Int, pressure: Float) -> NSEvent? { nil }
 }
+open class NSGraphicsContext: NSObject, @unchecked Sendable {}
 
 @preconcurrency @MainActor open class NSCursor: NSObject {
     open class var arrow: NSCursor { NSCursor() }
@@ -704,6 +708,9 @@ public struct NSWindowStyleMask: OptionSet, Sendable { public let rawValue: UInt
     open func center() {}
     open var attachedSheet: NSWindow? { nil }
     open var sheets: [NSWindow] { [] }
+    open var isSheet: Bool { false }
+    open var childWindows: [NSWindow]? { nil }
+    open func display() {}
 }
 @preconcurrency @MainActor open class NSPanel: NSWindow {}
 @preconcurrency @MainActor open class NSScreen: NSObject { open class var main: NSScreen? { nil }; open var frame: NSRect { .zero }; open var visibleFrame: NSRect { .zero }; open var backingScaleFactor: CGFloat { 2 } }
@@ -735,13 +742,17 @@ public struct NSWindowStyleMask: OptionSet, Sendable { public let rawValue: UInt
     open func requestUserAttention(_ t: Int) -> Int { 0 }
     open func runModal(for w: NSWindow) -> ModalResponse { .OK }
     open func beginSheet(_ s: NSWindow, completionHandler: ((ModalResponse) -> Void)?) {}
+    open func postEvent(_ e: NSEvent, atStart: Bool) {}
+    open weak var delegate: (any NSApplicationDelegate)?
 }
+@MainActor public protocol NSApplicationDelegate: AnyObject {}
+@preconcurrency @MainActor open class NSPopover: NSResponder { public override init() {}; open func close() {}; open var isShown: Bool { false }; open var animates = true; open func setValue(_ v: Any?, forKey k: String) {} }
+open class DistributedNotificationCenter: NotificationCenter, @unchecked Sendable { open class func `default`() -> DistributedNotificationCenter { DistributedNotificationCenter() } }
 @preconcurrency @MainActor open class NSDockTile: NSObject { open var badgeLabel: String? }
 @preconcurrency @MainActor public var NSApp: NSApplication! = NSApplication.shared
 
 @preconcurrency @MainActor open class NSSavePanel: NSWindow {
     open var canCreateDirectories = true
-    open var allowedContentTypes: [Any] = []
     open var nameFieldStringValue: String = ""
     open var message: String = ""
     open var prompt: String = ""

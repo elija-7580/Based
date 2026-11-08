@@ -48,6 +48,8 @@ extension WKNavigationDelegate {
     @discardableResult open func loadFileURL(_ u: URL, allowingReadAccessTo: URL) -> WKNavigation? { nil }
     open func evaluateJavaScript(_ js: String, completionHandler: ((Any?, Error?) -> Void)? = nil) {}
     open func evaluateJavaScript(_ js: String) async throws -> Any { 0 }
+    open func createPDF(configuration: WKPDFConfiguration? = nil, completionHandler: @escaping @MainActor (Result<Data, Error>) -> Void) {}
     @discardableResult open func reload() -> WKNavigation? { nil }
     open func stopLoading() {}
 }
+@preconcurrency @MainActor open class WKPDFConfiguration: NSObject { public override init() {}; open var rect: CGRect = .null; open var allowTransparentBackground = false }

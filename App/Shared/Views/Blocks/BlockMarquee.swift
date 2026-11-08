@@ -11,7 +11,8 @@ struct BlockMarqueeModifier: ViewModifier {
     @State private var base: Set<RecordID> = []
 
     /// Is `p` on the visible + / ⋮⋮ handle (clicks and drags there belong to the handle)?
-    private func onHandle(_ p: CGPoint) -> Bool {
+    /// Reads main-actor gutter state, so it is main-actor isolated itself (it is only called from the gestures).
+    @MainActor private func onHandle(_ p: CGPoint) -> Bool {
         guard let id = editor.gutter.hovered ?? editor.gutter.menuFor, let f = editor.gutter.frame(of: id) else { return false }
         return p.x >= f.minX - 48 && p.x < f.minX && p.y >= f.minY - 4 && p.y <= f.minY + 34
     }

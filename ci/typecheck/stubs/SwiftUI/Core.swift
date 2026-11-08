@@ -353,3 +353,19 @@ public struct AnyTransition: Sendable {
     public func combined(with other: AnyTransition) -> AnyTransition { self }
     public func animation(_ a: Animation?) -> AnyTransition { self }
 }
+
+// MARK: Canvas
+public struct GraphicsContext {
+    public struct Shading: Sendable {
+        public static var foreground: Shading { Shading() }
+        public static func color(_ c: Color) -> Shading { Shading() }
+        public static func style<S: ShapeStyle>(_ s: S) -> Shading { Shading() }
+    }
+    public func fill(_ path: Path, with shading: Shading, style: FillStyle = FillStyle()) {}
+    public func stroke(_ path: Path, with shading: Shading, lineWidth: CGFloat = 1) {}
+    public func stroke(_ path: Path, with shading: Shading, style: StrokeStyle) {}
+    public var opacity: Double { get { 1 } nonmutating set {} }
+}
+public struct Canvas<Symbols: View>: _PrimitiveView {
+    public init(opaque: Bool = false, colorMode: Int = 0, rendersAsynchronously: Bool = false, renderer: @escaping (inout GraphicsContext, CGSize) -> Void) where Symbols == EmptyView {}
+}

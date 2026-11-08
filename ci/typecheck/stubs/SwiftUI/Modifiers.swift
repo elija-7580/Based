@@ -7,6 +7,7 @@ extension ModifiedContent where Content: View, Modifier: ViewModifier {}
 
 extension View {
     public typealias _M = _V<Self>
+    public func matchedGeometryEffect<ID: Hashable>(id: ID, in namespace: Namespace.ID, properties: MatchedGeometryProperties = .frame, anchor: UnitPoint = .center, isSource: Bool = true) -> _M { .init() }
     public func modifier<M>(_ m: M) -> ModifiedContent<Self, M> { .init(content: self, modifier: m) }
     // layout
     public func padding(_ insets: EdgeInsets) -> _M { .init() }
@@ -301,3 +302,6 @@ public struct SearchFieldPlacement { public static let automatic = SearchFieldPl
 public struct RedactionReasons: OptionSet, Sendable { public let rawValue: Int; public init(rawValue: Int) { self.rawValue = rawValue }; public static let placeholder = RedactionReasons(rawValue: 1), privacy = RedactionReasons(rawValue: 2) }
 public struct ButtonBorderShape: Sendable { public static let automatic = ButtonBorderShape(), capsule = ButtonBorderShape(), roundedRectangle = ButtonBorderShape(), circle = ButtonBorderShape(); public static func roundedRectangle(radius: CGFloat) -> ButtonBorderShape { .init() } }
 extension VerticalEdge { public struct Set: OptionSet, Sendable { public let rawValue: Int8; public init(rawValue: Int8) { self.rawValue = rawValue }; public static let top = Set(rawValue: 1), bottom = Set(rawValue: 2), all = Set(rawValue: 3) } }
+
+public struct MatchedGeometryProperties: OptionSet, Sendable { public let rawValue: UInt32; public init(rawValue: UInt32) { self.rawValue = rawValue }
+    public static let position = MatchedGeometryProperties(rawValue: 1), size = MatchedGeometryProperties(rawValue: 2), frame = MatchedGeometryProperties(rawValue: 3) }

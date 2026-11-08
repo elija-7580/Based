@@ -16,3 +16,6 @@ extension NSItemProvider {
     public func hasItemConformingToTypeIdentifier(_ t: UTType) -> Bool { false }
     public func registeredContentTypes() -> [UTType] { [] }
 }
+extension NSSavePanel {
+    public var allowedContentTypes: [UTType] { get { [] } set {} }
+}

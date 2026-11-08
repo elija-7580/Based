@@ -357,9 +357,12 @@ The app builds and runs on the Mac (first user log: macOS 27.2, a 53,086-block N
 
 Pass 11 found that the app had not compiled since Pass 8/9; that is fixed and `bash ci/typecheck/run.sh`
 type-checks all of `App/Shared` on Linux against signature stubs of SwiftUI, AppKit, MapKit, CoreLocation,
-Charts, WebKit, … (`ci/typecheck/stubs`) plus the real BasedCore/BasedBrain modules — current result:
-*typecheck OK*. The stubs can't prove the code builds with Apple's SDK, so expect a few fixes on the first
-Xcode run.
+Charts, WebKit, CoreGraphics, … (`ci/typecheck/stubs`) plus the real BasedCore/BasedBrain modules — current
+result with Swift 6.2 on Linux: *typecheck OK* (0 errors). It checks the macOS paths (`os(macOS)` → true,
+`os(iOS)` → false); an iOS run is not there yet. The stubs can't prove the code builds with Apple's SDK, so
+expect a few fixes on the first Xcode run. When a symbol is missing, add it to the matching stub file (Apple's
+signature, dummy body); when the type checker gives up on a long SwiftUI expression, split it into a
+`@ViewBuilder` helper — that helps Xcode too. `TYPECHECK_OUT=<dir>` sets the scratch folder.
 
 **Automatic build (CI):** `ci/github-actions-ci.yml` builds the macOS + iOS apps on GitHub's Mac servers,
 runs all tests and the type-check on every push, and publishes the results to the `ci-logs` branch. To turn

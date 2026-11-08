@@ -44,134 +44,7 @@ struct PageScreen: View {
             #endif
             if model.store.isTrashed(pageID) { TrashBanner(pageID: pageID) }
             if page.props.isTemplate == true { TemplateBanner(page: page) }
-            ScrollViewReader { scroll in
-            ScrollView {
-                VStack(spacing: 0) {
-                if let cover = page.props.cover {
-                    // Notion: the cover spans the whole page area, edge to edge — never clipped to the column.
-                    PageCoverView(page: page, cover: cover, locked: editor.isLocked, isPeek: isPeek)
-                }
-                VStack(alignment: .leading, spacing: 0) {
-                    PageHeader(page: page, editor: editor, isPeek: isPeek, horizontalPadding: horizontalPadding)
-                    VStack(alignment: .leading, spacing: 0) {
-                        if page.isRow || page.props.isTemplate == true, let db = model.store.database(ofRow: pageID) {
-                            RowPropertiesPanel(db: db, row: page, locked: editor.isLocked || db.locked == true)
-                                .padding(.bottom, 12)
-                        }
-                        if format?.hideBacklinks != true { BacklinksView(pageID: pageID) }
-                        if page.type == .databasePage {
-                            DatabaseBlockView(blockID: pageID, fullPage: true)
-                        } else {
-                            BlockList(parentID: pageID, editor: editor, lazyWhenLong: true)
-                            Color.clear
-                                .frame(height: 160)
-                                .frame(maxWidth: .infinity)
-                                .contentShape(Rectangle())
-                                .onTapGesture { if !editor.isLocked { editor.selectedBlocks = []; editor.focusEndOfPage() } }
-                        }
-                    }
-                    .padding(.horizontal, horizontalPadding)
-                    #if os(macOS)
-                    // One hover region + overlay for the whole page: the + / ⋮⋮ of the block under the
-                    // pointer, the blue drop line and the drag ghost (BlockGutter.swift). The padding is part
-                    // of the region, so moving onto the handle keeps it visible.
-                    .overlay(alignment: .topLeading) { BlockGutterOverlay(editor: editor) }
-                    .onContinuousHover(coordinateSpace: BlockCanvas.space) { editor.gutter.hover($0, locked: editor.isLocked) }
-                    .blockMarquee(editor)
-                    .coordinateSpace(BlockCanvas.space)
-                    .background(EnclosingScrollViewReader { editor.gutter.scrollView = $0 })
-                    #endif
-                }
-                .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
-                .frame(maxWidth: .infinity)
-                if page.type != .databasePage {
-                    // Everything below the content, edge to edge and down to the bottom of the window (the page is at
-                    // least as tall as the viewport): a click puts the caret at the end of the page, so an empty
-                    // page can be typed on by clicking anywhere, like Notion.
-                    Color.clear
-                        .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                        .contentShape(Rectangle())
-                        .onTapGesture { if !editor.isLocked { editor.selectedBlocks = []; editor.focusEndOfPage() } }
-                }
-                }
-                .frame(minHeight: availableHeight, alignment: .top)
-            }
-            .background(GeometryReader { g in
-                Color.clear
-                    .onAppear { availableWidth = g.size.width; availableHeight = g.size.height }
-                    .onChange(of: g.size.width) { _, w in availableWidth = w }
-                    .onChange(of: g.size.height) { _, h in availableHeight = h }
-            })
-            .overlay(alignment: .topTrailing) {
-                if page.type != .databasePage, format?.hideOutline != true, !model.showFind {
-                    PageOutline(pageID: pageID, scroll: scroll, topInset: page.props.cover != nil ? (isPeek ? 190 : 300) : 96)
-                }
-            }
-            .onChange(of: editor.scrollRequest) { _, id in
-                // Keyboard / programmatic focus on a block that isn't rendered yet (lazy long pages).
-                guard let id else { return }
-                editor.scrollRequest = nil
-                guard let top = model.store.topLevelAncestor(of: id, in: pageID) else { return }
-                // The block may not be built yet (progressive build): build the rest, scroll on the next turn.
-                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.12)) { scroll.scrollTo(top, anchor: .center) } }
-            }
-            .onChange(of: model.findTarget) { _, target in
-                // ⌘F: scroll the current match into view and mark it.
-                guard !isPeek, let target, model.store.containingPage(of: target) == pageID else { return }
-                editor.revealAll()
-                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.15)) { scroll.scrollTo(target, anchor: .center) } }
-                editor.selectedBlocks = [target]
-            }
-            }
-            #if os(macOS)
-            .overlay {
-                GeometryReader { geo in
-                    if let sel = editor.selectionRect, editor.menu == nil, editor.aiPrompt == nil, !editor.isLocked {
-                        let g = geo.frame(in: .global)
-                        let x = min(max(8, sel.rect.minX - g.minX - 8), max(8, geo.size.width - 430))
-                        let y = sel.rect.minY - g.minY - 46
-                        FormatToolbar(editor: editor, blockID: sel.blockID)
-                            .offset(x: x, y: y < 4 ? sel.rect.maxY - g.minY + 8 : y)
-                            .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
-                    }
-                }
-                .animation(.easeOut(duration: 0.12), value: editor.selectionRect != nil)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSView.boundsDidChangeNotification)) { n in
-                // The toolbar follows its selection while the page scrolls.
-                guard let sel = editor.selectionRect, let clip = editor.gutter.scrollView?.contentView,
-                      (n.object as? NSView) === clip else { return }
-                editor.host(sel.blockID)?.reportSelection()
-            }
-            #endif
-            .acceptsFileDrops { model.dropFiles($0, onto: pageID) }
-            .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
-            .overlayPreferenceValue(MenuAnchorKey.self) { anchor in
-                GeometryReader { geo in
-                    if let anchor, let line = editor.aiPrompt {
-                        let r = geo[anchor]
-                        InlineAIBox(editor: editor, blockID: line)
-                            .frame(width: min(640, max(320, geo.size.width - r.minX - 40)))
-                            .offset(x: max(0, r.minX - 4), y: r.minY - 6)
-                            .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
-                    } else if let anchor, editor.menu != nil {
-                        let r = geo[anchor]
-                        // Notion: below the line whenever there's reasonable room, otherwise above; the height
-                        // shrinks to the room on that side (it used to flip up early and cover the text).
-                        let spaceBelow = geo.size.height - r.maxY - 12
-                        let spaceAbove = r.minY - 12
-                        let below = spaceBelow >= 160 || spaceBelow >= spaceAbove
-                        let room = below ? spaceBelow : spaceAbove
-                        let h = min(max(120, room), 360)
-                        InlineMenuView(editor: editor, maxHeight: room)
-                            .accessibilityIdentifier("slash.menu")
-                            .frame(height: h, alignment: below ? .top : .bottom)
-                            .offset(x: min(max(0, r.minX + 24), max(0, geo.size.width - 330)),
-                                    y: below ? r.maxY + 4 : r.minY - 4 - h)
-                            .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: below ? .top : .bottom)))
-                    }
-                }
-            }
+            pageScroll(page, format: format, fullWidth: fullWidth)
         }
         .focusable()
         .focused($keyFocus)
@@ -212,6 +85,139 @@ struct PageScreen: View {
         .onChange(of: page.props.format) { _, f in editor.format = f }
         .onChange(of: pageIsActive) { _, active in active ? activate() : deactivate() }
         .onDisappear { deactivate() }
+    }
+
+    /// The scrolling page column with its overlays (split out of `pageBody` so the type checker can handle it).
+    @ViewBuilder
+    private func pageScroll(_ page: Block, format: PageFormat?, fullWidth: Bool) -> some View {
+        ScrollViewReader { scroll in
+        ScrollView {
+            VStack(spacing: 0) {
+            if let cover = page.props.cover {
+                // Notion: the cover spans the whole page area, edge to edge — never clipped to the column.
+                PageCoverView(page: page, cover: cover, locked: editor.isLocked, isPeek: isPeek)
+            }
+            VStack(alignment: .leading, spacing: 0) {
+                PageHeader(page: page, editor: editor, isPeek: isPeek, horizontalPadding: horizontalPadding)
+                VStack(alignment: .leading, spacing: 0) {
+                    if page.isRow || page.props.isTemplate == true, let db = model.store.database(ofRow: pageID) {
+                        RowPropertiesPanel(db: db, row: page, locked: editor.isLocked || db.locked == true)
+                            .padding(.bottom, 12)
+                    }
+                    if format?.hideBacklinks != true { BacklinksView(pageID: pageID) }
+                    if page.type == .databasePage {
+                        DatabaseBlockView(blockID: pageID, fullPage: true)
+                    } else {
+                        BlockList(parentID: pageID, editor: editor, lazyWhenLong: true)
+                        Color.clear
+                            .frame(height: 160)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                            .onTapGesture { if !editor.isLocked { editor.selectedBlocks = []; editor.focusEndOfPage() } }
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+                #if os(macOS)
+                // One hover region + overlay for the whole page: the + / ⋮⋮ of the block under the
+                // pointer, the blue drop line and the drag ghost (BlockGutter.swift). The padding is part
+                // of the region, so moving onto the handle keeps it visible.
+                .overlay(alignment: .topLeading) { BlockGutterOverlay(editor: editor) }
+                .onContinuousHover(coordinateSpace: BlockCanvas.space) { editor.gutter.hover($0, locked: editor.isLocked) }
+                .blockMarquee(editor)
+                .coordinateSpace(BlockCanvas.space)
+                .background(EnclosingScrollViewReader { editor.gutter.scrollView = $0 })
+                #endif
+            }
+            .frame(maxWidth: fullWidth ? .infinity : Theme.contentWidth + 2 * horizontalPadding, alignment: .leading)
+            .frame(maxWidth: .infinity)
+            if page.type != .databasePage {
+                // Everything below the content, edge to edge and down to the bottom of the window (the page is at
+                // least as tall as the viewport): a click puts the caret at the end of the page, so an empty
+                // page can be typed on by clicking anywhere, like Notion.
+                Color.clear
+                    .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture { if !editor.isLocked { editor.selectedBlocks = []; editor.focusEndOfPage() } }
+            }
+            }
+            .frame(minHeight: availableHeight, alignment: .top)
+        }
+        .background(GeometryReader { g in
+            Color.clear
+                .onAppear { availableWidth = g.size.width; availableHeight = g.size.height }
+                .onChange(of: g.size.width) { _, w in availableWidth = w }
+                .onChange(of: g.size.height) { _, h in availableHeight = h }
+        })
+        .overlay(alignment: .topTrailing) {
+            if page.type != .databasePage, format?.hideOutline != true, !model.showFind {
+                PageOutline(pageID: pageID, scroll: scroll, topInset: page.props.cover != nil ? (isPeek ? 190 : 300) : 96)
+            }
+        }
+        .onChange(of: editor.scrollRequest) { _, id in
+            // Keyboard / programmatic focus on a block that isn't rendered yet (lazy long pages).
+            guard let id else { return }
+            editor.scrollRequest = nil
+            guard let top = model.store.topLevelAncestor(of: id, in: pageID) else { return }
+            // The block may not be built yet (progressive build): build the rest, scroll on the next turn.
+            DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.12)) { scroll.scrollTo(top, anchor: .center) } }
+        }
+        .onChange(of: model.findTarget) { _, target in
+            // ⌘F: scroll the current match into view and mark it.
+            guard !isPeek, let target, model.store.containingPage(of: target) == pageID else { return }
+            editor.revealAll()
+            DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.15)) { scroll.scrollTo(target, anchor: .center) } }
+            editor.selectedBlocks = [target]
+        }
+        }
+        #if os(macOS)
+        .overlay {
+            GeometryReader { geo in
+                if let sel = editor.selectionRect, editor.menu == nil, editor.aiPrompt == nil, !editor.isLocked {
+                    let g = geo.frame(in: .global)
+                    let x = min(max(8, sel.rect.minX - g.minX - 8), max(8, geo.size.width - 430))
+                    let y = sel.rect.minY - g.minY - 46
+                    FormatToolbar(editor: editor, blockID: sel.blockID)
+                        .offset(x: x, y: y < 4 ? sel.rect.maxY - g.minY + 8 : y)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
+                }
+            }
+            .animation(.easeOut(duration: 0.12), value: editor.selectionRect != nil)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSView.boundsDidChangeNotification)) { n in
+            // The toolbar follows its selection while the page scrolls.
+            guard let sel = editor.selectionRect, let clip = editor.gutter.scrollView?.contentView,
+                  (n.object as? NSView) === clip else { return }
+            editor.host(sel.blockID)?.reportSelection()
+        }
+        #endif
+        .acceptsFileDrops { model.dropFiles($0, onto: pageID) }
+        .background(Color.clear.contentShape(Rectangle()).onTapGesture { editor.selectedBlocks = [] })
+        .overlayPreferenceValue(MenuAnchorKey.self) { anchor in
+            GeometryReader { geo in
+                if let anchor, let line = editor.aiPrompt {
+                    let r = geo[anchor]
+                    InlineAIBox(editor: editor, blockID: line)
+                        .frame(width: min(640, max(320, geo.size.width - r.minX - 40)))
+                        .offset(x: max(0, r.minX - 4), y: r.minY - 6)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                } else if let anchor, editor.menu != nil {
+                    let r = geo[anchor]
+                    // Notion: below the line whenever there's reasonable room, otherwise above; the height
+                    // shrinks to the room on that side (it used to flip up early and cover the text).
+                    let spaceBelow = geo.size.height - r.maxY - 12
+                    let spaceAbove = r.minY - 12
+                    let below = spaceBelow >= 160 || spaceBelow >= spaceAbove
+                    let room = below ? spaceBelow : spaceAbove
+                    let h = min(max(120, room), 360)
+                    InlineMenuView(editor: editor, maxHeight: room)
+                        .accessibilityIdentifier("slash.menu")
+                        .frame(height: h, alignment: below ? .top : .bottom)
+                        .offset(x: min(max(0, r.minX + 24), max(0, geo.size.width - 330)),
+                                y: below ? r.maxY + 4 : r.minY - 4 - h)
+                        .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: below ? .top : .bottom)))
+                }
+            }
+        }
     }
 
     /// Kept-alive pages (DetailContent) are hidden instead of torn down, so "appear" / "disappear" are
