@@ -552,6 +552,79 @@ struct ViewSettingsView: View {
 
 // MARK: - Properties
 
+/// A property change that drops values and needs a confirmation first (BSD-18): a type change with
+/// `conversionLoss`, or deleting a property that has values. Harmless changes run at once and return nil.
+enum PropertyChangeRequest: Identifiable {
+    case changeType(PropertyType, lostCells: Int)
+    case delete(filledCells: Int, then: () -> Void)
+
+    var id: String {
+        switch self {
+        case .changeType(let t, _): return "type." + t.rawValue
+        case .delete: return "delete"
+        }
+    }
+
+    @MainActor
+    static func changeType(_ type: PropertyType, store: WorkspaceStore, databaseID: RecordID, propertyID: String) -> PropertyChangeRequest? {
+        let loss = store.conversionLoss(databaseID, propertyID, to: type)
+        if loss.isEmpty { store.changePropertyType(databaseID, propertyID, to: type); return nil }
+        return .changeType(type, lostCells: loss.cells)
+    }
+
+    @MainActor
+    static func delete(store: WorkspaceStore, databaseID: RecordID, propertyID: String, then done: @escaping () -> Void) -> PropertyChangeRequest? {
+        let filled = store.filledCellCount(databaseID, propertyID)
+        if filled == 0 { store.deleteProperty(databaseID, propertyID); done(); return nil }
+        return .delete(filledCells: filled, then: done)
+    }
+
+    var title: String {
+        switch self {
+        case .changeType(let t, _): return "Change type to \(t.displayName)?"
+        case .delete: return "Delete this property?"
+        }
+    }
+    var message: String {
+        switch self {
+        case .changeType(_, let n): return n == 1 ? "1 value will be lost. You can undo this with ⌘Z."
+                                                  : "\(n) values will be lost. You can undo this with ⌘Z."
+        case .delete(let n, _): return n == 1 ? "1 row has a value in it. You can undo this with ⌘Z."
+                                              : "\(n) rows have a value in it. You can undo this with ⌘Z."
+        }
+    }
+    var confirmTitle: String {
+        switch self {
+        case .changeType: return "Change type"
+        case .delete: return "Delete"
+        }
+    }
+}
+
+/// Shows the confirmation for a pending `PropertyChangeRequest` and performs it.
+struct PropertyChangeConfirmation: ViewModifier {
+    let store: WorkspaceStore
+    let databaseID: RecordID
+    let propertyID: String
+    @Binding var request: PropertyChangeRequest?
+
+    func body(content: Content) -> some View {
+        content.alert(request?.title ?? "", isPresented: Binding(get: { request != nil }, set: { if !$0 { request = nil } }),
+                      presenting: request) { r in
+            Button(r.confirmTitle, role: .destructive) {
+                request = nil
+                switch r {
+                case .changeType(let t, _): store.changePropertyType(databaseID, propertyID, to: t)
+                case .delete(_, let done): store.deleteProperty(databaseID, propertyID); done()
+                }
+            }
+            Button("Cancel", role: .cancel) { request = nil }
+        } message: { r in
+            Text(r.message)
+        }
+    }
+}
+
 /// Menu shown when clicking a column header.
 struct PropertyHeaderMenu: View {
     let ctx: DBContext
@@ -559,6 +632,7 @@ struct PropertyHeaderMenu: View {
     let done: () -> Void
     @State private var name = ""
     @State private var editingConfig = false
+    @State private var pendingChange: PropertyChangeRequest?
 
     private var store: WorkspaceStore { ctx.store }
 
@@ -575,7 +649,9 @@ struct PropertyHeaderMenu: View {
                     if property.type != .title {
                         Menu {
                             ForEach(PropertyType.creatable, id: \.self) { t in
-                                Button(t.displayName, systemImage: t.symbol) { store.changePropertyType(ctx.db.id, property.id, to: t) }
+                                Button(t.displayName, systemImage: t.symbol) {
+                                    pendingChange = PropertyChangeRequest.changeType(t, store: store, databaseID: ctx.db.id, propertyID: property.id)
+                                }
                             }
                         } label: { Label("Type: \(property.type.displayName)", systemImage: property.type.symbol) }
                         .menuStyle(.borderlessButton)
@@ -599,13 +675,16 @@ struct PropertyHeaderMenu: View {
                     }
                     if property.type != .title {
                         row("Duplicate property", "plus.square.on.square") { _ = store.duplicateProperty(ctx.db.id, property.id); done() }
-                        row("Delete property", "trash", destructive: true) { store.deleteProperty(ctx.db.id, property.id); done() }
+                        row("Delete property", "trash", destructive: true) {
+                            pendingChange = PropertyChangeRequest.delete(store: store, databaseID: ctx.db.id, propertyID: property.id, then: done)
+                        }
                     }
                 }
             }
         }
         .padding(10)
         .frame(width: 280)
+        .modifier(PropertyChangeConfirmation(store: store, databaseID: ctx.db.id, propertyID: property.id, request: $pendingChange))
         .onAppear { name = property.name }
         .onDisappear { rename() }
     }
@@ -695,6 +774,7 @@ struct PropertyConfigEditor: View {
     @State private var formula = ""
     @State private var newOption = ""
     @State private var prefix = ""
+    @State private var pendingChange: PropertyChangeRequest?
 
     private var store: WorkspaceStore { model.store }
 
@@ -708,7 +788,9 @@ struct PropertyConfigEditor: View {
                 if p.type != .title {
                     Menu {
                         ForEach(PropertyType.creatable, id: \.self) { t in
-                            Button(t.displayName, systemImage: t.symbol) { store.changePropertyType(db.id, p.id, to: t) }
+                            Button(t.displayName, systemImage: t.symbol) {
+                                pendingChange = PropertyChangeRequest.changeType(t, store: store, databaseID: db.id, propertyID: p.id)
+                            }
                         }
                     } label: { Label(p.type.displayName, systemImage: p.type.symbol) }
                     .menuStyle(.borderlessButton)
@@ -721,6 +803,7 @@ struct PropertyConfigEditor: View {
                 .textFieldStyle(.roundedBorder)
             }
             .font(.system(size: 13))
+            .modifier(PropertyChangeConfirmation(store: store, databaseID: db.id, propertyID: p.id, request: $pendingChange))
             .onAppear { name = p.name; formula = p.formula ?? ""; prefix = p.idPrefix ?? "" }
         }
     }

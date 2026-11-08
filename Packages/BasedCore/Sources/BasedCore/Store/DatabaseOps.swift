@@ -6,6 +6,14 @@ public struct CreatedDatabase: Sendable {
     public var viewID: RecordID
 }
 
+/// What a property type change would drop (see `WorkspaceStore.conversionLoss`).
+public struct ConversionLoss: Equatable, Sendable {
+    /// Cells whose value would be lost or shortened.
+    public var cells: Int = 0
+    public var isEmpty: Bool { cells == 0 }
+    public init(cells: Int = 0) { self.cells = cells }
+}
+
 @MainActor
 public extension WorkspaceStore {
 
@@ -258,29 +266,84 @@ public extension WorkspaceStore {
     }
 
     /// Change a property's type, converting existing values like Notion does.
+    /// Values that can't be carried over are dropped — the UI asks first when `conversionLoss` is not empty
+    /// (the change is one undo step).
     func changePropertyType(_ databaseID: RecordID, _ propertyID: String, to type: PropertyType) {
+        guard let plan = propertyConversion(databaseID, propertyID, to: type) else { return }
+        transact("Change property type") { tx in
+            tx.updateDatabase(databaseID) { d in
+                if let i = d.properties.firstIndex(where: { $0.id == propertyID }) { d.properties[i] = plan.schema }
+            }
+            for (id, v) in plan.values { tx.update(id) { $0.values[propertyID] = v } }
+        }
+    }
+
+    /// How many cells would lose (part of) their value if the property changed to `type` — e.g. text that isn't a
+    /// number, any value → Formula / Rollup / ID, several multi-select values → one select / status.
+    func conversionLoss(_ databaseID: RecordID, _ propertyID: String, to type: PropertyType) -> ConversionLoss {
+        guard let old = databases[databaseID]?.property(propertyID),
+              let plan = propertyConversion(databaseID, propertyID, to: type) else { return ConversionLoss() }
+        var loss = ConversionLoss()
+        for r in rows(of: databaseID) {
+            guard let v = r.values[propertyID], !Self.isBlank(v, old) else { continue }
+            let nv = plan.values[r.id] ?? nil
+            if Self.conversionLoses(v, old: old, new: nv, to: type) { loss.cells += 1 }
+        }
+        return loss
+    }
+
+    /// Number of rows with a non-empty value in `propertyID` (asked before deleting a property).
+    func filledCellCount(_ databaseID: RecordID, _ propertyID: String) -> Int {
+        let p = databases[databaseID]?.property(propertyID)
+        return rows(of: databaseID).filter { r in r.values[propertyID].map { !Self.isBlank($0, p) } ?? false }.count
+    }
+
+    /// The new schema and converted values for a type change (nothing is written). Pure apart from reading the store.
+    internal func propertyConversion(_ databaseID: RecordID, _ propertyID: String,
+                                     to type: PropertyType) -> (schema: PropertySchema, values: [RecordID: PropertyValue?])? {
         guard let db = databases[databaseID], let old = db.property(propertyID), old.type != type,
-              old.type != .title, type != .title else { return }
+              old.type != .title, type != .title else { return nil }
+        let wasOptions = old.type == .select || old.type == .multiSelect || old.type == .status
+        let isOptions = type == .select || type == .multiSelect || type == .status
         var schema = old
         schema.type = type
-        if type == .status { schema.applyDefaultStatus() }
-        var options = (type == .select || type == .multiSelect || type == .status) ? (schema.options ?? []) : []
-        if (type == .select || type == .multiSelect) && !(old.type == .select || old.type == .multiSelect || old.type == .status) {
-            options = []
+        // Existing options (select / multi-select / status) carry over with their IDs, names and colours.
+        var options = wasOptions && isOptions ? (old.options ?? []) : []
+        var statusGroups: [StatusGroup] = []
+        if type == .status && old.type != .status {
+            if options.isEmpty {
+                // Nothing to carry over: Notion's default options, so text like "Done" lands on the default.
+                var seeded = schema
+                seeded.applyDefaultStatus()
+                options = seeded.options ?? []
+                statusGroups = seeded.statusGroups ?? []
+            } else {
+                // Like Notion: the existing options all start in "To-do".
+                statusGroups = [StatusGroup(name: "To-do", color: .gray, optionIDs: options.map(\.id)),
+                                StatusGroup(name: "In progress", color: .blue, optionIDs: []),
+                                StatusGroup(name: "Complete", color: .green, optionIDs: [])]
+            }
         }
+        var newOptionIDs: [String] = []
         var converted: [RecordID: PropertyValue?] = [:]
         let palette = TColor.textColors
         for r in rows(of: databaseID) {
             guard let v = r.values[propertyID] else { continue }
-            let names = v.optionNames(old)
-            let text = v.plainString(old)
+            var names = v.optionNames(old)
+            var text = v.plainString(old)
+            if case .relation(let ids) = v {
+                // Linked pages by title, not by their internal IDs.
+                let titles = ids.filter { blocks[$0] != nil }.map { title(of: $0) }
+                names = titles
+                text = titles.joined(separator: ", ")
+            }
             var nv: PropertyValue?
             switch type {
             case .text: nv = text.isEmpty ? nil : .text(RichText(text))
             case .number: nv = Double(text.replacingOccurrences(of: ",", with: "")).map(PropertyValue.number)
             case .checkbox:
                 let t = text.lowercased()
-                nv = .checkbox(["true", "yes", "1", "checked", "x", "✓"].contains(t))
+                nv = .checkbox(Self.checkboxTrue.contains(t))
             case .url: nv = text.isEmpty ? nil : .url(text)
             case .email: nv = text.isEmpty ? nil : .email(text)
             case .phone: nv = text.isEmpty ? nil : .phone(text)
@@ -290,10 +353,10 @@ public extension WorkspaceStore {
                 var ids: [String] = []
                 for name in names where !name.isEmpty {
                     if let o = options.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
-                        ids.append(o.id)
-                    } else if type != .status {
+                        if !ids.contains(o.id) { ids.append(o.id) }
+                    } else {
                         let o = SelectOption(name: name, color: palette[(options.count + 1) % palette.count])
-                        options.append(o); ids.append(o.id)
+                        options.append(o); ids.append(o.id); newOptionIDs.append(o.id)
                     }
                 }
                 if type == .multiSelect { nv = ids.isEmpty ? nil : .multiSelect(ids) }
@@ -305,17 +368,51 @@ public extension WorkspaceStore {
             }
             converted[r.id] = nv
         }
-        if type == .select || type == .multiSelect { schema.options = options }
-        if type != .select && type != .multiSelect && type != .status { schema.options = nil; schema.statusGroups = nil }
+        switch type {
+        case .select, .multiSelect:
+            schema.options = options
+            schema.statusGroups = nil
+        case .status:
+            if old.type != .status {
+                // Options created from values (e.g. text → status) join "To-do" too.
+                if !statusGroups.isEmpty { statusGroups[0].optionIDs += newOptionIDs }
+                schema.options = options
+                schema.statusGroups = statusGroups
+            }
+        default:
+            schema.options = nil
+            schema.statusGroups = nil
+        }
         if type == .formula, schema.formula == nil { schema.formula = "" }
         if type == .relation, schema.relation == nil { schema.relation = RelationConfig(databaseID: databaseID) }
-        let final = schema
-        transact("Change property type") { tx in
-            tx.updateDatabase(databaseID) { d in
-                if let i = d.properties.firstIndex(where: { $0.id == propertyID }) { d.properties[i] = final }
-            }
-            for (id, v) in converted { tx.update(id) { $0.values[propertyID] = v } }
+        return (schema, converted)
+    }
+
+    /// No visible value (empty text, no options, an unchecked box counts as a value).
+    private static func isBlank(_ v: PropertyValue, _ schema: PropertySchema?) -> Bool {
+        if case .checkbox = v { return false }
+        return v.plainString(schema).isEmpty
+    }
+
+    private static let checkboxTrue: Set<String> = ["true", "yes", "1", "checked", "x", "✓"]
+    private static let checkboxFalse: Set<String> = ["false", "no", "0", "unchecked", ""]
+
+    /// Does converting `v` to `nv` lose information? (A missing new value, fewer options, or text that isn't a
+    /// recognisable checkbox state.)
+    private static func conversionLoses(_ v: PropertyValue, old: PropertySchema, new nv: PropertyValue?,
+                                        to type: PropertyType) -> Bool {
+        guard let nv else { return true }
+        switch (v, nv) {
+        case (.multiSelect(let a), .select), (.multiSelect(let a), .status): return a.count > 1
+        case (.relation(let a), .select), (.relation(let a), .status): return a.count > 1
+        default: break
         }
+        if type == .checkbox {
+            if case .checkbox = v { return false }
+            let t = v.plainString(old).lowercased()
+            return !checkboxTrue.contains(t) && !checkboxFalse.contains(t)
+        }
+        return false
     }
 
     /// New select/multi-select/status option; colour cycles like Notion's random palette.
