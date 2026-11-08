@@ -55,7 +55,10 @@ struct BasedCommands: Commands {
         #if os(macOS)
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") {
-                run("updates") { model.openSettings(page: "updates"); Task { await model.updater.checkNow() } }
+                run("updates") {
+                    if model.updater.channel == .source { model.openSettings(page: "updates") }
+                    Task { await model.updater.checkWithUI() }
+                }
             }
         }
         #endif

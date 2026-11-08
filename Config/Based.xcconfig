@@ -15,4 +15,10 @@ BASED_AGENTS_SUFFIX =
 BASED_GIT_COMMIT =
 BASED_GIT_DATE =
 BASED_UPDATE_REPO = elija-7580/Based
+// Downloadable builds (scripts/release-mac.sh, BASED_DISTRIBUTION = release) update themselves with Sparkle from
+// the latest GitHub release. "https:/$()/" because // starts a comment in xcconfig files.
+BASED_DISTRIBUTION = source
+BASED_UPDATE_FEED = https:/$()/github.com/$(BASED_UPDATE_REPO)/releases/latest/download/appcast.xml
+// Public half of the update signing key; the private half is the SPARKLE_PRIVATE_KEY secret on GitHub.
+BASED_SPARKLE_PUBLIC_KEY = ChFfGn/OaVPCCOqn4+WWTpIiKj8OBdYhxnw8rVyCy+I=
 #include? "Local.xcconfig"

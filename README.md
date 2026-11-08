@@ -174,7 +174,21 @@ make mac         # or: open Based.xcodeproj and run the Based-macOS / Based-iOS 
 make ios
 ```
 
-### Install and update on your Mac
+### Download for Mac
+
+**[Download Based.dmg](https://github.com/elija-7580/Based/releases/latest/download/Based.dmg)** → open it → drag
+Based into Applications. Universal app (Apple silicon and Intel), macOS 14 or later.
+
+The app isn't notarized by Apple yet, so the first launch needs **Control-click → Open** (or System Settings →
+Privacy & Security → *Open Anyway*). After that, Based updates itself: it checks the latest GitHub release every
+6 hours (or Based → Check for Updates…), shows what's new and installs with one click (Sparkle, EdDSA-signed).
+iCloud sync isn't in the downloadable build (it needs your own Apple team); build from source for that.
+
+Releases are made by `.github/workflows/release.yml` on every push to `main` (`scripts/release-mac.sh`:
+universal Release build, DMG, signed `appcast.xml`). It needs the repository secret `SPARKLE_PRIVATE_KEY`
+(base64 Ed25519 seed); its public half is `BASED_SPARKLE_PUBLIC_KEY` in `Config/Based.xcconfig`.
+
+### Build, install and update from source
 
 `make install` (= `scripts/install-mac.sh`) builds a Release app into `/Applications` and sets up the
 **updater**: a small launchd job (`~/Library/LaunchAgents/<bundle id>.updater.plist`, listening on

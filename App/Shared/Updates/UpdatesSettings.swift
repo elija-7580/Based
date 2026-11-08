@@ -15,6 +15,8 @@ struct UpdatesSettings: View {
                 Text("On iPhone and iPad, Based is updated by installing a new build from Xcode (or TestFlight).")
                     .font(.callout).foregroundStyle(Theme.secondary)
             }
+        } else if u.channel == .release {
+            releaseSection(u)
         } else {
             Section("Based for Mac") {
                 LabeledContent("Installed") {
@@ -30,6 +32,53 @@ struct UpdatesSettings: View {
             if u.phase != .idle { progressSection(u) }
             if u.agentAvailable == false { setupSection }
             if !u.newCommits.isEmpty { whatsNew(u) }
+        }
+    }
+
+    /// Downloaded (DMG) build: Sparkle does the work; this shows the state and its settings.
+    @ViewBuilder
+    private func releaseSection(_ u: Updater) -> some View {
+        Section("Based for Mac") {
+            LabeledContent("Installed") { Text("Version \(u.version) · \(u.shortCommit)").textSelection(.enabled) }
+            HStack(spacing: 10) {
+                switch u.check {
+                case .available:
+                    Image(systemName: "arrow.down.circle.fill").foregroundStyle(Color.accentColor)
+                    Text("Version \(u.availableVersion ?? "") is available").fontWeight(.medium)
+                case .upToDate:
+                    Image(systemName: "checkmark.circle").foregroundStyle(.green)
+                    Text("Based is up to date")
+                case .checking:
+                    ProgressView().controlSize(.small)
+                    Text("Checking…").foregroundStyle(Theme.secondary)
+                case .failed(let why), .unknown(let why):
+                    Image(systemName: "exclamationmark.circle").foregroundStyle(Theme.secondary)
+                    Text(why).font(.callout).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+                case .idle:
+                    Text("Not checked yet").foregroundStyle(Theme.secondary)
+                }
+                Spacer(minLength: 8)
+                if u.updateAvailable {
+                    Button("Update now…") { Task { await u.install() } }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("updates.install")
+                } else {
+                    Button("Check now") { Task { await u.checkWithUI() } }
+                }
+            }
+            if let d = u.lastChecked {
+                Text("Last checked \(d.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+            }
+            Toggle("Check for updates automatically", isOn: Binding(get: { u.autoCheck }, set: { u.autoCheck = $0 }))
+            Toggle("Download updates in the background", isOn: Binding(get: { _ = u.autoDownloadTick; return u.autoDownload },
+                                                                        set: { u.autoDownload = $0 }))
+                .disabled(!u.autoCheck)
+            Text("Updates come from the latest release on GitHub. The window that opens shows what's new; Install Update replaces Based and reopens it.")
+                .font(.caption).foregroundStyle(Theme.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+        Section {
+            if let url = URL(string: "https://github.com/\(u.repo)/releases") { Link("All releases on GitHub", destination: url) }
         }
     }
 
@@ -175,7 +224,9 @@ struct SidebarUpdateRow: View {
             .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
             .contentShape(Rectangle())
             .onHover { hover = $0 }
-            .onTapGesture { model.openSettings(page: "updates") }
+            .onTapGesture {
+                if u.channel == .release { Task { await u.install() } } else { model.openSettings(page: "updates") }
+            }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("sidebar.update")

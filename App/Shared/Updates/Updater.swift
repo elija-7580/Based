@@ -12,6 +12,9 @@ import Network
 /// 6 hours, and from Based → Check for Updates…) and lists them. "Update now" asks the updater agent — a small
 /// launchd job that install-mac.sh sets up, listening on 127.0.0.1:47321 — to pull, rebuild and reinstall.
 /// The app itself never runs git or Xcode, so this works with and without the App Sandbox.
+///
+/// The downloadable build (DMG from GitHub Releases, `BasedDistribution = release`) uses Sparkle instead:
+/// see `SparkleBridge` and scripts/release-mac.sh.
 @MainActor @Observable
 final class Updater {
     struct Commit: Identifiable, Hashable {
@@ -36,6 +39,12 @@ final class Updater {
 
     nonisolated static let agentPort: UInt16 = 47321
     static let checkInterval: TimeInterval = 6 * 3600
+
+    enum Channel { case release, source }
+    /// release → DMG build updated by Sparkle; source → built on this Mac, updated by the agent.
+    let channel: Channel
+    /// Release channel: the version Sparkle found (nil = none / not checked).
+    private(set) var availableVersion: String?
 
     let installedCommit: String
     let installedDate: Date?
@@ -64,7 +73,9 @@ final class Updater {
         return false
         #endif
     }
-    var updateAvailable: Bool { check == .available && !newCommits.isEmpty }
+    var updateAvailable: Bool {
+        channel == .release ? availableVersion != nil : (check == .available && !newCommits.isEmpty)
+    }
     var isDevelopmentBuild: Bool { installedCommit.isEmpty }
     var shortCommit: String { installedCommit.isEmpty ? "dev" : String(installedCommit.prefix(7)) }
     var compareURL: URL? {
@@ -75,6 +86,9 @@ final class Updater {
     /// Called once when this launch is the result of an update.
     @ObservationIgnored var onJustUpdated: (() -> Void)?
     @ObservationIgnored private var started = false
+    #if canImport(Sparkle) && os(macOS)
+    @ObservationIgnored private var sparkle: SparkleBridge?
+    #endif
     @ObservationIgnored private var checkTask: Task<Void, Never>?
     @ObservationIgnored private var pollTask: Task<Void, Never>?
 
@@ -89,12 +103,14 @@ final class Updater {
         repo = r.isEmpty ? "elija-7580/Based" : r
         version = info("CFBundleShortVersionString")
         build = info("CFBundleVersion")
+        channel = info("BasedDistribution") == "release" && !info("SUPublicEDKey").isEmpty ? .release : .source
     }
 
     /// Called once at launch.
     func start() {
         guard isSupported, !started else { return }
         started = true
+        if channel == .release { startSparkle(); return }
         Task {
             await refreshStatus()
             if case .done = phase {
@@ -111,7 +127,10 @@ final class Updater {
 
     private func scheduleChecks() {
         checkTask?.cancel()
-        guard autoCheck, isSupported else { return }
+        #if canImport(Sparkle) && os(macOS)
+        if channel == .release { sparkle?.automaticallyChecks = autoCheck; return }
+        #endif
+        guard autoCheck, isSupported, channel == .source else { return }
         checkTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 3_000_000_000)   // don't compete with launch work
             while !Task.isCancelled {
@@ -123,7 +142,68 @@ final class Updater {
 
     // MARK: Checking GitHub
 
+    // MARK: Release channel (Sparkle)
+
+    private func startSparkle() {
+        #if canImport(Sparkle) && os(macOS)
+        let bridge = SparkleBridge { [weak self] event in self?.handle(event) }
+        sparkle = bridge
+        autoCheck = bridge.automaticallyChecks
+        lastChecked = bridge.lastCheck
+        // Quiet check shortly after launch so the sidebar can show "Update available".
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard let self, self.autoCheck else { return }
+            self.check = .checking
+            self.sparkle?.checkSilently()
+        }
+        #else
+        check = .unknown("This build doesn't include the updater.")
+        #endif
+    }
+
+    #if canImport(Sparkle) && os(macOS)
+    private func handle(_ event: SparkleEvent) {
+        lastChecked = Date()
+        switch event {
+        case .found(let v): availableVersion = v; check = .available
+        case .upToDate: availableVersion = nil; check = .upToDate
+        case .failed(let why): check = .failed(why)
+        }
+    }
+    #endif
+
+    /// Release channel: auto-download setting (Sparkle installs downloaded updates when Based quits).
+    var autoDownload: Bool {
+        get {
+            #if canImport(Sparkle) && os(macOS)
+            return sparkle?.automaticallyDownloads ?? false
+            #else
+            return false
+            #endif
+        }
+        set {
+            #if canImport(Sparkle) && os(macOS)
+            sparkle?.automaticallyDownloads = newValue
+            autoDownloadTick += 1
+            #endif
+        }
+    }
+    /// Makes SwiftUI re-read `autoDownload` (Sparkle's value isn't observable).
+    private(set) var autoDownloadTick = 0
+
+    /// Opens Sparkle's update window (release channel) or checks GitHub (source channel).
+    func checkWithUI() async {
+        #if canImport(Sparkle) && os(macOS)
+        if channel == .release, let sparkle { sparkle.checkWithUI(); return }
+        #endif
+        await checkNow()
+    }
+
     func checkNow() async {
+        #if canImport(Sparkle) && os(macOS)
+        if channel == .release { sparkle?.checkWithUI(); return }
+        #endif
         guard check != .checking else { return }
         check = .checking
         defer { lastChecked = Date() }
@@ -190,6 +270,9 @@ final class Updater {
 
     /// Starts pulling, building and installing. Based quits and reopens on its own when the build is done.
     func install() async {
+        #if canImport(Sparkle) && os(macOS)
+        if channel == .release { sparkle?.checkWithUI(); return }   // Sparkle's window has "Install Update"
+        #endif
         guard !phase.isRunning else { return }
         Log.info("updates: install requested (installed \(shortCommit))")
         guard let reply = await Self.send("update") else {

@@ -16,6 +16,12 @@
 	<key>BasedGitCommit</key><string>$(BASED_GIT_COMMIT)</string>
 	<key>BasedGitDate</key><string>$(BASED_GIT_DATE)</string>
 	<key>BasedUpdateRepo</key><string>$(BASED_UPDATE_REPO)</string>
+	<key>BasedDistribution</key><string>$(BASED_DISTRIBUTION)</string>
+	<key>SUFeedURL</key><string>$(BASED_UPDATE_FEED)</string>
+	<key>SUPublicEDKey</key><string>$(BASED_SPARKLE_PUBLIC_KEY)</string>
+	<key>SUEnableAutomaticChecks</key><true/>
+	<key>SUScheduledCheckInterval</key><integer>21600</integer>
+	<key>SUEnableInstallerLauncherService</key><true/>
 	<key>BasedCloudSyncEnabled</key><string>$(BASED_CLOUD_SYNC)</string>
 	<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
