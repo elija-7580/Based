@@ -364,10 +364,15 @@ expect a few fixes on the first Xcode run. When a symbol is missing, add it to t
 signature, dummy body); when the type checker gives up on a long SwiftUI expression, split it into a
 `@ViewBuilder` helper — that helps Xcode too. `TYPECHECK_OUT=<dir>` sets the scratch folder.
 
-**Automatic build (CI):** `ci/github-actions-ci.yml` builds the macOS + iOS apps on GitHub's Mac servers,
-runs all tests and the type-check on every push, and publishes the results to the `ci-logs` branch. To turn
-it on once: github.com → *Add file → Create new file* → name `.github/workflows/ci.yml` → paste the file →
-*Commit* (the agent integration is not allowed to write workflow files).
+**Automatic build (CI):** `ci/github-actions-ci.yml` runs four jobs on every push and pull request:
+`core` (BasedCore `swift test`) and `typecheck` (BasedBrain `swift test`, `ci/typecheck/run.sh`, and the iOS
+type-check once `run.sh --ios` exists) in the pinned `swift:6.2-noble` container with a SwiftPM cache and a
+30-minute limit; `apps` (Debug build of the macOS app and the iOS Simulator app on GitHub's Mac servers); and
+`uitests` (the XCUITests in `App/UITests` on macOS — optional, a failure there doesn't fail the run yet).
+On pushes (not pull requests) the results are published to the `ci-logs` branch. Releases (DMG/Sparkle) are a
+separate workflow, `.github/workflows/release.yml`. To turn CI on once: github.com → *Add file → Create new
+file* → name `.github/workflows/ci.yml` → paste the file → *Commit* (the agent integration is not allowed to
+write workflow files).
 
 Honest status of every requirement: [`replica/backlog.md`](replica/backlog.md).
 
