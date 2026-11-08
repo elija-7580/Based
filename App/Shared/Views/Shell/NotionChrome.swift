@@ -297,7 +297,6 @@ struct NotionSidebar: View {
     @AppStorage("sidebar.teamspacesOpen") private var teamspacesOpen = true
     @AppStorage("sidebar.privateOpen") private var privateOpen = true
     @AppStorage("sidebar.chatsOpen") private var chatsOpen = true
-    @AppStorage("sidebar.developerOpen") private var developerOpen = false
     @FocusState private var focused: Bool
     @State private var privateDrop = false
 
@@ -369,7 +368,6 @@ struct NotionSidebar: View {
                         }
                     }
                 }
-                    SidebarDeveloperSection(open: $developerOpen)
                 }
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)
@@ -550,10 +548,12 @@ struct SidebarDeveloperRow: View {
 
 /// Pinned bottom of the sidebar: Library, Trash, Settings (outside the scroll view, like Notion).
 struct SidebarFooter: View {
+    @AppStorage("sidebar.developerOpen") private var developerOpen = false
     var body: some View {
         VStack(spacing: 1) {
             SidebarNavRow(item: .graph, title: "Graph", symbol: "point.3.connected.trianglepath.dotted").accessibilityIdentifier("sidebar.graph")
             SidebarNavRow(item: .library, title: "Library", symbol: "books.vertical").accessibilityIdentifier("sidebar.library")
+            SidebarDeveloperSection(open: $developerOpen)
             SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
             SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
         }

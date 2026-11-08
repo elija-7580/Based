@@ -19,6 +19,8 @@ public struct LibraryItem: Identifiable, Hashable, Sendable {
     public var created: Date
     public var edited: Date
     public var isFavorite: Bool
+    /// Lowercased "title␁location", built once so typing in the search field is a plain substring scan.
+    public var searchKey: String = ""
 }
 
 public enum LibrarySort: String, CaseIterable, Sendable { case title = "Title", kind = "Type", location = "Location", edited = "Last edited", created = "Created" }
@@ -121,14 +123,15 @@ public extension WorkspaceStore {
             let name: String
             if kind == .file { name = b.props.asset?.name ?? "File" } else { name = title(of: b.id) }
             out.append(LibraryItem(id: b.id, title: name, kind: kind, location: location, parentID: parentID, section: section,
-                                   created: b.createdAt, edited: b.updatedAt, isFavorite: favorites.contains(b.id)))
+                                   created: b.createdAt, edited: b.updatedAt, isFavorite: favorites.contains(b.id),
+                                   searchKey: name.lowercased() + "\u{1}" + location.lowercased()))
         }
         return out
     }
 
     /// Filters and sorts `items`.
     func filterLibrary(_ items: [LibraryItem], _ q: LibraryQuery, now: Date = Date()) -> [LibraryItem] {
-        let text = q.text.trimmingCharacters(in: .whitespaces)
+        let text = q.text.trimmingCharacters(in: .whitespaces).lowercased()
         var dupTitles: Set<String> = []
         if q.onlyDuplicateTitles {
             var seen: [String: Int] = [:]
@@ -137,7 +140,7 @@ public extension WorkspaceStore {
         }
         var list = items.filter { i in
             guard q.kinds.contains(i.kind) else { return false }
-            if !text.isEmpty && !i.title.localizedCaseInsensitiveContains(text) && !i.location.localizedCaseInsensitiveContains(text) { return false }
+            if !text.isEmpty && !i.searchKey.contains(text) { return false }
             switch q.location {
             case .any: break
             case .topLevel: if i.parentID != nil { return false }

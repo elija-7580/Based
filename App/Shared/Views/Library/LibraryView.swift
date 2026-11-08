@@ -144,18 +144,7 @@ struct LibraryView: View {
             Text(shown == total ? "\(total) items" : "\(shown) of \(total)")
                 .font(.system(size: 13)).foregroundStyle(Chrome.sectionText)
             Spacer(minLength: 12)
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Chrome.sectionText)
-                TextField("Search titles and locations", text: $query.text)
-                    .textFieldStyle(.plain).font(.system(size: 13))
-                    .accessibilityIdentifier("library.search")
-                if !query.text.isEmpty {
-                    Button { query.text = "" } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)) }
-                        .buttonStyle(.quiet).foregroundStyle(Chrome.sectionText)
-                }
-            }
-            .padding(.horizontal, 8).frame(width: 260, height: 28)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Chrome.hover))
+            LibrarySearchField(text: $query.text)
         }
         .padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 10)
     }
@@ -474,5 +463,42 @@ struct LibraryFilterChip<Items: View>: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
+    }
+}
+
+
+/// Search box with its own draft text: keystrokes only redraw this field; the table (and the overview above it)
+/// is filtered once typing pauses for a moment.
+private struct LibrarySearchField: View {
+    @Binding var text: String
+    @State private var draft = ""
+    @State private var pending: Task<Void, Never>?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Chrome.sectionText)
+            TextField("Search titles and locations", text: $draft)
+                .textFieldStyle(.plain).font(.system(size: 13))
+                .accessibilityIdentifier("library.search")
+            if !draft.isEmpty {
+                Button { draft = ""; commit(immediately: true) } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)) }
+                    .buttonStyle(.quiet).foregroundStyle(Chrome.sectionText)
+            }
+        }
+        .padding(.horizontal, 8).frame(width: 260, height: 28)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Chrome.hover))
+        .onAppear { draft = text }
+        .onChange(of: draft) { _, _ in commit(immediately: false) }
+        .onChange(of: text) { _, new in if new != draft { draft = new } }
+    }
+
+    private func commit(immediately: Bool) {
+        pending?.cancel()
+        let value = draft
+        if immediately { text = value; return }
+        pending = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 140_000_000)
+            if !Task.isCancelled { text = value }
+        }
     }
 }
