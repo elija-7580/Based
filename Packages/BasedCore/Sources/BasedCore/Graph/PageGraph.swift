@@ -99,8 +99,9 @@ public extension WorkspaceStore {
             var n = 0
             while let c = cur, n < 500 {
                 n += 1
-                if let v = pageOf[c] { result = v; break }
+                // A page owns its content: check that before the memo (which holds the page's *own* owner).
                 if c != id, isNode.contains(c) { result = c; break }
+                if let v = pageOf[c] { result = v; break }
                 chain.append(c)
                 guard let b = blocks[c] else { break }
                 switch b.parent {
