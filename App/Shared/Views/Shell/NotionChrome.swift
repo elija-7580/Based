@@ -489,21 +489,75 @@ struct SidebarModeSwitcher: View {
     }
 }
 
-/// "Developer" section at the end of the sidebar (folded by default): the Diagnostics screen's tabs as rows.
-/// Logs shows how many errors were logged since the log was last opened.
-struct SidebarDeveloperSection: View {
-    @Binding var open: Bool
+/// "Developer" in the pinned sidebar footer, a row like Graph / Library / Trash / Settings. Hovering it opens a
+/// small floating panel beside the sidebar (like the page outline on the right) with Logs, Hangs, Layout and
+/// System; clicking the row opens Logs. The row and Logs show how many errors were logged since Logs was opened.
+struct SidebarDeveloperRow: View {
     @Environment(AppModel.self) private var model
+    @State private var hoverRow = false
+    @State private var hoverPanel = false
+    @State private var open = false
+    @State private var hoverTask: Task<Void, Never>?
+
+    static let tabs: [(tab: DiagnosticsView.Tab, title: String, symbol: String)] = [
+        (.logs, "Logs", "text.alignleft"), (.hangs, "Hangs", "hourglass"),
+        (.layout, "Layout", "square.dashed"), (.system, "System", "cpu"),
+    ]
 
     var body: some View {
-        SidebarSectionHeader(title: "Developer", open: $open)
-        if open {
-            TimelineView(.periodic(from: .now, by: 5)) { _ in
-                SidebarDeveloperRow(tab: .logs, title: "Logs", symbol: "text.alignleft", badge: newErrors)
+        let selected = model.selection == .diagnostics
+        TimelineView(.periodic(from: .now, by: 5)) { _ in
+            let errors = newErrors
+            HStack(spacing: 8) {
+                Image(systemName: "hammer").font(.system(size: 13)).frame(width: 20, height: 20)
+                Text("Developer").font(.system(size: 14, weight: .medium)).lineLimit(1)
+                Spacer(minLength: 4)
+                if errors > 0 { SidebarErrorBadge(count: errors) }
+                Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                    .opacity(hoverRow || open ? 0.6 : 0)
             }
-            SidebarDeveloperRow(tab: .hangs, title: "Hangs", symbol: "hourglass")
-            SidebarDeveloperRow(tab: .layout, title: "Layout", symbol: "square.dashed")
-            SidebarDeveloperRow(tab: .system, title: "System", symbol: "cpu")
+            .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
+            .padding(.horizontal, 8)
+            .frame(height: Chrome.rowHeight)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hoverRow || open ? Chrome.hover : .clear)))
+            .contentShape(Rectangle())
+        }
+        .onHover { hoverRow = $0; update() }
+        .onTapGesture { hoverTask?.cancel(); open = false; model.openDiagnostics(.logs) }
+        .panelPopover(isPresented: $open, arrowEdge: .trailing) { panel }
+        .onDisappear { hoverTask?.cancel() }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("sidebar.developer")
+    }
+
+    private var panel: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text("Developer").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary)
+                .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 3)
+            ForEach(Self.tabs, id: \.tab) { t in
+                DeveloperPanelRow(title: t.title, symbol: t.symbol, badge: t.tab == .logs ? newErrors : 0,
+                                  current: model.selection == .diagnostics && model.diagnosticsTab == t.tab) {
+                    hoverTask?.cancel(); open = false
+                    model.openDiagnostics(t.tab)
+                }
+                .accessibilityIdentifier("sidebar.developer." + t.tab.rawValue.lowercased())
+            }
+        }
+        .padding(6)
+        .frame(width: 200)
+        .onHover { hoverPanel = $0; update() }
+    }
+
+    /// Opens after a short hover (passing over the row doesn't flash it); stays while the pointer is on the row
+    /// or the panel, and closes shortly after it leaves both — enough time to move from the row into the panel.
+    private func update() {
+        hoverTask?.cancel()
+        let want = hoverRow || hoverPanel
+        guard want != open else { return }
+        hoverTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(want ? 140 : 220))
+            if !Task.isCancelled && (hoverRow || hoverPanel) == want { open = want }
         }
     }
 
@@ -513,49 +567,53 @@ struct SidebarDeveloperSection: View {
     }
 }
 
-struct SidebarDeveloperRow: View {
-    let tab: DiagnosticsView.Tab
+private struct SidebarErrorBadge: View {
+    let count: Int
+    var body: some View {
+        Text("\(count)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+            .padding(.horizontal, 6).frame(height: 16)
+            .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
+    }
+}
+
+/// One entry in the Developer panel (same look as the page outline's rows).
+private struct DeveloperPanelRow: View {
     let title: String
     let symbol: String
     var badge = 0
-    @Environment(AppModel.self) private var model
+    var current = false
+    let action: () -> Void
     @State private var hover = false
 
     var body: some View {
-        let selected = model.selection == .diagnostics && model.diagnosticsTab == tab
-        HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 13)).frame(width: 20, height: 20)
-            Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1)
-            Spacer(minLength: 4)
-            if badge > 0 {
-                Text("\(badge)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 6).frame(height: 16)
-                    .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol).font(.system(size: 12)).frame(width: 18)
+                Text(title).font(.system(size: 13, weight: current ? .medium : .regular))
+                Spacer(minLength: 4)
+                if badge > 0 { SidebarErrorBadge(count: badge) }
             }
+            .foregroundStyle(current ? Theme.primary : Theme.primary.opacity(0.85))
+            .padding(.vertical, 5).padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Theme.primary.opacity(hover ? 0.07 : (current ? 0.05 : 0))))
+            .contentShape(Rectangle())
         }
-        .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
-        .padding(.horizontal, 8)
-        .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hover ? Chrome.hover : .clear)))
-        .contentShape(Rectangle())
-        .onHover { hover = $0 }
-        .onTapGesture { model.openDiagnostics(tab) }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("sidebar.developer." + tab.rawValue.lowercased())
+        .buttonStyle(.plain)
+        .onHover { h in withAnimation(.easeOut(duration: 0.08)) { hover = h } }
     }
 }
 
 /// Pinned bottom of the sidebar: Library, Trash, Settings (outside the scroll view, like Notion).
 struct SidebarFooter: View {
-    @AppStorage("sidebar.developerOpen") private var developerOpen = false
     var body: some View {
         VStack(spacing: 1) {
             SidebarUpdateRow()
             SidebarNavRow(item: .graph, title: "Graph", symbol: "point.3.connected.trianglepath.dotted").accessibilityIdentifier("sidebar.graph")
             SidebarNavRow(item: .library, title: "Library", symbol: "books.vertical").accessibilityIdentifier("sidebar.library")
-            SidebarDeveloperSection(open: $developerOpen)
             SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
+            SidebarDeveloperRow()
             SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
         }
         .padding(.horizontal, 8)
