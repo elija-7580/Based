@@ -13,7 +13,7 @@ struct SettingsView: View {
 
     enum SettingsPage: String, CaseIterable, Identifiable {
         case myAccount, mySettings, myNotifications, myConnections, languageRegion
-        case workspace, people, teamspaces, security, agents, connections, importData, sync, billing, diagnostics, about
+        case workspace, people, teamspaces, security, agents, connections, importData, sync, billing, updates, diagnostics, about
         var id: String { rawValue }
         var title: String {
             switch self {
@@ -31,6 +31,7 @@ struct SettingsView: View {
             case .importData: return "Import"
             case .sync: return "Sync & server"
             case .billing: return "Billing"
+            case .updates: return "Updates"
             case .diagnostics: return "Diagnostics"
             case .about: return "About"
             }
@@ -51,12 +52,13 @@ struct SettingsView: View {
             case .importData: return "square.and.arrow.down"
             case .sync: return "arrow.triangle.2.circlepath.icloud"
             case .billing: return "creditcard"
+            case .updates: return "arrow.down.circle"
             case .diagnostics: return "stethoscope"
             case .about: return "info.circle"
             }
         }
         static let accountPages: [SettingsPage] = [.myAccount, .mySettings, .myNotifications, .myConnections, .languageRegion]
-        static let workspacePages: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .diagnostics, .about]
+        static let workspacePages: [SettingsPage] = [.workspace, .people, .teamspaces, .security, .agents, .connections, .importData, .sync, .billing, .updates, .diagnostics, .about]
     }
 
     var body: some View {
@@ -74,6 +76,14 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .accessibilityIdentifier("settings.root")
+        .onAppear(perform: applyPageRequest)
+        .onChange(of: model.settingsPageRequest) { _, _ in applyPageRequest() }
+    }
+
+    private func applyPageRequest() {
+        guard let raw = model.settingsPageRequest else { return }
+        model.settingsPageRequest = nil
+        if let p = SettingsPage(rawValue: raw) { page = p }
     }
 
     private var sidebar: some View {
@@ -111,6 +121,7 @@ struct SettingsView: View {
             case .importData: ImportSettings()
             case .sync: SyncSettings()
             case .billing: BillingSettings()
+            case .updates: UpdatesSettings()
             case .diagnostics: DiagnosticsSettings()
             case .about: AboutSettings()
             }
@@ -489,10 +500,12 @@ struct DiagnosticsSettings: View {
 }
 
 struct AboutSettings: View {
+    @Environment(AppModel.self) private var model
     var body: some View {
         Section("About") {
             LabeledContent("Version", value: (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "dev")
             LabeledContent("Build", value: (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "dev")
+            LabeledContent("Commit", value: model.updater.shortCommit)
             Text("Based is a local‑first, open‑source Notion alternative with a built‑in AI brain and Happier‑style control room for coding agents. Data lives on your devices and syncs through iCloud or your own server.")
                 .font(.caption).foregroundStyle(Theme.secondary)
             Link("Source code on GitHub", destination: URL(string: "https://github.com/elija-7580/Based")!)

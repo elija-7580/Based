@@ -13,6 +13,9 @@
 	<key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>Based links</string><key>CFBundleURLSchemes</key><array><string>based</string></array></dict></array>
 	<key>BasedCloudKitContainer</key><string>$(BASED_CLOUDKIT_CONTAINER)</string>
+	<key>BasedGitCommit</key><string>$(BASED_GIT_COMMIT)</string>
+	<key>BasedGitDate</key><string>$(BASED_GIT_DATE)</string>
+	<key>BasedUpdateRepo</key><string>$(BASED_UPDATE_REPO)</string>
 	<key>BasedCloudSyncEnabled</key><string>$(BASED_CLOUD_SYNC)</string>
 	<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>

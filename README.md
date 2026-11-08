@@ -174,6 +174,16 @@ make mac         # or: open Based.xcodeproj and run the Based-macOS / Based-iOS 
 make ios
 ```
 
+### Install and update on your Mac
+
+`make install` (= `scripts/install-mac.sh`) builds a Release app into `/Applications` and sets up the
+**updater**: a small launchd job (`~/Library/LaunchAgents/<bundle id>.updater.plist`, listening on
+`127.0.0.1:47321`). Each build remembers the commit it came from; Based checks GitHub for newer commits on
+`main` (at launch, every 6 hours, Based → Check for Updates…) and shows them in Settings → Updates and as
+"Update available" at the bottom of the sidebar. **Update now** pulls `main`, rebuilds and reinstalls in the
+background; Based quits and reopens when the build is done. Progress: `~/Library/Logs/Based/update.log`.
+If the repository is in Documents or Desktop and macOS blocks the background job, use **Run in Terminal**.
+
 ### iCloud sync
 
 Without an Apple Developer team the app runs local-only. To enable sync:

@@ -11,4 +11,8 @@ BASED_CLOUDKIT_CONTAINER = iCloud.$(BASED_BUNDLE_ID)
 BASED_CLOUD_SYNC = NO
 BASED_ENTITLEMENTS_SUFFIX =
 BASED_AGENTS_SUFFIX =
+// Updates: install-mac.sh passes the commit it builds; Based compares it with main on BASED_UPDATE_REPO.
+BASED_GIT_COMMIT =
+BASED_GIT_DATE =
+BASED_UPDATE_REPO = elija-7580/Based
 #include? "Local.xcconfig"

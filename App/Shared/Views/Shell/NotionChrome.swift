@@ -551,6 +551,7 @@ struct SidebarFooter: View {
     @AppStorage("sidebar.developerOpen") private var developerOpen = false
     var body: some View {
         VStack(spacing: 1) {
+            SidebarUpdateRow()
             SidebarNavRow(item: .graph, title: "Graph", symbol: "point.3.connected.trianglepath.dotted").accessibilityIdentifier("sidebar.graph")
             SidebarNavRow(item: .library, title: "Library", symbol: "books.vertical").accessibilityIdentifier("sidebar.library")
             SidebarDeveloperSection(open: $developerOpen)

@@ -120,6 +120,8 @@ final class AppModel {
     @ObservationIgnored let registry: Registry
     /// Memoised view queries (filters/sorts/groups) — one shared cache, invalidated by store revision.
     @ObservationIgnored let queryCache: QueryCache
+    /// Mac updates: checks GitHub for newer commits and installs them through the updater agent.
+    let updater: Updater
     @ObservationIgnored private(set) var persistence: SQLitePersistence?
     #if canImport(CloudKit)
     @ObservationIgnored private(set) var cloud: CloudSync?
@@ -202,6 +204,8 @@ final class AppModel {
     var findQuery = ""
     var findIndex = 0
     var showSettings = false
+    /// Settings page to show next (SettingsView.SettingsPage raw value), e.g. "updates".
+    var settingsPageRequest: String?
     /// Agent Brain (memories, skills, agents, AI providers, server sync).
     @ObservationIgnored private(set) var brain: BrainModel!
     var showTrash = false
@@ -321,6 +325,7 @@ final class AppModel {
         store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
         registry = Registry(store: store)
         queryCache = QueryCache(store: store)
+        updater = Updater()
         pageHistory = PageHistory(store: store, directory: inMemory ? nil : dir)
         if store.blocks.isEmpty { Onboarding.seed(store) }
         let storeMS = Int(Date().timeIntervalSince(openStart) * 1000)
@@ -336,6 +341,11 @@ final class AppModel {
         startSyncIfConfigured()
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
         store.prepareLinkIndexInBackground()
+        updater.onJustUpdated = { [weak self] in
+            guard let self else { return }
+            self.showToast("Based was updated to build \(self.updater.build) (\(self.updater.shortCommit))")
+        }
+        updater.start()
         Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms (store \(storeMS) ms, agent brain \(brainMS) ms)", category: "app")
     }
 
@@ -472,6 +482,11 @@ final class AppModel {
     func trash(_ id: RecordID) { trash([id]) }
 
     /// ⌘, and the workspace menu: Settings live inside the main window (no separate Settings window).
+    func openSettings(page: String) {
+        settingsPageRequest = page
+        openSettings()
+    }
+
     func openSettings() {
         #if os(macOS)
         peek = nil

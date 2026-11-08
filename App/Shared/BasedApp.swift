@@ -52,6 +52,13 @@ struct BasedCommands: Commands {
     }
 
     var body: some Commands {
+        #if os(macOS)
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") {
+                run("updates") { model.openSettings(page: "updates"); Task { await model.updater.checkNow() } }
+            }
+        }
+        #endif
         CommandGroup(replacing: .appSettings) {
             Button("Settings…") { run("⌘,") { model.openSettings() } }
                 .keyboardShortcut(",")
