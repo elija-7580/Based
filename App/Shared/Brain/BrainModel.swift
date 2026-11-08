@@ -238,7 +238,9 @@ final class BrainModel {
 
     /// The running reply (Stop button).
     @ObservationIgnored private var runningTask: Task<Void, Never>?
-    func stop() { runningTask?.cancel() }
+    @ObservationIgnored private var runningTurn: ChatTurnHandle?
+    /// Stops the engine; the turn still ends with its "Stopped." note and is saved.
+    func stop() { runningTurn?.cancel() }
 
     func ask(_ prompt: String, pageContext: RecordID? = nil, attachments: [ChatAttachment] = []) {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -266,8 +268,6 @@ final class BrainModel {
             chatID = sid
         }
         let attachNote = attachments.isEmpty ? "" : "\n\n" + attachments.map { "📎 \($0.name)" }.joined(separator: "  ")
-        brain.appendTranscript(sid, role: "You", markdown: shown + attachNote)
-        brain.updateSession(sid, status: .running)
         Log.breadcrumb("ask AI (\(trimmed.count) chars, \(attachments.count) files)")
         var user = ChatTurn(role: .user, text: trimmed)
         user.attachments = attachments.map(\.name)
@@ -278,82 +278,45 @@ final class BrainModel {
         let replyID = reply.id
         isRunning = true
         let history: [ChatMessage] = turns.dropLast(2).filter { !$0.text.isEmpty }.map { ChatMessage(role: $0.role, content: $0.text) }
-        let rt = runtime
-        // Events land on the reply turn (looked up by id: the list may change while it runs).
-        let apply: @MainActor (ChatEvent) -> Void = { [weak self] e in
-            guard let self, let i = self.turns.firstIndex(where: { $0.id == replyID }) else { return }
-            self.turns[i].reply.apply(e)
+        runtime.onProgress = nil
+        // BSD-45: the turn runs in BasedBrain's ChatEngine; this view model only picks the backend and renders events.
+        let backend: ChatBackend
+        var system = ""
+        switch engine {
+        case .model(let ref):
+            backend = ModelChatBackend(runtime: runtime, modelRef: ref)
+        case .cli(let spec):
+            let context = brain.systemContext(query: trimmed)
+            system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + BasedGuide.instructions + "\n\n" + String(context.prefix(6000))
+            if spec.kind == .claudeCode {
+                backend = ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
+            } else {
+                backend = CLIChatBackend(spec: spec, mcp: happier.runtime.mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) })
+            }
+        case .none:
+            backend = UnavailableChatBackend(ChatError.noEngine.description)
         }
-        rt.onEvent = { e in Task { @MainActor in apply(e) } }
-        rt.onProgress = nil
-        let cliSpec: ChatEngineSpec? = { if case .cli(let s) = engine { return s }; return nil }()
-        // A chat remembers its CLI session as "<kind>:<id>"; switching the engine starts a fresh CLI session.
-        let resumeKey = (cliSpec?.kind.rawValue ?? "") + ":"
-        let stored = brain.sessions().first { $0.id == sid }?.acpSessionID
-        let resume: String? = {
-            guard let stored, let spec = cliSpec else { return nil }
-            if spec.kind == .claudeCode, stored.hasPrefix("claude:") { return String(stored.dropFirst(7)) }
-            return stored.hasPrefix(resumeKey) ? String(stored.dropFirst(resumeKey.count)) : nil
-        }()
-        let context = cliSpec != nil ? brain.systemContext(query: trimmed) : ""
-        let mcp = cliSpec != nil ? happier.mcpConfig(session: sid) : nil
-        let engineLabel = chatEngine
-        let mcpEndpoint = happier.runtime.mcpEndpoint
         // The chat keeps the folder it started in (reopened chats resume there).
         let folder: String = {
             let saved = brain.sessions().first { $0.id == sid }?.cwd ?? ""
             return saved.isEmpty ? chatFolder : saved
         }()
+        let chat = ChatEngine(sink: brain)
+        let request = ChatRequest(prompt: p, displayPrompt: shown + attachNote, history: history,
+                                  resume: chat.resume(for: sid, with: backend), cwd: folder, system: system)
+        let engineLabel = chatEngine
+        let turn = chat.send(request, session: sid, via: backend)
+        runningTurn = turn
         runningTask = Task {
-            var failed = false
-            do {
-                if case .model(let ref) = engine {
-                    let o = try await rt.run(prompt: p, modelRef: ref, history: history, callerSession: sid)
-                    try Task.checkCancellation()
-                    apply(.result(text: o.text.isEmpty ? "(done)" : o.text, sessionID: nil, costUSD: nil, isError: false))
-                } else if let spec = cliSpec {
-                    let system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + BasedGuide.instructions + "\n\n" + String(context.prefix(6000))
-                    let result: Result<ClaudePrint.Reply, Error>
-                    var sessionFromStream: String?
-                    let track: @MainActor (ChatEvent) -> Void = { e in
-                        if case .started(_, let s?) = e { sessionFromStream = s }
-                        apply(e)
-                    }
-                    switch spec.kind {
-                    case .claudeCode:
-                        result = await ClaudePrint.stream(p, resume: resume, cwd: folder, appendSystemPrompt: system, mcpConfig: mcp,
-                                                          allowedTools: mcp == nil ? [] : ["mcp__based"],
-                                                          model: spec.model.isEmpty ? nil : spec.model,
-                                                          effort: spec.effort.isEmpty ? nil : spec.effort,
-                                                          permissionMode: spec.permission.isEmpty ? nil : spec.permission,
-                                                          permissionPromptTool: mcp != nil && spec.permission != "bypassPermissions" ? "mcp__based__approval" : nil,
-                                                          onEvent: track)
-                    default:
-                        result = await Self.runCLI(spec, prompt: p, resume: resume, system: system, cwd: folder,
-                                                   mcp: mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) }, onEvent: track)
-                    }
-                    switch result {
-                    case .success(let r):
-                        if let cs = r.sessionID ?? sessionFromStream {
-                            brain.updateSession(sid, acpSessionID: (spec.kind == .claudeCode ? "claude" : spec.kind.rawValue) + ":" + cs)
-                        }
-                    case .failure(let e): throw e
-                    }
-                } else {
-                    throw ChatError.noEngine
-                }
-            } catch {
-                failed = true
-                let msg = Task.isCancelled ? "Stopped." : "⚠️ \(error)"
-                apply(.result(text: "", sessionID: nil, costUSD: nil, isError: true))
-                if let i = turns.firstIndex(where: { $0.id == replyID }) {
-                    turns[i].reply.restore(ChatPart(id: "err", kind: .text, text: msg))
-                }
-                brain.appendTranscript(sid, role: "Error", markdown: msg)
-                Log.error("Chat failed: \(error)", category: "ai")
+            // Events land on the reply turn (looked up by id: the list may change while it runs).
+            for await e in turn.events {
+                guard let i = turns.firstIndex(where: { $0.id == replyID }) else { continue }
+                turns[i].reply.apply(e)
             }
+            await turn.finished()
             if let i = turns.firstIndex(where: { $0.id == replyID }) {
                 let r = turns[i].reply
+                let failed = r.isError
                 turns[i].text = r.text
                 turns[i].isRunning = false
                 turns[i].failed = failed
@@ -361,14 +324,10 @@ final class BrainModel {
                 if let c = r.costUSD { meta.append(String(format: "$%.3f", c)) }
                 turns[i].meta = meta.joined(separator: " · ")
                 if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
-                for (role, md) in r.transcriptSections where !(failed && role == "Agent" && md.isEmpty) {
-                    brain.appendTranscript(sid, role: role, markdown: md)
-                }
-                brain.updateSession(sid, status: failed ? .failed : .done, result: r.text)
             }
-            rt.onEvent = nil
             isRunning = false
             runningTask = nil
+            runningTurn = nil
         }
     }
 
@@ -379,68 +338,10 @@ final class BrainModel {
         let body = String(MarkdownExporter(store: store).export(page: pageID, includeTitle: false).prefix(8000))
         let system = "You write content that goes straight into a page of the user's notes app. Reply with the content only, in Markdown (headings, lists, to-dos, tables, code blocks allowed) — no preamble, no closing remarks, no code fence around the whole answer. Match the page's language unless asked otherwise."
         let prompt = "Page “\(title)”:\n\n\(body)\n\n---\nTask: \(instruction)"
-        switch resolvedEngine {
-        case .model(let ref):
-            guard let (provider, model) = registry.resolve(ref) else { throw ChatError.noEngine }
-            let r = try await provider.complete([.system(system), .user(prompt)], model: model, tools: [], maxTokens: 4096)
-            return r.message.content
-        case .cli(let spec):
-            if spec.kind == .claudeCode {
-                switch await ClaudePrint.ask(prompt, cwd: chatFolder, appendSystemPrompt: system, model: spec.model.isEmpty ? nil : spec.model) {
-                case .success(let r): return r.text
-                case .failure(let e): throw e
-                }
-            }
-            let collected = TextCollector()
-            let result = await Self.runCLI(spec, prompt: prompt, resume: nil, system: system, cwd: chatFolder, mcp: nil) { e in
-                if case .text(let t) = e { collected.parts.append(t) }
-            }
-            if case .failure(let e) = result { throw e }
-            return collected.parts.joined(separator: "\n\n")
-        case .none:
-            throw ChatError.noEngine
-        }
+        return try await complete(system: system, prompt: prompt, maxTokens: 4096)
     }
-
-    @MainActor final class TextCollector { var parts: [String] = [] }
 
     private func cliSpecForSession(_ e: Engine) -> Bool { if case .cli = e { return true }; return false }
-
-    /// Codex / Gemini / OpenCode: streamed through `CLIChatRunner` with the matching line parser.
-    nonisolated static func runCLI(_ spec: ChatEngineSpec, prompt: String, resume: String?, system: String, cwd: String,
-                                   mcp: (url: String, token: String)?,
-                                   onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<ClaudePrint.Reply, Error> {
-        #if os(macOS)
-        guard let cmd = spec.kind.command else { return .failure(ChatError.noEngine) }
-        let exe = ShellEnvironment.which(cmd)
-            ?? (spec.kind == .opencode ? "/Applications/OpenCode.app/Contents/MacOS/opencode-cli" : nil)
-        guard let exe, FileManager.default.isExecutableFile(atPath: exe) else {
-            return .failure(ClaudePrint.Failure(description: "\(spec.kind.title) is not installed."))
-        }
-        var env = ShellEnvironment.environment()
-        let args: [String]
-        let parse: @Sendable (String) -> [ChatEvent]
-        switch spec.kind {
-        case .codex:
-            if let mcp { env["BASED_MCP_TOKEN"] = mcp.token }
-            args = CLIChatArguments.codex(prompt: prompt, spec: spec, resume: resume, mcpURL: mcp?.url, systemPrompt: system)
-            parse = CodexChatStream.events(fromLine:)
-        case .gemini:
-            args = CLIChatArguments.gemini(prompt: prompt, spec: spec, resume: resume, systemPrompt: system)
-            parse = GeminiChatStream.events(fromLine:)
-        case .opencode:
-            args = CLIChatArguments.opencode(prompt: prompt, spec: spec, resume: resume, systemPrompt: system)
-            parse = OpenCodeChatStream.events(fromLine:)
-        default:
-            return .failure(ChatError.noEngine)
-        }
-        let dir = FileManager.default.fileExists(atPath: cwd) ? cwd : NSHomeDirectory()
-        return await CLIChatRunner.run(executable: exe, arguments: args, environment: env, cwd: dir,
-                                       parse: parse, onEvent: onEvent)
-        #else
-        return .failure(ChatError.noEngine)
-        #endif
-    }
 
     /// Tells the model how to produce artifacts the chat can show in its panel.
     static let artifactHint = "For visual or interactive results (a web page, chart, small app, diagram, illustration) reply with ONE complete fenced block — ```html (self-contained, inline CSS/JS, CDNs allowed), ```svg, ```mermaid or ```jsx (a React component with `export default`, Tailwind classes work) — and keep the text around it short; the app shows it as a live artifact. For a longer standalone document the user may keep (a plan, report, letter, summary, notes) put it in ONE ```markdown block starting with a # title; the app shows it as a document they can read and save as a page. When you create or edit workspace pages with tools, the app shows them as cards, so do not repeat their content."

@@ -20,6 +20,8 @@ public enum ChatEvent: Sendable, Equatable {
     /// A screenshot / image a tool returned (browser use, computer use, image tools).
     case toolImage(id: String, data: Data, mediaType: String)
     case result(text: String, sessionID: String?, costUSD: Double?, isError: Bool)
+    /// The turn ended with an error or was stopped (BSD-45: sent by `ChatEngine`, shown as a note in the reply).
+    case failed(String)
 }
 
 public struct TodoItem: Sendable, Equatable, Identifiable {
@@ -163,7 +165,23 @@ public struct ChatTurnBuilder: Sendable, Equatable {
             if !parts.contains(where: { $0.kind == .text && !$0.text.isEmpty }), !t.isEmpty, !err {
                 parts.append(ChatPart(id: nextID("tx"), kind: .text, text: t))
             }
+        case .failed(let message):
+            fail(message)
         }
+    }
+
+    /// Closes whatever is still running and adds the error note (id "err", kept out of the saved transcript —
+    /// `ChatEngine` stores it as an Error entry).
+    private mutating func fail(_ message: String) {
+        isError = true
+        for i in parts.indices where parts[i].status == .running {
+            parts[i].status = parts[i].kind == .tool ? .failed : .done
+            parts[i].provisional = false
+            if parts[i].finished == nil { parts[i].finished = Date() }
+        }
+        var note = ChatPart(id: "err", kind: .text, text: message)
+        if parts.contains(where: { $0.id == "err" }) { note.id = nextID("err") }
+        parts.append(note)
     }
 
     private func lastProvisional(_ kind: ChatPart.Kind) -> Int? {
@@ -324,9 +342,13 @@ public enum ClaudeChatStream {
 public extension ChatTurnBuilder {
     /// Markdown sections for the saved chat (`**Thought**`, `**Tool**`, `**Tool result**`, `**Plan**`, `**Agent**`),
     /// read back by `TranscriptParser` / `parts(from:)` when the chat is reopened.
-    var transcriptSections: [(role: String, markdown: String)] {
+    var transcriptSections: [(role: String, markdown: String)] { Self.transcriptSections(of: parts[...]) }
+
+    /// Sections for a run of parts (`ChatEngine` saves finished parts while the turn is still going).
+    /// Error notes (`.failed`) are left out; they are saved as an Error entry.
+    static func transcriptSections(of parts: ArraySlice<ChatPart>) -> [(role: String, markdown: String)] {
         var out: [(String, String)] = []
-        for p in parts {
+        for p in parts where !p.id.hasPrefix("err") {
             switch p.kind {
             case .thinking where !p.text.isEmpty: out.append(("Thought", p.text))
             case .text where !p.text.isEmpty: out.append(("Agent", p.text))

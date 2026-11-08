@@ -21,12 +21,8 @@ extension BrainModel {
                 case .failure(let e): throw e
                 }
             }
-            let collected = TextCollector()
-            let result = await Self.runCLI(spec, prompt: prompt, resume: nil, system: system, cwd: chatFolder, mcp: nil) { e in
-                if case .text(let t) = e { collected.parts.append(t) }
-            }
-            if case .failure(let e) = result { throw e }
-            return collected.parts.joined(separator: "\n\n")
+            return try await ChatEngine.text(from: CLIChatBackend(spec: spec, mcp: nil),
+                                             ChatRequest(prompt: prompt, cwd: chatFolder, system: system))
         case .none:
             throw ChatError.noEngine
         }

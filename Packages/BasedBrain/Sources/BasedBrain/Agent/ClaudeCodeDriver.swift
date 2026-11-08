@@ -427,13 +427,27 @@ public extension ClaudePrint {
         return a + ["--verbose", "--include-partial-messages"]
     }
 
-    /// Runs `claude -p` with `stream-json` and reports every event on the main actor while it runs.
+    /// Runs `claude -p` with `stream-json` and reports every event on the main actor while it runs, in order
+    /// (BSD-45: through `MainActorRelay` instead of one `Task` per event, which could reorder deltas).
     /// Cancelling the calling task terminates the process.
     static func stream(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
                        appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
                        model: String? = nil, effort: String? = nil, permissionMode: String? = nil,
                        permissionPromptTool: String? = nil,
                        onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<Reply, Error> {
+        let relay = MainActorRelay(onEvent)
+        return await stream(prompt, executable: executable, resume: resume, cwd: cwd, appendSystemPrompt: appendSystemPrompt,
+                            mcpConfig: mcpConfig, allowedTools: allowedTools, model: model, effort: effort,
+                            permissionMode: permissionMode, permissionPromptTool: permissionPromptTool, emit: relay.send)
+    }
+
+    /// Same, but every event goes synchronously to `emit` on the pipe's reader thread, one at a time and in
+    /// stream order — the form `ChatEngine` uses (ADR 0005: one serial `ChatEvent` stream).
+    static func stream(_ prompt: String, executable: String? = nil, resume: String? = nil, cwd: String = NSHomeDirectory(),
+                       appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil, allowedTools: [String] = [],
+                       model: String? = nil, effort: String? = nil, permissionMode: String? = nil,
+                       permissionPromptTool: String? = nil,
+                       emit: @escaping @Sendable (ChatEvent) -> Void) async -> Result<Reply, Error> {
         #if os(macOS) || os(Linux)
         guard let exe = executable ?? ShellEnvironment.which("claude") else {
             return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
@@ -455,7 +469,7 @@ public extension ClaudePrint {
             for line in state.feed(chunk) {
                 for e in ClaudeChatStream.events(fromLine: line) {
                     state.note(e)
-                    Task { @MainActor in onEvent(e) }
+                    emit(e)
                 }
             }
         }
@@ -468,7 +482,7 @@ public extension ClaudePrint {
                     // Whatever is left in the pipe.
                     let rest = out.fileHandleForReading.readDataToEndOfFile()
                     for line in state.feed(rest + Data([0x0A])) {
-                        for e in ClaudeChatStream.events(fromLine: line) { state.note(e); Task { @MainActor in onEvent(e) } }
+                        for e in ClaudeChatStream.events(fromLine: line) { state.note(e); emit(e) }
                     }
                     if let r = state.reply {
                         c.resume(returning: r.isError ? .failure(Failure(description: r.text.isEmpty ? "Claude Code reported an error" : r.text)) : .success(r))

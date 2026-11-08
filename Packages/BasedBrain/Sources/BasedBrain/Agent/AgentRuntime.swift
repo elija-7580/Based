@@ -9,8 +9,8 @@ public final class AgentRuntime: @unchecked Sendable {
     public var maxTokensPerReply = 4096
     /// Called after each step with a short progress line (for UI).
     public var onProgress: (@Sendable (String) -> Void)?
-    /// Structured events (tool calls and results, text) for the Claude-style chat view.
-    public var onEvent: (@Sendable (ChatEvent) -> Void)?
+    // BSD-45: structured events are a parameter of `run(prompt:…events:)`, no longer a shared `onEvent`
+    // property — the scheduler shares this runtime, and its runs' events used to land in the open chat.
 
     public init(registry: ModelRegistry, tools: AgentTools) { self.registry = registry; self.tools = tools }
 
@@ -24,7 +24,8 @@ public final class AgentRuntime: @unchecked Sendable {
     /// `modelRef` like "anthropic/claude-opus-5-5"; nil → first registered provider's first model.
     /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
-                    callerSession: String? = nil) async throws -> Outcome {
+                    callerSession: String? = nil, events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
+        let onEvent = events
         guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
         if provider.isOnDevice {
             return try await runOnDevice(provider: provider, model: model, prompt: prompt, systemExtra: systemExtra, history: history)
@@ -50,7 +51,12 @@ public final class AgentRuntime: @unchecked Sendable {
             usage = usage + r.usage
             messages.append(r.message)
             if !r.thinking.isEmpty { onEvent?(.thinking(r.thinking)) }
-            if r.message.toolCalls.isEmpty { return Outcome(text: r.message.content, usage: usage, steps: steps, transcript: messages) }
+            if r.message.toolCalls.isEmpty {
+                // The final answer is an event too (before, it was only in the outcome and got lost in the chat
+                // when the model had already written text next to a tool call).
+                if !r.message.content.isEmpty { onEvent?(.text(r.message.content)) }
+                return Outcome(text: r.message.content, usage: usage, steps: steps, transcript: messages)
+            }
             if !r.message.content.isEmpty { onEvent?(.text(r.message.content)) }
             for call in r.message.toolCalls {
                 onProgress?("\(call.name) \(call.arguments.text.prefix(80))")

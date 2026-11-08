@@ -429,13 +429,21 @@ public enum OpenCodeChatStream {
 
 // MARK: - Runner
 
-/// Runs a chat CLI, feeds its stdout line by line through `parse` and reports events on the main actor.
+/// Runs a chat CLI, feeds its stdout line by line through `parse` and reports events in order (main actor or `emit`).
 /// Cancelling the calling task terminates the process. The result is the last `.result` event, or a reply
 /// built from the exit status when the CLI doesn't send one.
 public enum CLIChatRunner {
     public static func run(executable: String, arguments: [String], environment: [String: String], cwd: String,
                            parse: @escaping @Sendable (String) -> [ChatEvent],
                            onEvent: @escaping @MainActor (ChatEvent) -> Void) async -> Result<ClaudePrint.Reply, Error> {
+        let relay = MainActorRelay(onEvent)
+        return await run(executable: executable, arguments: arguments, environment: environment, cwd: cwd, parse: parse, emit: relay.send)
+    }
+
+    /// Same, but events go synchronously to `emit` in stream order (BSD-45, used by `ChatEngine`).
+    public static func run(executable: String, arguments: [String], environment: [String: String], cwd: String,
+                           parse: @escaping @Sendable (String) -> [ChatEvent],
+                           emit: @escaping @Sendable (ChatEvent) -> Void) async -> Result<ClaudePrint.Reply, Error> {
         #if os(macOS) || os(Linux)
         let p = Process()
         p.executableURL = URL(fileURLWithPath: executable)
@@ -451,7 +459,7 @@ public enum CLIChatRunner {
         let name = URL(fileURLWithPath: executable).lastPathComponent
         out.fileHandleForReading.readabilityHandler = { h in
             for line in state.feed(h.availableData) {
-                for e in parse(line) { state.note(e); state.sawEvent(); Task { @MainActor in onEvent(e) } }
+                for e in parse(line) { state.note(e); state.sawEvent(); emit(e) }
             }
         }
         err.fileHandleForReading.readabilityHandler = { h in state.appendError(h.availableData) }
@@ -462,7 +470,7 @@ public enum CLIChatRunner {
                     err.fileHandleForReading.readabilityHandler = nil
                     let rest = out.fileHandleForReading.readDataToEndOfFile()
                     for line in state.feed(rest + Data([0x0A])) {
-                        for e in parse(line) { state.note(e); state.sawEvent(); Task { @MainActor in onEvent(e) } }
+                        for e in parse(line) { state.note(e); state.sawEvent(); emit(e) }
                     }
                     Log.info("\(name) finished in \(String(format: "%.1f", Date().timeIntervalSince(started))) s (status \(proc.terminationStatus))", category: "agents")
                     if proc.terminationReason == .uncaughtSignal {
