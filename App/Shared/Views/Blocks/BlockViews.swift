@@ -848,17 +848,19 @@ struct SyncedBlockView: View {
     }
 }
 
-/// Notion button: inserts its (hidden) child blocks, adds a page to a database, or opens a page.
+/// Notion button: runs its steps in order — insert its (hidden) child blocks, add a page to a database, open a
+/// page / the page just added / a link, ask for confirmation. Edited in Notion's "When → Do" panel.
 struct ButtonBlockView: View {
     let block: Block
     let editor: EditorController
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
     @State private var editing = false
     @State private var label = ""
     @State private var hover = false
-    @State private var pageQuery = ""
+    @State private var pause: ButtonPause?
 
-    private var action: ButtonAction { block.props.buttonAction ?? ButtonAction(kind: .insertBlocks) }
+    private var steps: [ButtonAction] { block.props.effectiveButtonActions }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -884,12 +886,12 @@ struct ButtonBlockView: View {
                 .help("Edit button")
                 // Notion edits a button in a floating panel next to it, not inline (that pushed into the next column).
                 .panelPopover(isPresented: $editing, arrowEdge: .bottom) {
-                    config.environment(model).arrowlessPopover()
+                    ButtonEditor(block: block, label: $label) { editing = false }.environment(model)
                 }
             }
             .onHover { hover = $0 }
             // "Insert blocks" keeps its template blocks editable right under the button while the panel is open.
-            if editing, action.kind == .insertBlocks {
+            if editing, steps.contains(where: { $0.kind == .insertBlocks }) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Blocks this button inserts").font(.system(size: 12)).foregroundStyle(Theme.secondary)
                     if model.registry.block(block.id).children.isEmpty {
@@ -902,123 +904,327 @@ struct ButtonBlockView: View {
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(Theme.divider)))
             }
         }
-    }
-
-    private var symbol: String {
-        switch action.kind {
-        case .insertBlocks: return "plus.square.on.square"
-        case .addPage: return "plus"
-        case .openPage: return "arrow.up.right"
+        .confirmationDialog(pause?.message ?? "", isPresented: Binding(get: { pause != nil }, set: { if !$0 { pause = nil } })) {
+            Button("Continue") { if let p = pause { pause = nil; run(from: p.next, added: p.added) } }
+            Button("Cancel", role: .cancel) { pause = nil }
         }
     }
+
+    private var symbol: String { steps.first(where: { $0.kind != .confirm })?.kind.symbol ?? "cursorarrow.click" }
 
     private var helpText: String {
-        switch action.kind {
-        case .insertBlocks: return "Insert blocks"
-        case .addPage: return "Add a page to " + (action.targetID.flatMap { model.store.databases[$0]?.title.plainText } ?? "a database")
-        case .openPage: return "Open " + (action.targetID.map { model.store.title(of: $0) } ?? "a page")
+        steps.map { a in
+            switch a.kind {
+            case .addPage: return "Add a page to " + (a.targetID.flatMap { model.store.databases[$0]?.title.plainText } ?? "a database")
+            case .openPage: return "Open " + (a.targetID.map { model.store.title(of: $0) } ?? "a page")
+            default: return a.kind.displayName
+            }
+        }.joined(separator: " → ")
+    }
+
+    private func run(from start: Int = 0, added: [Int: RecordID] = [:]) {
+        let result = model.store.runButton(block.id, from: start, added: added)
+        for e in result.effects {
+            switch e {
+            case .open(let id, let mode): model.open(id, mode: mode)
+            case .openURL(let u):
+                let fixed = u.contains("://") ? u : "https://" + u
+                if let url = URL(string: fixed) { openURL(url) }
+            case .focusEnd(let id): editor.focusEnd(id)
+            case .needsSetup: editing = true
+            }
+        }
+        pause = result.pause
+    }
+}
+
+/// Notion's button editor: icon + name, "When: Button is clicked", "Do:" the steps as cards (each with its own
+/// pickers), "+ Add action", Done.
+struct ButtonEditor: View {
+    let block: Block
+    @Binding var label: String
+    let done: () -> Void
+    @Environment(AppModel.self) private var model
+
+    private var live: Block { model.store.blocks[block.id] ?? block }
+    private var steps: [ButtonAction] { live.props.effectiveButtonActions }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "cursorarrow.click.2")
+                    .font(.system(size: 15))
+                    .frame(width: 32, height: 32)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).stroke(Color(Theme.divider)))
+                TextField("Button name", text: $label)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 18, weight: .medium))
+                    .onChange(of: label) { _, v in
+                        model.store.updateBlock(block.id, name: "Rename button", coalesce: "button-\(block.id)") { $0.props.buttonLabel = v }
+                    }
+                Button(role: .destructive) { done(); model.store.deleteBlocks([block.id]) } label: { Image(systemName: "trash") }
+                    .buttonStyle(.quiet)
+                    .foregroundStyle(Theme.secondary)
+                    .help("Delete button")
+            }
+            .padding(14)
+            Rectangle().fill(Theme.gridLine).frame(height: 1).padding(.horizontal, 14)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    section("When")
+                    card {
+                        Label("Button is clicked", systemImage: "cursorarrow.rays").font(DS.Text.ui())
+                    }
+                    Rectangle().fill(Color(Theme.divider)).frame(width: 1, height: 22).frame(maxWidth: .infinity)
+                    section("Do")
+                    VStack(spacing: 8) {
+                        ForEach(Array(steps.enumerated()), id: \.offset) { i, a in
+                            ButtonStepCard(block: block, index: i, action: a, steps: steps, update: { f in update(i, f) },
+                                           remove: { edit { $0.remove(at: i) } },
+                                           move: { d in edit { s in let j = i + d; if s.indices.contains(j) { s.swapAt(i, j) } } })
+                                .transition(DS.Motion.foldTransition)
+                        }
+                        addAction
+                    }
+                    .animation(DS.Motion.reorder, value: steps.count)
+                }
+                .padding(.horizontal, 14).padding(.bottom, 12)
+            }
+            .frame(maxHeight: 520)
+            Button(action: done) {
+                Text("Done").font(DS.Text.ui(.medium)).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).frame(height: 32)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.accentBlue))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.defaultAction)
+            .padding(14)
+        }
+        .font(.system(size: 13))
+        .frame(width: 400)
+    }
+
+    private func section(_ t: String) -> some View {
+        Text(t).font(DS.Text.small(.medium)).foregroundStyle(Theme.secondary).padding(.top, 12).padding(.bottom, 6)
+    }
+
+    private func card<C: View>(@ViewBuilder _ c: () -> C) -> some View {
+        c()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).fill(Theme.primary.opacity(DS.Fill.rest)))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
+    }
+
+    private var addAction: some View {
+        Menu {
+            ForEach(ButtonAction.Kind.allCases, id: \.self) { k in
+                Button(k.displayName, systemImage: k.symbol) { edit { $0.append(Self.newStep(k, after: $0)) } }
+            }
+        } label: {
+            Label("Add action", systemImage: "plus")
+                .font(DS.Text.ui())
+                .foregroundStyle(Theme.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12).frame(height: 40)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .accessibilityIdentifier("button.addAction")
+    }
+
+    static func newStep(_ k: ButtonAction.Kind, after steps: [ButtonAction]) -> ButtonAction {
+        switch k {
+        case .openAdded:
+            return ButtonAction(kind: .openAdded, mode: .sidePeek, step: steps.lastIndex { $0.kind == .addPage })
+        case .openPage: return ButtonAction(kind: .openPage, mode: .fullPage)
+        default: return ButtonAction(kind: k)
         }
     }
 
-    private func setAction(_ f: (inout ButtonAction) -> Void) {
-        var a = action
-        f(&a)
-        model.store.updateBlock(block.id, name: "Edit button") { $0.props.buttonAction = a }
+    private func edit(_ f: (inout [ButtonAction]) -> Void) {
+        var s = steps
+        f(&s)
+        model.store.updateBlock(block.id, name: "Edit button") { b in
+            b.props.buttonActions = s
+            b.props.buttonAction = nil
+        }
+    }
+
+    private func update(_ i: Int, _ f: (inout ButtonAction) -> Void) {
+        edit { s in if s.indices.contains(i) { f(&s[i]) } }
+    }
+}
+
+/// One "Do" step in the button editor.
+private struct ButtonStepCard: View {
+    let block: Block
+    let index: Int
+    let action: ButtonAction
+    let steps: [ButtonAction]
+    let update: ((inout ButtonAction) -> Void) -> Void
+    let remove: () -> Void
+    let move: (Int) -> Void
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+    @State private var pageQuery = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: action.kind.symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.accentBlue)
+                    .frame(width: 22, height: 22)
+                    .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.accentBlue.opacity(0.12)))
+                headline
+                Spacer(minLength: 0)
+                Menu {
+                    Button("Move up", systemImage: "arrow.up") { move(-1) }.disabled(index == 0)
+                    Button("Move down", systemImage: "arrow.down") { move(1) }.disabled(index == steps.count - 1)
+                    Divider()
+                    Button("Delete", systemImage: "trash", role: .destructive) { remove() }
+                } label: { Image(systemName: "ellipsis").frame(width: 22, height: 22).contentShape(Rectangle()) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                .foregroundStyle(Theme.secondary)
+                .opacity(hover ? 1 : 0)
+            }
+            detail
+        }
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).fill(Theme.primary.opacity(DS.Fill.rest)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
+        .onHover { hover = $0 }
+    }
+
+    /// The sentence of the step with its main picker inline ("Add page to [Projects ⌄]", "Open [① Page added ⌄] in [Side peek ⌄]").
+    @ViewBuilder
+    private var headline: some View {
+        switch action.kind {
+        case .addPage:
+            Text("Add page to")
+            databaseMenu
+        case .openAdded:
+            Text("Open")
+            addedMenu
+            Text("in")
+            modeMenu
+        case .openPage:
+            Text("Open")
+            if let t = action.targetID {
+                HStack(spacing: 4) {
+                    PageIconView(icon: model.store.icon(of: t), size: 13)
+                    Text(model.store.title(of: t).nonEmptyOr("Untitled")).lineLimit(1)
+                }
+                .padding(.horizontal, 6).frame(height: 22)
+                .background(RoundedRectangle(cornerRadius: 5).fill(Theme.primary.opacity(DS.Fill.hover)))
+            }
+            Text("in")
+            modeMenu
+        default:
+            Text(action.kind.displayName)
+        }
     }
 
     @ViewBuilder
-    private var config: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Edit button").font(.system(size: 13, weight: .semibold)).padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 8)
-            VStack(alignment: .leading, spacing: 12) {
+    private var detail: some View {
+        switch action.kind {
+        case .insertBlocks:
+            Text("The blocks under the button (shown while this panel is open) are inserted below it.")
+                .font(DS.Text.small()).foregroundStyle(Theme.secondary)
+        case .addPage:
+            if let db = model.store.databases[action.targetID ?? ""] {
                 field("Name") {
-                    TextField("Button name", text: $label)
+                    TextField("Untitled", text: Binding(get: { action.title ?? "" }, set: { v in update { $0.title = v.isEmpty ? nil : v } }))
                         .textFieldStyle(.plain)
-                        .padding(.horizontal, 8).padding(.vertical, 6)
-                        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.hoverFill))
-                        .onChange(of: label) { _, v in model.store.updateBlock(block.id, name: "Rename button", coalesce: "button-\(block.id)") { $0.props.buttonLabel = v } }
                 }
-                field("When clicked") {
-                    Picker("", selection: Binding(get: { action.kind }, set: { k in setAction { $0.kind = k; $0.targetID = nil; $0.values = nil } })) {
-                        Label("Insert blocks", systemImage: "plus.square.on.square").tag(ButtonAction.Kind.insertBlocks)
-                        Label("Add page to database", systemImage: "plus").tag(ButtonAction.Kind.addPage)
-                        Label("Open page", systemImage: "arrow.up.right").tag(ButtonAction.Kind.openPage)
-                    }
-                    .labelsHidden().pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
-                }
-                switch action.kind {
-                case .insertBlocks:
-                    Text("Edit the blocks to insert below the button.").font(.system(size: 12)).foregroundStyle(Theme.secondary)
-                case .addPage:
-                    let dbs = model.store.databases.values.filter { model.store.blocks[$0.blockID]?.trashedAt == nil }
-                        .sorted { $0.title.plainText.localizedCaseInsensitiveCompare($1.title.plainText) == .orderedAscending }
-                    field("Database") {
-                        Picker("", selection: Binding(get: { action.targetID ?? "" }, set: { id in setAction { $0.targetID = id.isEmpty ? nil : id; $0.values = nil } })) {
-                            Text("Choose…").tag("")
-                            ForEach(dbs, id: \.id) { db in Text(db.title.plainText.isEmpty ? "Untitled" : db.title.plainText).tag(db.id) }
-                        }
-                        .labelsHidden().pickerStyle(.menu).frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    if let db = model.store.databases[action.targetID ?? ""] {
-                        let presets = db.properties.filter { [.select, .status].contains($0.type) }
-                        if !presets.isEmpty {
-                            field("Set properties") {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    ForEach(presets) { p in presetRow(p) }
-                                }
+                let presets = db.properties.filter { [.select, .status].contains($0.type) }
+                ForEach(presets) { p in presetRow(p) }
+            }
+        case .openPage:
+            VStack(alignment: .leading, spacing: 4) {
+                TextField("Search pages…", text: $pageQuery)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 8).frame(height: 28)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.hoverFill))
+                if !pageQuery.isEmpty {
+                    let q = pageQuery.lowercased()
+                    ForEach(model.store.allPages().filter { $0.trashedAt == nil && $0.title.lowercased().contains(q) }.prefix(6), id: \.id) { p in
+                        Button { update { $0.targetID = p.id }; pageQuery = "" } label: {
+                            HStack(spacing: 6) {
+                                PageIconView(icon: p.props.icon, size: 14)
+                                Text(model.store.title(of: p.id)).lineLimit(1)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                    }
-                    Toggle("Open the new page", isOn: Binding(get: { action.openAfter ?? true }, set: { v in setAction { $0.openAfter = v } }))
-                        .toggleStyle(.checkbox)
-                case .openPage:
-                    field("Page") {
-                        VStack(alignment: .leading, spacing: 4) {
-                            if let t = action.targetID {
-                                HStack(spacing: 6) {
-                                    PageIconView(icon: model.store.icon(of: t), size: 14)
-                                    Text(model.store.title(of: t)).fontWeight(.medium).lineLimit(1)
-                                }
-                            }
-                            TextField("Search pages…", text: $pageQuery)
-                                .textFieldStyle(.plain)
-                                .padding(.horizontal, 8).padding(.vertical, 6)
-                                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.hoverFill))
-                            if !pageQuery.isEmpty {
-                                let q = pageQuery.lowercased()
-                                ForEach(model.store.allPages().filter { $0.trashedAt == nil && $0.title.lowercased().contains(q) }.prefix(6), id: \.id) { p in
-                                    Button { setAction { $0.targetID = p.id }; pageQuery = "" } label: {
-                                        HStack(spacing: 6) {
-                                            PageIconView(icon: p.props.icon, size: 14)
-                                            Text(model.store.title(of: p.id)).lineLimit(1)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                    .buttonStyle(.hoverFill)
-                                }
-                            }
-                        }
+                        .buttonStyle(.hoverFill)
                     }
                 }
             }
-            .padding(.horizontal, 14).padding(.bottom, 14)
-            Rectangle().fill(Theme.gridLine).frame(height: 1)
-            HStack {
-                Button(role: .destructive) { editing = false; model.store.deleteBlocks([block.id]) } label: { Label("Delete button", systemImage: "trash") }
-                    .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
-                Spacer()
-                Button("Done") { editing = false }.keyboardShortcut(.defaultAction).controlSize(.small)
+        case .openURL:
+            field("Link") {
+                TextField("https://…", text: Binding(get: { action.url ?? "" }, set: { v in update { $0.url = v.isEmpty ? nil : v } }))
+                    .textFieldStyle(.plain)
             }
-            .padding(.horizontal, 10).padding(.vertical, 8)
+        case .confirm:
+            field("Message") {
+                TextField("Are you sure?", text: Binding(get: { action.message ?? "" }, set: { v in update { $0.message = v.isEmpty ? nil : v } }))
+                    .textFieldStyle(.plain)
+            }
+        case .openAdded:
+            if !steps.contains(where: { $0.kind == .addPage }) {
+                Text("Add an “Add page to” step first.").font(DS.Text.small()).foregroundStyle(Theme.secondary)
+            }
         }
-        .font(.system(size: 13))
-        .frame(width: 320)
+    }
+
+    private var databaseMenu: some View {
+        let dbs = model.store.databases.values.filter { model.store.blocks[$0.blockID]?.trashedAt == nil }
+            .sorted { $0.title.plainText.localizedCaseInsensitiveCompare($1.title.plainText) == .orderedAscending }
+        let current = action.targetID.flatMap { model.store.databases[$0] }
+        return Menu {
+            ForEach(dbs, id: \.id) { db in
+                Button(db.title.plainText.nonEmptyOr("Untitled")) { update { $0.targetID = db.id; $0.values = nil } }
+            }
+        } label: {
+            ChipMenuLabel(text: current.map { $0.title.plainText.nonEmptyOr("Untitled") } ?? "Choose database")
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+    }
+
+    private var addedMenu: some View {
+        let adds = steps.enumerated().filter { $0.element.kind == .addPage && $0.offset < index }
+        let current = action.step.flatMap { s in adds.firstIndex { $0.offset == s } }
+        return Menu {
+            ForEach(Array(adds.enumerated()), id: \.offset) { n, e in
+                Button("\(n + 1) · Page added") { update { $0.step = e.offset } }
+            }
+        } label: {
+            ChipMenuLabel(text: current.map { "\($0 + 1) · Page added" } ?? "Page added")
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+    }
+
+    private var modeMenu: some View {
+        Menu {
+            ForEach(OpenMode.allCases, id: \.self) { m in Button(m.displayName) { update { $0.mode = m } } }
+        } label: {
+            ChipMenuLabel(text: (action.mode ?? .fullPage).displayName)
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
     }
 
     private func field<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.secondary)
+        HStack(spacing: 8) {
+            Text(title).foregroundStyle(Theme.secondary).frame(width: 90, alignment: .leading)
             content()
+                .padding(.horizontal, 8).frame(height: 28)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.hoverFill))
         }
     }
 
@@ -1031,9 +1237,9 @@ struct ButtonBlockView: View {
             }
         }()
         return HStack(spacing: 8) {
-            Label(p.name, systemImage: p.type.symbol).lineLimit(1).frame(width: 110, alignment: .leading).foregroundStyle(Theme.secondary)
+            Label(p.name, systemImage: p.type.symbol).lineLimit(1).frame(width: 90, alignment: .leading).foregroundStyle(Theme.secondary)
             Picker("", selection: Binding(get: { current ?? "" }, set: { id in
-                setAction { a in
+                update { a in
                     var v = a.values ?? [:]
                     v[p.id] = id.isEmpty ? nil : (p.type == .status ? .status(id) : .select(id))
                     a.values = v.isEmpty ? nil : v
@@ -1044,30 +1250,6 @@ struct ButtonBlockView: View {
             }
             .labelsHidden().pickerStyle(.menu)
         }
-    }
-
-    private func run() {
-        switch action.kind {
-        case .addPage:
-            guard let dbID = action.targetID, model.store.databases[dbID] != nil else { editing = true; return }
-            let id = model.store.addRow(to: dbID, values: action.values ?? [:])
-            if action.openAfter ?? true { model.open(id, mode: .centerPeek) }
-            return
-        case .openPage:
-            guard let id = action.targetID, model.store.blocks[id] != nil else { editing = true; return }
-            model.open(id)
-            return
-        case .insertBlocks: break
-        }
-        let store = model.store
-        let kids = store.contentBlocks(of: block.id)
-        guard !kids.isEmpty else { editing = true; return }
-        var last = block.id
-        store.transact("Insert from button") { tx in
-            let keys = tx.sortKeys(kids.count, in: block.parent, .after(block.id))
-            for (k, key) in zip(kids, keys) { last = store.copySubtree(k, parent: block.parent, sortKey: key, tx: tx) }
-        }
-        editor.focusEnd(last)
     }
 }
 

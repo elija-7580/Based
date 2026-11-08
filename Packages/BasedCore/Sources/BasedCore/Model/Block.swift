@@ -240,18 +240,64 @@ public struct BookmarkMeta: Codable, Hashable, Sendable {
     }
 }
 
-/// Notion button actions.
+/// One step of a Notion button ("When button is clicked → Do: …"). A button runs its steps in order.
 public struct ButtonAction: Codable, Hashable, Sendable {
-    public enum Kind: String, Codable, CaseIterable, Sendable { case insertBlocks, addPage, openPage }
+    public enum Kind: String, Codable, CaseIterable, Sendable {
+        /// Insert the button's child blocks below it.
+        case insertBlocks
+        /// Add a page to a database (`targetID`), with a name (`title`) and property values (`values`).
+        case addPage
+        /// Open a page (`targetID`) in `mode`.
+        case openPage
+        /// Open a page added by an earlier step (`step`: index of that step; nil = the last page added).
+        case openAdded
+        /// Open a web link (`url`).
+        case openURL
+        /// Ask before going on (`message`); Cancel stops the remaining steps.
+        case confirm
+
+        public var displayName: String {
+            switch self {
+            case .insertBlocks: return "Insert blocks"
+            case .addPage: return "Add page to"
+            case .openPage: return "Open page"
+            case .openAdded: return "Open added page"
+            case .openURL: return "Open link"
+            case .confirm: return "Show confirmation"
+            }
+        }
+        public var symbol: String {
+            switch self {
+            case .insertBlocks: return "plus.square.on.square"
+            case .addPage: return "plus"
+            case .openPage, .openAdded: return "arrow.up.right"
+            case .openURL: return "link"
+            case .confirm: return "checkmark.circle"
+            }
+        }
+    }
     public var kind: Kind
     /// Database for `addPage`, page for `openPage`.
     public var targetID: RecordID?
-    /// `addPage`: open the new page afterwards (default true).
+    /// Legacy single-action buttons: open the added page afterwards (default true). Steps use `openAdded`.
     public var openAfter: Bool?
     /// `addPage`: property values for the new page (property id → value), like Notion's "Add page to … with".
     public var values: [String: PropertyValue]?
-    public init(kind: Kind, targetID: RecordID? = nil, openAfter: Bool? = nil, values: [String: PropertyValue]? = nil) {
+    /// `addPage`: name of the new page.
+    public var title: String?
+    /// `openPage` / `openAdded`: where to open (nil = the app's default).
+    public var mode: OpenMode?
+    /// `openAdded`: index of the `addPage` step whose page opens (nil = the last page added).
+    public var step: Int?
+    /// `openURL`: the link.
+    public var url: String?
+    /// `confirm`: the question.
+    public var message: String?
+
+    public init(kind: Kind, targetID: RecordID? = nil, openAfter: Bool? = nil, values: [String: PropertyValue]? = nil,
+                title: String? = nil, mode: OpenMode? = nil, step: Int? = nil, url: String? = nil, message: String? = nil) {
         self.kind = kind; self.targetID = targetID; self.openAfter = openAfter; self.values = values
+        self.title = title; self.mode = mode; self.step = step; self.url = url; self.message = message
     }
 }
 
@@ -289,7 +335,10 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var isTemplate: Bool?
     public var buttonLabel: String?
     /// What a button block does when clicked (nil = insert its child blocks, the original behaviour).
+    /// Superseded by `buttonActions`; still read for buttons made before steps existed.
     public var buttonAction: ButtonAction?
+    /// A button's steps, run in order ("When button is clicked → Do: …"). See `effectiveButtonActions`.
+    public var buttonActions: [ButtonAction]?
     /// Top-level pages only: the teamspace whose sidebar section lists the page (nil = Private).
     public var teamspace: RecordID?
 
