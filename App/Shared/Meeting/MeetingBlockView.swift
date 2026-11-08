@@ -51,7 +51,13 @@ struct MeetingBlockView: View {
         }
         .alert("Rename speaker", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $newName)
-            Button("Save") { if let s = renaming { store.renameSpeaker(block.id, speaker: s.id, to: newName) }; renaming = nil }
+            Button("Save") {
+                if let s = renaming {
+                    store.renameSpeaker(block.id, speaker: s.id, to: newName)
+                    service.speakerRenamed(block.id, speaker: s.id, to: newName, model: model)
+                }
+                renaming = nil
+            }
             Button("Cancel", role: .cancel) { renaming = nil }
         }
         .alert("Summary instructions", isPresented: $editingInstructions) {

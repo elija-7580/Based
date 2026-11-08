@@ -95,18 +95,24 @@ actor SpeechEngine {
     }
 
     /// Who spoke when, in a file. Labels are the diarizer's ("S1", "S2" …), stable within one file.
-    func speakerTurns(file url: URL) async throws -> [SpeakerTurn] {
+    /// `voices` are the speaker embeddings of each turn (for voice profiles; only used when the user opted in).
+    func speakerSeparation(file url: URL) async throws -> (turns: [SpeakerTurn], voices: [VoiceSample]) {
         #if canImport(FluidAudio)
         if diarizer == nil {
             let d = OfflineDiarizerManager(config: .default)
             try await d.prepareModels()
             diarizer = d
         }
-        guard let diarizer else { return [] }
+        guard let diarizer else { return ([], []) }
         let result = try await diarizer.process(url)
-        return result.segments.map {
+        let turns = result.segments.map {
             SpeakerTurn(start: Double($0.startTimeSeconds), end: Double($0.endTimeSeconds), speaker: $0.speakerId)
         }
+        let voices = result.segments.map {
+            VoiceSample(speaker: $0.speakerId, embedding: $0.embedding,
+                        weight: Double(max(0, $0.endTimeSeconds - $0.startTimeSeconds)) * Double(max(0.05, $0.qualityScore)))
+        }
+        return (turns, voices)
         #else
         throw MeetingEngineError.unavailable
         #endif

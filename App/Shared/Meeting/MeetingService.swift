@@ -208,6 +208,39 @@ final class MeetingService {
         }
     }
 
+    // MARK: Voice profiles (opt-in, this device only)
+
+    @ObservationIgnored private var voiceStore: VoiceProfileStore?
+
+    /// Voice profiles live in this device's local database (never synced), next to the workspace.
+    func voices(_ model: AppModel) -> VoiceProfileStore {
+        if let voiceStore, voiceStore.persistence === model.store.persistence { return voiceStore }
+        let s = VoiceProfileStore(persistence: model.store.persistence)
+        voiceStore = s
+        return s
+    }
+
+    private var remembersVoices: Bool { UserDefaults.standard.bool(forKey: Prefs.meetingRememberVoices) }
+
+    /// After the final pass: label speakers whose voice is known. Speakers the user already named keep their name.
+    private func recogniseVoices(_ meetingID: RecordID, _ samples: [VoiceSample], model: AppModel) {
+        guard remembersVoices, !samples.isEmpty else { return }
+        let found = voices(model).recognise(meeting: meetingID, samples: samples)
+        guard !found.isEmpty else { return }
+        model.store.updateMeeting(meetingID, name: "Recognised speakers", undoable: false) { m in
+            m.speakers = (m.speakers ?? []).map { s in
+                guard let p = found[s.id], s.name.hasPrefix("Speaker ") else { return s }
+                var named = s; named.name = p.name; return named
+            }
+        }
+    }
+
+    /// The user named a speaker: teach that voice (only when the feature is on).
+    func speakerRenamed(_ meetingID: RecordID, speaker: String, to name: String, model: AppModel) {
+        guard remembersVoices else { return }
+        voices(model).learn(meeting: meetingID, speaker: speaker, name: name)
+    }
+
     // MARK: Final pass
 
     /// Re-transcribes every track from its file and separates the speakers, replacing the live transcript.
@@ -224,6 +257,7 @@ final class MeetingService {
         loadModelInBackground()
 
         var segments: [TranscriptSegment] = []
+        var voiceSamples: [VoiceSample] = []
         var failure: String?
         let sessions = Dictionary(grouping: tracks.enumerated(), by: { $0.element.offset })
         for (_, group) in sessions.sorted(by: { $0.key < $1.key }) {
@@ -237,9 +271,10 @@ final class MeetingService {
                                                    track: track.role, idPrefix: "t\(index)-")
                     if fixedSpeaker == nil {
                         // Diarization failing (too short, model missing) still leaves a usable transcript.
-                        let turns = (try? await SpeechEngine.shared.speakerTurns(file: url)) ?? []
-                        let shifted = turns.map { SpeakerTurn(start: $0.start + track.offset, end: $0.end + track.offset,
-                                                              speaker: "t\(index)-\($0.speaker)") }
+                        let separated = (try? await SpeechEngine.shared.speakerSeparation(file: url)) ?? (turns: [], voices: [])
+                        let shifted = separated.turns.map { SpeakerTurn(start: $0.start + track.offset, end: $0.end + track.offset,
+                                                                        speaker: "t\(index)-\($0.speaker)") }
+                        voiceSamples += separated.voices.map { var v = $0; v.speaker = "t\(index)-\(v.speaker)"; return v }
                         segs = Transcript.assignSpeakers(segs, turns: shifted)
                         if shifted.isEmpty && track.role == .system {
                             segs = segs.map { var s = $0; s.speaker = MeetingSpeaker.othersID; return s }
@@ -262,6 +297,7 @@ final class MeetingService {
             m.speakers = WorkspaceStore.mergedSpeakers(m.speakers ?? [], used: segments.sorted { $0.start < $1.start }.compactMap(\.speaker))
             m.error = failure
         }
+        recogniseVoices(meetingID, voiceSamples, model: model)
         store.setMeetingStatus(meetingID, .done)
 
         if model.brain.hasEngine, store.meetingInfo(meetingID)?.summary != .done {
