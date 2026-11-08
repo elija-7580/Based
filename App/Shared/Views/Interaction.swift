@@ -332,12 +332,19 @@ private struct PanelAppear: ViewModifier {
 extension View {
     /// The app's popover: Notion-style floating panel — no arrow, no AppKit fade, quick fade-and-scale in,
     /// instant close. Use this instead of `.popover(isPresented:)` so every menu feels the same.
+    @ViewBuilder
     func panelPopover<Content: View>(isPresented: Binding<Bool>, arrowEdge: Edge? = nil,
                                      @ViewBuilder content: @escaping () -> Content) -> some View {
-        popover(isPresented: isPresented, arrowEdge: arrowEdge) {
+        let panel = {
             content()
                 .modifier(PanelAppear(anchor: Self.anchor(for: arrowEdge)))
                 .arrowlessPopover()
+        }
+        // Non-optional `arrowEdge` overload only: it exists on every SDK / deployment target we build for.
+        if let arrowEdge {
+            popover(isPresented: isPresented, arrowEdge: arrowEdge, content: panel)
+        } else {
+            popover(isPresented: isPresented, content: panel)
         }
     }
 

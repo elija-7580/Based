@@ -41,7 +41,12 @@ final class PageHistory {
         guard history != nil else { return }
         token = store.observe { [weak self] change in
             guard change.origin == .local || change.origin == .undo || change.origin == .redo else { return }
-            MainActor.assumeIsolated { self?.noteChange(change) }
+            // Local edits come from the main thread; anything else (agents, tools) is handed over to it.
+            if Thread.isMainThread {
+                MainActor.assumeIsolated { self?.noteChange(change) }
+            } else {
+                Task { @MainActor in self?.noteChange(change) }
+            }
         }
         timer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
