@@ -70,6 +70,7 @@ public struct SearchEngine {
                 var text = b.text.plainText
                 if let cells = b.props.cells { text += " " + cells.map(\.plainText).joined(separator: " ") }
                 if let c = b.props.caption { text += " " + c.plainText }
+                if let segs = b.props.segments { text += " " + segs.lazy.filter { !$0.isPartial }.map(\.text).joined(separator: " ") }
                 guard !text.isEmpty else { continue }
                 let folded = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
                 guard terms.allSatisfy({ folded.contains($0) }) else { continue }

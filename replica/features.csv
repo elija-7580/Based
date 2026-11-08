@@ -132,8 +132,8 @@ Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested"
 Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now
 Page history / versions,history,should,yes,no,
 Comments and discussions,collaboration,should,yes,no,
-Sharing and permissions,collaboration,could,yes,no,single user scope
-Publish to web,collaboration,could,yes,no,
+Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view"
+Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included"
 Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended"
 Import Markdown files,import,must,yes,yes,
 Export page as Markdown,export,must,yes,yes,
@@ -204,3 +204,4 @@ Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineA
 Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS)
 Lossless workspace archive export/import,export,should,no,yes,.based.jsonl in sync-protocol shape (WorkspaceArchive)
 Web client,platforms,should,yes,partial,based-server /app: tree + pages over sync v2, live updates, plain-text editing
+AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)"

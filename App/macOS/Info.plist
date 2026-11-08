@@ -26,5 +26,7 @@
 	<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key><string>MIT License</string>
+	<key>NSMicrophoneUsageDescription</key><string>Based records meetings and lectures you choose to transcribe.</string>
+	<key>NSAudioCaptureUsageDescription</key><string>Based records the other participants of a call (Zoom, Meet, Teams) when you transcribe a meeting.</string>
 </dict>
 </plist>

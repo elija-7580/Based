@@ -485,6 +485,11 @@ struct BlockContent: View {
             SyncedBlockView(block: block, editor: editor)
         case .button:
             ButtonBlockView(block: block, editor: editor)
+        case .meeting:
+            MeetingBlockView(block: block, editor: editor)
+        case .meetingSection, .transcript:
+            // Laid out by MeetingBlockView.
+            EmptyView()
         }
     }
 }

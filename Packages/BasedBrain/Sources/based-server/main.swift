@@ -10,6 +10,7 @@ import BasedBrain
 //   • Logs (JSONL, same format as the apps)           GET /logs?level=warning&limit=200
 //   • Claude Code / Codex chats on this machine       GET /cli-sessions, GET /cli-sessions/{id}/transcript
 //   • Agent setup check                               GET /doctor
+//   • Sharing: links, invites, published pages        /s/<secret>, /p/<id>, /share/v1/…  (ShareRoutes.swift)
 // Configuration via flags or env: BASED_DB, BASED_PORT, BASED_TOKEN, ANTHROPIC_API_KEY, OPENAI_API_KEY, OLLAMA_URL
 
 struct Options {
@@ -88,6 +89,8 @@ func log(_ s: String, category: String = "server") { Log.info(s, category: categ
 
 let (store, tools, mcp, sync, runtime, happier) = try await MainActor.run { try boot() }
 _ = store
+// Sharing: people, links and published pages with roles (ShareRoutes.swift, docs/sharing.md).
+let share = await MainActor.run { ShareService(store: store) }
 
 if opts.stdio {
     await StdioTransport(server: mcp).run()
@@ -128,6 +131,7 @@ let server = HTTPServer(port: opts.port) { req in
     if req.method == "OPTIONS" {
         return HTTPServer.Response(status: 204, headers: ["Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Authorization, Content-Type, Mcp-Session-Id"])
     }
+    if let shared = await ShareRoutes.handle(req, share: share, sync: sync, store: store, ownerToken: opts.token) { return shared }
     switch (req.method, req.path) {
     case ("GET", "/health"), ("GET", "/"):
         return .json(["ok": true, "name": "based-server", "time": .string(ISO8601DateFormatter().string(from: Date()))])

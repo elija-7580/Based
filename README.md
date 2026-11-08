@@ -15,6 +15,13 @@ Notion's features and built clean-room from public documentation.
 
 ## What works
 
+**New (Pass 23):** **meeting notes** (`/meet`) — records microphone and system audio as separate tracks, transcribes
+on device (Parakeet v3, 25 languages incl. German) live and again in full after you stop, separates speakers, links
+every line and note to the audio, takes pages and notes as context, summarises with your configured AI engine and
+can recognise voices across meetings (opt-in, device-only) — see [`docs/meeting-notes.md`](docs/meeting-notes.md).
+**Sharing** through `based-server`: Full access / Can edit / Can comment / Can view on a page and everything inside
+it, access links, invites, publish to web, sync filtered by role — see [`docs/sharing.md`](docs/sharing.md).
+
 **New (Pass 20):** chat engine/model/effort/permission picker for Claude Code, Codex, Gemini CLI, OpenCode and API
 models, with live thinking, tool cards, inline diffs, approval prompts, a working folder, `@` mentions and `/` commands;
 inline AI ("space" on an empty line) and a floating formatting toolbar in the editor; syntax-highlighted code; Notion-

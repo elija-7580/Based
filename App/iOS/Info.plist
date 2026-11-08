@@ -17,7 +17,8 @@
 	<key>LSRequiresIPhoneOS</key><true/>
 	<key>UILaunchScreen</key><dict/>
 	<key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><true/></dict>
-	<key>UIBackgroundModes</key><array><string>remote-notification</string></array>
+	<key>UIBackgroundModes</key><array><string>remote-notification</string><string>audio</string></array>
+	<key>NSMicrophoneUsageDescription</key><string>Based records meetings and lectures you choose to transcribe.</string>
 	<key>UISupportsDocumentBrowser</key><false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key><false/>
 	<key>NSPhotoLibraryUsageDescription</key><string>Add images from your photo library to pages.</string>

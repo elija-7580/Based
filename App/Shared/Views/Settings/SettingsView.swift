@@ -216,11 +216,51 @@ struct MySettings: View {
             Toggle("Spell‑check", isOn: $spellCheck)
             Toggle("Autocorrect", isOn: .constant(true)).disabled(true)
         }
+        MeetingVoiceSettings()
         Section("Privacy") {
             Toggle("Cookie / analytics", isOn: .constant(false)).disabled(true)
             Text("Based never sends telemetry. AI requests go only to the providers you configured.").font(.caption).foregroundStyle(Theme.secondary)
         }
     }
+}
+
+/// Meeting notes: recognising voices across meetings (opt-in, stored only on this device).
+struct MeetingVoiceSettings: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage(Prefs.meetingRememberVoices) private var remember = false
+    @State private var profiles: [VoiceProfile] = []
+    @State private var confirmForget = false
+
+    var body: some View {
+        Section("Meeting notes") {
+            Toggle("Recognise voices across meetings", isOn: Binding(get: { remember }, set: { on in
+                remember = on
+                if !on { MeetingService.shared.voices(model).forgetAll(); profiles = [] }
+            }))
+            Text("When you name a speaker, Based remembers their voice and labels them in later meetings. Voice prints stay on this device only — they are never synced or uploaded. Turning this off deletes them.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            if remember {
+                ForEach(profiles) { p in
+                    HStack {
+                        Image(systemName: "waveform")
+                        Text(p.name)
+                        Spacer()
+                        Text("\(Int(p.weight / 60)) min").font(.caption).foregroundStyle(Theme.secondary)
+                        Button("Forget") { MeetingService.shared.voices(model).forget(p.id); reload() }
+                    }
+                }
+                if !profiles.isEmpty {
+                    Button("Forget all voices", role: .destructive) { confirmForget = true }
+                }
+            }
+        }
+        .onAppear(perform: reload)
+        .confirmationDialog("Forget all voices?", isPresented: $confirmForget) {
+            Button("Forget all", role: .destructive) { MeetingService.shared.voices(model).forgetAll(); reload() }
+        }
+    }
+
+    private func reload() { profiles = MeetingService.shared.voices(model).profiles.sorted { $0.name < $1.name } }
 }
 
 struct NotificationSettings: View {

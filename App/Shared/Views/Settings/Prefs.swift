@@ -24,6 +24,8 @@ enum Prefs {
     static let fontFamily = "pref.font"                 // "default" | "serif" | "mono"
     static let smallText = "pref.smallText"
     static let fullWidth = "pref.fullWidth"
+    /// Meeting notes: remember named speakers' voices on this device (opt-in, off by default).
+    static let meetingRememberVoices = "pref.meeting.rememberVoices"
 
     static var defaults: UserDefaults { .standard }
 

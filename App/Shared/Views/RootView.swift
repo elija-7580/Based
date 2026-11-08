@@ -102,12 +102,34 @@ struct RootView: View {
         }
         #endif
         .onOpenURL { url in
+            if url.scheme == "https" || url.scheme == "http" { openShareURL(url); return }
             guard url.scheme == "based" else { return }
             #if DEBUG && os(macOS)
             if DebugDriver.handle(url, model: model) { return }
             #endif
             // based://page/<id> (also based://<id> and Notion-style ids) — the same link agents and other apps use.
             if let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil { model.open(id) }
+        }
+    }
+
+    private func openExternally(_ url: URL) {
+        #if os(macOS)
+        NSWorkspace.shared.open(url)
+        #else
+        UIApplication.shared.open(url)
+        #endif
+    }
+
+    /// A share link of the user's own server (Universal Link /s/… or /p/…): open the page here.
+    private func openShareURL(_ url: URL) {
+        guard let base = URL(string: model.brain.serverURL), base.host == url.host,
+              let token = Secrets.get("server.token"), !token.isEmpty else { openExternally(url); return }
+        Task {
+            if let id = try? await ShareClient(baseURL: base, token: token).resolve(url), model.store.blocks[id] != nil {
+                model.open(id)
+            } else {
+                openExternally(url)
+            }
         }
     }
 
