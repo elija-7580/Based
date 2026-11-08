@@ -96,6 +96,11 @@ public final class AgentTools {
             ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
             ToolSpec(name: "list_runs", description: "List agent runs (chat turns, coding sessions, scheduled agent runs, sub-agents), newest first, with status, kind, tokens and cost.",
                      inputSchema: .schema(["status": .str("Optional: Planned | Running | Waiting | Needs you | Done | Failed | Cancelled"), "kind": .str("Optional: Chat | Session | Schedule | Subagent | Main"), "parent_id": .str("Optional: only sub-runs of this run"), "limit": .num("Max runs (default 30)")])),
+            ToolSpec(name: "list_projects", description: "List the user's projects (Active, Paused, Done) with goal, folder and how many chats/runs belong to each.", inputSchema: .schema([:])),
+            ToolSpec(name: "get_project", description: "Read a project: goal, status, folder, its overview page (Status / Next steps / Latest updates), pages, chats and recent runs.",
+                     inputSchema: .schema(["project": .str("Project id or name")], required: ["project"])),
+            ToolSpec(name: "update_project_status", description: "Post a short dated update to a project's \"Latest updates\" section, optionally changing its status.",
+                     inputSchema: .schema(["project": .str("Project id or name"), "update": .str("What happened, one or two sentences"), "status": .str("Optional: Active | Paused | Done")], required: ["project", "update"])),
             ToolSpec(name: "get_run", description: "Read one run: its fields, short protocol and direct sub-runs.",
                      inputSchema: .schema(["run_id": .str("Run id")], required: ["run_id"])),
         ] + hostSpecs + externalSpecs
@@ -134,6 +139,12 @@ public final class AgentTools {
     private func req(_ args: JSONValue, _ k: String) throws -> String {
         guard let v = args[k]?.stringValue, !v.isEmpty else { throw ToolError("Missing argument '\(k)'") }
         return v
+    }
+
+    private func project(_ a: JSONValue) throws -> AgentProject {
+        let key = try req(a, "project")
+        if let p = brain.project(key) ?? brain.project(named: key) { return p }
+        throw ToolError("No project '\(key)'. Use list_projects.")
     }
 
     static func runLine(_ r: AgentRun) -> String {
@@ -253,6 +264,39 @@ public final class AgentTools {
             let limit = max(1, a["limit"]?.int ?? 30)
             let rs = brain.runs(f).prefix(limit)
             return rs.isEmpty ? "No runs." : rs.map(Self.runLine).joined(separator: "\n")
+        case "list_projects":
+            let ps = brain.projects()
+            if ps.isEmpty { return "No projects yet." }
+            let sessions = brain.sessions(), runs = brain.runs()
+            return ps.map { p in
+                var line = "- \(p.name) [\(p.status.rawValue)] (id: \(p.id))"
+                if !p.goal.isEmpty { line += " — \(p.goal)" }
+                if !p.folder.isEmpty { line += " · folder \(p.folder)" }
+                line += " · \(sessions.filter { $0.projectID == p.id }.count) chats/sessions, \(runs.filter { $0.projectID == p.id }.count) runs"
+                return line
+            }.joined(separator: "\n")
+        case "get_project":
+            let p = try project(a)
+            var out = "# \(p.name)\nStatus: \(p.status.rawValue)\nid: \(p.id)"
+            if !p.goal.isEmpty { out += "\nGoal: \(p.goal)" }
+            if !p.folder.isEmpty { out += "\nFolder: \(p.folder)" }
+            let body = brain.body(of: p.id)
+            if !body.isEmpty { out += "\n\n" + body }
+            if !p.pageIDs.isEmpty { out += "\n\nPages:\n" + p.pageIDs.map { "- \(store.title(of: $0)) (id: \($0))" }.joined(separator: "\n") }
+            let chats = brain.sessions(inProject: p.id)
+            if !chats.isEmpty { out += "\n\nChats and sessions:\n" + chats.prefix(20).map { "- [\($0.status.rawValue)] \($0.title) (id: \($0.id))" }.joined(separator: "\n") }
+            let runs = brain.runs(inProject: p.id)
+            if !runs.isEmpty { out += "\n\nRecent runs:\n" + runs.prefix(10).map(Self.runLine).joined(separator: "\n") }
+            return out
+        case "update_project_status":
+            let p = try project(a)
+            var status: AgentProject.Status?
+            if let st = a["status"]?.string, !st.isEmpty {
+                guard let v = AgentProject.Status.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(st) == .orderedSame }) else { throw ToolError("Unknown status '\(st)'") }
+                status = v
+            }
+            brain.postProjectUpdate(p.id, try req(a, "update"), status: status)
+            return "Posted update to \(p.name)" + (status.map { " (status \($0.rawValue))" } ?? "") + "."
         case "get_run":
             let id = try req(a, "run_id")
             guard let r = brain.run(id) else { throw ToolError("No run with id \(id)") }

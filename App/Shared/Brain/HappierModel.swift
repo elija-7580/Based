@@ -21,6 +21,9 @@ final class HappierModel {
     var sessions: [AgentSession] = []
     var inbox: [InboxItem] = []
     var connectionList: [Connection] = []
+    /// Projects (BSD-44) and the ones with a session that is running or waiting right now.
+    var projects: [AgentProject] = []
+    var activeProjectIDs: Set<RecordID> = []
     var liveText: [RecordID: String] = [:]          // streaming agent text per session
     var thoughts: [RecordID: String] = [:]
     var events: [RecordID: [SessionEvent]] = [:]    // tool calls / notices / plan
@@ -186,9 +189,14 @@ final class HappierModel {
     func refresh() {
         Log.measure("HappierModel.refresh", warnAfter: 0.05) {
             let ids = brain.ensureHappier()
-            happierIDs = [ids.sessions, ids.inbox, ids.connections]
+            let projectsDB = brain.ensureProjects()
+            happierIDs = [ids.sessions, ids.inbox, ids.connections, projectsDB]
             let s = brain.sessions().sorted { $0.updatedAt > $1.updatedAt }
             if s != sessions { sessions = s; sessionIDSet = Set(s.map(\.id)) }
+            let p = brain.projects()
+            if p != projects { projects = p }
+            let active = Set(s.filter(\.isActive).compactMap(\.projectID))
+            if active != activeProjectIDs { activeProjectIDs = active }
             let i = brain.inbox().sorted { $0.createdAt > $1.createdAt }
             if i != inbox { inbox = i }
             let c = brain.connections()

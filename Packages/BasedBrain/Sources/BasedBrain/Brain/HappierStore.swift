@@ -25,6 +25,8 @@ public struct AgentSession: Sendable, Identifiable, Equatable {
     public var task: String = ""
     /// Final answer of the last finished turn (what a sub-agent reports back to its parent).
     public var result: String = ""
+    /// Row of the Projects database (BSD-44); `project` stays the display name / folder name.
+    public var projectID: RecordID? = nil
     /// "based" = built-in AI chat; otherwise a coding agent id.
     public var isChat: Bool { agentID == "based" }
 }
@@ -176,7 +178,8 @@ extension BrainStore {
                                 machine: text(row, db, "Machine"), cwd: cwd, acpSessionID: acp.isEmpty ? nil : acp,
                                 tokens: tokens, startedAt: started, updatedAt: row.updatedAt, encrypted: bool(row, db, "Encrypted", default: false),
                                 project: project, parentID: parent.isEmpty ? nil : parent,
-                                task: text(row, db, "Task"), result: text(row, db, "Result"))
+                                task: text(row, db, "Task"), result: text(row, db, "Result"),
+                                projectID: relationValue(row.id, db, ProjectCol.sessionLink))
         }.sorted { $0.updatedAt > $1.updatedAt }
     }
 
@@ -201,6 +204,7 @@ extension BrainStore {
         setSelect(id, db, "Status", AgentSession.Status.idle.rawValue)
         if let p = propID(db, "Started") { store.setValue(id, p, .date(DateValue(start: Date(), includeTime: true))) }
         setBool(id, db, "Encrypted", encrypted)
+        linkSessionToProject(id, folder: cwd, name: project)   // BSD-44
         startRun(forSession: id, title: title, agentID: agentID, parentID: parentID)   // BSD-43
         return id
     }

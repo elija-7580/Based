@@ -297,6 +297,7 @@ struct NotionSidebar: View {
     @AppStorage("sidebar.teamspacesOpen") private var teamspacesOpen = true
     @AppStorage("sidebar.privateOpen") private var privateOpen = true
     @AppStorage("sidebar.chatsOpen") private var chatsOpen = true
+    @AppStorage("sidebar.projectsOpen") private var projectsOpen = true
     @FocusState private var focused: Bool
     @State private var privateDrop = false
 
@@ -358,6 +359,9 @@ struct NotionSidebar: View {
                     SidebarNavRow(item: .inbox, title: "Inbox", symbol: "tray", badge: happier.pendingCount).accessibilityIdentifier("sidebar.inbox")
                     SidebarNavRow(item: .brain, title: "Agent Brain", symbol: "brain").accessibilityIdentifier("sidebar.brain")
 
+                    // BSD-44: projects from the Agent Brain's Projects database; a dot marks a project with an agent at work.
+                    SidebarProjectsSection(open: $projectsOpen, order: order)
+
                     SidebarSectionHeader(title: "Chats", open: $chatsOpen, addHelp: "New chat") { model.openChat(nil, fullPage: true) }
                     if chatsOpen {
                         ForEach(happier.chats.prefix(40)) { c in
@@ -414,7 +418,8 @@ struct NotionSidebar: View {
     /// Visible rows top to bottom (⇧-click range selection).
     private func visibleOrder(favorites: [Block], teamspaces: [Teamspace], privatePages: [Block]) -> [SidebarItem] {
         if model.sidebarMode == .ai {
-            return [.chat(nil), .projects, .inbox, .brain] + (chatsOpen ? happier.chats.prefix(40).map { .chat($0.id) } : [])
+            return [.chat(nil), .projects, .inbox, .brain] + (projectsOpen ? happier.projects.map { .page($0.id) } : [])
+                + (chatsOpen ? happier.chats.prefix(40).map { .chat($0.id) } : [])
         }
         var out: [SidebarItem] = [.home]
         func walk(_ pages: [Block], scope: String) {
@@ -959,6 +964,8 @@ struct SidebarNavRow: View {
     let symbol: String
     var badge = 0
     var order: [SidebarItem] = []
+    /// Small green dot (e.g. a project with an agent at work).
+    var dot = false
     @Environment(AppModel.self) private var model
     @State private var hover = false
 
@@ -968,6 +975,7 @@ struct SidebarNavRow: View {
             SymbolImage(name: symbol, size: 15).frame(width: 20, height: 20)
             Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
+            if dot { Circle().fill(Color.green).frame(width: 7, height: 7).accessibilityLabel("Agent running") }
             if badge > 0 {
                 Text("\(badge)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 6).frame(height: 16)
@@ -1060,6 +1068,34 @@ struct SidebarImportRow: View {
 
 /// Section title ("Favorites", "Teamspaces", "Private", "Chats"): small gray label, click folds, hover shows
 /// the chevron and a "+" when the section has an add action.
+/// AI sidebar: the Projects section (BSD-44). Rows open the project page; a green dot marks a project with a
+/// session that is running or waiting for the user.
+struct SidebarProjectsSection: View {
+    @Binding var open: Bool
+    let order: [SidebarItem]
+    @Environment(AppModel.self) private var model
+    @Environment(HappierModel.self) private var happier
+
+    var body: some View {
+        SidebarSectionHeader(title: "Projects", open: $open, addHelp: "New project") { newProject() }
+        if open {
+            ForEach(happier.projects) { p in
+                SidebarNavRow(item: .page(p.id), title: p.name.isEmpty ? "Untitled project" : p.name, symbol: "folder",
+                              order: order, dot: happier.activeProjectIDs.contains(p.id))
+            }
+            if happier.projects.isEmpty {
+                SidebarActionRow(title: "New project", symbol: "plus") { newProject() }
+            }
+        }
+    }
+
+    private func newProject() {
+        let id = model.brain.brain.createProject(name: "New project")
+        open = true
+        model.open(id)
+    }
+}
+
 struct SidebarSectionHeader: View {
     let title: String
     @Binding var open: Bool

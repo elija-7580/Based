@@ -41,6 +41,8 @@ public struct AgentRun: Sendable, Identifiable, Equatable {
     public var result: String
     /// Page that holds the full result, when the run wrote one.
     public var resultPageID: RecordID?
+    /// Project the run belongs to (row of the Projects database, BSD-44).
+    public var projectID: RecordID? = nil
 }
 
 /// Selects runs; nil fields match everything.
@@ -72,60 +74,74 @@ public struct RunFilter: Sendable, Equatable {
 @MainActor
 extension BrainStore {
     static let runsMetaKey = "brain.runs"
-    private struct RIDs: Codable { var runs: RecordID }
 
     /// Column names of the Runs database. New columns are added to existing databases on first use (`ensureRuns`).
     enum RunCol {
         static let status = "Status", kind = "Kind", agent = "Agent", parent = "Parent run", session = "Session"
         static let engine = "Engine", model = "Model", compute = "Compute", started = "Started", ended = "Ended"
         static let tokens = "Tokens", cost = "Cost", result = "Result", resultPage = "Result page"
+        static let project = "Project"
     }
 
     /// Creates the Runs database on first use, adopts a synced one by title, adds missing columns and protects it
     /// (its host block can't be trashed, like the other Agent Brain databases). Returns the database id.
     @discardableResult
     public func ensureRuns() -> RecordID {
-        var db: RecordID?
-        if let d = store.persistence?.meta(Self.runsMetaKey), let ids = try? JSONDecoder().decode(RIDs.self, from: d),
-           store.databases[ids.runs] != nil { db = ids.runs }
-        if db == nil {
-            db = runsDBByTitle()
-            if db == nil {
-                db = store.createDatabase(title: "Runs", in: .block(rootID), inline: true, sampleRows: 0).databaseID
-            }
-            store.persistence?.setMeta(Self.runsMetaKey, try? JSONEncoder().encode(RIDs(runs: db!)))
-        }
-        let id = db!
+        let (id, _) = ensureBrainDatabase(title: "Runs", metaKey: Self.runsMetaKey)
         ensureRunColumns(id)
-        if let host = store.databases[id]?.blockID {
-            store.protectedIDs.insert(host)
-            if store.blocks[host]?.trashedAt != nil { store.restorePages([host]) }
-        }
+        if let projects = existingProjectsDB { ensureRelation(id, RunCol.project, to: projects) }
         return id
     }
 
     /// The Runs database id when it exists already (never creates it).
-    var existingRunsDB: RecordID? {
-        if let d = store.persistence?.meta(Self.runsMetaKey), let ids = try? JSONDecoder().decode(RIDs.self, from: d),
-           store.databases[ids.runs] != nil { return ids.runs }
-        return runsDBByTitle()
+    var existingRunsDB: RecordID? { existingBrainDatabase(title: "Runs", metaKey: Self.runsMetaKey) }
+
+    // MARK: Shared helpers for the lazily created Brain databases (Runs, Projects)
+
+    private struct OneID: Codable { var id: RecordID }
+
+    /// A Brain database by its stored id, else one titled `title` directly inside the Agent Brain page — also when
+    /// its block sits in the Trash, so repair can find and restore it; the oldest wins if sync brought two.
+    func existingBrainDatabase(title: String, metaKey: String) -> RecordID? {
+        if let d = store.persistence?.meta(metaKey), let ids = try? JSONDecoder().decode(OneID.self, from: d),
+           store.databases[ids.id] != nil { return ids.id }
+        return store.databases.values.filter { d in
+            d.title.plainText == title && store.blocks[d.blockID].map { $0.parent == .block(rootID) } == true
+        }.min { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }?.id
     }
 
-    /// A "Runs" database directly inside the Agent Brain page — also when its block sits in the Trash, so repair
-    /// can find and restore it; the oldest wins if sync brought two.
-    private func runsDBByTitle() -> RecordID? {
-        store.databases.values.filter { d in
-            d.title.plainText == "Runs" && store.blocks[d.blockID].map { $0.parent == .block(rootID) } == true
-        }.min { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }?.id
+    /// Finds or creates a Brain database, remembers its id and protects its host block (restoring it from the
+    /// Trash when needed). `created` is true when it was made just now.
+    func ensureBrainDatabase(title: String, metaKey: String) -> (id: RecordID, created: Bool) {
+        var created = false
+        let id: RecordID
+        if let found = existingBrainDatabase(title: title, metaKey: metaKey) { id = found } else {
+            id = store.createDatabase(title: RichText(title), in: .block(rootID), inline: true, sampleRows: 0).databaseID
+            created = true
+        }
+        store.persistence?.setMeta(metaKey, try? JSONEncoder().encode(OneID(id: id)))
+        if let host = store.databases[id]?.blockID {
+            store.protectedIDs.insert(host)
+            if store.blocks[host]?.trashedAt != nil { store.restorePages([host]) }
+        }
+        return (id, created)
+    }
+
+    /// Adds a column when it is missing (existing databases from older builds get new columns this way).
+    func ensureColumn(_ db: RecordID, _ name: String, _ type: PropertyType, _ configure: ((inout PropertySchema) -> Void)? = nil) {
+        guard propID(db, name) == nil, let pid = store.addProperty(to: db, name: name, type: type) else { return }
+        if let configure { store.updateProperty(db, pid, name: "Set up \(name)", configure) }
+    }
+
+    /// Single-target relation column pointing at `target`.
+    func ensureRelation(_ db: RecordID, _ name: String, to target: RecordID) {
+        ensureColumn(db, name, .relation) { s in s.relation = RelationConfig(databaseID: target, limitOne: true) }
     }
 
     public var runsDB: RecordID { ensureRuns() }
 
     private func ensureRunColumns(_ db: RecordID) {
-        func add(_ name: String, _ type: PropertyType, _ configure: ((inout PropertySchema) -> Void)? = nil) {
-            guard propID(db, name) == nil, let pid = store.addProperty(to: db, name: name, type: type) else { return }
-            if let configure { store.updateProperty(db, pid, name: "Set up Runs", configure) }
-        }
+        func add(_ n: String, _ t: PropertyType, _ c: ((inout PropertySchema) -> Void)? = nil) { ensureColumn(db, n, t, c) }
         add(RunCol.status, .select) { s in s.options = AgentRun.Status.allCases.map { SelectOption(name: $0.rawValue, color: Self.color(for: $0)) } }
         add(RunCol.kind, .select) { s in s.options = AgentRun.Kind.allCases.map { SelectOption(name: $0.rawValue) } }
         add(RunCol.agent, .relation) { [agentsDB] s in s.relation = RelationConfig(databaseID: agentsDB, limitOne: true) }
@@ -181,7 +197,7 @@ extension BrainStore {
     public func startRun(title: String, kind: AgentRun.Kind, status: AgentRun.Status = .running,
                          agentID: RecordID? = nil, parentID: RecordID? = nil, sessionID: RecordID? = nil,
                          engine: String = "", model: String = "", compute: AgentRun.Compute? = nil,
-                         at date: Date = Date()) -> RecordID {
+                         projectID: RecordID? = nil, at date: Date = Date()) -> RecordID {
         let db = runsDB
         var values: [(String, PropertyValue?)] = [
             (RunCol.status, runOption(db, RunCol.status, status.rawValue)),
@@ -192,6 +208,7 @@ extension BrainStore {
         if let agentID { values.append((RunCol.agent, .relation([agentID]))) }
         if let parentID { values.append((RunCol.parent, .relation([parentID]))) }
         if let sessionID { values.append((RunCol.session, .text(RichText(sessionID)))) }
+        if let projectID { values.append((RunCol.project, .relation([projectID]))) }
         if !engine.isEmpty { values.append((RunCol.engine, .text(RichText(engine)))) }
         if !model.isEmpty { values.append((RunCol.model, .text(RichText(model)))) }
         if let compute { values.append((RunCol.compute, runOption(db, RunCol.compute, compute.rawValue))) }
@@ -300,7 +317,8 @@ extension BrainStore {
                         compute: select(RunCol.compute).flatMap(AgentRun.Compute.init(rawValue:)),
                         startedAt: date(RunCol.started) ?? row.createdAt, endedAt: date(RunCol.ended),
                         tokens: Int(number(RunCol.tokens)), cost: number(RunCol.cost),
-                        result: text(row, db, RunCol.result), resultPageID: page.isEmpty ? nil : page)
+                        result: text(row, db, RunCol.result), resultPageID: page.isEmpty ? nil : page,
+                        projectID: relation(RunCol.project))
     }
 
     // MARK: Sessions → runs
@@ -315,7 +333,7 @@ extension BrainStore {
     func startRun(forSession sid: RecordID, title: String, agentID: String, parentID: RecordID?) {
         let parentRun = parentID.flatMap { latestRun(forSession: $0)?.id }
         startRun(title: title, kind: Self.runKind(agentID: agentID, parentID: parentID), status: .waiting,
-                 parentID: parentRun, sessionID: sid, engine: agentID)
+                 parentID: parentRun, sessionID: sid, engine: agentID, projectID: projectID(ofSession: sid))
     }
 
     /// Mirrors a session change onto its run. Chats get one run per turn: a chat that starts running again after
@@ -345,7 +363,8 @@ extension BrainStore {
                     let kind = Self.runKind(agentID: agentID ?? sess?.agentID ?? "", parentID: sess?.parentID)
                     let parentRun = sess?.parentID.flatMap { latestRun(forSession: $0)?.id }
                     let id = startRun(title: s.title.isEmpty ? "Run" : s.title, kind: kind, status: target,
-                                      parentID: parentRun, sessionID: sid, engine: agentID ?? sess?.agentID ?? "")
+                                      parentID: parentRun, sessionID: sid, engine: agentID ?? sess?.agentID ?? "",
+                                      projectID: sess?.projectID)
                     current = run(id)
                 } else if let c = current, c.status != target {
                     if target.isTerminal { finish(run: c.id, status: target) } else { update(run: c.id, status: target) }
