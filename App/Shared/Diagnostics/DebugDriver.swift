@@ -48,6 +48,7 @@ enum DebugDriver {
             switch q["to"] {
             case "home": model.selection = .home
             case "library": model.selection = .library
+            case "graph": model.selection = .graph
             case "settings": model.selection = .settings
             case "brain": model.selection = .brain
             case "projects": model.selection = .projects

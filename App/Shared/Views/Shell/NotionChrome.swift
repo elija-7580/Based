@@ -430,7 +430,7 @@ struct NotionSidebar: View {
             }
         }
         if privateOpen { walk(privatePages, scope: "") }
-        out += [.library, .trash, .settings]
+        out += [.graph, .library, .trash, .settings]
         return out
     }
 }
@@ -493,6 +493,7 @@ struct SidebarModeSwitcher: View {
 struct SidebarFooter: View {
     var body: some View {
         VStack(spacing: 1) {
+            SidebarNavRow(item: .graph, title: "Graph", symbol: "point.3.connected.trianglepath.dotted").accessibilityIdentifier("sidebar.graph")
             SidebarNavRow(item: .library, title: "Library", symbol: "books.vertical").accessibilityIdentifier("sidebar.library")
             SidebarNavRow(item: .trash, title: "Trash", symbol: "trash").accessibilityIdentifier("sidebar.trash")
             SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")

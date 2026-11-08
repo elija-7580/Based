@@ -83,6 +83,7 @@ struct SidebarView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .accessibilityIdentifier("sidebar.import")
+                Label("Graph", systemImage: "point.3.connected.trianglepath.dotted").tag(SidebarItem.graph).accessibilityIdentifier("sidebar.graph")
                 Label("Library", systemImage: "books.vertical").tag(SidebarItem.library).accessibilityIdentifier("sidebar.library")
                 Label("Trash", systemImage: "trash").tag(SidebarItem.trash).accessibilityIdentifier("sidebar.trash")
                 #if os(iOS)

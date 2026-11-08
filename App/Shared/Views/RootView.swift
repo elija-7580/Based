@@ -462,6 +462,7 @@ struct DetailContent: View {
         case .chat: ChatFullPage()
         case .diagnostics: DiagnosticsView()
         case .library: LibraryView()
+        case .graph: GraphView()
         }
     }
 }

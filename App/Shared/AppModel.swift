@@ -28,6 +28,7 @@ enum SidebarItem: Hashable {
     case chat(RecordID?)   // full-page AI chat (nil = new chat)
     case diagnostics       // logs, hangs, layout audit
     case library           // every page / database / memory / skill / file, with bulk actions
+    case graph             // pages and their connections (hierarchy, relations, mentions) as a graph / family tree
 
     /// Short label for tabs, breadcrumbs and logs.
     @MainActor func title(in model: AppModel) -> String {
@@ -43,6 +44,7 @@ enum SidebarItem: Hashable {
         case .chat(let id): return id.map { model.store.title(of: $0).nonEmptyOr("Chat") } ?? "New chat"
         case .diagnostics: return "Diagnostics"
         case .library: return "Library"
+        case .graph: return "Graph"
         }
     }
 
@@ -59,6 +61,7 @@ enum SidebarItem: Hashable {
         case .chat: return "bubble.left"
         case .diagnostics: return "stethoscope"
         case .library: return "books.vertical"
+        case .graph: return "point.3.connected.trianglepath.dotted"
         }
     }
 
