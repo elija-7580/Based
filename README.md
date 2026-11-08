@@ -15,7 +15,7 @@ Notion's features and built clean-room from public documentation.
 
 ## What works
 
-**New (Pass 22):** **meeting notes** (`/meet`) — records microphone and system audio as separate tracks, transcribes
+**New (Pass 23):** **meeting notes** (`/meet`) — records microphone and system audio as separate tracks, transcribes
 on device (Parakeet v3, 25 languages incl. German) live and again in full after you stop, separates speakers, links
 every line and note to the audio, takes pages and notes as context, summarises with your configured AI engine and
 can recognise voices across meetings (opt-in, device-only) — see [`docs/meeting-notes.md`](docs/meeting-notes.md).

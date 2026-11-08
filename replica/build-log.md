@@ -538,7 +538,7 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
   editing one block no longer re-renders every list on the page. Hang watchdog pings every 100 ms, reports from 250 ms.
 - `make install` / `scripts/install-mac.sh`: Release build → /Applications, removes old Debug/Release builds.
 
-## Pass 22 — Meeting notes and sharing (2026-11-08)
+## Pass 23 — Meeting notes and sharing (2026-11-08)
 - **Meeting notes** (`/meet`, ⌘N): `.meeting` block with Summary · Notes · Transcript; transcript in 40-segment
   `.transcript` chunks (live updates rewrite one small record). Capture: microphone + Core Audio process tap
   (macOS 14.2+) as separate tracks (Me / Others live), microphone with background audio on iPhone, uploads.
