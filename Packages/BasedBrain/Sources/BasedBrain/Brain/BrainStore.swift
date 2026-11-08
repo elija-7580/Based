@@ -54,7 +54,7 @@ public final class BrainStore {
     /// Ids of the records that make up the brain (page, About, database hosts and databases).
     public var coreIDs: Set<RecordID> {
         var out: Set<RecordID> = [rootID, aboutID]
-        for db in [memoriesDB, skillsDB, agentsDB] where !db.isEmpty {
+        for db in [memoriesDB, skillsDB, agentsDB, existingRunsDB ?? ""] where !db.isEmpty {
             if let host = store.databases[db]?.blockID { out.insert(host) }
         }
         out.remove("")

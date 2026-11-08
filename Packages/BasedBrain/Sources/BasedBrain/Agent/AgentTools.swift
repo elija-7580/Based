@@ -94,6 +94,10 @@ public final class AgentTools {
             ToolSpec(name: "delete_view", description: "Delete a database view.",
                      inputSchema: .schema(["view_id": .str("View id")], required: ["view_id"])),
             ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
+            ToolSpec(name: "list_runs", description: "List agent runs (chat turns, coding sessions, scheduled agent runs, sub-agents), newest first, with status, kind, tokens and cost.",
+                     inputSchema: .schema(["status": .str("Optional: Planned | Running | Waiting | Needs you | Done | Failed | Cancelled"), "kind": .str("Optional: Chat | Session | Schedule | Subagent | Main"), "parent_id": .str("Optional: only sub-runs of this run"), "limit": .num("Max runs (default 30)")])),
+            ToolSpec(name: "get_run", description: "Read one run: its fields, short protocol and direct sub-runs.",
+                     inputSchema: .schema(["run_id": .str("Run id")], required: ["run_id"])),
         ] + hostSpecs + externalSpecs
     }
 
@@ -130,6 +134,15 @@ public final class AgentTools {
     private func req(_ args: JSONValue, _ k: String) throws -> String {
         guard let v = args[k]?.stringValue, !v.isEmpty else { throw ToolError("Missing argument '\(k)'") }
         return v
+    }
+
+    static func runLine(_ r: AgentRun) -> String {
+        var s = "- [\(r.status.rawValue)] \(r.title) · \(r.kind.rawValue)"
+        if !r.engine.isEmpty { s += " · \(r.engine)" }
+        s += " · \(r.tokens) tokens"
+        if r.cost > 0 { s += String(format: " · %.2f €", r.cost) }
+        s += " · started \(ISO8601DateFormatter().string(from: r.startedAt)) (id: \(r.id))"
+        return s
     }
 
     private func dispatch(_ name: String, _ a: JSONValue) throws -> String {
@@ -227,6 +240,34 @@ public final class AgentTools {
         case "inbox":
             let items = brain.inbox(pendingOnly: true)
             return items.isEmpty ? "Inbox is empty." : items.map { "- [\($0.kind.rawValue)] \($0.title) (id: \($0.id))" }.joined(separator: "\n")
+        case "list_runs":
+            var f = RunFilter(parentID: a["parent_id"]?.string)
+            if let st = a["status"]?.string, !st.isEmpty {
+                guard let v = AgentRun.Status.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(st) == .orderedSame }) else { throw ToolError("Unknown status '\(st)'") }
+                f.statuses = [v]
+            }
+            if let k = a["kind"]?.string, !k.isEmpty {
+                guard let v = AgentRun.Kind.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(k) == .orderedSame }) else { throw ToolError("Unknown kind '\(k)'") }
+                f.kinds = [v]
+            }
+            let limit = max(1, a["limit"]?.int ?? 30)
+            let rs = brain.runs(f).prefix(limit)
+            return rs.isEmpty ? "No runs." : rs.map(Self.runLine).joined(separator: "\n")
+        case "get_run":
+            let id = try req(a, "run_id")
+            guard let r = brain.run(id) else { throw ToolError("No run with id \(id)") }
+            var out = Self.runLine(r)
+            if let p = r.parentID { out += "\nParent run: \(p)" }
+            if let s = r.sessionID { out += "\nSession: \(s)" }
+            if let ag = r.agentID { out += "\nAgent: \(ag)" }
+            if !r.model.isEmpty { out += "\nModel: \(r.model)" }
+            if let e = r.endedAt { out += "\nEnded: \(ISO8601DateFormatter().string(from: e))" }
+            if !r.result.isEmpty { out += "\n\nResult:\n\(r.result)" }
+            let log = brain.body(of: id)
+            if !log.isEmpty { out += "\n\nProtocol:\n\(log)" }
+            let kids = brain.children(ofRun: id)
+            if !kids.isEmpty { out += "\n\nSub-runs:\n" + kids.map(Self.runLine).joined(separator: "\n") }
+            return out
         case "update_page":
             let id = try page(a)
             if let t = a["title"]?.string { store.setText(id, RichText(t)) }

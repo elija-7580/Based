@@ -201,6 +201,7 @@ extension BrainStore {
         setSelect(id, db, "Status", AgentSession.Status.idle.rawValue)
         if let p = propID(db, "Started") { store.setValue(id, p, .date(DateValue(start: Date(), includeTime: true))) }
         setBool(id, db, "Encrypted", encrypted)
+        startRun(forSession: id, title: title, agentID: agentID, parentID: parentID)   // BSD-43
         return id
     }
 
@@ -219,6 +220,10 @@ extension BrainStore {
             var cur = 0.0
             if case .number(let n)? = row.values[p] { cur = n }
             store.setValue(id, p, .number(cur + Double(addTokens)))
+        }
+        // BSD-43: the session's run follows its status, tokens and result.
+        if status != nil || addTokens != 0 || result != nil {
+            mirrorSession(id, status: status, addTokens: addTokens, result: result, agentID: agentID)
         }
     }
 

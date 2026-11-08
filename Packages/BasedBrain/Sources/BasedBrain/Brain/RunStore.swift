@@ -1,0 +1,414 @@
+import Foundation
+import BasedCore
+
+// BSD-43: every agent run is a record. A chat turn, a coding session, a scheduled agent run and a sub-agent are
+// all the same thing — a *run* with a status, a kind, an optional agent and parent run, engine/model, usage and a
+// short result. Runs live in the "Runs" database inside the Agent Brain page (like Sessions/Inbox), so they sync
+// to every device and the start page, budgets and the MCP tools all read the same data.
+
+/// One agent run (a row of the Runs database).
+public struct AgentRun: Sendable, Identifiable, Equatable {
+    public enum Status: String, CaseIterable, Sendable {
+        case planned = "Planned", running = "Running", waiting = "Waiting", needsYou = "Needs you"
+        case done = "Done", failed = "Failed", cancelled = "Cancelled"
+        /// Finished one way or another; a terminal run has an end time.
+        public var isTerminal: Bool { self == .done || self == .failed || self == .cancelled }
+    }
+    public enum Kind: String, CaseIterable, Sendable {
+        case chat = "Chat", session = "Session", schedule = "Schedule", subagent = "Subagent", main = "Main"
+    }
+    public enum Compute: String, CaseIterable, Sendable { case low = "Low", auto = "Auto", high = "High" }
+
+    public var id: RecordID
+    public var title: String
+    public var status: Status
+    public var kind: Kind
+    /// Row of the Agents database that ran (scheduled / custom agents).
+    public var agentID: RecordID?
+    /// Run that started this one (sub-agents).
+    public var parentID: RecordID?
+    /// Row of the Sessions database this run belongs to (chat and coding sessions).
+    public var sessionID: RecordID?
+    public var engine: String
+    public var model: String
+    public var compute: Compute?
+    public var startedAt: Date
+    public var endedAt: Date?
+    public var tokens: Int
+    /// Cost in euros (0 when unknown).
+    public var cost: Double
+    /// Short result (or the latest progress line while it runs).
+    public var result: String
+    /// Page that holds the full result, when the run wrote one.
+    public var resultPageID: RecordID?
+}
+
+/// Selects runs; nil fields match everything.
+public struct RunFilter: Sendable, Equatable {
+    public var statuses: Set<AgentRun.Status>?
+    public var kinds: Set<AgentRun.Kind>?
+    public var agentID: RecordID?
+    public var sessionID: RecordID?
+    public var parentID: RecordID?
+    public var startedSince: Date?
+    public init(statuses: Set<AgentRun.Status>? = nil, kinds: Set<AgentRun.Kind>? = nil, agentID: RecordID? = nil,
+                sessionID: RecordID? = nil, parentID: RecordID? = nil, startedSince: Date? = nil) {
+        self.statuses = statuses; self.kinds = kinds; self.agentID = agentID
+        self.sessionID = sessionID; self.parentID = parentID; self.startedSince = startedSince
+    }
+    public static let all = RunFilter()
+
+    public func matches(_ r: AgentRun) -> Bool {
+        if let statuses, !statuses.contains(r.status) { return false }
+        if let kinds, !kinds.contains(r.kind) { return false }
+        if let agentID, r.agentID != agentID { return false }
+        if let sessionID, r.sessionID != sessionID { return false }
+        if let parentID, r.parentID != parentID { return false }
+        if let startedSince, r.startedAt < startedSince { return false }
+        return true
+    }
+}
+
+@MainActor
+extension BrainStore {
+    static let runsMetaKey = "brain.runs"
+    private struct RIDs: Codable { var runs: RecordID }
+
+    /// Column names of the Runs database. New columns are added to existing databases on first use (`ensureRuns`).
+    enum RunCol {
+        static let status = "Status", kind = "Kind", agent = "Agent", parent = "Parent run", session = "Session"
+        static let engine = "Engine", model = "Model", compute = "Compute", started = "Started", ended = "Ended"
+        static let tokens = "Tokens", cost = "Cost", result = "Result", resultPage = "Result page"
+    }
+
+    /// Creates the Runs database on first use, adopts a synced one by title, adds missing columns and protects it
+    /// (its host block can't be trashed, like the other Agent Brain databases). Returns the database id.
+    @discardableResult
+    public func ensureRuns() -> RecordID {
+        var db: RecordID?
+        if let d = store.persistence?.meta(Self.runsMetaKey), let ids = try? JSONDecoder().decode(RIDs.self, from: d),
+           store.databases[ids.runs] != nil { db = ids.runs }
+        if db == nil {
+            db = runsDBByTitle()
+            if db == nil {
+                db = store.createDatabase(title: "Runs", in: .block(rootID), inline: true, sampleRows: 0).databaseID
+            }
+            store.persistence?.setMeta(Self.runsMetaKey, try? JSONEncoder().encode(RIDs(runs: db!)))
+        }
+        let id = db!
+        ensureRunColumns(id)
+        if let host = store.databases[id]?.blockID {
+            store.protectedIDs.insert(host)
+            if store.blocks[host]?.trashedAt != nil { store.restorePages([host]) }
+        }
+        return id
+    }
+
+    /// The Runs database id when it exists already (never creates it).
+    var existingRunsDB: RecordID? {
+        if let d = store.persistence?.meta(Self.runsMetaKey), let ids = try? JSONDecoder().decode(RIDs.self, from: d),
+           store.databases[ids.runs] != nil { return ids.runs }
+        return runsDBByTitle()
+    }
+
+    /// A "Runs" database directly inside the Agent Brain page — also when its block sits in the Trash, so repair
+    /// can find and restore it; the oldest wins if sync brought two.
+    private func runsDBByTitle() -> RecordID? {
+        store.databases.values.filter { d in
+            d.title.plainText == "Runs" && store.blocks[d.blockID].map { $0.parent == .block(rootID) } == true
+        }.min { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }?.id
+    }
+
+    public var runsDB: RecordID { ensureRuns() }
+
+    private func ensureRunColumns(_ db: RecordID) {
+        func add(_ name: String, _ type: PropertyType, _ configure: ((inout PropertySchema) -> Void)? = nil) {
+            guard propID(db, name) == nil, let pid = store.addProperty(to: db, name: name, type: type) else { return }
+            if let configure { store.updateProperty(db, pid, name: "Set up Runs", configure) }
+        }
+        add(RunCol.status, .select) { s in s.options = AgentRun.Status.allCases.map { SelectOption(name: $0.rawValue, color: Self.color(for: $0)) } }
+        add(RunCol.kind, .select) { s in s.options = AgentRun.Kind.allCases.map { SelectOption(name: $0.rawValue) } }
+        add(RunCol.agent, .relation) { [agentsDB] s in s.relation = RelationConfig(databaseID: agentsDB, limitOne: true) }
+        add(RunCol.parent, .relation) { s in s.relation = RelationConfig(databaseID: db, limitOne: true) }
+        add(RunCol.session, .text)
+        add(RunCol.engine, .text)
+        add(RunCol.model, .text)
+        add(RunCol.compute, .select) { s in s.options = AgentRun.Compute.allCases.map { SelectOption(name: $0.rawValue) } }
+        add(RunCol.started, .date)
+        add(RunCol.ended, .date)
+        add(RunCol.tokens, .number)
+        add(RunCol.cost, .number) { s in s.numberFormat = .euro }
+        add(RunCol.result, .text)
+        add(RunCol.resultPage, .text)
+    }
+
+    private static func color(for s: AgentRun.Status) -> TColor {
+        switch s {
+        case .planned: return .gray
+        case .running: return .blue
+        case .waiting: return .yellow
+        case .needsYou: return .orange
+        case .done: return .green
+        case .failed: return .red
+        case .cancelled: return .brown
+        }
+    }
+
+    // MARK: Writing
+
+    /// Option id for a select column, creating the option when a newer build added a value.
+    private func runOption(_ db: RecordID, _ col: String, _ name: String) -> PropertyValue? {
+        guard let pid = propID(db, col), let oid = store.addOption(db, pid, name: name) else { return nil }
+        return .select(oid)
+    }
+
+    /// Writes several columns of a run as one non-undoable change (runs are written by agents, not by the user).
+    /// `coalesce` merges rapid progress updates of the same run into one change record.
+    private func writeRun(_ id: RecordID, _ db: RecordID, _ values: [(String, PropertyValue?)], title: String? = nil,
+                          name: String = "Update run", coalesce: String? = nil) {
+        guard store.blocks[id] != nil else { return }
+        let resolved: [(String, PropertyValue?)] = values.compactMap { col, v in propID(db, col).map { ($0, v) } }
+        store.transact(name, coalesce: coalesce, undoable: false) { tx in
+            tx.update(id) { b in
+                for (pid, v) in resolved { b.values[pid] = v }
+                if let title { b.text = RichText(title) }
+            }
+        }
+    }
+
+    /// Starts a run and returns its id.
+    @discardableResult
+    public func startRun(title: String, kind: AgentRun.Kind, status: AgentRun.Status = .running,
+                         agentID: RecordID? = nil, parentID: RecordID? = nil, sessionID: RecordID? = nil,
+                         engine: String = "", model: String = "", compute: AgentRun.Compute? = nil,
+                         at date: Date = Date()) -> RecordID {
+        let db = runsDB
+        var values: [(String, PropertyValue?)] = [
+            (RunCol.status, runOption(db, RunCol.status, status.rawValue)),
+            (RunCol.kind, runOption(db, RunCol.kind, kind.rawValue)),
+            (RunCol.started, .date(DateValue(start: date, includeTime: true))),
+            (RunCol.tokens, .number(0)),
+        ]
+        if let agentID { values.append((RunCol.agent, .relation([agentID]))) }
+        if let parentID { values.append((RunCol.parent, .relation([parentID]))) }
+        if let sessionID { values.append((RunCol.session, .text(RichText(sessionID)))) }
+        if !engine.isEmpty { values.append((RunCol.engine, .text(RichText(engine)))) }
+        if !model.isEmpty { values.append((RunCol.model, .text(RichText(model)))) }
+        if let compute { values.append((RunCol.compute, runOption(db, RunCol.compute, compute.rawValue))) }
+        if status.isTerminal { values.append((RunCol.ended, .date(DateValue(start: date, includeTime: true)))) }
+        let resolved: [String: PropertyValue] = Dictionary(values.compactMap { col, v in
+            guard let v, let pid = propID(db, col) else { return nil }
+            return (pid, v)
+        }, uniquingKeysWith: { a, _ in a })
+        let user = store.userID
+        return store.transact("Start run", undoable: false) { tx in
+            let row = Block(type: .page, parent: .database(db), sortKey: tx.sortKey(in: .database(db), .end),
+                            text: RichText(String(title.prefix(200))), values: resolved, createdBy: user)
+            tx.put(row)
+            return row.id
+        }
+    }
+
+    /// Changes a run's status and/or its progress line (shown as the result while it runs).
+    public func update(run id: RecordID, status: AgentRun.Status? = nil, progress: String? = nil, at date: Date = Date()) {
+        let db = runsDB
+        var values: [(String, PropertyValue?)] = []
+        if let status {
+            values.append((RunCol.status, runOption(db, RunCol.status, status.rawValue)))
+            // Terminal → stamp the end; back to active (a session that continues) → clear it.
+            values.append((RunCol.ended, status.isTerminal ? .date(DateValue(start: date, includeTime: true)) : nil))
+        }
+        if let progress { values.append((RunCol.result, .text(RichText(String(progress.suffix(2000)))))) }
+        guard !values.isEmpty else { return }
+        writeRun(id, db, values, name: "Run progress", coalesce: "run:\(id)")
+    }
+
+    /// Adds usage to a run (tokens and cost accumulate).
+    public func addUsage(run id: RecordID, tokens: Int, cost: Double = 0) {
+        guard tokens != 0 || cost != 0, let cur = run(id) else { return }
+        let db = runsDB
+        var values: [(String, PropertyValue?)] = [(RunCol.tokens, .number(Double(cur.tokens + tokens)))]
+        if cost != 0 { values.append((RunCol.cost, .number(cur.cost + cost))) }
+        writeRun(id, db, values, name: "Run usage", coalesce: "run:\(id)")
+    }
+
+    /// Ends a run with a result and its usage.
+    public func finish(run id: RecordID, status: AgentRun.Status = .done, result: String? = nil,
+                       usage: Usage = Usage(), cost: Double = 0, resultPageID: RecordID? = nil, at date: Date = Date()) {
+        guard let cur = run(id) else { return }
+        let db = runsDB
+        let final = status.isTerminal ? status : .done
+        var values: [(String, PropertyValue?)] = [
+            (RunCol.status, runOption(db, RunCol.status, final.rawValue)),
+            (RunCol.ended, .date(DateValue(start: date, includeTime: true))),
+        ]
+        if let result { values.append((RunCol.result, .text(RichText(String(result.suffix(2000)))))) }
+        if usage.total != 0 { values.append((RunCol.tokens, .number(Double(cur.tokens + usage.total)))) }
+        if cost != 0 { values.append((RunCol.cost, .number(cur.cost + cost))) }
+        if let resultPageID { values.append((RunCol.resultPage, .text(RichText(resultPageID)))) }
+        writeRun(id, db, values, name: "Finish run")
+    }
+
+    /// Appends a line to the run's short protocol (the page body; not the full transcript).
+    public func logRun(_ id: RecordID, _ markdown: String) {
+        guard store.blocks[id] != nil, !markdown.isEmpty else { return }
+        appendBody(id, markdown: markdown)
+    }
+
+    // MARK: Reading
+
+    public func runs(_ filter: RunFilter = .all) -> [AgentRun] {
+        guard let db = existingRunsDB else { return [] }
+        return store.rows(of: db).map { decodeRun($0, db) }.filter(filter.matches).sorted { $0.startedAt > $1.startedAt }
+    }
+
+    public func run(_ id: RecordID) -> AgentRun? {
+        guard let row = store.blocks[id], row.trashedAt == nil, let db = existingRunsDB, case .database(db) = row.parent else { return nil }
+        return decodeRun(row, db)
+    }
+
+    /// Direct child runs (sub-agents) of a run.
+    public func children(ofRun id: RecordID) -> [AgentRun] { runs(RunFilter(parentID: id)) }
+
+    /// Latest run of a session.
+    public func latestRun(forSession sid: RecordID) -> AgentRun? { runs(RunFilter(sessionID: sid)).first }
+
+    private func decodeRun(_ row: Block, _ db: RecordID) -> AgentRun {
+        func select(_ col: String) -> String? {
+            guard let pid = propID(db, col), case .select(let oid)? = row.values[pid] else { return nil }
+            return store.databases[db]?.property(pid)?.option(oid)?.name
+        }
+        func relation(_ col: String) -> RecordID? {
+            guard let pid = propID(db, col), case .relation(let ids)? = row.values[pid] else { return nil }
+            return ids.first
+        }
+        func date(_ col: String) -> Date? {
+            guard let pid = propID(db, col), case .date(let d)? = row.values[pid] else { return nil }
+            return d.start
+        }
+        func number(_ col: String) -> Double {
+            guard let pid = propID(db, col), case .number(let n)? = row.values[pid] else { return 0 }
+            return n
+        }
+        let session = text(row, db, RunCol.session), page = text(row, db, RunCol.resultPage)
+        return AgentRun(id: row.id, title: row.title,
+                        status: select(RunCol.status).flatMap(AgentRun.Status.init(rawValue:)) ?? .planned,
+                        kind: select(RunCol.kind).flatMap(AgentRun.Kind.init(rawValue:)) ?? .session,
+                        agentID: relation(RunCol.agent), parentID: relation(RunCol.parent),
+                        sessionID: session.isEmpty ? nil : session,
+                        engine: text(row, db, RunCol.engine), model: text(row, db, RunCol.model),
+                        compute: select(RunCol.compute).flatMap(AgentRun.Compute.init(rawValue:)),
+                        startedAt: date(RunCol.started) ?? row.createdAt, endedAt: date(RunCol.ended),
+                        tokens: Int(number(RunCol.tokens)), cost: number(RunCol.cost),
+                        result: text(row, db, RunCol.result), resultPageID: page.isEmpty ? nil : page)
+    }
+
+    // MARK: Sessions → runs
+
+    /// Kind of run a session gets: chats ("based") are chat runs, sessions with a parent are sub-agents.
+    static func runKind(agentID: String, parentID: RecordID?) -> AgentRun.Kind {
+        if parentID != nil { return .subagent }
+        return agentID == "based" ? .chat : .session
+    }
+
+    /// Called when a session is created: it gets a run that points at it (sub-agents under the parent's run).
+    func startRun(forSession sid: RecordID, title: String, agentID: String, parentID: RecordID?) {
+        let parentRun = parentID.flatMap { latestRun(forSession: $0)?.id }
+        startRun(title: title, kind: Self.runKind(agentID: agentID, parentID: parentID), status: .waiting,
+                 parentID: parentRun, sessionID: sid, engine: agentID)
+    }
+
+    /// Mirrors a session change onto its run. Chats get one run per turn: a chat that starts running again after
+    /// its last run ended starts a new run. Coding sessions keep one run that goes back to running.
+    func mirrorSession(_ sid: RecordID, status: AgentSession.Status?, addTokens: Int, result: String?, agentID: String?) {
+        guard existingRunsDB != nil || status != nil else { return }
+        guard let s = store.blocks[sid], s.trashedAt == nil else { return }
+        var current = latestRun(forSession: sid)
+        if current == nil, status == nil { return }   // sessions from before BSD-43 get a run on their next status change
+        if let status {
+            let target: AgentRun.Status? = {
+                switch status {
+                case .running: return .running
+                case .waiting: return .needsYou
+                case .done: return .done
+                case .failed: return .failed
+                case .idle:
+                    // Idle after a turn was running = cancelled; before the first turn = waiting; after an end: unchanged.
+                    guard let c = current else { return nil }
+                    if c.status.isTerminal { return nil }
+                    return c.status == .running || c.status == .needsYou ? .cancelled : .waiting
+                }
+            }()
+            if let target {
+                if current == nil || (current!.status.isTerminal && !target.isTerminal && current!.kind == .chat) {
+                    let sess = sessions().first { $0.id == sid }
+                    let kind = Self.runKind(agentID: agentID ?? sess?.agentID ?? "", parentID: sess?.parentID)
+                    let parentRun = sess?.parentID.flatMap { latestRun(forSession: $0)?.id }
+                    let id = startRun(title: s.title.isEmpty ? "Run" : s.title, kind: kind, status: target,
+                                      parentID: parentRun, sessionID: sid, engine: agentID ?? sess?.agentID ?? "")
+                    current = run(id)
+                } else if let c = current, c.status != target {
+                    if target.isTerminal { finish(run: c.id, status: target) } else { update(run: c.id, status: target) }
+                    current = run(c.id)
+                }
+            }
+        }
+        guard let c = current else { return }
+        if addTokens != 0 { addUsage(run: c.id, tokens: addTokens) }
+        if let result { update(run: c.id, progress: result) }
+        if let agentID, c.engine != agentID { writeRun(c.id, runsDB, [(RunCol.engine, .text(RichText(agentID)))]) }
+    }
+}
+
+/// Pure views over runs for the start page, widgets and MCP — no store access, clock injected.
+public struct RunOverview: Sendable {
+    public var runs: [AgentRun]
+    public var inbox: [InboxItem]
+    public var agents: [Agent]
+
+    public init(runs: [AgentRun], inbox: [InboxItem] = [], agents: [Agent] = []) {
+        self.runs = runs; self.inbox = inbox; self.agents = agents
+    }
+
+    /// Runs that are working right now, newest first.
+    public var running: [AgentRun] { runs.filter { $0.status == .running }.sorted { $0.startedAt > $1.startedAt } }
+
+    /// Runs that wait for the user: status "Needs you" or a pending inbox item for their session.
+    public var needsYou: [AgentRun] {
+        let pendingSessions = Set(inbox.filter { $0.status == .pending }.compactMap(\.sessionID))
+        return runs.filter { r in
+            guard !r.status.isTerminal else { return false }
+            return r.status == .needsYou || r.sessionID.map(pendingSessions.contains) == true
+        }.sorted { $0.startedAt > $1.startedAt }
+    }
+
+    /// Pending inbox items that belong to a run (through its session).
+    public func pendingInbox(for run: AgentRun) -> [InboxItem] {
+        guard let sid = run.sessionID else { return [] }
+        return inbox.filter { $0.status == .pending && $0.sessionID == sid }
+    }
+
+    /// Runs that ended at or after `date`, latest first.
+    public func finishedSince(_ date: Date) -> [AgentRun] {
+        runs.filter { $0.status.isTerminal && ($0.endedAt ?? $0.startedAt) >= date }
+            .sorted { ($0.endedAt ?? $0.startedAt) > ($1.endedAt ?? $1.startedAt) }
+    }
+
+    /// Next scheduled runs of enabled agents, soonest first.
+    public func upcoming(now: Date, limit: Int = 10, calendar: Calendar = .current) -> [(agent: Agent, at: Date)] {
+        agents.compactMap { a -> (agent: Agent, at: Date)? in
+            guard a.enabled, let raw = a.schedule, let s = Schedule.parse(raw) else { return nil }
+            return (a, s.nextRun(after: now, lastRun: a.lastRun, calendar: calendar))
+        }.sorted { $0.at < $1.at }.prefix(limit).map { $0 }
+    }
+
+    /// Cost (€) of the runs started on `now`'s calendar day.
+    public func costToday(now: Date, calendar: Calendar = .current) -> Double {
+        runs.filter { calendar.isDate($0.startedAt, inSameDayAs: now) }.reduce(0) { $0 + $1.cost }
+    }
+
+    /// Tokens of the runs started on `now`'s calendar day.
+    public func tokensToday(now: Date, calendar: Calendar = .current) -> Int {
+        runs.filter { calendar.isDate($0.startedAt, inSameDayAs: now) }.reduce(0) { $0 + $1.tokens }
+    }
+}

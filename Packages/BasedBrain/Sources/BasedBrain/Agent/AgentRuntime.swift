@@ -94,13 +94,25 @@ public final class AgentRuntime: @unchecked Sendable {
     @discardableResult
     public func run(agent: Agent, trigger: String = "manual") async -> Outcome? {
         let brain = tools.brain
+        // BSD-43: every agent run is a row in Runs (kind Schedule), with the trigger in its protocol.
+        let runID = await MainActor.run {
+            let id = brain.startRun(title: agent.name, kind: .schedule, agentID: agent.id, engine: "based", model: agent.model ?? "")
+            brain.logRun(id, "Trigger: \(trigger)")
+            return id
+        }
         do {
             let o = try await run(prompt: "Trigger: \(trigger). Carry out your instructions now and report briefly what you did.",
                                   modelRef: agent.model, systemExtra: agent.instructions)
-            await MainActor.run { brain.markRun(agent.id); brain.logRun(agent.id, summary: o.text, usage: o.usage) }
+            await MainActor.run {
+                brain.markRun(agent.id); brain.logRun(agent.id, summary: o.text, usage: o.usage)
+                brain.finish(run: runID, status: .done, result: o.text, usage: o.usage)
+            }
             return o
         } catch {
-            await MainActor.run { brain.markRun(agent.id); brain.logRun(agent.id, summary: "", usage: Usage(), error: "\(error)") }
+            await MainActor.run {
+                brain.markRun(agent.id); brain.logRun(agent.id, summary: "", usage: Usage(), error: "\(error)")
+                brain.finish(run: runID, status: .failed, result: "Error: \(error)")
+            }
             return nil
         }
     }
