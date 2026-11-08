@@ -12,6 +12,6 @@ let package = Package(
     targets: [
         .target(name: "BasedBrain", dependencies: [.product(name: "BasedCore", package: "BasedCore")]),
         .executableTarget(name: "based-server", dependencies: ["BasedBrain"]),
-        .testTarget(name: "BasedBrainTests", dependencies: ["BasedBrain"]),
+        .testTarget(name: "BasedBrainTests", dependencies: ["BasedBrain"], exclude: ["Fixtures"]),
     ]
 )

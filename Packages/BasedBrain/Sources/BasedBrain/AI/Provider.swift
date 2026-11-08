@@ -60,6 +60,9 @@ public struct AIResponse: Sendable, Equatable {
     public init(message: ChatMessage, usage: Usage = Usage(), stopReason: String? = nil, thinking: String = "") {
         self.message = message; self.usage = usage; self.stopReason = stopReason; self.thinking = thinking
     }
+
+    /// The answer hit the length limit (Anthropic `max_tokens`, OpenAI `length`).
+    public var isTruncated: Bool { stopReason == "max_tokens" || stopReason == "length" }
 }
 
 public enum AIError: Error, CustomStringConvertible, Sendable {
@@ -80,9 +83,18 @@ public protocol AIProvider: Sendable {
     var displayName: String { get }
     var models: [String] { get }
     func complete(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int) async throws -> AIResponse
+    /// Like `complete`, but reports thinking and text as `.thinkingDelta` / `.textDelta` while they arrive
+    /// (BSD-46). Providers without streaming answer in one piece.
+    func stream(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int,
+                onEvent: @escaping @Sendable (ChatEvent) -> Void) async throws -> AIResponse
 }
 
 public extension AIProvider {
+    func stream(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int,
+                onEvent: @escaping @Sendable (ChatEvent) -> Void) async throws -> AIResponse {
+        try await complete(messages, model: model, tools: tools, maxTokens: maxTokens)
+    }
+
     /// The on-device model (Apple Intelligence): no tools, small context window.
     var isOnDevice: Bool { id == "apple" }
 }

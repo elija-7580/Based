@@ -22,6 +22,8 @@ public enum ChatEvent: Sendable, Equatable {
     case result(text: String, sessionID: String?, costUSD: Double?, isError: Bool)
     /// The turn ended with an error or was stopped (BSD-45: sent by `ChatEngine`, shown as a note in the reply).
     case failed(String)
+    /// A hint about the turn that is not part of the answer ("continuing a cut-off answer…", BSD-46).
+    case notice(String)
 }
 
 public struct TodoItem: Sendable, Equatable, Identifiable {
@@ -76,6 +78,8 @@ public struct ChatTurnBuilder: Sendable, Equatable {
     public private(set) var costUSD: Double?
     public private(set) var finalText: String?
     public private(set) var isError = false
+    /// Hints that are not part of the answer (`.notice`), shown with the turn's meta line.
+    public private(set) var notices: [String] = []
     private var counter = 0
     /// Tasks created by TaskCreate get ids 1, 2, 3 … like Claude Code.
     private var tasks: [TodoItem] = []
@@ -167,6 +171,8 @@ public struct ChatTurnBuilder: Sendable, Equatable {
             }
         case .failed(let message):
             fail(message)
+        case .notice(let message):
+            notices.append(message)
         }
     }
 

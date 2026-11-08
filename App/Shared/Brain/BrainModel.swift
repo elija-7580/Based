@@ -322,6 +322,7 @@ final class BrainModel {
                 turns[i].failed = failed
                 var meta = [engineLabel, "\(Int(Date().timeIntervalSince(turns[i].started).rounded())) s"]
                 if let c = r.costUSD { meta.append(String(format: "$%.3f", c)) }
+                meta += r.notices   // BSD-46: "continued after the length limit" / "cut off"
                 turns[i].meta = meta.joined(separator: " · ")
                 if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
             }

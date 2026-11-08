@@ -47,9 +47,25 @@ public final class AgentRuntime: @unchecked Sendable {
         var usage = Usage(), steps = 0
         while steps < maxSteps {
             steps += 1
-            let r = try await provider.complete(messages, model: model, tools: specs, maxTokens: maxTokensPerReply)
+            var r = try await step(provider, messages, model: model, tools: specs, events: onEvent, thinking: true)
+            var reply = r.message
+            // BSD-46: an answer cut off by the length limit is continued once (the continuation's deltas extend the
+            // text already shown), then marked as cut.
+            if r.isTruncated, r.message.toolCalls.isEmpty {
+                onEvent?(.notice("The answer hit the length limit and was continued."))
+                let more: [ChatMessage] = [r.message, .user("Your reply was cut off by the length limit. Continue exactly where you stopped — no repetition, no preamble.")]
+                let r2 = try await step(provider, messages + more, model: model, tools: specs, events: onEvent, thinking: false)
+                if r2.isTruncated { onEvent?(.notice("The answer was cut off at the length limit.")) }
+                messages += more
+                usage = usage + r.usage
+                reply = r2.message
+                var merged = r2
+                merged.message.content = r.message.content + r2.message.content
+                merged.thinking = r.thinking
+                r = merged
+            }
             usage = usage + r.usage
-            messages.append(r.message)
+            messages.append(reply)
             if !r.thinking.isEmpty { onEvent?(.thinking(r.thinking)) }
             if r.message.toolCalls.isEmpty {
                 // The final answer is an event too (before, it was only in the outcome and got lost in the chat
@@ -71,6 +87,20 @@ public final class AgentRuntime: @unchecked Sendable {
             }
         }
         return Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)
+    }
+
+    /// One model call: streamed when someone listens (thinking and text deltas go straight to the chat), else in
+    /// one piece. `thinking: false` drops thinking deltas (a continuation adds to the text part already shown).
+    func step(_ provider: AIProvider, _ messages: [ChatMessage], model: String, tools: [ToolSpec],
+              events: (@Sendable (ChatEvent) -> Void)?, thinking: Bool) async throws -> AIResponse {
+        guard let events else { return try await provider.complete(messages, model: model, tools: tools, maxTokens: maxTokensPerReply) }
+        return try await provider.stream(messages, model: model, tools: tools, maxTokens: maxTokensPerReply) { e in
+            switch e {
+            case .thinkingDelta where !thinking: break
+            case .thinkingDelta, .textDelta: events(e)
+            default: break
+            }
+        }
     }
 
     /// The on-device model has no tool calling and a ~4k-token window: give it a short system prompt
