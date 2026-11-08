@@ -1,19 +1,20 @@
-import XCTest
+import Foundation
+import Testing
 @testable import BasedCore
 
 @MainActor
-final class InteropTests: XCTestCase {
-    func testInlineCodecRoundTrip() {
+@Suite struct InteropTests {
+    @Test func inlineCodecRoundTrip() {
         let t = RichText(runs: [TextRun("plain "), TextRun("bold", marks: Marks(bold: true)), TextRun(" and "),
                                 TextRun("code", marks: Marks(code: true)), TextRun(" "), TextRun("link", marks: Marks(link: "https://a.b"))])
         let md = InlineMarkdownCodec.encode(t)
-        XCTAssertEqual(md, "plain **bold** and `code` [link](https://a.b)")
-        XCTAssertEqual(InlineMarkdownCodec.decode(md), t)
-        XCTAssertEqual(InlineMarkdownCodec.decode("a \\*not italic\\*").plainText, "a *not italic*")
-        XCTAssertTrue(InlineMarkdownCodec.decode("~~gone~~").marks(at: 1).strikethrough)
+        #expect(md == "plain **bold** and `code` [link](https://a.b)")
+        #expect(InlineMarkdownCodec.decode(md) == t)
+        #expect(InlineMarkdownCodec.decode("a \\*not italic\\*").plainText == "a *not italic*")
+        #expect(InlineMarkdownCodec.decode("~~gone~~").marks(at: 1).strikethrough)
     }
 
-    func testMarkdownImportExport() {
+    @Test func markdownImportExport() {
         let md = """
         # Heading
 
@@ -45,35 +46,35 @@ final class InteropTests: XCTestCase {
         </details>
         """
         let blocks = MarkdownImporter().parse(md)
-        XCTAssertEqual(blocks.map(\.type), [.heading1, .text, .bulletedList, .todo, .numberedList, .numberedList, .quote, .code, .divider, .table, .toggle])
-        XCTAssertEqual(blocks[2].children.first?.text.plainText, "nested")
-        XCTAssertEqual(blocks[3].props.checked, true)
-        XCTAssertEqual(blocks[7].props.language, "swift")
-        XCTAssertEqual(blocks[9].children.count, 2)
-        XCTAssertEqual(blocks[10].children.first?.text.plainText, "hidden")
+        #expect(blocks.map(\.type) == [.heading1, .text, .bulletedList, .todo, .numberedList, .numberedList, .quote, .code, .divider, .table, .toggle])
+        #expect(blocks[2].children.first?.text.plainText == "nested")
+        #expect(blocks[3].props.checked == true)
+        #expect(blocks[7].props.language == "swift")
+        #expect(blocks[9].children.count == 2)
+        #expect(blocks[10].children.first?.text.plainText == "hidden")
 
         let s = WorkspaceStore(persistence: MemoryPersistence(), node: "m")
         let page = s.createPage(title: "Doc")
         s.insertImported(blocks, in: .block(page))
         let out = MarkdownExporter(store: s).export(page: page)
-        XCTAssertTrue(out.hasPrefix("# Doc\n"))
-        XCTAssertTrue(out.contains("Some **bold** text"))
-        XCTAssertTrue(out.contains("- item one\n    - nested"))
-        XCTAssertTrue(out.contains("- [x] done task"))
-        XCTAssertTrue(out.contains("2. second"))
-        XCTAssertTrue(out.contains("```swift\nlet x = 1\n```"))
-        XCTAssertTrue(out.contains("| 1 | 2 |"))
+        #expect(out.hasPrefix("# Doc\n"))
+        #expect(out.contains("Some **bold** text"))
+        #expect(out.contains("- item one\n    - nested"))
+        #expect(out.contains("- [x] done task"))
+        #expect(out.contains("2. second"))
+        #expect(out.contains("```swift\nlet x = 1\n```"))
+        #expect(out.contains("| 1 | 2 |"))
         // re-import gives the same structure
         let again = MarkdownImporter().parse(MarkdownImporter.splitTitle(out).body)
-        XCTAssertEqual(again.map(\.type), blocks.map(\.type))
+        #expect(again.map(\.type) == blocks.map(\.type))
     }
 
-    func testCSV() {
+    @Test func csv() {
         let rows = [["Name", "Notes"], ["A, B", "say \"hi\"\nnext"], ["C", ""]]
-        XCTAssertEqual(CSV.decode(CSV.encode(rows)), rows)
+        #expect(CSV.decode(CSV.encode(rows)) == rows)
     }
 
-    func testNotionExportImport() throws {
+    @Test func notionExportImport() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("export-\(UUID().uuidString)")
         let fm = FileManager.default
         let hex1 = "0123456789abcdef0123456789abcdef", hex2 = "fedcba9876543210fedcba9876543210", hex3 = "11112222333344445555666677778888"
@@ -97,38 +98,38 @@ final class InteropTests: XCTestCase {
 
         let s = WorkspaceStore(persistence: MemoryPersistence(), node: "i")
         let report = try NotionImporter(store: s, assets: nil).importItems([root])
-        XCTAssertEqual(report.databases, 1)
+        #expect(report.databases == 1)
         let home = s.topLevelPages().first { s.title(of: $0.id) == "Home" }!
         let content = s.contentBlocks(of: home.id)
-        XCTAssertEqual(content.map(\.type), [.text, .page, .databaseInline])
+        #expect(content.map(\.type) == [.text, .page, .databaseInline])
         let child = content[1]
-        XCTAssertEqual(s.title(of: child.id), "Child")
+        #expect(s.title(of: child.id) == "Child")
         // link back to Home resolved as a page mention
         let backlink = s.contentBlocks(of: child.id).first!
-        XCTAssertEqual(backlink.text.mentionedPages, [home.id])
+        #expect(backlink.text.mentionedPages == [home.id])
         let db = s.database(forBlock: content[2].id)!
-        XCTAssertEqual(db.title.plainText, "Tasks")
-        XCTAssertEqual(db.property(named: "Estimate")?.type, .number)
-        XCTAssertEqual(db.property(named: "Done")?.type, .checkbox)
-        XCTAssertEqual(db.property(named: "Status")?.type, .status)
-        XCTAssertEqual(db.property(named: "Tags")?.type, .multiSelect)
+        #expect(db.title.plainText == "Tasks")
+        #expect(db.property(named: "Estimate")?.type == .number)
+        #expect(db.property(named: "Done")?.type == .checkbox)
+        #expect(db.property(named: "Status")?.type == .status)
+        #expect(db.property(named: "Tags")?.type == .multiSelect)
         let rows = s.rows(of: db.id)
-        XCTAssertEqual(rows.map(\.title), ["Write docs", "Ship"])
+        #expect(rows.map(\.title) == ["Write docs", "Ship"])
         let ship = rows[1]
-        XCTAssertEqual(s.contentBlocks(of: ship.id).first?.text.plainText, "Release notes here.")
+        #expect(s.contentBlocks(of: ship.id).first?.text.plainText == "Release notes here.")
         try? fm.removeItem(at: root)
     }
 
-    func testSearch() {
+    @Test func search() {
         let s = WorkspaceStore(persistence: MemoryPersistence(), node: "s")
         let a = s.createPage(title: "Meeting notes")
         let b = s.createPage(title: "Groceries")
         s.insertBlock(.text, text: "Discuss the quarterly meeting agenda", in: .block(b))
         let hits = SearchEngine(store: s).search("meeting")
-        XCTAssertEqual(hits.first?.pageID, a)
-        XCTAssertEqual(hits.count, 2)
-        XCTAssertNotNil(hits.first { $0.pageID == b }?.snippet)
+        #expect(hits.first?.pageID == a)
+        #expect(hits.count == 2)
+        #expect(hits.first { $0.pageID == b }?.snippet != nil)
         var f = SearchFilters(); f.titleOnly = true
-        XCTAssertEqual(SearchEngine(store: s).search("meeting", filters: f).map(\.pageID), [a])
+        #expect(SearchEngine(store: s).search("meeting", filters: f).map(\.pageID) == [a])
     }
 }

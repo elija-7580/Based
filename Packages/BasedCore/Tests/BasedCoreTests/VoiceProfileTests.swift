@@ -1,8 +1,9 @@
-import XCTest
+import Foundation
+import Testing
 @testable import BasedCore
 
 @MainActor
-final class VoiceProfileTests: XCTestCase {
+@Suite struct VoiceProfileTests {
     /// A "voice": a base direction plus a little per-recording noise.
     func voice(_ seed: Int, noise: Float = 0.15, variant: Int = 0) -> [Float] {
         var g = SplitMix(seed: UInt64(seed))
@@ -11,7 +12,7 @@ final class VoiceProfileTests: XCTestCase {
         return base.map { $0 + noise * Float(n.unit() * 2 - 1) }
     }
 
-    func testCentroidsAreWeightedUnitVectors() {
+    @Test func centroidsAreWeightedUnitVectors() {
         let a = voice(1), b = voice(2)
         let cs = VoicePrint.centroids([
             VoiceSample(speaker: "S1", embedding: a, weight: 10),
@@ -20,64 +21,64 @@ final class VoiceProfileTests: XCTestCase {
             VoiceSample(speaker: "S3", embedding: [0, 0, 0], weight: 3),     // degenerate: ignored
             VoiceSample(speaker: "S4", embedding: a, weight: 0),             // no speech: ignored
         ])
-        XCTAssertEqual(Set(cs.keys), ["S1", "S2"])
-        XCTAssertEqual(cs["S1"]?.weight, 15)
+        #expect(Set(cs.keys) == ["S1", "S2"])
+        #expect(cs["S1"]?.weight == 15)
         let norm = cs["S1"]!.embedding.reduce(Float(0)) { $0 + $1 * $1 }.squareRoot()
-        XCTAssertEqual(norm, 1, accuracy: 1e-4)
-        XCTAssertGreaterThan(VoicePrint.cosine(cs["S1"]!.embedding, a), 0.95)
+        #expect(abs(norm - 1) <= 1e-4)
+        #expect(VoicePrint.cosine(cs["S1"]!.embedding, a) > 0.95)
     }
 
-    func testMatchingIsOneToOneAndRespectsThreshold() {
+    @Test func matchingIsOneToOneAndRespectsThreshold() {
         let anna = VoiceProfile(name: "Anna", embedding: voice(1), weight: 60)
         let ben = VoiceProfile(name: "Ben", embedding: voice(2), weight: 60)
         let clusters = ["S1": voice(2, variant: 3), "S2": voice(1, variant: 4), "S3": voice(3), "S4": voice(1, variant: 5)]
         let m = VoicePrint.match(clusters, profiles: [anna, ben])
-        XCTAssertEqual(m["S1"]?.name, "Ben")
-        XCTAssertEqual(m["S3"], nil, "a stranger stays unnamed")
+        #expect(m["S1"]?.name == "Ben")
+        #expect(m["S3"] == nil, "a stranger stays unnamed")
         // Anna is assigned to exactly one of the two clusters that sound like her.
-        XCTAssertEqual([m["S2"], m["S4"]].compactMap { $0?.name }, ["Anna"])
-        XCTAssertLessThan(VoicePrint.cosine(voice(1), voice(3)), VoicePrint.defaultThreshold)
+        #expect([m["S2"], m["S4"]].compactMap { $0?.name } == ["Anna"])
+        #expect(VoicePrint.cosine(voice(1), voice(3)) < VoicePrint.defaultThreshold)
     }
 
-    func testLearnRecogniseForgetAndPersist() {
+    @Test func learnRecogniseForgetAndPersist() {
         let db = MemoryPersistence()
         let store = VoiceProfileStore(persistence: db)
         // Meeting 1: nobody known yet; the user names Speaker S1 "Anna".
-        XCTAssertTrue(store.recognise(meeting: "m1", samples: [VoiceSample(speaker: "S1", embedding: voice(1), weight: 40),
+        #expect(store.recognise(meeting: "m1", samples: [VoiceSample(speaker: "S1", embedding: voice(1), weight: 40),
                                                                VoiceSample(speaker: "S2", embedding: voice(2), weight: 30)]).isEmpty)
         let anna = store.learn(meeting: "m1", speaker: "S1", name: " Anna ")
-        XCTAssertEqual(anna?.name, "Anna")
-        XCTAssertNil(store.learn(meeting: "m1", speaker: "S9", name: "Nobody"), "unknown cluster teaches nothing")
+        #expect(anna?.name == "Anna")
+        #expect(store.learn(meeting: "m1", speaker: "S9", name: "Nobody") == nil, "unknown cluster teaches nothing")
 
         // Meeting 2 (another session, reloaded from disk): Anna is recognised, the other voice isn't.
         let again = VoiceProfileStore(persistence: db)
         let found = again.recognise(meeting: "m2", samples: [VoiceSample(speaker: "X", embedding: voice(1, variant: 7), weight: 20),
                                                              VoiceSample(speaker: "Y", embedding: voice(4), weight: 20)])
-        XCTAssertEqual(found["X"]?.id, anna?.id)
-        XCTAssertNil(found["Y"])
+        #expect(found["X"]?.id == anna?.id)
+        #expect(found["Y"] == nil)
 
         // Naming the matched speaker "Anna" again teaches the same profile; naming it someone else must not.
         let taught = again.learn(meeting: "m2", speaker: "X", name: "anna")
-        XCTAssertEqual(taught?.id, anna?.id)
-        XCTAssertEqual(taught?.weight, 60)
+        #expect(taught?.id == anna?.id)
+        #expect(taught?.weight == 60)
         let other = again.learn(meeting: "m2", speaker: "X", name: "Clara")
-        XCTAssertNotEqual(other?.id, anna?.id)
-        XCTAssertEqual(again.profiles.first { $0.id == anna?.id }?.weight, 60, "Anna untouched by the correction")
+        #expect(other?.id != anna?.id)
+        #expect(again.profiles.first { $0.id == anna?.id }?.weight == 60, "Anna untouched by the correction")
 
         again.forget(other!.id)
-        XCTAssertEqual(again.profiles.map(\.name), ["Anna"])
+        #expect(again.profiles.map(\.name) == ["Anna"])
         again.forgetAll()
-        XCTAssertTrue(VoiceProfileStore(persistence: db).profiles.isEmpty)
-        XCTAssertNil(db.meta("meeting.voices.v1"), "nothing left on disk")
+        #expect(VoiceProfileStore(persistence: db).profiles.isEmpty)
+        #expect(db.meta("meeting.voices.v1") == nil, "nothing left on disk")
     }
 
-    func testOldMeetingsAreDropped() {
+    @Test func oldMeetingsAreDropped() {
         let store = VoiceProfileStore(persistence: MemoryPersistence())
         for i in 0..<60 { store.recognise(meeting: "m\(i)", samples: [VoiceSample(speaker: "S", embedding: voice(i), weight: 1)]) }
-        XCTAssertEqual(store.book.order.count, 50)
-        XCTAssertEqual(store.book.clusters.count, 50)
-        XCTAssertNil(store.book.clusters["m0"])
-        XCTAssertNotNil(store.book.clusters["m59"])
+        #expect(store.book.order.count == 50)
+        #expect(store.book.clusters.count == 50)
+        #expect(store.book.clusters["m0"] == nil)
+        #expect(store.book.clusters["m59"] != nil)
     }
 }
 

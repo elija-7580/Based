@@ -1,8 +1,9 @@
-import XCTest
+import Foundation
+import Testing
 @testable import BasedCore
 
-final class ClipboardHTMLTests: XCTestCase {
-    func testNotionStyleClipboard() {
+@Suite struct ClipboardHTMLTests {
+    @Test func notionStyleClipboard() {
         let html = """
         <meta charset="utf-8"><h2>Plan</h2>
         <p>Some <strong>bold</strong> and <span class="highlight-red">red</span> text with a
@@ -17,28 +18,28 @@ final class ClipboardHTMLTests: XCTestCase {
         """
         let known = "1fe618c1-167e-80f8-946e-c1a7918dfc28"
         let blocks = ClipboardHTMLImporter(resolvePage: ClipboardHTMLImporter.pageResolver { $0 == known }).parse(html)
-        XCTAssertEqual(blocks.map(\.type), [.heading2, .text, .todo, .todo, .bulletedList, .toggle, .callout, .table, .code, .divider])
-        XCTAssertTrue(blocks[1].text.runs.contains { $0.marks.bold && $0.text == "bold" })
-        XCTAssertTrue(blocks[1].text.runs.contains { $0.marks.color == .red })
-        XCTAssertTrue(blocks[1].text.runs.contains { $0.mention == .page(known) })
-        XCTAssertEqual(blocks[2].props.checked, true)
-        XCTAssertEqual(blocks[3].props.checked, false)
-        XCTAssertEqual(blocks[3].text.plainText, "Open thing")
-        XCTAssertEqual(blocks[4].children.first?.text.plainText, "Nested")
-        XCTAssertEqual(blocks[5].children.first?.text.plainText, "Inside toggle")
-        XCTAssertEqual(blocks[6].props.icon, .emoji("💡"))
-        XCTAssertEqual(blocks[6].text.plainText, "Callout text")
-        XCTAssertEqual(blocks[7].props.tableColumns, 2)
-        XCTAssertEqual(blocks[7].props.tableHeaderRow, true)
-        XCTAssertEqual(blocks[8].props.language, "swift")
-        XCTAssertTrue(ClipboardHTMLImporter.isStructured(html))
-        XCTAssertFalse(ClipboardHTMLImporter.isStructured("<span>just text</span>"))
+        #expect(blocks.map(\.type) == [.heading2, .text, .todo, .todo, .bulletedList, .toggle, .callout, .table, .code, .divider])
+        #expect(blocks[1].text.runs.contains { $0.marks.bold && $0.text == "bold" })
+        #expect(blocks[1].text.runs.contains { $0.marks.color == .red })
+        #expect(blocks[1].text.runs.contains { $0.mention == .page(known) })
+        #expect(blocks[2].props.checked == true)
+        #expect(blocks[3].props.checked == false)
+        #expect(blocks[3].text.plainText == "Open thing")
+        #expect(blocks[4].children.first?.text.plainText == "Nested")
+        #expect(blocks[5].children.first?.text.plainText == "Inside toggle")
+        #expect(blocks[6].props.icon == .emoji("💡"))
+        #expect(blocks[6].text.plainText == "Callout text")
+        #expect(blocks[7].props.tableColumns == 2)
+        #expect(blocks[7].props.tableHeaderRow == true)
+        #expect(blocks[8].props.language == "swift")
+        #expect(ClipboardHTMLImporter.isStructured(html))
+        #expect(!ClipboardHTMLImporter.isStructured("<span>just text</span>"))
     }
 }
 
-final class ClipboardRoundTripTests: XCTestCase {
+@Suite struct ClipboardRoundTripTests {
     @MainActor
-    func testBasedHTMLCopyPastesBackAsSameBlocks() throws {
+    @Test func basedHTMLCopyPastesBackAsSameBlocks() throws {
         let store = WorkspaceStore(persistence: try SQLitePersistence(url: nil), node: "t")
         let page = store.createPage(title: RichText("P"), in: .workspace)
         let md = "## Head\n\n- [x] done\n- bullet\n\n> [!NOTE] callout\n\n<details><summary>T</summary>\n\ninside\n\n</details>\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n---\n"
@@ -48,6 +49,6 @@ final class ClipboardRoundTripTests: XCTestCase {
         exporter.headingOffset = 0
         let html = exporter.blocks(blocks)
         let back = ClipboardHTMLImporter().parse(html)
-        XCTAssertEqual(back.map(\.type), blocks.map(\.type), html)
+        #expect(back.map(\.type) == blocks.map(\.type), Comment(rawValue: html))
     }
 }

@@ -1,8 +1,9 @@
-import XCTest
+import Foundation
+import Testing
 @testable import BasedCore
 
 @MainActor
-final class StoreTests: XCTestCase {
+@Suite struct StoreTests {
     func makeStore() -> (WorkspaceStore, RecordID) {
         let s = WorkspaceStore(persistence: MemoryPersistence(), node: "test")
         let page = s.createPage(title: "Home")
@@ -13,125 +14,125 @@ final class StoreTests: XCTestCase {
         s.visibleOrder(in: page).map { s.blocks[$0]!.text.plainText }
     }
 
-    func testFractionalIndexOrdering() {
+    @Test func fractionalIndexOrdering() {
         var keys: [String] = []
         var lo: String? = nil
         for _ in 0..<200 { let k = FractionalIndex.between(lo, nil); keys.append(k); lo = k }
-        XCTAssertEqual(keys, keys.sorted())
+        #expect(keys == keys.sorted())
         let a = keys[10], b = keys[11]
         var mids: [String] = []
         var hi = b
-        for _ in 0..<50 { let m = FractionalIndex.between(a, hi); XCTAssert(a < m && m < hi); mids.append(m); hi = m }
+        for _ in 0..<50 { let m = FractionalIndex.between(a, hi); #expect(a < m && m < hi); mids.append(m); hi = m }
         let many = FractionalIndex.keys(count: 20, between: a, b)
-        XCTAssertEqual(many, many.sorted())
-        XCTAssert(many.allSatisfy { a < $0 && $0 < b })
+        #expect(many == many.sorted())
+        #expect(many.allSatisfy { a < $0 && $0 < b })
     }
 
-    func testInsertSplitMerge() {
+    @Test func insertSplitMerge() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.text, text: "Hello world", in: .block(page))
         let f = s.splitBlock(a, at: 5)!
-        XCTAssertEqual(texts(s, page), ["Hello", " world"])
+        #expect(texts(s, page) == ["Hello", " world"])
         let back = s.mergeIntoPrevious(f.id, pageID: page)!
-        XCTAssertEqual(back, FocusTarget(a, 5))
-        XCTAssertEqual(texts(s, page), ["Hello world"])
+        #expect(back == FocusTarget(a, 5))
+        #expect(texts(s, page) == ["Hello world"])
     }
 
-    func testEnterOnListContinuesAndEmptyListBecomesText() {
+    @Test func enterOnListContinuesAndEmptyListBecomesText() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.todo, text: "Buy milk", in: .block(page))
         s.setChecked(a, true)
         let f = s.splitBlock(a, at: 8)!
-        XCTAssertEqual(s.blocks[f.id]?.type, .todo)
-        XCTAssertEqual(s.blocks[f.id]?.props.checked, false)
+        #expect(s.blocks[f.id]?.type == .todo)
+        #expect(s.blocks[f.id]?.props.checked == false)
         _ = s.splitBlock(f.id, at: 0)
-        XCTAssertEqual(s.blocks[f.id]?.type, .text)
+        #expect(s.blocks[f.id]?.type == .text)
     }
 
-    func testHeadingEnterCreatesText() {
+    @Test func headingEnterCreatesText() {
         let (s, page) = makeStore()
         let h = s.insertBlock(.heading1, text: "Title", in: .block(page))
         let f = s.splitBlock(h, at: 5)!
-        XCTAssertEqual(s.blocks[f.id]?.type, .text)
+        #expect(s.blocks[f.id]?.type == .text)
     }
 
-    func testEnterAtStartInsertsAbove() {
+    @Test func enterAtStartInsertsAbove() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.bulletedList, text: "Item", in: .block(page))
         let f = s.splitBlock(a, at: 0)!
-        XCTAssertEqual(f.id, a)
-        XCTAssertEqual(texts(s, page), ["", "Item"])
+        #expect(f.id == a)
+        #expect(texts(s, page) == ["", "Item"])
     }
 
-    func testIndentOutdent() {
+    @Test func indentOutdent() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.bulletedList, text: "A", in: .block(page))
         let b = s.insertBlock(.bulletedList, text: "B", in: .block(page))
         let c = s.insertBlock(.bulletedList, text: "C", in: .block(page))
         s.indent([b, c])
-        XCTAssertEqual(s.blocks[b]?.parent, .block(a))
-        XCTAssertEqual(s.blocks[c]?.parent, .block(a))
-        XCTAssertEqual(texts(s, page), ["A", "B", "C"])
+        #expect(s.blocks[b]?.parent == .block(a))
+        #expect(s.blocks[c]?.parent == .block(a))
+        #expect(texts(s, page) == ["A", "B", "C"])
         s.outdent([b])
-        XCTAssertEqual(s.blocks[b]?.parent, .block(page))
-        XCTAssertEqual(s.blocks[c]?.parent, .block(b), "following siblings become children")
-        XCTAssertEqual(texts(s, page), ["A", "B", "C"])
+        #expect(s.blocks[b]?.parent == .block(page))
+        #expect(s.blocks[c]?.parent == .block(b), "following siblings become children")
+        #expect(texts(s, page) == ["A", "B", "C"])
     }
 
-    func testUndoRedoAndCoalescing() {
+    @Test func undoRedoAndCoalescing() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.text, in: .block(page))
         s.setText(a, "H")
         s.setText(a, "He")
         s.setText(a, "Hey")
-        XCTAssertEqual(s.undoActionName, "Typing")
+        #expect(s.undoActionName == "Typing")
         s.undo()
-        XCTAssertEqual(s.blocks[a]?.text.plainText, "", "typing burst undone in one step")
+        #expect(s.blocks[a]?.text.plainText == "", "typing burst undone in one step")
         s.undo()
-        XCTAssertNil(s.blocks[a])
+        #expect(s.blocks[a] == nil)
         s.redo()
-        XCTAssertNotNil(s.blocks[a])
+        #expect(s.blocks[a] != nil)
         s.redo()
-        XCTAssertEqual(s.blocks[a]?.text.plainText, "Hey")
+        #expect(s.blocks[a]?.text.plainText == "Hey")
     }
 
-    func testMoveDuplicateDelete() {
+    @Test func moveDuplicateDelete() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.text, text: "A", in: .block(page))
         let b = s.insertBlock(.text, text: "B", in: .block(page))
         let c = s.insertBlock(.text, text: "C", in: .block(page))
         s.moveBlocks([c], to: .block(page), at: .before(a))
-        XCTAssertEqual(texts(s, page), ["C", "A", "B"])
+        #expect(texts(s, page) == ["C", "A", "B"])
         s.moveDown(c)
-        XCTAssertEqual(texts(s, page), ["A", "C", "B"])
+        #expect(texts(s, page) == ["A", "C", "B"])
         s.moveBlocks([a, c], to: .block(page), at: .after(b))
-        XCTAssertEqual(texts(s, page), ["B", "A", "C"])
+        #expect(texts(s, page) == ["B", "A", "C"])
         let copies = s.duplicateBlocks([b])
-        XCTAssertEqual(copies.count, 1)
-        XCTAssertEqual(texts(s, page), ["B", "B", "A", "C"])
+        #expect(copies.count == 1)
+        #expect(texts(s, page) == ["B", "B", "A", "C"])
         s.deleteBlocks([a])
-        XCTAssertEqual(texts(s, page), ["B", "B", "C"])
+        #expect(texts(s, page) == ["B", "B", "C"])
     }
 
-    func testTrashRestoreAndBacklinks() {
+    @Test func trashRestoreAndBacklinks() {
         let (s, page) = makeStore()
         let sub = s.createPage(title: "Sub", in: .block(page))
-        XCTAssertEqual(s.subpages(of: page).map(\.id), [sub])
+        #expect(s.subpages(of: page).map(\.id) == [sub])
         let other = s.createPage(title: "Other")
         let t = RichText(runs: [TextRun("see "), TextRun("Sub", mention: .page(sub))])
         s.insertBlock(.text, text: t, in: .block(other))
-        XCTAssertEqual(s.backlinks(to: sub), [other])
+        #expect(s.backlinks(to: sub) == [other])
         s.trash([page])
-        XCTAssertTrue(s.isTrashed(sub))
-        XCTAssertEqual(s.trashedPages().map(\.id), [page])
+        #expect(s.isTrashed(sub))
+        #expect(s.trashedPages().map(\.id) == [page])
         s.restore([page])
-        XCTAssertFalse(s.isTrashed(sub))
-        XCTAssertEqual(s.ancestors(of: sub).map(\.id), [page])
+        #expect(!s.isTrashed(sub))
+        #expect(s.ancestors(of: sub).map(\.id) == [page])
         s.toggleFavorite(sub)
-        XCTAssertEqual(s.favoritePages().map(\.id), [sub])
+        #expect(s.favoritePages().map(\.id) == [sub])
     }
 
-    func testSQLitePersistenceRoundTrip() throws {
+    @Test func sqlitePersistenceRoundTrip() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let url = dir.appendingPathComponent("based.sqlite")
         var pageID = ""
@@ -145,45 +146,45 @@ final class StoreTests: XCTestCase {
         }
         let p2 = try SQLitePersistence(url: url)
         let s2 = WorkspaceStore(persistence: p2, node: "b")
-        XCTAssertEqual(s2.title(of: pageID), "Persisted")
+        #expect(s2.title(of: pageID) == "Persisted")
         let kids = s2.contentBlocks(of: pageID)
-        XCTAssertEqual(kids.first?.type, .heading2)
-        XCTAssertEqual(kids.first?.text.runs.first?.marks.bold, true)
-        XCTAssertEqual(kids.last?.type, .databaseInline)
-        XCTAssertEqual(s2.rows(of: kids.last!.props.databaseID!).count, 3)
-        XCTAssertEqual(p2.meta("k"), Data([1, 2, 3]))
+        #expect(kids.first?.type == .heading2)
+        #expect(kids.first?.text.runs.first?.marks.bold == true)
+        #expect(kids.last?.type == .databaseInline)
+        #expect(s2.rows(of: kids.last!.props.databaseID!).count == 3)
+        #expect(p2.meta("k") == Data([1, 2, 3]))
         try? FileManager.default.removeItem(at: dir)
     }
 
-    func testRemoteMergeLastWriterWins() {
+    @Test func remoteMergeLastWriterWins() {
         let a = WorkspaceStore(persistence: MemoryPersistence(), node: "A")
         let b = WorkspaceStore(persistence: MemoryPersistence(), node: "B")
         let page = a.createPage(title: "Shared")
         b.applyRemote(a.allRecords())
-        XCTAssertEqual(b.title(of: page), "Shared")
+        #expect(b.title(of: page) == "Shared")
         a.setText(page, "From A")
         b.breakUndoCoalescing()
         b.setText(page, "From B") // later stamp wins
         let staleOnA = a.applyRemote(b.allRecords())
-        XCTAssertTrue(staleOnA.isEmpty)
-        XCTAssertEqual(a.title(of: page), "From B")
+        #expect(staleOnA.isEmpty)
+        #expect(a.title(of: page) == "From B")
         let staleOnB = b.applyRemote(a.allRecords())
-        XCTAssertTrue(staleOnB.isEmpty)
-        XCTAssertEqual(b.title(of: page), "From B")
+        #expect(staleOnB.isEmpty)
+        #expect(b.title(of: page) == "From B")
     }
 
-    func testColumns() {
+    @Test func columns() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.text, text: "Left", in: .block(page))
         let b = s.insertBlock(.text, text: "Right", in: .block(page))
         s.placeInColumn([b], beside: a, leading: false)
         let list = s.contentBlocks(of: page).first!
-        XCTAssertEqual(list.type, .columnList)
-        XCTAssertEqual(s.contentBlocks(of: list.id).count, 2)
-        XCTAssertEqual(texts(s, page).filter { !$0.isEmpty }, ["Left", "Right"])
+        #expect(list.type == .columnList)
+        #expect(s.contentBlocks(of: list.id).count == 2)
+        #expect(texts(s, page).filter { !$0.isEmpty } == ["Left", "Right"])
     }
 
-    func testMovingLastBlockOutOfColumnRemovesIt() {
+    @Test func movingLastBlockOutOfColumnRemovesIt() {
         let (s, page) = makeStore()
         let a = s.insertBlock(.text, text: "A", in: .block(page))
         let b = s.insertBlock(.text, text: "B", in: .block(page))
@@ -191,18 +192,18 @@ final class StoreTests: XCTestCase {
         s.placeInColumn([b], beside: a, leading: false)
         let list = s.contentBlocks(of: page).first!
         s.placeInColumn([c], beside: b, leading: false)
-        XCTAssertEqual(s.contentBlocks(of: list.id).count, 3)
+        #expect(s.contentBlocks(of: list.id).count == 3)
         // Move B (alone in the middle column) under C: the middle column disappears.
         s.moveBlocks([b], to: s.blocks[c]!.parent, at: .after(c))
-        XCTAssertEqual(s.contentBlocks(of: list.id).count, 2)
+        #expect(s.contentBlocks(of: list.id).count == 2)
         // Move C's column content into A's column: one column left, so the list unwraps.
         s.moveBlocks([c, b], to: s.blocks[a]!.parent, at: .after(a))
-        XCTAssertEqual(s.contentBlocks(of: list.id).count, 1)
+        #expect(s.contentBlocks(of: list.id).count == 1)
         s.moveBlocks([a, c, b], to: .block(page), at: .end)
-        XCTAssertNil(s.blocks[list.id])
-        XCTAssertEqual(texts(s, page).filter { !$0.isEmpty }, ["A", "C", "B"])
+        #expect(s.blocks[list.id] == nil)
+        #expect(texts(s, page).filter { !$0.isEmpty } == ["A", "C", "B"])
         // Undo restores the columns in one step.
         s.undo()
-        XCTAssertNotNil(s.blocks[list.id])
+        #expect(s.blocks[list.id] != nil)
     }
 }
