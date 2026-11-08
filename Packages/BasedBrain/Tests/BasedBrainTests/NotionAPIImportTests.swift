@@ -1,4 +1,5 @@
-import XCTest
+import Foundation
+import Testing
 @testable import BasedBrain
 @testable import BasedCore
 
@@ -28,7 +29,7 @@ final class FakeNotion: NotionTransport, @unchecked Sendable {
             return n
         }
         if fail > 0 { return (429, ["retry-after": "0"], Data(#"{"code":"rate_limited","message":"slow down"}"#.utf8)) }
-        XCTAssertEqual(headers["Notion-Version"], NotionClient.version)
+        #expect(headers["Notion-Version"] == NotionClient.version)
         if let r = routes[key] { return (200, [:], try r.encoded()) }
         return (404, [:], Data(#"{"object":"error","code":"object_not_found","message":"Could not find \#(key)"}"#.utf8))
     }
@@ -38,7 +39,7 @@ final class FakeNotion: NotionTransport, @unchecked Sendable {
 }
 
 @MainActor
-final class NotionAPIImportTests: XCTestCase {
+@Suite struct NotionAPIImportTests {
     // Ids
     let hub = "11111111-1111-4111-8111-111111111111"
     let sub = "22222222-2222-4222-8222-222222222222"
@@ -205,142 +206,142 @@ final class NotionAPIImportTests: XCTestCase {
         NotionWorkspaceImport(client: NotionClient(token: "secret_x", transport: f, requestsPerSecond: 0), options: NotionImportOptions())
     }
 
-    func testFullImportFromAPI() async throws {
+    @Test func fullImportFromAPI() async throws {
         let f = makeFake()
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         let assets = FileAssetStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("na-" + UUID().uuidString))
         let report = try await importer(f).run([NotionTarget("https://www.notion.so/Project-Hub-\(hub.replacingOccurrences(of: "-", with: ""))?pvs=4")!], into: store, assets: assets)
-        XCTAssertEqual(f.count("GET pages/\(sub)"), 2, "429 is retried")
-        XCTAssertEqual(report.assets, 1)
+        #expect(f.count("GET pages/\(sub)") == 2, "429 is retried")
+        #expect(report.assets == 1)
 
         // Page and blocks
-        let p = try XCTUnwrap(store.blocks[hub])
-        XCTAssertEqual(p.title, "Project Hub")
-        XCTAssertEqual(p.props.icon, .emoji("🚀"))
-        XCTAssertEqual(p.parent, .workspace)
-        XCTAssertEqual(p.createdBy, "Elija")
+        let p = try #require(store.blocks[hub])
+        #expect(p.title == "Project Hub")
+        #expect(p.props.icon == .emoji("🚀"))
+        #expect(p.parent == .workspace)
+        #expect(p.createdBy == "Elija")
         let kids = store.childBlocks(of: .block(hub))
-        XCTAssertEqual(kids.map(\.type), [.heading1, .text, .todo, .toggle, .callout, .code, .image, .table, .columnList, .page, .databaseInline,
+        #expect(kids.map(\.type) == [.heading1, .text, .todo, .toggle, .callout, .code, .image, .table, .columnList, .page, .databaseInline,
                                           .syncedBlock, .syncedBlock, .callout, .linkToPage, .heading2])
-        XCTAssertEqual(kids[0].props.color, .blue)
+        #expect(kids[0].props.color == .blue)
         let runs = kids[1].text.runs
-        XCTAssertTrue(runs[1].marks.bold)
-        XCTAssertEqual(runs[2].marks.color, .redBackground)
-        XCTAssertEqual(runs[3].marks.link, "based://page/\(sub)")
-        XCTAssertEqual(runs[4].mention, .page(sub))
-        XCTAssertEqual(runs[5].equation, "E=mc^2")
-        XCTAssertEqual(kids[2].props.checked, true)
-        XCTAssertEqual(store.childBlocks(of: .block(b(4))).first?.title, "Hidden text")
-        XCTAssertEqual(kids[4].props.icon, .emoji("💡"))
-        XCTAssertEqual(kids[4].props.color, .yellowBackground)
-        XCTAssertEqual(kids[5].title, "let x = 1")
-        XCTAssertEqual(kids[5].props.language, "swift")
-        XCTAssertEqual(kids[5].props.caption?.plainText, "Example")
-        let img = try XCTUnwrap(kids[6].props.asset)
-        XCTAssertFalse(img.id.hasPrefix("pending-"))
-        XCTAssertNil(kids[6].props.url, "expiring Notion URLs aren't kept")
-        XCTAssertEqual(kids[7].props.tableColumns, 2)
-        XCTAssertEqual(kids[7].props.tableHeaderRow, true)
-        XCTAssertEqual(store.childBlocks(of: .block(b(8))).map { $0.props.cells?.map(\.plainText) ?? [] }, [["Name", "Value"], ["A", "1"]])
-        XCTAssertEqual(store.childBlocks(of: .block(b(9))).map { $0.props.ratio }, [0.3, 0.7])
-        XCTAssertEqual(kids[9].title, "Spec")
-        XCTAssertEqual(store.childBlocks(of: .block(sub)).first?.type, .quote)
-        XCTAssertNil(kids[11].props.syncSource)
-        XCTAssertEqual(store.childBlocks(of: .block(b(20))).first?.title, "Shared")
-        XCTAssertEqual(kids[12].props.syncSource, b(20))
-        XCTAssertTrue(store.childBlocks(of: .block(b(21))).isEmpty)
-        XCTAssertEqual(kids[13].props.icon, .emoji("⚠️"))
-        XCTAssertEqual(kids[14].props.linkTarget, sub)
-        XCTAssertEqual(kids[15].props.toggleable, true)
-        XCTAssertEqual(store.childBlocks(of: .block(b(24))).first?.title, "Inside")
-        XCTAssertTrue(report.warnings.contains { $0.contains("ai block") || $0.contains("ai_block") })
+        #expect(runs[1].marks.bold)
+        #expect(runs[2].marks.color == .redBackground)
+        #expect(runs[3].marks.link == "based://page/\(sub)")
+        #expect(runs[4].mention == .page(sub))
+        #expect(runs[5].equation == "E=mc^2")
+        #expect(kids[2].props.checked == true)
+        #expect(store.childBlocks(of: .block(b(4))).first?.title == "Hidden text")
+        #expect(kids[4].props.icon == .emoji("💡"))
+        #expect(kids[4].props.color == .yellowBackground)
+        #expect(kids[5].title == "let x = 1")
+        #expect(kids[5].props.language == "swift")
+        #expect(kids[5].props.caption?.plainText == "Example")
+        let img = try #require(kids[6].props.asset)
+        #expect(!img.id.hasPrefix("pending-"))
+        #expect(kids[6].props.url == nil, "expiring Notion URLs aren't kept")
+        #expect(kids[7].props.tableColumns == 2)
+        #expect(kids[7].props.tableHeaderRow == true)
+        #expect(store.childBlocks(of: .block(b(8))).map { $0.props.cells?.map(\.plainText) ?? [] } == [["Name", "Value"], ["A", "1"]])
+        #expect(store.childBlocks(of: .block(b(9))).map { $0.props.ratio } == [0.3, 0.7])
+        #expect(kids[9].title == "Spec")
+        #expect(store.childBlocks(of: .block(sub)).first?.type == .quote)
+        #expect(kids[11].props.syncSource == nil)
+        #expect(store.childBlocks(of: .block(b(20))).first?.title == "Shared")
+        #expect(kids[12].props.syncSource == b(20))
+        #expect(store.childBlocks(of: .block(b(21))).isEmpty)
+        #expect(kids[13].props.icon == .emoji("⚠️"))
+        #expect(kids[14].props.linkTarget == sub)
+        #expect(kids[15].props.toggleable == true)
+        #expect(store.childBlocks(of: .block(b(24))).first?.title == "Inside")
+        #expect(report.warnings.contains { $0.contains("ai block") || $0.contains("ai_block") })
 
         // Database schema
         let container = kids[10]
-        XCTAssertEqual(container.id, tasksDB)
-        XCTAssertEqual(container.props.databaseID, tasksDS)
-        let db = try XCTUnwrap(store.databases[tasksDS])
-        XCTAssertEqual(db.blockID, tasksDB)
-        XCTAssertEqual(db.title.plainText, "Tasks")
-        XCTAssertEqual(db.summary?.plainText, "All the work")
-        XCTAssertEqual(Array(db.properties.map(\.name).prefix(5)), ["Name", "Status", "Due", "Points", "Tags"], "view order")
+        #expect(container.id == tasksDB)
+        #expect(container.props.databaseID == tasksDS)
+        let db = try #require(store.databases[tasksDS])
+        #expect(db.blockID == tasksDB)
+        #expect(db.title.plainText == "Tasks")
+        #expect(db.summary?.plainText == "All the work")
+        #expect(Array(db.properties.map(\.name).prefix(5)) == ["Name", "Status", "Due", "Points", "Tags"], "view order")
         func prop(_ n: String) -> PropertySchema? { db.properties.first { $0.name == n } }
-        XCTAssertEqual(prop("Status")?.type, .status)
-        XCTAssertEqual(prop("Status")?.statusGroups?.map(\.name), ["To-do", "In progress", "Complete"])
-        XCTAssertEqual(prop("Points")?.numberFormat, .euro)
-        XCTAssertEqual(prop("Project")?.type, .relation)
-        XCTAssertEqual(prop("Project")?.relation?.databaseID, projDS)
-        XCTAssertEqual(prop("Project")?.relation?.syncedPropertyID, NotionAPIMapper.propertyID(projDS, "back"))
-        XCTAssertEqual(prop("Score")?.type, .formula)
-        XCTAssertEqual(prop("Score")?.formula, "prop(\"Points\") * 2")
-        XCTAssertEqual(prop("Label")?.type, .text)
-        XCTAssertTrue(prop("Label")?.description?.contains("notionOnly(prop(\"Points\"))") ?? false)
-        XCTAssertEqual(prop("Count")?.type, .rollup)
-        XCTAssertEqual(prop("Count")?.rollup?.function, .countAll)
-        XCTAssertEqual(prop("Key")?.idPrefix, "TSK")
-        XCTAssertEqual(db.nextUniqueID, 3)
+        #expect(prop("Status")?.type == .status)
+        #expect(prop("Status")?.statusGroups?.map(\.name) == ["To-do", "In progress", "Complete"])
+        #expect(prop("Points")?.numberFormat == .euro)
+        #expect(prop("Project")?.type == .relation)
+        #expect(prop("Project")?.relation?.databaseID == projDS)
+        #expect(prop("Project")?.relation?.syncedPropertyID == NotionAPIMapper.propertyID(projDS, "back"))
+        #expect(prop("Score")?.type == .formula)
+        #expect(prop("Score")?.formula == "prop(\"Points\") * 2")
+        #expect(prop("Label")?.type == .text)
+        #expect(prop("Label")?.description?.contains("notionOnly(prop(\"Points\"))") ?? false)
+        #expect(prop("Count")?.type == .rollup)
+        #expect(prop("Count")?.rollup?.function == .countAll)
+        #expect(prop("Key")?.idPrefix == "TSK")
+        #expect(db.nextUniqueID == 3)
 
         // Rows: main view order, values, content, timestamps
         let rows = store.rows(of: tasksDS).sorted { $0.sortKey < $1.sortKey }
-        XCTAssertEqual(rows.map(\.id), [row1, row2])
+        #expect(rows.map(\.id) == [row1, row2])
         let r1 = rows[0]
-        XCTAssertEqual(r1.title, "Write docs")
-        XCTAssertEqual(r1.values[prop("Status")!.id], .status("s-doing"))
-        XCTAssertEqual(r1.values[prop("Tags")!.id], .multiSelect(["t-urgent"]))
-        XCTAssertEqual(r1.values[prop("Points")!.id], .number(3))
-        XCTAssertEqual(r1.values[prop("Owner")!.id], .person(["Elija"]))
-        XCTAssertEqual(r1.values[prop("Project")!.id], .relation([proj1]))
-        XCTAssertEqual(r1.values[prop("Label")!.id], .text("L3"))
-        XCTAssertNil(r1.values[prop("Score")!.id], "live formula")
+        #expect(r1.title == "Write docs")
+        #expect(r1.values[prop("Status")!.id] == .status("s-doing"))
+        #expect(r1.values[prop("Tags")!.id] == .multiSelect(["t-urgent"]))
+        #expect(r1.values[prop("Points")!.id] == .number(3))
+        #expect(r1.values[prop("Owner")!.id] == .person(["Elija"]))
+        #expect(r1.values[prop("Project")!.id] == .relation([proj1]))
+        #expect(r1.values[prop("Label")!.id] == .text("L3"))
+        #expect(r1.values[prop("Score")!.id] == nil, "live formula")
         let engine = QueryEngine(store: store)
-        XCTAssertEqual(engine.value(row1, prop("Score")!.id).number, 6)
-        XCTAssertEqual(engine.value(row1, prop("Count")!.id).number, 1)
-        XCTAssertEqual(r1.values[prop("Key")!.id], .uniqueID(1))
-        if case .date(let d)? = r1.values[prop("Due")!.id] { XCTAssertFalse(d.includeTime) } else { XCTFail("date") }
-        if case .date(let d)? = rows[1].values[prop("Due")!.id] { XCTAssertTrue(d.includeTime) } else { XCTFail("date time") }
-        XCTAssertEqual(store.childBlocks(of: .block(row1)).first?.title, "Row body")
+        #expect(engine.value(row1, prop("Score")!.id).number == 6)
+        #expect(engine.value(row1, prop("Count")!.id).number == 1)
+        #expect(r1.values[prop("Key")!.id] == .uniqueID(1))
+        if case .date(let d)? = r1.values[prop("Due")!.id] { #expect(!d.includeTime) } else { Issue.record("date") }
+        if case .date(let d)? = rows[1].values[prop("Due")!.id] { #expect(d.includeTime) } else { Issue.record("date time") }
+        #expect(store.childBlocks(of: .block(row1)).first?.title == "Row body")
         let created = ISO8601DateFormatter().date(from: "2024-01-05T09:30:00Z")!
-        XCTAssertEqual(r1.createdAt.timeIntervalSince1970, created.timeIntervalSince1970, accuracy: 1)
+        #expect(abs(r1.createdAt.timeIntervalSince1970 - created.timeIntervalSince1970) <= 1)
 
         // Views
         let views = (container.props.viewIDs ?? []).compactMap { store.views[$0] }
-        XCTAssertEqual(views.map(\.name), ["All tasks", "Board"])
-        XCTAssertEqual(views[0].wrapCells, true)
-        XCTAssertEqual(views[0].properties?.first?.width, 280)
-        XCTAssertEqual(views[0].properties?.first { $0.id == prop("Tags")!.id }?.visible, false)
+        #expect(views.map(\.name) == ["All tasks", "Board"])
+        #expect(views[0].wrapCells == true)
+        #expect(views[0].properties?.first?.width == 280)
+        #expect(views[0].properties?.first { $0.id == prop("Tags")!.id }?.visible == false)
         let board = views[1]
-        XCTAssertEqual(board.type, .board)
-        XCTAssertEqual(board.groupBy?.propertyID, prop("Status")!.id)
-        XCTAssertEqual(board.groupBy?.hideEmptyGroups, true)
-        XCTAssertEqual(board.cardCover, .pageCover)
-        XCTAssertEqual(board.cardSize, .large)
-        let filter = try XCTUnwrap(board.filter)
-        XCTAssertEqual(filter.combinator, .and)
-        guard case .condition(let c0) = filter.items[0], case .group(let g1) = filter.items[1] else { return XCTFail("filter shape") }
-        XCTAssertEqual(c0.propertyID, prop("Tags")!.id)
-        XCTAssertEqual(c0.op, .contains)
-        XCTAssertEqual(c0.value, .options(["t-urgent"]))
-        XCTAssertEqual(g1.combinator, .or)
-        guard case .condition(let c1) = g1.items[0], case .condition(let c2) = g1.items[1] else { return XCTFail("or group") }
-        XCTAssertEqual(c1.op, .within); XCTAssertEqual(c1.value, .relative(.pastWeek))
-        XCTAssertEqual(c2.op, .greater); XCTAssertEqual(c2.value, .number(2))
-        let createdProp = try XCTUnwrap(db.properties.first { $0.type == .createdTime })
-        XCTAssertEqual(board.sorts?.map(\.propertyID), [prop("Points")!.id, createdProp.id])
-        XCTAssertEqual(board.sorts?.map(\.ascending), [false, true])
+        #expect(board.type == .board)
+        #expect(board.groupBy?.propertyID == prop("Status")!.id)
+        #expect(board.groupBy?.hideEmptyGroups == true)
+        #expect(board.cardCover == .pageCover)
+        #expect(board.cardSize == .large)
+        let filter = try #require(board.filter)
+        #expect(filter.combinator == .and)
+        guard case .condition(let c0) = filter.items[0], case .group(let g1) = filter.items[1] else { Issue.record("filter shape"); return }
+        #expect(c0.propertyID == prop("Tags")!.id)
+        #expect(c0.op == .contains)
+        #expect(c0.value == .options(["t-urgent"]))
+        #expect(g1.combinator == .or)
+        guard case .condition(let c1) = g1.items[0], case .condition(let c2) = g1.items[1] else { Issue.record("or group"); return }
+        #expect(c1.op == .within); #expect(c1.value == .relative(.pastWeek))
+        #expect(c2.op == .greater); #expect(c2.value == .number(2))
+        let createdProp = try #require(db.properties.first { $0.type == .createdTime })
+        #expect(board.sorts?.map(\.propertyID) == [prop("Points")!.id, createdProp.id])
+        #expect(board.sorts?.map(\.ascending) == [false, true])
         // The engine shows the board's rows: Urgent + (past week or points > 2) → only row1
         let shown = QueryEngine(store: store).run(board).rows
-        XCTAssertEqual(shown.map(\.id), [row1])
+        #expect(shown.map(\.id) == [row1])
 
         // The related database is imported as its own page, with the two-way relation
-        let projContainer = try XCTUnwrap(store.blocks[projDB])
-        XCTAssertEqual(projContainer.type, .databasePage)
-        XCTAssertEqual(projContainer.parent, .workspace)
-        let projDBRec = try XCTUnwrap(store.databases[projDS])
-        XCTAssertEqual(projDBRec.properties.first { $0.name == "Tasks" }?.relation?.databaseID, tasksDS)
-        XCTAssertEqual(store.rows(of: projDS).map(\.title), ["Website"])
+        let projContainer = try #require(store.blocks[projDB])
+        #expect(projContainer.type == .databasePage)
+        #expect(projContainer.parent == .workspace)
+        let projDBRec = try #require(store.databases[projDS])
+        #expect(projDBRec.properties.first { $0.name == "Tasks" }?.relation?.databaseID == tasksDS)
+        #expect(store.rows(of: projDS).map(\.title) == ["Website"])
     }
 
-    func testDashboardImport() async throws {
+    @Test func dashboardImport() async throws {
         let f = makeFake()
         let dash = "99999999-9999-4999-8999-000000000003", w1 = "99999999-9999-4999-8999-000000000004"
         let w2 = "99999999-9999-4999-8999-000000000005", w3 = "99999999-9999-4999-8999-000000000006"
@@ -363,30 +364,30 @@ final class NotionAPIImportTests: XCTestCase {
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         let assets = FileAssetStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("nd-" + UUID().uuidString))
         let report = try await importer(f).run([NotionTarget("https://www.notion.so/\(hub.replacingOccurrences(of: "-", with: ""))")!], into: store, assets: assets)
-        XCTAssertEqual(f.count("GET views/\(w2)"), 1, "widget views missing from the list are fetched")
+        #expect(f.count("GET views/\(w2)") == 1, "widget views missing from the list are fetched")
 
-        let container = try XCTUnwrap(store.blocks.values.first { $0.props.databaseID == tasksDS && $0.type == .databaseInline })
+        let container = try #require(store.blocks.values.first { $0.props.databaseID == tasksDS && $0.type == .databaseInline })
         let tabs = store.views(forBlock: container.id)
-        XCTAssertEqual(tabs.map(\.name), ["All tasks", "Board", "Overview"], "widgets aren't tabs")
-        let d = try XCTUnwrap(store.views[dash])
-        XCTAssertEqual(d.type, .dashboard)
-        let rows = try XCTUnwrap(d.dashboard?.rows)
-        XCTAssertEqual(rows.map { $0.widgets.map(\.width) }, [[4, 8], [12]])
-        XCTAssertEqual(rows.first?.height, 320)
-        XCTAssertEqual(rows.flatMap { $0.widgets.map(\.viewID) }, [w1, w2, w3])
-        let total = try XCTUnwrap(store.views[w1])
-        XCTAssertEqual(total.widgetOf, dash)
-        XCTAssertEqual(total.chart?.kind, .number)
-        XCTAssertEqual(total.chart?.caption, "All tasks")
-        XCTAssertEqual(total.chart?.colorTheme, "green")
-        XCTAssertEqual(total.chart?.height, "small")
-        XCTAssertEqual(store.views[w2]?.databaseID, projDS, "widget over another database")
-        XCTAssertEqual(store.views[w3]?.chart?.kind, .bar)
-        XCTAssertNotNil(store.views[w3]?.chart?.xPropertyID)
-        XCTAssertFalse(report.warnings.contains { $0.contains("Dashboard") }, report.warnings.joined(separator: "\n"))
+        #expect(tabs.map(\.name) == ["All tasks", "Board", "Overview"], "widgets aren't tabs")
+        let d = try #require(store.views[dash])
+        #expect(d.type == .dashboard)
+        let rows = try #require(d.dashboard?.rows)
+        #expect(rows.map { $0.widgets.map(\.width) } == [[4, 8], [12]])
+        #expect(rows.first?.height == 320)
+        #expect(rows.flatMap { $0.widgets.map(\.viewID) } == [w1, w2, w3])
+        let total = try #require(store.views[w1])
+        #expect(total.widgetOf == dash)
+        #expect(total.chart?.kind == .number)
+        #expect(total.chart?.caption == "All tasks")
+        #expect(total.chart?.colorTheme == "green")
+        #expect(total.chart?.height == "small")
+        #expect(store.views[w2]?.databaseID == projDS, "widget over another database")
+        #expect(store.views[w3]?.chart?.kind == .bar)
+        #expect(store.views[w3]?.chart?.xPropertyID != nil)
+        #expect(!(report.warnings.contains { $0.contains("Dashboard") }), Comment(rawValue: report.warnings.joined(separator: "\n")))
     }
 
-    func testReimportUpdatesInPlace() async throws {
+    @Test func reimportUpdatesInPlace() async throws {
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         let target = [NotionTarget(hub)!]
         _ = try await importer(makeFake()).run(target, into: store, assets: nil)
@@ -399,15 +400,15 @@ final class NotionAPIImportTests: XCTestCase {
         kids.removeAll { $0["id"]?.string == b(3) }
         f.routes["GET blocks/\(hub)/children"] = list(kids)
         let r = try await importer(f).run(target, into: store, assets: nil)
-        XCTAssertEqual(store.databases.count, dbs)
-        XCTAssertEqual(store.views.count, views)
-        XCTAssertEqual(store.blocks.values.filter { $0.trashedAt == nil }.count, count - 1)
-        XCTAssertNil(store.blocks[b(3)].flatMap { $0.trashedAt == nil ? $0 : nil })
-        XCTAssertEqual(store.children(of: .workspace).filter { store.blocks[$0]?.trashedAt == nil }.count, 2, "hub + Projects, no duplicates")
-        XCTAssertTrue(r.warnings.contains { $0.contains("existing") })
+        #expect(store.databases.count == dbs)
+        #expect(store.views.count == views)
+        #expect(store.blocks.values.filter { $0.trashedAt == nil }.count == count - 1)
+        #expect(store.blocks[b(3)].flatMap { $0.trashedAt == nil ? $0 : nil } == nil)
+        #expect(store.children(of: .workspace).filter { store.blocks[$0]?.trashedAt == nil }.count == 2, "hub + Projects, no duplicates")
+        #expect(r.warnings.contains { $0.contains("existing") })
     }
 
-    func testSearchModeAndTargets() async throws {
+    @Test func searchModeAndTargets() async throws {
         let f = makeFake()
         f.routes["POST search"] = list([
             f.routes["GET pages/\(hub)"]!,
@@ -418,16 +419,16 @@ final class NotionAPIImportTests: XCTestCase {
         _ = try await importer(f).run([], into: store, assets: nil)
         // The database lives inside the hub page, so the hub is the only shared root (plus the related Projects database).
         let roots = store.childBlocks(of: .workspace).map(\.id)
-        XCTAssertEqual(Set(roots), [hub, projDB])
-        XCTAssertEqual(store.blocks[tasksDB]?.parent, .block(hub))
+        #expect(Set(roots) == [hub, projDB])
+        #expect(store.blocks[tasksDB]?.parent == .block(hub))
 
-        XCTAssertEqual(NotionTarget("https://app.notion.com/p/25afa757a99a4c998c1fa9ec4a6051eb")?.id, "25afa757-a99a-4c99-8c1f-a9ec4a6051eb")
-        XCTAssertEqual(NotionTarget("https://www.notion.so/team/Tasks-33333333333343338333333333333333?v=99999999999949998999000000000001")?.id, tasksDB)
-        XCTAssertEqual(NotionTarget.parseList("\(hub)\n\(hub), \(sub)").map(\.id), [hub, sub])
-        XCTAssertNil(NotionTarget("hello"))
+        #expect(NotionTarget("https://app.notion.com/p/25afa757a99a4c998c1fa9ec4a6051eb")?.id == "25afa757-a99a-4c99-8c1f-a9ec4a6051eb")
+        #expect(NotionTarget("https://www.notion.so/team/Tasks-33333333333343338333333333333333?v=99999999999949998999000000000001")?.id == tasksDB)
+        #expect(NotionTarget.parseList("\(hub)\n\(hub), \(sub)").map(\.id) == [hub, sub])
+        #expect(NotionTarget("hello") == nil)
     }
 
-    func testUnauthorizedStops() async throws {
+    @Test func unauthorizedStops() async throws {
         let f = FakeNotion()
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         final class Deny: NotionTransport, @unchecked Sendable {
@@ -439,25 +440,25 @@ final class NotionAPIImportTests: XCTestCase {
         do {
             _ = try await NotionWorkspaceImport(client: NotionClient(token: "bad", transport: Deny(), requestsPerSecond: 0), options: NotionImportOptions())
                 .run([NotionTarget(hub)!], into: store, assets: nil)
-            XCTFail("should throw")
+            Issue.record("should throw")
         } catch let e as NotionAPIError {
-            if case .unauthorized = e {} else { XCTFail("\(e)") }
+            if case .unauthorized = e {} else { Issue.record("\(e)") }
         }
     }
 
-    func testFormulaConversion() {
+    @Test func formulaConversion() {
         let names = ["a": "Price", "b": "Qty", "c%3A": "Odd \"Name\""]
-        XCTAssertEqual(NotionAPIMapper.convertFormula("{{notion:block_property:a:x:y}} * {{notion:block_property:b:x:y}}", names: names), "prop(\"Price\") * prop(\"Qty\")")
-        XCTAssertEqual(NotionAPIMapper.convertFormula("if({{notion:block_property:a:x:y}} > 3, \"big\", \"small\")", names: names), "if(prop(\"Price\") > 3, \"big\", \"small\")")
-        XCTAssertNil(NotionAPIMapper.convertFormula("{{notion:block_property:zz:x:y}} + 1", names: names), "unknown property")
-        XCTAssertNil(NotionAPIMapper.convertFormula("unknownFn({{notion:block_property:a:x:y}})", names: names))
-        XCTAssertEqual(NotionAPIMapper.readableFormula("{{notion:block_property:b:x:y}} + 1", names: names), "prop(\"Qty\") + 1")
-        XCTAssertEqual(NotionAPIMapper.color("purple_background"), .purpleBackground)
-        XCTAssertNil(NotionAPIMapper.color("default"))
+        #expect(NotionAPIMapper.convertFormula("{{notion:block_property:a:x:y}} * {{notion:block_property:b:x:y}}", names: names) == "prop(\"Price\") * prop(\"Qty\")")
+        #expect(NotionAPIMapper.convertFormula("if({{notion:block_property:a:x:y}} > 3, \"big\", \"small\")", names: names) == "if(prop(\"Price\") > 3, \"big\", \"small\")")
+        #expect(NotionAPIMapper.convertFormula("{{notion:block_property:zz:x:y}} + 1", names: names) == nil, "unknown property")
+        #expect(NotionAPIMapper.convertFormula("unknownFn({{notion:block_property:a:x:y}})", names: names) == nil)
+        #expect(NotionAPIMapper.readableFormula("{{notion:block_property:b:x:y}} + 1", names: names) == "prop(\"Qty\") + 1")
+        #expect(NotionAPIMapper.color("purple_background") == .purpleBackground)
+        #expect(NotionAPIMapper.color("default") == nil)
     }
 
     /// Map views (map_by) and place values (name, address, lat/lon, Google place id).
-    func testMapViewAndPlaceImport() async throws {
+    @Test func mapViewAndPlaceImport() async throws {
         let f = makeFake()
         let mapView = "99999999-9999-4999-8999-000000000007"
         func patch(_ v: JSONValue?, _ change: (inout [String: JSONValue]) -> Void) -> JSONValue {
@@ -487,19 +488,19 @@ final class NotionAPIImportTests: XCTestCase {
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         let assets = FileAssetStore(root: FileManager.default.temporaryDirectory.appendingPathComponent("nm-" + UUID().uuidString))
         _ = try await importer(f).run([NotionTarget("https://www.notion.so/\(hub.replacingOccurrences(of: "-", with: ""))")!], into: store, assets: assets)
-        let db = try XCTUnwrap(store.databases[tasksDS])
-        let place = try XCTUnwrap(db.properties.first { $0.name == "Where" })
-        XCTAssertEqual(place.type, .place)
-        let map = try XCTUnwrap(store.views[mapView])
-        XCTAssertEqual(map.type, .map)
-        XCTAssertEqual(map.mapPropertyID, place.id)
-        XCTAssertEqual(map.mapHeight, "large")
-        guard case .place(let raw)? = store.blocks[row1]?.values[place.id] else { return XCTFail("no place value") }
+        let db = try #require(store.databases[tasksDS])
+        let place = try #require(db.properties.first { $0.name == "Where" })
+        #expect(place.type == .place)
+        let map = try #require(store.views[mapView])
+        #expect(map.type == .map)
+        #expect(map.mapPropertyID == place.id)
+        #expect(map.mapHeight == "large")
+        guard case .place(let raw)? = store.blocks[row1]?.values[place.id] else { Issue.record("no place value"); return }
         let v = PlaceValue(raw: raw)
-        XCTAssertEqual(v.name, "Office")
-        XCTAssertEqual(v.address, "Main St 1, Berlin")
-        XCTAssertEqual(v.lat ?? 0, 52.52, accuracy: 1e-9)
-        XCTAssertEqual(v.googlePlaceID, "g-1")
-        XCTAssertNil(store.blocks[row2]?.values[place.id])
+        #expect(v.name == "Office")
+        #expect(v.address == "Main St 1, Berlin")
+        #expect(abs((v.lat ?? 0) - 52.52) <= 1e-9)
+        #expect(v.googlePlaceID == "g-1")
+        #expect(store.blocks[row2]?.values[place.id] == nil)
     }
 }
