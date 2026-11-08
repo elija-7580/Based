@@ -1236,6 +1236,7 @@ struct PageTopBar: View {
     let page: Block
     let editor: EditorController
     @Environment(AppModel.self) private var model
+    @State private var sharing = false
 
     var body: some View {
         HStack(spacing: 2) {
@@ -1247,6 +1248,7 @@ struct PageTopBar: View {
                 Color.clear.frame(width: 0, height: 0)
             }
             Menu {
+                Button("Share on the web…", systemImage: "globe") { sharing = true }
                 Button("Copy link", systemImage: "link") { Clipboard.copyLinks([page.id], store: model.store) }
                 Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
             } label: {
@@ -1257,6 +1259,7 @@ struct PageTopBar: View {
             .menuIndicator(.hidden)
             .fixedSize()
             .accessibilityIdentifier("page.share")
+            .popover(isPresented: $sharing) { SharePanel(pageID: page.id) }
             ChromeIconButton(symbol: SymbolImage.ai, size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }
                 .accessibilityIdentifier("toolbar.chat")
             FavoriteButton(pageID: page.id)

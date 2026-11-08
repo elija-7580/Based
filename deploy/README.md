@@ -57,6 +57,13 @@ your pages as resources (`based://page/<id>`), and your skills as prompts.
 
 The whole workspace is one SQLite file (`/data/based.sqlite` in the volume). `sqlite3 based.sqlite ".backup b.sqlite"` or snapshot the volume.
 
+## Sharing
+
+Pages shared from the app (Share ⌄ → *Share on the web…*) are served here: `/s/<secret>` for links and invites,
+`/p/<id>` for published pages. Set `BASED_PUBLIC_URL` (docker-compose derives it from `BASED_DOMAIN`) so links carry
+the right address, and optionally `BASED_APPLE_APP_ID=<TeamID>.<bundle id>` so they open in the Based app.
+Details and endpoints: [`docs/sharing.md`](../docs/sharing.md).
+
 ## Coding-agent daemon (Happier-style)
 
 The same `based-server` is the daemon that runs Claude Code / Codex / Gemini

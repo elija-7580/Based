@@ -56,7 +56,9 @@ details.b > summary { cursor:pointer; }
 <body>
 <div id="root"></div>
 <script>
-const S = { token: localStorage.getItem("based.token") || "", recs: new Map(), kids: new Map(), current: null, open: new Set() };
+const S = { token: localStorage.getItem("based.token") || "", recs: new Map(), kids: new Map(), current: null, open: new Set(), me: null };
+// Shared links (/s/<secret>): the secret is the credential; it isn't stored.
+if (location.pathname.startsWith("/s/")) { S.token = location.pathname.slice(3); S.link = true; }
 const $ = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
 
@@ -97,6 +99,26 @@ async function api(path) {
 }
 
 S.after = 0;
+// Who is this (owner / invited person / link) and which pages can they see?
+async function whoami() {
+  try { S.me = await api("/share/v1/me"); } catch (e) { if (/token/.test(e.message)) throw e; S.me = { kind: "owner", pages: [] }; }
+  if (S.me.kind !== "owner" && S.after === 0) {
+    const snap = await api("/share/v1/snapshot");
+    for (const r of snap.records) S.recs.set(r.kind + ":" + r.data.id, r.data);
+    S.after = snap.next; index();
+  }
+}
+const owner = () => !S.me || S.me.kind === "owner";
+// Role on a block: the role of the closest shared page above it.
+function roleOf(id) {
+  if (owner()) return "full";
+  const roles = Object.fromEntries((S.me.pages || []).map(p => [p.id, p.role]));
+  let b = block(id);
+  while (b) { if (roles[b.id]) return roles[b.id]; if (!b.parent || !b.parent.startsWith("b:")) break; b = block(b.parent.slice(2)); }
+  return null;
+}
+const canEdit = (id) => ["edit", "full"].includes(roleOf(id));
+
 async function sync(status) {
   let after = S.after, n = 0;
   for (;;) {
@@ -134,7 +156,7 @@ function login(msg) {
   root.appendChild(box);
   box.querySelector("#go").onclick = async () => {
     S.token = box.querySelector("#tok").value.trim();
-    try { await sync(t => box.querySelector("#msg").textContent = t); localStorage.setItem("based.token", S.token); shell(); }
+    try { await whoami(); await sync(t => box.querySelector("#msg").textContent = t); localStorage.setItem("based.token", S.token); shell(); }
     catch (e) { box.querySelector("#msg").textContent = e.message; }
   };
 }
@@ -145,9 +167,9 @@ function shell() {
   const app = $(`<div id="app"><aside><h1></h1><div id="tree"></div></aside><main id="main"></main></div>`);
   root.appendChild(app);
   const ws = [...S.recs.entries()].find(([k]) => k.startsWith("workspace:"));
-  app.querySelector("aside h1").textContent = (ws && ws[1].name) || "Workspace";
+  app.querySelector("aside h1").textContent = owner() ? ((ws && ws[1].name) || "Workspace") : "Shared with " + (S.me.kind === "link" ? "you" : S.me.name);
   tree();
-  const first = children("w").find(b => b.type === "page");
+  const first = owner() ? children("w").find(b => b.type === "page") : block((S.me.pages[0] || {}).id);
   showPage(location.hash.slice(1) || (ws && ws[1].homePageID) || (first && first.id));
   live();
   window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id && id !== S.current) showPage(id); });
@@ -166,7 +188,17 @@ function tree() {
       if (sub && S.open.has(b.id)) { const k = $(`<div class="kids"></div>`); container.appendChild(k); add("b:" + b.id, k); }
     }
   };
-  add("w", el);
+  if (owner()) add("w", el);
+  else {
+    // Shared roots instead of the workspace top level.
+    for (const p of S.me.pages) {
+      const b = block(p.id); if (!b) continue;
+      const row = $(`<div class="row${S.current === b.id ? " on" : ""}"><span class="tw"></span>${icon(b) || "📄"} <span>${esc(title(b.id))}</span><span class="muted" style="margin-left:auto;font-size:11px">${p.role === "view" || p.role === "comment" ? "view" : "edit"}</span></div>`);
+      row.onclick = () => { showPage(b.id); history.pushState(null, "", "#" + b.id); };
+      el.appendChild(row);
+      const k = $(`<div class="kids"></div>`); el.appendChild(k); add("b:" + b.id, k);
+    }
+  }
 }
 
 // Renders a list of sibling blocks; consecutive numbered items count up (1., 2., 3. …).
@@ -195,9 +227,32 @@ function render(b, number) {
     case "page": case "databasePage": return `<div class="b pagelink" data-open="${b.id}">${icon(b) || "📄"} ${esc(title(b.id))}</div>`;
     case "image": { const u = b.props && b.props.url; return u ? `<img class="b" src="${esc(u)}" style="max-width:100%;border-radius:4px">` : `<div class="b muted">🖼 Image</div>`; }
     case "databaseInline": return dbTable(b);
+    case "meeting": return meeting(b);
+    case "meetingSection": case "transcript": return "";
     case "columnList": return `<div class="b" style="display:flex;gap:24px">${children(k).map(c => `<div style="flex:1">${seq(children("b:" + c.id))}</div>`).join("")}</div>`;
     default: return `<div class="b" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${b.id}"` : ""}>${rich(b.text)}</div>${inner()}`;
   }
+}
+
+// Meeting notes (read-only): summary, notes, transcript with speakers and times.
+function tc(s) { s = Math.floor(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = String(s % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`; }
+function meeting(b) {
+  const info = (b.props && b.props.meeting) || {};
+  const names = Object.fromEntries((info.speakers || []).map(s => [s.id, s.name]));
+  const kids = children("b:" + b.id);
+  const section = (kind) => kids.find(c => c.type === "meetingSection" && c.props && c.props.meetingSection === kind);
+  let html = `<div class="b callout" style="display:block"><div style="font-weight:600;font-size:17px">🎙 ${esc(plain(b.text) || "Meeting notes")}</div>`;
+  for (const [kind, label] of [["summary", "Summary"], ["notes", "Notes"]]) {
+    const sec = section(kind); const list = sec ? children("b:" + sec.id) : [];
+    if (list.length) html += `<h4 class="b">${label}</h4>${seq(list)}`;
+  }
+  const segs = kids.filter(c => c.type === "transcript").flatMap(c => (c.props && c.props.segments) || []).filter(x => !x.p).sort((x, y) => x.s - y.s);
+  if (segs.length) {
+    const paras = [];
+    for (const g of segs) { const last = paras[paras.length - 1]; if (last && last.sp === g.sp && g.s - last.e <= 8) { last.t += " " + g.t; last.e = g.e; } else paras.push({ sp: g.sp, s: g.s, e: g.e, t: g.t }); }
+    html += `<details class="b"><summary>Transcript</summary>${paras.map(p => `<p><b>${esc(names[p.sp] || p.sp || "Unknown")}</b> <span class="muted">${tc(p.s)}</span><br>${esc(p.t)}</p>`).join("")}</details>`;
+  }
+  return html + `</div>`;
 }
 
 // Databases (read-only): title column + the first properties, values formatted like the apps.
@@ -241,7 +296,7 @@ function dbTable(b) {
 // newer HLC stamp (last writer wins on every device).
 const NODE = localStorage.getItem("based.node") || ("web" + Math.random().toString(16).slice(2, 7));
 localStorage.setItem("based.node", NODE);
-function editable(b) { return runs(b.text).every(r => !r.m && !r.mention && !r.eq); }
+function editable(b) { return canEdit(b.id) && runs(b.text).every(r => !r.m && !r.mention && !r.eq); }
 function nextStamp(prev) {
   const now = Date.now();
   const millis = Math.max(now, (prev && prev.millis) || 0);
@@ -290,7 +345,7 @@ function showPage(id, keepScroll) {
 
 (async () => {
   if (!S.token) return login();
-  try { await sync(); shell(); } catch (e) { login(e.message); }
+  try { await whoami(); await sync(); shell(); } catch (e) { if (S.link) { document.getElementById("root").textContent = "This link has expired or was revoked."; return; } login(e.message); }
 })();
 </script>
 </body>

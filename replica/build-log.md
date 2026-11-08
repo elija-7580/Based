@@ -537,3 +537,20 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - **Performance**: `BlockList` observes its own node's `childRevision` instead of the global structure revision, so
   editing one block no longer re-renders every list on the page. Hang watchdog pings every 100 ms, reports from 250 ms.
 - `make install` / `scripts/install-mac.sh`: Release build → /Applications, removes old Debug/Release builds.
+
+## Pass 22 — Meeting notes and sharing (2026-11-08)
+- **Meeting notes** (`/meet`, ⌘N): `.meeting` block with Summary · Notes · Transcript; transcript in 40-segment
+  `.transcript` chunks (live updates rewrite one small record). Capture: microphone + Core Audio process tap
+  (macOS 14.2+) as separate tracks (Me / Others live), microphone with background audio on iPhone, uploads.
+  FluidAudio Parakeet TDT v3 for live (UtteranceChunker pseudo-streaming) and the full-file final pass; pyannote +
+  VBx diarization; click-to-play lines and time-stamped notes; context pages / notes feed vocabulary and summary;
+  AI summary with `[m:ss]` citations through the configured engine (API key or CLI). Voice profiles (opt-in):
+  speaker embeddings matched by cosine similarity, stored only in the device's local meta table.
+- **Sharing** (`based-server`): roles Full access / Can edit / Can comment / Can view, inherited down the page tree;
+  access links, invites with device tokens, publish to web (server-rendered); secrets stored hashed; snapshot, pull
+  and push filtered and checked per principal (pages moved out arrive as deletions with their content); web client
+  shows only shared roots and is read-only where the role says so; Share panel in the app; Universal Links.
+- Fix: `PageGraph` mention edges depended on dictionary order (a page's own owner was reused for its content).
+- Tests: MeetingTests, VoiceProfileTests, ShareTests; end-to-end against a running server (links, roles, invite,
+  revoke, publish, push rejection, move-out). Linux tests need Swift 6.4 (6.0–6.2 crash on `@MainActor` XCTest).
+

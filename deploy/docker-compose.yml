@@ -9,6 +9,9 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OLLAMA_URL: ${OLLAMA_URL:-}
+      # Sharing: links are built from this URL; BASED_APPLE_APP_ID ("<TeamID>.<bundle id>") opens them in the app.
+      BASED_PUBLIC_URL: https://${BASED_DOMAIN}
+      BASED_APPLE_APP_ID: ${BASED_APPLE_APP_ID:-}
       TZ: Europe/Vienna
     volumes:
       - based-data:/data
