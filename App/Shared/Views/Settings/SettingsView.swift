@@ -514,7 +514,7 @@ struct IconPickerButton: View {
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(Theme.codeBackground)))
         }
         .buttonStyle(.hoverFill)
-        .popover(isPresented: $open) { IconPicker(current: icon, onPick: { onPick($0); open = false }).frame(width: 360, height: 400) }
+        .panelPopover(isPresented: $open) { IconPicker(current: icon, onPick: { onPick($0); open = false }).frame(width: 360, height: 400) }
     }
 }
 

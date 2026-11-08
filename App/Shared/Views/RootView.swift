@@ -231,7 +231,7 @@ struct ModalBackdrop<Content: View>: View {
             Button("", action: dismiss).keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
         }
         .transition(.opacity.animation(.easeOut(duration: 0.12)))
-        .onAppear { withAnimation(.spring(response: 0.26, dampingFraction: 0.86)) { shown = true } }
+        .onAppear { withAnimation(DS.Motion.panel) { shown = true } }
     }
 }
 
@@ -298,7 +298,7 @@ struct DetailShell: View {
                         .transition(.move(edge: .trailing))
                 }
             }
-            .animation(.spring(response: 0.32, dampingFraction: 0.9), value: panelKey)
+            .animation(DS.Motion.peek, value: panelKey)
         }
         .navigationTitle(model.currentTitle)
         #else
@@ -394,7 +394,9 @@ struct DetailContent: View {
                 if let it = k == current ? item : keptItems[k] {
                     content(it)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .opacity(active ? 1 : 0)
+                        // Switching pages: the new page fades in quickly instead of snapping (only the opacity
+                        // animates — nothing inside the page moves).
+                        .animation(DS.Motion.page) { $0.opacity(active ? 1 : 0) }
                         .allowsHitTesting(active)
                         .accessibilityHidden(!active)
                         .environment(\.pageIsActive, active)
@@ -410,6 +412,7 @@ struct DetailContent: View {
                 .id(current)
                 .zIndex(2)
                 .background(Chrome.appBackground)
+                .transition(.opacity.animation(DS.Motion.page))
             }
         }
         .auditLayout("content")

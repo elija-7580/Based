@@ -160,7 +160,9 @@ final class EditorController {
             DispatchQueue.main.async { h.focus(at: target.offset) }
         } else {
             pendingFocus = target
-            // Long pages render lazily: bring the block on screen so its text view exists and takes focus.
+            // Long pages build progressively / lazily: build the rest and bring the block on screen so its text
+            // view exists and takes focus.
+            revealAll()
             scrollRequest = target.id
         }
     }
@@ -176,6 +178,13 @@ final class EditorController {
 
     /// A block to scroll into view (the page observes it; long pages only render what's visible).
     var scrollRequest: RecordID?
+
+    /// Progressive page build (BlockList at the top of the page): how many top-level blocks are built so far.
+    /// The page opens with the first screenful and builds the rest in small slices in the background; `.max`
+    /// once everything is built (or when a jump needs a block further down right away).
+    var revealLimit: Int = BlockList.firstSlice
+    /// Builds every remaining block now (find, outline jumps, keyboard focus on a block that isn't built yet).
+    func revealAll() { if revealLimit != .max { revealLimit = .max } }
 
     func focusEnd(_ id: RecordID) {
         focus(FocusTarget(id, store.blocks[id]?.text.length ?? 0))

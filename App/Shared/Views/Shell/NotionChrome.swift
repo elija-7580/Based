@@ -297,6 +297,7 @@ struct NotionSidebar: View {
     @AppStorage("sidebar.teamspacesOpen") private var teamspacesOpen = true
     @AppStorage("sidebar.privateOpen") private var privateOpen = true
     @AppStorage("sidebar.chatsOpen") private var chatsOpen = true
+    @AppStorage("sidebar.developerOpen") private var developerOpen = false
     @FocusState private var focused: Bool
     @State private var privateDrop = false
 
@@ -368,7 +369,8 @@ struct NotionSidebar: View {
                         }
                     }
                 }
-                    }
+                    SidebarDeveloperSection(open: $developerOpen)
+                }
                 .padding(.horizontal, 8)
                 .padding(.bottom, 10)
             }
@@ -486,6 +488,63 @@ struct SidebarModeSwitcher: View {
         DispatchQueue.main.async {
             Log.measure("switch sidebar → \(m.rawValue)", category: "ui", warnAfter: 0.05) { model.switchSidebar(to: m) }
         }
+    }
+}
+
+/// "Developer" section at the end of the sidebar (folded by default): the Diagnostics screen's tabs as rows.
+/// Logs shows how many errors were logged since the log was last opened.
+struct SidebarDeveloperSection: View {
+    @Binding var open: Bool
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        SidebarSectionHeader(title: "Developer", open: $open)
+        if open {
+            TimelineView(.periodic(from: .now, by: 5)) { _ in
+                SidebarDeveloperRow(tab: .logs, title: "Logs", symbol: "text.alignleft", badge: newErrors)
+            }
+            SidebarDeveloperRow(tab: .hangs, title: "Hangs", symbol: "hourglass")
+            SidebarDeveloperRow(tab: .layout, title: "Layout", symbol: "square.dashed")
+            SidebarDeveloperRow(tab: .system, title: "System", symbol: "cpu")
+        }
+    }
+
+    private var newErrors: Int {
+        let since = model.logsSeenAt
+        return Log.shared.recent(limit: 200, minLevel: .error).filter { $0.date > since }.count
+    }
+}
+
+struct SidebarDeveloperRow: View {
+    let tab: DiagnosticsView.Tab
+    let title: String
+    let symbol: String
+    var badge = 0
+    @Environment(AppModel.self) private var model
+    @State private var hover = false
+
+    var body: some View {
+        let selected = model.selection == .diagnostics && model.diagnosticsTab == tab
+        HStack(spacing: 8) {
+            Image(systemName: symbol).font(.system(size: 13)).frame(width: 20, height: 20)
+            Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1)
+            Spacer(minLength: 4)
+            if badge > 0 {
+                Text("\(badge)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+                    .padding(.horizontal, 6).frame(height: 16)
+                    .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
+            }
+        }
+        .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
+        .padding(.horizontal, 8)
+        .frame(height: Chrome.rowHeight)
+        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hover ? Chrome.hover : .clear)))
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .onTapGesture { model.openDiagnostics(tab) }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("sidebar.developer." + tab.rawValue.lowercased())
     }
 }
 
@@ -726,7 +785,7 @@ struct SidebarWorkspaceRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .popover(isPresented: $showMenu, arrowEdge: .bottom) { WorkspaceMenu { showMenu = false } }
+            .panelPopover(isPresented: $showMenu, arrowEdge: .bottom) { WorkspaceMenu { showMenu = false } }
             .accessibilityIdentifier("sidebar.workspace")
             Spacer(minLength: 4)
             if hover && !floating {
@@ -971,7 +1030,7 @@ struct SidebarSectionHeader: View {
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .animation(.easeOut(duration: 0.12), value: hover)
-        .onTapGesture { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } }
+        .onTapGesture { withAnimation(DS.Motion.fold) { open.toggle() } }
         .padding(.top, 12)
         .accessibilityIdentifier("sidebar.section." + title.lowercased())
     }
@@ -1004,6 +1063,7 @@ struct SidebarPageRow: View {
                 } else {
                     ForEach(subs, id: \.id) {
                         SidebarPageRow(page: $0, depth: depth + 1, order: order, scope: scope).id(scope + $0.id)
+                            .transition(DS.Motion.foldTransition)
                     }
                 }
             }
@@ -1018,7 +1078,9 @@ struct SidebarPageRow: View {
 
     private func toggle() {
         let key = scope + page.id
-        if model.expanded.contains(key) { model.expanded.remove(key) } else { model.expanded.insert(key) }
+        withAnimation(DS.Motion.fold) {
+            if model.expanded.contains(key) { model.expanded.remove(key) } else { model.expanded.insert(key) }
+        }
     }
 
     /// Tooltip for look-alike rows: where the page lives and when it was created.

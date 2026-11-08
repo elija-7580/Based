@@ -143,6 +143,17 @@ final class AppModel {
     var sidebarMode: SidebarMode = SidebarMode(rawValue: UserDefaults.standard.string(forKey: "sidebar.mode") ?? "") ?? .notes {
         didSet { UserDefaults.standard.set(sidebarMode.rawValue, forKey: "sidebar.mode") }
     }
+    /// Tab shown by the Diagnostics screen (Developer section of the sidebar: Logs / Hangs / Layout / System).
+    var diagnosticsTab: DiagnosticsView.Tab = .logs
+    /// When the log was last looked at: the sidebar's Logs row counts errors after this.
+    var logsSeenAt = Date()
+    /// Opens the Diagnostics screen on one tab.
+    func openDiagnostics(_ tab: DiagnosticsView.Tab) {
+        diagnosticsTab = tab
+        if tab == .logs { logsSeenAt = Date() }
+        peek = nil
+        selection = .diagnostics
+    }
     /// Last screen visited in each mode, so switching back returns there.
     @ObservationIgnored var lastItem: [String: SidebarItem] = [:]
 

@@ -39,7 +39,7 @@ struct QuietButtonStyle: ButtonStyle {
                 .opacity(enabled ? 1 : 0.45)
                 .clickableCursor()
                 .onHover { hover = $0 }
-                .animation(.easeOut(duration: DS.Motion.hover), value: hover)
+                .animation(hover ? nil : DS.Motion.hoverOut, value: hover)
                 .animation(.easeOut(duration: DS.Motion.press), value: configuration.isPressed)
         }
 
@@ -80,7 +80,7 @@ struct HoverFillButtonStyle: ButtonStyle {
                 .padding(-style.outset)
                 .clickableCursor()
                 .onHover { hover = $0 }
-                .animation(.easeOut(duration: DS.Motion.hover), value: hover)
+                .animation(hover ? nil : DS.Motion.hoverOut, value: hover)
                 .animation(.easeOut(duration: DS.Motion.press), value: configuration.isPressed)
         }
 
@@ -162,7 +162,8 @@ private struct HoverHighlight: ViewModifier {
                     .fill(Theme.primary.opacity(hover ? opacity : 0))
             )
             .onHover { hover = $0 }
-            .animation(.easeOut(duration: 0.1), value: hover)
+            // Notion: the fill is there the moment the pointer arrives and fades out when it leaves.
+            .animation(hover ? nil : DS.Motion.hoverOut, value: hover)
     }
 }
 
@@ -305,6 +306,9 @@ private struct PopoverArrowHider: NSViewRepresentable {
                   let popover = window.value(forKey: "_popover") as? NSPopover,
                   popover.responds(to: NSSelectorFromString("setShouldHideAnchor:")) else { return }
             popover.setValue(true, forKey: "shouldHideAnchor")
+            // AppKit's own popover fade is slow and soft; the content animates itself in (`PanelAppear`), and
+            // closing is instant, like Notion's menus.
+            popover.animates = false
         }
     }
     func makeNSView(context: Context) -> Probe { Probe() }
@@ -312,7 +316,41 @@ private struct PopoverArrowHider: NSViewRepresentable {
 }
 #endif
 
+/// Popover content arriving like a Notion menu: a quick fade with a hint of scale from the anchor side.
+private struct PanelAppear: ViewModifier {
+    var anchor: UnitPoint
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .scaleEffect(shown ? 1 : 0.97, anchor: anchor)
+            .onAppear { withAnimation(DS.Motion.panel) { shown = true } }
+    }
+}
+
 extension View {
+    /// The app's popover: Notion-style floating panel — no arrow, no AppKit fade, quick fade-and-scale in,
+    /// instant close. Use this instead of `.popover(isPresented:)` so every menu feels the same.
+    func panelPopover<Content: View>(isPresented: Binding<Bool>, arrowEdge: Edge? = nil,
+                                     @ViewBuilder content: @escaping () -> Content) -> some View {
+        popover(isPresented: isPresented, arrowEdge: arrowEdge) {
+            content()
+                .modifier(PanelAppear(anchor: Self.anchor(for: arrowEdge)))
+                .arrowlessPopover()
+        }
+    }
+
+    fileprivate static func anchor(for edge: Edge?) -> UnitPoint {
+        switch edge {
+        case .bottom?: return .top
+        case .top?: return .bottom
+        case .leading?: return .trailing
+        case .trailing?: return .leading
+        case nil: return .top
+        }
+    }
+
     /// Popover content without the arrow (macOS), like Notion's floating menus.
     func arrowlessPopover() -> some View {
         #if os(macOS)

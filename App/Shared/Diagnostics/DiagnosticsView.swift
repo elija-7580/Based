@@ -16,7 +16,6 @@ struct DiagnosticsView: View {
     enum Tab: String, CaseIterable, Identifiable { case logs = "Log", hangs = "Hangs", layout = "Layout", system = "System"; var id: String { rawValue } }
 
     @Environment(AppModel.self) private var model
-    @State private var tab: Tab = .logs
     @State private var level: LogLevel = .info
     @State private var category = ""
     @State private var search = ""
@@ -31,10 +30,14 @@ struct DiagnosticsView: View {
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
+    /// The tab lives in the model so the sidebar's Developer rows (Logs, Hangs, Layout, System) can pick it.
+    private var tab: Tab { model.diagnosticsTab }
+
     var body: some View {
+        @Bindable var model = model
         VStack(spacing: 0) {
             HStack {
-                Picker("", selection: $tab) { ForEach(Tab.allCases) { Text($0.rawValue).tag($0) } }
+                Picker("", selection: $model.diagnosticsTab) { ForEach(Tab.allCases) { Text($0.rawValue).tag($0) } }
                     .pickerStyle(.segmented).labelsHidden().frame(maxWidth: 360)
                 Spacer()
                 if let copiedNote {
@@ -76,6 +79,8 @@ struct DiagnosticsView: View {
         .navigationTitle("Diagnostics")
         #endif
         .onAppear(perform: reload)
+        // Errors seen here no longer count on the sidebar's Logs row.
+        .onDisappear { model.logsSeenAt = Date() }
         .onReceive(timer) { _ in if live && tab == .logs { reload() }; tick += 1 }
         .onChange(of: level) { _, _ in reload() }
         .onChange(of: category) { _, _ in reload() }

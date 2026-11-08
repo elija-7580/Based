@@ -311,13 +311,13 @@ struct DatabaseBlockView: View {
             }
             .buttonStyle(.quiet)
             .help("Filter")
-            .popover(isPresented: $showFilter) { FilterEditor(ctx: ctx) }
+            .panelPopover(isPresented: $showFilter) { FilterEditor(ctx: ctx) }
             Button { showSort.toggle() } label: {
                 ToolbarIcon("arrow.up.arrow.down", active: ctx.view.sorts?.isEmpty == false)
             }
             .buttonStyle(.quiet)
             .help("Sort")
-            .popover(isPresented: $showSort) { SortEditor(ctx: ctx) }
+            .panelPopover(isPresented: $showSort) { SortEditor(ctx: ctx) }
             if searching {
                 HStack(spacing: 4) {
                     ToolbarIcon("magnifyingglass", size: 12)
@@ -350,7 +350,7 @@ struct DatabaseBlockView: View {
             Button { showSettings.toggle() } label: { ToolbarIcon("slider.horizontal.3") }
                 .buttonStyle(.quiet)
                 .help("View settings")
-                .popover(isPresented: $showSettings) { ViewSettingsView(ctx: ctx) }
+                .panelPopover(isPresented: $showSettings) { ViewSettingsView(ctx: ctx) }
             if !ctx.locked {
                 NewRowButton(ctx: ctx).padding(.leading, 6)
             }

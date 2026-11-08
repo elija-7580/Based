@@ -112,12 +112,14 @@ struct PageScreen: View {
                 guard let id else { return }
                 editor.scrollRequest = nil
                 guard let top = model.store.topLevelAncestor(of: id, in: pageID) else { return }
-                withAnimation(.easeOut(duration: 0.12)) { scroll.scrollTo(top, anchor: .center) }
+                // The block may not be built yet (progressive build): build the rest, scroll on the next turn.
+                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.12)) { scroll.scrollTo(top, anchor: .center) } }
             }
             .onChange(of: model.findTarget) { _, target in
                 // ⌘F: scroll the current match into view and mark it.
                 guard !isPeek, let target, model.store.containingPage(of: target) == pageID else { return }
-                withAnimation(.easeOut(duration: 0.15)) { scroll.scrollTo(target, anchor: .center) }
+                editor.revealAll()
+                DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.15)) { scroll.scrollTo(target, anchor: .center) } }
                 editor.selectedBlocks = [target]
             }
             }
@@ -285,7 +287,7 @@ struct PageHeader: View {
                     // With a cover the icon overlaps its bottom edge by half, like Notion.
                     .offset(y: hasCover ? -42 : 0)
                     .padding(.bottom, hasCover ? -42 : 0)
-                    .popover(isPresented: $iconPicker) {
+                    .panelPopover(isPresented: $iconPicker) {
                         IconPicker(current: page.props.icon) { store.setPageIcon(page.id, $0); iconPicker = false }
                     }
                 } else if hasCover {
@@ -393,7 +395,7 @@ struct PageCoverView: View {
             }
             .contentShape(Rectangle())
             .onHover { hover = $0 }
-            .popover(isPresented: $picker) {
+            .panelPopover(isPresented: $picker) {
                 CoverPicker(current: page.props.cover) { model.store.setPageCover(page.id, $0); picker = false }
             }
     }
@@ -445,7 +447,7 @@ struct RowPropertiesPanel: View {
             HStack(spacing: 14) {
                 if !locked {
                     Button { adding = true } label: { Label("Add a property", systemImage: "plus") }
-                        .popover(isPresented: $adding) { AddRowPropertyMenu(db: live) { adding = false } }
+                        .panelPopover(isPresented: $adding) { AddRowPropertyMenu(db: live) { adding = false } }
                 }
                 Button(hideEmpty ? "Show all properties" : "Hide empty properties") { hideEmpty.toggle() }
             }

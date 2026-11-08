@@ -22,7 +22,7 @@ struct PageOptionsButton: View {
         .onHover { hover = $0 }
         .help("Style, export and more…")
         .accessibilityIdentifier("page.menu")
-        .popover(isPresented: $open, arrowEdge: .bottom) {
+        .panelPopover(isPresented: $open, arrowEdge: .bottom) {
             PageOptionsPanel(page: page, editor: editor) { open = false }
         }
         #if DEBUG

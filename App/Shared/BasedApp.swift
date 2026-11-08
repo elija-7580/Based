@@ -186,7 +186,7 @@ struct BasedCommands: Commands {
         }
         CommandGroup(after: .help) {
             Divider()
-            Button("Diagnostics & Logs") { model.selection = .diagnostics }
+            Button("Diagnostics & Logs") { model.openDiagnostics(.logs) }
                 .keyboardShortcut("d", modifiers: [.command, .option, .shift])
             Button("Copy Diagnostic Report") { AppDiagnostics.copyReport(model: model) }
         }

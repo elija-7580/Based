@@ -9,6 +9,7 @@ import BasedBrain
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
     @Environment(HappierModel.self) private var happier
+    @AppStorage("sidebar.developerOpen") private var developerOpen = false
 
     var body: some View {
         // Only structural changes (pages added / moved / renamed / trashed, favorites) re-render the sidebar.
@@ -89,6 +90,14 @@ struct SidebarView: View {
                 #if os(iOS)
                 Label("Settings", systemImage: "gearshape").tag(SidebarItem.settings).accessibilityIdentifier("sidebar.settings")
                 #endif
+            }
+            Section(isExpanded: $developerOpen) {
+                Button { model.openDiagnostics(.logs) } label: { Label("Logs", systemImage: "text.alignleft") }
+                Button { model.openDiagnostics(.hangs) } label: { Label("Hangs", systemImage: "hourglass") }
+                Button { model.openDiagnostics(.layout) } label: { Label("Layout", systemImage: "square.dashed") }
+                Button { model.openDiagnostics(.system) } label: { Label("System", systemImage: "cpu") }
+            } header: {
+                Text("Developer")
             }
         }
         .listStyle(.sidebar)

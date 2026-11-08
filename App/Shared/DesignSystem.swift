@@ -48,9 +48,34 @@ enum DS {
         static let pressed: Double = 0.13
     }
 
-    /// Standard animation durations.
+    /// Motion — one short, quiet vocabulary for the whole app (Notion / the Claude app feel): things react at
+    /// once, nothing bounces, nothing lingers. Use these instead of ad-hoc `.easeOut(duration:)` / springs.
     enum Motion {
+        /// Hover fill fading *out* (in is instant — see `hoverFill`).
         static let hover: Double = 0.1
         static let press: Double = 0.06
+        /// Hover fills: no delay going in, a short fade going out.
+        static let hoverOut = Animation.easeOut(duration: 0.12)
+        /// Popovers, menus, toolbars appearing (critically damped: no overshoot).
+        static let panel = Animation.spring(response: 0.2, dampingFraction: 1)
+        /// Folding (toggles, sidebar tree, sections): the arrow and the content move together.
+        static let fold = Animation.spring(response: 0.24, dampingFraction: 0.92)
+        /// Blocks moving, being inserted or removed.
+        static let reorder = Animation.spring(response: 0.3, dampingFraction: 0.9)
+        /// Switching pages / screens.
+        static let page = Animation.easeOut(duration: 0.14)
+        /// Side / center peek sliding in.
+        static let peek = Animation.spring(response: 0.3, dampingFraction: 0.95)
+        /// Small state changes (badges, checkmarks, selection washes).
+        static let quick = Animation.easeOut(duration: 0.1)
+
+        /// A block appearing in the editor.
+        static let blockInsert = AnyTransition.asymmetric(insertion: .opacity.combined(with: .offset(y: -3)), removal: .opacity)
+        /// Floating panels (menus, popovers): fade with a hint of scale from the anchor.
+        static func panelTransition(from anchor: UnitPoint = .top) -> AnyTransition {
+            .opacity.combined(with: .scale(scale: 0.97, anchor: anchor))
+        }
+        /// Folded content (toggle children, tree rows).
+        static let foldTransition = AnyTransition.asymmetric(insertion: .opacity.combined(with: .offset(y: -4)), removal: .opacity)
     }
 }

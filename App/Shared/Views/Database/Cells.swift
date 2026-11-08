@@ -233,7 +233,7 @@ struct PropertyCell: View {
                 .frame(maxWidth: .infinity, minHeight: 22, alignment: .topLeading)
                 .contentShape(Rectangle())
                 .onTapGesture { if editable { editing = true } }
-                .popover(isPresented: $editing) {
+                .panelPopover(isPresented: $editing) {
                     PropertyValueEditor(db: db, rowID: row.id, property: property) { editing = false }
                         .environment(model)
                         .arrowlessPopover()

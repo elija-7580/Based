@@ -23,7 +23,7 @@ struct FormatToolbar: View {
                     Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
                 }.padding(.horizontal, 4)
             } action: { turn.toggle() }
-            .popover(isPresented: $turn, arrowEdge: .bottom) {
+            .panelPopover(isPresented: $turn, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(TurnIntoOptions.types, id: \.self) { t in
                         PanelActionRow(title: t.displayName, symbol: t.symbol) { turn = false; editor.turnTargets(into: t) }
@@ -42,7 +42,7 @@ struct FormatToolbar: View {
             ToolbarButton(help: "Colour") {
                 Text("A").font(.system(size: 14, weight: .semibold)).underline()
             } action: { colors.toggle() }
-            .popover(isPresented: $colors, arrowEdge: .bottom) { colorMenu }
+            .panelPopover(isPresented: $colors, arrowEdge: .bottom) { colorMenu }
         }
         .padding(3)
         .frame(height: 36)

@@ -197,6 +197,7 @@ extension View {
     public func onGeometryChange<T: Equatable>(for type: T.Type, of transform: @escaping (GeometryProxy) -> T, action: @escaping (T, T) -> Void) -> _M { .init() }
     public func refreshable(action: @escaping @Sendable () async -> Void) -> _M { .init() }
     public func animation<V: Equatable>(_ animation: Animation?, value: V) -> _M { .init() }
+    public func animation<V: View>(_ animation: Animation?, @ViewBuilder body: (_ViewModifier_Content<Self>) -> V) -> _M { .init() }
     @available(*, deprecated) public func animation(_ animation: Animation?) -> _M { .init() }
     public func transition(_ t: AnyTransition) -> _M { .init() }
     public func transaction(_ transform: @escaping (inout Transaction) -> Void) -> _M { .init() }

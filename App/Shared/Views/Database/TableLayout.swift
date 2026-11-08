@@ -37,7 +37,7 @@ struct RowMenuItems: View {
 }
 
 /// Title cell (Notion): icon + title; clicking the title opens the page (⌘-click: new tab), the pencil renames
-/// it in place, and "Open" appears right after the title on hover — visible even when the column is wider than the viewport.
+/// it in place, and "Open" appears on hover at the right edge of the Name column (a fixed spot in every row).
 struct RowTitleCell: View {
     let ctx: DBContext
     let row: Block
@@ -106,16 +106,18 @@ struct RowTitleCell: View {
                     .onTapGesture { ctx.open(row.id) }
                     .accessibilityIdentifier("table.rowTitle")
             }
-            // Actions sit right after the title (not on the cell's trailing edge), so they stay visible
-            // when the column is wider than the table viewport and the table is scrolled sideways.
-            if hover && !editing {
-                rowActions
-                    .layoutPriority(2)
-                    .transition(.opacity)
-            }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        // Notion: the Rename / Open pill always sits at the right edge of the Name column — same spot in every
+        // row, whatever the title length — floating over a long title instead of pushing it.
+        .overlay(alignment: .trailing) {
+            if hover && !editing {
+                rowActions
+                    .padding(.trailing, 2)
+                    .transition(.opacity)
+            }
+        }
         .contentShape(Rectangle())
         .onHover { h in withAnimation(.easeOut(duration: 0.1)) { hover = h } }
         .onAppear { draft = row.title }
@@ -449,7 +451,7 @@ struct TableHeader: View {
                     .buttonStyle(.quiet(padding: 4, minSize: 28))
                     .padding(.leading, 2)
                     .help("Add a property")
-                    .popover(isPresented: $adding) { AddPropertyMenu(ctx: ctx) { adding = false } }
+                    .panelPopover(isPresented: $adding) { AddPropertyMenu(ctx: ctx) { adding = false } }
             }
         }
         .font(.system(size: 14))
@@ -501,7 +503,7 @@ struct HeaderCell: View {
             .frame(width: 12)
             .offset(x: 6)
         }
-        .popover(isPresented: $editing) {
+        .panelPopover(isPresented: $editing) {
             PropertyHeaderMenu(ctx: ctx, property: property) { editing = false }
         }
     }

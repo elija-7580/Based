@@ -408,7 +408,7 @@ private struct GutterHandle: View {
                 .accessibilityLabel("Block menu")
                 .accessibilityAction(named: "Open block menu") { editor.clickHandle(block.id, shift: false) }
                 .accessibilityIdentifier("block.handle")
-                .popover(isPresented: menuBinding, arrowEdge: .leading) {
+                .panelPopover(isPresented: menuBinding, arrowEdge: .leading) {
                     BlockMenuView(ids: editor.handleTargets(block.id), editor: editor) { editor.gutter.menuFor = nil }
                         .arrowlessPopover()
                 }

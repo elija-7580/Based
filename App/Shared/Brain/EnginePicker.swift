@@ -37,7 +37,7 @@ struct EnginePickerButton: View {
         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: open)
         .help("Model and effort")
         .accessibilityIdentifier("ai.engine")
-        .popover(isPresented: $open, arrowEdge: .bottom) {
+        .panelPopover(isPresented: $open, arrowEdge: .bottom) {
             EnginePickerPanel { open = false }
                 .environment(brain)
         }

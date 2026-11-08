@@ -37,7 +37,7 @@ struct MediaBlockView: View {
             }
         }
         .onHover { hovering = $0 }
-        .popover(isPresented: $showSource) {
+        .panelPopover(isPresented: $showSource) {
             MediaSourcePicker(block: block) { showSource = false }
                 .frame(minWidth: 320)
         }
@@ -416,7 +416,7 @@ struct EquationBlockView: View {
         }
         .buttonStyle(.hoverFill)
         .disabled(editor.isLocked)
-        .popover(isPresented: $editing) {
+        .panelPopover(isPresented: $editing) {
             VStack(alignment: .trailing, spacing: 8) {
                 TextEditor(text: $draft)
                     .font(.system(size: 13, design: .monospaced))

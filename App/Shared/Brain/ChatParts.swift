@@ -141,7 +141,7 @@ struct ThinkingView: View {
         let running = part.status == .running
         let hasText = !part.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         VStack(alignment: .leading, spacing: 6) {
-            Button { if hasText { withAnimation(.spring(response: 0.3, dampingFraction: 0.88)) { open.toggle() } } } label: {
+            Button { if hasText { withAnimation(DS.Motion.fold) { open.toggle() } } } label: {
                 HStack(spacing: 6) {
                     AIGlyph(size: 13).foregroundStyle(running ? Theme.accentBlue : Theme.secondary)
                         .symbolEffectPulse(running)
@@ -263,7 +263,7 @@ struct ToolRowView: View {
     var body: some View {
         let style = ToolStyle(name: part.toolName)
         VStack(alignment: .leading, spacing: 6) {
-            Button { if part.output?.isEmpty == false || !part.images.isEmpty || part.diff != nil { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } } } label: {
+            Button { if part.output?.isEmpty == false || !part.images.isEmpty || part.diff != nil { withAnimation(DS.Motion.fold) { open.toggle() } } } label: {
                 HStack(spacing: 8) {
                     Group {
                         if style.symbol == SymbolImage.ai { AIGlyph(size: 13) } else { Image(systemName: style.symbol).font(.system(size: 12)) }
@@ -728,7 +728,7 @@ struct ChangedFilesCard: View {
     var body: some View {
         let added = files.reduce(0) { $0 + $1.added }, removed = files.reduce(0) { $0 + $1.removed }
         VStack(alignment: .leading, spacing: 0) {
-            Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { open.toggle() } } label: {
+            Button { withAnimation(DS.Motion.fold) { open.toggle() } } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "doc.badge.ellipsis").font(.system(size: 12)).foregroundStyle(Theme.secondary)
                     Text("\(files.count) file\(files.count == 1 ? "" : "s") changed").font(.system(size: 13, weight: .medium))

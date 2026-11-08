@@ -21,11 +21,21 @@ struct BlockList: View {
     let parentID: RecordID
     let editor: EditorController
     var listDepth = 0
-    /// Top level of a page: render lazily once the page is long (each block owns a text view; a 244-block
-    /// page took ~450 ms to open when every row was built up front).
+    /// Top level of a page: build progressively once the page is long (each block owns a text view; a 244-block
+    /// page took ~450 ms to open when every row was built up front, and a LazyVStack built rows *while* scrolling,
+    /// which is what made scrolling stutter).
     var lazyWhenLong = false
-    static let lazyThreshold = 60
+    /// Above this many top-level blocks the page builds progressively: the first screenful at once, the rest in
+    /// small slices on the following frames, with a quiet skeleton standing in for what isn't built yet.
+    static let progressiveThreshold = 40
+    /// Blocks built on the first frame (comfortably more than a screenful).
+    static let firstSlice = 32
+    /// Above this the page stays a LazyVStack (memory: thousands of text views).
+    static let lazyThreshold = 1500
     @Environment(AppModel.self) private var model
+    @State private var building: Task<Void, Never>?
+    /// The skeleton has scrolled into view: build in bigger slices (the reader is waiting for it).
+    @State private var hurry = false
 
     var body: some View {
         let node = model.registry.block(parentID)
@@ -37,16 +47,65 @@ struct BlockList: View {
         if lazyWhenLong && ids.count > Self.lazyThreshold {
             LazyVStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
         } else {
+            // One VStack for short and progressively built pages alike, so crossing the threshold while typing
+            // doesn't rebuild every row (and drop the caret).
+            let progressive = lazyWhenLong && ids.count > Self.progressiveThreshold
+            let limit = progressive ? min(editor.revealLimit, ids.count) : ids.count
+            VStack(alignment: .leading, spacing: Theme.blockSpacing) {
+                rows(limit < ids.count ? Array(ids.prefix(limit)) : ids, numbers)
+                if limit < ids.count {
+                    BlockSkeleton(height: estimatedHeight(ids[limit...]))
+                        .onAppear { hurry = true }
+                }
+            }
             // Moves, inserts and deletes slide into place (Notion animates reordering) instead of jumping.
-            VStack(alignment: .leading, spacing: Theme.blockSpacing) { rows(ids, numbers) }
-                .animation(.spring(response: 0.32, dampingFraction: 0.88), value: ids)
+            .animation(DS.Motion.reorder, value: ids)
+            .onAppear { if lazyWhenLong { startBuilding(total: ids.count) } }
+            .onDisappear { building?.cancel(); building = nil }
         }
+    }
+
+    /// Builds the page in slices: the first screenful on the first frame, then a few blocks every other frame
+    /// so the reader can already scroll and type; ends with `revealLimit = .max` (kept-alive pages stay built).
+    private func startBuilding(total: Int) {
+        guard total > Self.progressiveThreshold, editor.revealLimit < total else { editor.revealAll(); return }
+        building?.cancel()
+        building = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(hurry ? 16 : 28))
+                guard !Task.isCancelled else { return }
+                let count = model.registry.block(parentID).children.count
+                let next = editor.revealLimit == .max ? count : editor.revealLimit + (hurry ? 24 : 10)
+                if next >= count { editor.revealAll(); hurry = false; return }
+                editor.revealLimit = next
+            }
+        }
+    }
+
+    /// Rough height of blocks not built yet, so the scroll bar and the page length don't jump as they arrive.
+    private func estimatedHeight(_ ids: ArraySlice<RecordID>) -> CGFloat {
+        let small = editor.format?.smallText == true
+        var h: CGFloat = 0
+        for id in ids {
+            guard let b = model.store.blocks[id] else { continue }
+            let line = Theme.lineHeight(for: b.type, format: editor.format)
+            let perLine: Double = (small ? 100 : 88) * (b.type.isHeading ? 0.6 : 1)
+            let lines = max(1, Int((Double(b.text.length) / perLine).rounded(.up)))
+            h += CGFloat(lines) * line + Theme.blockSpacing + (b.type.isHeading ? 12 : 0)
+            switch b.type {
+            case .image, .video, .embed, .bookmark, .file, .pdf: h += 160
+            case .databaseInline: h += 220
+            case .code: h += 24
+            default: break
+            }
+        }
+        return h
     }
 
     private func rows(_ ids: [RecordID], _ numbers: [RecordID: Int]) -> some View {
         ForEach(ids, id: \.self) { id in
             BlockRow(id: id, editor: editor, number: numbers[id], listDepth: listDepth)
-                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -3)), removal: .opacity))
+                .transition(DS.Motion.blockInsert)
         }
     }
 
@@ -100,6 +159,10 @@ struct BlockRow: View {
         let selected = editor.selectedBlocks.contains(id)
         let menuHere = editor.menu?.blockID == id || editor.aiPrompt == id
         let nested = b.type.isList ? listDepth + 1 : listDepth
+        // Notion: a coloured toggle (or toggle heading) colours everything inside it too — the fill wraps the
+        // line and its open children as one rounded box instead of stopping under the first line.
+        let showsChildren = rendersChildrenBelow(b) && !node.children.isEmpty
+        let fillsChildren = hasFill(b) && showsChildren
         VStack(alignment: .leading, spacing: Theme.blockSpacing) {
             HStack(alignment: .top, spacing: 4) {
                 BlockMarker(block: b, editor: editor, number: number, depth: listDepth)
@@ -108,10 +171,10 @@ struct BlockRow: View {
             }
             .padding(.vertical, b.type.isHeading ? 6 : 0)
             // A coloured background gets a little inset so text and the toggle arrow don't touch its edge.
-            .padding(.horizontal, hasFill(b) ? 8 : 0)
-            .padding(.vertical, hasFill(b) && !b.type.isHeading ? 2 : 0)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background(b)))
-            .padding(.top, b.type == .heading1 ? 10 : 0)
+            .padding(.horizontal, hasFill(b) && !fillsChildren ? 8 : 0)
+            .padding(.vertical, hasFill(b) && !b.type.isHeading && !fillsChildren ? 2 : 0)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(fillsChildren ? Color.clear : background(b)))
+            .padding(.top, b.type == .heading1 && !fillsChildren ? 10 : 0)
             // Only the row with the open slash / mention menu writes the anchor; a preference on every row made
             // SwiftUI merge hundreds of nil values on each layout pass.
             .background { if menuHere { Color.clear.anchorPreference(key: MenuAnchorKey.self, value: .bounds) { $0 } } }
@@ -124,12 +187,18 @@ struct BlockRow: View {
             #else
             .overlay(alignment: .topLeading) { handle(b) }
             #endif
-            if rendersChildrenBelow(b), !node.children.isEmpty {
+            if showsChildren {
                 BlockList(parentID: id, editor: editor, listDepth: nested)
                     .padding(.leading, Theme.indent)
-                    .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: -4)), removal: .opacity))
+                    .transition(DS.Motion.foldTransition)
             }
         }
+        .padding(.horizontal, fillsChildren ? 8 : 0)
+        .padding(.vertical, fillsChildren ? 4 : 0)
+        .background {
+            if fillsChildren { RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background(b)) }
+        }
+        .padding(.top, b.type == .heading1 && fillsChildren ? 10 : 0)
         // Selection tints the whole block — its own background (code, callout) and nested children included — like
         // Notion's translucent blue wash, instead of replacing the background (which hid code blocks).
         .overlay {
@@ -150,7 +219,7 @@ struct BlockRow: View {
         .onDrop(of: [.text], delegate: BlockDropDelegate(target: b, model: model, editor: editor, box: geometry, edge: $dropEdge))
         #endif
         .contextMenu { BlockMenuItems(ids: menuTargets, editor: editor) }
-        .popover(isPresented: linkBinding) { LinkEditorView(editor: editor, blockID: id) }
+        .panelPopover(isPresented: linkBinding) { LinkEditorView(editor: editor, blockID: id) }
     }
 
     private var menuTargets: [RecordID] {
@@ -188,7 +257,7 @@ struct BlockRow: View {
                     return NSItemProvider(object: id as NSString)
                 }
                 .offset(x: -16, y: handleOffset(b))
-                .popover(isPresented: $showMenu) {
+                .panelPopover(isPresented: $showMenu) {
                     BlockMenuView(ids: menuTargets, editor: editor) { showMenu = false }
                         .presentationCompactAdaptation(.popover)
                 }
@@ -327,7 +396,7 @@ struct BlockMarker: View {
         let empty = model.store.contentBlocks(of: block.id).isEmpty
         return Button {
             // The arrow turns and the children fold in/out with one spring (Notion animates both).
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) { model.store.toggleOpen(block.id) }
+            withAnimation(DS.Motion.fold) { model.store.toggleOpen(block.id) }
         } label: {
             Image(systemName: "arrowtriangle.right.fill")
                 .font(.system(size: 10))
@@ -469,7 +538,7 @@ struct CalloutView: View {
                     .frame(height: Theme.lineHeight(for: .text, format: editor.format))
             }
             .buttonStyle(.hoverFill)
-            .popover(isPresented: $pickingIcon) {
+            .panelPopover(isPresented: $pickingIcon) {
                 IconPicker(current: block.props.icon) { icon in
                     model.store.updateBlock(block.id, name: "Callout icon") { $0.props.icon = icon ?? .emoji("💡") }
                     pickingIcon = false
@@ -814,7 +883,7 @@ struct ButtonBlockView: View {
                 .opacity(hover || editing ? 1 : 0)
                 .help("Edit button")
                 // Notion edits a button in a floating panel next to it, not inline (that pushed into the next column).
-                .popover(isPresented: $editing, arrowEdge: .bottom) {
+                .panelPopover(isPresented: $editing, arrowEdge: .bottom) {
                     config.environment(model).arrowlessPopover()
                 }
             }

@@ -71,7 +71,13 @@ struct PageOutline: View {
     }
 
     private func jump(_ id: RecordID) {
-        withAnimation(.smooth(duration: 0.35)) { scroll.scrollTo(id, anchor: .top) }
+        // Headings further down may not be built yet (progressive page build): build them, then scroll.
+        if let ed = model.activeEditor, ed.pageID == pageID, ed.revealLimit != .max {
+            ed.revealAll()
+            DispatchQueue.main.async { withAnimation(.smooth(duration: 0.35)) { scroll.scrollTo(id, anchor: .top) } }
+        } else {
+            withAnimation(.smooth(duration: 0.35)) { scroll.scrollTo(id, anchor: .top) }
+        }
     }
 
     private func rail(_ items: [Entry]) -> some View {
