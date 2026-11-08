@@ -19,6 +19,7 @@ BASED_UPDATE_REPO = elija-7580/Based
 // the latest GitHub release. "https:/$()/" because // starts a comment in xcconfig files.
 BASED_DISTRIBUTION = source
 BASED_UPDATE_FEED = https:/$()/github.com/$(BASED_UPDATE_REPO)/releases/latest/download/appcast.xml
-// Public half of the update signing key; the private half is the SPARKLE_PRIVATE_KEY secret on GitHub.
-BASED_SPARKLE_PUBLIC_KEY = ChFfGn/OaVPCCOqn4+WWTpIiKj8OBdYhxnw8rVyCy+I=
+// Public half of the update signing key (written by scripts/setup-release-key.sh); the private half is the
+// SPARKLE_PRIVATE_KEY secret on GitHub.
+BASED_SPARKLE_PUBLIC_KEY =
 #include? "Local.xcconfig"

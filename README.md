@@ -186,7 +186,8 @@ iCloud sync isn't in the downloadable build (it needs your own Apple team); buil
 
 Releases are made by `.github/workflows/release.yml` on every push to `main` (`scripts/release-mac.sh`:
 universal Release build, DMG, signed `appcast.xml`). It needs the repository secret `SPARKLE_PRIVATE_KEY`
-(base64 Ed25519 seed); its public half is `BASED_SPARKLE_PUBLIC_KEY` in `Config/Based.xcconfig`.
+(base64 Ed25519 seed); its public half is `BASED_SPARKLE_PUBLIC_KEY` in `Config/Based.xcconfig`. Both are
+set up once with `scripts/setup-release-key.sh` on a Mac.
 
 ### Build, install and update from source
 
