@@ -74,6 +74,8 @@ public enum SlashCommands {
             .init("Image", "Upload or embed with a link.", .media, .block(.image), symbol: "photo", aliases: ["picture", "photo", "img"]),
             .init("Video", "Upload or embed with a link.", .media, .block(.video), symbol: "play.rectangle", aliases: ["movie", "youtube"]),
             .init("Audio", "Upload or embed with a link.", .media, .block(.audio), symbol: "waveform", aliases: ["sound", "music", "mp3"]),
+            .init("Meeting notes", "Transcribe a meeting or lecture, then summarise it.", .media, .block(.meeting), symbol: "waveform.and.mic",
+                  aliases: ["meet", "meeting", "transcribe", "transcription", "record", "recorder", "lecture", "transkript", "besprechung"]),
             .init("Code", "Capture a code snippet.", .media, .block(.code), symbol: "chevron.left.forwardslash.chevron.right", aliases: ["snippet", "pre"], shortcut: "```"),
             .init("HTML", "Write HTML, CSS and JavaScript and see it live.", .media, .codeBlock(language: "html"), symbol: "chevron.left.forwardslash.chevron.right", aliases: ["html", "web", "css", "javascript", "widget", "iframe html"]),
             .init("Mermaid diagram", "Flowcharts, sequence diagrams and more from text.", .media, .codeBlock(language: "mermaid"), symbol: "point.3.connected.trianglepath.dotted", aliases: ["mermaid", "diagram", "flowchart", "chart"]),

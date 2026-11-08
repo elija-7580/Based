@@ -94,7 +94,11 @@ public struct MarkdownExporter {
                 let title = store.title(of: b.id)
                 line = "[\(title)](\((MarkdownExporter.fileName(title) + ".csv").addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? title))"
             case .table: line = table(b)
-            case .tableOfContents, .breadcrumb, .button, .tableRow: continue
+            case .tableOfContents, .breadcrumb, .button, .tableRow, .meetingSection, .transcript: continue
+            case .meeting:
+                out.append(pad + meeting(b).replacingOccurrences(of: "\n", with: "\n" + pad))
+                if idx < blocks.count - 1 { out.append("") }
+                continue
             case .columnList, .column, .syncedBlock:
                 if !kids.isEmpty { out.append(exportBlocks(kids, indent: indent)) }
                 continue
@@ -106,6 +110,31 @@ public struct MarkdownExporter {
             if !(b.type.isList && next?.type == b.type) && next != nil { out.append("") }
         }
         return out.joined(separator: "\n")
+    }
+
+    /// A meeting as a heading with Summary, Notes and Transcript.
+    func meeting(_ b: Block) -> String {
+        var parts = ["## " + inline(b.text)]
+        let info = b.props.meeting
+        if let start = info?.startedAt {
+            let f = ISO8601DateFormatter(); f.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime]
+            parts.append("*" + f.string(from: start) + (info?.duration.map { " · " + Transcript.timecode($0) } ?? "") + "*")
+        }
+        for kind in [MeetingSectionKind.summary, .notes] {
+            guard let sec = store.contentBlocks(of: b.id).first(where: { $0.props.meetingSection == kind }) else { continue }
+            let kids = store.contentBlocks(of: sec.id)
+            guard !kids.isEmpty else { continue }
+            parts.append("### " + (kind == .summary ? "Summary" : "Notes"))
+            parts.append(exportBlocks(kids, indent: 0))
+        }
+        let segs = store.transcriptChunks(of: b.id).flatMap { $0.props.segments ?? [] }
+        if !segs.isEmpty {
+            parts.append("### Transcript")
+            parts.append(Transcript.paragraphs(segs.filter { !$0.isPartial }).map { p in
+                "**\(info?.speakerName(p.speaker) ?? "Unknown")** [\(Transcript.timecode(p.start))]: \(p.text)"
+            }.joined(separator: "\n\n"))
+        }
+        return parts.joined(separator: "\n\n")
     }
 
     func table(_ b: Block) -> String {

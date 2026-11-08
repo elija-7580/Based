@@ -15,6 +15,12 @@ public enum BlockType: String, Codable, CaseIterable, Sendable {
     case linkToPage
     case syncedBlock
     case button
+    /// Meeting notes: recording, transcript, notes and AI summary (see Meeting.swift).
+    case meeting
+    /// Notes or summary area inside a meeting.
+    case meetingSection
+    /// A chunk of a meeting's transcript (`props.segments`).
+    case transcript
 
     public var displayName: String {
         switch self {
@@ -51,6 +57,9 @@ public enum BlockType: String, Codable, CaseIterable, Sendable {
         case .linkToPage: return "Link to page"
         case .syncedBlock: return "Synced block"
         case .button: return "Button"
+        case .meeting: return "Meeting notes"
+        case .meetingSection: return "Meeting section"
+        case .transcript: return "Transcript"
         }
     }
 
@@ -79,7 +88,7 @@ public enum BlockType: String, Codable, CaseIterable, Sendable {
     public var supportsChildren: Bool {
         switch self {
         case .text, .bulletedList, .numberedList, .todo, .toggle, .quote, .callout,
-             .page, .column, .columnList, .table, .syncedBlock,
+             .page, .column, .columnList, .table, .syncedBlock, .meeting, .meetingSection,
              .heading1, .heading2, .heading3, .heading4:
             return true
         default:
@@ -341,6 +350,14 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var buttonActions: [ButtonAction]?
     /// Top-level pages only: the teamspace whose sidebar section lists the page (nil = Private).
     public var teamspace: RecordID?
+    /// `.meeting`: recording state, tracks, speakers, context.
+    public var meeting: MeetingInfo?
+    /// `.meetingSection`: notes or summary.
+    public var meetingSection: MeetingSectionKind?
+    /// `.transcript`: the segments of this chunk.
+    public var segments: [TranscriptSegment]?
+    /// Blocks typed into meeting notes while recording: seconds into the recording (click → play from there).
+    public var meetingTime: Double?
 
     public init() {}
 }

@@ -384,6 +384,12 @@ final class EditorController {
         let replaceable = empty && (b.type == .text || b.type.isHeading || b.type.isList || b.type == .quote)
         let parent = b.parent
         switch cmd.action {
+        case .block(.meeting):
+            // A meeting brings its notes and summary sections along.
+            let m = store.createMeeting(in: parent, at: replaceable ? .before(id) : .after(id))
+            if replaceable { store.deleteBlocks([id]) }
+            selectedBlocks = [m]
+            return
         case .block(let t):
             if t.isTextEditable {
                 if replaceable || empty {

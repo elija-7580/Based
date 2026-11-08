@@ -411,25 +411,12 @@ struct CommandPalette: View {
 }
 
 extension AppModel {
-    /// ⌘N → "New meeting notes": a dated page with the usual sections.
+    /// ⌘N → "New meeting notes": a dated page with a meeting block (record, transcript, notes, summary).
     func newMeetingNotes() {
         let now = Date()
         let id = store.createPage(title: RichText("Meeting notes — " + now.formatted(date: .abbreviated, time: .omitted)),
                                   icon: .emoji("🗓️"), name: "New meeting notes")
-        let md = """
-        **Date:** \(now.formatted(date: .long, time: .shortened))
-        **Attendees:** 
-
-        ## Agenda
-        - 
-
-        ## Notes
-        - 
-
-        ## Action items
-        - [ ] 
-        """
-        _ = store.insertImported(MarkdownImporter().parse(md), in: .block(id), name: "New meeting notes")
+        store.createMeeting(in: .block(id), title: "Meeting — " + now.formatted(date: .omitted, time: .shortened), now: now)
         openRoot(id)
     }
 }

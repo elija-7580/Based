@@ -23,6 +23,8 @@ public extension WorkspaceStore {
     func showsChildrenInline(_ b: Block) -> Bool {
         switch b.type {
         case .page, .databasePage, .databaseInline, .table, .tableRow, .linkToPage: return false
+        // The meeting view lays out its sections and transcript itself.
+        case .meeting, .meetingSection, .transcript: return false
         case .toggle: return b.props.isOpen ?? false
         default:
             if b.type.isHeading, b.props.toggleable == true { return b.props.isOpen ?? false }

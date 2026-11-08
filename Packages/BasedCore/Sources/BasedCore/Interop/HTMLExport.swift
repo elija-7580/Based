@@ -180,8 +180,27 @@ public struct HTMLExporter {
             return children(b)
         case .tableOfContents:
             return ""
-        case .breadcrumb, .button, .tableRow:
+        case .breadcrumb, .button, .tableRow, .transcript:
             return ""
+        case .meetingSection:
+            return children(b)
+        case .meeting:
+            var html = "<section class=\"meeting\"><h2>\(Self.escape(b.text.plainText))</h2>\n"
+            for kind in [MeetingSectionKind.summary, .notes] {
+                guard let sec = store.contentBlocks(of: b.id).first(where: { $0.props.meetingSection == kind }),
+                      !store.contentBlocks(of: sec.id).isEmpty else { continue }
+                html += "<h3>\(kind == .summary ? "Summary" : "Notes")</h3>\n" + children(sec)
+            }
+            let segs = store.transcript(of: b.id, includePartial: false)
+            if !segs.isEmpty {
+                html += "<details class=\"transcript\"><summary>Transcript</summary>\n"
+                for p in Transcript.paragraphs(segs) {
+                    html += "<p><strong>\(Self.escape(b.props.meeting?.speakerName(p.speaker) ?? "Unknown"))</strong> "
+                        + "<span class=\"time\">\(Transcript.timecode(p.start))</span><br>\(Self.escape(p.text))</p>\n"
+                }
+                html += "</details>\n"
+            }
+            return html + "</section>\n"
         }
     }
 

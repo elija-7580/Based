@@ -16,6 +16,9 @@ mod() { local name=$1; shift; swiftc -diagnostic-style=llvm -emit-module -parse-
 mod Combine "$TC/stubs/Combine.swift"
 
 mod Security "$TC/stubs/Security.swift"
+mod CoreAudio "$TC/stubs/CoreAudio.swift"
+mod AVFoundation "$TC/stubs/AVFoundation.swift"
+mod FluidAudio "$TC/stubs/FluidAudio.swift"
 mod MetricKit "$TC/stubs/MetricKit.swift"
 mod AppKit "$TC/stubs/AppKit.swift"
 mod UniformTypeIdentifiers "$TC/stubs/UniformTypeIdentifiers.swift"

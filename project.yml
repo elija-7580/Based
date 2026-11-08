@@ -29,6 +29,9 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.6.4
+  FluidAudio:   # on-device speech recognition (Parakeet v3) and speaker diarization for meeting notes
+    url: https://github.com/FluidInference/FluidAudio
+    from: 0.18.3
 targets:
   Based-macOS:
     type: application
@@ -42,6 +45,7 @@ targets:
         product: BasedBrain
       - package: SwiftTerm   # real terminal for Claude Code / Codex sessions (macOS only)
       - package: Sparkle     # self-updates for the downloadable DMG build (macOS only)
+      - package: FluidAudio
     settings:
       base:
         PRODUCT_NAME: Based
@@ -60,6 +64,7 @@ targets:
       - package: BasedCore
       - package: BasedBrain
         product: BasedBrain
+      - package: FluidAudio
     settings:
       base:
         PRODUCT_NAME: Based

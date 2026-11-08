@@ -1,6 +1,8 @@
 import Foundation
 #if canImport(SQLite3)
 import SQLite3
+#elseif canImport(CSQLite)
+import CSQLite
 #endif
 import Testing
 @testable import BasedCore
