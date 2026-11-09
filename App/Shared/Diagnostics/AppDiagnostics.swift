@@ -116,8 +116,7 @@ enum AppDiagnostics {
             r.facts.append(.init("Workspace", "\(model.store.blocks.count) blocks · \(model.store.databases.count) databases · \(model.tabs.count) tabs"))
             let storage: String
             if let e = model.storageError { storage = "cannot open — \(e)" }
-            else if let f = model.store.writeFailure { storage = "read-only since \(f.since.formatted(date: .omitted, time: .standard)) — \(f.message) · \(f.rejected) changes rejected" }
-            else { storage = "writable · \(model.dataDirectory.path)" }
+            else { storage = model.store.storageSummary(location: model.dataDirectory.path) }   // BSD-121: incl. unsaved changes
             r.facts.append(.init("Storage", storage))
             // BSD-16: rows this version can't decode (kept on disk, not synced).
             r.facts.append(.init("Undecodable records", String(model.store.frozenKeys.count)))

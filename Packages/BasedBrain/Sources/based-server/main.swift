@@ -90,8 +90,8 @@ if let lvl = ProcessInfo.processInfo.environment["BASED_LOG_LEVEL"].flatMap(LogL
 func log(_ s: String, category: String = "server") { Log.info(s, category: category) }
 
 @MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime, HappierRuntime) {
-    let persistence = try SQLitePersistence(url: URL(fileURLWithPath: opts.db))
-    let store = WorkspaceStore(persistence: persistence, node: "server")
+    // BSD-121: writes go through a background writer (flushed on SIGTERM / SIGINT and before stdio exits).
+    let store = try ServerStorage.openStore(url: URL(fileURLWithPath: opts.db))
     let brain = BrainStore(store: store)
     let tools = AgentTools(store: store, brain: brain)
     let registry = ModelRegistry()
@@ -121,7 +121,8 @@ func log(_ s: String, category: String = "server") { Log.info(s, category: categ
 }
 
 let (store, tools, mcp, sync, runtime, happier) = try await MainActor.run { try boot() }
-_ = store
+let terminationSources = await MainActor.run { ServerStorage.flushOnTermination(store) }
+_ = terminationSources
 // Sharing: people, links and published pages with roles (ShareRoutes.swift, docs/sharing.md).
 let share = await MainActor.run { ShareService(store: store) }
 // BSD-58: MCP clients can hand work to the main agent (`ask_main_agent`).
@@ -158,7 +159,8 @@ mcp.permissions = { [tools] in tools.brain.permissions(mode: .bypass) }
 
 if opts.stdio {
     await StdioTransport(server: mcp).run()
-    exit(0)
+    let saved = await MainActor.run { ServerStorage.flush(store, reason: "stdio closed") }
+    exit(saved ? 0 : 1)
 }
 
 let exposure = ServerExposure.binding(token: opts.token, insecurePublic: opts.insecurePublic)

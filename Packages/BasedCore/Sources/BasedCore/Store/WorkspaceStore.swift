@@ -658,6 +658,24 @@ public final class WorkspaceStore {
     /// Changes not yet saved by a background writer (0 for synchronous persistence).
     public var unsavedChangeCount: Int { (persistence as? PersistenceWriter)?.pendingCount ?? 0 }
 
+    /// BSD-121: the "Storage" line of the diagnostic report: writable or read-only, where, and how many changes
+    /// the background writer still holds (plus its error while it is stopped).
+    public func storageSummary(location: String) -> String {
+        var parts: [String]
+        if let f = writeFailure {
+            parts = ["read-only since \(f.since.formatted(date: .omitted, time: .standard)) — \(f.message)",
+                     "\(f.rejected) changes rejected"]
+        } else {
+            parts = ["writable", location]
+        }
+        let unsaved = unsavedChangeCount
+        if unsaved > 0 { parts.append("\(unsaved) change\(unsaved == 1 ? "" : "s") not saved yet") }
+        if writeFailure == nil, let e = (persistence as? PersistenceWriter)?.failure {
+            parts.append("background save failed: \(e)")
+        }
+        return parts.joined(separator: " · ")
+    }
+
     /// Blocks until queued background writes are saved (sync readers, tests). False if some are unsaved.
     @discardableResult
     public func flushWrites() -> Bool { persistence?.flushPendingWrites() ?? true }

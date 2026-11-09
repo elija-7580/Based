@@ -9,8 +9,11 @@ import Testing
 struct SyncV2Tests {
     let dir = FileManager.default.temporaryDirectory.appendingPathComponent("syncv2-\(UUID().uuidString)")
 
+    /// Server stores open like based-server does (BSD-121: behind a `PersistenceWriter`); clients write directly.
     func store(_ name: String) throws -> WorkspaceStore {
-        WorkspaceStore(persistence: try SQLitePersistence(url: dir.appendingPathComponent("\(name).sqlite")), node: name)
+        let url = dir.appendingPathComponent("\(name).sqlite")
+        if name.hasPrefix("server") { return try ServerStorage.openStore(url: url) }
+        return WorkspaceStore(persistence: try SQLitePersistence(url: url), node: name)
     }
 
     func client(_ s: WorkspaceStore, server: SyncServer, pageSize: Int = 500, log: Box? = nil) -> ServerSync {
@@ -37,6 +40,32 @@ struct SyncV2Tests {
     }
 
     final class Box { var paths: [String] = [] }
+
+    /// BSD-121: the server store saves in the background; after 1 000 pushes and a flush (what SIGTERM does),
+    /// a fresh open of the file has every record, and pulls see all of them in the change log.
+    @Test func serverWriterKeepsEveryPushAcrossARestart() async throws {
+        let srvURL = dir.appendingPathComponent("server-writer.sqlite")
+        let srvStore = try ServerStorage.openStore(url: srvURL)
+        #expect(srvStore.persistence is PersistenceWriter)
+        let server = SyncServer(store: srvStore)
+        let client = try store("writer-client")
+        var ids: [RecordID] = []
+        for i in 0..<1_000 {
+            let id = client.createPage(title: RichText("Pushed \(i)"))
+            ids.append(id)
+            _ = server.pushV2(SyncPush(records: [client.record(RecordKey(.block, id))!], deletions: []))
+        }
+        // Reads through the writer see everything at once (they wait for the queue).
+        let pulled = server.pullPage(after: 0, limit: 5_000).records.compactMap { r -> RecordID? in
+            if case .block(let b) = r { return b.id } else { return nil }
+        }
+        #expect(Set(ids).isSubset(of: Set(pulled)))
+        #expect(ServerStorage.flush(srvStore, reason: "test"))
+        #expect(srvStore.unsavedChangeCount == 0)
+        let reopened = WorkspaceStore(persistence: try SQLitePersistence(url: srvURL), node: "check")
+        #expect(ids.allSatisfy { reopened.blocks[$0] != nil })
+        #expect(reopened.title(of: ids[999]) == "Pushed 999")
+    }
 
     @Test func roundTripLateOfflineChangeRestartAndDeletion() async throws {
         let srvStore = try store("server")
@@ -184,9 +213,10 @@ struct SyncV2Tests {
         await client(b, server: SyncServer(store: srvStore)).syncNow()
         #expect(b.blocks[page] != nil)
 
-        let ps = srvStore.persistence as! SQLitePersistence
+        #expect(srvStore.flushSync(timeout: 5))
+        let ps = (srvStore.persistence as! PersistenceWriter).sqlite!
         try ps.writeRawRow(kind: .block, id: page, data: Data("broken".utf8))
-        let server2 = SyncServer(store: WorkspaceStore(persistence: try SQLitePersistence(url: srvURL), node: "server"))
+        let server2 = SyncServer(store: try ServerStorage.openStore(url: srvURL))
         #expect(server2.store.frozenKeys.contains(RecordKey(.block, page)))
         let pageOfChanges = server2.pullPage(after: 0)
         #expect(!pageOfChanges.deletions.contains(RecordKey(.block, page)))
@@ -200,7 +230,7 @@ struct SyncV2Tests {
 struct SyncWaitTests {
     @Test func longPollReturnsOnChangeOrTimeout() async throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("wait-\(UUID().uuidString).sqlite")
-        let store = WorkspaceStore(persistence: try SQLitePersistence(url: url), node: "s")
+        let store = try ServerStorage.openStore(url: url, node: "s")   // BSD-121: like based-server
         let server = SyncServer(store: store)
         let now = (store.persistence as! ChangeLogging).lastChangeSeq
         // Already newer → immediate.
