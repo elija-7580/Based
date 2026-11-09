@@ -12,6 +12,7 @@ packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1039 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1040)[39m
 packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+apps/web test: [2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
 packages/sync test: [2m      Tests [22m [1m[32m26 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (29)[39m
 apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 --- e2e
@@ -19,22 +20,16 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 > @based/web@0.0.0 e2e /home/runner/work/Based/Based/apps/web
 > playwright test
 
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 
-Running 2 tests using 2 workers
+Running 8 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (180ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (1.8s)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (434ms)
+  ✓  3 [chromium] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (256ms)
+  ✓  4 [chromium] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (708ms)
+  ✓  5 [chromium] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (327ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (4.1s)
+  ✓  6 [webkit] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (3.8s)
+  ✓  7 [webkit] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (2.5s)
+  ✓  8 [webkit] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (1.2s)
 
-  2 passed (4.9s)
+  8 passed (15.9s)
