@@ -110,7 +110,7 @@ public final class AgentTools {
                      inputSchema: .schema(["project": .str("Project id or name"), "update": .str("What happened, one or two sentences"), "status": .str("Optional: Active | Paused | Done")], required: ["project", "update"])),
             ToolSpec(name: "get_run", description: "Read one run: its fields, result, short protocol and direct sub-runs.",
                      inputSchema: .schema(["run_id": .str("Run id")], required: ["run_id"])),
-        ] + hostSpecs + externalSpecs
+        ] + Self.captureSpecs + hostSpecs + externalSpecs
     }
 
     /// Tools provided by the host runtime (sub-agents …), executed asynchronously through `hostCall`.
@@ -542,6 +542,8 @@ public final class AgentTools {
         case "delete_view":
             let vid = try req(a, "view_id"); guard store.views[vid] != nil else { throw ToolError("No view \(vid)") }
             store.deleteView(vid); return "Deleted view \(vid)."
+        case "capture", "list_captures", "file_capture":   // BSD-63 (Brain/CaptureStore.swift)
+            return try captureTool(name, a)
         default: throw ToolError("Unknown tool \(name)")
         }
     }

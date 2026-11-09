@@ -74,7 +74,17 @@ token) and ask "Which projects are running and what needs me?".
 | `get_run` | One run: fields, result, protocol, sub-runs |
 | `inbox` | What waits for the user, with answer options; `all` includes answered items; paged |
 | `resolve_inbox` | Answer an item: an option id for permission requests, free text for questions. First answer wins. Refused on session-scoped endpoints (a coding agent can't approve itself); in-app agents always need an explicit allow rule |
-| `ask_main_agent` | Hand a task to the main agent; returns the sub-agent run id at once (server only) |
+| `ask_main_agent` | Hand a task to the main agent; returns the sub-agent run id at once (server and the app's local `/mcp`, never on session endpoints) |
+
+### Captures (BSD-63)
+
+Quick notes, voice-note transcripts and links land in the Brain database **Captures** (Source, Status New / Transcribed / Filed / Discarded, Captured, Link, Audio, Filed to, Note). The shipped agent **Sort captures** (`daily 23:00`) files them with these tools.
+
+| Tool | What it does |
+|---|---|
+| `capture` | Keep a thought or link for the user (`text`, `url`, `source`); lands in Captures |
+| `list_captures` | Captures waiting to be sorted, oldest first (`all` includes filed / discarded); paged |
+| `file_capture` | File one capture: `project` (Latest updates), `new_page` (inside a project), `page` (append to a project page), `task` (the user's Tasks / To-dos / Aufgaben database), `memory`, `ask` (Inbox question with a suggestion), `discard`. Only project pages, the task database and Memories are edited; anything else becomes a question |
 
 ### Host tools (server with coding agents)
 

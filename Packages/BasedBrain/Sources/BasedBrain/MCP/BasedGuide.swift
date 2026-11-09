@@ -107,12 +107,15 @@ public enum BasedGuide {
         - **Main agent**: the user's chief of staff. It answers small things itself and hands bigger work to \
         sub-agents on a model that fits the task. `ask_main_agent` gives it a task and returns the run id at once; \
         follow the run with `get_run`. Its result is posted to the project and to the main thread.
+        - **Captures**: quick notes, voice-note transcripts and links (`capture`). The "Sort captures" agent files \
+        them every night with `list_captures` and `file_capture` (project, new page, task, memory — or asks the user).
 
         Typical flows
         - "What needs me?" → `inbox` → summarise each item with its options.
         - "How is Publit going?" → `get_project` {"project": "Publit"} → latest updates + running runs.
         - "Have an agent research X for Publit" → `ask_main_agent` {"task": "…", "project": "Publit"} → tell the \
         user the run id; later `get_run`.
+        - "Note that I want to try EPUB export" → `capture` {"text": "…"}; it is sorted tonight.
 
         Lists are paged: `limit` and `offset`; a last line "… N more (offset: K)" means call again with that offset.
         """),
