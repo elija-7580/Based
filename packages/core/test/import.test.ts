@@ -2,9 +2,11 @@
 // Worker-Aufteilung prepare/commit mit Fortschritt, Export-ZIP mit Fehlerbericht, Archiv-Paket hin und zurück.
 import { zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
+import type { WorkspaceStore as Store } from "../src/index.js";
 import {
   commitPreparedImport, extractZip, ImportCancelled, ImportFiles, importNotionItems, loadArchive, MemoryAssetSink, MemoryPersistence,
   planWorkspaceExport, prepareImport, readZipEntries, topLevelPages, WorkspaceStore, writeArchivePackage, writeExportZip, ZipError, importArchiveRecords,
+  preparedImportFromWire, preparedImportToWire,
 } from "../src/index.js";
 
 const enc = new TextEncoder();
@@ -93,6 +95,35 @@ describe("Import im Worker: prepare, dann commit", () => {
     // Wurzeln liegen nach der HTML-Seite, ohne doppelte Sortierschlüssel.
     const roots = s.children("w").map((id) => s.blocks.get(id)!.sk);
     expect(new Set(roots).size).toBe(roots.length);
+  });
+
+  it("PreparedImport als reine Daten (Import-Worker → Store-Worker): gleiches Ergebnis wie direkt", () => {
+    const prepared = prepareImport([{ files, path: "Export" }]);
+    const wire = structuredClone(preparedImportToWire(prepared));
+    expect(wire.builder?.pendingAssets).toHaveLength(1);
+    const direct = store(), viaWire = store();
+    const a = commitPreparedImport(direct, prepared);
+    const b = commitPreparedImport(viaWire, preparedImportFromWire(wire));
+    expect(b.pages).toBe(a.pages);
+    expect(b.rootIDs).toEqual(a.rootIDs);
+    const shape = (s: Store) => [...s.blocks.values()].map((x) => [x.id, x.type, x.parent, x.sk, JSON.stringify(x.text ?? "")].join("|")).sort();
+    // IDs der Markdown-Seiten sind zufällig: nur die HTML-Seite vergleichen, Rest nach Gestalt.
+    expect(viaWire.blocks.get("11111111-1111-1111-1111-111111111111")).toMatchObject({ text: "Page", parent: "w" });
+    expect(shape(viaWire).length).toBe(shape(direct).length);
+    // Reimport über den Draht aktualisiert an Ort und Stelle
+    const again = commitPreparedImport(viaWire, preparedImportFromWire(structuredClone(preparedImportToWire(prepareImport([{ files, path: "Export" }])))));
+    expect(again.warnings.some((w) => w.startsWith("Updated"))).toBe(true);
+  });
+
+  it("Archiv-Import über transact(keepStamps): Schreibfehler wird gemeldet", () => {
+    const src = store();
+    src.transact("init", (tx) => tx.put({ kind: "block", data: { id: "p", type: "page", parent: "w", sk: "a0", text: "X", createdAt: 0, updatedAt: 0 } }));
+    const read = loadArchive(writeArchivePackage(src, () => undefined).zip).read;
+    const failing = new MemoryPersistence();
+    failing.write = () => { throw new Error("disk full"); };
+    const dst = new WorkspaceStore({ persistence: failing, node: "t" });
+    expect(() => importArchiveRecords(dst, read)).toThrow(/disk full/);
+    expect(dst.blocks.has("p")).toBe(false);
   });
 
   it("Abbruch wirft ImportCancelled, der Store bleibt unberührt", () => {

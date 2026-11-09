@@ -11,7 +11,7 @@ import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
 import type { WorkspaceStore } from "../store/store.js";
-import { commitImport, emptyReport, ImportBuilder, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportReport } from "./builder.js";
+import { commitImport, emptyReport, ImportBuilder, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
@@ -93,6 +93,21 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   if (md.length > 0) out.markdown = new MarkdownNotionImporter(opts).run(md);
   progress(1);
   return out;
+}
+
+/** `PreparedImport` als reine Daten (über `postMessage` zwischen Workern). */
+export interface PreparedImportWire {
+  builder: ImportBuilderWire | undefined;
+  markdown: PreparedImport["markdown"];
+  notes: string[];
+}
+
+export function preparedImportToWire(p: PreparedImport): PreparedImportWire {
+  return { builder: p.builder?.toWire(), markdown: p.markdown, notes: p.notes };
+}
+
+export function preparedImportFromWire(w: PreparedImportWire): PreparedImport {
+  return { builder: w.builder ? ImportBuilder.fromWire(w.builder) : undefined, markdown: w.markdown, notes: w.notes };
 }
 
 /** Schreibt einen vorbereiteten Import: HTML zuerst, dann Markdown/CSV (Swift `importPrepared`). */

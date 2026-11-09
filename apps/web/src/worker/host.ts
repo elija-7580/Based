@@ -19,7 +19,7 @@ import {
   recordKey,
   renamePage,
   restorePages,
-  SearchCorpus,
+  SearchIndex,
   setFavorite,
   subtree,
   structureSignature,
@@ -33,6 +33,7 @@ import {
   type WorkspaceStore,
 } from "@based/core";
 import { SyncClient, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
+import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
 import type { Command, Event, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -71,7 +72,9 @@ export class StoreHost {
   private flushQueued = false;
   private openPages = new Map<string, Set<RecordKeyString>>();
   private pageDelta = new Map<string, { upserts: Map<RecordKeyString, WireRecord>; deletions: Set<RecordKeyString> }>();
-  private corpus: { revision: number; corpus: SearchCorpus } | undefined;
+  /** Volltextindex für Quick Find: einmal gebaut, danach inkrementell (geänderte Records vor der nächsten Suche). */
+  private index: SearchIndex | undefined;
+  private indexDirty = new Set<RecordKeyString>();
   private pendingSearch: { id: number; query: string; limit: number } | undefined;
   private lastStatus = "";
 
@@ -90,12 +93,15 @@ export class StoreHost {
         case "init": reply(await this.init(msg.device, msg.sync, msg.opfs)); break;
         case "command": reply(this.command(msg.command)); break;
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30); break;
-        case "warmSearch": this.corpusNow(); reply(true); break;
+        case "warmSearch": this.searchIndex(); reply(true); break;
         case "openPage": reply(this.openPage(msg.pageID)); break;
         case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); reply(true); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
+        case "commitImport": reply(commitImportPayload(this.store, msg.payload, msg.parent)); break;
+        case "exportPage": reply(exportPage(this.store, msg.pageID, msg.format)); break;
+        case "exportWorkspace": reply(exportWorkspace(this.store, msg.format)); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -228,6 +234,7 @@ export class StoreHost {
     const store = this.store;
     for (const key of change.keys) {
       const { kind, id } = parseKey(key);
+      if (this.index && (kind === "block" || kind === "database")) this.indexDirty.add(key);
       if (kind === "workspace") this.structureDirty = true;
       else if (kind === "block") this.trackBlock(id);
       else if (kind === "database") {
@@ -356,10 +363,24 @@ export class StoreHost {
 
   // MARK: Quick Find
 
-  private corpusNow(): SearchCorpus {
+  /** Index auf dem Stand des Stores: beim ersten Mal gebaut, danach nur geänderte Blöcke/Datenbanken eingearbeitet. */
+  searchIndex(): SearchIndex {
     const store = this.store;
-    if (!this.corpus || this.corpus.revision !== store.revision) this.corpus = { revision: store.revision, corpus: new SearchCorpus(store) };
-    return this.corpus.corpus;
+    if (!this.index) {
+      this.index = SearchIndex.fromSource(store);
+      this.indexDirty.clear();
+    } else if (this.indexDirty.size) {
+      const upserts: WireRecord[] = [];
+      const deletions: RecordKeyString[] = [];
+      for (const key of this.indexDirty) {
+        const r = store.record(key);
+        if (r) upserts.push(r);
+        else deletions.push(key);
+      }
+      this.indexDirty.clear();
+      this.index.apply({ upserts, deletions });
+    }
+    return this.index;
   }
 
   /** Neuere Suchen brechen ältere ab, die noch nicht liefen (Tippen). */
@@ -371,15 +392,24 @@ export class StoreHost {
       const p = this.pendingSearch;
       if (!p) return;
       this.pendingSearch = undefined;
-      this.opts.post({ type: "reply", id: p.id, ok: true, result: this.search(p.query, p.limit) });
+      // Abbrechen, sobald eine neuere Suche ansteht (z. B. über `defer` eingereiht).
+      const r = this.search(p.query, p.limit, () => this.pendingSearch !== undefined);
+      if (r) this.opts.post({ type: "reply", id: p.id, ok: true, result: r });
+      else this.opts.post({ type: "reply", id: p.id, ok: false, error: "cancelled", cancelled: true });
     };
     (this.opts.defer ?? ((fn) => setTimeout(fn, 0)))(run);
   }
 
-  search(query: string, limit = 30): SearchResult {
+  /** Quick Find über den Volltextindex (Titel, Inhalt mit Snippet, Zeilenwerte); `undefined` = abgebrochen. */
+  search(query: string, limit = 30, isCancelled?: () => boolean): SearchResult | undefined {
     const t0 = performance.now();
     const store = this.store;
-    const hits: QuickFindHit[] = query.trim() ? this.corpusNow().search(query, {}, "bestMatch", limit).map((h) => {
+    let found: ReturnType<SearchIndex["run"]> = [];
+    if (query.trim()) {
+      found = this.searchIndex().run(query, isCancelled ? { limit, isCancelled } : { limit });
+      if (!found) return undefined;
+    }
+    const hits = found.map((h) => {
       const b = store.blocks.get(h.pageID);
       const path = pageAncestors(store, h.pageID).map((id) => titleOf(store, id));
       if (b?.parent === "w" && b.props?.teamspace) {
@@ -394,7 +424,7 @@ export class StoreHost {
       };
       if (h.snippet) hit.snippet = h.snippet;
       return hit;
-    }) : [];
+    });
     return { query, hits, took: performance.now() - t0 };
   }
 
