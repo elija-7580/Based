@@ -103,6 +103,8 @@ final class HappierModel {
         runtime.machineName = machineName
         runtime.agents = agents
         runtime.permissionPolicy = permissionPolicy
+        // BSD-50: allow / ask / deny rules from Agent Brain → Permissions, read fresh for every request.
+        runtime.permissionRules = { [weak brain] in brain?.permissions(mode: .ask) }
         ensureSessionKey()
         runtime.cipher = SessionCipher(base64: cipherKey)
         // BSD-94: one ordered queue instead of a Task per update (fast updates could arrive swapped).
@@ -371,8 +373,8 @@ final class HappierModel {
 
     func resolve(_ item: InboxItem, decision: String) {
         let approved = decision.hasPrefix("allow") || decision == "approve"
-        brain.resolveInbox(item.id, decision: decision, status: approved ? .approved : .rejected)
-        if useServer { Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision)]) } }
+        brain.resolveInbox(item.id, decision: decision, status: approved ? .approved : .rejected, device: machineName)
+        if useServer { Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision), "device": .string(machineName)]) } }
         refresh()
     }
 

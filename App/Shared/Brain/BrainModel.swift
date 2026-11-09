@@ -159,6 +159,12 @@ final class BrainModel {
 
     typealias Engine = ChatEngineChoice
 
+    /// BSD-50: permission mode for Based's own tools in the chat (composer menu; CLIs picked by Auto get the same
+    /// mode as their permission flag). Rules come from Agent Brain → Permissions.
+    var permissionMode: PermissionMode = PermissionMode(rawValue: UserDefaults.standard.string(forKey: "ai.permissionMode") ?? "") ?? .ask {
+        didSet { UserDefaults.standard.set(permissionMode.rawValue, forKey: "ai.permissionMode") }
+    }
+
     /// BSD-49: compute level for Auto (Low / Auto / High), picked under "Auto" in the model picker.
     var compute: ComputeLevel = ComputeLevel(rawValue: UserDefaults.standard.string(forKey: "ai.compute") ?? "") ?? .auto {
         didSet { UserDefaults.standard.set(compute.rawValue, forKey: "ai.compute") }
@@ -297,8 +303,10 @@ final class BrainModel {
         let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
         switch engine {
         case .model(let ref):
-            backend = ModelChatBackend(runtime: runtime, modelRef: ref)
-        case .cli(let spec):
+            backend = ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode))
+        case .cli(var spec):
+            // Auto picked a CLI: it runs with the composer's permission mode (an explicit CLI choice has its own).
+            if engineSpec.kind == .auto, spec.permission.isEmpty { spec.permission = permissionMode.cliPermission(for: spec.kind) }
             if spec.kind == .claudeCode {
                 backend = ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
             } else {

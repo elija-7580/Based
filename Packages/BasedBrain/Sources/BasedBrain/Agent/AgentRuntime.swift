@@ -28,7 +28,8 @@ public final class AgentRuntime: @unchecked Sendable {
     /// `modelRef` like "anthropic/claude-opus-5-5"; nil → first registered provider's first model.
     /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
-                    callerSession: String? = nil, events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
+                    callerSession: String? = nil, permissions: AgentPermissions? = nil,
+                    events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
         let onEvent = events
         guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
         if provider.isOnDevice {
@@ -113,7 +114,9 @@ public final class AgentRuntime: @unchecked Sendable {
                 onProgress?("\(call.name) \(call.arguments.text.prefix(80))")
                 onEvent?(.toolUse(id: call.id, name: call.name, input: call.arguments))
                 let res: AgentTools.ToolResult
-                if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
+                // BSD-50: mode and rules decide before the tool runs.
+                if let blocked = await tools.authorize(call.name, call.arguments, permissions: permissions) { res = blocked }
+                else if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
                 else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }),
                         let r = await host(call.name, Self.withCaller(call.arguments, callerSession)) { res = r }
                 else { res = await MainActor.run { tools.call(call.name, call.arguments) } }

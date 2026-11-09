@@ -300,8 +300,10 @@ let server = HTTPServer(port: opts.port) { req in
         let body = (try? JSONValue.parse(req.body)) ?? .object([:])
         let decision = body["decision"]?.string ?? "reject_once"
         let approved = decision.hasPrefix("allow") || decision == "approve" || body["approved"]?.bool == true
-        await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected) }
-        return .json(["ok": true])
+        let device = body["device"]?.string ?? "server"
+        let first = await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected, device: device) }
+        // BSD-50: the first answer wins; a second device gets 409 instead of overwriting it.
+        return first ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409)
     case ("GET", "/connections"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let list = await MainActor.run { tools.brain.connections() }

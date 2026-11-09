@@ -93,6 +93,9 @@ public final class ACPClient: @unchecked Sendable {
     public var onLog: (@Sendable (String) -> Void)?
     /// Allow the agent to read/write files in these directories (fs/* requests). Empty = deny all.
     public var allowedRoots: [String] = []
+    /// BSD-50: rules checked for `fs/write_text_file` (deny rules and plan mode block the write; the agent asked
+    /// for the edit itself via `session/request_permission`, so there is no second prompt).
+    public var permissions: AgentPermissions?
 
     public init(definition: AgentDefinition) { self.definition = definition }
 
@@ -208,6 +211,9 @@ public final class ACPClient: @unchecked Sendable {
             catch { return .failure(.internalError("\(error)")) }
         case "fs/write_text_file":
             guard let path = params?["path"]?.string, allowed(path), let content = params?["content"]?.string else { return .failure(.init(code: -32001, message: "Write not permitted")) }
+            if let permissions, permissions.decide(PermissionCall(tool: "Write", argument: path, category: .edit)).effect == .deny {
+                return .failure(.init(code: -32001, message: "Write not permitted by the permission rules"))
+            }
             do { try content.write(toFile: path, atomically: true, encoding: .utf8); return .success(.null) }
             catch { return .failure(.internalError("\(error)")) }
         default:
@@ -215,8 +221,9 @@ public final class ACPClient: @unchecked Sendable {
         }
     }
 
-    private func allowed(_ path: String) -> Bool {
-        let p = URL(fileURLWithPath: path).standardizedFileURL.path
-        return allowedRoots.contains { p.hasPrefix(URL(fileURLWithPath: $0).standardizedFileURL.path) }
+    /// Inside one of `allowedRoots`, component-wise and with symlinks resolved (BSD-50: `/p/proj` no longer
+    /// allows `/p/proj-secret`, and a symlink inside the project can't point outside it).
+    func allowed(_ path: String) -> Bool {
+        allowedRoots.contains { PathScope.contains(root: $0, path: path) }
     }
 }

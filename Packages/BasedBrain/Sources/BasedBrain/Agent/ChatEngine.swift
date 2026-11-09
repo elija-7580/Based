@@ -258,11 +258,15 @@ public final class MainActorQueue: Sendable {
 public struct ModelChatBackend: ChatBackend {
     public let runtime: AgentRuntime
     public let modelRef: String
-    public init(runtime: AgentRuntime, modelRef: String) { self.runtime = runtime; self.modelRef = modelRef }
+    /// BSD-50: mode and rules for this chat's tool calls (nil = no checks, as before).
+    public var permissions: AgentPermissions?
+    public init(runtime: AgentRuntime, modelRef: String, permissions: AgentPermissions? = nil) {
+        self.runtime = runtime; self.modelRef = modelRef; self.permissions = permissions
+    }
     public var resumeKind: String? { nil }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
         let o = try await runtime.run(prompt: request.prompt, modelRef: modelRef, history: request.history,
-                                      callerSession: session, events: emit)
+                                      callerSession: session, permissions: permissions, events: emit)
         try Task.checkCancellation()
         return ChatReply(text: o.text)
     }

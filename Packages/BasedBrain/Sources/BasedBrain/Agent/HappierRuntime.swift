@@ -88,6 +88,9 @@ public final class HappierRuntime: @unchecked Sendable {
     public var machineName: String
     public var cipher: SessionCipher?
     public var permissionPolicy: PermissionPolicy = .ask
+    /// BSD-50: allow / ask / deny rules (Agent Brain → Permissions), checked before `permissionPolicy`:
+    /// an allow rule answers without the Inbox, a deny rule refuses, an ask rule always goes to the Inbox.
+    public var permissionRules: (@MainActor @Sendable () -> AgentPermissions?)?
     /// Command that exposes Based itself as an MCP server to the agents (so they can read/write the workspace).
     public var basedMCPServer: MCPServerConfig?
     /// HTTP MCP endpoint of this process (app: 127.0.0.1 random port; server: its public port). Enables the
@@ -572,14 +575,23 @@ public final class HappierRuntime: @unchecked Sendable {
         func option(_ kinds: [String]) -> String? { kinds.lazy.compactMap { k in req.options.first { $0.kind == k }?.id }.first }
         let allow = option(["allow_once", "allow_always"]) ?? req.options.first?.id
         let reject = option(["reject_once", "reject_always"])
-        switch permissionPolicy {
+        let call = PermissionCall.acp(kind: req.toolKind, title: req.toolTitle, detail: req.detail)
+        let ruled = await ruleVerdict(call)
+        if ruled?.effect == .allow { return allow }
+        if ruled?.effect == .deny { Log.info("Permission denied by rule in \(sid): \(req.toolTitle)", category: "agents"); return reject }
+        if ruled == nil { switch permissionPolicy {
         case .allowAll: return allow
         case .allowReads where req.toolKind == "read" || req.toolKind == "search" || req.toolKind == "fetch": return allow
         default: break
-        }
+        } }
         let r = await requestApproval(sid, title: req.toolTitle, kind: req.toolKind, detail: req.detail, options: req.options.map { ($0.id, $0.name) })
         if !r.approved { return reject }
         return r.option.flatMap { dec in req.options.first { $0.id == dec }?.id } ?? allow
+    }
+
+    private func ruleVerdict(_ call: PermissionCall) async -> PermissionVerdict? {
+        guard let provider = permissionRules else { return nil }
+        return await mainQueue.run { provider()?.ruleVerdict(call) }
     }
 
     /// Claude Code `--permission-prompt-tool` handler (MCP tool `approval` on `/mcp/session/<id>`).
@@ -587,9 +599,14 @@ public final class HappierRuntime: @unchecked Sendable {
     public func claudeApproval(session sid: RecordID, tool: String, input: JSONValue) async -> JSONValue {
         let kind = ClaudeStream.kind(of: tool)
         let allow: JSONValue = ["behavior": "allow", "updatedInput": input]
-        if permissionPolicy == .allowAll { return allow }
-        if permissionPolicy == .allowReads, ["read", "search", "fetch"].contains(kind) { return allow }
-        if alwaysAllowed.sync({ $0[sid]?.contains(tool) ?? false }) { return allow }
+        let ruled = await ruleVerdict(PermissionCall.claude(tool, input))
+        if ruled?.effect == .deny { return ["behavior": "deny", "message": .string("Blocked by the permission rules (\(ruled!.reason)).")] }
+        if ruled?.effect == .allow { return allow }
+        if ruled == nil {
+            if permissionPolicy == .allowAll { return allow }
+            if permissionPolicy == .allowReads, ["read", "search", "fetch"].contains(kind) { return allow }
+            if alwaysAllowed.sync({ $0[sid]?.contains(tool) ?? false }) { return allow }
+        }
         let detail: String
         if tool == "Bash" { detail = input["command"]?.string ?? "" }
         else if let d = try? input.encoded(pretty: true) { detail = String(decoding: d, as: UTF8.self) }

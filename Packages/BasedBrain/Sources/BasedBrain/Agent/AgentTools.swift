@@ -120,6 +120,39 @@ public final class AgentTools {
 
     public struct ToolResult: Sendable { public var text: String; public var isError: Bool }
 
+    // MARK: Permissions (BSD-50)
+
+    /// The permission call for a tool of this toolbox (Based tools, host tools such as sub-agents, MCP tools).
+    public func permissionCall(_ name: String, _ args: JSONValue) -> PermissionCall {
+        if isExternal(name) { return PermissionCall(tool: name, argument: nil, category: .external) }
+        if isHost(name) { return PermissionCall(tool: "based." + name, argument: nil, category: .read) }
+        return .based(name, args)
+    }
+
+    /// Checks a call against `permissions`. Returns nil when it may run, else the result to hand to the model.
+    /// `approve` asks the user; without it (no approval prompt in this place yet) a mode's "ask" lets ordinary edits
+    /// run as before, while rule-based asks and the "always ask" list are refused with an explanation.
+    public func authorize(_ name: String, _ args: JSONValue, permissions: AgentPermissions?,
+                          approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil) async -> ToolResult? {
+        guard let permissions else { return nil }
+        let call = permissionCall(name, args)
+        let v = permissions.decide(call)
+        switch v.effect {
+        case .allow:
+            return nil
+        case .deny:
+            return ToolResult(text: "Not permitted: \(call.tool) is blocked (\(v.reason)). Don't retry it; tell the user what you wanted to do so they can do it or change the permissions.", isError: true)
+        case .ask:
+            if let approve {
+                return await approve(call, v) ? nil : ToolResult(text: "The user declined \(call.tool).", isError: true)
+            }
+            if call.alwaysAsks || v.reason.hasPrefix("rule") {
+                return ToolResult(text: "Needs the user's approval: \(call.tool) (\(v.reason)). There is no approval prompt here — ask the user to do it or to allow it in the permission rules.", isError: true)
+            }
+            return nil
+        }
+    }
+
     /// Tools provided by connected MCP servers (filled by `ConnectionManager`). Names are `<slug>__<tool>`.
     public var externalSpecs: [ToolSpec] = []
     /// Async executor for external tools; returns nil when the name is not external.

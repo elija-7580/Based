@@ -283,9 +283,17 @@ extension BrainStore {
         return id
     }
 
-    public func resolveInbox(_ id: RecordID, decision: String, status: InboxItem.Status) {
+    /// Answers an inbox item once: only a pending item is resolved (BSD-50 — two devices answering no longer
+    /// overwrite each other; the first answer wins). `device` is recorded with the decision. Returns false when the
+    /// item was already answered or is gone.
+    @discardableResult
+    public func resolveInbox(_ id: RecordID, decision: String, status: InboxItem.Status, device: String? = nil) -> Bool {
         let db = inboxDB
-        setText(id, db, "Decision", decision); setSelect(id, db, "Status", status.rawValue)
+        guard let row = store.blocks[id], row.trashedAt == nil,
+              (InboxItem.Status(rawValue: selectName(row, db, "Status") ?? "") ?? .pending) == .pending else { return false }
+        let recorded = device.map { decision + " · " + $0 } ?? decision
+        setText(id, db, "Decision", recorded); setSelect(id, db, "Status", status.rawValue)
+        return true
     }
 
     // MARK: Connections

@@ -319,10 +319,14 @@ struct PermissionModeButton: View {
     @Environment(BrainModel.self) private var brain
     @State private var hover = false
 
+    @Environment(AppModel.self) private var model
+
     var body: some View {
         let kind = brain.engineSpec.kind
         let modes = CLICatalog.permissions(for: kind)
-        if !modes.isEmpty {
+        if modes.isEmpty {
+            basedModes
+        } else {
             let current = modes.first { $0.id == brain.engineSpec.permission } ?? modes[0]
             Menu {
                 ForEach(modes) { m in
@@ -350,6 +354,35 @@ struct PermissionModeButton: View {
     }
 
     private func isRisky(_ id: String) -> Bool { ["bypassPermissions", "danger-full-access", "yolo"].contains(id) }
+
+    /// BSD-50: Auto and API models — Based's own modes (Ask · Accept edits · Plan · Allow everything) and the rules page.
+    private var basedModes: some View {
+        let current = brain.permissionMode
+        return Menu {
+            ForEach(PermissionMode.allCases, id: \.self) { m in
+                Button {
+                    brain.permissionMode = m
+                } label: {
+                    Label("\(m.title) — \(m.detail)", systemImage: m == current ? "checkmark" : m.symbol)
+                }
+            }
+            Divider()
+            Button("Edit rules…") { model.open(brain.brain.ensurePermissionsPage()) }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: current.symbol).font(.system(size: 10.5))
+                if !iconOnly { Text(current.title).font(.system(size: 12)).lineLimit(1) }
+            }
+            .help(current.title)
+            .foregroundStyle(current == .bypass ? Color.orange : (hover ? Theme.primary : Theme.secondary))
+            .padding(.horizontal, 7).padding(.vertical, 4)
+            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))
+        }
+        .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+        .onHover { hover = $0 }
+        .help("Permission mode")
+        .accessibilityIdentifier("ai.permissionMode")
+    }
 }
 
 /// Working folder for coding-agent CLIs ("📁 Based ⌄"): recent folders and "Choose folder…", like the Claude
