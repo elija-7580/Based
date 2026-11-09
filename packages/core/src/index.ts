@@ -18,8 +18,8 @@ export { QueryEngine, TITLE_PROPERTY_ID, filterOps, cellText, databaseOfRow, dur
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
 export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
 export type { ConversionPlan } from "./store/conversion.js";
-export { SearchCorpus, contentText, fold, rowText, snippet } from "./search/search.js";
-export type { SearchFilters, SearchHit, SearchSort } from "./search/search.js";
+export { SearchCorpus, SearchIndex, attachSearchIndex, contentText, fold, handleSearchMessage, observeSearchDeltas, rowText, searchDeltaFrom, searchSnapshot, searchTitle, snippet } from "./search/search.js";
+export type { SearchDelta, SearchFilters, SearchHit, SearchOptions, SearchRequest, SearchResponse, SearchSort, SearchSource } from "./search/search.js";
 export { HTMLNode, decodeEntities, parseHTML, pageIDFromLink, sanitizeURL, urlScheme } from "./interop/html.js";
 export { ClipboardHTMLImporter, importedJSON, notionColor } from "./interop/clipboard.js";
 export type { ImportedBlock } from "./interop/clipboard.js";

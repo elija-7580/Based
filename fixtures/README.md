@@ -21,7 +21,7 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | values | `queries/values.utc.json` | Berechnete Werte jeder Zeile (Formeln, Relationen, Rollups) und alle Spalten-Berechnungen |
 | merge | `merge/merge.json` | Last-Writer-Wins, Tombstones mit/ohne Stempel, kein Wiederbeleben, Batches |
 | conversion | `conversion/conversion.utc.json` | Property-Typwechsel jeder Aufgaben-Property in jeden Zieltyp (Schema, Werte, verlorene Zellen); neue IDs als `new:<Name>` / `group:<Name>` |
-| search | `search/search.json` | Quick-Find-Index (SearchCorpus): Titel/Inhalt/Zeilen, Faltung (Groß/klein, Umlaute), Filter, alle Sortierungen, Limit. Gleichstand: pageID aufsteigend; Inhalts-Snippet als Kandidatenliste |
+| search | `search/search.json`, `search/fulltext.json` | Quick-Find-Index (SearchCorpus): Titel/Inhalt/Zeilen, Faltung (Groß/klein, Umlaute), Filter, alle Sortierungen, Limit. Gleichstand: pageID aufsteigend; Inhalts-Snippet als Kandidatenliste, Zeilen-Snippet über Werte nach Property-ID. `fulltext`: Volltext-Fälle aus SearchCorpusTests (Erwähnungen, Toggle, Zellen, Unterschrift, Transkript, Papierkorb, Vorlagen, Datenbanken) × Filter × Sortierung und inkrementelle Schritte (Remote-Records, danach suchen; der TS-Index folgt über `store.observe`) |
 | clipboard | `clipboard/clipboard.json`, `clipboard/export.utc.json` | Eingefügtes HTML (Notion, Google Docs, Listen, Farben, Links, Tabellen, Entities) → Blöcke; HTML-Export von Seiten und wieder einlesen |
 | undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
 

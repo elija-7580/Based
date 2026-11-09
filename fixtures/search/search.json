@@ -1440,7 +1440,7 @@
     }
   ],
   "module" : "search",
-  "note" : "Index: SearchCorpus.build über alle Blöcke und Datenbanken (Papierkorb ausgenommen). Inhaltstreffer: snippetBlocks = alle Blöcke der Seite, die passen; Swift wählt einen davon (Dictionary-Reihenfolge), der Port soll den ersten in Dokumentreihenfolge nehmen. Zeilen-Treffer: snippet. Reihenfolge: Swift-Kriterium (bestMatch: Score absteigend, dann Titel), bei Gleichstand pageID aufsteigend; limit erst danach.",
+  "note" : "Index: SearchCorpus.build über alle Blöcke und Datenbanken (Papierkorb ausgenommen). Inhaltstreffer: snippetBlocks = alle Blöcke der Seite, die passen; Swift wählt einen davon (Dictionary-Reihenfolge), der Port soll den ersten in Dokumentreihenfolge nehmen. Zeilen-Treffer: snippet über die Werte nach Property-ID sortiert. Reihenfolge: Swift-Kriterium (bestMatch: Score absteigend, dann Titel), bei Gleichstand pageID aufsteigend; limit erst danach.",
   "now" : 1700000000000,
   "records" : [
     {

@@ -80,40 +80,7 @@ public enum ExtraFixtures {
         var cases: [JSONValue] = []
         func run(_ name: String, _ q: String, _ edit: (inout SearchFilters) -> Void = { _ in }, sort: SearchSort = .bestMatch, limit: Int = 50) {
             var f = SearchFilters(); edit(&f)
-            // Swift lässt die Reihenfolge bei Gleichstand offen (instabile Sortierung über Dictionary-Reihenfolge):
-            // alle Treffer holen, mit pageID als letztem Kriterium sortieren, dann kürzen.
-            let blocks = store.blocks
-            func key(_ h: SearchHit) -> Date { (sort == .createdNewest || sort == .createdOldest ? blocks[h.pageID]?.createdAt : blocks[h.pageID]?.updatedAt) ?? .distantPast }
-            let all = corpus.search(q, filters: f, sort: sort, limit: 100_000, now: C.now) ?? []
-            let hits = Array(all.sorted { a, b in
-                switch sort {
-                case .bestMatch:
-                    if a.score != b.score { return a.score > b.score }
-                    let ta = store.title(of: a.pageID), tb = store.title(of: b.pageID)
-                    if ta != tb { return ta < tb }
-                case .lastEditedNewest, .createdNewest: if key(a) != key(b) { return key(a) > key(b) }
-                case .lastEditedOldest, .createdOldest: if key(a) != key(b) { return key(a) < key(b) }
-                }
-                return a.pageID < b.pageID
-            }.prefix(limit))
-            var filters: [String: JSONValue] = ["titleOnly": .bool(f.titleOnly)]
-            if let p = f.inPage { filters["inPage"] = .string(p) }
-            if let u = f.createdBy { filters["createdBy"] = .string(u) }
-            if let d = f.editedAfter { filters["editedAfter"] = .number(d.timeIntervalSinceReferenceDate) }
-            if let d = f.editedBefore { filters["editedBefore"] = .number(d.timeIntervalSinceReferenceDate) }
-            cases.append(C.testCase(name, ["query": .string(q), "filters": .object(filters), "sort": .string(sort.rawValue), "limit": .number(Double(limit))],
-                                    .array(hits.map { h in
-                                        var o: [String: JSONValue] = ["pageID": .string(h.pageID), "score": .number(h.score)]
-                                        if h.blockID != nil {
-                                            // Swift nimmt den ersten Treffer in Dictionary-Reihenfolge (nicht stabil): alle passenden Blöcke.
-                                            let terms = SearchCorpus.fold(q.trimmingCharacters(in: .whitespacesAndNewlines)).split(separator: " ").map(String.init)
-                                            let cands = corpus.contents.filter { e in e.page == h.pageID && terms.allSatisfy { SearchCorpus.has(e.folded, $0) } }
-                                            o["snippetBlocks"] = .array(cands.map(\.blockID).sorted().map(JSONValue.string))
-                                        } else {
-                                            o["snippet"] = h.snippet.map(JSONValue.string) ?? .null
-                                        }
-                                        return .object(o)
-                                    })))
+            cases.append(C.testCase(name, searchInput(q, f, sort, limit), searchOutput(store, corpus, q, f, sort, limit)))
         }
         for q in ["plattform", "Plattformen", "PLATTFORM", "platt", "review", "architektur review", "apfel", "äpfel", "cafe", "creme", "hlc",
                   "tauri electron", "login", "typo", "crash", "zebra", "alpha", "🚀", "linux", "x", "nichtvorhanden", "  sync  "] {
@@ -127,7 +94,63 @@ public enum ExtraFixtures {
         for sort in SearchSort.allCases { run("Sortierung \(sort.rawValue)", "e", sort: sort) }
         run("Limit 3", "e", limit: 3)
         return C.file("search", cases, meta: ["records": .array(records.map(S.line)), "now": .number(C.now.timeIntervalSince1970 * 1000),
-                                               "note": "Index: SearchCorpus.build über alle Blöcke und Datenbanken (Papierkorb ausgenommen). Inhaltstreffer: snippetBlocks = alle Blöcke der Seite, die passen; Swift wählt einen davon (Dictionary-Reihenfolge), der Port soll den ersten in Dokumentreihenfolge nehmen. Zeilen-Treffer: snippet. Reihenfolge: Swift-Kriterium (bestMatch: Score absteigend, dann Titel), bei Gleichstand pageID aufsteigend; limit erst danach."])
+                                               "note": searchNote])
+    }
+
+    static let searchNote: JSONValue = "Index: SearchCorpus.build über alle Blöcke und Datenbanken (Papierkorb ausgenommen). Inhaltstreffer: snippetBlocks = alle Blöcke der Seite, die passen; Swift wählt einen davon (Dictionary-Reihenfolge), der Port soll den ersten in Dokumentreihenfolge nehmen. Zeilen-Treffer: snippet über die Werte nach Property-ID sortiert. Reihenfolge: Swift-Kriterium (bestMatch: Score absteigend, dann Titel), bei Gleichstand pageID aufsteigend; limit erst danach."
+
+    static func searchInput(_ q: String, _ f: SearchFilters, _ sort: SearchSort, _ limit: Int) -> JSONValue {
+        var filters: [String: JSONValue] = ["titleOnly": .bool(f.titleOnly)]
+        if let p = f.inPage { filters["inPage"] = .string(p) }
+        if let u = f.createdBy { filters["createdBy"] = .string(u) }
+        if let d = f.editedAfter { filters["editedAfter"] = .number(d.timeIntervalSinceReferenceDate) }
+        if let d = f.editedBefore { filters["editedBefore"] = .number(d.timeIntervalSinceReferenceDate) }
+        return ["query": .string(q), "filters": .object(filters), "sort": .string(sort.rawValue), "limit": .number(Double(limit))]
+    }
+
+    /// Treffer einer Suche im Fixture-Format (Gleichstand nach pageID, Snippet-Block als Kandidatenliste).
+    static func searchOutput(_ store: WorkspaceStore, _ corpus: SearchCorpus, _ q: String, _ f: SearchFilters, _ sort: SearchSort, _ limit: Int) -> JSONValue {
+        // Swift lässt die Reihenfolge bei Gleichstand offen (instabile Sortierung über Dictionary-Reihenfolge):
+        // alle Treffer holen, mit pageID als letztem Kriterium sortieren, dann kürzen.
+        let blocks = store.blocks
+        func key(_ h: SearchHit) -> Date { (sort == .createdNewest || sort == .createdOldest ? blocks[h.pageID]?.createdAt : blocks[h.pageID]?.updatedAt) ?? .distantPast }
+        let all = corpus.search(q, filters: f, sort: sort, limit: 100_000, now: C.now) ?? []
+        let hits = Array(all.sorted { a, b in
+            switch sort {
+            case .bestMatch:
+                if a.score != b.score { return a.score > b.score }
+                let ta = store.title(of: a.pageID), tb = store.title(of: b.pageID)
+                if ta != tb { return ta < tb }
+            case .lastEditedNewest, .createdNewest: if key(a) != key(b) { return key(a) > key(b) }
+            case .lastEditedOldest, .createdOldest: if key(a) != key(b) { return key(a) < key(b) }
+            }
+            return a.pageID < b.pageID
+        }.prefix(limit))
+        return .array(hits.map { h in
+            var o: [String: JSONValue] = ["pageID": .string(h.pageID), "score": .number(h.score)]
+            if h.blockID != nil {
+                // Swift nimmt den ersten Treffer in Dictionary-Reihenfolge (nicht stabil): alle passenden Blöcke.
+                let terms = SearchCorpus.fold(q.trimmingCharacters(in: .whitespacesAndNewlines)).split(separator: " ").map(String.init)
+                let cands = corpus.contents.filter { e in e.page == h.pageID && terms.allSatisfy { SearchCorpus.has(e.folded, $0) } }
+                o["snippetBlocks"] = .array(cands.map(\.blockID).sorted().map(JSONValue.string))
+            } else if h.snippet != nil, let row = blocks[h.pageID], row.isRow {
+                // Zeilenwerte stehen in Swift in Dictionary-Reihenfolge (nicht stabil): Ausschnitt über die Werte
+                // nach Property-ID sortiert, wie der Port ihn bildet.
+                let text = row.values.sorted { $0.key < $1.key }.compactMap { _, v -> String? in
+                    switch v {
+                    case .text(let t): return t.plainText
+                    case .url(let s), .email(let s), .phone(let s): return s
+                    case .place(let s): return PlaceValue.display(s)
+                    default: return nil
+                    }
+                }.joined(separator: " ")
+                let terms = SearchCorpus.fold(q.trimmingCharacters(in: .whitespacesAndNewlines)).split(separator: " ").map(String.init)
+                o["snippet"] = .string(SearchEngine.snippet(text, SearchCorpus.fold(text), terms[0]))
+            } else {
+                o["snippet"] = h.snippet.map(JSONValue.string) ?? .null
+            }
+            return .object(o)
+        })
     }
 
     // MARK: Clipboard-HTML
