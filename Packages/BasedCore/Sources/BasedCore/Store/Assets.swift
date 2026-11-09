@@ -37,8 +37,14 @@ public final class FileAssetStore: AssetStore {
         try data.write(to: dir.appendingPathComponent(ref.name), options: .atomic)
     }
 
+    /// Where `ref`'s bytes live below an asset-store root (`<root>/<id>/<name>`); used off the main actor by the
+    /// archive import (BSD-67), which restores files without a store instance.
+    public static func location(of ref: AssetRef, in root: URL) -> URL {
+        root.appendingPathComponent(ref.id, isDirectory: true).appendingPathComponent(ref.name)
+    }
+
     public func url(for asset: AssetRef) -> URL? {
-        let u = root.appendingPathComponent(asset.id, isDirectory: true).appendingPathComponent(asset.name)
+        let u = Self.location(of: asset, in: root)
         return FileManager.default.fileExists(atPath: u.path) ? u : nil
     }
 

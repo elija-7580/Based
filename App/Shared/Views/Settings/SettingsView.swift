@@ -618,9 +618,9 @@ struct ExportAllSheet: View {
     private var explanation: String {
         switch kind {
         case .markdown, .html:
-            return "Every page becomes a \(kind == .html ? "HTML" : "Markdown") file, every database a CSV, nested pages become folders — the same structure Notion exports."
+            return "Every page becomes a \(kind == .html ? "HTML" : "Markdown") file, every database a CSV, nested pages become folders — the same structure Notion exports. Images and attached files go into an “assets” folder."
         case .archive:
-            return "One file with everything, lossless: page tree, databases with views, filters and formulas, formatting and history stamps. Use it as a backup, to move to another Mac, or to import into other Based clients (File → Import)."
+            return "One file with everything, lossless: page tree, databases with views, filters and formulas, formatting and history stamps, plus every image and attached file. Use it as a backup, to move to another Mac, or to import into other Based clients (File → Import)."
         }
     }
 
@@ -628,7 +628,7 @@ struct ExportAllSheet: View {
         #if os(macOS)
         if kind == .archive {
             let p = NSSavePanel()
-            p.nameFieldStringValue = "Based Workspace.based.jsonl"
+            p.nameFieldStringValue = "Based Workspace.based.zip"
             p.prompt = "Export"
             if p.runModal() == .OK, let u = p.url { model.exportArchive(to: u) }
             return
@@ -637,7 +637,7 @@ struct ExportAllSheet: View {
         if p.runModal() == .OK, let u = p.url { model.exportWorkspace(to: u.appendingPathComponent("Based Export", isDirectory: true), html: kind == .html) }
         #else
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        if kind == .archive { model.exportArchive(to: docs.appendingPathComponent("Based Workspace.based.jsonl")); return }
+        if kind == .archive { model.exportArchive(to: docs.appendingPathComponent("Based Workspace.based.zip")); return }
         model.exportWorkspace(to: docs.appendingPathComponent("Based Export", isDirectory: true), html: kind == .html)
         #endif
     }

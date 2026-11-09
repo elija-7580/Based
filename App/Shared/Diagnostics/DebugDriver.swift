@@ -188,8 +188,12 @@ enum DebugDriver {
             if let out = q["out"] { model.exportArchive(to: URL(fileURLWithPath: out)) }
         case "importarchive":
             if let path = q["in"] {
-                let summary = model.importArchiveIfPossible(URL(fileURLWithPath: path)) ?? "not a Based archive"
-                Log.notice("debug importarchive: \(summary)", category: "debug")
+                let url = URL(fileURLWithPath: path)
+                guard model.isBasedArchive(url) else { Log.notice("debug importarchive: not a Based archive", category: "debug"); break }
+                Task { @MainActor in
+                    let summary = await model.importArchive(url)
+                    Log.notice("debug importarchive: \(summary)", category: "debug")
+                }
             }
         case "pdf":
             if let ed = model.activeEditor, let out = q["out"] {

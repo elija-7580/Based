@@ -8,6 +8,9 @@ public struct HTMLExporter {
     public let store: WorkspaceStore
     /// How links to other pages are written (default: relative "<Title>.html").
     public var pageLink: (RecordID) -> (title: String, url: String)?
+    /// Where a block's file (image, video, attachment) is linked from the page (default "assets/<name>";
+    /// WorkspaceExporter points it at the copied file, BSD-67).
+    public var assetLink: (AssetRef) -> String = { "assets/" + $0.name }
 
     /// Pages put their title in <h1>, so block headings start at <h2>; clipboard HTML keeps H1 = h1 (offset 0).
     public var headingOffset = 1
@@ -145,20 +148,20 @@ public struct HTMLExporter {
         case .equation:
             return "<div class=\"equation\">\\[\(Self.escape(b.props.expression ?? b.text.plainText))\\]</div>\n"
         case .image:
-            let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
+            let src = b.props.url ?? b.props.asset.map(assetLink) ?? ""
             let alt = b.props.caption?.plainText ?? ""
             return "<figure><img src=\"\(Self.escapeAttribute(SafeURL.sanitize(src, allowDataImages: true)))\" alt=\"\(Self.escapeAttribute(alt))\">\(caption(b, figure: true))</figure>\n"
         case .video:
-            let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
+            let src = b.props.url ?? b.props.asset.map(assetLink) ?? ""
             return "<figure><video controls src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\"></video>\(caption(b, figure: true))</figure>\n"
         case .audio:
-            let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
+            let src = b.props.url ?? b.props.asset.map(assetLink) ?? ""
             return "<figure><audio controls src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\"></audio>\(caption(b, figure: true))</figure>\n"
         case .embed:
             let src = b.props.url ?? ""
             return "<figure><iframe class=\"embed\" src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\" loading=\"lazy\"></iframe>\(caption(b, figure: true))</figure>\n"
         case .file, .pdf, .bookmark:
-            let url = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
+            let url = b.props.url ?? b.props.asset.map(assetLink) ?? ""
             let label = b.props.bookmark?.title ?? b.props.caption?.plainText ?? b.props.asset?.name ?? url
             let detail = b.props.bookmark?.summary.map { "<span class=\"bookmark-desc\">\(Self.escape($0))</span>" } ?? ""
             return "<a class=\"bookmark\" href=\"\(Self.escapeAttribute(SafeURL.sanitize(url)))\"><span class=\"bookmark-title\">\(Self.escape(label.isEmpty ? url : label))</span>\(detail)<span class=\"bookmark-url\">\(Self.escape(url))</span></a>\n"

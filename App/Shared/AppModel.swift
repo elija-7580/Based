@@ -657,35 +657,26 @@ final class AppModel {
         store.transact("Workspace icon") { tx in tx.updateWorkspace { $0.icon = icon } }
     }
 
-    /// Settings → Export all: every page as Markdown (databases as CSV + page folders) into one directory.
+    /// Settings → Export all: every page as Markdown or HTML (databases as CSV), nested pages in folders, images
+    /// and files in `assets/` (BSD-67). Text is rendered here, the files are written off the main actor; the
+    /// message names every file that couldn't be written and every attachment that isn't on this device.
     func exportWorkspace(to directory: URL, html: Bool = false) {
-        let count = writeExport(store.topLevelPages(), to: directory, html: html)
-        exportAllMessage = "Exported \(count) pages to \(directory.path)"
+        exportAllMessage = "Exporting…"
+        writeExport(store.topLevelPages(), to: directory, html: html) { [weak self] report in
+            self?.exportAllMessage = report.summary
+        }
     }
 
-    /// Writes pages as Markdown and databases as CSV, sub-pages in folders named after their parent.
-    func writeExport(_ pages: [Block], to directory: URL, html: Bool = false) -> Int {
-        let exporter = MarkdownExporter(store: store)
-        let htmlExporter = HTMLExporter(store: store)
-        let fm = FileManager.default
-        var count = 0
-        func write(_ page: Block, into dir: URL) {
-            let base = MarkdownExporter.fileName(store.title(of: page.id))
-            let isDB = page.type == .databasePage || page.type == .databaseInline
-            let text = html ? htmlExporter.export(page: page.id)
-                : isDB ? (store.database(forBlock: page.id).map { exporter.csv(database: $0.id) } ?? "") : exporter.export(page: page.id)
-            try? text.write(to: dir.appendingPathComponent(base + (html ? ".html" : isDB ? ".csv" : ".md")), atomically: true, encoding: .utf8)
-            count += 1
-            let kids = store.subpages(of: page.id)
-            if !kids.isEmpty {
-                let sub = dir.appendingPathComponent(base, isDirectory: true)
-                try? fm.createDirectory(at: sub, withIntermediateDirectories: true)
-                kids.forEach { write($0, into: sub) }
+    /// Pages (with sub-pages and attachments) into `directory` via WorkspaceExporter; `done` runs on the main actor.
+    func writeExport(_ pages: [Block], to directory: URL, html: Bool = false, done: @escaping @MainActor (ExportReport) -> Void) {
+        let plan = WorkspaceExporter(store: store, assets: assets).plan(pages, format: html ? .html : .markdown)
+        Task { @MainActor in
+            let report = await Task.detached(priority: .userInitiated) { plan.write(to: directory) }.value
+            if !report.failures.isEmpty {
+                Log.error("export: \(report.failures.count) problems, first: \(report.failures[0].path) — \(report.failures[0].message)", category: "import")
             }
+            done(report)
         }
-        try? fm.createDirectory(at: directory, withIntermediateDirectories: true)
-        pages.forEach { write($0, into: directory) }
-        return count
     }
 
     func exportCurrentPage(as format: ExportRequest.Format = .markdown) {
@@ -913,29 +904,57 @@ final class AppModel {
     }
 
     /// ⌘J: toggle the docked chat (closes a side peek that occupies the same space).
-    /// Lossless JSON Lines archive of the whole workspace (WorkspaceArchive).
+    /// Lossless archive of the whole workspace (WorkspaceArchive): `.based.zip` with records and every image/file
+    /// (v2, BSD-67), or the plain JSON Lines v1 when `url` ends in `.jsonl`. Zipping runs off the main actor.
     func exportArchive(to url: URL) {
-        do {
-            let data = try WorkspaceArchive.write(store)
-            try data.write(to: url, options: .atomic)
-            exportAllMessage = "Exported \(store.allRecords().count) records (\(ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))) to \(url.lastPathComponent)."
-            Log.notice("archive export: \(data.count) bytes", category: "import")
-        } catch {
-            exportAllMessage = "Export failed: \(error)"
+        if url.pathExtension.lowercased() == "jsonl" {
+            do {
+                let data = try WorkspaceArchive.write(store)
+                try data.write(to: url, options: .atomic)
+                exportAllMessage = "Exported \(store.allRecords().count) records (\(ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file))) to \(url.lastPathComponent)."
+                Log.notice("archive export: \(data.count) bytes", category: "import")
+            } catch {
+                exportAllMessage = "Export failed: \(error)"
+            }
+            return
+        }
+        let package: WorkspaceArchive.Package
+        do { package = try WorkspaceArchive.package(store, assets: assets) } catch {
+            exportAllMessage = "Export failed: \(error)"; return
+        }
+        exportAllMessage = "Exporting…"
+        Task { @MainActor in
+            do {
+                let r = try await Task.detached(priority: .userInitiated) { try package.write(to: url) }.value
+                var s = "Exported \(r.records) records and \(r.assets) file\(r.assets == 1 ? "" : "s") (\(ByteCountFormatter.string(fromByteCount: Int64(r.bytes + package.records.count), countStyle: .file))) to \(url.lastPathComponent)."
+                if !r.missing.isEmpty {
+                    s += " \(r.missing.count) file\(r.missing.count == 1 ? " isn't" : "s aren't") on this device and missing from the archive: " + r.missing.prefix(3).map(\.name).joined(separator: ", ") + (r.missing.count > 3 ? ", …" : "")
+                }
+                exportAllMessage = s
+                Log.notice("archive export: \(r.records) records, \(r.assets) assets, \(r.missing.count) missing", category: "import")
+            } catch {
+                exportAllMessage = "Export failed: \(error)"
+            }
         }
     }
 
-    /// Imports a Based archive if `url` is one; returns nil when it isn't (other importers take over).
-    func importArchiveIfPossible(_ url: URL) -> String? {
-        guard let h = try? FileHandle(forReadingFrom: url) else { return nil }
-        let head = h.readData(ofLength: 400); try? h.close()
-        guard String(decoding: head, as: UTF8.self).contains("\"based-archive\"") else { return nil }
+    /// True if `url` is a Based archive (v1 `.jsonl` or v2 `.based.zip`); other importers take the rest.
+    func isBasedArchive(_ url: URL) -> Bool { WorkspaceArchive.isArchive(url) }
+
+    /// Imports a Based archive: reading, parsing and restoring files run off the main actor, only the records
+    /// are applied here. Returns the summary line.
+    func importArchive(_ url: URL) async -> String {
+        let assetsRoot = assets.root
         do {
-            let data = try Data(contentsOf: url)
-            let r = try WorkspaceArchive.importArchive(data, into: store)
+            let loaded = try await Task.detached(priority: .userInitiated) { try WorkspaceArchive.load(url, assetsRoot: assetsRoot) }.value
+            let r = try WorkspaceArchive.importRecords(loaded.read, into: store)
             var s = "\(r.imported) records imported from the Based archive."
+            if loaded.assetsRestored > 0 { s += " \(loaded.assetsRestored) files restored." }
             if r.keptNewer > 0 { s += " \(r.keptNewer) kept (newer here)." }
             if r.skipped > 0 { s += " \(r.skipped) unreadable lines skipped." }
+            if !loaded.assetFailures.isEmpty {
+                s += " \(loaded.assetFailures.count) file\(loaded.assetFailures.count == 1 ? "" : "s") couldn't be restored: " + loaded.assetFailures.prefix(3).joined(separator: "; ")
+            }
             return s
         } catch {
             return "Import failed: \(error)"
@@ -992,13 +1011,17 @@ final class AppModel {
         showToast(ids.count == 1 ? "Moved to \(where_)" : "Moved \(ids.count) pages to \(where_)")
     }
 
-    /// Markdown (pages) / CSV (databases) files for `ids` and their sub-pages, into `directory`.
-    @discardableResult
-    func exportPages(_ ids: [RecordID], to directory: URL) -> Int {
+    /// Markdown (pages) / CSV (databases) files for `ids`, their sub-pages and attachments, into `directory`.
+    func exportPages(_ ids: [RecordID], to directory: URL) {
         let pages = ids.compactMap { store.blocks[$0] }
-        let n = writeExport(pages, to: directory)
-        showToast("Exported \(n) files to \(directory.lastPathComponent)")
-        return n
+        writeExport(pages, to: directory) { [weak self] report in
+            let files = report.pages + report.assets
+            if report.failures.isEmpty {
+                self?.showToast("Exported \(files) files to \(directory.lastPathComponent)")
+            } else {
+                self?.showToast("Exported \(files) files, \(report.failures.count) problem\(report.failures.count == 1 ? "" : "s"): \(report.failures[0].message)")
+            }
+        }
     }
 
     #if os(macOS)

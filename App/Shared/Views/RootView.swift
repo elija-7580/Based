@@ -155,9 +155,18 @@ struct RootView: View {
     private func importFiles(_ urls: [URL], into parent: ParentRef) {
         // Lossless Based archives restore records directly (no conversion).
         if urls.count == 1 {
-            let scoped = urls[0].startAccessingSecurityScopedResource()
-            defer { if scoped { urls[0].stopAccessingSecurityScopedResource() } }
-            if let summary = model.importArchiveIfPossible(urls[0]) { importSummary = summary; return }
+            let url = urls[0]
+            let scoped = url.startAccessingSecurityScopedResource()
+            let isArchive = model.isBasedArchive(url)
+            if isArchive {
+                // Parsing and file restore run off the main actor (BSD-67); access stays open until done.
+                Task { @MainActor in
+                    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                    importSummary = await model.importArchive(url)
+                }
+                return
+            }
+            if scoped { url.stopAccessingSecurityScopedResource() }
         }
         let scoped = urls.map { $0.startAccessingSecurityScopedResource() }
         Log.notice("import: \(urls.map(\.lastPathComponent).joined(separator: ", "))", category: "import")

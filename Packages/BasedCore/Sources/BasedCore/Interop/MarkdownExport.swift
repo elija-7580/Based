@@ -5,6 +5,9 @@ public struct MarkdownExporter {
     public let store: WorkspaceStore
     /// How page mentions/links are written (default: relative "<Title>.md").
     public var pageLink: (RecordID) -> (title: String, url: String)?
+    /// Where a block's file (image, video, attachment) is linked from the page (default "assets/<name>";
+    /// WorkspaceExporter points it at the copied file, BSD-67).
+    public var assetLink: (AssetRef) -> String = { "assets/" + $0.name }
 
     public init(store: WorkspaceStore, pageLink: ((RecordID) -> (title: String, url: String)?)? = nil) {
         self.store = store
@@ -14,7 +17,7 @@ public struct MarkdownExporter {
         }
     }
 
-    public static func fileName(_ title: String) -> String {
+    nonisolated public static func fileName(_ title: String) -> String {
         let bad = CharacterSet(charactersIn: "/\\:?*\"<>|\n")
         let s = title.components(separatedBy: bad).joined(separator: " ").trimmingCharacters(in: .whitespaces)
         return s.isEmpty ? "Untitled" : String(s.prefix(120))
@@ -82,9 +85,9 @@ public struct MarkdownExporter {
                 line = "```\(lang)\n\(b.text.plainText)\n```"
             case .equation: line = "$$\n\(b.props.expression ?? b.text.plainText)\n$$"
             case .image:
-                line = "![\(b.props.caption?.plainText ?? "")](\(b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""))"
+                line = "![\(b.props.caption?.plainText ?? "")](\(b.props.url ?? b.props.asset.map(assetLink) ?? ""))"
             case .video, .audio, .file, .pdf, .embed, .bookmark:
-                let url = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
+                let url = b.props.url ?? b.props.asset.map(assetLink) ?? ""
                 let label = b.props.bookmark?.title ?? b.props.caption?.plainText ?? b.props.asset?.name ?? url
                 line = "[\(label.isEmpty ? url : label)](\(url))"
             case .page, .databasePage, .linkToPage:
