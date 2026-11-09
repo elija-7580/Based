@@ -102,7 +102,7 @@ body{margin:0}
 .bsd .snap .ch{animation:bsdSnap 300ms cubic-bezier(.2,1.5,.4,1) both}
 .bsd .flipin .ch{animation:bsdFlipIn 650ms cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 60%}
 .bsd .packw .w{animation:bsdPack 750ms cubic-bezier(.2,1.25,.4,1) both}
-.bsd .blurw .w{animation:bsdBlur 1000ms ease-out both}
+.bsd .blurw .w{display:inline-block;animation:bsdBlur 600ms cubic-bezier(.2,0,0,1) both}
 .bsd .tile.fa{animation:bsdTileA 520ms cubic-bezier(.3,.7,.3,1) both}
 .bsd .tile.fb{animation:bsdTileB 520ms cubic-bezier(.3,.7,.3,1) both}
 .bsd .travel{animation:bsdTravel 1.2s cubic-bezier(.6,0,.4,1) both}
@@ -110,7 +110,7 @@ body{margin:0}
 @keyframes bsdSnap{from{opacity:0;transform:translateY(-.55em) scale(1.25)}to{opacity:1;transform:none}}
 @keyframes bsdFlipIn{from{opacity:0;transform:perspective(600px) rotateX(-95deg)}to{opacity:1;transform:none}}
 @keyframes bsdPack{from{opacity:0;transform:translateX(90px) rotate(9deg)}to{opacity:1;transform:none}}
-@keyframes bsdBlur{from{opacity:0;filter:blur(16px);transform:translateY(12px)}to{opacity:1;filter:none;transform:none}}
+@keyframes bsdBlur{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes bsdTileA{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
 @keyframes bsdTileB{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
 @keyframes bsdTravel{from{offset-distance:0%}to{offset-distance:100%}}

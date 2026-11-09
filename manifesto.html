@@ -101,7 +101,7 @@ body{margin:0}
 .bsd .snap .ch{animation:bsdSnap 300ms cubic-bezier(.2,1.5,.4,1) both}
 .bsd .flipin .ch{animation:bsdFlipIn 650ms cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 60%}
 .bsd .packw .w{animation:bsdPack 750ms cubic-bezier(.2,1.25,.4,1) both}
-.bsd .blurw .w{animation:bsdBlur 1000ms ease-out both}
+.bsd .blurw .w{display:inline-block;animation:bsdBlur 600ms cubic-bezier(.2,0,0,1) both}
 .bsd .tile.fa{animation:bsdTileA 520ms cubic-bezier(.3,.7,.3,1) both}
 .bsd .tile.fb{animation:bsdTileB 520ms cubic-bezier(.3,.7,.3,1) both}
 .bsd .travel{animation:bsdTravel 1.2s cubic-bezier(.6,0,.4,1) both}
@@ -109,7 +109,7 @@ body{margin:0}
 @keyframes bsdSnap{from{opacity:0;transform:translateY(-.55em) scale(1.25)}to{opacity:1;transform:none}}
 @keyframes bsdFlipIn{from{opacity:0;transform:perspective(600px) rotateX(-95deg)}to{opacity:1;transform:none}}
 @keyframes bsdPack{from{opacity:0;transform:translateX(90px) rotate(9deg)}to{opacity:1;transform:none}}
-@keyframes bsdBlur{from{opacity:0;filter:blur(16px);transform:translateY(12px)}to{opacity:1;filter:none;transform:none}}
+@keyframes bsdBlur{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes bsdTileA{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
 @keyframes bsdTileB{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
 @keyframes bsdTravel{from{offset-distance:0%}to{offset-distance:100%}}
@@ -289,7 +289,7 @@ footer a{display:inline-block;padding:6px 0}
 
 <section aria-labelledby="mf-title" class="wrap" style="padding-top: 104px; padding-bottom: 80px; display: flex; flex-direction: column; gap: 28px;">
 <p class="eyebrow rise d1">Manifesto</p>
-<h1 id="mf-title" class="disp blurw" aria-label="We are rebuilding knowledge work. Starting with what Notion got right." style="margin: 0; max-width: 1120px; font-size: clamp(46px, 8vw, 112px);"><span aria-hidden="true"><sc-for list="{{hw1}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for><br><span style="color: var(--muted);"><sc-for list="{{hw2}}" as="w" hint-placeholder-count="3"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span><span class="hl"><sc-for list="{{hw3}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span></span></h1>
+<h1 id="mf-title" class="disp blurw" aria-label="We are rebuilding knowledge work. Starting with what Notion got right." style="margin: 0; max-width: 1120px; font-size: clamp(46px, 8vw, 112px);"><span aria-hidden="true"><sc-for list="{{hw1}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for><br><span><sc-for list="{{hw2}}" as="w" hint-placeholder-count="3"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span><span class="hl"><sc-for list="{{hw3}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span></span></h1>
 <p class="lead rise d3" style="max-width: 720px;">Notion showed the world that notes, docs and databases belong together. We think they also belong on your own devices: open, fast, encrypted, and ready for agents that work for you without working behind your back.</p>
 </section>
 
