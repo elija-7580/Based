@@ -108,6 +108,8 @@ let (store, tools, mcp, sync, runtime, happier) = try await MainActor.run { try 
 _ = store
 // Sharing: people, links and published pages with roles (ShareRoutes.swift, docs/sharing.md).
 let share = await MainActor.run { ShareService(store: store) }
+// BSD-58: MCP clients can hand work to the main agent (`ask_main_agent`).
+mcp.mainAgent = MainAgent(runtime: runtime)
 
 if opts.stdio {
     await StdioTransport(server: mcp).run()

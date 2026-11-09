@@ -11,8 +11,8 @@ public final class AgentTools {
 
     public var specs: [ToolSpec] {
         [
-            ToolSpec(name: "based_guide", description: "How Based works (read once before bigger edits): topics overview, markdown, databases, safety.",
-                     inputSchema: .schema(["topic": .str("overview | markdown | databases | safety")], required: ["topic"])),
+            ToolSpec(name: "based_guide", description: "How Based works (read once before bigger edits): topics overview, markdown, databases, agents, safety.",
+                     inputSchema: .schema(["topic": .str("overview | markdown | databases | agents | safety")], required: ["topic"])),
             ToolSpec(name: "search", description: "Search pages and database rows by title and full text. Returns ids, titles and snippets.",
                      inputSchema: .schema(["query": .str("Search text"), "limit": .num("Max results (default 20)")], required: ["query"])),
             ToolSpec(name: "read_page", description: "Read a page as Markdown, including its properties when it is a database row.",
@@ -93,15 +93,22 @@ public final class AgentTools {
                                            "target_page_id": .str("Page for open_page"), "position": .str("start | end (default end)")], required: ["parent_id", "label", "action"])),
             ToolSpec(name: "delete_view", description: "Delete a database view.",
                      inputSchema: .schema(["view_id": .str("View id")], required: ["view_id"])),
-            ToolSpec(name: "inbox", description: "List pending items in the user's inbox (permission requests and questions from coding agents).", inputSchema: .schema([:])),
-            ToolSpec(name: "list_runs", description: "List agent runs (chat turns, coding sessions, scheduled agent runs, sub-agents), newest first, with status, kind, tokens and cost.",
-                     inputSchema: .schema(["status": .str("Optional: Planned | Running | Waiting | Needs you | Done | Failed | Cancelled"), "kind": .str("Optional: Chat | Session | Schedule | Subagent | Main"), "parent_id": .str("Optional: only sub-runs of this run"), "limit": .num("Max runs (default 30)")])),
-            ToolSpec(name: "list_projects", description: "List the user's projects (Active, Paused, Done) with goal, folder and how many chats/runs belong to each.", inputSchema: .schema([:])),
-            ToolSpec(name: "get_project", description: "Read a project: goal, status, folder, its overview page (Status / Next steps / Latest updates), pages, chats and recent runs.",
+            // BSD-58: agent-facing tools, described like Notion's MCP: what it is for, when to use it, an example.
+            ToolSpec(name: "inbox", description: "List what waits for the user: permission requests and questions from coding agents, failed runs, reviews. Use it when the user asks \"what needs me?\". Each item shows its id and answer options; answer with resolve_inbox. Example: inbox {} → \"- [Permission] Run npm test (id: …) options: allow_once=Allow, reject_once=Deny\".",
+                     inputSchema: .schema(["all": ["type": "boolean", "description": "Also answered items (default: pending only)"], "limit": .num("Max items (default 30)"), "offset": .num("Skip this many (paging)")])),
+            ToolSpec(name: "resolve_inbox", description: "Answer an inbox item for the user — only when the user told you what to answer. Permission requests take one of the item's option ids (allow_once, allow_always, reject_once …); questions take a free-text answer. The first answer wins: an item already answered on another device is not changed. Example: resolve_inbox {\"item_id\": \"…\", \"option\": \"allow_once\"}.",
+                     inputSchema: .schema(["item_id": .str("Inbox item id (from inbox)"), "option": .str("Option id for permission requests (allow_once | allow_always | reject_once | …)"), "answer": .str("Free-text answer for questions")], required: ["item_id"])),
+            ToolSpec(name: "list_runs", description: "List agent runs (chat turns, coding sessions, scheduled agent runs, sub-agents of the main agent), newest first, with status, kind, tokens and cost. Use it for \"what is running / what failed today?\"; open one with get_run. Example: list_runs {\"status\": \"Running\"}.",
+                     inputSchema: .schema(["status": .str("Optional: Planned | Running | Waiting | Needs you | Done | Failed | Cancelled"), "kind": .str("Optional: Chat | Session | Schedule | Subagent | Main"), "parent_id": .str("Optional: only sub-runs of this run"), "project": .str("Optional: project id or name"), "limit": .num("Max runs (default 30)"), "offset": .num("Skip this many (paging)")])),
+            ToolSpec(name: "list_projects", description: "List the user's projects (Active, Paused, Done) with goal, folder and how many chats/runs belong to each. A project groups pages, chats, coding sessions and runs around one goal. Use get_project for details.",
+                     inputSchema: .schema(["status": .str("Optional: Active | Paused | Done"), "limit": .num("Max projects (default 50)"), "offset": .num("Skip this many (paging)")])),
+            ToolSpec(name: "get_project", description: "Read a project: goal, status, folder, its overview page (Status / Next steps / Latest updates), pages, chats and recent runs. Accepts the id or the name. Example: get_project {\"project\": \"Publit\"}.",
                      inputSchema: .schema(["project": .str("Project id or name")], required: ["project"])),
-            ToolSpec(name: "update_project_status", description: "Post a short dated update to a project's \"Latest updates\" section, optionally changing its status.",
+            ToolSpec(name: "create_project", description: "Create a project (a row in Projects with an overview page: Status, Next steps, Latest updates). Use it when the user starts a new goal that will have several chats, runs or pages; check list_projects first so you don't create a duplicate.",
+                     inputSchema: .schema(["name": .str("Short project name"), "goal": .str("One sentence: what done looks like"), "folder": .str("Optional working folder for coding sessions"), "status": .str("Optional: Active (default) | Paused | Done")], required: ["name"])),
+            ToolSpec(name: "update_project_status", description: "Post a short dated update to a project's \"Latest updates\" section, optionally changing its status. Use it after finishing something worth knowing in a project.",
                      inputSchema: .schema(["project": .str("Project id or name"), "update": .str("What happened, one or two sentences"), "status": .str("Optional: Active | Paused | Done")], required: ["project", "update"])),
-            ToolSpec(name: "get_run", description: "Read one run: its fields, short protocol and direct sub-runs.",
+            ToolSpec(name: "get_run", description: "Read one run: its fields, result, short protocol and direct sub-runs.",
                      inputSchema: .schema(["run_id": .str("Run id")], required: ["run_id"])),
         ] + hostSpecs + externalSpecs
     }
@@ -187,6 +194,39 @@ public final class AgentTools {
         if r.cost > 0 { s += String(format: " · %.2f €", r.cost) }
         s += " · started \(ISO8601DateFormatter().string(from: r.startedAt)) (id: \(r.id))"
         return s
+    }
+
+    /// BSD-58: one page of a list plus a "more" hint (agents page with offset instead of getting everything).
+    static func page<T>(_ items: [T], _ a: JSONValue, defaultLimit: Int) -> ([T], String) {
+        let limit = max(1, a["limit"]?.int ?? defaultLimit), offset = max(0, a["offset"]?.int ?? 0)
+        let slice = Array(items.dropFirst(offset).prefix(limit))
+        let rest = items.count - offset - slice.count
+        return (slice, rest > 0 ? "\n… \(rest) more (offset: \(offset + slice.count))" : "")
+    }
+
+    private func inboxLine(_ i: InboxItem) -> String {
+        var s = "- [\(i.kind.rawValue)] \(i.title) (id: \(i.id))"
+        if i.status != .pending { s += " · \(i.status.rawValue)" + (i.decision.map { ": \($0)" } ?? "") }
+        if let sid = i.sessionID { s += " · session \(brain.sessions().first { $0.id == sid }?.title ?? sid)" }
+        if !i.options.isEmpty { s += " · options: " + i.options.joined(separator: ", ") }
+        let d = i.detail.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        if !d.isEmpty { s += "\n  " + String(d.prefix(200)) }
+        return s
+    }
+
+    /// Decision and status for an answer to `item`. Permission requests need one of their option ids (approved when
+    /// it allows); questions and notices take free text.
+    static func inboxDecision(_ item: InboxItem, option: String?, answer: String?) throws -> (String, InboxItem.Status) {
+        let ids = item.options.map { $0.split(separator: "=", maxSplits: 1).first.map(String.init) ?? $0 }
+        if let option = option?.trimmingCharacters(in: .whitespaces), !option.isEmpty {
+            if !ids.isEmpty, !ids.contains(option) { throw ToolError("Unknown option '\(option)'. Options: \(ids.joined(separator: ", "))") }
+            let allows = option.hasPrefix("allow") || option == "approve" || option == "approved" || option == "yes"
+            return (option, allows ? .approved : .rejected)
+        }
+        if let answer = answer?.trimmingCharacters(in: .whitespacesAndNewlines), !answer.isEmpty, item.kind != .permission {
+            return (answer, .done)
+        }
+        throw ToolError(item.kind == .permission ? "Permission requests need an option: \(ids.isEmpty ? "allow_once, reject_once" : ids.joined(separator: ", "))" : "Give an answer.")
     }
 
     private func dispatch(_ name: String, _ a: JSONValue) throws -> String {
@@ -282,8 +322,19 @@ public final class AgentTools {
             if cs.isEmpty { return "No connections. Add MCP servers in Settings → Connections." }
             return cs.map { c in "- \(c.name) (\(c.transport.rawValue), \(c.enabled ? "enabled" : "disabled")) \(c.status)\n" + (externalSpecs.filter { $0.name.hasPrefix(Self.slug(c.name) + "__") }.map { "    • \($0.name): \($0.description.prefix(80))" }.joined(separator: "\n")) }.joined(separator: "\n")
         case "inbox":
-            let items = brain.inbox(pendingOnly: true)
-            return items.isEmpty ? "Inbox is empty." : items.map { "- [\($0.kind.rawValue)] \($0.title) (id: \($0.id))" }.joined(separator: "\n")
+            let all = brain.inbox(pendingOnly: a["all"]?.bool != true).sorted { $0.createdAt > $1.createdAt }
+            let (page, more) = Self.page(all, a, defaultLimit: 30)
+            if page.isEmpty { return a["all"]?.bool == true ? "Inbox is empty." : "Nothing waits for the user — the inbox is empty." }
+            return page.map(inboxLine).joined(separator: "\n") + more
+        case "resolve_inbox":
+            let iid = try req(a, "item_id")
+            guard let item = brain.inbox().first(where: { $0.id == iid }) else { throw ToolError("No inbox item \(iid). Use inbox.") }
+            guard item.status == .pending else { return "Already answered (\(item.status.rawValue): \(item.decision ?? "")) — nothing changed." }
+            let (decision, status) = try Self.inboxDecision(item, option: a["option"]?.string, answer: a["answer"]?.stringValue)
+            guard brain.resolveInbox(iid, decision: decision, status: status, device: "mcp") else {
+                return "Already answered on another device — nothing changed."
+            }
+            return "Answered \"\(item.title)\": \(decision) (\(status.rawValue))."
         case "list_runs":
             var f = RunFilter(parentID: a["parent_id"]?.string)
             if let st = a["status"]?.string, !st.isEmpty {
@@ -294,20 +345,36 @@ public final class AgentTools {
                 guard let v = AgentRun.Kind.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(k) == .orderedSame }) else { throw ToolError("Unknown kind '\(k)'") }
                 f.kinds = [v]
             }
-            let limit = max(1, a["limit"]?.int ?? 30)
-            let rs = brain.runs(f).prefix(limit)
-            return rs.isEmpty ? "No runs." : rs.map(Self.runLine).joined(separator: "\n")
+            var rs = brain.runs(f)
+            if let key = a["project"]?.string, !key.isEmpty { let p = try project(a); rs = rs.filter { $0.projectID == p.id } }
+            let (page, more) = Self.page(rs, a, defaultLimit: 30)
+            return page.isEmpty ? "No runs." : page.map(Self.runLine).joined(separator: "\n") + more
         case "list_projects":
-            let ps = brain.projects()
-            if ps.isEmpty { return "No projects yet." }
+            var ps = brain.projects()
+            if let st = a["status"]?.string, !st.isEmpty {
+                guard let v = AgentProject.Status.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(st) == .orderedSame }) else { throw ToolError("Unknown status '\(st)'") }
+                ps = ps.filter { $0.status == v }
+            }
+            if ps.isEmpty { return "No projects yet. create_project starts one." }
             let sessions = brain.sessions(), runs = brain.runs()
-            return ps.map { p in
+            let (page, more) = Self.page(ps, a, defaultLimit: 50)
+            return page.map { p in
                 var line = "- \(p.name) [\(p.status.rawValue)] (id: \(p.id))"
                 if !p.goal.isEmpty { line += " — \(p.goal)" }
                 if !p.folder.isEmpty { line += " · folder \(p.folder)" }
                 line += " · \(sessions.filter { $0.projectID == p.id }.count) chats/sessions, \(runs.filter { $0.projectID == p.id }.count) runs"
                 return line
-            }.joined(separator: "\n")
+            }.joined(separator: "\n") + more
+        case "create_project":
+            let name = try req(a, "name").trimmingCharacters(in: .whitespacesAndNewlines)
+            if let existing = brain.project(named: name) { return "A project named \(existing.name) already exists (id: \(existing.id)) — nothing created." }
+            var status = AgentProject.Status.active
+            if let st = a["status"]?.string, !st.isEmpty {
+                guard let v = AgentProject.Status.allCases.first(where: { $0.rawValue.caseInsensitiveCompare(st) == .orderedSame }) else { throw ToolError("Unknown status '\(st)'") }
+                status = v
+            }
+            let id = brain.createProject(name: name, goal: a["goal"]?.stringValue ?? "", folder: a["folder"]?.stringValue ?? "", status: status)
+            return "Created project [\(name)](\(PageLink.url(id))) (id: \(id), \(status.rawValue))."
         case "get_project":
             let p = try project(a)
             var out = "# \(p.name)\nStatus: \(p.status.rawValue)\nid: \(p.id)"

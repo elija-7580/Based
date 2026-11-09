@@ -1,7 +1,7 @@
 import Foundation
 import BasedCore
 
-/// Model Context Protocol server (JSON-RPC 2.0, protocol 2025-03-26).
+/// Model Context Protocol server (JSON-RPC 2.0; protocol versions in `supportedVersions`, negotiated in `initialize`).
 /// Exposes workspace tools, pages as resources and skills as prompts, so Claude, ChatGPT, Cursor …
 /// all see the same brain. Transport-agnostic: feed it request JSON, get response JSON.
 public final class MCPServer: @unchecked Sendable {
@@ -15,6 +15,26 @@ public final class MCPServer: @unchecked Sendable {
     public init(tools: AgentTools, serverName: String = "based", version: String = "0.1.0") {
         self.tools = tools; self.serverName = serverName; self.version = version
     }
+
+    /// BSD-58: protocol versions this server speaks, newest first. `initialize` answers with the client's version
+    /// when it is in the list, otherwise with the newest one (the client then decides whether to continue).
+    public static let supportedVersions = ["2025-06-18", "2025-03-26", "2024-11-05"]
+
+    public static func negotiate(_ requested: String?) -> String {
+        if let r = requested, supportedVersions.contains(r) { return r }
+        return supportedVersions[0]
+    }
+
+    /// BSD-58: the user's main agent, for `ask_main_agent` (set by the server; nil = tool not offered).
+    public var mainAgent: MainAgent?
+
+    static let askMainAgentSpec = ToolSpec(
+        name: "ask_main_agent",
+        description: "Hand a task to the user's main agent, which runs it as a sub-agent in the background on a model that fits the kind of work. Returns the run id immediately; follow it with get_run, the result is also posted to the project. Use it for work that takes more than a few tool calls (research, writing, coding, reorganising). Example: ask_main_agent {\"task\": \"Research three competitors of Publit and write a comparison page\", \"kind\": \"research\", \"project\": \"Publit\"}.",
+        inputSchema: .schema(["task": .str("Complete, self-contained instructions"),
+                              "kind": .str("code | research | write | organize (default organize)"),
+                              "project": .str("Optional project id or name"),
+                              "compute": .str("Optional: low | auto | high (default auto)")], required: ["task"]))
 
     static let approvalSpec = ToolSpec(name: "approval", description: "Asks the Based user to approve a tool call (permission prompt). Used by Claude Code.",
                                        inputSchema: .schema(["tool_name": .str("Tool that wants to run"), "input": ["type": "object", "description": "Tool input"],
@@ -59,7 +79,7 @@ public final class MCPServer: @unchecked Sendable {
     private func dispatch(_ method: String, _ p: JSONValue, session: String?) async throws -> JSONValue {
         switch method {
         case "initialize":
-            return ["protocolVersion": .string(p["protocolVersion"]?.string ?? "2025-03-26"),
+            return ["protocolVersion": .string(Self.negotiate(p["protocolVersion"]?.string)),
                     "capabilities": ["tools": ["listChanged": false], "resources": ["subscribe": false, "listChanged": false], "prompts": ["listChanged": false]],
                     "serverInfo": ["name": .string(serverName), "version": .string(version)],
                     "instructions": .string(BasedGuide.instructions)]
@@ -67,6 +87,7 @@ public final class MCPServer: @unchecked Sendable {
         case "tools/list":
             var specs = await MainActor.run { tools.specs }
             if session != nil, approval != nil { specs.insert(Self.approvalSpec, at: 0) }
+            if session == nil, mainAgent != nil { specs.append(Self.askMainAgentSpec) }
             return ["tools": .array(specs.map { ["name": .string($0.name), "description": .string($0.description), "inputSchema": $0.inputSchema] })]
         case "tools/call":
             guard let name = p["name"]?.string else { throw RPCError(code: -32602, message: "name required") }
@@ -75,6 +96,21 @@ public final class MCPServer: @unchecked Sendable {
                 let decision = await approval(session, args["tool_name"]?.string ?? "tool", args["input"] ?? .object([:]))
                 let text = (try? decision.encoded()).map { String(decoding: $0, as: UTF8.self) } ?? "{\"behavior\":\"deny\",\"message\":\"error\"}"
                 return ["content": [["type": "text", "text": .string(text)]]]
+            }
+            // BSD-58: a coding agent (session-scoped endpoint) must not answer the user's inbox — that would let it
+            // approve its own permission requests.
+            if session != nil, name == "resolve_inbox" {
+                return ["content": [["type": "text", "text": "Not permitted: agents can't answer the user's inbox. Ask the user."]], "isError": true]
+            }
+            if name == Self.askMainAgentSpec.name, session == nil, let mainAgent {
+                let thread = await MainActor.run { () -> RecordID in
+                    tools.brain.ensureMainAgent()
+                    return tools.brain.ensureMainThread(machine: "mcp")
+                }
+                var a = args
+                if case .object(var o) = a, o["kind"] == nil { o["kind"] = "organize"; a = .object(o) }
+                let r = await mainAgent.delegate(a, thread: thread)
+                return ["content": [["type": "text", "text": .string(r.text)]], "isError": .bool(r.isError)]
             }
             var callArgs = args
             // Session-scoped calls (`/mcp/session/<id>`): host tools learn who is calling (sub-agent parent).

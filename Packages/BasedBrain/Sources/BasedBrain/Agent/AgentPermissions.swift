@@ -95,6 +95,8 @@ public struct PermissionCall: Sendable, Equatable {
     /// a shell outside a sandbox.
     public var alwaysAsks: Bool {
         let t = tool.lowercased()
+        // BSD-58: answering an inbox item decides for the user (approves another agent's action) — never by mode alone.
+        if t.hasSuffix("resolve_inbox") { return true }
         if ["permanent", "empty_trash", "purge", "destroy", "delete_forever"].contains(where: t.contains) { return true }
         if category == .external, ["send", "post", "publish", "email", "mail", "message", "tweet", "reply", "share", "invite", "transfer", "pay"]
             .contains(where: t.contains) { return true }

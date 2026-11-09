@@ -24,6 +24,10 @@ public enum BasedGuide {
     6. Durable facts about the user go to `memory_save`; check `memory_search` / `about_user` before asking. \
     Load a skill with `load_skill` before following it.
 
+    7. Agents: `list_projects` / `get_project` show what the user works on, `list_runs` / `get_run` what agents \
+    did, `inbox` what waits for the user (answer with `resolve_inbox` only when the user said what to answer), \
+    `ask_main_agent` hands bigger work to the user's main agent. See `based_guide` topic "agents".
+
     Content is written as Markdown (see `based_guide` topic "markdown" for the supported blocks, including live \
     HTML / Mermaid blocks, tables, toggles and callouts). Read `based_guide` topic "overview" once if unsure.
     """
@@ -86,6 +90,31 @@ public enum BasedGuide {
         - `group_by`: a property name ("" removes grouping)
         Charts: `create_chart` adds a chart view (bar, line, pie …).
         Buttons: `add_button` adds a Notion-style button that creates a row (with preset properties) or opens a page.
+        """),
+        ("agents", "Projects, runs, inbox and the main agent", """
+        # Agents in Based
+
+        - **Project**: one goal with its pages, chats, coding sessions and runs. Its overview page has Status, \
+        Next steps and Latest updates. `list_projects` → `get_project` (id or name). `create_project` for a new goal \
+        (check the list first), `update_project_status` to post a dated update or change Active / Paused / Done.
+        - **Run**: one piece of agent work — a chat turn, a coding session (Claude Code, Codex …), a scheduled agent, \
+        a sub-agent of the main agent. Status: Planned, Running, Waiting, Needs you, Done, Failed, Cancelled. \
+        `list_runs` filters by status, kind, project and parent; `get_run` shows result, protocol and sub-runs.
+        - **Inbox**: what waits for the user — permission requests from coding agents (options such as allow_once, \
+        allow_always, reject_once), questions, failed runs. `inbox` lists pending items with their options. \
+        `resolve_inbox` answers one; do it only when the user told you the answer. The first answer wins: an item \
+        answered on another device stays as it is.
+        - **Main agent**: the user's chief of staff. It answers small things itself and hands bigger work to \
+        sub-agents on a model that fits the task. `ask_main_agent` gives it a task and returns the run id at once; \
+        follow the run with `get_run`. Its result is posted to the project and to the main thread.
+
+        Typical flows
+        - "What needs me?" → `inbox` → summarise each item with its options.
+        - "How is Publit going?" → `get_project` {"project": "Publit"} → latest updates + running runs.
+        - "Have an agent research X for Publit" → `ask_main_agent` {"task": "…", "project": "Publit"} → tell the \
+        user the run id; later `get_run`.
+
+        Lists are paged: `limit` and `offset`; a last line "… N more (offset: K)" means call again with that offset.
         """),
         ("safety", "Working safely", """
         # Working safely in the user's workspace

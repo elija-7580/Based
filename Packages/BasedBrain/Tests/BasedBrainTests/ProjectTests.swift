@@ -113,7 +113,7 @@ struct ProjectStoreTests {
     @Test func projectTools() {
         let (store, brain) = make()
         let tools = AgentTools(store: store, brain: brain)
-        #expect(tools.call("list_projects", [:]).text == "No projects yet.")
+        #expect(tools.call("list_projects", [:]).text.hasPrefix("No projects yet."))
         let p = brain.createProject(name: "Based", goal: "Replace Notion.", folder: "/code/based")
         let s = brain.createSession(title: "Fix", agentID: "claude", machine: "m", cwd: "/code/based", encrypted: false)
         brain.updateSession(s, status: .running)
