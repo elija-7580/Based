@@ -41,6 +41,67 @@ public extension ShellEnvironment {
         return Set(names.filter(SandboxEnvironmentPolicy.validName))
     }
 
+    /// The defaults key holding the approved names for `agentID`.
+    static func agentEnvKey(_ agentID: String) -> String { "based.agentEnv.\(agentID)" }
+
+    /// BSD-110: stores the approved names for `agentID` (Settings → Agents & AI, `based-server --agent-env`).
+    /// Invalid names are dropped, order and duplicates don't matter; an empty list removes the approval.
+    /// Writes only when the stored value really changes. Returns the names now approved.
+    @discardableResult
+    static func setApprovedPassthrough(_ names: [String], for agentID: String, defaults: UserDefaults = .standard) -> [String] {
+        let clean = Array(Set(names.map { $0.trimmingCharacters(in: .whitespaces) }.filter(SandboxEnvironmentPolicy.validName))).sorted()
+        let key = agentEnvKey(agentID)
+        if clean.isEmpty {
+            if defaults.object(forKey: key) != nil { defaults.removeObject(forKey: key) }
+        } else {
+            let value = clean.joined(separator: ",")
+            if defaults.string(forKey: key) != value { defaults.set(value, forKey: key) }
+        }
+        return clean
+    }
+
+    /// BSD-110: parses `id=NAME[,NAME]` specs (`--agent-env`, repeatable) and `BASED_AGENT_ENV`
+    /// (`claude=ANTHROPIC_API_KEY;gemini=GEMINI_API_KEY,GOOGLE_CLOUD_PROJECT`). Specs for the same agent add up.
+    /// Malformed parts are reported in `invalid` instead of being guessed.
+    static func parseAgentEnvSpecs(_ specs: [String]) -> (approvals: [String: [String]], invalid: [String]) {
+        var out: [String: Set<String>] = [:]
+        var invalid: [String] = []
+        for spec in specs.flatMap({ $0.split(separator: ";").map(String.init) }) {
+            let part = spec.trimmingCharacters(in: .whitespacesAndNewlines)
+            if part.isEmpty { continue }
+            let kv = part.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            guard kv.count == 2, !kv[0].isEmpty, kv[0].allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }) else {
+                invalid.append(part); continue
+            }
+            let names = kv[1].split(whereSeparator: { $0 == "," || $0 == " " }).map(String.init)
+            let valid = names.filter(SandboxEnvironmentPolicy.validName)
+            invalid += names.filter { !SandboxEnvironmentPolicy.validName($0) }.map { "\(kv[0])=\($0)" }
+            out[kv[0], default: []].formUnion(valid)
+        }
+        return (out.mapValues { $0.sorted() }, invalid)
+    }
+
+    /// BSD-110: applies parsed specs: each named agent gets exactly these names (agents not named keep theirs).
+    static func applyAgentEnv(_ approvals: [String: [String]], defaults: UserDefaults = .standard) {
+        for (id, names) in approvals { setApprovedPassthrough(names, for: id, defaults: defaults) }
+    }
+
+    /// Login variables an agent typically needs to sign in with a key (offered as a fix when present but not approved).
+    static let agentKeyHints: [String: [String]] = [
+        "claude": ["ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"],
+        "codex": ["OPENAI_API_KEY"],
+        "gemini": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+    ]
+
+    /// BSD-110: key variables set in `base` (default: the login-shell environment) that `agentID` would need but
+    /// that aren't approved for it.
+    static func unapprovedKeys(for agentID: String, base: [String: String]? = nil, defaults: UserDefaults = .standard) -> [String] {
+        guard let hints = agentKeyHints[agentID] else { return [] }
+        let env = base ?? environment()
+        let approved = passthrough(for: agentID, defaults: defaults)
+        return hints.filter { env[$0]?.isEmpty == false && !approved.contains($0) }
+    }
+
     /// Everything that passes for `agentID`: its defaults plus what the user approved.
     static func passthrough(for agentID: String?, defaults: UserDefaults = .standard) -> Set<String> {
         guard let agentID, !agentID.isEmpty else { return [] }

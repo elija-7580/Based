@@ -47,6 +47,9 @@ struct Options {
     var embeddings = ProcessInfo.processInfo.environment["BASED_EMBEDDINGS_URL"]
     var embeddingModel = ProcessInfo.processInfo.environment["BASED_EMBEDDING_MODEL"] ?? "nomic-embed-text"
     var embeddingKey = ProcessInfo.processInfo.environment["BASED_EMBEDDINGS_KEY"] ?? ""
+    /// BSD-110: environment variables approved per coding agent, `id=NAME[,NAME]` (also `BASED_AGENT_ENV`,
+    /// several separated by `;`), e.g. `--agent-env claude=ANTHROPIC_API_KEY`.
+    var agentEnv: [String] = ProcessInfo.processInfo.environment["BASED_AGENT_ENV"].map { [$0] } ?? []
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -68,12 +71,13 @@ struct Options {
             case "--sandbox-image": sandboxImage = it.next() ?? sandboxImage
             case "--sandbox-mount": if let m = it.next() { sandboxMounts.append(m) }
             case "--sandbox-env": if let e = it.next() { sandboxEnv.append(e) }
+            case "--agent-env": if let e = it.next() { agentEnv.append(e) }
             case "--sandbox-no-network": sandboxNetwork = false
             case "--docker-socket": dockerSocket = it.next() ?? dockerSocket
             case "--embeddings": embeddings = it.next()
             case "--embedding-model": embeddingModel = it.next() ?? embeddingModel
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network] [--embeddings http://host:11434/v1] [--embedding-model nomic-embed-text]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network] [--agent-env id=NAME[,NAME]] [--embeddings http://host:11434/v1] [--embedding-model nomic-embed-text]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -87,6 +91,15 @@ Log.shared.subsystem = "com.based.server"
 Log.shared.configure(directory: URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("logs"), name: "based-server")
 Log.shared.echoToStderr = true
 if let lvl = ProcessInfo.processInfo.environment["BASED_LOG_LEVEL"].flatMap(LogLevel.init(name:)) { Log.shared.minimumLevel = lvl }
+// BSD-110: approvals for agent children (same defaults keys the Mac app's Settings write).
+if !opts.agentEnv.isEmpty {
+    let parsed = ShellEnvironment.parseAgentEnvSpecs(opts.agentEnv)
+    ShellEnvironment.applyAgentEnv(parsed.approvals)
+    for bad in parsed.invalid { Log.warning("--agent-env: ignored “\(bad)” (expected id=NAME[,NAME])", category: "server") }
+    for (id, names) in parsed.approvals.sorted(by: { $0.key < $1.key }) {
+        Log.info("agent env: \(id) may inherit \(names.joined(separator: ", "))", category: "server")
+    }
+}
 func log(_ s: String, category: String = "server") { Log.info(s, category: category) }
 
 @MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime, HappierRuntime) {

@@ -190,3 +190,57 @@ import FoundationNetworking
         #expect(try await post("/mcp/session/abc", sessionToken) == 401)
     }
 }
+
+/// BSD-110: approvals per agent from Settings and from `based-server --agent-env` / `BASED_AGENT_ENV`.
+@Suite struct AgentEnvApprovalTests {
+    func defaults() throws -> (UserDefaults, String) {
+        let suite = "based.tests.\(UUID().uuidString)"
+        return (try #require(UserDefaults(suiteName: suite)), suite)
+    }
+
+    @Test func serverOptionApprovalShowsUpInPassthrough() throws {
+        let (d, suite) = try defaults()
+        defer { d.removePersistentDomain(forName: suite) }
+        let parsed = ShellEnvironment.parseAgentEnvSpecs(["claude=ANTHROPIC_API_KEY", "gemini=GEMINI_API_KEY, GOOGLE_CLOUD_PROJECT;codex=OPENAI_API_KEY",
+                                                         "claude=CLAUDE_CODE_OAUTH_TOKEN", "broken", "x=bad-name"])
+        #expect(parsed.approvals["claude"] == ["ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"])
+        #expect(parsed.approvals["gemini"] == ["GEMINI_API_KEY", "GOOGLE_CLOUD_PROJECT"])
+        #expect(parsed.invalid == ["broken", "x=bad-name"])
+        ShellEnvironment.applyAgentEnv(parsed.approvals, defaults: d)
+        #expect(ShellEnvironment.passthrough(for: "claude", defaults: d) == ["CLAUDE_CONFIG_DIR", "ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"])
+        #expect(ShellEnvironment.passthrough(for: "codex", defaults: d) == ["CODEX_HOME", "OPENAI_API_KEY"])
+        let base = ["PATH": "/usr/bin", "ANTHROPIC_API_KEY": "sk-ant-x", "OPENAI_API_KEY": "sk-o", "BASED_TOKEN": "t"]
+        let env = ShellEnvironment.childEnvironment(base: base, passthrough: ShellEnvironment.passthrough(for: "claude", defaults: d))
+        #expect(env["ANTHROPIC_API_KEY"] == "sk-ant-x" && env["OPENAI_API_KEY"] == nil && env["BASED_TOKEN"] == nil)
+    }
+
+    @Test func withoutApprovalNothingSecretPasses() throws {
+        let (d, suite) = try defaults()
+        defer { d.removePersistentDomain(forName: suite) }
+        let base = ["PATH": "/usr/bin", "ANTHROPIC_API_KEY": "sk-ant-x", "GEMINI_API_KEY": "g"]
+        for agent in ["claude", "gemini", "codex"] {
+            let env = ShellEnvironment.childEnvironment(base: base, passthrough: ShellEnvironment.passthrough(for: agent, defaults: d))
+            #expect(env["ANTHROPIC_API_KEY"] == nil && env["GEMINI_API_KEY"] == nil)
+        }
+        #expect(ShellEnvironment.unapprovedKeys(for: "claude", base: base, defaults: d) == ["ANTHROPIC_API_KEY"])
+        #expect(ShellEnvironment.unapprovedKeys(for: "opencode", base: base, defaults: d).isEmpty)
+    }
+
+    @Test func settingsFieldWritesOnlyRealChangesAndClears() throws {
+        let (d, suite) = try defaults()
+        defer { d.removePersistentDomain(forName: suite) }
+        #expect(ShellEnvironment.setApprovedPassthrough([" GEMINI_API_KEY", "bad name", "GEMINI_API_KEY", "A_B"], for: "gemini", defaults: d) == ["A_B", "GEMINI_API_KEY"])
+        #expect(d.string(forKey: "based.agentEnv.gemini") == "A_B,GEMINI_API_KEY")
+        #expect(ShellEnvironment.unapprovedKeys(for: "gemini", base: ["GEMINI_API_KEY": "g"], defaults: d).isEmpty)
+        ShellEnvironment.setApprovedPassthrough([], for: "gemini", defaults: d)
+        #expect(d.object(forKey: "based.agentEnv.gemini") == nil)
+        #expect(ShellEnvironment.approvedPassthrough(for: "gemini", defaults: d).isEmpty)
+    }
+
+    @Test func doctorFixCommandKeepsExistingApprovals() {
+        #expect(AgentDoctor.approveCommand(agent: "claude", names: ["ANTHROPIC_API_KEY"], bundleID: "app.based.mac")
+                == "defaults write app.based.mac based.agentEnv.claude ANTHROPIC_API_KEY")
+        #expect(AgentDoctor.approveCommand(agent: "claude", names: ["X", "ANTHROPIC_API_KEY"], bundleID: nil)
+                == "based-server --agent-env claude=X,ANTHROPIC_API_KEY")
+    }
+}

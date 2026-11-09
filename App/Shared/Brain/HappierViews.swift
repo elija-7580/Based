@@ -315,6 +315,8 @@ struct AgentsSettingsView: View {
         }
         .sheet(item: $editing) { a in AgentEditSheet(agent: a).environment(happier) }
 
+        AgentEnvSettingsSection()   // BSD-110
+
         Section("Permissions & run location") {
             Picker("When an agent asks for permission", selection: Binding(get: { happier.permissionMode }, set: { happier.permissionMode = $0 })) {
                 ForEach(PermissionMode.allCases, id: \.self) { m in Text(m.title).tag(m) }

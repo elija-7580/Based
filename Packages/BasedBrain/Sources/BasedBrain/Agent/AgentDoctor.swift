@@ -62,6 +62,12 @@ public enum AgentDoctor {
         let cmd = URL(fileURLWithPath: def.command).lastPathComponent
         if def.id == "claude", let c = tool("claude"), c.ok {
             let loggedIn = claudeLoggedIn()
+            if !loggedIn, let key = ShellEnvironment.unapprovedKeys(for: "claude").first {
+                // BSD-110: the key is there, it just isn't passed through (BSD-33 keeps secrets from children).
+                return AgentStatus(id: def.id, name: def.name, state: .needsLogin,
+                                   summary: "Claude Code found. \(key) is set in your shell but not passed to Claude Code — allow it under Settings → Agents & AI → Environment passthrough, or run `claude` once and log in.",
+                                   fix: approveCommand(agent: "claude", names: ShellEnvironment.approvedPassthrough(for: "claude").sorted() + [key]), driver: "Claude Code (native)")
+            }
             return AgentStatus(id: def.id, name: def.name, state: loggedIn ? .ready : .needsLogin,
                                summary: loggedIn ? "Claude Code \(c.version ?? "") found — runs natively (no adapter needed)." :
                                 "Claude Code found, but no login was detected. Run `claude` once in Terminal and log in.",
@@ -85,6 +91,14 @@ public enum AgentDoctor {
         }
         let install = catalog.first { $0.id == cmd }?.install
         return AgentStatus(id: def.id, name: def.name, state: .missing, summary: "`\(def.command)` was not found in your shell PATH.", fix: install, driver: "ACP")
+    }
+
+    /// BSD-110: terminal command that approves `names` for `agent` (same effect as the Settings field): the
+    /// app's defaults domain on a Mac, the server option elsewhere.
+    public static func approveCommand(agent: String, names: [String], bundleID: String? = Bundle.main.bundleIdentifier) -> String {
+        let list = names.joined(separator: ",")
+        if let bundleID, !bundleID.isEmpty { return "defaults write \(bundleID) based.agentEnv.\(agent) \(list)" }
+        return "based-server --agent-env \(agent)=\(list)"
     }
 
     /// Claude Code stores its login in the keychain (macOS) or ~/.claude/.credentials.json; an API key also works.
