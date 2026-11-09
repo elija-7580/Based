@@ -49,6 +49,7 @@ final class WatchReceiver: NSObject, WCSessionDelegate, @unchecked Sendable {
     static let shared = WatchReceiver()
     @MainActor private weak var model: AppModel?
     @MainActor private var token: ObservationToken?
+    @MainActor private var pendingPush: Task<Void, Never>?
 
     @MainActor
     func start(model: AppModel) {
@@ -56,9 +57,20 @@ final class WatchReceiver: NSObject, WCSessionDelegate, @unchecked Sendable {
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
         WCSession.default.activate()
-        // Keep the watch's "N today" current while the app runs.
+        // Keep the watch's "N today" current while the app runs. BSD-144: coalesced — the status reads every capture,
+        // so it must not run once per store change (keystroke); the observer itself only schedules.
         token = model.store.observe { [weak self] _ in
-            Task { @MainActor in self?.pushStatus() }
+            Task { @MainActor in self?.schedulePush() }
+        }
+    }
+
+    @MainActor
+    private func schedulePush() {
+        pendingPush?.cancel()
+        pendingPush = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled else { return }
+            self?.pushStatus()
         }
     }
 
