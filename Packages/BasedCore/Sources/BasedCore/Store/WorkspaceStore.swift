@@ -651,30 +651,94 @@ public final class WorkspaceStore {
         if var top = undoStack.last { top.coalesceKey = nil; undoStack[undoStack.count - 1] = top }
     }
 
-    public func undo() {
-        guard let entry = undoStack.popLast() else { return }
-        let tx = Tx(store: self)
-        for (key, snap) in entry.before { apply(snap.value, key, tx) }
-        guard commit(tx, name: entry.name, coalesce: nil, origin: .undo, undoable: false) else {
-            undoStack.append(entry)   // not saved: keep it undoable
-            return
-        }
-        var redone = entry
-        redone.after = entry.after.mapValues { snap in Snapshot(value: snap.value) }
-        redoStack.append(redone)
+    /// What an undo or redo did (BSD-27).
+    public struct UndoOutcome: Equatable, Sendable {
+        /// Action name of the step that was undone/redone (nil = nothing to do).
+        public var name: String?
+        /// Records restored.
+        public var applied = 0
+        /// Records left alone because another device, agent or sync changed them since (no overwrite, no revival).
+        public var skipped = 0
+        /// Whole steps dropped because every record in them had changed elsewhere.
+        public var droppedSteps = 0
+        public var partial: Bool { applied > 0 && skipped > 0 }
     }
 
-    public func redo() {
-        guard let entry = redoStack.popLast() else { return }
-        let tx = Tx(store: self)
-        for (key, snap) in entry.after { apply(snap.value, key, tx) }
-        guard commit(tx, name: entry.name, coalesce: nil, origin: .redo, undoable: false) else {
-            redoStack.append(entry)
-            return
+    /// Undoes the last local step, but only for records still as that step left them (three-way check, BSD-27):
+    /// a record changed or deleted elsewhere since (sync, an agent, another window) keeps that newer state, and a
+    /// record deleted elsewhere is never brought back. A step none of whose records can be undone is dropped and
+    /// the next one is tried.
+    @discardableResult
+    public func undo() -> UndoOutcome {
+        step(undo: true)
+    }
+
+    /// Redoes the last undone step under the same rule as `undo()`.
+    @discardableResult
+    public func redo() -> UndoOutcome {
+        step(undo: false)
+    }
+
+    /// No `inout` stacks here: observers that run inside `commit` may read `canUndo` / `canRedo`.
+    private func step(undo: Bool) -> UndoOutcome {
+        let origin: ChangeOrigin = undo ? .undo : .redo
+        let restore: KeyPath<UndoEntry, [RecordKey: Snapshot]> = undo ? \.before : \.after
+        let expect: KeyPath<UndoEntry, [RecordKey: Snapshot]> = undo ? \.after : \.before
+        var outcome = UndoOutcome()
+        while let entry = undo ? undoStack.popLast() : redoStack.popLast() {
+            var keys: [RecordKey] = []
+            var skipped = 0
+            for key in entry[keyPath: restore].keys.sorted(by: { $0.id < $1.id }) {
+                if Self.sameContent(record(key), entry[keyPath: expect][key]?.value) { keys.append(key) } else { skipped += 1 }
+            }
+            outcome.name = entry.name
+            outcome.skipped += skipped
+            guard !keys.isEmpty else {
+                outcome.droppedSteps += 1
+                Log.info("\(origin == .undo ? "Undo" : "Redo") skipped “\(entry.name)”: changed elsewhere since", category: "store")
+                continue
+            }
+            let tx = Tx(store: self)
+            for key in keys { apply(entry[keyPath: restore][key]?.value, key, tx) }
+            guard commit(tx, name: entry.name, coalesce: nil, origin: origin, undoable: false) else {
+                if undo { undoStack.append(entry) } else { redoStack.append(entry) }   // not saved: keep it
+                outcome.skipped -= skipped
+                return outcome
+            }
+            outcome.applied = keys.count
+            // The opposite step only covers what was actually restored.
+            var moved = entry
+            moved.coalesceKey = nil
+            moved.before = entry.before.filter { keys.contains($0.key) }
+            moved.after = entry.after.filter { keys.contains($0.key) }
+            if undo { redoStack.append(moved) } else { undoStack.append(moved) }
+            if skipped > 0 {
+                Log.info("\(origin == .undo ? "Undo" : "Redo") of “\(entry.name)”: \(skipped) record(s) changed elsewhere, left as they are",
+                         category: "store")
+            }
+            return outcome
         }
-        var again = entry
-        again.coalesceKey = nil
-        undoStack.append(again)
+        return outcome
+    }
+
+    /// Same record content, ignoring what every write changes anyway (stamp, `updatedAt`, `updatedBy`).
+    static func sameContent(_ a: Record?, _ b: Record?) -> Bool {
+        switch (a, b) {
+        case (nil, nil): return true
+        case (.block(var x)?, .block(var y)?):
+            x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt; x.updatedBy = y.updatedBy
+            return x == y
+        case (.database(var x)?, .database(var y)?):
+            x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt
+            return x == y
+        case (.view(var x)?, .view(var y)?):
+            x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt
+            return x == y
+        case (.workspace(var x)?, .workspace(var y)?):
+            x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt
+            return x == y
+        default: return false
+        }
     }
 
     private func apply(_ value: Record?, _ key: RecordKey, _ tx: Tx) {

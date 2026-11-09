@@ -751,8 +751,18 @@ final class AppModel {
         lastSnapshot = s
     }
 
-    func undo() { store.undo() }
-    func redo() { store.redo() }
+    func undo() { noteSkipped(store.undo(), verb: "Undo") }
+    func redo() { noteSkipped(store.redo(), verb: "Redo") }
+
+    /// BSD-27: undo/redo leave records alone that changed elsewhere since (sync, agents); say so.
+    private func noteSkipped(_ r: WorkspaceStore.UndoOutcome, verb: String) {
+        guard r.skipped > 0 else { return }
+        if r.applied == 0 {
+            showToast("Nothing to \(verb.lowercased()): it was changed elsewhere in the meantime")
+        } else {
+            showToast("\(verb) skipped \(r.skipped) block\(r.skipped == 1 ? "" : "s") changed elsewhere in the meantime")
+        }
+    }
 
     // MARK: Tabs (⌘T / ⌘W / ⌃Tab / ⌘1…9)
 
