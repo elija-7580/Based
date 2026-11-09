@@ -806,7 +806,7 @@ struct PageLinkView: View {
 
     var body: some View {
         let node = model.registry.block(pageID)
-        let _ = model.registry.workspace.structureRevision
+        let _ = model.registry.observeTitle(pageID)   // BSD-117: own title / database name, not every structural change
         Button {
             model.open(pageID)
         } label: {
@@ -1319,9 +1319,10 @@ struct BreadcrumbView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let _ = model.registry.workspace.structureRevision
+        let _ = model.registry.workspace.structureRevision   // the path itself (moves)
         let full = model.store.ancestors(of: pageID).filter { $0.type.isPageLike }.reversed() + [model.store.blocks[pageID]].compactMap { $0 }
         let chain = Array(full.suffix(3))   // long paths would push the peek buttons out of the header
+        let _ = chain.forEach { model.registry.observeTitle($0.id) }   // BSD-117: titles / icons of the shown pages
         HStack(spacing: 4) {
             if full.count > chain.count { Text("… /").foregroundStyle(Theme.secondary) }
             ForEach(Array(chain.enumerated()), id: \.offset) { i, b in

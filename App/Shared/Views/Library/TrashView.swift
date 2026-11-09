@@ -14,6 +14,7 @@ struct TrashView: View {
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision
+        let _ = model.registry.workspace.pageMetaRevision   // BSD-117: titles (search filters by them)
         let store = model.store
         let all = store.trashedPages()
         let items = all.filter { query.isEmpty || store.title(of: $0.id).localizedCaseInsensitiveContains(query) }

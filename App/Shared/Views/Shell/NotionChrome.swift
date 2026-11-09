@@ -302,13 +302,14 @@ struct NotionSidebar: View {
     @State private var privateDrop = false
 
     var body: some View {
+        // BSD-117: only the page tree (not titles) re-renders the sidebar; each row observes its own page node.
         let _ = model.registry.workspace.structureRevision
         let store = model.store
         let brainRoot = model.brain.brain.rootID
         let favorites = store.favoritePages()
         let teamspaces = store.teamspaces
         let privatePages = store.topLevelPages(in: .privatePages).filter { $0.id != brainRoot }
-        let dupes = Self.duplicateTitles(store.topLevelPages(), store: store)
+        let dupes = model.registry.workspace.duplicateTitles   // BSD-117: maintained by the registry
         let order = visibleOrder(favorites: favorites, teamspaces: teamspaces, privatePages: privatePages)
         VStack(spacing: 0) {
             SidebarWorkspaceRow(floating: floating)
@@ -406,14 +407,6 @@ struct NotionSidebar: View {
         let id = model.store.createTeamspace(name: "New teamspace")
         teamspacesOpen = true
         model.renamingID = "ts:" + id
-    }
-
-    /// Lower-cased titles used by more than one top-level page: those rows get a tooltip with location and
-    /// creation date so look-alike entries (e.g. several "Teamspace Home" pages) can be told apart.
-    static func duplicateTitles(_ pages: [Block], store: WorkspaceStore) -> Set<String> {
-        var count: [String: Int] = [:]
-        for p in pages { count[store.title(of: p.id).trimmingCharacters(in: .whitespaces).lowercased(), default: 0] += 1 }
-        return Set(count.filter { $0.value > 1 }.keys)
     }
 
     /// Visible rows top to bottom (⇧-click range selection).

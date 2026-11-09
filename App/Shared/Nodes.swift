@@ -35,7 +35,17 @@ final class ViewNode {
 final class WorkspaceNode {
     /// Bumped on every change (sidebar, search, trash).
     var revision = 0
+    /// BSD-117: bumped when the page tree changes (pages added / moved / trashed, type or open state, favorites,
+    /// teamspaces) — not when a page's title or icon changes, so typing a title doesn't re-render the sidebar,
+    /// tab strip, outline or breadcrumbs.
     var structureRevision = 0
+    /// BSD-117: bumped when a page's title or icon (or a database's name) changes. Views that list many titles
+    /// without observing each page's node (Trash, Home chooser) read this; single titles observe their node
+    /// via `Registry.observeTitle`.
+    var pageMetaRevision = 0
+    /// Lower-cased titles used by more than one top-level page (sidebar tooltips). Kept here so the sidebar
+    /// re-renders only when the set changes, not on every title keystroke.
+    var duplicateTitles: Set<String> = []
 }
 
 @MainActor
@@ -46,10 +56,38 @@ final class Registry {
     private var dbs: [RecordID: DatabaseNode] = [:]
     private var views: [RecordID: ViewNode] = [:]
     private var token: ObservationToken?
+    /// `store.hierarchyRevision` as of the last applied change set (BSD-117).
+    private var seenHierarchyRevision: Int
 
     init(store: WorkspaceStore) {
         self.store = store
+        seenHierarchyRevision = store.hierarchyRevision
+        workspace.duplicateTitles = Self.duplicateTitles(store.topLevelPages(), store: store)
         token = store.observe { [weak self] change in self?.apply(change) }
+    }
+
+    /// BSD-117: registers observation of everything `store.title(of:)` / `store.icon(of:)` read for `id` — the
+    /// page's node and, for a database page, its database — so a view showing one title re-renders only when
+    /// that title changes (instead of reading `workspace.structureRevision`).
+    func observeTitle(_ id: RecordID?) {
+        guard let id else { return }
+        let n = block(id)
+        if let db = n.block?.props.databaseID { _ = database(db).database }
+    }
+
+    func observeTitle(of item: SidebarItem?) {
+        switch item {
+        case .page(let id)?: observeTitle(id)
+        case .chat(let id?)?: observeTitle(id)
+        default: break
+        }
+    }
+
+    /// Lower-cased titles used by more than one of `pages`.
+    static func duplicateTitles(_ pages: [Block], store: WorkspaceStore) -> Set<String> {
+        var count: [String: Int] = [:]
+        for p in pages { count[store.title(of: p.id).trimmingCharacters(in: .whitespaces).lowercased(), default: 0] += 1 }
+        return Set(count.filter { $0.value > 1 }.keys)
     }
 
     func block(_ id: RecordID) -> BlockNode {
@@ -80,6 +118,8 @@ final class Registry {
 
     private func apply(_ change: ChangeSet) {
         var structural = false
+        var pageMeta = false
+        var topLevelMeta = false
         for key in change.keys {
             switch key.kind {
             case .block:
@@ -94,12 +134,19 @@ final class Registry {
                     if case .database(let d)? = old?.parent { dbs[d]?.revision += 1 }
                 }
                 if case .database(let d)? = b?.parent { dbs[d]?.revision += 1 }
-                if b == nil || b?.type.isPageLike == true { structural = true }
+                // BSD-117: a page's title / icon is page metadata; existence, parent, order, type and trash state
+                // are caught by `store.hierarchyRevision` below.
+                if let b, b.type.isPageLike {
+                    pageMeta = true
+                    if b.parent == .workspace { topLevelMeta = true }
+                }
             case .database:
                 if let n = dbs[key.id] {
                     n.database = store.databases[key.id]
                     n.revision += 1
                 }
+                pageMeta = true
+                topLevelMeta = true
                 // relations/rollups may depend on other databases
                 for (_, d) in dbs where d.id != key.id { d.revision += 1 }
             case .view:
@@ -122,7 +169,16 @@ final class Registry {
                 dbs[String(p.dropFirst(2))]?.revision += 1
             }
         }
+        if store.hierarchyRevision != seenHierarchyRevision {
+            seenHierarchyRevision = store.hierarchyRevision
+            structural = true
+        }
         workspace.revision += 1
         if structural { workspace.structureRevision += 1 }
+        if pageMeta { workspace.pageMetaRevision += 1 }
+        if structural || topLevelMeta {
+            let dupes = Self.duplicateTitles(store.topLevelPages(), store: store)
+            if dupes != workspace.duplicateTitles { workspace.duplicateTitles = dupes }
+        }
     }
 }

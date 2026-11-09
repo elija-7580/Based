@@ -11,7 +11,6 @@ struct TabStrip: View {
     struct TabDrag: Equatable { var id: UUID; var grabOffset: CGFloat; var pointerX: CGFloat }
 
     var body: some View {
-        let _ = model.registry.workspace.structureRevision   // titles / icons
         HStack(spacing: 0) {
             // Tabs only scroll when they don't fit, so the free title-bar space stays draggable.
             ViewThatFits(in: .horizontal) {
@@ -81,6 +80,7 @@ struct TabButton: View {
 
     var body: some View {
         let info = model.tabInfo(tab)
+        let _ = model.registry.observeTitle(of: info.item)   // BSD-117: this tab follows its own page's title / icon
         HStack(spacing: 6) {
             icon(info.item)
             Text(info.title).lineLimit(1).truncationMode(.tail)
