@@ -23,6 +23,7 @@ body{margin:0}
 .bsd .h2{font-family:var(--display);font-weight:800;letter-spacing:-0.035em;line-height:1.02;font-size:clamp(34px,5vw,64px);margin:0}
 .bsd .eyebrow{margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
 .bsd .lead{margin:0;font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:var(--ink-2)}
+.bsd .mnav{display:none}
 .bsd .wrap{max-width:1200px;margin:0 auto;padding-left:24px;padding-right:24px}
 .bsd .nav{backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px)}
 .bsd .navlink{text-decoration:none;color:var(--muted);font-weight:500}
@@ -144,6 +145,24 @@ body{margin:0}
 @keyframes bsdDrop{from{opacity:0;transform:translateY(-24px) scale(.9)}to{opacity:1;transform:none}}
 @keyframes bsdMenu{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
 @media (max-width: 760px){
+.bsd nav[aria-label="Main"]{flex-wrap:nowrap!important;gap:10px!important}
+.bsd nav[aria-label="Main"] .btn{min-height:38px!important;padding:0 14px}
+.bsd footer .wrap{padding-top:32px!important;gap:24px!important}
+.bsd footer .wrap>div:first-child>div:not(:first-child){display:none!important}
+
+.bsd .mnav{display:block}
+.bsd .mnav summary{list-style:none;width:40px;height:40px;border-radius:50%;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.bsd .mnav summary::-webkit-details-marker{display:none}
+.bsd .mnav[open] summary{background:var(--button);color:var(--button-ink)}
+.bsd .mnav-sheet{position:absolute;left:0;right:0;top:100%;padding:6px 20px 14px;background:var(--bg);border-bottom:1px solid var(--line);box-shadow:var(--shadow-float);display:flex;flex-direction:column;animation:bsdFade 160ms ease both}
+.bsd .mnav-sheet a{min-height:50px;display:flex;align-items:center;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:17px;font-weight:600}
+.bsd .mnav-sheet a:last-child{border-bottom:0}
+.bsd [style*="padding-top: 120px"]{padding-top:56px!important}
+.bsd [style*="padding-bottom: 120px"]{padding-bottom:56px!important}
+.bsd [style*="padding-bottom: 110px"]{padding-bottom:48px!important}
+.bsd [style*="padding-top: 140px"]{padding-top:64px!important}
+.bsd [style*="padding-bottom: 140px"]{padding-bottom:64px!important}
+
 .mcol{min-height:0!important}
 .orch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:16px!important}
 .orch-svg{min-width:640px}
@@ -207,6 +226,37 @@ footer a{display:inline-block;padding:6px 0}
 }
 @keyframes bsdFlow{to{stroke-dashoffset:-32}}
 
+.bsd .mb{max-width:520px;margin:0 auto;width:100%;box-sizing:border-box}
+.bsd .mb-hero{padding:28px 20px 12px;display:flex;flex-direction:column;gap:16px}
+.bsd .mb-pill{align-self:flex-start;margin:0;padding:6px 12px;border-radius:999px;background:var(--surface-raised);font-size:13px;font-weight:600}
+.bsd .mb-full{width:100%;box-sizing:border-box;justify-content:center;min-height:48px}
+.bsd .mb-trust{margin:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.bsd .mb-sec{padding:32px 20px 8px}
+.bsd .mb-card{border-radius:22px;background:var(--bg);box-shadow:var(--shadow-panel)}
+.bsd .mb-scroll{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.bsd .mb-scroll::-webkit-scrollbar{display:none}
+.bsd .mb-snap{scroll-snap-type:x mandatory;scroll-padding:0 20px}
+.bsd .mb-slide{flex:0 0 82%;scroll-snap-align:start;box-sizing:border-box;padding:20px;border-radius:22px;display:flex;flex-direction:column;gap:10px;min-height:230px}
+.bsd .mb-h2{margin:6px 0 16px;font-family:var(--display);font-size:30px;font-weight:800;line-height:1.08;letter-spacing:-0.03em}
+.bsd .mb-h3{margin:0;font-family:var(--display);font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-0.02em}
+.bsd .mb-p{margin:0;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.bsd .mb-more{margin-top:auto;font-size:14px;font-weight:600}
+.bsd .mb-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:0;border-radius:999px;background:var(--surface-raised);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.bsd .mb-chip[aria-pressed="true"]{background:var(--button);color:var(--button-ink)}
+.bsd .mb-row{display:grid;grid-template-columns:84px 1fr 1fr;align-items:center;gap:8px;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px}
+.bsd .mb-yes,.bsd .mb-no{justify-self:start;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.bsd .mb-yes{background:#DCEFE3;color:#2F6B47}
+.bsd .mb-no{background:var(--surface-raised);color:var(--muted)}
+.bsd .mb-strong{background:var(--marker);color:#1F1F1D}
+.bsd .mb-input{min-height:50px;padding:0 16px;border:0;border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;box-sizing:border-box;width:100%}
+.bsd .mb-link{display:flex;justify-content:space-between;align-items:center;min-height:52px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:16px;font-weight:600}
+.bsd .mb-sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;justify-content:flex-end}
+.bsd .mb-backdrop{position:absolute;inset:0;border:0;background:rgba(20,20,18,.35);animation:bsdFade 200ms ease both}
+.bsd .mb-sheet{position:relative;max-height:80vh;overflow:auto;padding:10px 14px calc(16px + env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:var(--bg);box-shadow:var(--shadow-big);animation:bsdSheet 280ms cubic-bezier(.2,0,0,1) both}
+.bsd .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes bsdSheet{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion: reduce){.bsd .mb-sheet,.bsd .mb-backdrop{animation:none}}
+
 </style>
 </helmet>
 <div class="bsd" data-theme="{{theme}}" style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -222,6 +272,15 @@ footer a{display:inline-block;padding:6px 0}
 <a href="https://github.com/elija-7580/Based" class="navlink">GitHub</a>
 </div>
 <a href="Main.dc.html#waitlist" class="btn" style="min-height: 40px; font-size: 14px; margin-left: auto;">Join the beta</a>
+<details class="mnav"><summary aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg></summary><div class="mnav-sheet">
+<a href="Main.dc.html">Home</a>
+<a href="Workspace.dc.html">Workspace</a>
+<a href="Agents.dc.html">Agents</a>
+<a href="Switch.dc.html">Leaving Notion?</a>
+<a href="Roadmap.dc.html">Roadmap</a>
+<a href="Manifesto.dc.html">Manifesto</a>
+<a href="https://github.com/elija-7580/Based">GitHub</a>
+</div></details>
 </nav>
 </header>
 
