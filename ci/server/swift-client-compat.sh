@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # BSD-158: Kompatibilität Swift-Client ↔ TS-Server. Startet den TS-based-server (apps/server) auf einer frischen
 # Datenbank und lässt den unveränderten Swift-Client (`ServerSync`, BasedBrain) über HTTP dagegen laufen:
-# Packages/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift (ohne die Umgebungsvariablen übersprungen).
+# Swift/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift (ohne die Umgebungsvariablen übersprungen).
 # Danach liest der TS-Client denselben Server (apps/server/test/external-mixed.test.ts).
 #   usage: ci/server/swift-client-compat.sh [--skip-build] [--reference]
 #   --skip-build  Swift-Tests nicht neu bauen (schon mit `swift build --build-tests` gebaut)
@@ -9,7 +9,7 @@
 # Umgebung: SWIFT_BIN (Ordner mit `swift`), BASED_COMPAT_PORT (Standard 18120; Referenz-Server: Port + 1).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PKG="$ROOT/Packages/BasedBrain"
+PKG="$ROOT/Swift/BasedBrain"
 PORT="${BASED_COMPAT_PORT:-18120}"
 TOKEN="compat-$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 SKIP_BUILD=0

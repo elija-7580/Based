@@ -4,7 +4,7 @@ Eingabe→Ausgabe-Paare der Swift-Kernlogik. Der TypeScript-Kern (`packages/core
 erst als portiert, wenn alle seine Fixtures grün sind. **Nicht von Hand ändern** – neu erzeugen:
 
 ```bash
-cd Packages/BasedCore && swift run based-fixtures      # schreibt ../../fixtures/ (setzt selbst TZ=UTC)
+cd Swift/BasedCore && swift run based-fixtures      # schreibt ../../fixtures/ (setzt selbst TZ=UTC)
 pnpm --filter @based/core test                         # Bericht: "<modul>: x/y grün" bzw. "nicht portiert"
 ```
 

@@ -13,9 +13,9 @@ IOS=0
 if [[ "${1:-}" == "--ios" ]]; then IOS=1; shift; OUT="$OUT/ios"; fi
 PLATFORM=(); [[ $IOS == 1 ]] && PLATFORM=(-D STUB_IOS)
 mkdir -p "$OUT/mods" "$OUT/src"
-( cd "$ROOT/Packages/BasedBrain" && swift build >/dev/null )
-BRAIN="$ROOT/Packages/BasedBrain/.build/debug"
-CSQL=(-Xcc -fmodule-map-file="$ROOT/Packages/BasedCore/Sources/CSQLite/module.modulemap" -I "$ROOT/Packages/BasedCore/Sources/CSQLite")
+( cd "$ROOT/Swift/BasedBrain" && swift build >/dev/null )
+BRAIN="$ROOT/Swift/BasedBrain/.build/debug"
+CSQL=(-Xcc -fmodule-map-file="$ROOT/Swift/BasedCore/Sources/CSQLite/module.modulemap" -I "$ROOT/Swift/BasedCore/Sources/CSQLite")
 mod() { local name=$1; shift; swiftc -diagnostic-style=llvm -emit-module -parse-as-library -swift-version 5 -suppress-warnings -module-name "$name" \
           -emit-module-path "$OUT/mods/$name.swiftmodule" -I "$OUT/mods" ${PLATFORM[@]+"${PLATFORM[@]}"} "$@"; }
 rm -rf "$OUT/mods"; mkdir -p "$OUT/mods"

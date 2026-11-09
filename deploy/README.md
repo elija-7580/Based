@@ -15,7 +15,7 @@
 
 All endpoints except `/health`, `/app` and the sharing pages (`/s/…`, `/p/…`, invite accept) need
 `Authorization: Bearer $BASED_TOKEN` – the header only; `?token=` in the URL is ignored (it would end up in logs).
-Routes are registered in one table with auth middleware (`Packages/BasedBrain/Sources/BasedBrain/Server/`, ADR 0006):
+Routes are registered in one table with auth middleware (`Swift/BasedBrain/Sources/BasedBrain/Server/`, ADR 0006):
 a new route is owner-only unless it says otherwise. Limits: 1 MiB request body (32 MiB for sync pushes and MCP),
 413 above that; 30 s receive timeout; 64 simultaneous connections (503 beyond). CORS headers are only sent for the
 origin of `BASED_PUBLIC_URL`.
@@ -46,8 +46,8 @@ Caddy obtains the TLS certificate automatically. Point the DNS A record at the V
 ## Bare metal
 
 ```bash
-swift build -c release --package-path Packages/BasedBrain
-sudo install Packages/BasedBrain/.build/release/based-server /usr/local/bin/
+swift build -c release --package-path Swift/BasedBrain
+sudo install Swift/BasedBrain/.build/release/based-server /usr/local/bin/
 sudo useradd -r based && sudo mkdir -p /var/lib/based /etc/based && sudo chown based /var/lib/based
 echo "BASED_TOKEN=$(openssl rand -hex 32)" | sudo tee /etc/based/env
 sudo cp deploy/based-server.service /etc/systemd/system/ && sudo systemctl enable --now based-server

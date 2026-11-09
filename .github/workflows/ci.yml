@@ -75,11 +75,11 @@ jobs:
       - run: swift --version
       - uses: actions/cache@v4
         with:
-          path: Packages/BasedCore/.build
-          key: spm-core-6.2-${{ hashFiles('Packages/BasedCore/Package.swift', 'Packages/BasedCore/Package.resolved') }}
+          path: Swift/BasedCore/.build
+          key: spm-core-6.2-${{ hashFiles('Swift/BasedCore/Package.swift', 'Swift/BasedCore/Package.resolved') }}
           restore-keys: spm-core-6.2-
       - name: Test
-        working-directory: Packages/BasedCore
+        working-directory: Swift/BasedCore
         run: |
           set -o pipefail
           swift test 2>&1 | tee ../../core-test.log
@@ -104,12 +104,12 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            Packages/BasedCore/.build
-            Packages/BasedBrain/.build
-          key: spm-brain-6.2-${{ hashFiles('Packages/*/Package.swift', 'Packages/*/Package.resolved') }}
+            Swift/BasedCore/.build
+            Swift/BasedBrain/.build
+          key: spm-brain-6.2-${{ hashFiles('Swift/*/Package.swift', 'Swift/*/Package.resolved') }}
           restore-keys: spm-brain-6.2-
       - name: BasedBrain tests
-        working-directory: Packages/BasedBrain
+        working-directory: Swift/BasedBrain
         run: |
           set -o pipefail
           swift test 2>&1 | tee ../../brain-test.log

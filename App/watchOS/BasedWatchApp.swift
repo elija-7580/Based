@@ -7,7 +7,7 @@ import WatchConnectivity
 // 32 kHz); the note goes to the iPhone with `WCSession.transferFile` (metadata: `WatchCaptureMeta`) and waits in an
 // outbox on the watch until the iPhone has it. The iPhone files it in Captures and transcribes it.
 // Compiled only into the Based-watchOS target (project.yml), together with
-// Packages/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift (no BasedCore dependency on the watch).
+// Swift/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift (no BasedCore dependency on the watch).
 
 @main
 struct BasedWatchApp: App {

@@ -29,7 +29,7 @@
 ## Modules
 
 ```
-Packages/BasedCore/Sources/BasedCore
+Swift/BasedCore/Sources/BasedCore
   Model/     ids, stamps (HLC), fractional index, colors, rich text, block,
              database (schema, values, views, filters), workspace, record
   Store/     WorkspaceStore (cache + indexes + transactions + undo/redo +

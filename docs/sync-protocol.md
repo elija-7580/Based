@@ -148,7 +148,7 @@ grows in arrival order.
 
 ## Server
 
-`based-server` (`Packages/BasedBrain/Sources/based-server`) stores the workspace in SQLite, the same as the
+`based-server` (`Swift/BasedBrain/Sources/based-server`) stores the workspace in SQLite, the same as the
 app. It has a `changes(seq, kind, id, deleted, local, deleted_stamp)` table with one row per record: its latest
 change. `pull` reads that table by `seq`. A row with `deleted = 1` is the record's tombstone; `deleted_stamp`
 (JSON stamp, NULL for deletions logged before format v3) is what pushes are compared against, so the change

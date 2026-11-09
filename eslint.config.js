@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 import globals from "globals";
 
 export default tseslint.config(
-  { ignores: ["**/node_modules/**", "**/dist/**", "**/target/**", "**/.build/**", "Packages/**", "App/**", "spikes/**", "Web/**", "**/playwright-report/**", "**/test-results/**"] },
+  { ignores: ["**/node_modules/**", "**/dist/**", "**/target/**", "**/.build/**", "Swift/**", "App/**", "spikes/**", "Web/**", "**/playwright-report/**", "**/test-results/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: globals.node } },

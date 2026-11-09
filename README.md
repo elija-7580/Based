@@ -63,7 +63,7 @@ workspace archive; and a first **web client** at `based-server /app` ([`docs/pla
 - **App**: light/dark/system (⇧⌘L), settings, iPhone keyboard toolbar and
   long-press menus, iPad runs (layout not tuned).
 
-- **Agent Brain** (`Packages/BasedBrain`): an *Agent Brain* page in the
+- **Agent Brain** (`Swift/BasedBrain`): an *Agent Brain* page in the
   workspace holds **Memories** (Title + Type, like Notion AI), **Skills**
   (reusable instructions, exposed as MCP prompts) and **Agents** (instructions
   page + `Schedule` + `Model` + token budget). Chat with the workspace agent
@@ -162,10 +162,10 @@ share extension, widgets, watchOS target.
 
 **Swift-App (eingefroren bis zum Umschalten):**
 
-- `Packages/BasedCore` — model, store, editing, databases, formulas,
+- `Swift/BasedCore` — model, store, editing, databases, formulas,
   import/export, search, sync core (Swift package; Foundation only, tested on
   Linux and macOS)
-- `Packages/BasedBrain` — AI providers, agent tools/runtime/scheduler, MCP
+- `Swift/BasedBrain` — AI providers, agent tools/runtime/scheduler, MCP
   server, HTTP server, server sync, Notion API import, and the `based-server`
   executable (Foundation only, tested on Linux)
 - `deploy/` — Dockerfile, docker-compose + Caddy, systemd unit, MCP client config
@@ -183,7 +183,7 @@ Core (any platform with Swift 5.9+/6):
 
 ```bash
 make test        # = swift test for BasedCore and BasedBrain
-swift build -c release --package-path Packages/BasedBrain   # → based-server
+swift build -c release --package-path Swift/BasedBrain   # → based-server
 ```
 
 Apps (macOS 14+ / iOS 17+, Xcode 16+, `brew install xcodegen`):

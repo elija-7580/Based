@@ -106,7 +106,7 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
 - `test/client-compat.test.ts`: `SyncClient` aus `packages/sync` gegen den Server über HTTP (Swift-Korpus
   byte-gleich, Offline, Tombstones, GC mit Full-Pull, Live über Long-Poll, falscher Token).
 - `ci/server/swift-client-compat.sh`: startet den TS-Server (Port 18120) und lässt den **unveränderten** Swift-
-  Client (`ServerSync`) über HTTP dagegen laufen: `Packages/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift`
+  Client (`ServerSync`) über HTTP dagegen laufen: `Swift/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift`
   (übersprungen ohne `BASED_COMPAT_SERVER_URL`/`_TOKEN`). Danach liest der TS-Client denselben Server
   (`test/external-mixed.test.ts`: alles, was Swift schrieb, ist im TS-Kern lesbar und byte-gleich). `--reference`
   wiederholt die Swift-Suite gegen den Swift-Server als Kontrolle. Braucht Swift 6.x unter Linux.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Type-checks the Apple Watch app (App/watchOS) and its complication (App/watchOSWidget) on Linux against the
 # signature-only stubs, the way run.sh checks App/Shared (BSD-66). The watch targets don't link BasedCore; they
-# compile Packages/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift directly, so does this check.
+# compile Swift/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift directly, so does this check.
 #   usage: ci/typecheck/run-watch.sh      (output in $TYPECHECK_OUT/watch, default /tmp/based-typecheck/watch)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -21,7 +21,7 @@ mod UniformTypeIdentifiers "$TC/stubs/UniformTypeIdentifiers.swift"
 mod SwiftUI "$TC"/stubs/SwiftUI/*.swift
 mod WatchConnectivity "$TC/stubs/WatchConnectivity.swift"
 mod WidgetKit "$TC/stubs/WidgetKit.swift"
-SHARED="$ROOT/Packages/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift"
+SHARED="$ROOT/Swift/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift"
 tc() { swiftc -diagnostic-style=llvm -typecheck -continue-building-after-errors -parse-as-library -swift-version 5 -module-name "$1" \
          -I "$OUT/mods" "${FLAGS[@]}" "${@:2}"; }
 tc BasedWatch "$ROOT"/App/watchOS/*.swift "$SHARED"

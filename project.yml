@@ -20,9 +20,9 @@ settings:
     ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 packages:
   BasedCore:
-    path: Packages/BasedCore
+    path: Swift/BasedCore
   BasedBrain:
-    path: Packages/BasedBrain
+    path: Swift/BasedBrain
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
     # 1.99.2/1.99.3 kompilieren mit Xcode 26.3 nicht (PowerlineRenderer.thinFlamePath: Array + DropFirstSequence).
@@ -57,7 +57,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX)$(BASED_AGENTS_SUFFIX).entitlements
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
-        # BSD-118: the script below runs `swift build` on Packages/BasedBrain, which script sandboxing would block.
+        # BSD-118: the script below runs `swift build` on Swift/BasedBrain, which script sandboxing would block.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
     postBuildScripts:
       - name: Embed based command line
@@ -67,7 +67,7 @@ targets:
         script: |
           set -u
           [ "${BASED_SKIP_CLI:-}" = "1" ] && exit 0
-          PKG="$SRCROOT/Packages/BasedBrain"
+          PKG="$SRCROOT/Swift/BasedBrain"
           SCRATCH="$DERIVED_FILE_DIR/based-cli"
           DEST="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Helpers"
           LOG="$DERIVED_FILE_DIR/based-cli.log"
@@ -149,7 +149,7 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - App/watchOS
-      - path: Packages/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift
+      - path: Swift/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift
         group: App/watchOS/Shared
     dependencies:
       - target: Based-watchOS-Complication

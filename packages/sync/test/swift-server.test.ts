@@ -1,6 +1,6 @@
 // BSD-152 Akzeptanz gegen den echten Swift-based-server. Läuft nur mit gebautem Server:
-//   (cd Packages/BasedBrain && swift build --product based-server)
-//   BASED_SERVER_BIN=$PWD/Packages/BasedBrain/.build/debug/based-server pnpm --filter @based/sync test
+//   (cd Swift/BasedBrain && swift build --product based-server)
+//   BASED_SERVER_BIN=$PWD/Swift/BasedBrain/.build/debug/based-server pnpm --filter @based/sync test
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
