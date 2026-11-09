@@ -964,9 +964,23 @@ struct PropertyConfigEditor: View {
         }
         if let r = p.rollup {
             Picker("Property", selection: Binding(get: { r.targetPropertyID }, set: { id in
+                // BSD-17: a target that would roll this rollup up again (a loop) can't be picked.
+                guard !store.wouldCreateRollupCycle(database: db.id, property: p.id, relationPropertyID: r.relationPropertyID,
+                                                    targetPropertyID: id) else { return }
                 store.updateProperty(db.id, p.id, name: "Rollup") { $0.rollup?.targetPropertyID = id }
             })) {
-                ForEach(targetProps) { Text($0.name).tag($0.id) }
+                ForEach(targetProps) { t in
+                    let loop = store.wouldCreateRollupCycle(database: db.id, property: p.id,
+                                                           relationPropertyID: r.relationPropertyID, targetPropertyID: t.id)
+                    Text(loop ? "\(t.name) (would form a loop)" : t.name).tag(t.id)
+                        .foregroundStyle(loop ? Theme.secondary : Theme.primary)
+                        .selectionDisabled(loop)
+                }
+            }
+            if store.wouldCreateRollupCycle(database: db.id, property: p.id, relationPropertyID: r.relationPropertyID,
+                                            targetPropertyID: r.targetPropertyID) {
+                Text("This rollup reads itself through the relation (a loop). Its cells stay empty.")
+                    .font(.caption).foregroundStyle(.orange)
             }
             Picker("Calculate", selection: Binding(get: { r.function }, set: { f in
                 store.updateProperty(db.id, p.id, name: "Rollup") { $0.rollup?.function = f }

@@ -25,6 +25,18 @@ public final class QueryCache {
     }
 
     public var queryEngine: QueryEngine { engine }
+
+    /// Error of a formula / rollup cell (division by zero, cycle, too deep …), computing it if needed (BSD-17).
+    public func error(row: RecordID, prop: String) -> FormulaError? {
+        if revision != store.revision { results.removeAll(); engine.reset(); revision = store.revision }
+        _ = engine.value(row, prop)
+        return engine.error(row: row, prop: prop)
+    }
+
+    /// Whether any cell of this property failed in the values computed so far.
+    public func hasErrors(prop: String) -> Bool {
+        revision == store.revision && engine.failingProperties.contains(prop)
+    }
     public func invalidate() { results.removeAll(); engine.reset() }
 }
 

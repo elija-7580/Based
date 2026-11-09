@@ -150,6 +150,7 @@ extension View {
     @_disfavoredOverload public func badge<S: StringProtocol>(_ label: S?) -> _M { .init() }
     // interaction
     public func disabled(_ b: Bool) -> _M { .init() }
+    public func selectionDisabled(_ b: Bool = true) -> _M { .init() }
     public func allowsHitTesting(_ b: Bool) -> _M { .init() }
     public func contentShape<S: Shape>(_ shape: S, eoFill: Bool = false) -> _M { .init() }
     public func contentShape<S: Shape>(_ kind: ContentShapeKinds, _ shape: S, eoFill: Bool = false) -> _M { .init() }

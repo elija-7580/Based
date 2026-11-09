@@ -21,8 +21,20 @@ public final class QueryEngine {
     public var now: Date
     private var formulas: [String: Result<Formula, FormulaError>] = [:]
     private var memo: [String: Value] = [:]
-    private var evaluating: Set<String> = []
+    /// Formula / rollup cells being evaluated right now, innermost last (cycle and depth guard, BSD-17).
+    private var stack: [String] = []
+    private var onStack: Set<String> = []
+    /// Longest chain of formulas / rollups (also across relations) before evaluation stops with `.tooDeep`.
+    /// 32, not 64: each level costs several formula-evaluator frames, and 64 levels overflowed the 512 KB stack
+    /// of a non-main thread in tests (48 still passed).
+    public static let defaultMaxDepth = 32
+    public var maxDepth = QueryEngine.defaultMaxDepth
+    /// Last error per property id (any row).
     public private(set) var errors: [String: String] = [:]
+    /// Errors per cell (row id + property id): cycles, too deep, invalid arguments, division by zero.
+    private var cellErrors: [String: FormulaError] = [:]
+    /// Property ids with at least one failing cell.
+    public private(set) var failingProperties: Set<String> = []
 
     public init(store: WorkspaceStore, now: Date = Date()) {
         self.store = store
@@ -31,7 +43,7 @@ public final class QueryEngine {
 
     /// Drop memoized values (call after edits).
     public func reset(now: Date = Date()) {
-        memo.removeAll(); errors.removeAll(); self.now = now
+        memo.removeAll(); errors.removeAll(); cellErrors.removeAll(); failingProperties.removeAll(); self.now = now
     }
 
     // MARK: Values
@@ -42,14 +54,43 @@ public final class QueryEngine {
         return value(row, p, db)
     }
 
+    /// The error of a formula or rollup cell (after its value was computed), nil if it's fine.
+    public func error(row: RecordID, prop: String) -> FormulaError? { cellErrors[row + "\u{1}" + prop] }
+
+    private func fail(_ key: String, _ propID: String, _ e: FormulaError) {
+        // A cycle / depth error explains the cell best; follow-up errors (empty input) don't replace it.
+        if let old = cellErrors[key], old.kind == .cycle || old.kind == .tooDeep { return }
+        cellErrors[key] = e
+        errors[propID] = e.message
+        failingProperties.insert(propID)
+    }
+
     public func value(_ row: Block, _ p: PropertySchema, _ db: Database) -> Value {
         let key = row.id + "\u{1}" + p.id
         if let v = memo[key] { return v }
         let v: Value
         switch p.type {
         case .title: v = .string(row.text.plainText)
-        case .formula: v = formulaValue(row, p, db, key: key)
-        case .rollup: v = rollupValue(row, p, db)
+        case .formula, .rollup:
+            // One guard for formulas and rollups, across rows and relations: a cell already being evaluated
+            // is a cycle; a chain deeper than `maxDepth` stops. Both give an empty cell with an error.
+            if onStack.contains(key) {
+                // Every cell on the cycle is wrong, not only the one that noticed.
+                if let i = stack.lastIndex(of: key) {
+                    for k in stack[i...] { if let pid = k.split(separator: "\u{1}", maxSplits: 1).last { fail(k, String(pid), .cycle) } }
+                }
+                return .empty
+            }
+            guard stack.count < maxDepth else {
+                // The whole chain is cut off: mark every cell on it.
+                fail(key, p.id, .tooDeep)
+                for k in stack { if let pid = k.split(separator: "\u{1}", maxSplits: 1).last { fail(k, String(pid), .tooDeep) } }
+                return .empty
+            }
+            stack.append(key); onStack.insert(key)
+            let computed = p.type == .formula ? formulaValue(row, p, db, key: key) : rollupValue(row, p, db)
+            stack.removeLast(); onStack.remove(key)
+            if let e = cellErrors[key], e.kind == .cycle || e.kind == .tooDeep { v = .empty } else { v = computed }
         case .createdTime: v = .date(DateValue(start: row.createdAt, includeTime: true))
         case .lastEditedTime: v = .date(DateValue(start: row.updatedAt, includeTime: true))
         case .createdBy: v = row.createdBy.map(Value.person) ?? .empty
@@ -92,18 +133,22 @@ public final class QueryEngine {
         guard let src = p.formula, !src.trimmingCharacters(in: .whitespaces).isEmpty else { return .empty }
         switch compiled(src) {
         case .failure(let e):
-            errors[p.id] = e.message
+            fail(key, p.id, e)
             return .empty
         case .success(let f):
-            guard !evaluating.contains(key) else { errors[p.id] = "Circular reference"; return .empty }
-            evaluating.insert(key)
-            defer { evaluating.remove(key) }
             do {
-                return try f.evaluate(environment(row, db))
+                let v = try f.evaluate(environment(row, db))
+                // inf / NaN (e.g. ln(0), pow overflow) shows as an error, not as "inf".
+                if case .number(let n) = v, !n.isFinite {
+                    fail(key, p.id, FormulaError("Result is not a finite number", kind: .invalidArgument))
+                    return .empty
+                }
+                return v
             } catch let e as FormulaError {
-                errors[p.id] = e.message
+                fail(key, p.id, e)
                 return .empty
             } catch {
+                fail(key, p.id, FormulaError("\(error)"))
                 return .empty
             }
         }

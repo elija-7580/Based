@@ -863,3 +863,45 @@ public enum DateParsing {
         return s
     }
 }
+// MARK: Rollup cycles (BSD-17)
+
+@MainActor
+public extension WorkspaceStore {
+    /// Whether rolling up `targetPropertyID` through `relationPropertyID` in property `propertyID` of
+    /// `databaseID` would make the rollup depend on itself (e.g. two databases rolling up each other's rollup
+    /// over a two-way relation). Follows rollups across relations and `prop("…")` references in formulas.
+    /// The query engine survives such a loop (empty cells with an error); the settings use this to warn first.
+    func wouldCreateRollupCycle(database databaseID: RecordID, property propertyID: String,
+                                relationPropertyID: String, targetPropertyID: String) -> Bool {
+        guard let db = databases[databaseID], let rel = db.property(relationPropertyID),
+              let targetDB = rel.relation?.databaseID else { return false }
+        let start = (databaseID, propertyID)
+        var visited = Set<String>()
+        var todo: [(RecordID, String)] = [(targetDB, targetPropertyID)]
+        while let (dbID, pid) = todo.popLast() {
+            if dbID == start.0 && pid == start.1 { return true }
+            guard visited.insert(dbID + "\u{1}" + pid).inserted, let d = databases[dbID], let p = d.property(pid) else { continue }
+            switch p.type {
+            case .rollup:
+                if let cfg = p.rollup, let r = d.property(cfg.relationPropertyID), let next = r.relation?.databaseID {
+                    // The rollup being edited uses its new configuration.
+                    let target = (dbID == start.0 && pid == start.1) ? targetPropertyID : cfg.targetPropertyID
+                    todo.append((next, target))
+                }
+            case .formula:
+                for name in Self.formulaPropertyReferences(p.formula ?? "") {
+                    if let q = d.property(named: name) { todo.append((dbID, q.id)) }
+                }
+            default: break
+            }
+        }
+        return false
+    }
+
+    /// Property names a formula reads with `prop("…")` (approximation; enough for cycle warnings).
+    nonisolated static func formulaPropertyReferences(_ src: String) -> [String] {
+        guard let re = try? NSRegularExpression(pattern: #"prop\(\s*"((?:[^"\\]|\\.)*)"\s*\)"#) else { return [] }
+        let ns = src as NSString
+        return re.matches(in: src, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range(at: 1)) }
+    }
+}

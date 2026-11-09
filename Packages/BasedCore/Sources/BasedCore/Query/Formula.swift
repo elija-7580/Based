@@ -1,9 +1,35 @@
 import Foundation
 
 public struct FormulaError: Error, Equatable, CustomStringConvertible, Sendable {
+    public enum Kind: Sendable, Equatable {
+        case general, invalidArgument, divisionByZero, cycle, tooDeep
+    }
     public var message: String
-    public init(_ m: String) { message = m }
+    public var kind: Kind
+    public init(_ m: String, kind: Kind = .general) { message = m; self.kind = kind }
     public var description: String { message }
+
+    public static func invalidArgument(_ fn: String, _ detail: String) -> FormulaError {
+        FormulaError("\(fn)(): \(detail)", kind: .invalidArgument)
+    }
+    public static let divisionByZero = FormulaError("Division by zero", kind: .divisionByZero)
+    public static let cycle = FormulaError("Circular reference", kind: .cycle)
+    public static let tooDeep = FormulaError("Too many nested formulas or rollups", kind: .tooDeep)
+}
+
+/// Limits that keep user formulas from trapping or exhausting memory (BSD-17).
+enum FormulaLimits {
+    /// Largest magnitude accepted where a whole number is needed (indices, counts, date amounts).
+    static let maxInt = 1_000_000_000.0
+    /// Longest string `repeat` / `padStart` / `padEnd` may build.
+    static let maxStringLength = 100_000
+}
+
+/// A whole number from a formula number: rejects NaN, ±inf and values beyond ±1e9 instead of trapping.
+func formulaInt(_ d: Double, _ fn: String) throws -> Int {
+    guard d.isFinite else { throw FormulaError.invalidArgument(fn, "expected a finite number") }
+    guard abs(d) <= FormulaLimits.maxInt else { throw FormulaError.invalidArgument(fn, "number out of range") }
+    return Int(d.rounded(.towardZero))
 }
 
 // MARK: - Lexer
@@ -409,9 +435,11 @@ struct Evaluator {
         case "*": return .number(try num(a, "*") * (try num(b, "*")))
         case "/":
             let d = try num(b, "/")
+            guard d != 0 else { throw FormulaError.divisionByZero }
             return .number(try num(a, "/") / d)
         case "%":
             let d = try num(b, "%")
+            guard d != 0 else { throw FormulaError.divisionByZero }
             return .number(fmod(try num(a, "%"), d))
         case "^": return .number(pow(try num(a, "^"), try num(b, "^")))
         case "==": return .bool(equal(a, b))
@@ -527,6 +555,7 @@ struct Evaluator {
             return args[i]
         }
         func n(_ i: Int) throws -> Double { try num(try arg(i), name) }
+        func int(_ i: Int) throws -> Int { try formulaInt(try n(i), name) }
         func s(_ i: Int) throws -> String { str(try arg(i)) }
         func d(_ i: Int) throws -> DateValue { try date(try arg(i), name) }
         func numbers() throws -> [Double] {
@@ -546,8 +575,8 @@ struct Evaluator {
             return .number(Double(str(v).count))
         case "substring":
             let chars = Array(try s(0))
-            let a = max(0, min(chars.count, Int(try n(1))))
-            let b = args.count > 2 ? max(a, min(chars.count, Int(try n(2)))) : chars.count
+            let a = max(0, min(chars.count, try int(1)))
+            let b = args.count > 2 ? max(a, min(chars.count, try int(2))) : chars.count
             return .string(String(chars[a..<b]))
         case "contains":
             let v = try arg(0)
@@ -578,15 +607,23 @@ struct Evaluator {
         case "lower": return .string(try s(0).lowercased())
         case "upper": return .string(try s(0).uppercased())
         case "trim": return .string(try s(0).trimmingCharacters(in: .whitespacesAndNewlines))
-        case "repeat": return .string(String(repeating: try s(0), count: max(0, Int(try n(1)))))
+        case "repeat":
+            let text = try s(0)
+            let count = max(0, try int(1))
+            guard text.isEmpty || count <= FormulaLimits.maxStringLength / text.count else {
+                throw FormulaError.invalidArgument(name, "result longer than \(FormulaLimits.maxStringLength) characters")
+            }
+            return .string(String(repeating: text, count: count))
         case "padStart", "padEnd":
             var text = try s(0)
-            let len = Int(try n(1))
+            let len = try int(1)
+            guard len <= FormulaLimits.maxStringLength else {
+                throw FormulaError.invalidArgument(name, "result longer than \(FormulaLimits.maxStringLength) characters")
+            }
             let pad = args.count > 2 ? str(args[2]) : " "
-            guard !pad.isEmpty else { return .string(text) }
-            var padding = ""
-            while text.count + padding.count < len { padding += pad }
-            padding = String(padding.prefix(max(0, len - text.count)))
+            let needed = len - text.count
+            guard !pad.isEmpty, needed > 0 else { return .string(text) }
+            let padding = String(String(repeating: pad, count: needed / pad.count + 1).prefix(needed))
             text = name == "padStart" ? padding + text : text + padding
             return .string(text)
         case "link": return .string(try s(0))
@@ -614,9 +651,15 @@ struct Evaluator {
         case "add": return try binary("+", try arg(0), try arg(1))
         case "subtract": return .number(try n(0) - (try n(1)))
         case "multiply": return .number(try n(0) * (try n(1)))
-        case "divide": return .number(try n(0) / (try n(1)))
+        case "divide":
+            let d = try n(1)
+            guard d != 0 else { throw FormulaError.divisionByZero }
+            return .number(try n(0) / d)
         case "pow": return .number(pow(try n(0), try n(1)))
-        case "mod": return .number(fmod(try n(0), try n(1)))
+        case "mod":
+            let d = try n(1)
+            guard d != 0 else { throw FormulaError.divisionByZero }
+            return .number(fmod(try n(0), d))
         case "equal": return .bool(equal(try arg(0), try arg(1)))
         case "unequal": return .bool(!equal(try arg(0), try arg(1)))
         case "larger": return try binary(">", try arg(0), try arg(1))
@@ -667,8 +710,14 @@ struct Evaluator {
         case "year": return .number(Double(cal.component(.year, from: try d(0).start)))
         case "dateAdd", "dateSubtract":
             var dv = try d(0)
-            let amount = Int(try n(1)) * (name == "dateSubtract" ? -1 : 1)
+            let amount = try int(1) * (name == "dateSubtract" ? -1 : 1)
             let unit = try component(try s(2))
+            // |amount| ≤ 1e9 and unit.1 ≤ 1e6, so the product can't overflow; keep the shift within ±~30 000 years.
+            let secondsPerUnit: Double = [.year: 31_556_952, .month: 2_629_746, .day: 86_400, .hour: 3_600,
+                                          .minute: 60, .second: 1, .nanosecond: 1e-9][unit.0] ?? 1
+            guard abs(Double(amount * unit.1) * secondsPerUnit) <= 1e12 else {
+                throw FormulaError.invalidArgument(name, "amount out of range")
+            }
             dv.start = cal.date(byAdding: unit.0, value: amount * unit.1, to: dv.start) ?? dv.start
             if let e = dv.end { dv.end = cal.date(byAdding: unit.0, value: amount * unit.1, to: e) }
             if unit.0 == .hour || unit.0 == .minute || unit.0 == .second { dv.includeTime = true }
@@ -718,21 +767,21 @@ struct Evaluator {
             return .string(str(args[0]))
         case "at":
             let l = try arg(0).list
-            var i = Int(try n(1))
+            var i = try int(1)
             if i < 0 { i += l.count }
             return i >= 0 && i < l.count ? l[i] : .empty
         case "first": return try arg(0).list.first ?? .empty
         case "last": return try arg(0).list.last ?? .empty
         case "slice":
             let l = try arg(0).list
-            var a = Int(try n(1)); if a < 0 { a += l.count }
-            var b = args.count > 2 ? Int(try n(2)) : l.count; if b < 0 { b += l.count }
+            var a = try int(1); if a < 0 { a += l.count }
+            var b = args.count > 2 ? try int(2) : l.count; if b < 0 { b += l.count }
             a = max(0, min(a, l.count)); b = max(a, min(b, l.count))
             return .list(Array(l[a..<b]))
         case "splice":
             var l = try arg(0).list
-            let a = max(0, min(Int(try n(1)), l.count))
-            let count = args.count > 2 ? max(0, min(Int(try n(2)), l.count - a)) : l.count - a
+            let a = max(0, min(try int(1), l.count))
+            let count = args.count > 2 ? max(0, min(try int(2), l.count - a)) : l.count - a
             l.removeSubrange(a..<(a + count))
             l.insert(contentsOf: args.dropFirst(3), at: a)
             return .list(l)

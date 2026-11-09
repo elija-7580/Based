@@ -66,7 +66,16 @@ struct PropertyValueView: View {
         case .number:
             if case .number(let n) = value { Text(CellFormatter.number(n, property.numberFormat)).monospacedDigit() }
         case .formula, .rollup:
-            computed
+            if value.isEmpty, let e = model.queryCache.error(row: row.id, prop: property.id) {
+                // BSD-17: a failing formula / rollup shows an empty cell with a warning, not "inf" or a crash.
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .help(e.message)
+                    .accessibilityLabel("Formula error: \(e.message)")
+            } else {
+                computed
+            }
         case .button:
             Text(property.name).padding(.horizontal, 6).padding(.vertical, 2)
                 .background(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))

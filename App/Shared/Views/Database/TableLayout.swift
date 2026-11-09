@@ -463,6 +463,7 @@ struct TableHeader: View {
 /// Column header (Notion): gray type icon + name, hover fill; click for the property menu. The right edge is a
 /// 12 pt resize handle with the resize cursor and a blue line, and the whole column follows the drag live.
 struct HeaderCell: View {
+    @Environment(AppModel.self) private var model
     let ctx: DBContext
     let property: PropertySchema
     let columns: TableColumnWidths
@@ -479,6 +480,12 @@ struct HeaderCell: View {
                     .font(.system(size: 12, weight: .regular))
                     .frame(width: 16)
                 Text(property.name).lineLimit(1)
+                if (property.type == .formula || property.type == .rollup), model.queryCache.hasErrors(prop: property.id) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.orange)
+                        .help(model.queryCache.queryEngine.errors[property.id] ?? "Some cells have errors")
+                }
             }
             .padding(.horizontal, 8)
             .frame(width: w, height: 33, alignment: .leading)
