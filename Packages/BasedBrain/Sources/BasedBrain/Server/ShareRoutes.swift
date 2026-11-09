@@ -38,6 +38,9 @@ enum ShareRoutes {
         }
         r.add("GET", "/p/*", access: .public) { ctx in await published(ctx.request.path, share: share, store: store) }
         r.add("GET", "/p/*/*", access: .public) { ctx in await published(ctx.request.path, share: share, store: store) }
+        r.add("GET", "/p/*/*/html/*", access: .public) { ctx in
+            await publishedHTMLBlock(linkID: ctx.captures[0], blockID: ctx.captures[2], share: share, store: store)
+        }
         r.add("POST", "/share/v1/invites/accept", access: .public) { ctx in
             let body = (try? JSONValue.parse(ctx.request.body)) ?? .object([:])
             let result: Result<(ShareUser, String, RecordID), ShareError> = await MainActor.run {
@@ -190,15 +193,32 @@ enum ShareRoutes {
             guard let link = share.publishedLink(id: parts[1]) else { return nil }
             let target = parts.count >= 3 ? parts[2] : link.pageID
             guard let b = store.blocks[target], b.trashedAt == nil, share.role(of: .link(link), on: .block(b)) != nil else { return nil }
-            let exporter = HTMLExporter(store: store) { id in
+            var exporter = HTMLExporter(store: store) { id in
                 guard let p = store.blocks[id], share.role(of: .link(link), on: .block(p)) != nil else { return nil }
                 return (store.title(of: id), "/p/\(link.id)/\(id)")
             }
+            exporter.htmlBlockURL = { blockID in "/p/\(link.id)/\(target)/html/\(blockID)" }
             return exporter.export(page: target)
         }
         guard let out else { return .text("This page isn't published.", status: 404) }
         // BSD-35: CSP; MathJax/Mermaid come from jsDelivr, embeds/video/audio from https.
         return WebSecurity.page(out, scriptSources: ["https://cdn.jsdelivr.net"], embeds: true)
+    }
+
+    /// One HTML block of a published page as its own document. `sandbox allow-scripts` without allow-same-origin
+    /// gives it an opaque origin: its scripts run, but can't read this origin's storage (where /app keeps its
+    /// token) or call its API — the isolation the srcdoc frame has in exported files.
+    static func publishedHTMLBlock(linkID: String, blockID: String, share: ShareService, store: WorkspaceStore) async -> HTTPServer.Response {
+        let source: String? = await MainActor.run {
+            guard let link = share.publishedLink(id: linkID), let b = store.blocks[blockID], b.trashedAt == nil, b.type == .code,
+                  (b.props.language ?? "").lowercased() == "html", share.role(of: .link(link), on: .block(b)) != nil else { return nil }
+            return b.text.plainText
+        }
+        guard let source else { return .text("Not found", status: 404) }
+        return HTTPServer.Response(status: 200, headers: [
+            "Content-Type": "text/html; charset=utf-8", "Content-Security-Policy": "sandbox allow-scripts",
+            "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex",
+        ], body: Data(source.utf8))
     }
 
     /// Universal Links: BASED_APPLE_APP_ID = "<TeamID>.<bundle id>" makes /s/* and /p/* open in the Based app.

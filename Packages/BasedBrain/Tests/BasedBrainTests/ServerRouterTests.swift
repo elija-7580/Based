@@ -67,10 +67,39 @@ import Darwin
         let f = try fixture()
         let open = Set(f.router.routes.filter { $0.access == .public }.map { "\($0.method) \($0.pattern)" })
         #expect(open == ["GET /health", "GET /", "GET /mcp", "GET /app", "GET /.well-known/apple-app-site-association",
-                         "GET /s/*", "GET /p/*", "GET /p/*/*", "POST /share/v1/invites/accept"])
+                         "GET /s/*", "GET /p/*", "GET /p/*/*", "GET /p/*/*/html/*", "POST /share/v1/invites/accept"])
         let configured = Set(f.router.routes.filter { $0.access == .ownerConfigured }.map(\.pattern))
         #expect(configured == ["/sandboxes", "/sandboxes/*/snapshot", "/sandboxes/*/restore", "/sandboxes/*/destroy"])
         #expect(f.router.routes.filter { $0.access == .session }.map(\.pattern) == ["/mcp/session/*"])
+    }
+
+    // MARK: Published pages
+
+    /// HTML blocks on published pages: the page's nonce CSP would block a srcdoc frame's scripts, so the block loads
+    /// from its own URL in a CSP sandbox (opaque origin) – and only blocks inside the published page are served.
+    @Test func publishedHTMLBlocksLoadSandboxedFromTheirOwnURL() async throws {
+        let f = try fixture()
+        let page = f.store.createPage(title: "Published")
+        var props = BlockProps(); props.language = "html"
+        let block = f.store.insertBlock(.code, text: "<script>document.body.textContent = 1</script>", props: props, in: .block(page))
+        let other = f.store.createPage(title: "Private")
+        let secret = f.store.insertBlock(.code, text: "<b>private</b>", props: props, in: .block(other))
+        let link = try f.share.createLink(.publish, pageID: page, role: .view, by: .owner).link
+
+        let html = await f.router.handle(req("GET", "/p/\(link.id)"))
+        #expect(html.status == 200)
+        let body = String(decoding: html.body, as: UTF8.self)
+        #expect(body.contains("src=\"/p/\(link.id)/\(page)/html/\(block)\""))
+        #expect(!body.contains("srcdoc="))
+        #expect(html.headers["Content-Security-Policy"]?.contains("frame-src 'self' https:") == true)
+
+        let frame = await f.router.handle(req("GET", "/p/\(link.id)/\(page)/html/\(block)"))
+        #expect(frame.status == 200)
+        #expect(frame.headers["Content-Security-Policy"] == "sandbox allow-scripts")
+        #expect(String(decoding: frame.body, as: UTF8.self).contains("<script>"))
+
+        #expect(await f.router.handle(req("GET", "/p/\(link.id)/\(page)/html/\(secret)")).status == 404, "outside the published page")
+        #expect(await f.router.handle(req("GET", "/p/unknown/\(page)/html/\(block)")).status == 404)
     }
 
     // MARK: Existing behaviour

@@ -15,6 +15,11 @@ public struct HTMLExporter {
     /// Pages put their title in <h1>, so block headings start at <h2>; clipboard HTML keeps H1 = h1 (offset 0).
     public var headingOffset = 1
 
+    /// Published pages (based-server): HTML blocks load from this URL instead of an inline `srcdoc`. A srcdoc
+    /// frame inherits the page's nonce CSP, which blocks its scripts; the URL is served with its own
+    /// `sandbox allow-scripts` CSP (opaque origin), so the block runs without reaching the page's origin.
+    public var htmlBlockURL: ((RecordID) -> String)?
+
     public init(store: WorkspaceStore, pageLink: ((RecordID) -> (title: String, url: String)?)? = nil) {
         self.store = store
         self.pageLink = pageLink ?? { id in
@@ -138,6 +143,9 @@ public struct HTMLExporter {
             let source = b.text.plainText
             if lang == "html" {
                 // Live, sandboxed (scripts run, but can't reach this page or its storage).
+                if let url = htmlBlockURL?(b.id) {
+                    return "<figure class=\"html-block\"><iframe sandbox=\"allow-scripts\" loading=\"lazy\" src=\"\(Self.escapeAttribute(url))\"></iframe></figure>\n"
+                }
                 return "<figure class=\"html-block\"><iframe sandbox=\"allow-scripts\" loading=\"lazy\" srcdoc=\"\(Self.escapeAttribute(source))\"></iframe></figure>\n"
             }
             if lang == "mermaid" {

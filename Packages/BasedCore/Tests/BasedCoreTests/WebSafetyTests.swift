@@ -63,3 +63,20 @@ import Testing
         if case .emoji(let e)? = page.props.icon { #expect(!e.contains("<") && e.count == 1) }
     }
 }
+
+/// Published pages: HTML blocks can load from a URL (sandboxed by the server) instead of srcdoc.
+@MainActor
+@Suite struct HTMLBlockURLTests {
+    @Test func htmlBlockUsesURLWhenSet() {
+        let s = WorkspaceStore(persistence: MemoryPersistence(), node: "test")
+        let page = s.createPage(title: "P")
+        var html = BlockProps(); html.language = "html"
+        let block = s.insertBlock(.code, text: "<b>x</b>", props: html, in: .block(page))
+        #expect(HTMLExporter(store: s).export(page: page).contains("srcdoc="), "files keep srcdoc")
+        var e = HTMLExporter(store: s)
+        e.htmlBlockURL = { id in "/p/L/\(page)/html/\(id)" }
+        let out = e.export(page: page)
+        #expect(out.contains("<iframe sandbox=\"allow-scripts\" loading=\"lazy\" src=\"/p/L/\(page)/html/\(block)\">"))
+        #expect(!out.contains("srcdoc="))
+    }
+}

@@ -107,7 +107,9 @@ function rich(t) {
 }
 function block(id) { return S.recs.get("block:" + id); }
 function title(id) { const b = block(id); return (b && plain(b.text)) || "Untitled"; }
-function icon(b) { const i = b && b.props && b.props.icon; return i && typeof i.emoji === "string" ? esc([...i.emoji].slice(0, 8).join("")) : ""; }
+// Emoji icons sync as a plain string ("🚀"); {emoji: "🚀"} is accepted too. Either way: escaped, at most 8 characters.
+function icon(b) { const i = b && b.props && b.props.icon; const e = typeof i === "string" ? i : (i && typeof i.emoji === "string" ? i.emoji : "");
+  return e ? esc([...e].slice(0, 8).join("")) : ""; }
 function children(key) { return (S.kids.get(key) || []).map(block).filter(b => b && !b.trashedAt); }
 
 function index() {
@@ -399,7 +401,7 @@ enum WebSecurity {
                  "img-src 'self' data: https:",
                  "connect-src 'self'",
                  "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'"]
-        if embeds { p += ["frame-src https:", "media-src 'self' https: data:", "font-src 'self' https: data:"] }
+        if embeds { p += ["frame-src 'self' https:", "media-src 'self' https: data:", "font-src 'self' https: data:"] }
         return p.joined(separator: "; ")
     }
 
