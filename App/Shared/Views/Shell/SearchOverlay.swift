@@ -52,6 +52,8 @@ struct SearchOverlay: View {
     @State private var sort: SearchSort = .bestMatch
     @State private var highlighted = 0
     @State private var rows: [Row] = []
+    /// BSD-62: the semantic half of a search arrives after the keyword hits (the query has to be embedded first).
+    @State private var semanticTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -260,6 +262,7 @@ struct SearchOverlay: View {
                     let section = sort == .bestMatch ? "Best matches" : Self.bucket(model.store.blocks[h.pageID]?.updatedAt ?? .distantPast)
                     out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: section))
                 }
+                addSemanticHits(q, filters: f)
             }
         case .chats:
             for c in happier.chats where q.isEmpty || c.title.localizedCaseInsensitiveContains(q) {
@@ -268,6 +271,24 @@ struct SearchOverlay: View {
         }
         rows = out
         if !q.isEmpty, out.count > 1, highlighted == 0 { highlighted = 1 }   // first real hit, "Ask AI" stays one ↑ away
+    }
+
+    /// BSD-62: keyword and meaning merged (Reciprocal Rank Fusion) once the query is embedded; replaces the page rows
+    /// if the query is still the same. Pages found only by meaning show their best-matching section as snippet.
+    private func addSemanticHits(_ q: String, filters: SearchFilters) {
+        semanticTask?.cancel()
+        guard let service = model.semantic, service.context != nil, !titleOnly, sort == .bestMatch else { return }
+        let hybrid = service.hybrid()
+        semanticTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 150_000_000)   // typing: wait for a pause
+            guard !Task.isCancelled else { return }
+            let hits = await hybrid.search(q, filters: filters, limit: 60)
+            guard !Task.isCancelled, scope == .pages, query.trimmingCharacters(in: .whitespacesAndNewlines) == q else { return }
+            var out = rows.filter { if case .page = $0.kind { return false } else { return true } }
+            for h in hits { out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: "Best matches")) }
+            rows = out
+            if out.count > 1, highlighted == 0 { highlighted = 1 }
+        }
     }
 
     /// Notion's date groups.

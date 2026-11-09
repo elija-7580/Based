@@ -109,6 +109,7 @@ struct PageScreen: View {
                         DatabaseBlockView(blockID: pageID, fullPage: true)
                     } else {
                         BlockList(parentID: pageID, editor: editor, lazyWhenLong: true)
+                        if !isPeek { RelatedPagesView(pageID: pageID) }
                         Color.clear
                             .frame(height: 160)
                             .frame(maxWidth: .infinity)

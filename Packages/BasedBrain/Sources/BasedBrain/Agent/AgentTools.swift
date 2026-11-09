@@ -8,12 +8,14 @@ public final class AgentTools {
     public let store: WorkspaceStore
     public let brain: BrainStore
     public init(store: WorkspaceStore, brain: BrainStore) { self.store = store; self.brain = brain }
+    /// BSD-62: semantic index + embedding model; when set, `search` also finds pages by meaning (`semanticSearchCall`).
+    public var semantic: SemanticContext?
 
     public var specs: [ToolSpec] {
         [
             ToolSpec(name: "based_guide", description: "How Based works (read once before bigger edits): topics overview, markdown, databases, agents, safety.",
                      inputSchema: .schema(["topic": .str("overview | markdown | databases | agents | safety")], required: ["topic"])),
-            ToolSpec(name: "search", description: "Search pages and database rows by title and full text. Returns ids, titles and snippets.",
+            ToolSpec(name: "search", description: "Search pages and database rows by title and full text (and by meaning when the semantic index is on). Returns ids, titles and snippets.",
                      inputSchema: .schema(["query": .str("Search text"), "limit": .num("Max results (default 20)")], required: ["query"])),
             ToolSpec(name: "read_page", description: "Read a page as Markdown, including its properties when it is a database row. block_ids: true puts [block:<id>] before each top-level block (for citing).",
                      inputSchema: .schema(["page_id": .str("Page id"), "block_ids": .boolean("Prefix each top-level block with its id (default false)")], required: ["page_id"])),
@@ -124,6 +126,7 @@ public final class AgentTools {
     public func callAsync(_ name: String, _ args: JSONValue) async -> ToolResult {
         if isHost(name), let h = hostCall, let r = await h(name, args) { return r }
         if isExternal(name), let e = externalCall, let r = await e(name, args) { return r }
+        if let r = await semanticSearchCall(name, args) { return r }
         return call(name, args)
     }
 
