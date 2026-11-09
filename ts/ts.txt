@@ -1,35 +1,64 @@
 packages/design-tokens test: [2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+packages/ui test: [2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
+packages/core test:   export     14/14 grün
 packages/core test:   formulas   143/143 grün
 packages/core test:   hlc        74/74 grün
+packages/core test:   import     22/22 grün
 packages/core test:   merge      13/13 grün
 packages/core test:   queries    88/88 grün
 packages/core test:   records    66/66 grün
-packages/core test:   search     33/33 grün
+packages/core test:   reimport   8/8 grün
+packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1039 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1040)[39m
-packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-apps/web test: [2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+packages/core test: [2m      Tests [22m [1m[32m1351 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1352)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m12 passed[39m[22m[90m (12)[39m
 packages/sync test: [2m      Tests [22m [1m[32m26 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (29)[39m
+packages/editor test: [2m      Tests [22m [1m[32m22 passed[39m[22m[90m (22)[39m
 apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+apps/web test: [2m      Tests [22m [1m[32m17 passed[39m[22m[90m (17)[39m
 --- e2e
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-> @based/web@0.0.0 e2e /home/runner/work/Based/Based/apps/web
-> playwright test
+Running 22 tests using 2 workers
 
+  ✓   2 [chromium] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (1.9s)
+  ✓   1 [chromium] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da (2.2s)
+  ✓   4 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (977ms)
+  ✓   3 [chromium] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (1.8s)
+  ✓   5 [chromium] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (598ms)
+  ✓   7 [chromium] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (1.2s)
+  ✓   8 [chromium] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (702ms)
+[chromium] Quick Find (Hin und zurück zum Worker, ms): 2.5, 5.3, 6.5, 7.4, 13.9
+  ✓   6 [chromium] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (2.1s)
+[chromium] Seitenleiste 5.000 Seiten: {"count":179,"p50":16.699999999999818,"p95":16.800000000000182,"max":16.800000000000182,"maxRows":29,"total":160064}
+  ✓   9 [chromium] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (4.5s)
+  ✓  11 [chromium] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (2.6s)
+  ✓  10 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da (6.9s)
+  ✓  12 [chromium] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (1.1s)
+  ✓  14 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (2.4s)
+  ✓  15 [webkit] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.3s)
+  ✓  13 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (7.7s)
+  ✓  16 [webkit] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (4.0s)
+  ✓  17 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (4.4s)
+  ✓  18 [webkit] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (2.3s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 4, 5, 6, 9, 9
+  ✓  19 [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (1.9s)
+[webkit] Seitenleiste 5.000 Seiten: {"count":179,"p50":16,"p95":17,"max":24,"maxRows":29,"total":160064}
+  ✓  20 [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (4.4s)
+  ✓  21 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (3.0s)
+  ✓  22 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (1.7s)
 
-Running 8 tests using 2 workers
-
-  ✓  2 [chromium] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (300ms)
-  ✓  3 [chromium] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (216ms)
-  ✓  4 [chromium] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (672ms)
-  ✓  5 [chromium] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (276ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (2.9s)
-  ✓  6 [webkit] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.5s)
-  ✓  7 [webkit] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (1.7s)
-  ✓  8 [webkit] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (1.2s)
-
-  8 passed (11.5s)
+  22 passed (43.7s)
