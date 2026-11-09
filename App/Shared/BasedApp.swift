@@ -8,35 +8,55 @@ import AppKit
 @main
 struct BasedApp: App {
     @State private var model = AppModel()
-    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
     #if os(macOS)
     /// BSD-64: menu bar icon for quick capture (Settings → Capture).
     @AppStorage(QuickCapturePrefs.menuBar) private var showCaptureInMenuBar = true
     #endif
 
+    // BSD-135 (hang on start, 09.11.): this body must stay cheap and must not read the model. Every re-evaluation
+    // of the App body rebuilt the whole window content (environment pushed through every Text and NSTextView of
+    // a large page); together with the MenuBarExtra writing its `isInserted` binding back on each scene update
+    // that became an endless loop at 100 % CPU. The window content lives in `MainWindowRoot` (its own view: an
+    // App body re-evaluation is a cheap struct comparison there), and the binding only writes real changes.
     var body: some Scene {
         #if os(macOS)
         // One main window: the app has one model (tabs, active editor, chat), so a second window showed the
         // same page with its own editor — and every based:// link (deep links, the debug driver) opened
         // another one through WindowGroup. `Window` is single-instance and receives the URLs itself.
-        Window("Based", id: "main") { root }
+        Window("Based", id: "main") { MainWindowRoot(model: $model) }
             .defaultSize(width: 1240, height: 820)
             .windowResizability(.contentMinSize)
             // Notion-style chrome: content runs under the (hidden) title bar; MacTitleBar draws tabs + controls.
             .windowStyle(.hiddenTitleBar)
             .commands { BasedCommands(model: model) }
-        MenuBarExtra("Capture a Thought", systemImage: "square.and.pencil", isInserted: $showCaptureInMenuBar) {
+        MenuBarExtra("Capture a Thought", systemImage: "square.and.pencil", isInserted: menuBarInserted) {
             QuickCaptureMenuBarContent(model: model)
         }
         .menuBarExtraStyle(.window)
         #else
-        WindowGroup { root }
+        WindowGroup { MainWindowRoot(model: $model) }
             .commands { BasedCommands(model: model) }
         #endif
         // No separate Settings window: ⌘, opens Settings inside the main window (see BasedCommands).
     }
 
-    private var root: some View {
+    #if os(macOS)
+    /// Writes only real changes: AppKit reports the status item's visibility back on every scene update, and an
+    /// @AppStorage write invalidates the App body even when the value is the same.
+    private var menuBarInserted: Binding<Bool> {
+        Binding(get: { showCaptureInMenuBar },
+                set: { if $0 != showCaptureInMenuBar { showCaptureInMenuBar = $0 } })
+    }
+    #endif
+}
+
+/// The main window's content with the app-wide environment. A separate view so that the App body (scenes, menus,
+/// menu bar extra) can be re-evaluated without rebuilding and re-propagating the environment of every page view.
+struct MainWindowRoot: View {
+    @Binding var model: AppModel
+    @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+
+    var body: some View {
         RootView()
             .environment(model)
             .environment(model.brain)
