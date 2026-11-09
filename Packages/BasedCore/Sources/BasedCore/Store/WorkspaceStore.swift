@@ -153,10 +153,22 @@ public protocol Persistence: AnyObject {
     func setMeta(_ key: String, _ value: Data?)
     /// Throws if the storage can't be written right now (used by `WorkspaceStore.retryWrites`).
     func checkWritable() throws
+    /// `loadAll` plus the keys of stored rows that couldn't be decoded (default: none).
+    func loadAllReporting() throws -> LoadResult
 }
 
 extension Persistence {
     public func checkWritable() throws { try write(upserts: [], deletions: []) }
+    public func loadAllReporting() throws -> LoadResult { LoadResult(records: try loadAll()) }
+}
+
+/// Result of loading a workspace: the records plus rows that couldn't be decoded (key → error text).
+public struct LoadResult {
+    public var records: [Record] = []
+    public var undecodable: [RecordKey: String] = [:]
+    public init(records: [Record] = [], undecodable: [RecordKey: String] = [:]) {
+        self.records = records; self.undecodable = undecodable
+    }
 }
 
 /// Errors of `WorkspaceStore.tryTransact`.
@@ -235,6 +247,10 @@ public final class WorkspaceStore {
     private var deferredRemote: [(records: [Record], deletions: [RecordKey])] = []
     /// The initial load failed: `retryWrites` loads again before accepting changes.
     private var loadFailed = false
+    /// Stored records this app version can't decode (newer app, unknown block type, decoding bug). They stay
+    /// untouched on disk and are never synced as deletions (BSD-16). A decodable copy that arrives by sync
+    /// replaces the row and leaves this set.
+    public private(set) var frozenKeys: Set<RecordKey> = []
     /// Monotonic counter bumped on every committed change (local, remote, undo). Use as a cache key.
     public private(set) var revision: Int = 0
     /// `topLevelPages()` memo (the workspace level also holds every trashed import — thousands of records the
@@ -279,7 +295,9 @@ public final class WorkspaceStore {
         var loadedWorkspace = false
         if let persistence {
             do {
-                loadedWorkspace = bulkLoad(try persistence.loadAll())
+                let loaded = try persistence.loadAllReporting()
+                noteUndecodable(loaded.undecodable)
+                loadedWorkspace = bulkLoad(loaded.records)
             } catch {
                 // Don't write anything into a database we couldn't read: start read-only with an in-memory
                 // workspace and let `retryWrites()` load again.
@@ -294,6 +312,15 @@ public final class WorkspaceStore {
         if !loadedWorkspace {
             transact("Create workspace", undoable: false) { tx in tx.put(Workspace()) }
         }
+    }
+
+    private func noteUndecodable(_ undecodable: [RecordKey: String]) {
+        guard !undecodable.isEmpty else { return }
+        frozenKeys.formUnion(undecodable.keys)
+        let sample = undecodable.sorted { $0.key.description < $1.key.description }.prefix(5)
+            .map { "\($0.key): \($0.value)" }.joined(separator: " · ")
+        Log.error("\(undecodable.count) records could not be decoded and are kept unchanged (not synced): \(sample)",
+                  category: "store", metadata: ["count": String(undecodable.count)])
     }
 
     // MARK: Lookup
@@ -489,7 +516,9 @@ public final class WorkspaceStore {
         do {
             try persistence.checkWritable()
             if loadFailed {
-                let records = try persistence.loadAll()
+                let loaded = try persistence.loadAllReporting()
+                noteUndecodable(loaded.undecodable)
+                let records = loaded.records
                 loadFailed = false
                 lastError = nil
                 writeFailure = nil
@@ -594,7 +623,9 @@ public final class WorkspaceStore {
         }
         let tx = Tx(store: self)
         var stale: [RecordKey] = []
+        var unfrozen: [RecordKey] = []
         for r in records {
+            if frozenKeys.contains(r.key) { unfrozen.append(r.key) }
             clock.observe(r.stamp)
             if let local = record(r.key) {
                 if local == r { continue }
@@ -607,6 +638,7 @@ public final class WorkspaceStore {
             deferredRemote.append((records, deletions))
             return []
         }
+        for k in unfrozen { frozenKeys.remove(k) }
         return stale
     }
 

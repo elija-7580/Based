@@ -91,6 +91,8 @@ public final class CloudSync: CKSyncEngineDelegate {
         guard let engine, !keys.isEmpty else { return }
         var changes: [CKSyncEngine.PendingRecordZoneChange] = []
         for k in keys {
+            // A row this version can't decode is missing from memory but not deleted (BSD-16).
+            if store.frozenKeys.contains(k) { continue }
             if store.record(k) != nil { changes.append(.saveRecord(recordID(k))) }
             else { changes.append(.deleteRecord(recordID(k))); meta?.setMeta(Self.systemPrefix + k.description, nil) }
         }

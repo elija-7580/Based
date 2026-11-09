@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import BasedCore
+@testable import BasedCore
 @testable import BasedBrain
 
 /// Sync v2 end to end: a server and two clients, each on its own SQLite file, talking JSON through the
@@ -120,6 +120,54 @@ struct SyncV2Tests {
         await c.syncNow()
         #expect(c.usesV2 == false)
         #expect(paths.contains("/sync/push") && paths.contains("/sync/pull"))
+    }
+
+    /// BSD-16: a row a client can't decode (newer app, decoding bug) is never pushed as a deletion.
+    @Test func frozenRecordIsNeverPushedAsDeletion() async throws {
+        let srvStore = try store("server")
+        let server = SyncServer(store: srvStore)
+        let url = dir.appendingPathComponent("a.sqlite")
+        let a = try store("a")
+        let page = a.createPage(title: RichText("Shared"))
+        let line = a.insertBlock(.text, text: RichText("from the future"), in: .block(page), at: .end)
+        await client(a, server: server).syncNow()
+        #expect(srvStore.blocks[line] != nil)
+
+        // The row becomes undecodable on A (and is logged as a fresh local change, like a newer app would).
+        let pa = a.persistence as! SQLitePersistence
+        try pa.writeRawRow(kind: .block, id: line, data: Data("{\"type\":\"futureBlock\"".utf8))
+        let reopened = WorkspaceStore(persistence: try SQLitePersistence(url: url), node: "a")
+        #expect(reopened.frozenKeys.contains(RecordKey(.block, line)))
+        let log = Box()
+        await client(reopened, server: server, log: log).syncNow()
+        #expect(srvStore.blocks[line]?.text.plainText == "from the future")
+
+        // A real deletion still travels.
+        reopened.deleteBlocks([page])
+        reopened.purgeTrash(olderThan: 0, now: Date().addingTimeInterval(3600))
+        await client(reopened, server: server).syncNow()
+        #expect(srvStore.blocks[page] == nil)
+    }
+
+    /// BSD-16: a row the server can't decode is skipped when clients pull, not served as a deletion.
+    @Test func frozenRecordOnServerIsNeverPulledAsDeletion() async throws {
+        let srvURL = dir.appendingPathComponent("server.sqlite")
+        let srvStore = try store("server")
+        let a = try store("a"), b = try store("b")
+        let page = a.createPage(title: RichText("Kept"))
+        await client(a, server: SyncServer(store: srvStore)).syncNow()
+        await client(b, server: SyncServer(store: srvStore)).syncNow()
+        #expect(b.blocks[page] != nil)
+
+        let ps = srvStore.persistence as! SQLitePersistence
+        try ps.writeRawRow(kind: .block, id: page, data: Data("broken".utf8))
+        let server2 = SyncServer(store: WorkspaceStore(persistence: try SQLitePersistence(url: srvURL), node: "server"))
+        #expect(server2.store.frozenKeys.contains(RecordKey(.block, page)))
+        let pageOfChanges = server2.pullPage(after: 0)
+        #expect(!pageOfChanges.deletions.contains(RecordKey(.block, page)))
+        await client(b, server: server2).syncNow()
+        #expect(b.blocks[page]?.text.plainText == "Kept")
+        #expect(ps.rawRow(RecordKey(.block, page)) == Data("broken".utf8))
     }
 }
 

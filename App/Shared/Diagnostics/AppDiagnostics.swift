@@ -119,6 +119,8 @@ enum AppDiagnostics {
             else if let f = model.store.writeFailure { storage = "read-only since \(f.since.formatted(date: .omitted, time: .standard)) — \(f.message) · \(f.rejected) changes rejected" }
             else { storage = "writable · \(model.dataDirectory.path)" }
             r.facts.append(.init("Storage", storage))
+            // BSD-16: rows this version can't decode (kept on disk, not synced).
+            r.facts.append(.init("Undecodable records", String(model.store.frozenKeys.count)))
         }
         r.previousRun = CrashReporter.previousCrash?.report
         r.hangs = HangWatchdog.shared.hangs.map(\.report)

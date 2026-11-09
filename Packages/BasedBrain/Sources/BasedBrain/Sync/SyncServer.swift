@@ -134,7 +134,8 @@ extension SyncServer {
         let page = entries.prefix(limit)
         var records: [Record] = [], deletions: [RecordKey] = []
         for e in page {
-            if !e.deleted, let r = store.record(e.key) { records.append(r) } else { deletions.append(e.key) }
+            // Only an explicit deletion is a deletion: a row this server can't decode is skipped (BSD-16).
+            if e.deleted { deletions.append(e.key) } else if let r = store.record(e.key) { records.append(r) }
         }
         return SyncPage(records: records, deletions: deletions, next: page.last?.seq ?? after, more: entries.count > limit)
     }
@@ -278,11 +279,19 @@ public final class ServerSync {
             let mine = entries.filter(\.local)
             if !mine.isEmpty {
                 var records: [Record] = [], deletions: [RecordKey] = []
+                var skipped = 0
                 for e in mine {
-                    if !e.deleted, let r = store.record(e.key) { records.append(r) } else { deletions.append(e.key) }
+                    // Only an explicit deletion is a deletion. A logged change whose record isn't in memory is
+                    // a row this version can't decode (frozen): never push it as a deletion (BSD-16).
+                    if e.deleted { deletions.append(e.key) }
+                    else if let r = store.record(e.key) { records.append(r) }
+                    else { skipped += 1 }
                 }
-                let reply: SyncPushReply = try await post("sync/v2/push", SyncPush(records: records, deletions: deletions))
-                if !reply.newer.isEmpty { store.applyRemote(reply.newer) }
+                if skipped > 0 { Log.warning("Sync: \(skipped) undecodable records not pushed", category: "sync") }
+                if !records.isEmpty || !deletions.isEmpty {
+                    let reply: SyncPushReply = try await post("sync/v2/push", SyncPush(records: records, deletions: deletions))
+                    if !reply.newer.isEmpty { store.applyRemote(reply.newer) }
+                }
             }
             pushed = last.seq
             writeSeq(Self.pushedKey, pushed)
