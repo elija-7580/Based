@@ -34,7 +34,7 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 2 tests using 2 workers
 
-  ✓  1 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (157ms)
-  ✓  2 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (3.6s)
+  ✓  1 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (176ms)
+  ✓  2 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (577ms)
 
-  2 passed (6.7s)
+  2 passed (3.7s)
