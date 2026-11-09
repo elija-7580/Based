@@ -17,6 +17,7 @@ mod Combine "$TC/stubs/Combine.swift"
 mod CoreGraphics "$TC/stubs/CoreGraphics.swift"
 
 mod NaturalLanguage "$TC/stubs/NaturalLanguage.swift"
+mod Carbon "$TC/stubs/Carbon.swift"
 mod Security "$TC/stubs/Security.swift"
 mod CoreAudio "$TC/stubs/CoreAudio.swift"
 mod AVFoundation "$TC/stubs/AVFoundation.swift"

@@ -660,7 +660,8 @@ public struct NSWindowStyleMask: OptionSet, Sendable { public let rawValue: UInt
     public struct CollectionBehavior: OptionSet, Sendable { public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }; public static let fullScreenPrimary = CollectionBehavior(rawValue: 128) }
     public struct Level: RawRepresentable, Hashable, Sendable { public var rawValue: Int; public init(rawValue: Int) { self.rawValue = rawValue }; public static let normal = Level(rawValue: 0), floating = Level(rawValue: 3) }
     public override init() {}
-    public init(contentRect: NSRect, styleMask: StyleMask, backing: Int, defer: Bool) {}
+    public enum BackingStoreType: UInt, Sendable { case retained = 0, nonretained = 1, buffered = 2 }
+    public init(contentRect: NSRect, styleMask: StyleMask, backing: BackingStoreType, defer: Bool) {}
     open var title: String = ""
     open var subtitle: String = ""
     open var titleVisibility: TitleVisibility = .visible

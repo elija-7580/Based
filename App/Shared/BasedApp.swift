@@ -9,6 +9,10 @@ import AppKit
 struct BasedApp: App {
     @State private var model = AppModel()
     @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+    #if os(macOS)
+    /// BSD-64: menu bar icon for quick capture (Settings → Capture).
+    @AppStorage(QuickCapturePrefs.menuBar) private var showCaptureInMenuBar = true
+    #endif
 
     var body: some Scene {
         #if os(macOS)
@@ -21,6 +25,10 @@ struct BasedApp: App {
             // Notion-style chrome: content runs under the (hidden) title bar; MacTitleBar draws tabs + controls.
             .windowStyle(.hiddenTitleBar)
             .commands { BasedCommands(model: model) }
+        MenuBarExtra("Capture a Thought", systemImage: "square.and.pencil", isInserted: $showCaptureInMenuBar) {
+            QuickCaptureMenuBarContent(model: model)
+        }
+        .menuBarExtraStyle(.window)
         #else
         WindowGroup { root }
             .commands { BasedCommands(model: model) }
@@ -36,6 +44,11 @@ struct BasedApp: App {
             .preferredColorScheme(Appearance(rawValue: appearance)?.colorScheme)
             // The workspace file opens again after the storage error screen's "Try again" (BSD-15).
             .onChange(of: model.reopenRequest) { _, _ in model = AppModel() }
+            #if os(macOS)
+            // BSD-64: system-wide quick capture (hot key → floating field); follows the model when it is replaced.
+            .onAppear { QuickCapturePanel.shared.install(model: model) }
+            .onChange(of: ObjectIdentifier(model)) { _, _ in QuickCapturePanel.shared.install(model: model) }
+            #endif
             #if os(macOS)
             // Small enough for split-screen; the window can't shrink below it (contentMinSize), so nothing is
             // clipped or shifted when the window opens at its restored size.
