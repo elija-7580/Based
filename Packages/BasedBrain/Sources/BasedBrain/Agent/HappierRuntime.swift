@@ -219,6 +219,11 @@ public final class HappierRuntime: @unchecked Sendable {
 
     /// Send a user prompt to a session (starting the agent process again if needed).
     public func prompt(_ sid: RecordID, _ text: String) async throws -> ACPStopReason {
+        // BSD-48: a follow-up sent while the session works waits for the running turn (FIFO), so its "You" line,
+        // the answer and the status land after the previous turn.
+        let gate = turnGate(sid)
+        guard await gate.enter() else { return .cancelled }
+        defer { gate.leave() }
         var conn = self.connection(for: sid)
         if conn == nil || conn?.isRunning == false && !(conn is ClaudeCodeDriver) {
             do { try await attach(sid) } catch { inFlight.sync { _ = $0.remove(sid) }; throw error }
@@ -261,7 +266,15 @@ public final class HappierRuntime: @unchecked Sendable {
 
     public func cancel(_ sid: RecordID) { connection(for: sid)?.cancel() }
 
+    private let gates = Locked<[RecordID: AsyncTurnGate]>([:])
+    func turnGate(_ sid: RecordID) -> AsyncTurnGate {
+        gates.sync { g in if let x = g[sid] { return x }; let x = AsyncTurnGate(); g[sid] = x; return x }
+    }
+    /// Follow-ups waiting for the running turn of a session.
+    public func queuedPrompts(_ sid: RecordID) -> Int { turnGate(sid).waitingCount }
+
     public func stop(_ sid: RecordID) {
+        turnGate(sid).cancelWaiting()
         let c = liveBox.sync { $0.removeValue(forKey: sid) }
         c?.stop()
         mainQueue.send { self.brain.updateSession(sid, status: .idle) }

@@ -235,6 +235,9 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
     public var onLog: (@Sendable (String) -> Void)?
 
     private let state = Locked<State>(State())
+    /// BSD-48: one turn at a time. A prompt sent while a turn runs waits for that turn's `result` (before, it
+    /// cancelled the old waiter and the first `result` answered the second prompt — answers swapped).
+    private let gate = AsyncTurnGate()
     private struct State {
         var sessionID: String?
         var buffer = Data()
@@ -343,6 +346,8 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
 
     /// Sends one user turn and waits for its `result`.
     public func prompt(_ text: String, resources: [(uri: String, text: String)] = []) async throws -> ACPStopReason {
+        guard await gate.enter() else { return .cancelled }
+        defer { gate.leave() }
         if !isRunning { try start() }
         var content: [JSONValue] = [["type": "text", "text": .string(text)]]
         for r in resources where !r.text.isEmpty {
@@ -370,7 +375,11 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
         #endif
     }
 
+    /// Prompts waiting for the running turn.
+    public var queuedPrompts: Int { gate.waitingCount }
+
     public func stop() {
+        gate.cancelWaiting()
         #if os(macOS) || os(Linux)
         try? stdinPipe?.fileHandleForWriting.close()
         if let p = process, p.isRunning { p.terminate() }

@@ -226,6 +226,11 @@ struct ChatTranscriptView: View {
                             .id(t.id)
                             .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 10)), removal: .opacity))
                     }
+                    // BSD-48: messages waiting for the running reply.
+                    ForEach(brain.queued) { q in
+                        QueuedPromptRow(text: q.text, remove: { brain.removeQueued(q.id) }, sendNow: { brain.sendQueuedNow(q.id) })
+                            .transition(.opacity)
+                    }
                     // Permission requests of this chat (Claude Code's --permission-prompt-tool → Inbox) answered inline.
                     if let sid = brain.chatID {
                         ForEach(brain.happier.pendingInbox(for: sid)) { item in
@@ -388,8 +393,9 @@ struct ChatComposer: View {
                     EnginePickerButton(openRequest: $openModelPicker)
                 }
                 DictationButton { focused = true }
-                SendStopButton(running: brain.isRunning, enabled: canSend) {
-                    if brain.isRunning { brain.stop() } else { send() }
+                // While a reply runs: typed text is queued (arrow), an empty composer stops (square).
+                SendStopButton(running: brain.isRunning && !canSend, enabled: canSend) {
+                    if brain.isRunning && !canSend { brain.stop() } else { send() }
                 }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: brain.engineSpec.kind)
@@ -490,7 +496,7 @@ struct ChatComposer: View {
 
     private func send() {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard canSend, !brain.isRunning else { return }
+        guard canSend else { return }
         input = ""
         let files = attachments
         attachments = []
@@ -514,6 +520,32 @@ struct ChatComposer: View {
 
 /// Claude-style send button: a filled circle with an arrow that springs in when there is something to send,
 /// turning into a square stop button while the reply runs.
+/// A message waiting for the running reply (BSD-48): greyed, with "Send now" (interrupts) and remove.
+struct QueuedPromptRow: View {
+    let text: String
+    let remove: () -> Void
+    let sendNow: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "clock").font(.system(size: 11)).padding(.top, 3)
+            Text(text).lineLimit(3).frame(maxWidth: .infinity, alignment: .leading)
+            Button("Send now", action: sendNow)
+                .buttonStyle(.borderless).font(.system(size: 11, weight: .medium))
+                .help("Stop the current answer and send this message next")
+            Button(action: remove) { Image(systemName: "xmark") }
+                .buttonStyle(.borderless).font(.system(size: 11))
+                .help("Remove from the queue")
+                .accessibilityLabel("Remove queued message")
+        }
+        .font(.system(size: 13))
+        .foregroundStyle(Theme.secondary)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.secondary.opacity(0.08)))
+        .accessibilityIdentifier("ai.queuedPrompt")
+    }
+}
+
 struct SendStopButton: View {
     let running: Bool
     let enabled: Bool

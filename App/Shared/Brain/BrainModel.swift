@@ -55,7 +55,22 @@ final class BrainModel {
     @ObservationIgnored private var secretsObserver: NSObjectProtocol?
 
     var turns: [ChatTurn] = []
+    /// A reply is running (set by the prompt queue).
     var isRunning = false
+    /// BSD-48: messages sent while a reply runs, shown greyed under it; sent one after another.
+    var queued: [QueuedPrompt] = []
+
+    struct QueuedPrompt: Identifiable, Equatable { let id: UUID; var text: String }
+    struct PendingAsk { var prompt: String; var pageContext: RecordID?; var attachments: [ChatAttachment] }
+    @ObservationIgnored private lazy var promptQueue: ChatPromptQueue<PendingAsk> = {
+        let q = ChatPromptQueue<PendingAsk> { [weak self] p in self?.startTurn(p.prompt, pageContext: p.pageContext, attachments: p.attachments) }
+        q.onChange = { [weak self, weak q] in
+            guard let self, let q else { return }
+            self.isRunning = q.isBusy
+            self.queued = q.waiting.map { QueuedPrompt(id: $0.id, text: $0.text) }
+        }
+        return q
+    }()
     /// Artifact shown in the panel next to the chat (nil = closed).
     var artifact: ChatArtifact?
     /// Set when a reply finishes with an artifact; the full-page chat opens it (the docked panel only shows the card).
@@ -189,11 +204,12 @@ final class BrainModel {
         #endif
     }
 
-    func newChat() { chatID = nil; turns = []; isRunning = false; artifact = nil }
+    func newChat() { promptQueue.detach(); chatID = nil; turns = []; artifact = nil }
 
     func openChat(_ id: RecordID?) {
         guard let id else { newChat(); return }
         guard id != chatID || turns.isEmpty else { return }
+        promptQueue.detach()
         chatID = id
         artifact = nil
         // Group everything between two user messages into one assistant turn with its parts.
@@ -216,15 +232,26 @@ final class BrainModel {
         turns = out
     }
 
-    /// The running reply (Stop button).
-    @ObservationIgnored private var runningTask: Task<Void, Never>?
-    @ObservationIgnored private var runningTurn: ChatTurnHandle?
-    /// Stops the engine; the turn still ends with its "Stopped." note and is saved.
-    func stop() { runningTurn?.cancel() }
+    /// Stops the engine; the turn still ends with its "Stopped." note and is saved. Waiting messages follow.
+    func stop() { promptQueue.stopCurrent() }
 
+    /// Sends a message, or queues it while a reply is running (BSD-48).
     func ask(_ prompt: String, pageContext: RecordID? = nil, attachments: [ChatAttachment] = []) {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty || !attachments.isEmpty, !isRunning else { return }
+        guard !trimmed.isEmpty || !attachments.isEmpty else { return }
+        let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
+        promptQueue.submit(shown, PendingAsk(prompt: prompt, pageContext: pageContext, attachments: attachments))
+    }
+
+    /// Takes a waiting message back.
+    func removeQueued(_ id: UUID) { promptQueue.remove(id) }
+    /// Sends a waiting message now: the running reply stops (and is saved), this one goes next.
+    func sendQueuedNow(_ id: UUID) { promptQueue.sendNow(id) }
+
+    /// Starts one turn (called by the prompt queue when it is this message's turn).
+    private func startTurn(_ prompt: String, pageContext: RecordID?, attachments: [ChatAttachment]) -> ChatTurnHandle? {
+        let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty || !attachments.isEmpty else { return nil }
         let engine = resolvedEngine
         let page = ChatRouting.page(pageContext, in: store, onDevice: engine.isOnDevice)
         let p = ChatRouting.prompt(trimmed, attachments: attachments.map { $0.promptText() }, page: page, onDevice: engine.isOnDevice)
@@ -245,8 +272,9 @@ final class BrainModel {
         reply.isRunning = true
         turns.append(reply)
         let replyID = reply.id
-        isRunning = true
-        let history: [ChatMessage] = turns.dropLast(2).filter { !$0.text.isEmpty }.map { ChatMessage(role: $0.role, content: $0.text) }
+        // A queued turn can start before the previous reply's text was copied out of its builder.
+        let history: [ChatMessage] = turns.dropLast(2).map { t in (t.role, t.text.isEmpty && t.role == .assistant ? t.reply.text : t.text) }
+            .filter { !$0.1.isEmpty }.map { ChatMessage(role: $0.0, content: $0.1) }
         runtime.onProgress = nil
         // BSD-45: the turn runs in BasedBrain's ChatEngine; this view model only picks the backend and renders events.
         let backend: ChatBackend
@@ -273,8 +301,7 @@ final class BrainModel {
                                   resume: chat.resume(for: sid, with: backend), cwd: folder, system: system)
         let engineLabel = chatEngine
         let turn = chat.send(request, session: sid, via: backend)
-        runningTurn = turn
-        runningTask = Task {
+        Task {
             // Events land on the reply turn (looked up by id: the list may change while it runs).
             for await e in turn.events {
                 guard let i = turns.firstIndex(where: { $0.id == replyID }) else { continue }
@@ -293,10 +320,8 @@ final class BrainModel {
                 turns[i].meta = meta.joined(separator: " · ")
                 if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
             }
-            isRunning = false
-            runningTask = nil
-            runningTurn = nil
         }
+        return turn
     }
 
     /// Inline AI ("space on an empty line"): writes Markdown to insert into `pageID` with the current engine.
