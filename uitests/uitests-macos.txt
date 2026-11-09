@@ -1,41 +1,41 @@
 ** TEST FAILED **
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testAgentBrainDashboard] : Failed to click "sidebar.brain" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.brain" IN identifiers'`, given input App element pid: 21439
-Test Case '-[Based_macOS_UITests.BasedUITests testAgentBrainDashboard]' failed (8.639 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testBlockGutterButtonsAreClickable] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 21566
-Test Case '-[Based_macOS_UITests.BasedUITests testBlockGutterButtonsAreClickable]' failed (5.060 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testAgentBrainDashboard] : Failed to click "sidebar.brain" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.brain" IN identifiers'`, given input App element pid: 21025
+Test Case '-[Based_macOS_UITests.BasedUITests testAgentBrainDashboard]' failed (8.324 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testBlockGutterButtonsAreClickable] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 21490
+Test Case '-[Based_macOS_UITests.BasedUITests testBlockGutterButtonsAreClickable]' failed (5.313 seconds).
 App/UITests/BasedUITests.swift:83: error: -[Based_macOS_UITests.BasedUITests testChatPanelToggles] : XCTAssertTrue failed - Missing element "chat.panel" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testChatPanelToggles]' failed (8.075 seconds).
+Test Case '-[Based_macOS_UITests.BasedUITests testChatPanelToggles]' failed (7.842 seconds).
 App/UITests/BasedUITests.swift:75: error: -[Based_macOS_UITests.BasedUITests testCommandPaletteCreatesPage] : XCTAssertTrue failed - Missing element "palette" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testCommandPaletteCreatesPage]' failed (7.461 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testCreatePageAndTypeTitle] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 22638
-Test Case '-[Based_macOS_UITests.BasedUITests testCreatePageAndTypeTitle]' failed (4.680 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testDatabaseTableRenders] : Failed to click "sidebar.home" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.home" IN identifiers'`, given input App element pid: 22911
-Test Case '-[Based_macOS_UITests.BasedUITests testDatabaseTableRenders]' failed (4.539 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testFindInPage] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 23349
-Test Case '-[Based_macOS_UITests.BasedUITests testFindInPage]' failed (4.732 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testFullPageChat] : Failed to click "sidebar.askAI" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.askAI" IN identifiers'`, given input App element pid: 23385
-Test Case '-[Based_macOS_UITests.BasedUITests testFullPageChat]' failed (4.507 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testLayoutHasNoOverlapsOrClipping] : Failed to click "sidebar.home" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.home" IN identifiers'`, given input App element pid: 23470
-Test Case '-[Based_macOS_UITests.BasedUITests testLayoutHasNoOverlapsOrClipping]' failed (4.293 seconds).
+Test Case '-[Based_macOS_UITests.BasedUITests testCommandPaletteCreatesPage]' failed (7.688 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testCreatePageAndTypeTitle] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 21833
+Test Case '-[Based_macOS_UITests.BasedUITests testCreatePageAndTypeTitle]' failed (5.015 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testDatabaseTableRenders] : Failed to click "sidebar.home" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.home" IN identifiers'`, given input App element pid: 22055
+Test Case '-[Based_macOS_UITests.BasedUITests testDatabaseTableRenders]' failed (4.913 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testFindInPage] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 22073
+Test Case '-[Based_macOS_UITests.BasedUITests testFindInPage]' failed (4.775 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testFullPageChat] : Failed to click "sidebar.askAI" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.askAI" IN identifiers'`, given input App element pid: 22312
+Test Case '-[Based_macOS_UITests.BasedUITests testFullPageChat]' failed (4.686 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testLayoutHasNoOverlapsOrClipping] : Failed to click "sidebar.home" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.home" IN identifiers'`, given input App element pid: 22373
+Test Case '-[Based_macOS_UITests.BasedUITests testLayoutHasNoOverlapsOrClipping]' failed (4.840 seconds).
 App/UITests/BasedUITests.swift:62: error: -[Based_macOS_UITests.BasedUITests testQuickFind] : XCTAssertTrue failed - Missing element "quickfind.field" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testQuickFind]' failed (7.340 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testSessionsAndInbox] : Failed to click "sidebar.sessions" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.sessions" IN identifiers'`, given input App element pid: 23886
-Test Case '-[Based_macOS_UITests.BasedUITests testSessionsAndInbox]' failed (5.584 seconds).
+Test Case '-[Based_macOS_UITests.BasedUITests testQuickFind]' failed (7.397 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testSessionsAndInbox] : Failed to click "sidebar.sessions" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.sessions" IN identifiers'`, given input App element pid: 22614
+Test Case '-[Based_macOS_UITests.BasedUITests testSessionsAndInbox]' failed (4.969 seconds).
 App/UITests/BasedUITests.swift:234: error: -[Based_macOS_UITests.BasedUITests testSettingsPages] : XCTAssertTrue failed - Missing element "settings.root" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testSettingsPages]' failed (7.944 seconds).
+Test Case '-[Based_macOS_UITests.BasedUITests testSettingsPages]' failed (7.842 seconds).
 App/UITests/BasedUITests.swift:38: error: -[Based_macOS_UITests.BasedUITests testSidebarHasAllEntries] : XCTAssertTrue failed - Missing element "sidebar.search" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testSidebarHasAllEntries]' failed (7.374 seconds).
-App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testSlashMenuAppears] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 24478
-Test Case '-[Based_macOS_UITests.BasedUITests testSlashMenuAppears]' failed (4.513 seconds).
+Test Case '-[Based_macOS_UITests.BasedUITests testSidebarHasAllEntries]' failed (7.504 seconds).
+App/UITests/BasedUITests.swift:261: error: -[Based_macOS_UITests.BasedUITests testSlashMenuAppears] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 23590
+Test Case '-[Based_macOS_UITests.BasedUITests testSlashMenuAppears]' failed (4.791 seconds).
 App/UITests/BasedUITests.swift:99: error: -[Based_macOS_UITests.BasedUITests testTabs] : XCTAssertTrue failed - Missing element "tab" Any
-Test Case '-[Based_macOS_UITests.BasedUITests testTabs]' failed (7.234 seconds).
-	 Executed 15 tests, with 15 failures (0 unexpected) in 91.975 (91.982) seconds
-App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testDeleteUndoRestoreDeletePermanently] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 24792
-Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testDeleteUndoRestoreDeletePermanently]' failed (4.801 seconds).
-App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testMoveAndNestPages] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 25088
-Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testMoveAndNestPages]' failed (4.902 seconds).
-App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testScreenshotsOfSidebarLibraryAndTrash] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 25313
-Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testScreenshotsOfSidebarLibraryAndTrash]' failed (4.519 seconds).
-	 Executed 3 tests, with 3 failures (0 unexpected) in 14.221 (14.223) seconds
-	 Executed 18 tests, with 18 failures (0 unexpected) in 106.196 (106.209) seconds
-	 Executed 18 tests, with 18 failures (0 unexpected) in 106.196 (106.210) seconds
+Test Case '-[Based_macOS_UITests.BasedUITests testTabs]' failed (7.498 seconds).
+	 Executed 15 tests, with 15 failures (0 unexpected) in 93.395 (93.404) seconds
+App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testDeleteUndoRestoreDeletePermanently] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 24046
+Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testDeleteUndoRestoreDeletePermanently]' failed (4.725 seconds).
+App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testMoveAndNestPages] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 24220
+Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testMoveAndNestPages]' failed (4.743 seconds).
+App/UITests/SidebarLibraryUITests.swift:44: error: -[Based_macOS_UITests.SidebarLibraryUITests testScreenshotsOfSidebarLibraryAndTrash] : Failed to click "sidebar.addPage" Any: No matches found for first query match sequence: `Descendants matching type Any` -> `Elements matching predicate '"sidebar.addPage" IN identifiers'`, given input App element pid: 24256
+Test Case '-[Based_macOS_UITests.SidebarLibraryUITests testScreenshotsOfSidebarLibraryAndTrash]' failed (4.608 seconds).
+	 Executed 3 tests, with 3 failures (0 unexpected) in 14.077 (14.079) seconds
+	 Executed 18 tests, with 18 failures (0 unexpected) in 107.472 (107.489) seconds
+	 Executed 18 tests, with 18 failures (0 unexpected) in 107.472 (107.493) seconds
