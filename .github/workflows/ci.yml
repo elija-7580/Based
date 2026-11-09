@@ -182,7 +182,10 @@ jobs:
           for p in macos ios; do
             f=build-$p.log
             [ -f $f ] || continue
-            { grep -E "BUILD (SUCCEEDED|FAILED)" $f | tail -n 1; grep -E "error:" $f | sed "s|$PWD/||" | sort -u | head -n 300; } > /tmp/out/$p.txt
+            { grep -E "BUILD (SUCCEEDED|FAILED)" $f | tail -n 1; grep -E "error:" $f | sed "s|$PWD/||" | sort -u | head -n 300
+              # Fehler ohne "error:"-Zeile (Skript-Phasen, Paketauflösung, Signatur) stehen nur am Ende des Logs.
+              if grep -q "BUILD FAILED" $f; then echo "--- Ende des Logs"; tail -n 80 $f | sed "s|$PWD/||"; fi
+            } > /tmp/out/$p.txt
             grep -E "warning:" $f | sed "s|$PWD/||" | sort -u | head -n 200 > /tmp/out/$p-warnings.txt
           done
           bash scripts/publish-logs.sh apps
