@@ -273,6 +273,44 @@ extension SyncServer {
         return (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0
     }
 
+    // MARK: Tombstone GC (BSD-104)
+
+    static let oldestSeqKey = "sync.oldestSeq"
+    /// Tombstones are kept this long; a device offline for longer does a full pull (see `oldestSeq`).
+    public static let tombstoneRetentionDays = 90
+
+    /// Clients whose `pulled` is below this may have missed deletions whose tombstones were compacted away and must
+    /// pull everything again (`after=0`). 0 = nothing compacted yet. Served in `/sync/v2/info` as `oldestSeq`.
+    public var oldestSeq: Int64 {
+        store.persistence?.meta(Self.oldestSeqKey).flatMap { Int64(String(decoding: $0, as: UTF8.self)) } ?? 0
+    }
+
+    /// Deletes tombstones (deletion rows of the change log, and the v1 tombstone list) older than `days`, by the
+    /// HLC stamp of the delete. Records are never touched; unstamped deletion rows (before v3) stay. Raises
+    /// `oldestSeq` to the highest compacted sequence. Returns how many tombstones were removed.
+    @discardableResult
+    public func compactTombstones(olderThanDays days: Int = SyncServer.tombstoneRetentionDays, now: Date = Date()) -> Int {
+        let cutoff = Int64((now.timeIntervalSince1970 - Double(days) * 86_400) * 1000)
+        var removed = 0
+        if let log = store.persistence as? ChangeLogging {
+            do {
+                let r = try log.compactTombstones(olderThanMillis: cutoff)
+                removed += r.removed
+                if r.maxSeq > oldestSeq { store.persistence?.setMeta(Self.oldestSeqKey, Data(String(r.maxSeq).utf8)) }
+            } catch {
+                Log.warning("Tombstone compaction failed: \(error)", category: "sync")
+            }
+        }
+        let v1 = tombstones.filter { $0.value.millis < cutoff }
+        if !v1.isEmpty {
+            for k in v1.keys { tombstones[k] = nil }
+            let enc = Dictionary(uniqueKeysWithValues: tombstones.map { ($0.key.description, $0.value) })
+            store.persistence?.setMeta(Self.tombKey, try? JSONEncoder().encode(enc))
+        }
+        if removed > 0 { Log.info("Compacted \(removed) tombstones older than \(days) days", category: "sync") }
+        return removed
+    }
+
     /// Merges a client's changes (last writer wins); returns server copies that are newer than the pushed ones.
     public func pushV2(_ p: SyncPush) -> SyncPushReply {
         let (newer, tombstoned) = merge(p.records, deletions: p.deletions, stamps: p.deletionStamps)
@@ -425,8 +463,17 @@ public final class ServerSync {
             writeSeq(Self.pushedKey, pushed)
             if entries.count < pageSize { break }
         }
-        // Pull
+        // Pull. If the server compacted tombstones past what this device pulled (offline > 90 days, BSD-104), a
+        // deletion may be missing here: pull everything again and drop what the server no longer has.
         var after = readSeq(Self.pulledKey)
+        let oldest = await serverOldestSeq()
+        let fullPull = after > 0 && after < oldest
+        if fullPull {
+            Log.info("Sync: pulled \(after) < server oldestSeq \(oldest): full pull", category: "sync")
+            after = 0
+        }
+        var seen = Set<RecordKey>()
+        var candidates: [RecordID] = []
         var received = 0
         while true {
             var c = URLComponents(url: baseURL.appendingPathComponent("sync/v2/pull"), resolvingAgainstBaseURL: false)!
@@ -436,14 +483,44 @@ public final class ServerSync {
                 // Pulled changes are logged as remote (local = false), so they're never pushed back.
                 _ = store.applyRemote(page.records, deletions: page.deletions, deletionStamps: page.deletionStamps)
                 received += page.records.count + page.deletions.count
+                candidates += store.orphanCandidates(records: page.records, deletions: page.deletions)
             }
+            if fullPull { for r in page.records { seen.insert(r.key) } }
             after = page.next
-            writeSeq(Self.pulledKey, after)
+            if !fullPull { writeSeq(Self.pulledKey, after) }
             if !page.more { break }
         }
+        if fullPull {
+            // Everything local was pushed above, so a record the server doesn't have was deleted there and its
+            // tombstone is gone: delete it here too (as the missed tombstone would have). Rows this version
+            // can't decode aren't in memory and stay untouched.
+            // Local changes made while this sync ran (after the push) aren't on the server yet: keep them.
+            var unpushed = Set<RecordKey>()
+            var cur = pushed
+            while let batch = try? log.changes(after: cur, limit: 5_000), let last = batch.last {
+                for e in batch where e.local { unpushed.insert(e.key) }
+                cur = last.seq
+            }
+            let gone = store.allRecords().map(\.key).filter { $0.kind != .workspace && !seen.contains($0) && !unpushed.contains($0) }
+            if !gone.isEmpty {
+                candidates += store.orphanCandidates(records: [], deletions: gone)
+                store.applyRemote([], deletions: gone)
+                received += gone.count
+            }
+            writeSeq(Self.pulledKey, after)
+        }
+        // Blocks whose parent is gone (BSD-104) go to the Trash instead of staying invisible.
+        store.rescueOrphans(among: candidates)
         lastSync = Date(); lastError = nil
         onStatus?("Synced \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short)) · live (protocol v2)"
                   + (received > 0 ? " · \(received) changes" : ""))
+    }
+
+    /// `oldestSeq` from `/sync/v2/info`; 0 when the server doesn't send it or the request fails (older servers).
+    private func serverOldestSeq() async -> Int64 {
+        struct Info: Decodable { var oldestSeq: Int64? }
+        let info: Info? = try? await get(baseURL.appendingPathComponent("sync/v2/info"))
+        return info?.oldestSeq ?? 0
     }
 
     private func readSeq(_ key: String) -> Int64 {

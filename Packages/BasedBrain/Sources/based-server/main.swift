@@ -171,6 +171,12 @@ if !opts.noScheduler {
     log("scheduler started (tick 60s)")
 }
 
-while true { try await Task.sleep(nanoseconds: 3_600_000_000_000) }
+// BSD-104: tombstones older than 90 days are compacted at start and then hourly (clients that were offline for
+// longer see `oldestSeq` in /sync/v2/info and pull everything again).
+while true {
+    let n = await MainActor.run { sync.compactTombstones() }
+    if n > 0 { log("sync: compacted \(n) tombstones older than \(SyncServer.tombstoneRetentionDays) days") }
+    try await Task.sleep(nanoseconds: 3_600_000_000_000)
+}
 
 extension String { var nonEmptyOrNone: String { isEmpty ? "none" : self } }

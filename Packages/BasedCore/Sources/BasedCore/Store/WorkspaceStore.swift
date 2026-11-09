@@ -256,9 +256,14 @@ public protocol ChangeLogging: Persistence {
     var lastChangeSeq: Int64 { get }
     /// The stamp of the record's deletion, if its latest logged change is a stamped deletion.
     func tombstone(_ key: RecordKey) -> Stamp?
+    /// Removes deletion rows whose tombstone stamp is older than `cutoffMillis` (wall clock of the HLC stamp;
+    /// BSD-104). Unstamped deletion rows (from before v3) are kept. Returns how many rows went and the highest
+    /// `seq` among them (0 if none): a client that pulled less than that may have missed a deletion.
+    func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64)
 }
 
 extension ChangeLogging {
+    public func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64) { (0, 0) }
     public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
         try write(upserts: upserts, deletions: deletions, local: local)
     }

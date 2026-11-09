@@ -250,6 +250,30 @@ public final class SQLitePersistence: ChangeLogging {
         return Self.decodeStamp(String(cString: t))
     }
 
+    public func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64) {
+        // Stamps are JSON text: decode in Swift (no dependency on SQLite's JSON functions).
+        let st = try prepare("SELECT seq, deleted_stamp FROM changes WHERE deleted = 1 AND deleted_stamp IS NOT NULL")
+        var old: [Int64] = []
+        while sqlite3_step(st) == SQLITE_ROW {
+            guard let t = sqlite3_column_text(st, 1), let stamp = Self.decodeStamp(String(cString: t)) else { continue }
+            if Int64(stamp.millis) < cutoffMillis { old.append(sqlite3_column_int64(st, 0)) }
+        }
+        sqlite3_finalize(st)
+        guard !old.isEmpty else { return (0, 0) }
+        try exec("BEGIN IMMEDIATE")
+        do {
+            let del = try prepare("DELETE FROM changes WHERE seq = ? AND deleted = 1")
+            defer { sqlite3_finalize(del) }
+            for seq in old {
+                sqlite3_reset(del)
+                sqlite3_bind_int64(del, 1, seq)
+                guard sqlite3_step(del) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            }
+            try exec("COMMIT")
+        } catch { try? exec("ROLLBACK"); throw error }
+        return (old.count, old.max() ?? 0)
+    }
+
     /// `deleted_stamp` column format: the stamp as JSON (`{"millis":…,"counter":…,"node":"…"}`).
     static func encodeStamp(_ s: Stamp) -> String {
         (try? JSONEncoder().encode(s)).map { String(decoding: $0, as: UTF8.self) } ?? ""
@@ -322,6 +346,11 @@ public final class MemoryPersistence: ChangeLogging {
         }
     }
     public func tombstone(_ key: RecordKey) -> Stamp? { log[key].flatMap { $0.deleted ? $0.deletedStamp : nil } }
+    public func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64) {
+        let old = log.values.filter { e in e.deleted && e.deletedStamp.map { Int64($0.millis) < cutoffMillis } == true }
+        for e in old { log[e.key] = nil }
+        return (old.count, old.map(\.seq).max() ?? 0)
+    }
     public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
         Array(log.values.filter { $0.seq > after }.sorted { $0.seq < $1.seq }.prefix(limit))
     }

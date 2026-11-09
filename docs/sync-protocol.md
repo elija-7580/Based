@@ -42,6 +42,12 @@ applies in both directions:
   removal for a share guest) is applied unconditionally, as before.
 - Restoring a page from the Trash re-stamps everything inside it (blocks, rows, databases, views), so a restore
   wins over an older "Delete forever" on another device with all its content, not as an empty page.
+- **Orphans** (BSD-104): a block edited after its page was deleted forever wins against the tombstone, its page
+  doesn't come back. After each pull the client checks the arriving blocks and the children of arriving
+  deletions; a block whose parent block/database is missing goes to the Trash instead of staying invisible
+  (`WorkspaceStore.rescueOrphans`): pages and rows move to the top level and into the Trash, other blocks move
+  into one page "Recovered blocks" (ID `recovered-blocks`) that sits in the Trash. Not undoable, logged as a
+  local change (other devices get the same state). Nothing is deleted.
 
 Unknown fields must be preserved (decode and re-encode them untouched). That lets newer clients add fields
 without breaking older ones. Since BSD-25 the Swift clients do this:
@@ -64,10 +70,13 @@ All requests send `Authorization: Bearer <token>`.
 ### `GET /sync/v2/info`
 
 ```json
-{ "protocol": 2, "seq": 18234 }
+{ "protocol": 2, "seq": 18234, "oldestSeq": 9120 }
 ```
 
-`seq` is the server's latest change number.
+`seq` is the server's latest change number. `oldestSeq` (BSD-104, 0 or missing = nothing compacted): tombstones
+up to this number may have been removed. A client whose `pulled` is above 0 but below `oldestSeq` pulls everything
+again (`after=0`) after pushing its own changes, and then deletes the records the server no longer has (except
+ones changed locally during that sync and rows it can't decode). Clients treat a failing `info` as `oldestSeq = 0`.
 
 ### `POST /sync/v2/push`
 
@@ -143,9 +152,12 @@ grows in arrival order.
 app. It has a `changes(seq, kind, id, deleted, local, deleted_stamp)` table with one row per record: its latest
 change. `pull` reads that table by `seq`. A row with `deleted = 1` is the record's tombstone; `deleted_stamp`
 (JSON stamp, NULL for deletions logged before format v3) is what pushes are compared against, so the change
-log doubles as the tombstone table (client and server use the same code). Tombstones are not yet garbage
-collected; when they are (planned: after 90 days), a device offline for longer must do a full pull
-(`after=0`). v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
+log doubles as the tombstone table (client and server use the same code). **Tombstone GC** (BSD-104): at start
+and then hourly the server removes deletion rows whose stamp is older than 90 days
+(`SyncServer.compactTombstones`; records are never touched, unstamped pre-v3 rows stay) and raises
+`meta sync.oldestSeq` to the highest removed `seq`; a device offline for longer does a full pull (see
+`/sync/v2/info`). Share guests (`ShareService` pulls) don't check `oldestSeq` yet; clients don't compact their own
+logs. v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
 
 ## Channels
 

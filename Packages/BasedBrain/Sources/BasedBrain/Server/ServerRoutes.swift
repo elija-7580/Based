@@ -128,8 +128,9 @@ public enum BasedServerRoutes {
             return json(SyncWait(seq: seq))
         }
         r.add("GET", "/sync/v2/info") { _ in
-            let seq = await MainActor.run { (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0 }
-            return .json(["protocol": 2, "seq": .number(Double(seq))])
+            let (seq, oldest) = await MainActor.run { ((store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0, sync.oldestSeq) }
+            // oldestSeq (BSD-104): a client that pulled less must pull everything again (tombstones were compacted).
+            return .json(["protocol": 2, "seq": .number(Double(seq)), "oldestSeq": .number(Double(oldest))])
         }
         r.add("POST", "/api/blocks/insert-after", access: .ownerOrShared) { ctx in
             // Web client: new text block after `after` (the server computes the sort key with BasedCore).
