@@ -111,7 +111,9 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
         let today = brain.captures().filter { calendar.isDate($0.capturedAt, inSameDayAs: now) }.count
         return WidgetSnapshot(running: running.count,
                               runningTop: running.sorted { $0.startedAt > $1.startedAt }.prefix(top).map { Line(title: $0.title, detail: $0.result) },
-                              needsYou: needs.count, needsYouTop: Array(needs.prefix(top)), capturesToday: today, updatedAt: now)
+                              needsYou: needs.count, needsYouTop: Array(needs.prefix(top)), capturesToday: today,
+                              // Whole seconds: secondsSince1970 round-trips them exactly (fractions can drift by one ulp).
+                              updatedAt: Date(timeIntervalSince1970: now.timeIntervalSince1970.rounded(.down)))
     }
 
     public func encoded() throws -> Data {
