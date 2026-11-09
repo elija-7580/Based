@@ -87,9 +87,14 @@ public protocol AIProvider: Sendable {
     /// (BSD-46). Providers without streaming answer in one piece.
     func stream(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int,
                 onEvent: @escaping @Sendable (ChatEvent) -> Void) async throws -> AIResponse
+    /// BSD-126: the same provider with a reasoning effort for one turn ("low" … "max"; "" = unchanged).
+    /// Providers without an effort setting return themselves.
+    func withEffort(_ effort: String) -> AIProvider
 }
 
 public extension AIProvider {
+    func withEffort(_ effort: String) -> AIProvider { self }
+
     func stream(_ messages: [ChatMessage], model: String, tools: [ToolSpec], maxTokens: Int,
                 onEvent: @escaping @Sendable (ChatEvent) -> Void) async throws -> AIResponse {
         try await complete(messages, model: model, tools: tools, maxTokens: maxTokens)

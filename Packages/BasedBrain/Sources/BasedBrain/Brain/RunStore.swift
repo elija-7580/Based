@@ -273,11 +273,17 @@ extension BrainStore {
     /// BSD-49: records the router's decision on the session's current run (model, compute level) and logs why.
     public func noteRoute(session sid: RecordID, _ d: RouteDecision) {
         guard let r = latestRun(forSession: sid) else { return }
+        noteRoute(run: r.id, d)
+    }
+
+    /// BSD-126: the same for a run without a session (scheduled agents with model "auto").
+    public func noteRoute(run id: RecordID, _ d: RouteDecision) {
+        guard store.blocks[id] != nil else { return }
         let db = runsDB
-        writeRun(r.id, db, [(RunCol.model, .text(RichText(ChatRouting.label(d.choice)))),
+        writeRun(id, db, [(RunCol.model, .text(RichText(ChatRouting.label(d.choice)))),
                             (RunCol.compute, runOption(db, RunCol.compute, d.compute.runCompute.rawValue))], name: "Run route")
         let route = d.route.map { "Route **\($0.name)**" } ?? "Model chosen in the picker"
-        logRun(r.id, "\(route) · \(d.compute.title) → \(ChatRouting.label(d.choice)) — \(d.reason)")
+        logRun(id, "\(route) · \(d.compute.title) → \(ChatRouting.label(d.choice)) — \(d.reason)")
     }
 
     /// BSD-53: records the sandbox of the session's current run ("docker:<id>" or "local:<path>") and its snapshot

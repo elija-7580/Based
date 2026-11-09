@@ -50,8 +50,15 @@ public enum ChatRouting {
                 case .none: return false
                 }
             }()
+            // BSD-126: when the chosen engine fails before answering, the Auto chain for this task answers (with
+            // a notice); the route itself stays nil, so the meta line shows no route.
+            let chain = router.decide(task, compute: compute, forceLow: forceLow, registry: registry, installed: installed,
+                                      defaultModel: defaultModel)
+            var fallbacks: [ChatEngineChoice] = []
+            for x in [chain.choice] + chain.fallbacks where x != .none && x != c && !fallbacks.contains(x) { fallbacks.append(x) }
             return RouteDecision(choice: c, effort: spec.effort, compute: compute,
-                                 reason: honoured ? "chosen in the picker" : "\(spec.kind.title) is not available; Auto fallback")
+                                 reason: honoured ? "chosen in the picker" : "\(spec.kind.title) is not available; Auto fallback",
+                                 fallbacks: c == .none ? [] : fallbacks)
         }
         return router.decide(task, compute: compute, forceLow: forceLow, registry: registry, installed: installed,
                              defaultModel: defaultModel)

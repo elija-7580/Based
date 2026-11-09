@@ -457,7 +457,7 @@ public final class HappierRuntime: @unchecked Sendable {
     /// session-scoped MCP endpoint (`/mcp/session/<id>`) carry `_caller_session`, which becomes the default parent.
     public static let subAgentSpecs: [ToolSpec] = [
         ToolSpec(name: "spawn_agent", description: "Start a sub-agent (a coding-agent session: Claude Code, Codex, Gemini …) with a self-contained task. Runs in the background unless wait=true; its final answer is reported back to you. Returns the session id.",
-                 inputSchema: .schema(["agent": .str("Agent id: claude | codex | gemini | opencode (default: claude)"), "prompt": .str("Self-contained task for the sub-agent"),
+                 inputSchema: .schema(["agent": .str("Agent id: claude | codex | gemini | opencode (default: picked by the router for the task)"), "prompt": .str("Self-contained task for the sub-agent"),
                                        "title": .str("Short title shown on the board/canvas"), "cwd": .str("Absolute working directory (default: the parent's)"),
                                        "project": .str("Project name (default: the parent's)"), "wait": .boolean("Block until it finishes and return its answer (default false)"),
                                        "parent_session_id": .str("Parent session id (default: the calling session)")], required: ["prompt"])),
@@ -514,6 +514,25 @@ public final class HappierRuntime: @unchecked Sendable {
         return sid
     }
 
+    /// BSD-126: compute level for sub-agents started without an agent id (Settings: the chat's level).
+    public var subAgentCompute: ComputeLevel {
+        get { subAgentComputeBox.current }
+        set { subAgentComputeBox.sync { $0 = newValue } }
+    }
+    private let subAgentComputeBox = Locked(ComputeLevel.auto)
+
+    /// The coding agent for a sub-agent task: the router's route over the enabled CLI agents; "claude" (as before)
+    /// when none of them can be routed to.
+    func routeSubAgent(prompt: String, cwd: String?) async -> (agentID: String, decision: RouteDecision?) {
+        let enabled = agents.filter(\.enabled)
+        let kinds = Set(enabled.compactMap { ChatEngineSpec.Kind(agentID: $0.id) })
+        let routes = await mainQueue.run { self.brain.routes().routes }
+        let d = ModelRouter(routes: routes).subAgent(RouteTask(text: prompt, folder: cwd?.isEmpty == false ? cwd : nil),
+                                                     compute: subAgentCompute, available: kinds)
+        guard case .cli(let s) = d.choice, let id = s.kind.agentID else { return ("claude", nil) }
+        return (id, d)
+    }
+
     static func titleFrom(prompt: String, agent: String) -> String {
         let first = prompt.split(whereSeparator: { $0 == "\n" || $0 == "." }).first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
         if first.isEmpty { return agent }
@@ -537,12 +556,20 @@ public final class HappierRuntime: @unchecked Sendable {
         let caller = args["_caller_session"]?.string
         switch name {
         case "spawn_agent":
-            let agent = args["agent"]?.string ?? "claude", prompt = args["prompt"]?.string ?? ""
+            let prompt = args["prompt"]?.string ?? ""
             guard !prompt.isEmpty else { return .init(text: "prompt required", isError: true) }
             let parent = args["parent_session_id"]?.string ?? caller
+            // BSD-126: without an agent id the router picks the coding agent for the task (and notes it in the run).
+            var agent = args["agent"]?.string.flatMap { $0.isEmpty ? nil : $0 } ?? ""
+            var routed: RouteDecision?
+            if agent.isEmpty {
+                let r = await routeSubAgent(prompt: prompt, cwd: args["cwd"]?.string)
+                agent = r.agentID; routed = r.decision
+            }
             do {
                 let sid = try await spawn(agentID: agent, prompt: prompt, title: args["title"]?.string, cwd: args["cwd"]?.string,
                                           project: args["project"]?.string, parentID: parent)
+                if let routed { await mainQueue.run { self.brain.noteRoute(session: sid, routed) } }
                 if args["wait"]?.bool == true {
                     let r = await waitFor([sid], timeout: 1800)
                     return .init(text: Self.report(r), isError: false)
