@@ -134,7 +134,7 @@ public final class QueryEngine {
 
     /// Relation targets that still exist and aren't in the Trash.
     public func liveRelationTargets(_ ids: [RecordID]) -> [RecordID] {
-        ids.filter { store.blocks[$0] != nil && !store.isTrashed($0) }
+        store.liveRelationTargets(ids)
     }
 
     /// Stored value → computed value.

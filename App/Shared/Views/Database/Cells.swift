@@ -25,7 +25,9 @@ struct PropertyValueView: View {
         case .checkbox:
             TodoCheckbox(checked: value.bool)
         case .relation:
-            if case .relation(let ids)? = row.values[property.id] {
+            if case .relation(let stored)? = row.values[property.id] {
+                // Pages in the Trash aren't shown (BSD-112); the stored links stay for a restore.
+                let ids = store.liveRelationTargets(stored)
                 if wrap {
                     // Page property panel: one linked page per line, like Notion. A plain VStack always reports
                     // its true height (the flow layout could be measured at another width than it was drawn at,

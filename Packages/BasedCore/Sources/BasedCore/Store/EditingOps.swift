@@ -480,13 +480,46 @@ public extension WorkspaceStore {
             ndb.id = RecordIDs.make()
             ndb.blockID = copy.id
             // The copy's relations are one-way: the mirrors on other databases belong to the original (BSD-31).
-            for i in ndb.properties.indices { ndb.properties[i].relation?.syncedPropertyID = nil }
+            // Relations of the database to itself point at the copy instead, with their values moved to the copied
+            // rows (BSD-112); a two-way self-relation stays two-way between the copy's own properties.
+            let selfRelations = Set(db.properties.filter { $0.relation?.databaseID == dbID }.map(\.id))
+            for i in ndb.properties.indices {
+                guard ndb.properties[i].relation != nil else { continue }
+                if selfRelations.contains(ndb.properties[i].id) {
+                    ndb.properties[i].relation?.databaseID = ndb.id
+                    if let partner = ndb.properties[i].relation?.syncedPropertyID, !selfRelations.contains(partner) {
+                        ndb.properties[i].relation?.syncedPropertyID = nil
+                    }
+                } else {
+                    ndb.properties[i].relation?.syncedPropertyID = nil
+                }
+            }
             tx.put(ndb)
             copy.props.databaseID = ndb.id
             copy.props.viewIDs = copyViews(of: src.id, to: copy.id, databaseID: ndb.id, tx: tx)
             tx.put(copy)
+            var rowMap: [RecordID: RecordID] = [:]
             for r in childBlocks(of: .database(dbID)) where r.trashedAt == nil {
-                copySubtree(r, parent: .database(ndb.id), sortKey: r.sortKey, tx: tx)
+                rowMap[r.id] = copySubtree(r, parent: .database(ndb.id), sortKey: r.sortKey, tx: tx)
+            }
+            if !selfRelations.isEmpty {
+                for newRow in rowMap.values {
+                    tx.update(newRow) { b in
+                        for pid in selfRelations {
+                            guard case .relation(let ids)? = b.values[pid] else { continue }
+                            // Links to rows that weren't copied (in the Trash) have no counterpart and go.
+                            let mapped = ids.compactMap { rowMap[$0] }
+                            b.values[pid] = mapped.isEmpty ? nil : .relation(mapped)
+                        }
+                    }
+                }
+            }
+            // Templates of the copy are the copied template rows.
+            if ndb.templateIDs != nil || ndb.defaultTemplateID != nil {
+                tx.updateDatabase(ndb.id) { d in
+                    d.templateIDs = d.templateIDs?.compactMap { rowMap[$0] }
+                    d.defaultTemplateID = d.defaultTemplateID.flatMap { rowMap[$0] }
+                }
             }
         } else {
             if src.type == .databaseInline || src.type == .databasePage {
