@@ -165,6 +165,75 @@ import Testing
     }
 
     /// The hand-written Codable code must list every stored property, or it silently stops being saved.
+    // MARK: BSD-107: nested values
+
+    @Test func unknownPropertyValueKindSurvivesATitleEdit() throws {
+        var row = Block(type: .page, parent: .database("db"), sortKey: "a0", text: "Row")
+        row.values["n"] = .number(3)
+        var obj = try Self.object(.block(row))
+        // Known values keep the synthesized form.
+        #expect(obj["values"]?["n"] == ["number": ["_0": 3]])
+        var values = obj["values"]?.object ?? [:]
+        values["p"] = ["hologram": ["depth": 2, "colors": ["red", "blue"]]]
+        obj["values"] = .object(values)
+        let data = try JSONEncoder().encode(JSONValue.object(obj))
+        guard case .block(var b) = try Record.decode(kind: .block, data: data) else { Issue.record(); return }
+        #expect(b.values["p"]?.isUnknown == true)
+        #expect(b.values["n"] == .number(3))
+        #expect(QueryEngine.value(of: b.values["p"], PropertySchema(name: "P", type: .text)) == .empty)
+
+        b.text = RichText("Renamed")
+        let out = try Self.object(.block(b))
+        #expect(out["values"]?["p"] == ["hologram": ["depth": 2, "colors": ["red", "blue"]]])
+        #expect(out["values"]?["n"] == ["number": ["_0": 3]])
+    }
+
+    @Test func damagedKnownPropertyValueStillFails() {
+        let bad = Data(#"{"number":{"_0":"not a number"}}"#.utf8)
+        #expect(throws: (any Error).self) { try JSONDecoder().decode(PropertyValue.self, from: bad) }
+    }
+
+    @Test func everyKnownPropertyValueRoundTrips() throws {
+        let all: [PropertyValue] = [.text("t"), .number(1.5), .select("o"), .multiSelect(["a", "b"]), .status("s"),
+                                    .date(DateValue(start: Date(timeIntervalSince1970: 0))), .person(["u"]), .files([]),
+                                    .checkbox(true), .url("u"), .email("e"), .phone("p"), .relation(["r"]), .uniqueID(4),
+                                    .place("x")]
+        for v in all {
+            let data = try JSONEncoder().encode(v)
+            #expect(try JSONDecoder().decode(PropertyValue.self, from: data) == v)
+            #expect(v.isUnknown == false)
+        }
+    }
+
+    @Test func unknownFilterOperatorAndValueRoundTrip() throws {
+        var view = DatabaseView(databaseID: "db", blockID: "blk", name: "V", type: .table, sortKey: "a")
+        view.filter = FilterGroup(items: [.condition(FilterCondition(id: "c1", propertyID: "p", op: .equals, value: .text("x"))),
+                                          .condition(FilterCondition(id: "c2", propertyID: "p", op: .contains, value: .text("y")))])
+        var text = String(decoding: try Record.view(view).encoded(), as: UTF8.self)
+        text = text.replacingOccurrences(of: #""op":"equals""#, with: #""op":"isSimilarTo","futureKnob":7"#)
+        text = text.replacingOccurrences(of: #"{"text":{"_0":"y"}}"#, with: #"{"vector":[1,2]}"#)
+        guard case .view(let decoded) = try Record.decode(kind: .view, data: Data(text.utf8)),
+              case .condition(let c1)? = decoded.filter?.items.first,
+              case .condition(let c2)? = decoded.filter?.items.last else { Issue.record(); return }
+        #expect(c1.op == .unknown)
+        #expect(c2.op == .contains)
+        #expect(c2.value == nil)
+        #expect(!FilterOp.allCases.contains(.unknown))
+
+        // Unknown operators hide nothing.
+        let s = WorkspaceStore()
+        let db = Database(blockID: "blk", title: "D", properties: [PropertySchema(id: "p", name: "P", type: .checkbox)])
+        let row = Block(type: .page, parent: .database(db.id), sortKey: "a")
+        #expect(QueryEngine(store: s).matches(row, c1, db))
+
+        let out = String(decoding: try Record.view(decoded).encoded(), as: UTF8.self)
+        #expect(out.contains(#""op":"isSimilarTo""#))
+        #expect(out.contains(#""futureKnob":7"#))
+        #expect(out.contains(#""vector":[1,2]"#))
+        guard case .view(let again) = try Record.decode(kind: .view, data: Data(out.utf8)) else { Issue.record(); return }
+        #expect(again == decoded)
+    }
+
     @Test func everyStoredPropertyHasACodingKey() {
         func labels(_ v: Any) -> Set<String> { Set(Mirror(reflecting: v).children.compactMap(\.label)).subtracting(["extra"]) }
         #expect(labels(BlockProps()) == BlockProps.knownKeys)
