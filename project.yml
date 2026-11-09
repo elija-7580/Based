@@ -83,6 +83,23 @@ targets:
             echo "warning: based command line not built (see $LOG); Settings → Install command line will say so"
           fi
           exit 0
+      - name: Sign embedded frameworks like the app
+        basedOnDependencyAnalysis: false
+        # P0 (9.11.): without a Development Team the app is signed ad hoc, but Sparkle.framework (an SPM binary)
+        # keeps the signature of the Sparkle team. With the hardened runtime, library validation then refuses to
+        # load it ("different Team IDs") and Based crashes at launch. Sign every embedded framework with the app's
+        # own identity; with a real team Xcode already does that.
+        script: |
+          set -euo pipefail
+          [ -n "${DEVELOPMENT_TEAM:-}" ] && exit 0
+          FW="$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH"
+          [ -d "$FW" ] || exit 0
+          ID="${EXPANDED_CODE_SIGN_IDENTITY:-}"
+          [ -n "$ID" ] || ID="-"
+          for f in "$FW"/*.framework "$FW"/*.dylib; do
+            [ -e "$f" ] || continue
+            codesign --force --deep --options runtime --timestamp=none --sign "$ID" "$f"
+          done
   Based-iOS:
     type: application
     platform: iOS

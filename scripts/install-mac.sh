@@ -20,6 +20,8 @@ xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Release -
   BASED_GIT_COMMIT="$COMMIT" BASED_GIT_DATE="$COMMIT_DATE" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" build | tail -3
 APP="$DD/Build/Products/Release/Based.app"
 [ -d "$APP" ] || { echo "build failed: $APP missing"; exit 1; }
+# Never replace a working Based with a build that can't start (P0 9.11.: Sparkle signed by another team).
+"$ROOT/scripts/check-mac-signature.sh" "$APP" || { phase failed "signature"; echo "Not installed: the build would crash at launch. /Applications/Based.app is unchanged."; exit 1; }
 BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist" 2>/dev/null || echo com.friedrich-ulrich.based)"
 
 phase installing "$(git rev-parse --short HEAD)"
