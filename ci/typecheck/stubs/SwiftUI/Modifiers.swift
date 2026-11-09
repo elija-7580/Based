@@ -264,6 +264,12 @@ extension View {
     public func dropDestination<T: Transferable>(for payloadType: T.Type = T.self, action: @escaping ([T], CGPoint) -> Bool, isTargeted: @escaping (Bool) -> Void = { _ in }) -> _M { .init() }
     // navigation & toolbar
     public func navigationTitle(_ key: LocalizedStringKey) -> _M { .init() }
+    #if STUB_IOS
+    public func navigationBarTitleDisplayMode(_ m: NavigationBarItem.TitleDisplayMode) -> _M { .init() }
+    public func navigationBarHidden(_ h: Bool) -> _M { .init() }
+    public func textInputAutocapitalization(_ a: TextInputAutocapitalization?) -> _M { .init() }
+    public func keyboardType(_ k: UIKeyboardType) -> _M { .init() }
+    #endif
     public func navigationTitle(_ text: Text) -> _M { .init() }
     @_disfavoredOverload public func navigationTitle<S: StringProtocol>(_ title: S) -> _M { .init() }
     public func navigationTitle(_ title: Binding<String>) -> _M { .init() }
@@ -306,3 +312,7 @@ extension VerticalEdge { public struct Set: OptionSet, Sendable { public let raw
 
 public struct MatchedGeometryProperties: OptionSet, Sendable { public let rawValue: UInt32; public init(rawValue: UInt32) { self.rawValue = rawValue }
     public static let position = MatchedGeometryProperties(rawValue: 1), size = MatchedGeometryProperties(rawValue: 2), frame = MatchedGeometryProperties(rawValue: 3) }
+#if STUB_IOS
+public struct NavigationBarItem: Sendable { public enum TitleDisplayMode: Sendable { case automatic, inline, large } }
+public struct TextInputAutocapitalization: Sendable { public static let never = TextInputAutocapitalization(), words = TextInputAutocapitalization(), sentences = TextInputAutocapitalization(), characters = TextInputAutocapitalization() }
+#endif
