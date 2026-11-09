@@ -147,3 +147,21 @@ public enum WatchCaptureLogic {
         return CaptureIntentLogic.voiceNote(audio: audio, transcript: nil, source: .watch, brain: brain, at: meta.capturedAt)
     }
 }
+
+/// BSD-131: views a widget (or any other app) can open with a link: based://inbox (Needs you) and based://home
+/// (the agents' start page with what runs now).
+public enum AppDestination: Equatable, Sendable {
+    case inbox, home
+
+    public init?(url: URL) {
+        guard url.scheme?.lowercased() == "based", let c = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              c.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).isEmpty else { return nil }
+        switch c.host?.lowercased() {
+        case "inbox": self = .inbox
+        case "home": self = .home
+        default: return nil
+        }
+    }
+
+    public var url: URL { URL(string: self == .inbox ? "based://inbox" : "based://home")! }
+}

@@ -76,6 +76,7 @@ struct RunningWidget: Widget {
         StaticConfiguration(kind: "BasedRunning", provider: SnapshotProvider()) { entry in
             ListWidgetView(title: "running", symbol: "bolt.fill", count: entry.snapshot.running,
                            lines: entry.snapshot.runningTop, empty: "No agent is working right now.")
+                .widgetURL(AppDestination.home.url)   // BSD-131: opens the agents' start page
         }
         .configurationDisplayName("Running now")
         .description("Agents working right now.")
@@ -88,6 +89,7 @@ struct NeedsYouWidget: Widget {
         StaticConfiguration(kind: "BasedNeedsYou", provider: SnapshotProvider()) { entry in
             ListWidgetView(title: "need you", symbol: "hand.raised.fill", count: entry.snapshot.needsYou,
                            lines: entry.snapshot.needsYouTop, empty: "Nothing waits for you.")
+                .widgetURL(AppDestination.inbox.url)  // BSD-131: opens the Inbox
         }
         .configurationDisplayName("Needs you")
         .description("Approvals and questions from your agents.")

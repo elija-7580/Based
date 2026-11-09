@@ -119,6 +119,8 @@ struct RootView: View {
             #endif
             // BSD-65: based://capture, based://capture/record, based://ask?text=…
             if let route = CaptureRoute(url: url) { model.captureRoute = route; return }
+            // BSD-131: widget taps — based://inbox (Needs you), based://home (agents' start page).
+            if let dest = AppDestination(url: url) { model.selection = dest == .inbox ? .inbox : .agentHome; return }
             // based://page/<id> (also based://<id> and Notion-style ids) — the same link agents and other apps use.
             if let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil { model.open(id) }
         }

@@ -13,7 +13,11 @@ public protocol TimelineProvider {
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void)
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void)
 }
-public struct WidgetFamily: Hashable, Sendable { public static let accessoryCircular = WidgetFamily(), accessoryCorner = WidgetFamily(), accessoryRectangular = WidgetFamily(), accessoryInline = WidgetFamily() }
+public struct WidgetFamily: Hashable, Sendable {
+    public static let accessoryCircular = WidgetFamily(), accessoryCorner = WidgetFamily(), accessoryRectangular = WidgetFamily(), accessoryInline = WidgetFamily()
+    // BSD-131: Home Screen families (iOS widgets).
+    public static let systemSmall = WidgetFamily(), systemMedium = WidgetFamily(), systemLarge = WidgetFamily()
+}
 public protocol WidgetConfiguration {}
 public struct StaticConfiguration<Content: View>: WidgetConfiguration {
     public init<P: TimelineProvider>(kind: String, provider: P, @ViewBuilder content: @escaping (P.Entry) -> Content) {}
@@ -31,3 +35,14 @@ extension View {
     public func containerBackground<S: ShapeStyle>(_ s: S, for placement: ContainerBackgroundPlacement) -> some View { self }
 }
 public struct ContainerBackgroundPlacement: Sendable { public static let widget = ContainerBackgroundPlacement() }
+
+// BSD-131: widget bundles (iOS widget extension).
+public struct EmptyWidgetConfiguration: WidgetConfiguration { public init() {} }
+public struct _WidgetGroup: Widget { public init() {}; public var body: EmptyWidgetConfiguration { EmptyWidgetConfiguration() } }
+@resultBuilder public enum WidgetBundleBuilder {
+    public static func buildBlock(_ w: any Widget...) -> _WidgetGroup { _WidgetGroup() }
+}
+@MainActor @preconcurrency public protocol WidgetBundle { associatedtype Body: Widget; init(); @WidgetBundleBuilder var body: Body { get } }
+extension WidgetBundle { @MainActor public static func main() {} }
+public enum WidgetCenter { public static let shared = _WidgetCenter() }
+public final class _WidgetCenter: Sendable { public func reloadAllTimelines() {}; public func reloadTimelines(ofKind kind: String) {} }

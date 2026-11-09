@@ -39,4 +39,13 @@ PRE=(); [[ $IOS == 1 ]] && PRE=(--ios)
 rm -rf "$OUT/src"; python3 "$TC/preprocess.py" ${PRE[@]+"${PRE[@]}"} "$ROOT/App/Shared" "$OUT/src"
 swiftc -diagnostic-style=llvm -typecheck -continue-building-after-errors -parse-as-library -swift-version 5 -module-name Based -D DEBUG \
   -I "$OUT/mods" -I "$BRAIN" -I "$BRAIN/Modules" "${CSQL[@]}" "$@" "$OUT"/src/*.swift
+if [[ $IOS == 1 ]]; then
+  # BSD-131: the iOS extensions (Share sheet, Home/Lock Screen widgets) are separate modules; check them too.
+  mod WidgetKit "$TC/stubs/WidgetKit.swift"
+  for ext in ShareExtension Widgets; do
+    rm -rf "$OUT/ext-$ext"; python3 "$TC/preprocess.py" --ios "$ROOT/App/$ext" "$OUT/ext-$ext"
+    swiftc -diagnostic-style=llvm -typecheck -continue-building-after-errors -parse-as-library -swift-version 5 -module-name "Based$ext" \
+      -I "$OUT/mods" -I "$BRAIN" -I "$BRAIN/Modules" "${CSQL[@]}" ${PLATFORM[@]+"${PLATFORM[@]}"} "$@" "$OUT/ext-$ext"/*.swift
+  done
+fi
 echo "typecheck OK"
