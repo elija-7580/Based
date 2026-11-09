@@ -101,6 +101,11 @@ extension WorkspaceStore {
         }
     }
 
+    /// Relation targets that still exist and aren't in the Trash (what cells and the page panel show, BSD-112).
+    public func liveRelationTargets(_ ids: [RecordID]) -> [RecordID] {
+        ids.filter { blocks[$0] != nil && !isTrashed($0) }
+    }
+
     // MARK: Formulas
 
     /// `prop("old")` → `prop("new")` in every formula of the database (not `x.prop("old")`, which reads a
@@ -115,6 +120,150 @@ extension WorkspaceStore {
             if out != src { props[i].formula = out; changed = true }
         }
         if changed { tx.updateDatabase(databaseID) { $0.properties = props } }
+
+        // BSD-112: formulas that read the renamed property of related pages, `prop("Rel").map(current.prop("old"))`,
+        // in every database (also this one) with a relation to this database.
+        for other in databases.values.sorted(by: { $0.id < $1.id }) {
+            guard let d = tx.database(other.id) else { continue }
+            let rels = Set(d.properties.filter { $0.type == .relation && $0.relation?.databaseID == databaseID }.map(\.name))
+            guard !rels.isEmpty else { continue }
+            var props = d.properties
+            var changed = false
+            for i in props.indices {
+                guard let src = props[i].formula, !src.isEmpty else { continue }
+                let out = Self.renamingRelatedReferences(src, relations: rels, from: old, to: new)
+                if out != src { props[i].formula = out; changed = true }
+            }
+            if changed { tx.updateDatabase(d.id) { $0.properties = props } }
+        }
+    }
+
+    /// Formula methods whose argument runs once per list item with `current` bound to it.
+    nonisolated static let lambdaMethods: Set<String> = ["map", "filter", "find", "findIndex", "some", "every", "count", "sortBy"]
+
+    /// `current.prop("old")` → `current.prop("new")` where `current` is a page of a relation named in `relations`:
+    /// inside the argument of `prop("Rel").map(…)` (and further lambda methods chained right after it, like
+    /// `.filter(…).map(…)`). Conservative: a `current` inside a nested lambda call (bound to something else) and
+    /// other forms (`.first().prop(…)`) are left alone.
+    nonisolated static func renamingRelatedReferences(_ src: String, relations: Set<String>, from old: String, to new: String) -> String {
+        let c = Array(src)
+        var edits: [(Range<Int>, String)] = []
+        var i = 0
+        while i < c.count {
+            if c[i] == "\"" { i = skipString(c, i); continue }
+            if (i == 0 || !(c[i - 1] == "." || isWordChar(c[i - 1]))), let (name, end) = parseProp(c, at: i) {
+                var p = end
+                if relations.contains(name) {
+                    while true {
+                        var q = skipSpaces(c, p)
+                        guard q < c.count, c[q] == "." else { break }
+                        q = skipSpaces(c, q + 1)
+                        var e = q
+                        while e < c.count, isWordChar(c[e]) { e += 1 }
+                        let ident = String(c[q..<e])
+                        let open = skipSpaces(c, e)
+                        guard lambdaMethods.contains(ident), open < c.count, c[open] == "(",
+                              let close = matchingParen(c, open) else { break }
+                        edits += currentPropEdits(c, (open + 1)..<close, old: old, new: new)
+                        p = close + 1
+                    }
+                }
+                i = p
+                continue
+            }
+            i += 1
+        }
+        guard !edits.isEmpty else { return src }
+        var out = c
+        for (r, text) in edits.sorted(by: { $0.0.lowerBound > $1.0.lowerBound }) { out.replaceSubrange(r, with: Array(text)) }
+        return String(out)
+    }
+
+    /// `current.prop("old")` in `range` that isn't inside a nested lambda call.
+    nonisolated private static func currentPropEdits(_ c: [Character], _ range: Range<Int>, old: String, new: String) -> [(Range<Int>, String)] {
+        var edits: [(Range<Int>, String)] = []
+        var stack: [Bool] = []   // true: a nested lambda call
+        var j = range.lowerBound
+        while j < range.upperBound {
+            let ch = c[j]
+            if ch == "\"" { j = skipString(c, j); continue }
+            if ch == "(" {
+                var k = j - 1
+                while k >= range.lowerBound, c[k] == " " { k -= 1 }
+                var b = k
+                while b >= range.lowerBound, isWordChar(c[b]) { b -= 1 }
+                let ident = k > b ? String(c[(b + 1)...k]) : ""
+                var d = b
+                while d >= range.lowerBound, c[d] == " " { d -= 1 }
+                stack.append(d >= range.lowerBound && c[d] == "." && lambdaMethods.contains(ident))
+            } else if ch == ")" {
+                _ = stack.popLast()
+            } else if !stack.contains(true), matches(c, j, "current"), j == range.lowerBound || !(isWordChar(c[j - 1]) || c[j - 1] == "."),
+                      j + 7 < c.count, !isWordChar(c[j + 7]) {
+                var q = skipSpaces(c, j + 7)
+                if q < c.count, c[q] == "." {
+                    q = skipSpaces(c, q + 1)
+                    if let (name, end) = parseProp(c, at: q), name == old, end <= range.upperBound {
+                        edits.append((j..<end, "current.prop(\"" + escapeFormulaString(new) + "\")"))
+                        j = end
+                        continue
+                    }
+                }
+            }
+            j += 1
+        }
+        return edits
+    }
+
+    /// `prop ( "name" )` at `i`: the unescaped name and the index after `)`.
+    nonisolated private static func parseProp(_ c: [Character], at i: Int) -> (String, Int)? {
+        guard matches(c, i, "prop") else { return nil }
+        var q = skipSpaces(c, i + 4)
+        guard q < c.count, c[q] == "(" else { return nil }
+        q = skipSpaces(c, q + 1)
+        guard q < c.count, c[q] == "\"" else { return nil }
+        let strEnd = skipString(c, q)
+        guard strEnd <= c.count, strEnd > q + 1, c[strEnd - 1] == "\"" else { return nil }
+        let name = unescapeFormulaString(String(c[(q + 1)..<(strEnd - 1)]))
+        let close = skipSpaces(c, strEnd)
+        guard close < c.count, c[close] == ")" else { return nil }
+        return (name, close + 1)
+    }
+
+    nonisolated private static func matches(_ c: [Character], _ i: Int, _ word: String) -> Bool {
+        let w = Array(word)
+        return i + w.count <= c.count && Array(c[i..<(i + w.count)]) == w
+    }
+
+    nonisolated private static func isWordChar(_ ch: Character) -> Bool { ch.isLetter || ch.isNumber || ch == "_" }
+
+    nonisolated private static func skipSpaces(_ c: [Character], _ i: Int) -> Int {
+        var j = i
+        while j < c.count, c[j].isWhitespace { j += 1 }
+        return j
+    }
+
+    /// Index after the string literal starting at `i` (which is `"`), or `c.count` if it never closes.
+    nonisolated private static func skipString(_ c: [Character], _ i: Int) -> Int {
+        var j = i + 1
+        while j < c.count {
+            if c[j] == "\\" { j += 2; continue }
+            if c[j] == "\"" { return j + 1 }
+            j += 1
+        }
+        return c.count
+    }
+
+    /// Index of the `)` matching the `(` at `open` (strings skipped).
+    nonisolated private static func matchingParen(_ c: [Character], _ open: Int) -> Int? {
+        var depth = 0
+        var j = open
+        while j < c.count {
+            if c[j] == "\"" { j = skipString(c, j); continue }
+            if c[j] == "(" { depth += 1 } else if c[j] == ")" { depth -= 1; if depth == 0 { return j } }
+            j += 1
+        }
+        return nil
     }
 
     nonisolated static func renamingFormulaReferences(_ src: String, from old: String, to new: String) -> String {
