@@ -7,6 +7,8 @@ public final class AgentRuntime: @unchecked Sendable {
     public let tools: AgentTools
     public var maxSteps = 24
     public var maxTokensPerReply = 4096
+    /// Context window override in tokens (nil = known size of the model, see `ContextBudget.window(for:)`).
+    public var contextWindow: Int?
     /// Called after each step with a short progress line (for UI).
     public var onProgress: (@Sendable (String) -> Void)?
     // BSD-45: structured events are a parameter of `run(prompt:…events:)`, no longer a shared `onEvent`
@@ -19,6 +21,8 @@ public final class AgentRuntime: @unchecked Sendable {
         public var usage: Usage
         public var steps: Int
         public var transcript: [ChatMessage]
+        /// The tool loop stopped at `maxSteps` (BSD-47: reported as a notice, "continue" goes on).
+        public var hitStepLimit = false
     }
 
     /// `modelRef` like "anthropic/claude-opus-5-5"; nil → first registered provider's first model.
@@ -45,9 +49,40 @@ public final class AgentRuntime: @unchecked Sendable {
         if let systemExtra { system += "\n\n# Agent instructions\n" + systemExtra }
         var messages: [ChatMessage] = [.system(system)] + history + [.user(prompt)]
         var usage = Usage(), steps = 0
+        // BSD-47: keep the conversation inside the context window (summaries instead of "prompt too long").
+        let budget = ContextBudget(window: contextWindow ?? ContextBudget.window(for: model))
+        let summaryModel = ContextBudget.summaryModel(of: provider, fallback: model)
+        let summarizer: ContextBudget.Summarizer = { text in
+            let r = try await provider.complete([
+                .system("Summarize this earlier part of a conversation between the user and their assistant in at most 250 words. Keep facts, decisions, names, ids of pages and open tasks. Write in the conversation's language. Reply with the summary only."),
+                .user(text),
+            ], model: summaryModel, tools: [], maxTokens: 1024)
+            return r.message.content
+        }
+        var noticed: Set<String> = []
+        let brain = tools.brain
+        func compacted(_ m: [ChatMessage], force: Bool) async -> [ChatMessage] {
+            let (out, report) = await budget.fit(m, summarizer: summarizer, force: force)
+            guard report.changed else { return m }
+            if let n = report.userNotice, noticed.insert(n).inserted { onEvent?(.notice(n)) }
+            Log.info("Context compacted: \(report.before) → \(report.after) tokens (window \(budget.window))", category: "ai")
+            if let callerSession {
+                let line = "**Context compacted** (\(report.before) → \(report.after) tokens)" + (report.summary.map { "\n\nSo far: " + $0 } ?? "")
+                await MainActor.run { if let run = brain.latestRun(forSession: callerSession) { brain.logRun(run.id, line) } }
+            }
+            return out
+        }
         while steps < maxSteps {
             steps += 1
-            var r = try await step(provider, messages, model: model, tools: specs, events: onEvent, thinking: true)
+            messages = await compacted(messages, force: false)
+            var r: AIResponse
+            do {
+                r = try await step(provider, messages, model: model, tools: specs, events: onEvent, thinking: true)
+            } catch where ContextBudget.isContextOverflow(error) {
+                // Our estimate was too optimistic for this model: compact harder and try once more.
+                messages = await compacted(messages, force: true)
+                r = try await step(provider, messages, model: model, tools: specs, events: onEvent, thinking: true)
+            }
             var reply = r.message
             // BSD-46: an answer cut off by the length limit is continued once (the continuation's deltas extend the
             // text already shown), then marked as cut.
@@ -86,7 +121,12 @@ public final class AgentRuntime: @unchecked Sendable {
                 onEvent?(.toolResult(id: call.id, output: String(res.text.prefix(4_000)), isError: res.isError))
             }
         }
-        return Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)
+        // BSD-47: the step limit no longer ends silently.
+        onEvent?(.notice("Stopped after \(maxSteps) steps (step limit). Reply “continue” to keep going."))
+        onProgress?("Step limit reached")
+        var o = Outcome(text: messages.last(where: { $0.role == .assistant })?.content ?? "", usage: usage, steps: steps, transcript: messages)
+        o.hitStepLimit = true
+        return o
     }
 
     /// One model call: streamed when someone listens (thinking and text deltas go straight to the chat), else in
