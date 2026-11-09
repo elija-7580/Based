@@ -1,7 +1,7 @@
 // BSD-155: Einstellungen einer Ansicht (Swift ViewSettingsView): Name, Layout, Properties, Gruppierung,
 // Karten, Diagramm, Dashboard-Widgets, Sperre, Duplizieren/Löschen. Alles über Store-Transaktionen.
 import {
-  DASHBOARD_COLUMNS, PROPERTY_TYPE_LABELS, addDashboardWidget, deleteView, duplicateView, movePropertyInView, removeDashboardWidget,
+  CALENDAR_PROPERTY_TYPES, DASHBOARD_COLUMNS, PROPERTY_TYPE_LABELS, TIMELINE_SCALES, calendarDateProperty, addDashboardWidget, deleteView, duplicateView, movePropertyInView, removeDashboardWidget,
   renameView, setAllPropertiesVisible, setDashboardWidgetWidth, setDatabaseLocked, setGroupBy, setGroupHidden, setPropertyVisible,
   setViewType, updateChart, updateView, visiblePropertyIDs, valueCase, WIDGET_TYPES,
   type DatabaseView,
@@ -159,6 +159,55 @@ function ChartSection({ view }: { view: DatabaseView }) {
   );
 }
 
+/** BSD-8: Kalender/Timeline – Datums-Property, Ende, Bereich (Monat/Woche) bzw. Zoom und Tabelle. */
+function DatesSection({ view }: { view: DatabaseView }) {
+  const { store, db } = useDB();
+  const current = calendarDateProperty(db, view);
+  const dateProps = db.properties.filter((p) => CALENDAR_PROPERTY_TYPES.includes(p.type));
+  const endProps = db.properties.filter((p) => p.type === "date" && p.id !== current?.id);
+  const set = (f: (v: DatabaseView) => void, name: string) => updateView(store, view.id, f, name);
+  const what = view.type === "calendar" ? "calendar" : "timeline";
+  return (
+    <section className="dbui-config-section" aria-label="Dates">
+      <label className="dbui-field"><span className="dbui-field-label">Show {what} by</span>
+        <select className="dbui-select" aria-label="Date property" value={current?.id ?? ""} onChange={(e) => set((v) => {
+          v.datePropertyID = e.target.value;
+          if (v.endDatePropertyID === e.target.value) delete v.endDatePropertyID;
+        }, "Date property")}>
+          {!current && <option value="">None</option>}
+          {dateProps.map((p) => <option key={p.id} value={p.id}>{p.name} ({PROPERTY_TYPE_LABELS[p.type] ?? p.type})</option>)}
+        </select>
+      </label>
+      <label className="dbui-field"><span className="dbui-field-label">End date</span>
+        <select className="dbui-select" aria-label="End date property" value={view.endDatePropertyID ?? ""} onChange={(e) => set((v) => {
+          if (e.target.value) v.endDatePropertyID = e.target.value; else delete v.endDatePropertyID;
+        }, "End date property")}>
+          <option value="">Date range of {current?.name ?? "the date"}</option>
+          {endProps.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </label>
+      {current && current.type !== "date" && <p className="dbui-hint">{current.name} is computed – entries can’t be moved.</p>}
+      {view.type === "calendar" && (
+        <label className="dbui-field"><span className="dbui-field-label">Show</span>
+          <select className="dbui-select" aria-label="Calendar range" value={view.calendarMode === "week" ? "week" : "month"} onChange={(e) => set((v) => { v.calendarMode = e.target.value; }, "Calendar range")}>
+            <option value="month">Month</option><option value="week">Week</option>
+          </select>
+        </label>
+      )}
+      {view.type === "timeline" && (
+        <>
+          <label className="dbui-field"><span className="dbui-field-label">Zoom</span>
+            <select className="dbui-select" aria-label="Timeline zoom" value={typeof view.timelineScale === "string" ? view.timelineScale : "week"} onChange={(e) => set((v) => { v.timelineScale = e.target.value; }, "Timeline zoom")}>
+              {TIMELINE_SCALES.map((t) => <option key={t} value={t}>{t[0]!.toUpperCase() + t.slice(1)}</option>)}
+            </select>
+          </label>
+          <Toggle label="Show table" checked={view.timelineShowTable === true} onChange={(on) => set((v) => { if (on) v.timelineShowTable = true; else delete v.timelineShowTable; }, "Timeline table")} />
+        </>
+      )}
+    </section>
+  );
+}
+
 function DashboardSection({ view }: { view: DatabaseView }) {
   const { store } = useDB();
   const rows = view.dashboard?.rows ?? [];
@@ -207,8 +256,9 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
       <MenuSeparator />
       {view.type === "dashboard" ? <DashboardSection view={view} /> : view.type === "chart" ? <ChartSection view={view} /> : (
         <>
-          {view.type !== "calendar" && view.type !== "timeline" && <PropertiesSection view={view} />}
-          {["table", "board", "list", "gallery"].includes(view.type) && <GroupSection view={view} groups={groups} />}
+          {(view.type === "calendar" || view.type === "timeline") && <DatesSection view={view} />}
+          {view.type !== "calendar" && <PropertiesSection view={view} />}
+          {["table", "board", "list", "gallery", "timeline"].includes(view.type) && <GroupSection view={view} groups={groups} />}
           {(view.type === "board" || view.type === "gallery") && <CardSection view={view} />}
           <section className="dbui-config-section" aria-label="Display">
             {view.type === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}

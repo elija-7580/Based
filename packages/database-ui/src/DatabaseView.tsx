@@ -27,6 +27,8 @@ export interface DatabaseViewProps {
   onViewChange?: ((viewID: string) => void) | undefined;
   /** Agent-Strich: Standard ist `updatedBy` „agent…“/„based“. */
   isAgentEdit?: ((row: Block) => boolean) | undefined;
+  /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
+  weekStart?: number | undefined;
   /** Nur lesen (zusätzlich zur Sperre der Datenbank). */
   readOnly?: boolean | undefined;
   /** Titel der Datenbank über den Tabs zeigen (Standard: ja). */
@@ -160,7 +162,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
  */
 export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
-  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit });
+  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart });
   const style = { height: props.height ?? "100%" };
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (

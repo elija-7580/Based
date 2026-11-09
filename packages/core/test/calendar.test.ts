@@ -207,6 +207,14 @@ describe("Bereichsabfrage und Spuren", () => {
     expect(l.perDay).toEqual([1, 4, 1, 0, 1, 1, 1]);
     expect(l.hiddenPerDay).toEqual([0, 2, 0, 0, 0, 0, 0]);
   });
+
+  it("layoutLanes füllt Lücken vor späteren Balken; lange Bereiche (Timeline) mit Tageslisten", () => {
+    const l = layoutLanes([span("late", 103, 106), span("early", 100), span("mid", 101, 102)], 100, 7);
+    expect(l.lanes).toBe(1);
+    expect(l.placements.map((p) => p.lane)).toEqual([0, 0, 0]);
+    const long = layoutLanes([span("a", 0, 40), span("b", 41, 60), span("c", 30, 45)], 0, 90);
+    expect(long.placements.map((p) => [p.span.row.id, p.lane])).toEqual([["a", 0], ["c", 1], ["b", 0]]);
+  });
 });
 
 describe("Zeitachse", () => {

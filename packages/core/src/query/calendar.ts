@@ -271,19 +271,35 @@ export function layoutLanes(spans: readonly RowSpan[], first: number, days: numb
     const multiA = la > 0 ? 1 : 0, multiB = lb > 0 ? 1 : 0;
     return multiB - multiA || a.from - b.from || lb - la || a.i - b.i;
   });
-  const laneEnds: number[] = [];
+  // Belegung je Spur: Bitmaske (bis 30 Tage, der Normalfall Woche) bzw. Tagesliste – Lücken vor einem
+  // späteren Balken werden so ebenfalls gefüllt.
+  const small = days <= 30;
+  const masks: number[] = [];
+  const used: Uint8Array[] = [];
+  const free = (l: number, from: number, to: number) => {
+    if (small) return (masks[l]! & (((1 << (to - from + 1)) - 1) << from)) === 0;
+    for (let d = from; d <= to; d++) if (used[l]![d]) return false;
+    return true;
+  };
+  const take = (l: number, from: number, to: number) => {
+    if (small) masks[l] = masks[l]! | (((1 << (to - from + 1)) - 1) << from);
+    else used[l]!.fill(1, from, to + 1);
+  };
+  let laneCount = 0;
   const placements: LanePlacement[] = [];
   const perDay = new Array<number>(days).fill(0), hiddenPerDay = new Array<number>(days).fill(0);
   for (const x of items) {
-    let lane = laneEnds.findIndex((end) => end < x.from);
-    if (lane < 0) { lane = laneEnds.length; laneEnds.push(x.to); } else laneEnds[lane] = x.to;
+    let lane = 0;
+    while (lane < laneCount && !free(lane, x.from, x.to)) lane++;
+    if (lane === laneCount) { laneCount++; masks.push(0); if (!small) used.push(new Uint8Array(days)); }
+    take(lane, x.from, x.to);
     placements.push({ span: x.s, lane, from: x.from, to: x.to, continuesBefore: x.s.start < first, continuesAfter: x.s.end > last });
     for (let d = x.from; d <= x.to; d++) {
       perDay[d]!++;
       if (lane >= maxLanes) hiddenPerDay[d]!++;
     }
   }
-  return { placements, lanes: laneEnds.length, perDay, hiddenPerDay };
+  return { placements, lanes: laneCount, perDay, hiddenPerDay };
 }
 
 // MARK: Zeitachse
