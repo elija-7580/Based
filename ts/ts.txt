@@ -1,5 +1,5 @@
 packages/design-tokens test: [2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-packages/core test:   clipboard  nicht portiert (13 Fälle)
+packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
 packages/core test:   formulas   143/143 grün
 packages/core test:   hlc        74/74 grün
@@ -10,7 +10,7 @@ packages/core test:   search     33/33 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1004 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (1007)[39m
+packages/core test: [2m      Tests [22m [1m[32m1022 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1023)[39m
 packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 packages/sync test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
@@ -34,7 +34,7 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 2 tests using 2 workers
 
-  ✓  1 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (176ms)
-  ✓  2 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (577ms)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (220ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (889ms)
 
-  2 passed (3.7s)
+  2 passed (5.1s)
