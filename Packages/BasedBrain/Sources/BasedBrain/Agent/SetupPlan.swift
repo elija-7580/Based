@@ -181,6 +181,13 @@ public enum SetupPlan {
     public static let dailyBriefInstructions = """
     Every morning, write a short brief for the user: what the agents finished and what failed since yesterday, \
     open questions in the Inbox, and what is planned today. Keep it under ten lines, most important first. \
+    Based hands you the facts (runs, Inbox, schedules, project updates) — write only from them; do not start new work.
+    """
+
+    /// BSD-56's text (rows created with it are adopted as the shipped brief).
+    static let legacyDailyBriefInstructions = """
+    Every morning, write a short brief for the user: what the agents finished and what failed since yesterday, \
+    open questions in the Inbox, and what is planned today. Keep it under ten lines, most important first. \
     Use check_runs and the projects' latest updates; do not start new work.
     """
 
@@ -290,14 +297,27 @@ public enum SetupPlan {
         }
         var briefID: RecordID?, briefCreated = false
         if let sched = d.dailyBrief {
-            if let existing = brain.agents().first(where: { $0.name == dailyBriefName }) {
+            let all = brain.agents()
+            if let existing = all.first(where: BrainStore.isDailyBrief) ?? all.first(where: { $0.name == dailyBriefName }) {
                 briefID = existing.id
+                // BSD-57: a row from BSD-56 (before the Kind marker) with untouched instructions is the shipped brief.
+                if !BrainStore.isDailyBrief(existing), existing.kind.isEmpty,
+                   [dailyBriefInstructions, legacyDailyBriefInstructions].map(plain).contains(plain(existing.instructions)) {
+                    brain.markDailyBrief(existing.id)
+                }
             } else {
-                briefID = brain.saveAgent(name: dailyBriefName, instructions: dailyBriefInstructions, schedule: sched, model: nil)
+                let id = brain.saveAgent(name: dailyBriefName, instructions: dailyBriefInstructions, schedule: sched, model: nil)
+                brain.markDailyBrief(id)
+                briefID = id
                 briefCreated = true
             }
         }
         return SetupApplied(mainAgent: main.id, mainAgentCreated: !hadMain, dailyBrief: briefID, dailyBriefCreated: briefCreated)
+    }
+
+    /// Instructions as stored in the page body come back with Markdown escapes ("check\\_runs").
+    private static func plain(_ s: String) -> String {
+        s.replacingOccurrences(of: "\\", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func nonEmpty(_ s: String?) -> Bool { !(s?.trimmingCharacters(in: .whitespaces).isEmpty ?? true) }

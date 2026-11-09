@@ -115,6 +115,9 @@ public struct HomeSnapshot: Sendable, Equatable {
     /// Latest update the main agent wrote into a project ("Latest updates").
     public var lastUpdate: String
     public var costToday: Double
+    /// BSD-57: today's daily brief (its headline and page), empty when it has not run yet.
+    public var brief: String = ""
+    public var briefPageID: RecordID? = nil
 
     public func items(in lane: HomeItem.Lane) -> [HomeItem] { items.filter { $0.lane == lane } }
 
@@ -207,8 +210,10 @@ public extension BrainStore {
         let projects = existingProjectsDB == nil ? [] : self.projects()
         let update = projects.filter { $0.status == .active }.sorted { $0.updatedAt > $1.updatedAt }
             .lazy.compactMap { p in self.latestUpdates(ofProject: p.id, limit: 1).first.map { "\(p.name): \($0)" } }.first ?? ""
-        return HomeSnapshot.make(overview: overview, projects: projects, lastUpdate: update, userName: userName, lastSeen: lastSeen,
-                                 now: now, range: range)
+        var snap = HomeSnapshot.make(overview: overview, projects: projects, lastUpdate: update, userName: userName, lastSeen: lastSeen,
+                                     now: now, range: range)
+        if let b = todaysBrief(now: now) { snap.brief = b.summary; snap.briefPageID = b.page }
+        return snap
     }
 }
 

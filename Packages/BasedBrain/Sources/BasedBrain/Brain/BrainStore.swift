@@ -41,6 +41,8 @@ public struct Agent: Sendable, Identifiable, Equatable {
     public var isMain: Bool = false
     /// BSD-98: this agent's permission layer (column "Permissions": `mode …` plus rules), "" = none.
     public var permissions: String = ""
+    /// BSD-57: raw value of the Kind column ("main", "brief", "" = a normal agent).
+    public var kind: String = ""
 }
 
 /// The "Agent Brain" lives inside the workspace as a page with three databases, so it syncs like
@@ -294,7 +296,7 @@ public final class BrainStore {
                          enabled: bool(row, agentsDB, "Enabled", default: true), lastRun: last, dailyTokenBudget: budget,
                          monthlyBudget: monthly, runningSince: since, runningNode: node.isEmpty ? nil : node, createdAt: row.createdAt,
                          isMain: text(row, agentsDB, AgentCol.kind) == AgentCol.mainKind,
-                         permissions: text(row, agentsDB, PermissionCol.name))
+                         permissions: text(row, agentsDB, PermissionCol.name), kind: text(row, agentsDB, AgentCol.kind))
         }
     }
 

@@ -189,6 +189,8 @@ public final class AgentRuntime: @unchecked Sendable {
     /// (and its responsible project's) is layered on top. There is no one to ask during a scheduled run: rule-"ask"
     /// and the always-ask list are refused with an explanation, Plan mode refuses every change.
     public func run(agent: Agent, trigger: String = "manual", permissions: AgentPermissions? = nil) async -> Outcome? {
+        // BSD-57: the shipped daily brief has its own run (facts first, model only when something happened).
+        if BrainStore.isDailyBrief(agent) { return await runDailyBrief(agent: agent, trigger: trigger) }
         let brain = tools.brain
         let effective = await MainActor.run { () -> AgentPermissions in
             let project = brain.projects().first { $0.agentID == agent.id }?.id

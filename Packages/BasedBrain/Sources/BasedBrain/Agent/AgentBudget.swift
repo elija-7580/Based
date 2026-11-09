@@ -17,6 +17,8 @@ enum AgentCol {
     static let runningSince = "Running since", node = "Node"
     /// BSD-52: "main" marks the main agent's row.
     static let kind = "Kind", mainKind = "main"
+    /// BSD-57: "brief" marks the shipped daily brief (its run collects facts instead of a free model run).
+    static let briefKind = "brief"
 }
 
 /// Where scheduled agents run.

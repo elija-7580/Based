@@ -60,7 +60,7 @@ struct AgentHomeView: View {
             let g = HomeGeometry(width: Double(geo.size.width), height: max(320, Double(geo.size.height) - header - 80))
             let layout = HomeLayout.place(snap.items, geometry: g, scale: TimeScale(range: range, now: now))
             VStack(spacing: 0) {
-                HomeHeader(snapshot: snap, range: $rangeRaw).frame(height: header)
+                HomeHeader(snapshot: snap, range: $rangeRaw, openPage: openPage).frame(height: header)
                 ZStack(alignment: .topLeading) {
                     HomeSun(center: g.center, radius: g.clockRadius, tone: sunTone(now))
                     HomeRings(geometry: g, ticks: layout.ticks)
@@ -109,6 +109,10 @@ struct AgentHomeView: View {
 
     // MARK: Actions
 
+    private func openPage(_ id: RecordID) {
+        if model.store.blocks[id] != nil { model.selection = .page(id) }
+    }
+
     private func open(_ item: HomeItem) {
         if let page = item.resultPageID, model.store.blocks[page] != nil { model.selection = .page(page); return }
         if let run = item.runID, model.store.blocks[run] != nil { model.selection = .page(run); return }
@@ -126,11 +130,21 @@ struct AgentHomeView: View {
 private struct HomeHeader: View {
     let snapshot: HomeSnapshot
     @Binding var range: String
+    var openPage: (RecordID) -> Void = { _ in }
 
     var body: some View {
         HStack(alignment: .top, spacing: DS.Space.xl) {
             VStack(alignment: .leading, spacing: DS.Space.xs) {
                 Text(snapshot.greeting).font(.system(size: 26, weight: .semibold))
+                // BSD-57: today's brief (tap opens its page in Briefs).
+                if !snapshot.brief.isEmpty, let page = snapshot.briefPageID {
+                    Button { openPage(page) } label: {
+                        Label("Today's brief: \(snapshot.brief)", systemImage: "sun.horizon")
+                            .font(DS.Text.ui()).lineLimit(1)
+                    }
+                    .buttonStyle(.plain).foregroundStyle(Theme.secondary)
+                    .accessibilityIdentifier("home.brief")
+                }
                 if !snapshot.summary.isEmpty {
                     Text(snapshot.summary).font(DS.Text.ui()).foregroundStyle(Theme.secondary).lineLimit(2)
                 } else if !snapshot.lastUpdate.isEmpty {
