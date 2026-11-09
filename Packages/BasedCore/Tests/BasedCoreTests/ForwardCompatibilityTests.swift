@@ -258,7 +258,10 @@ import Testing
             .condition(FilterCondition(id: "c1", propertyID: "d", op: .within, value: .relative(.pastWeek))),
             .group(FilterGroup(combinator: .and, items: [.condition(FilterCondition(id: "c2", propertyID: "p", op: .isEmpty))])),
         ])
-        let text = Self.inject(String(decoding: try Record.view(view).encoded(), as: UTF8.self), [
+        // Sorted keys: the tokens below must not depend on the encoder's key order.
+        let sorted = JSONEncoder(); sorted.outputFormatting = .sortedKeys
+        let canonical = String(decoding: try sorted.encode(try Self.json(Record.view(view).encoded())), as: UTF8.self)
+        let text = Self.inject(canonical, [
             (#""p":"median""#, #""p":"geometricMean""#),
             (#"{"pageCover":{}}"#, #"{"hologram":{"angle":30}}"#),
             (#""centerPeek""#, #""splitView""#),
