@@ -1,5 +1,5 @@
-packages/design-tokens test: [2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
 packages/ui test: [2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -15,50 +15,50 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1351 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1352)[39m
+packages/core test: [2m      Tests [22m [1m[32m1371 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1372)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m12 passed[39m[22m[90m (12)[39m
 packages/sync test: [2m      Tests [22m [1m[32m26 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (29)[39m
 packages/editor test: [2m      Tests [22m [1m[32m22 passed[39m[22m[90m (22)[39m
-apps/web test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+apps/web test: [2m      Tests [22m [1m[32m35 passed[39m[22m[90m (35)[39m
 apps/server test: [2m      Tests [22m [1m[32m34 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (35)[39m
 --- e2e
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+  ✓  24 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (4.7s)
+  ✓  23 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (7.7s)
+  ✓  25 [webkit] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (3.2s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 6, 19, 19, 28, 35
+  ✓  26 [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (4.3s)
+  ✓  27 [webkit] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (5.7s)
+  ✓  29 [webkit] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (3.3s)
+[webkit] Seitenleiste 5.000 Seiten: {"count":179,"p50":26,"p95":53,"max":68,"maxRows":29,"total":160064}
+  ✘  28 [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (9.4s)
+  ✓  30 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.1s)
+  ✓  31 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (9.0s)
+  ✓  33 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (5.0s)
+  ✓  32 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (15.2s)
+  ✓  34 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.5s)
 
-Running 22 tests using 2 workers
 
-  ✓   2 [chromium] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (1.5s)
-  ✓   1 [chromium] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da (1.9s)
-  ✓   4 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (752ms)
-  ✓   3 [chromium] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (1.4s)
-  ✓   5 [chromium] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (525ms)
-  ✓   7 [chromium] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (880ms)
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 2.5, 2.6, 2.6, 8.4, 11
-  ✓   6 [chromium] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (1.5s)
-  ✓   8 [chromium] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (609ms)
-[chromium] Seitenleiste 5.000 Seiten: {"count":179,"p50":16.699999999999818,"p95":16.700000000000273,"max":16.800000000000182,"maxRows":29,"total":160064}
-  ✓   9 [chromium] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (4.3s)
-  ✓  11 [chromium] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (2.7s)
-  ✓  10 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da (6.6s)
-  ✓  12 [chromium] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (1.1s)
-  ✓  14 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (2.1s)
-  ✓  15 [webkit] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.2s)
-  ✓  13 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (7.1s)
-  ✓  16 [webkit] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (3.3s)
-  ✓  18 [webkit] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (2.0s)
-  ✓  17 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (4.2s)
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 2, 5, 6, 11, 13
-  ✓  19 [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (1.6s)
-[webkit] Seitenleiste 5.000 Seiten: {"count":179,"p50":16,"p95":17,"max":21,"maxRows":29,"total":160064}
-  ✓  20 [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (4.3s)
-  ✓  21 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (2.7s)
-  ✓  22 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (1.5s)
+  1) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
 
-  22 passed (39.7s)
+    Error: expect(received).toBeLessThan(expected)
+
+    Expected: < 34
+    Received:   53
+
+      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
+      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
+    > 144 |   expect(r.p95).toBeLessThan(34);
+          |                 ^
+      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
+      146 | });
+      147 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
+
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+
+  1 failed
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
+  33 passed (1.7m)
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
+Exit status 1
