@@ -7,10 +7,11 @@ import Testing
 @Suite struct UndecodableRecordTests {
     let dir = FileManager.default.temporaryDirectory.appendingPathComponent("undecodable-\(UUID().uuidString)")
 
-    /// A block row whose type is unknown to this version (written by a newer app).
+    /// A block row this version can't decode (a required field changed shape). Unknown block types and fields
+    /// decode since BSD-25 (ForwardCompatibilityTests), so the row breaks the parent reference instead.
     static func futureBlockData(_ b: Block) throws -> Data {
         let json = String(decoding: try Record.block(b).encoded(), as: UTF8.self)
-        let replaced = json.replacingOccurrences(of: "\"type\":\"\(b.type.rawValue)\"", with: "\"type\":\"futureBlock\"")
+        let replaced = json.replacingOccurrences(of: "\"type\":\"\(b.type.rawValue)\"", with: "\"type\":{\"v\":2}")
         #expect(replaced != json)
         return Data(replaced.utf8)
     }

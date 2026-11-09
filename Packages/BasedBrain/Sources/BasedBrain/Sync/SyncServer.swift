@@ -59,7 +59,7 @@ public struct SyncPage: Codable, Sendable, Equatable {
     enum CodingKeys: String, CodingKey { case records, deletions, next, more }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        records = try c.decode([Record].self, forKey: .records)
+        records = try LenientRecords.decode(c, forKey: .records)
         (deletions, deletionStamps) = WireDeletion.decode(try c.decode([WireDeletion].self, forKey: .deletions))
         next = try c.decode(Int64.self, forKey: .next)
         more = try c.decode(Bool.self, forKey: .more)
@@ -115,7 +115,7 @@ public struct SyncPushReply: Codable, Sendable {
     enum CodingKeys: String, CodingKey { case newer, seq, deleted }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        newer = try c.decode([Record].self, forKey: .newer)
+        newer = try LenientRecords.decode(c, forKey: .newer)
         seq = try c.decode(Int64.self, forKey: .seq)
         (deleted, deletedStamps) = WireDeletion.decode(try c.decodeIfPresent([WireDeletion].self, forKey: .deleted) ?? [])
     }
@@ -124,6 +124,33 @@ public struct SyncPushReply: Codable, Sendable {
         try c.encode(newer, forKey: .newer)
         try c.encode(seq, forKey: .seq)
         try c.encode(WireDeletion.encode(deleted, deletedStamps), forKey: .deleted)
+    }
+}
+
+/// Records a client receives are decoded one by one (BSD-25): a record this version still can't read (broken JSON,
+/// an unknown record kind) is skipped and logged instead of failing the whole page, which used to stall this
+/// client's sync for good. Unknown fields and block types no longer fail at all (they're kept, see
+/// ForwardCompatibility.swift). Pushes are decoded strictly: the server never silently drops what a client sent.
+enum LenientRecords {
+    /// One array element. Its init never throws, so the array container always steps over exactly one element.
+    private struct Slot: Decodable {
+        let record: Record?
+        let label: String
+        init(from decoder: Decoder) {
+            if let r = try? Record(from: decoder) { record = r; label = ""; return }
+            record = nil
+            let raw = try? JSONValue(from: decoder)
+            label = "\(raw?["kind"]?.string ?? "?")/\(raw?["data"]?["id"]?.string ?? "?")"
+        }
+    }
+
+    static func decode<K: CodingKey>(_ c: KeyedDecodingContainer<K>, forKey key: K) throws -> [Record] {
+        let slots = try c.decode([Slot].self, forKey: key)
+        let skipped = slots.filter { $0.record == nil }.map(\.label)
+        if !skipped.isEmpty {
+            Log.warning("Sync: skipped \(skipped.count) undecodable records: \(skipped.prefix(20).joined(separator: ", "))", category: "sync")
+        }
+        return slots.compactMap(\.record)
     }
 }
 

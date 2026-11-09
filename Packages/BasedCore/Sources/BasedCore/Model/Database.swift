@@ -4,9 +4,12 @@ public enum PropertyType: String, Codable, CaseIterable, Sendable {
     case title, text, number, select, multiSelect, status, date, person, files, checkbox
     case url, email, phone, formula, relation, rollup
     case createdTime, createdBy, lastEditedTime, lastEditedBy, button, uniqueID, place, verification
+    /// A property type from a newer Based version (BSD-25): shown read-only, original kept in `PropertySchema.extra`.
+    case unknown = "__unknown"
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Unsupported property"
         case .title: return "Title"
         case .text: return "Text"
         case .number: return "Number"
@@ -155,6 +158,8 @@ public struct PropertySchema: Codable, Hashable, Identifiable, Sendable {
     public var idPrefix: String?
     public var dateFormat: String?
     public var description: String?
+    /// Fields from a newer version this one doesn't know (BSD-25); written back unchanged.
+    public var extra: [String: JSONValue] = [:]
 
     public init(id: String = RecordIDs.make(), name: String, type: PropertyType) {
         self.id = id; self.name = name; self.type = type
@@ -224,6 +229,8 @@ public struct Database: Codable, Hashable, Identifiable, Sendable {
     public var createdAt: Date
     public var updatedAt: Date
     public var stamp: Stamp
+    /// Fields from a newer version this one doesn't know (BSD-25); written back unchanged.
+    public var extra: [String: JSONValue] = [:]
 
     public init(id: RecordID = RecordIDs.make(), blockID: RecordID, title: RichText, properties: [PropertySchema]) {
         self.id = id; self.blockID = blockID; self.title = title; self.properties = properties
@@ -245,8 +252,10 @@ public struct Database: Codable, Hashable, Identifiable, Sendable {
 
 public enum ViewType: String, Codable, CaseIterable, Sendable {
     case table, board, list, gallery, calendar, timeline, chart, feed, map, form, dashboard
+    /// A layout from a newer Based version (BSD-25): shown as a table, original kept in `DatabaseView.extra`.
+    case unknown = "__unknown"
 
-    public var displayName: String { rawValue.capitalized }
+    public var displayName: String { self == .unknown ? "Unsupported view" : rawValue.capitalized }
 
     /// View types implemented in this build.
     public static let available: [ViewType] = [.table, .board, .list, .gallery, .calendar, .timeline, .chart, .map, .form, .dashboard]
@@ -299,7 +308,7 @@ public enum FilterOp: String, Codable, CaseIterable, Sendable {
             return [.equals, .before, .after, .onOrBefore, .onOrAfter, .within, .isEmpty, .isNotEmpty]
         case .checkbox:
             return [.equals, .notEquals]
-        case .createdBy, .lastEditedBy, .button, .verification:
+        case .createdBy, .lastEditedBy, .button, .verification, .unknown:
             return [.isEmpty, .isNotEmpty]
         }
     }
@@ -431,6 +440,8 @@ public struct DatabaseView: Codable, Hashable, Identifiable, Sendable {
     public var createdAt: Date
     public var updatedAt: Date
     public var stamp: Stamp
+    /// Fields from a newer version this one doesn't know (BSD-25); written back unchanged.
+    public var extra: [String: JSONValue] = [:]
 
     public init(id: RecordID = RecordIDs.make(), databaseID: RecordID, blockID: RecordID, name: String, type: ViewType, sortKey: String) {
         self.id = id; self.databaseID = databaseID; self.blockID = blockID; self.name = name; self.type = type
@@ -465,6 +476,8 @@ public struct Workspace: Codable, Hashable, Identifiable, Sendable {
     public var createdAt: Date
     public var updatedAt: Date
     public var stamp: Stamp
+    /// Fields from a newer version this one doesn't know (BSD-25); written back unchanged.
+    public var extra: [String: JSONValue] = [:]
 
     public static let mainID = "workspace"
 

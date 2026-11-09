@@ -44,7 +44,18 @@ applies in both directions:
   wins over an older "Delete forever" on another device with all its content, not as an empty page.
 
 Unknown fields must be preserved (decode and re-encode them untouched). That lets newer clients add fields
-without breaking older ones.
+without breaking older ones. Since BSD-25 the Swift clients do this:
+
+- Block (top level and `props`), Database, each property schema, DatabaseView and Workspace keep keys they
+  don't know in `extra` and write them back unchanged (`BasedCore/Model/ForwardCompatibility.swift`).
+- An unknown block `type`, property `type` or view `type` decodes as `.unknown`; the original string is kept
+  and written back. The app shows such a block as a grey read-only line ("needs a newer version of Based"),
+  it can't be turned into another type; unknown views render as a table.
+- Received record lists (`records` of a pull page, `newer` of a push reply) are decoded record by record: one
+  that still can't be read (broken JSON, unknown record kind) is skipped and logged, the rest is applied.
+  Pushes are decoded strictly, so a server never silently drops what a client sent.
+- Not covered yet: unknown cases of nested enums (property values, filter operators, …) still fail the
+  record; such rows are kept raw and never deleted (BSD-16).
 
 ## Endpoints
 

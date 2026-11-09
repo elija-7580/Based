@@ -328,7 +328,8 @@ public extension WorkspaceStore {
     func turnInto(_ ids: [RecordID], _ type: BlockType, toggleable: Bool? = nil) {
         transact("Turn into \(type.displayName)") { tx in
             for id in ids {
-                guard let b = tx.block(id), !b.type.isPageLike || type.isPageLike else { continue }
+                // A block from a newer version (BSD-25) keeps its type: turning it into something else would drop its content.
+                guard let b = tx.block(id), b.type != .unknown, type != .unknown, !b.type.isPageLike || type.isPageLike else { continue }
                 tx.update(id) { blk in
                     let from = blk.type
                     blk.type = type

@@ -94,7 +94,7 @@ public struct MarkdownExporter {
                 let title = store.title(of: b.id)
                 line = "[\(title)](\((MarkdownExporter.fileName(title) + ".csv").addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? title))"
             case .table: line = table(b)
-            case .tableOfContents, .breadcrumb, .button, .tableRow, .meetingSection, .transcript: continue
+            case .tableOfContents, .breadcrumb, .button, .tableRow, .meetingSection, .transcript, .unknown: continue
             case .meeting:
                 out.append(pad + meeting(b).replacingOccurrences(of: "\n", with: "\n" + pad))
                 if idx < blocks.count - 1 { out.append("") }

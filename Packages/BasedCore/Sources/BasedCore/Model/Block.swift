@@ -21,9 +21,13 @@ public enum BlockType: String, Codable, CaseIterable, Sendable {
     case meetingSection
     /// A chunk of a meeting's transcript (`props.segments`).
     case transcript
+    /// A block type from a newer Based version (BSD-25). Shown read-only; the original type string is kept
+    /// in `Block.extra["type"]` and written back on encode.
+    case unknown = "__unknown"
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Unsupported block"
         case .page: return "Page"
         case .text: return "Text"
         case .heading1: return "Heading 1"
@@ -358,6 +362,8 @@ public struct BlockProps: Codable, Hashable, Sendable {
     public var segments: [TranscriptSegment]?
     /// Blocks typed into meeting notes while recording: seconds into the recording (click → play from there).
     public var meetingTime: Double?
+    /// Props written by a newer version that this one doesn't know (BSD-25); written back unchanged.
+    public var extra: [String: JSONValue] = [:]
 
     public init() {}
 }
@@ -401,6 +407,9 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
     /// Non-nil when the page (and everything inside it) is in the trash.
     public var trashedAt: Date?
     public var stamp: Stamp
+    /// Top-level fields written by a newer version that this one doesn't know (BSD-25); written back unchanged.
+    /// Holds the original type string under "type" when `type == .unknown`.
+    public var extra: [String: JSONValue] = [:]
 
     public init(id: RecordID = RecordIDs.make(), type: BlockType, parent: ParentRef, sortKey: String,
                 text: RichText = RichText(), props: BlockProps = BlockProps(), values: [String: PropertyValue] = [:],
@@ -415,11 +424,14 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id, type, parent, sortKey = "sk", text, props, values, createdAt, updatedAt, createdBy, updatedBy, trashedAt, stamp
     }
+    static let knownKeys: Set<String> = ["id", "type", "parent", "sk", "text", "props", "values", "createdAt", "updatedAt",
+                                         "createdBy", "updatedBy", "trashedAt", "stamp"]
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(RecordID.self, forKey: .id)
-        type = try c.decode(BlockType.self, forKey: .type)
+        let rawType = try c.decode(String.self, forKey: .type)
+        type = BlockType(rawValue: rawType) ?? .unknown
         parent = try c.decode(ParentRef.self, forKey: .parent)
         sortKey = try c.decode(String.self, forKey: .sortKey)
         text = try c.decodeIfPresent(RichText.self, forKey: .text) ?? RichText()
@@ -431,12 +443,14 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
         updatedBy = try c.decodeIfPresent(String.self, forKey: .updatedBy)
         trashedAt = try c.decodeIfPresent(Date.self, forKey: .trashedAt)
         stamp = try c.decodeIfPresent(Stamp.self, forKey: .stamp) ?? .zero
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+        if type == .unknown { extra[CodingKeys.type.rawValue] = .string(rawType) }
     }
 
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
-        try c.encode(type, forKey: .type)
+        if type != .unknown { try c.encode(type, forKey: .type) }
         try c.encode(parent, forKey: .parent)
         try c.encode(sortKey, forKey: .sortKey)
         if !text.isEmpty { try c.encode(text, forKey: .text) }
@@ -448,6 +462,8 @@ public struct Block: Codable, Hashable, Identifiable, Sendable {
         try c.encodeIfPresent(updatedBy, forKey: .updatedBy)
         try c.encodeIfPresent(trashedAt, forKey: .trashedAt)
         try c.encode(stamp, forKey: .stamp)
+        // An unknown block type that was changed to a known one drops the stale original.
+        try UnknownKeys.encode(type == .unknown ? extra : extra.filter { $0.key != CodingKeys.type.rawValue }, to: encoder)
     }
 
     public var title: String { text.plainText }

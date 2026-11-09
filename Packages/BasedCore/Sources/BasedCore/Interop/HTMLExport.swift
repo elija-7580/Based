@@ -180,7 +180,7 @@ public struct HTMLExporter {
             return children(b)
         case .tableOfContents:
             return ""
-        case .breadcrumb, .button, .tableRow, .transcript:
+        case .breadcrumb, .button, .tableRow, .transcript, .unknown:
             return ""
         case .meetingSection:
             return children(b)

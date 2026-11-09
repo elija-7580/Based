@@ -262,6 +262,7 @@ extension PropertyType {
         case .uniqueID: return "number.square"
         case .place: return "mappin"
         case .verification: return "checkmark.seal"
+        case .unknown: return "questionmark.square.dashed"
         }
     }
 }

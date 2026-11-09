@@ -490,7 +490,31 @@ struct BlockContent: View {
         case .meetingSection, .transcript:
             // Laid out by MeetingBlockView.
             EmptyView()
+        case .unknown:
+            UnknownBlockView(block: block, editor: editor)
         }
+    }
+}
+
+/// A block type from a newer Based version (BSD-25): a grey, read-only line. It can still be selected, moved and
+/// deleted; its content stays untouched in `Block.extra` and syncs back unchanged.
+struct UnknownBlockView: View {
+    let block: Block
+    let editor: EditorController
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "questionmark.square.dashed")
+            Text("This block needs a newer version of Based")
+            if let raw = block.extra["type"]?.string {
+                Text("(\(raw))").foregroundStyle(Theme.secondary.opacity(0.6))
+            }
+        }
+        .font(.system(size: Theme.fontSize(for: .text, small: editor.format?.smallText == true) * 0.9))
+        .foregroundStyle(Theme.secondary)
+        .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .onTapGesture { editor.selectedBlocks = [block.id] }
     }
 }
 
