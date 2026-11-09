@@ -11,3 +11,12 @@ Based.xcodeproj/
 build/
 build-ios/
 build-bench/
+
+# TypeScript-Stack (ADR 0011)
+node_modules/
+dist/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+playwright-report/
+test-results/
+*.tsbuildinfo

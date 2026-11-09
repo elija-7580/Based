@@ -1,0 +1,29 @@
+{
+  "name": "based",
+  "private": true,
+  "description": "Based – TypeScript-Stack nach ADR 0011 (neben der eingefrorenen Swift-App)",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "e2e": "pnpm --filter @based/web e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "globals": "^17.14.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

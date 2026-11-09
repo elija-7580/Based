@@ -1,0 +1,11 @@
+[package]
+name = "based-desktop"
+version = "0.0.0"
+edition = "2021"
+# ADR 0011: keine eigene Rust-Logik – nur Tauri-Vorlage und offizielle Plugins.
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

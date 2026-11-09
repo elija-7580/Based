@@ -49,3 +49,8 @@ if [[ $IOS == 1 ]]; then
   done
 fi
 echo "typecheck OK"
+
+# BSD-147: TypeScript-Stack (ADR 0011) mitprüfen, sobald pnpm da ist. SKIP_TS=1 schaltet das ab.
+if [[ "${SKIP_TS:-0}" != 1 ]] && command -v pnpm >/dev/null 2>&1 && [[ -f "$ROOT/pnpm-workspace.yaml" ]]; then
+  bash "$ROOT/ci/typecheck/run-ts.sh"
+fi

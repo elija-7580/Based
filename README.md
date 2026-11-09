@@ -153,6 +153,15 @@ share extension, widgets, watchOS target.
 
 ## Repository layout
 
+**TypeScript-Stack (ADR 0011, im Aufbau):** pnpm-Workspace neben dem Swift-Code.
+
+- `packages/core`, `packages/sync`, `packages/editor` — plattformfreie Logik (nie aus `apps/*` importieren; Lint-Regel)
+- `apps/web` (React + Vite, Playwright auf WebKit + Chromium), `apps/desktop` (Tauri 2, gebaut ab Phase 4), `apps/server` (TS-Server, Phase 3)
+- Prüfen: `ci/typecheck/run-ts.sh [--e2e]` (= `pnpm install && pnpm -r typecheck && pnpm lint && pnpm -r test`)
+- `replica/features.csv` Spalte `ts` = Stand im neuen Stack
+
+**Swift-App (eingefroren bis zum Umschalten):**
+
 - `Packages/BasedCore` — model, store, editing, databases, formulas,
   import/export, search, sync core (Swift package; Foundation only, tested on
   Linux and macOS)

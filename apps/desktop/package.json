@@ -1,0 +1,12 @@
+{
+  "name": "@based/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tauri-2-Hülle um apps/web. Gebaut wird ab Phase 4 (braucht Rust + Apple Developer Team für Signatur).",
+  "scripts": {
+    "typecheck": "node -e \"JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8'))\"",
+    "test": "node --test test/config.test.mjs",
+    "tauri": "tauri"
+  }
+}
