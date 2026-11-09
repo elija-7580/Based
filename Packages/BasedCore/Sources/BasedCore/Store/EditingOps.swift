@@ -343,8 +343,40 @@ public extension WorkspaceStore {
                     if type.isHeading { blk.props.toggleable = toggleable } else { blk.props.toggleable = nil }
                     if type == .divider { blk.text = RichText() }
                 }
+                // BSD-100: a type without nested blocks (code, equation, divider, …) would hide the children;
+                // like Notion they stay visible, as siblings right below the block.
+                if Self.hidesChildren(type) { liftChildren(of: id, tx: tx) }
             }
         }
+    }
+
+    /// Types that can't show nested blocks and don't keep children for another purpose (a button's template blocks,
+    /// database containers, table rows, transcripts, pages and blocks from a newer version are left alone).
+    nonisolated static func hidesChildren(_ t: BlockType) -> Bool {
+        !t.supportsChildren && !t.isPageLike
+            && ![.button, .databaseInline, .databasePage, .tableRow, .transcript, .unknown].contains(t)
+    }
+
+    /// Moves the children of `id` (in order) right after it, into its parent.
+    func liftChildren(of id: RecordID, tx: Tx) {
+        guard let b = tx.block(id) else { return }
+        let kids = children(of: .block(id))
+        guard !kids.isEmpty else { return }
+        let keys = tx.sortKeys(kids.count, in: b.parent, .after(id))
+        for (k, key) in zip(kids, keys) { tx.update(k) { $0.parent = b.parent; $0.sortKey = key } }
+    }
+
+    /// BSD-100 repair: blocks whose type can't show children but has some (written before the fix above, or by
+    /// another device) get their children moved up behind them. One non-undoable change; nothing is deleted.
+    /// Returns the blocks whose children were moved.
+    @discardableResult
+    func liftHiddenChildren() -> [RecordID] {
+        let hosts = blocks.values.filter { Self.hidesChildren($0.type) && !children(of: .block($0.id)).isEmpty }.map(\.id).sorted()
+        guard !hosts.isEmpty else { return [] }
+        transact("Show hidden blocks", undoable: false) { tx in
+            for id in hosts { liftChildren(of: id, tx: tx) }
+        }
+        return hosts
     }
 
     /// Move blocks (keeping their relative order) to a new location.
