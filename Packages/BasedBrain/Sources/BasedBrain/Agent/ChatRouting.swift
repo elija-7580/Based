@@ -115,16 +115,15 @@ public extension ACPUpdate {
         case .agentText(let t): return .textDelta(t)
         case .agentThought(let t): return .thinkingDelta(t)
         case .toolCall(let id, let title, let kind, _):
-            return .toolUse(id: id, name: kind.isEmpty ? "tool" : kind, input: ["title": .string(title)])
+            let t = SessionTool.normalize(kind: kind, title: title)
+            return .toolUse(id: id, name: t.name, input: ["title": .string(t.detail)])
         case .toolCallUpdate(let id, let status, let output):
             guard status == "completed" || status == "failed" else { return nil }
             return .toolResult(id: id, output: output ?? "", isError: status == "failed")
         case .plan(let lines):
             let todos: [JSONValue] = lines.map { line in
-                let status = line.hasPrefix("☒") ? "completed" : line.hasPrefix("◐") ? "in_progress" : "pending"
-                var title = line
-                for p in ["☒ ", "◐ ", "☐ ", "- "] where title.hasPrefix(p) { title = String(title.dropFirst(p.count)) }
-                return ["content": .string(title), "status": .string(status)]
+                let s = SessionTool.planLine(line)
+                return ["content": .string(s.title), "status": .string(s.status)]
             }
             return .toolUse(id: "", name: "TodoWrite", input: ["todos": .array(todos)])
         case .diff(let path, let old, let new):
@@ -132,5 +131,46 @@ public extension ACPUpdate {
         case .notice(let n): return .notice(n)
         case .usage, .modeChanged, .userText, .other: return nil
         }
+    }
+}
+
+/// Tool calls of coding sessions in the chat's vocabulary (BSD-96): ACP kinds ("execute", "read", "edit" …) become the
+/// tool names the chat views know ("Bash", "Read", "Edit" …), and Claude Code titles like "Bash(ls -la)" become the
+/// short argument ("ls -la").
+public enum SessionTool {
+    static let names: [String: String] = [
+        "read": "Read", "edit": "Edit", "delete": "Delete", "move": "Move", "search": "Grep", "execute": "Bash",
+        "think": "Task", "fetch": "WebFetch", "plan": "TodoWrite", "other": "Tool",
+    ]
+
+    public static func normalize(kind: String?, title: String) -> (name: String, detail: String) {
+        let k = (kind ?? "").trimmingCharacters(in: .whitespaces)
+        var name = k.isEmpty ? "Tool" : (names[k.lowercased()] ?? k)
+        var detail = title.trimmingCharacters(in: .whitespaces)
+        // "Bash(ls -la)" → name "Bash" (when the kind was generic), detail "ls -la".
+        if let open = detail.firstIndex(of: "("), detail.hasSuffix(")") {
+            let head = String(detail[..<open])
+            if !head.isEmpty, head.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }) {
+                if name == "Tool" || names.values.contains(name) && head.first?.isUppercase == true { name = head }
+                detail = String(detail[detail.index(after: open)..<detail.index(before: detail.endIndex)])
+            }
+        }
+        return (name, detail)
+    }
+
+    /// One plan line in any of the forms sessions write: "☒ Read", "◐ Fix", "☐ Ship", "[completed] Read",
+    /// "[in_progress] Fix", "- [x] Read" → title + TodoWrite status.
+    public static func planLine(_ line: String) -> (title: String, status: String) {
+        var t = line.trimmingCharacters(in: .whitespaces)
+        if t.hasPrefix("- [x] ") || t.hasPrefix("- [X] ") { return (String(t.dropFirst(6)).trimmingCharacters(in: .whitespaces), "completed") }
+        if t.hasPrefix("- [ ] ") { return (String(t.dropFirst(6)).trimmingCharacters(in: .whitespaces), "pending") }
+        if t.hasPrefix("- ") { t = String(t.dropFirst(2)) }
+        var status = "pending"
+        let prefixes: [(String, String)] = [
+            ("☒ ", "completed"), ("◐ ", "in_progress"), ("☐ ", "pending"),
+            ("[completed] ", "completed"), ("[in_progress] ", "in_progress"), ("[pending] ", "pending"),
+        ]
+        for (p, s) in prefixes where t.hasPrefix(p) { t = String(t.dropFirst(p.count)); status = s; break }
+        return (t.trimmingCharacters(in: .whitespaces), status)
     }
 }

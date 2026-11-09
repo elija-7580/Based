@@ -105,7 +105,7 @@ private struct StubProvider: AIProvider {
         for u in updates { if let e = u.chatEvent { b.apply(e) } }
         b.apply(.result(text: "", sessionID: nil, costUSD: nil, isError: false))
         #expect(b.parts.map(\.kind) == [.thinking, .tool, .todos, .text])
-        #expect(b.parts[1].output == "a.txt" && b.parts[1].detail == "Bash(ls)" && b.parts[1].status == .done)
+        #expect(b.parts[1].output == "a.txt" && b.parts[1].detail == "ls" && b.parts[1].toolName == "Bash" && b.parts[1].status == .done)
         #expect(b.parts[2].todos.map(\.status) == [.completed, .inProgress, .pending])
         #expect(b.parts[2].todos.map(\.title) == ["Read", "Fix", "Ship"])
         #expect(b.text == "Done")

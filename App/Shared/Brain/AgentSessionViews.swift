@@ -630,21 +630,18 @@ struct SessionConsole: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 10) {
                     if clearedBefore == 0 { welcome }
-                    ForEach(visibleItems) { ConsoleItemView(item: $0) }
-                    if busy {
-                        ForEach((happier.events[sessionID] ?? []).filter { $0.time >= turnStart }.suffix(12)) { e in
-                            ConsoleLine(bullet: "⏺", bulletColor: e.status == "failed" ? .red : .green) {
-                                Text(e.text).lineLimit(4)
-                            }
+                    // BSD-96 (ADR 0005): replies render with the chat's part views (thinking, tool cards, to-dos, diffs).
+                    ForEach(SessionTranscript.segments(visibleItems)) { seg in
+                        switch seg {
+                        case .user(let item), .line(let item): ConsoleItemView(item: item)
+                        case .reply(_, let parts):
+                            AssistantMessageView(turn: ChatTurn(role: .assistant, text: "", reply: Self.reply(parts)))
+                                .font(.system(size: 13))
                         }
-                        if let th = happier.thoughts[sessionID], !th.isEmpty {
-                            ConsoleLine(bullet: "✻", bulletColor: Theme.secondary) {
-                                Text(th.suffix(600)).italic().foregroundStyle(Theme.secondary).lineLimit(4)
-                            }
-                        }
-                        if let live = happier.liveText[sessionID], !live.isEmpty {
-                            ConsoleLine(bullet: "⏺", bulletColor: Theme.primary) { Text(ConsoleItemView.markdown(live)).textSelection(.enabled) }
-                        }
+                    }
+                    if busy, let live = happier.live[sessionID], !live.parts.isEmpty {
+                        AssistantMessageView(turn: ChatTurn(role: .assistant, text: "", reply: live, isRunning: true))
+                            .font(.system(size: 13))
                     }
                     ForEach(notes) { n in
                         VStack(alignment: .leading, spacing: 3) {
@@ -670,10 +667,18 @@ struct SessionConsole: View {
             .onChange(of: items.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onChange(of: notes.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onChange(of: happier.liveText[sessionID]?.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
+            .onChange(of: happier.live[sessionID]?.parts.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onChange(of: pending.count) { _, _ in proxy.scrollTo("end", anchor: .bottom) }
             .onAppear { proxy.scrollTo("end", anchor: .bottom) }
         }
         .background(Color.primary.opacity(0.015))
+    }
+
+    /// Saved parts of one reply as a finished turn.
+    static func reply(_ parts: [ChatPart]) -> ChatTurnBuilder {
+        var b = ChatTurnBuilder()
+        for p in parts { b.restore(p) }
+        return b
     }
 
     // MARK: Composer

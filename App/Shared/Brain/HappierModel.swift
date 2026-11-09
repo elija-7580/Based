@@ -26,7 +26,9 @@ final class HappierModel {
     var activeProjectIDs: Set<RecordID> = []
     var liveText: [RecordID: String] = [:]          // streaming agent text per session
     var thoughts: [RecordID: String] = [:]
-    var events: [RecordID: [SessionEvent]] = [:]    // tool calls / notices / plan
+    var events: [RecordID: [SessionEvent]] = [:]    // tool calls / notices / plan (activity line, board cards)
+    /// BSD-96: the running turn of each session folded like a chat reply (rendered with the chat's part views).
+    var live: [RecordID: ChatTurnBuilder] = [:]
     var busy: Set<RecordID> = []
     /// Sessions with a turn in flight, including sub-agents the runtime started itself.
     var working: Set<RecordID> = []
@@ -124,8 +126,8 @@ final class HappierModel {
         runtime.onTurn = { [weak self] sid, started in
             queue.send {
                 guard let self else { return }
-                if started { self.working.insert(sid); if !self.busy.contains(sid) { self.liveText[sid] = ""; self.thoughts[sid] = nil } }
-                else { self.working.remove(sid); if !self.busy.contains(sid) { self.liveText[sid] = nil } }
+                if started { self.working.insert(sid); if !self.busy.contains(sid) { self.liveText[sid] = ""; self.thoughts[sid] = nil; self.live[sid] = ChatTurnBuilder() } }
+                else { self.working.remove(sid); if !self.busy.contains(sid) { self.liveText[sid] = nil; self.live[sid] = nil } }
                 self.refresh()
             }
         }
@@ -302,6 +304,7 @@ final class HappierModel {
     func transcript(_ sid: RecordID) -> String { brain.transcript(sid, cipher: runtime.cipher) }
 
     private func handle(_ sid: RecordID, _ u: ACPUpdate) {
+        live[sid, default: ChatTurnBuilder()].apply(u)
         switch u {
         case .agentText(let t): liveText[sid, default: ""] += t
         case .agentThought(let t): thoughts[sid, default: ""] += t
@@ -362,9 +365,9 @@ final class HappierModel {
     func send(_ sid: RecordID, _ text: String) {
         guard !text.isEmpty else { return }
         Log.breadcrumb("prompt → session \(sid.prefix(6))")
-        busy.insert(sid); liveText[sid] = ""; thoughts[sid] = nil; lastError = nil
+        busy.insert(sid); liveText[sid] = ""; thoughts[sid] = nil; live[sid] = ChatTurnBuilder(); lastError = nil
         Task {
-            defer { busy.remove(sid); liveText[sid] = nil; refresh() }
+            defer { busy.remove(sid); liveText[sid] = nil; live[sid] = nil; refresh() }
             do {
                 if useServer {
                     let r = try await serverCall("POST", "/sessions/\(sid)/prompt", ["prompt": .string(text)])

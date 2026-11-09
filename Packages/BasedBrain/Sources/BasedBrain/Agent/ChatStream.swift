@@ -176,6 +176,38 @@ public struct ChatTurnBuilder: Sendable, Equatable {
         }
     }
 
+    /// BSD-96: folds one update of a coding session (ACP) like a chat event. On top of `ACPUpdate.chatEvent`:
+    /// a tool call that arrives already finished is closed right away, and a file edit (`.diff`) is attached to
+    /// the edit tool call it belongs to instead of becoming a second card.
+    public mutating func apply(_ update: ACPUpdate) {
+        switch update {
+        case .diff(let path, let old, let new):
+            guard old != new else { return }
+            let d = LineDiff.unified(old: old, new: new, context: 2)
+            let c = LineDiff.counts(LineDiff.ops(old: old, new: new))
+            if let i = parts.lastIndex(where: { $0.kind == .tool }), parts[i].diff == nil,
+               ["Edit", "Write", "MultiEdit"].contains(parts[i].toolName) {
+                parts[i].diff = d; parts[i].added = c.added; parts[i].removed = c.removed
+                if parts[i].detail.isEmpty { parts[i].detail = path }
+                return
+            }
+            closeThinking(); closeProvisionalText()
+            var p = ChatPart(id: nextID("df"), kind: .tool)
+            p.toolName = "Edit"; p.detail = path; p.diff = d; p.added = c.added; p.removed = c.removed; p.finished = Date()
+            parts.append(p)
+        case .toolCall(let id, _, _, let status):
+            guard let e = update.chatEvent else { return }
+            apply(e)
+            if status == "completed" || status == "failed" {
+                let pid = id.isEmpty ? parts.last(where: { $0.kind == .tool })?.id ?? "" : id
+                apply(.toolResult(id: pid, output: "", isError: status == "failed"))
+                if let i = parts.lastIndex(where: { $0.id == pid && $0.kind == .tool }), parts[i].output == "" { parts[i].output = nil }
+            }
+        default:
+            if let e = update.chatEvent { apply(e) }
+        }
+    }
+
     /// Closes whatever is still running and adds the error note (id "err", kept out of the saved transcript —
     /// `ChatEngine` stores it as an Error entry).
     private mutating func fail(_ message: String) {
@@ -332,16 +364,30 @@ public extension ChatTurnBuilder {
             case .agent: return ChatPart(id: "s\(i)", kind: .text, text: item.text)
             case .tool:
                 var p = ChatPart(id: "s\(i)", kind: .tool, status: item.failed ? .failed : .done)
-                p.toolName = item.toolKind ?? "Tool"
-                p.detail = item.text
+                // Session transcripts store the ACP kind ("`execute` Bash(ls)"); chats the tool name ("`Read` path").
+                let t = SessionTool.normalize(kind: item.toolKind, title: item.text)
+                p.toolName = t.name
+                p.detail = t.detail
                 p.output = item.output
+                return p
+            case .diff:
+                // BSD-96: a session's saved file edit → an Edit card with its diff.
+                var p = ChatPart(id: "s\(i)", kind: .tool)
+                p.toolName = "Edit"
+                p.detail = item.text
+                let body = item.output ?? ""
+                p.diff = body
+                for line in body.components(separatedBy: "\n") {
+                    if line.hasPrefix("+"), !line.hasPrefix("+++") { p.added += 1 }
+                    else if line.hasPrefix("-"), !line.hasPrefix("---") { p.removed += 1 }
+                }
                 return p
             case .plan:
                 var p = ChatPart(id: "s\(i)", kind: .todos)
                 p.todos = item.text.components(separatedBy: "\n").enumerated().compactMap { j, line in
-                    let done = line.contains("[x]")
-                    let title = line.replacingOccurrences(of: "- [x] ", with: "").replacingOccurrences(of: "- [ ] ", with: "").trimmingCharacters(in: .whitespaces)
-                    return title.isEmpty ? nil : TodoItem(id: "\(j + 1)", title: title, status: done ? .completed : .pending)
+                    let l = SessionTool.planLine(line)
+                    let status: TodoItem.Status = l.status == "completed" ? .completed : l.status == "in_progress" ? .inProgress : .pending
+                    return l.title.isEmpty ? nil : TodoItem(id: "\(j + 1)", title: l.title, status: status)
                 }
                 return p
             case .error: return ChatPart(id: "s\(i)", kind: .text, text: "⚠️ " + item.text)
