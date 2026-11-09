@@ -346,7 +346,10 @@ public extension WorkspaceStore {
         let section = meetingSection(meeting, .summary)
         let items = MarkdownImporter().parse(markdown)
         transact("Meeting summary") { tx in
-            for b in contentBlocks(of: section) { removeSubtree(b.id, tx: tx) }
+            let now = Date()
+            for b in contentBlocks(of: section) {
+                if isTrashable(b) { tx.update(b.id) { $0.trashedAt = now } } else { removeSubtreeKeepingPages(b.id, trashedAt: now, tx: tx) }
+            }
             tx.update(meeting) { b in
                 var m = b.props.meeting ?? MeetingInfo()
                 m.summary = .done; m.summaryEngine = engine

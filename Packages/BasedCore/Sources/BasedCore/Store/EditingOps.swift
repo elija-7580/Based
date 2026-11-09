@@ -508,18 +508,64 @@ public extension WorkspaceStore {
     }
 
     /// Delete blocks. Pages and databases go to the trash; other blocks are removed (undoable).
+    /// Pages and databases nested inside a removed block (a toggle, callout, column …) are not removed
+    /// with it: they move to the Trash as well (see `removeSubtreeKeepingPages`).
     func deleteBlocks(_ ids: [RecordID]) {
         transact("Delete") { tx in
             let now = Date()
             for id in ids {
                 guard let b = tx.block(id), !containsProtected(id) else { continue }
-                if b.type.isPageLike || (b.type == .databaseInline && ownsDatabase(b)) {
+                if isTrashable(b) {
                     tx.update(id) { $0.trashedAt = now }
                 } else {
-                    removeSubtree(id, tx: tx)
+                    removeSubtreeKeepingPages(id, trashedAt: now, tx: tx)
                 }
             }
         }
+    }
+
+    /// A block that goes to the Trash instead of being removed: a page (or row) or a database container.
+    func isTrashable(_ b: Block) -> Bool {
+        b.type.isPageLike || ((b.type == .databaseInline || b.type == .databasePage) && ownsDatabase(b))
+    }
+
+    /// The outermost pages and database containers below `id` (not descending into them: their content
+    /// and rows travel with them).
+    func nestedTrashables(below id: RecordID) -> [RecordID] {
+        var out: [RecordID] = []
+        var stack = Array(children(of: .block(id)).reversed())
+        while let cur = stack.popLast() {
+            guard let b = blocks[cur] else { continue }
+            if isTrashable(b) { out.append(cur); continue }
+            stack.append(contentsOf: children(of: .block(cur)).reversed())
+        }
+        return out
+    }
+
+    /// Hard-removes a block and its plain content, but rescues every page and database inside it:
+    /// they are re-attached at the end of the page the block was on and moved to the Trash (an already
+    /// trashed one keeps its date), so "Restore" brings them back with all their content. Without this a
+    /// deleted toggle took its sub-pages and inline databases with it for good (BSD-99).
+    func removeSubtreeKeepingPages(_ id: RecordID, trashedAt now: Date, tx: Tx) {
+        let rescued = nestedTrashables(below: id)
+        if !rescued.isEmpty {
+            let host: ParentRef = {
+                if case .block(let pid)? = blocks[id]?.parent, let page = containingPage(of: pid) { return .block(page) }
+                if case .database(let did)? = blocks[id]?.parent { return .database(did) }
+                return .workspace
+            }()
+            let keys = FractionalIndex.keys(count: rescued.count,
+                                            between: children(of: host).compactMap { blocks[$0]?.sortKey }.max(), nil)
+            for (rid, key) in zip(rescued, keys) {
+                tx.update(rid) { blk in
+                    blk.parent = host
+                    blk.sortKey = key
+                    if blk.trashedAt == nil { blk.trashedAt = now }
+                    if host == .workspace, blk.type == .databaseInline { blk.type = .databasePage }
+                }
+            }
+        }
+        removeSubtree(id, tx: tx)
     }
 
     func ownsDatabase(_ b: Block) -> Bool {
