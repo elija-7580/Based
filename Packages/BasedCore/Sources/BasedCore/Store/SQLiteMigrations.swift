@@ -47,6 +47,13 @@ extension SQLitePersistence {
             """)
             try db.dedupeWorkspaceRows()
         },
+        SQLiteMigration(version: 3, name: "stamped tombstones in the change log") { db in
+            // ADR 0002 / BSD-24: a deletion's log row keeps the HLC stamp of the delete. Older deletion rows stay
+            // NULL (unknown stamp: they can't block a later record, exactly as before).
+            if !db.columnExists("changes", "deleted_stamp") {
+                try db.exec("ALTER TABLE changes ADD COLUMN deleted_stamp TEXT")
+            }
+        },
     ]
 
     static var currentSchemaVersion: Int { migrations.last?.version ?? 0 }
@@ -63,6 +70,13 @@ extension SQLitePersistence {
         guard let st = try? prepare(sql) else { return nil }
         defer { sqlite3_finalize(st) }
         return sqlite3_step(st) == SQLITE_ROW ? Int(sqlite3_column_int64(st, 0)) : nil
+    }
+
+    func columnExists(_ table: String, _ column: String) -> Bool {
+        guard let st = try? prepare("SELECT 1 FROM pragma_table_info('\(table)') WHERE name = ?") else { return false }
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_text(st, 1, column, -1, SQLITE_TRANSIENT_PTR)
+        return sqlite3_step(st) == SQLITE_ROW
     }
 
     func tableExists(_ name: String) -> Bool {

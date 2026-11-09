@@ -331,7 +331,8 @@ public final class ShareService {
         }
         var seen = Set<RecordKey>()
         deletions = deletions.filter { seen.insert($0).inserted }
-        return SyncPage(records: records, deletions: deletions, next: page.next, more: page.more)
+        // Real deletions keep their tombstone stamps; visibility removals have none (applied unconditionally).
+        return SyncPage(records: records, deletions: deletions, deletionStamps: page.deletionStamps, next: page.next, more: page.more)
     }
 
     public struct PushResult: Sendable {
@@ -362,7 +363,8 @@ public final class ShareService {
         for k in body.deletions {
             if let r = store.record(k), role(of: p, on: r)?.canEdit == true { deletions.append(k) } else { rejected.append(k) }
         }
-        var reply = sync.pushV2(SyncPush(records: allowed, deletions: deletions))
+        var reply = sync.pushV2(SyncPush(records: allowed, deletions: deletions,
+                                         deletionStamps: body.deletionStamps.filter { deletions.contains($0.key) }))
         reply.newer += rejected.compactMap { k in store.record(k).flatMap { canRead(p, $0) ? $0 : nil } }
         return PushResult(reply: reply, rejected: rejected)
     }

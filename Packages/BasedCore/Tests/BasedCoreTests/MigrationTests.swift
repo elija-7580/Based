@@ -101,6 +101,35 @@ import Testing
         #expect(names == ["based.sqlite.bak-v1"])
     }
 
+    @Test func v2FileGetsStampedTombstonesAndKeepsOldDeletions() throws {
+        let url = path("based.sqlite")
+        try makeV0File(url, records: [.block(samplePage("p1", "A")), .block(samplePage("p2", "B"))])
+        // A v2 file: change log without `deleted_stamp`, one old (unstamped) deletion.
+        try SQLitePersistence.rawExec(path: url.path, """
+        CREATE TABLE changes (seq INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, id TEXT NOT NULL,
+                              deleted INTEGER NOT NULL DEFAULT 0, local INTEGER NOT NULL DEFAULT 1);
+        CREATE UNIQUE INDEX changes_key ON changes(kind, id);
+        CREATE TABLE quarantine (kind TEXT NOT NULL, id TEXT NOT NULL, data BLOB NOT NULL, reason TEXT NOT NULL, at REAL NOT NULL);
+        INSERT INTO changes(kind, id, deleted, local) VALUES('block', 'p1', 0, 0);
+        INSERT INTO changes(kind, id, deleted, local) VALUES('block', 'gone', 1, 1);
+        PRAGMA user_version = 2;
+        """)
+        let p = try SQLitePersistence(url: url)
+        #expect(p.schemaVersion == 3)
+        #expect(p.columnExists("changes", "deleted_stamp"))
+        let log = try p.changes(after: 0, limit: 10)
+        #expect(log.count == 2)
+        let old = try #require(log.first { $0.key.id == "gone" })
+        #expect(old.deleted && old.local && old.deletedStamp == nil)
+        #expect(p.tombstone(RecordKey(.block, "gone")) == nil)
+        // Content still loads; new deletions are stamped.
+        let s = WorkspaceStore(persistence: p, node: "nodeA")
+        #expect(s.title(of: "p2") == "B")
+        s.deleteForever(["p2"])
+        #expect(p.tombstone(RecordKey(.block, "p2")) != nil)
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("based.sqlite.bak-v2").path))
+    }
+
     @Test func newerFileIsRefusedAndUntouched() throws {
         let url = path("based.sqlite")
         try makeV0File(url, records: [.block(samplePage("p1", "From the future"))])

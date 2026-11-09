@@ -131,7 +131,19 @@ public extension WorkspaceStore {
                         if blk.type == .databaseInline { blk.type = .databasePage }
                     }
                 }
+                restampSubtree(of: id, tx: tx)
             }
+        }
+    }
+
+    /// Re-stamps everything inside a restored page (blocks, rows, databases, views) so the restore wins against
+    /// an older "delete forever" on another device: otherwise only the page itself would be newer than those
+    /// tombstones and come back empty (ADR 0002, BSD-24).
+    func restampSubtree(of id: RecordID, tx: Tx) {
+        for d in [id] + descendants(of: id) {
+            if d != id { tx.restamp(RecordKey(.block, d)) }
+            for v in viewIDs(forBlock: d) { tx.restamp(RecordKey(.view, v)) }
+            if let db = blocks[d]?.props.databaseID, databases[db]?.blockID == d { tx.restamp(RecordKey(.database, db)) }
         }
     }
 

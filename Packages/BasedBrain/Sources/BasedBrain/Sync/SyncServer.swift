@@ -21,16 +21,55 @@ public struct SyncEnvelope: Codable, Sendable {
 // "everything after N", and clients push from their own persistent change log. Records stay last-writer-wins
 // by HLC stamp. Spec: docs/sync-protocol.md.
 
+/// A deletion on the wire: `{"kind","id","stamp"?}` (BSD-24). `stamp` is the HLC stamp of the delete; it's optional,
+/// so older clients (which send and read only kind + id) keep working.
+struct WireDeletion: Codable {
+    var kind: RecordKind
+    var id: RecordID
+    var stamp: Stamp?
+
+    static func encode(_ keys: [RecordKey], _ stamps: [RecordKey: Stamp]) -> [WireDeletion] {
+        keys.map { WireDeletion(kind: $0.kind, id: $0.id, stamp: stamps[$0]) }
+    }
+    static func decode(_ list: [WireDeletion]) -> (keys: [RecordKey], stamps: [RecordKey: Stamp]) {
+        var stamps: [RecordKey: Stamp] = [:]
+        let keys = list.map { d -> RecordKey in
+            let k = RecordKey(d.kind, d.id)
+            if let s = d.stamp { stamps[k] = s }
+            return k
+        }
+        return (keys, stamps)
+    }
+}
+
 /// `GET /sync/v2/pull?after=<seq>&limit=<n>` response.
 public struct SyncPage: Codable, Sendable, Equatable {
     public var records: [Record]
     public var deletions: [RecordKey]
+    /// Tombstone stamps of `deletions` (sent inside each deletion as `stamp`). A deletion without one (a visibility
+    /// removal for a guest, a deletion logged before v3) is applied unconditionally.
+    public var deletionStamps: [RecordKey: Stamp]
     /// Pass as `after` for the next page.
     public var next: Int64
     /// More pages are waiting.
     public var more: Bool
-    public init(records: [Record], deletions: [RecordKey], next: Int64, more: Bool) {
-        self.records = records; self.deletions = deletions; self.next = next; self.more = more
+    public init(records: [Record], deletions: [RecordKey], deletionStamps: [RecordKey: Stamp] = [:], next: Int64, more: Bool) {
+        self.records = records; self.deletions = deletions; self.deletionStamps = deletionStamps; self.next = next; self.more = more
+    }
+    enum CodingKeys: String, CodingKey { case records, deletions, next, more }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        records = try c.decode([Record].self, forKey: .records)
+        (deletions, deletionStamps) = WireDeletion.decode(try c.decode([WireDeletion].self, forKey: .deletions))
+        next = try c.decode(Int64.self, forKey: .next)
+        more = try c.decode(Bool.self, forKey: .more)
+    }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(records, forKey: .records)
+        try c.encode(WireDeletion.encode(deletions, deletionStamps), forKey: .deletions)
+        try c.encode(next, forKey: .next)
+        try c.encode(more, forKey: .more)
     }
 }
 
@@ -44,14 +83,48 @@ public struct SyncWait: Codable, Sendable {
 public struct SyncPush: Codable, Sendable {
     public var records: [Record]
     public var deletions: [RecordKey]
-    public init(records: [Record], deletions: [RecordKey]) { self.records = records; self.deletions = deletions }
+    /// Tombstone stamps of `deletions` (on the wire inside each deletion). The server stamps unstamped ones on receipt.
+    public var deletionStamps: [RecordKey: Stamp]
+    public init(records: [Record], deletions: [RecordKey], deletionStamps: [RecordKey: Stamp] = [:]) {
+        self.records = records; self.deletions = deletions; self.deletionStamps = deletionStamps
+    }
+    enum CodingKeys: String, CodingKey { case records, deletions }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        records = try c.decode([Record].self, forKey: .records)
+        (deletions, deletionStamps) = WireDeletion.decode(try c.decode([WireDeletion].self, forKey: .deletions))
+    }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(records, forKey: .records)
+        try c.encode(WireDeletion.encode(deletions, deletionStamps), forKey: .deletions)
+    }
 }
 
-/// `POST /sync/v2/push` reply: server copies that are newer than what was pushed (the client takes them).
+/// `POST /sync/v2/push` reply: server copies that are newer than what was pushed (the client takes them), and
+/// pushed records the server keeps deleted because its tombstone is newer (`deleted`, optional on the wire; the
+/// client deletes them too).
 public struct SyncPushReply: Codable, Sendable {
     public var newer: [Record]
     public var seq: Int64
-    public init(newer: [Record], seq: Int64) { self.newer = newer; self.seq = seq }
+    public var deleted: [RecordKey]
+    public var deletedStamps: [RecordKey: Stamp]
+    public init(newer: [Record], seq: Int64, deleted: [RecordKey] = [], deletedStamps: [RecordKey: Stamp] = [:]) {
+        self.newer = newer; self.seq = seq; self.deleted = deleted; self.deletedStamps = deletedStamps
+    }
+    enum CodingKeys: String, CodingKey { case newer, seq, deleted }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        newer = try c.decode([Record].self, forKey: .newer)
+        seq = try c.decode(Int64.self, forKey: .seq)
+        (deleted, deletedStamps) = WireDeletion.decode(try c.decodeIfPresent([WireDeletion].self, forKey: .deleted) ?? [])
+    }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(newer, forKey: .newer)
+        try c.encode(seq, forKey: .seq)
+        try c.encode(WireDeletion.encode(deleted, deletedStamps), forKey: .deleted)
+    }
 }
 
 /// Wire encoding: {"kind": "...", "data": {...}}.
@@ -106,16 +179,26 @@ public final class SyncServer {
 
     /// Merge pushed records. Returns records where the server copy is newer (client should take them).
     public func push(_ env: SyncEnvelope) -> SyncEnvelope {
-        let stale = store.applyRemote(env.records, deletions: env.deletions)
-        let now = store.clock.current
-        for d in env.deletions { tombstones[d] = now }
-        if !env.deletions.isEmpty {
+        let (newer, _) = merge(env.records, deletions: env.deletions, stamps: [:])
+        // (Clients don't use this cursor; scanning every record per push made pushes O(workspace).)
+        return SyncEnvelope(records: newer, deletions: [], cursor: store.clock.current)
+    }
+
+    /// Applies a push. Deletions without a stamp (older clients) are stamped with the server's clock on receipt.
+    /// Returns server copies newer than what was pushed (also when a pushed deletion lost against a newer edit or
+    /// restore) and pushed records that stay deleted because the server's tombstone is newer.
+    func merge(_ records: [Record], deletions: [RecordKey], stamps: [RecordKey: Stamp])
+        -> (newer: [Record], tombstoned: [RecordKey: Stamp]) {
+        var stamps = stamps
+        for d in deletions where stamps[d] == nil { stamps[d] = store.clock.now() }
+        let result = store.applyRemoteReporting(records, deletions: deletions, deletionStamps: stamps)
+        let applied = deletions.filter { store.record($0) == nil }
+        for d in applied { tombstones[d] = stamps[d] ?? store.clock.current }
+        if !applied.isEmpty {
             let enc = Dictionary(uniqueKeysWithValues: tombstones.map { ($0.key.description, $0.value) })
             store.persistence?.setMeta(Self.tombKey, try? JSONEncoder().encode(enc))
         }
-        let newer = stale.compactMap { store.record($0) }
-        // (Clients don't use this cursor; scanning every record per push made pushes O(workspace).)
-        return SyncEnvelope(records: newer, deletions: [], cursor: store.clock.current)
+        return (result.stale.compactMap { store.record($0) }, result.tombstoned)
     }
 }
 
@@ -132,12 +215,16 @@ extension SyncServer {
         let limit = max(1, min(limit, 5_000))
         let entries = (try? log.changes(after: after, limit: limit + 1)) ?? []
         let page = entries.prefix(limit)
-        var records: [Record] = [], deletions: [RecordKey] = []
+        var records: [Record] = [], deletions: [RecordKey] = [], stamps: [RecordKey: Stamp] = [:]
         for e in page {
             // Only an explicit deletion is a deletion: a row this server can't decode is skipped (BSD-16).
-            if e.deleted { deletions.append(e.key) } else if let r = store.record(e.key) { records.append(r) }
+            if e.deleted {
+                deletions.append(e.key)
+                if let s = e.deletedStamp { stamps[e.key] = s }
+            } else if let r = store.record(e.key) { records.append(r) }
         }
-        return SyncPage(records: records, deletions: deletions, next: page.last?.seq ?? after, more: entries.count > limit)
+        return SyncPage(records: records, deletions: deletions, deletionStamps: stamps,
+                        next: page.last?.seq ?? after, more: entries.count > limit)
     }
 
     /// Long poll: returns as soon as the server has changes after `after`, or after `timeout` seconds.
@@ -155,8 +242,9 @@ extension SyncServer {
 
     /// Merges a client's changes (last writer wins); returns server copies that are newer than the pushed ones.
     public func pushV2(_ p: SyncPush) -> SyncPushReply {
-        let env = push(SyncEnvelope(records: p.records, deletions: p.deletions, cursor: .zero))
-        return SyncPushReply(newer: env.records, seq: (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0)
+        let (newer, tombstoned) = merge(p.records, deletions: p.deletions, stamps: p.deletionStamps)
+        return SyncPushReply(newer: newer, seq: (store.persistence as? ChangeLogging)?.lastChangeSeq ?? 0,
+                             deleted: tombstoned.keys.sorted(), deletedStamps: tombstoned)
     }
 }
 
@@ -278,19 +366,26 @@ public final class ServerSync {
             guard let last = entries.last else { break }
             let mine = entries.filter(\.local)
             if !mine.isEmpty {
-                var records: [Record] = [], deletions: [RecordKey] = []
+                var records: [Record] = [], deletions: [RecordKey] = [], stamps: [RecordKey: Stamp] = [:]
                 var skipped = 0
                 for e in mine {
                     // Only an explicit deletion is a deletion. A logged change whose record isn't in memory is
                     // a row this version can't decode (frozen): never push it as a deletion (BSD-16).
-                    if e.deleted { deletions.append(e.key) }
+                    if e.deleted {
+                        deletions.append(e.key)
+                        if let s = e.deletedStamp { stamps[e.key] = s }
+                    }
                     else if let r = store.record(e.key) { records.append(r) }
                     else { skipped += 1 }
                 }
                 if skipped > 0 { Log.warning("Sync: \(skipped) undecodable records not pushed", category: "sync") }
                 if !records.isEmpty || !deletions.isEmpty {
-                    let reply: SyncPushReply = try await post("sync/v2/push", SyncPush(records: records, deletions: deletions))
-                    if !reply.newer.isEmpty { store.applyRemote(reply.newer) }
+                    let reply: SyncPushReply = try await post("sync/v2/push",
+                                                              SyncPush(records: records, deletions: deletions, deletionStamps: stamps))
+                    // Newer server copies win; records the server keeps deleted (newer tombstone) are deleted here too.
+                    if !reply.newer.isEmpty || !reply.deleted.isEmpty {
+                        store.applyRemote(reply.newer, deletions: reply.deleted, deletionStamps: reply.deletedStamps)
+                    }
                 }
             }
             pushed = last.seq
@@ -306,7 +401,7 @@ public final class ServerSync {
             let page: SyncPage = try await get(c.url!)
             if !page.records.isEmpty || !page.deletions.isEmpty {
                 // Pulled changes are logged as remote (local = false), so they're never pushed back.
-                _ = store.applyRemote(page.records, deletions: page.deletions)
+                _ = store.applyRemote(page.records, deletions: page.deletions, deletionStamps: page.deletionStamps)
                 received += page.records.count + page.deletions.count
             }
             after = page.next

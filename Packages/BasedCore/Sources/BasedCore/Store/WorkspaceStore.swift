@@ -59,6 +59,10 @@ public final class Tx {
     var parents: Set<String> = []
     /// Keep `updatedAt` / `updatedBy` of written records (imports carry the source's timestamps).
     public var preserveTimestamps = false
+    /// Stamps for deletions in this transaction (remote tombstones). Local deletions get a fresh stamp.
+    var tombstoneStamps: [RecordKey: Stamp] = [:]
+    /// Records written (and restamped) even though their content didn't change.
+    var forced: Set<RecordKey> = []
 
     init(store: WorkspaceStore) { self.store = store }
 
@@ -94,6 +98,14 @@ public final class Tx {
     }
 
     public func removeBlock(_ id: RecordID) { remove(RecordKey(.block, id)) }
+
+    /// Writes the record with a new stamp although its content is unchanged, so it wins against older
+    /// tombstones elsewhere (restoring a page re-stamps its whole subtree, BSD-24).
+    public func restamp(_ key: RecordKey) {
+        guard store.record(key) != nil else { return }
+        touch(key)
+        forced.insert(key)
+    }
 
     public func update(_ id: RecordID, _ f: (inout Block) -> Void) {
         guard var b = store.blocks[id] else { return }
@@ -215,8 +227,11 @@ public struct ChangeEntry: Sendable, Equatable {
     public var key: RecordKey
     public var deleted: Bool
     public var local: Bool
-    public init(seq: Int64, key: RecordKey, deleted: Bool, local: Bool) {
-        self.seq = seq; self.key = key; self.deleted = deleted; self.local = local
+    /// For a deletion: the HLC stamp of the delete (a stamped tombstone, ADR 0002 / BSD-24). Nil for upserts and
+    /// for deletions logged before format v3 or received without a stamp.
+    public var deletedStamp: Stamp?
+    public init(seq: Int64, key: RecordKey, deleted: Bool, local: Bool, deletedStamp: Stamp? = nil) {
+        self.seq = seq; self.key = key; self.deleted = deleted; self.local = local; self.deletedStamp = deletedStamp
     }
 }
 
@@ -224,9 +239,30 @@ public struct ChangeEntry: Sendable, Equatable {
 /// "everything after N" and a client knows which local changes it hasn't pushed yet — across restarts.
 public protocol ChangeLogging: Persistence {
     func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws
+    /// Like `write(upserts:deletions:local:)`, logging each deletion with its tombstone stamp (BSD-24).
+    func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws
     /// Entries with `seq > after`, ascending, at most `limit`.
     func changes(after: Int64, limit: Int) throws -> [ChangeEntry]
     var lastChangeSeq: Int64 { get }
+    /// The stamp of the record's deletion, if its latest logged change is a stamped deletion.
+    func tombstone(_ key: RecordKey) -> Stamp?
+}
+
+extension ChangeLogging {
+    public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
+        try write(upserts: upserts, deletions: deletions, local: local)
+    }
+    public func tombstone(_ key: RecordKey) -> Stamp? { nil }
+}
+
+/// Outcome of merging a remote batch (`WorkspaceStore.applyRemoteReporting`).
+public struct RemoteMergeResult: Sendable, Equatable {
+    /// Keys whose local copy is newer than what arrived (a record, or a record newer than an arriving deletion):
+    /// the sender should take the local copy.
+    public var stale: [RecordKey] = []
+    /// Arriving records that lost against a newer local tombstone (they stay deleted), with that tombstone's stamp.
+    public var tombstoned: [RecordKey: Stamp] = [:]
+    public init(stale: [RecordKey] = [], tombstoned: [RecordKey: Stamp] = [:]) { self.stale = stale; self.tombstoned = tombstoned }
 }
 
 /// In-memory record cache with indexes, transactions, undo/redo, observers.
@@ -257,7 +293,7 @@ public final class WorkspaceStore {
     /// Called when `writeFailure` is set or cleared (UI banner).
     public var onWriteFailureChanged: (() -> Void)?
     /// Remote changes that arrived while read-only; applied after `retryWrites()` succeeds.
-    private var deferredRemote: [(records: [Record], deletions: [RecordKey])] = []
+    private var deferredRemote: [(records: [Record], deletions: [RecordKey], stamps: [RecordKey: Stamp])] = []
     /// The initial load failed: `retryWrites` loads again before accepting changes.
     private var loadFailed = false
     /// Stored records this app version can't decode (newer app, unknown block type, decoding bug). They stay
@@ -462,6 +498,7 @@ public final class WorkspaceStore {
         }
         var upserts: [Record] = []
         var deletions: [RecordKey] = []
+        var tombstones: [RecordKey: Stamp] = [:]
         var change = ChangeSet(origin: origin)
         var before: [RecordKey: Snapshot] = [:]
         var after: [RecordKey: Snapshot] = [:]
@@ -472,15 +509,18 @@ public final class WorkspaceStore {
             guard var cur = record(key) else {
                 if prev != nil {
                     deletions.append(key)
+                    // Stamped tombstone (ADR 0002): remote ones carry the sender's stamp, local ones get a new one.
+                    if let s = tx.tombstoneStamps[key] { tombstones[key] = s } else if restamp { tombstones[key] = clock.now() }
                     change.keys.insert(key)
                     before[key] = Snapshot(value: prev)
                     after[key] = Snapshot(value: nil)
                 }
                 continue
             }
-            if cur == prev { continue }
+            let unchanged = cur == prev
+            if unchanged && !tx.forced.contains(key) { continue }
             if restamp {
-                cur = stamped(cur, now: now, keepTimes: tx.preserveTimestamps)
+                cur = stamped(cur, now: now, keepTimes: tx.preserveTimestamps || unchanged)
                 var ignored = Set<String>()
                 restore(key, cur, &ignored)
             }
@@ -495,7 +535,7 @@ public final class WorkspaceStore {
         if let persistence {
             do {
                 if let log = persistence as? ChangeLogging {
-                    try log.write(upserts: upserts, deletions: deletions, local: origin.isLocalWrite)
+                    try log.write(upserts: upserts, deletions: deletions, tombstones: tombstones, local: origin.isLocalWrite)
                 } else {
                     try persistence.write(upserts: upserts, deletions: deletions)
                 }
@@ -577,7 +617,7 @@ public final class WorkspaceStore {
         onWriteFailureChanged?()
         let queued = deferredRemote
         deferredRemote = []
-        for batch in queued { applyRemote(batch.records, deletions: batch.deletions) }
+        for batch in queued { applyRemote(batch.records, deletions: batch.deletions, deletionStamps: batch.stamps) }
         return writeFailure == nil
     }
 
@@ -647,19 +687,30 @@ public final class WorkspaceStore {
     /// Returns keys whose local version is newer and should be re-sent.
     /// While the store is read-only the batch is queued (in memory) and applied after `retryWrites()` succeeds.
     @discardableResult
-    public func applyRemote(_ records: [Record], deletions: [RecordKey] = []) -> [RecordKey] {
+    public func applyRemote(_ records: [Record], deletions: [RecordKey] = [],
+                            deletionStamps: [RecordKey: Stamp] = [:]) -> [RecordKey] {
+        applyRemoteReporting(records, deletions: deletions, deletionStamps: deletionStamps).stale
+    }
+
+    /// `applyRemote` with the full outcome. Deletions are stamped tombstones (ADR 0002, BSD-24): one with a stamp
+    /// removes the local copy only if that copy is older (a newer edit or restore wins and is reported as stale);
+    /// one without a stamp (older senders) removes it unconditionally, as before. An arriving record whose key has
+    /// a newer local tombstone stays deleted and is reported in `tombstoned`.
+    @discardableResult
+    public func applyRemoteReporting(_ records: [Record], deletions: [RecordKey] = [],
+                                     deletionStamps: [RecordKey: Stamp] = [:]) -> RemoteMergeResult {
         if persistence != nil, writeFailure != nil {
             if !records.isEmpty || !deletions.isEmpty {
-                deferredRemote.append((records, deletions))
+                deferredRemote.append((records, deletions, deletionStamps))
                 writeFailure?.rejected += 1
             }
-            return []
+            return RemoteMergeResult()
         }
-        guard let stale = merge(records, deletions: deletions, origin: .remote, name: "Sync") else {
-            deferredRemote.append((records, deletions))
-            return []
+        guard let result = merge(records, deletions: deletions, stamps: deletionStamps, origin: .remote, name: "Sync") else {
+            deferredRemote.append((records, deletions, deletionStamps))
+            return RemoteMergeResult()
         }
-        return stale
+        return result
     }
 
     /// Merges records restored from an archive (last-writer-wins by stamp, like `applyRemote`) as origin `.import`:
@@ -671,16 +722,19 @@ public final class WorkspaceStore {
             writeFailure?.rejected += 1
             throw StoreError.readOnly(f.message)
         }
-        guard let stale = merge(records, deletions: deletions, origin: .import, name: "Import") else {
+        guard let result = merge(records, deletions: deletions, stamps: [:], origin: .import, name: "Import") else {
             throw StoreError.readOnly(writeFailure?.message ?? "write failed")
         }
-        return stale
+        return result.stale
     }
 
     /// LWW merge shared by `applyRemote` and `applyImported`. Nil if the commit failed.
-    private func merge(_ records: [Record], deletions: [RecordKey], origin: ChangeOrigin, name: String) -> [RecordKey]? {
+    private func merge(_ records: [Record], deletions: [RecordKey], stamps: [RecordKey: Stamp],
+                       origin: ChangeOrigin, name: String) -> RemoteMergeResult? {
         let tx = Tx(store: self)
         var stale: [RecordKey] = []
+        var tombstoned: [RecordKey: Stamp] = [:]
+        let log = persistence as? ChangeLogging
         var unfrozen: [RecordKey] = []
         for r in records {
             if case .workspace(let w) = r, w.id != workspace.id {
@@ -694,13 +748,25 @@ public final class WorkspaceStore {
             if let local = record(r.key) {
                 if local == r { continue }
                 if local.stamp > r.stamp { stale.append(r.key); continue }
+            } else if let ts = log?.tombstone(r.key), ts >= r.stamp {
+                // Deleted here after this version was written: it stays deleted (no resurrection).
+                tombstoned[r.key] = ts
+                continue
             }
             tx.put(r)
         }
-        for key in deletions { tx.remove(key) }
+        for key in deletions {
+            guard let local = record(key) else { continue }
+            if let ts = stamps[key] {
+                clock.observe(ts)
+                if local.stamp > ts { stale.append(key); continue }
+                tx.tombstoneStamps[key] = ts
+            }
+            tx.remove(key)
+        }
         guard commit(tx, name: name, coalesce: nil, origin: origin, undoable: false) else { return nil }
         for k in unfrozen { frozenKeys.remove(k) }
-        return stale
+        return RemoteMergeResult(stale: stale, tombstoned: tombstoned)
     }
 
     /// Every record, for full uploads and exports.

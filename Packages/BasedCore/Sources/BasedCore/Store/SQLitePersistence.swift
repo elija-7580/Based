@@ -138,6 +138,11 @@ public final class SQLitePersistence: ChangeLogging {
     }
 
     public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
+        try write(upserts: upserts, deletions: deletions, tombstones: [:], local: local)
+    }
+
+    /// Writes records and deletions; each deletion's log row keeps its tombstone stamp (`deleted_stamp`, v3).
+    public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
         try exec("BEGIN IMMEDIATE")
         do {
             let ins = try prepare("INSERT OR REPLACE INTO records(kind, id, data) VALUES(?, ?, ?)")
@@ -145,7 +150,7 @@ public final class SQLitePersistence: ChangeLogging {
             // A record keeps one log row: its newest change (delete + insert gives it a new, higher seq).
             let unlog = try prepare("DELETE FROM changes WHERE kind = ? AND id = ?")
             defer { sqlite3_finalize(unlog) }
-            let log = try prepare("INSERT INTO changes(kind, id, deleted, local) VALUES(?, ?, ?, ?)")
+            let log = try prepare("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, ?, ?, ?)")
             defer { sqlite3_finalize(log) }
             func logChange(_ k: RecordKey, deleted: Bool) throws {
                 sqlite3_reset(unlog)
@@ -157,6 +162,11 @@ public final class SQLitePersistence: ChangeLogging {
                 sqlite3_bind_text(log, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
                 sqlite3_bind_int(log, 3, deleted ? 1 : 0)
                 sqlite3_bind_int(log, 4, local ? 1 : 0)
+                if deleted, let stamp = tombstones[k] {
+                    sqlite3_bind_text(log, 5, Self.encodeStamp(stamp), -1, SQLITE_TRANSIENT_PTR)
+                } else {
+                    sqlite3_bind_null(log, 5)
+                }
                 guard sqlite3_step(log) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
             }
             for r in upserts {
@@ -216,7 +226,7 @@ public final class SQLitePersistence: ChangeLogging {
     }
 
     public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
-        let st = try prepare("SELECT seq, kind, id, deleted, local FROM changes WHERE seq > ? ORDER BY seq LIMIT ?")
+        let st = try prepare("SELECT seq, kind, id, deleted, local, deleted_stamp FROM changes WHERE seq > ? ORDER BY seq LIMIT ?")
         defer { sqlite3_finalize(st) }
         sqlite3_bind_int64(st, 1, after)
         sqlite3_bind_int64(st, 2, Int64(limit))
@@ -225,10 +235,26 @@ public final class SQLitePersistence: ChangeLogging {
             guard let k = sqlite3_column_text(st, 1), let kind = RecordKind(rawValue: String(cString: k)),
                   let i = sqlite3_column_text(st, 2) else { continue }
             out.append(ChangeEntry(seq: sqlite3_column_int64(st, 0), key: RecordKey(kind, String(cString: i)),
-                                   deleted: sqlite3_column_int(st, 3) != 0, local: sqlite3_column_int(st, 4) != 0))
+                                   deleted: sqlite3_column_int(st, 3) != 0, local: sqlite3_column_int(st, 4) != 0,
+                                   deletedStamp: sqlite3_column_text(st, 5).flatMap { Self.decodeStamp(String(cString: $0)) }))
         }
         return out
     }
+
+    public func tombstone(_ key: RecordKey) -> Stamp? {
+        guard let st = try? prepare("SELECT deleted_stamp FROM changes WHERE kind = ? AND id = ? AND deleted = 1") else { return nil }
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_text(st, 1, key.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+        sqlite3_bind_text(st, 2, key.id, -1, SQLITE_TRANSIENT_PTR)
+        guard sqlite3_step(st) == SQLITE_ROW, let t = sqlite3_column_text(st, 0) else { return nil }
+        return Self.decodeStamp(String(cString: t))
+    }
+
+    /// `deleted_stamp` column format: the stamp as JSON (`{"millis":…,"counter":…,"node":"…"}`).
+    static func encodeStamp(_ s: Stamp) -> String {
+        (try? JSONEncoder().encode(s)).map { String(decoding: $0, as: UTF8.self) } ?? ""
+    }
+    static func decodeStamp(_ text: String) -> Stamp? { try? JSONDecoder().decode(Stamp.self, from: Data(text.utf8)) }
 
     public var lastChangeSeq: Int64 {
         guard let st = try? prepare("SELECT COALESCE(MAX(seq), 0) FROM changes") else { return 0 }
@@ -285,10 +311,17 @@ public final class MemoryPersistence: ChangeLogging {
     public func loadAll() throws -> [Record] { Array(records.values) }
     public func write(upserts: [Record], deletions: [RecordKey]) throws { try write(upserts: upserts, deletions: deletions, local: true) }
     public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
+        try write(upserts: upserts, deletions: deletions, tombstones: [:], local: local)
+    }
+    public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
         writes += 1
         for r in upserts { records[r.key] = r; seq += 1; log[r.key] = ChangeEntry(seq: seq, key: r.key, deleted: false, local: local) }
-        for k in deletions { records[k] = nil; seq += 1; log[k] = ChangeEntry(seq: seq, key: k, deleted: true, local: local) }
+        for k in deletions {
+            records[k] = nil; seq += 1
+            log[k] = ChangeEntry(seq: seq, key: k, deleted: true, local: local, deletedStamp: tombstones[k])
+        }
     }
+    public func tombstone(_ key: RecordKey) -> Stamp? { log[key].flatMap { $0.deleted ? $0.deletedStamp : nil } }
     public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
         Array(log.values.filter { $0.seq > after }.sorted { $0.seq < $1.seq }.prefix(limit))
     }

@@ -29,6 +29,20 @@ Fields every payload has:
 stamp is greater than the local copy's. Clients must advance their own clock past every stamp they see, so
 their next local edit wins.
 
+**Deletions are stamped tombstones** (ADR 0002, since format v3 / BSD-24): a deletion on the wire is
+`{"kind": "block", "id": "…", "stamp": {…}}`, where `stamp` is the HLC stamp of the delete. The same rule
+applies in both directions:
+
+- A deletion removes a copy only if that copy's `stamp` is **older** than the deletion's. A newer edit or
+  restore wins; the receiver keeps its copy (the server sends it back in `newer`).
+- A record whose key has a **newer** tombstone stays deleted (no resurrection of a block edited offline on a
+  page that was deleted later).
+- `stamp` is optional, so older clients keep working: the server stamps an unstamped pushed deletion with its
+  own clock on receipt. A deletion that arrives at a client without a stamp (older server, or a visibility
+  removal for a share guest) is applied unconditionally, as before.
+- Restoring a page from the Trash re-stamps everything inside it (blocks, rows, databases, views), so a restore
+  wins over an older "Delete forever" on another device with all its content, not as an empty page.
+
 Unknown fields must be preserved (decode and re-encode them untouched). That lets newer clients add fields
 without breaking older ones.
 
@@ -49,24 +63,25 @@ All requests send `Authorization: Bearer <token>`.
 Body:
 
 ```json
-{ "records": [ {"kind": "block", "data": {…}} ], "deletions": [ {"kind": "block", "id": "…"} ] }
+{ "records": [ {"kind": "block", "data": {…}} ], "deletions": [ {"kind": "block", "id": "…", "stamp": {…}} ] }
 ```
 
 Reply:
 
 ```json
-{ "newer": [ {"kind": "block", "data": {…}} ], "seq": 18240 }
+{ "newer": [ {"kind": "block", "data": {…}} ], "seq": 18240, "deleted": [ {"kind": "block", "id": "…", "stamp": {…}} ] }
 ```
 
-`newer` lists records where the server already had a newer version than the pushed one. The client applies
-them. Push in batches of about 500 records.
+`newer` lists records where the server already had a newer version than the pushed one (also when a pushed
+deletion lost against a newer edit). `deleted` (optional, may be missing from older servers) lists pushed
+records the server keeps deleted because its tombstone is newer. The client applies both. Push in batches of about 500 records.
 
 ### `GET /sync/v2/pull?after=<seq>&limit=<n>`
 
 Reply:
 
 ```json
-{ "records": […], "deletions": [ {"kind": "block", "id": "…"} ], "next": 18240, "more": false }
+{ "records": […], "deletions": [ {"kind": "block", "id": "…", "stamp": {…}} ], "next": 18240, "more": false }
 ```
 
 This returns every record changed after server change number `after`, oldest first. Each record appears
@@ -114,8 +129,12 @@ grows in arrival order.
 ## Server
 
 `based-server` (`Packages/BasedBrain/Sources/based-server`) stores the workspace in SQLite, the same as the
-app. It has a `changes(seq, kind, id, deleted, local)` table with one row per record: its latest change.
-`pull` reads that table by `seq`. v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
+app. It has a `changes(seq, kind, id, deleted, local, deleted_stamp)` table with one row per record: its latest
+change. `pull` reads that table by `seq`. A row with `deleted = 1` is the record's tombstone; `deleted_stamp`
+(JSON stamp, NULL for deletions logged before format v3) is what pushes are compared against, so the change
+log doubles as the tombstone table (client and server use the same code). Tombstones are not yet garbage
+collected; when they are (planned: after 90 days), a device offline for longer must do a full pull
+(`after=0`). v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
 
 ## Channels
 
