@@ -470,6 +470,23 @@ final class HappierModel {
         refresh()
     }
 
+    /// BSD-116: a message to the main agent through the server (iPhone without its own AI); the answer arrives in
+    /// the main thread by sync. Returns the hint to show when it failed.
+    func askMainAgentOnServer(_ text: String, options: MainTurnOptions) async -> String? {
+        var body: [String: JSONValue] = ["text": .string(text), "device": .string(machineName)]
+        if let c = options.compute { body["compute"] = .string(c.rawValue) }
+        if !options.model.isEmpty { body["model"] = .string(options.model) }
+        if let p = options.permission { body["permission"] = .string(p.rawValue) }
+        do {
+            let (status, reply) = try await serverCallWithStatus("POST", "/main/ask", body)
+            refresh()
+            return (200..<300).contains(status) ? nil : (reply["error"]?.string ?? reply["text"]?.string ?? "HTTP \(status)")
+        } catch { return "\(error)" }
+    }
+
+    /// Whether a Based server is configured.
+    var serverConfigured: Bool { !(UserDefaults.standard.string(forKey: "server.url") ?? "").isEmpty }
+
     /// BSD-115: another device may have answered first (409) — say where instead of letting the card vanish.
     private func resolveOnServer(_ item: InboxItem, decision: String) async {
         do {

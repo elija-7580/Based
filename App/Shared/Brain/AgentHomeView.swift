@@ -402,6 +402,12 @@ struct MainAgentInput: View {
         guard !t.isEmpty else { return }
         text = ""
         model.openChat(model.brain.mainThreadID(), fullPage: false)
+        // BSD-116: an iPhone without its own AI asks the server's main agent; the reply syncs into the thread.
+        if !model.brain.hasProvider, model.brain.happier.serverConfigured {
+            let happier = model.brain.happier, opts = options, app = model
+            Task { if let e = await happier.askMainAgentOnServer(t, options: opts) { app.showToast("Main agent: \(e)") } }
+            return
+        }
         model.brain.ask(t, mainOptions: options)
     }
 }

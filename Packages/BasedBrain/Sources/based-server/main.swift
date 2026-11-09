@@ -126,6 +126,12 @@ _ = store
 let share = await MainActor.run { ShareService(store: store) }
 // BSD-58: MCP clients can hand work to the main agent (`ask_main_agent`).
 mcp.mainAgent = MainAgent(runtime: runtime)
+// BSD-116: "code" jobs of the main agent go to a coding session here too (Claude Code / Codex … installed on the
+// server), in the main thread.
+if let main = mcp.mainAgent {
+    main.installed = await ChatEngineSpec.Kind.installedCLIs()
+    main.cliLauncher = happier.mainAgentLauncher(thread: { await MainActor.run { tools.brain.mainThread() } })
+}
 
 // BSD-62: semantic search over an OpenAI-compatible embeddings endpoint. The index (embeddings.sqlite next to the
 // database, never synced) is brought up to date at start and every 5 minutes; only changed pages are re-embedded.

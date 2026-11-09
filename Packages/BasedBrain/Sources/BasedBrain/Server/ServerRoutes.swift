@@ -236,6 +236,21 @@ public enum BasedServerRoutes {
             let items = await MainActor.run { tools.brain.inbox(pendingOnly: pending) }
             return .json(["items": .array(items.map(inboxJSON))])
         }
+        // BSD-116: a turn in the main agent's thread from the iPhone / web client (owner). Body {"text", "compute"?,
+        // "model"?, "permission"?}; answers with the thread id and the reply once the turn is done.
+        r.add("POST", "/main/ask") { ctx in
+            guard let body = try? JSONValue.parse(ctx.request.body), let text = body["text"]?.string?
+                .trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+                return .json(["error": #"send JSON: {"text": "…"}"#], status: 400)
+            }
+            guard let main = await s.mcp.resolveMainAgent() else { return .json(["error": "no main agent on this server"], status: 503) }
+            let options = MainTurnOptions(compute: body["compute"]?.string.flatMap { ComputeLevel(rawValue: $0.lowercased()) },
+                                          model: body["model"]?.string ?? "",
+                                          permission: body["permission"]?.string.flatMap(PermissionMode.init(rawValue:)))
+            let r = await main.ask(text, options: options, device: body["device"]?.string ?? "server")
+            return .json(["thread": .string(r.thread), "text": .string(r.text), "failed": .bool(r.failed)], status: r.failed ? 502 : 200)
+        }
+
         r.add("POST", "/inbox/*/resolve") { ctx in
             let iid = ctx.captures[0]
             let body = (try? JSONValue.parse(ctx.request.body)) ?? .object([:])
