@@ -49,6 +49,11 @@ struct BasedApp: App {
             .onAppear { QuickCapturePanel.shared.install(model: model) }
             .onChange(of: ObjectIdentifier(model)) { _, _ in QuickCapturePanel.shared.install(model: model) }
             #endif
+            #if os(iOS)
+            // BSD-66: voice notes from the Apple Watch app.
+            .onAppear { WatchReceiver.shared.start(model: model) }
+            .onChange(of: ObjectIdentifier(model)) { _, _ in WatchReceiver.shared.start(model: model) }
+            #endif
             #if os(macOS)
             // Small enough for split-screen; the window can't shrink below it (contentMinSize), so nothing is
             // clipped or shifted when the window opens at its restored size.

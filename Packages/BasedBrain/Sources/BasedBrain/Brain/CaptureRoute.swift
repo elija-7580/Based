@@ -123,3 +123,27 @@ public enum CaptureIntentLogic {
         return out
     }
 }
+
+// MARK: - Apple Watch (BSD-66)
+
+@MainActor
+public enum WatchCaptureLogic {
+    /// What the watch shows: captures of today (any device) and when "Sort captures" runs ("daily 23:00" → "23:00").
+    public static func status(brain: BrainStore, now: Date = Date(), calendar: Calendar = .current) -> WatchStatus {
+        let today = brain.captures().filter { calendar.isDate($0.capturedAt, inSameDayAs: now) }.count
+        let schedule = brain.agents().first { $0.name == BrainStore.captureSorterName }?.schedule ?? ""
+        let time = schedule.split(separator: " ").last.map(String.init).flatMap { t -> String? in
+            let p = t.split(separator: ":")
+            guard p.count == 2, let h = Int(p[0]), let m = Int(p[1]), (0..<24).contains(h), (0..<60).contains(m) else { return nil }
+            return String(format: "%02d:%02d", h, m)
+        }
+        return WatchStatus(capturedToday: today, sortTime: time)
+    }
+
+    /// A voice note that arrived from the watch: stored audio → capture (source Watch, recorded time of the watch),
+    /// waiting for its transcript. A transfer seen before (`ledger`) is skipped and returns nil.
+    public static func receive(meta: WatchCaptureMeta, audio: AssetRef, brain: BrainStore, ledger: inout WatchInboxLedger) -> CaptureIntentResult? {
+        guard ledger.accept(meta.id) else { return nil }
+        return CaptureIntentLogic.voiceNote(audio: audio, transcript: nil, source: .watch, brain: brain, at: meta.capturedAt)
+    }
+}
