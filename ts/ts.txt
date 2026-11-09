@@ -10,9 +10,9 @@ packages/core test:   search     33/33 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1022 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1023)[39m
+packages/core test: [2m      Tests [22m [1m[32m1028 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1029)[39m
 packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-packages/sync test: [2m      Tests [22m [1m[32m18 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (21)[39m
+packages/sync test: [2m      Tests [22m [1m[32m26 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (29)[39m
 apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 --- e2e
 
@@ -34,7 +34,7 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 2 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (191ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (3.8s)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (222ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (4.1s)
 
-  2 passed (8.4s)
+  2 passed (8.8s)
