@@ -1,0 +1,4912 @@
+{
+  "assetFiles" : [
+    "as-a",
+    "as-b",
+    "as-c"
+  ],
+  "cases" : [
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "p-root",
+        "set" : "corpus"
+      },
+      "name" : "Markdown: p-root",
+      "output" : "# Startseite\n\n[fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\](fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&%20'.md)\n\nEinfacher Text\n\n[URL-Icon](URL-Icon.md)\n\n- [ ] Offen\n\n<details>\n<summary>Toggle</summary>\n</details>\n\n> Zitat\n\n<aside>\n💡 Hinweis\n</aside>\n---\n\n```swift\nlet x = 1\nprint(\"/pfad\")\n```\n\n$$\n\\int_0^1 x^2\\,dx\n$$\n\n![fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\](assets/bild.heic)\n\n[https://youtube.com/watch?v=x](https://youtube.com/watch?v=x)\n\n[ton.m4a](assets/ton.m4a)\n\n**fett** [<u>~~*`kursiv+farbig`*~~</u>](https://example.com/a?b=c) [Startseite](Startseite.md)@2025-11-05 01:46 → 2025-11-05 02:46@user-1[Link](https://friedrich-ulrich.com)$e^{i\\pi}+1=0$ Ende <br>\t\u001f <tag> & ' \" \\\\\n\n[Untitled](Untitled.md)\n\n[datei.zip](assets/datei.zip)\n\n[https://example.com/doc.pdf](https://example.com/doc.pdf)\n\n[Titel](https://example.com)\n\n[https://figma.com/x](https://figma.com/x)\n\n|  | | |\n| --- | --- | --- |\n\n# Überschrift\n\n[fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\](fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&%20'.csv)\n\n[fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\](fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&%20'.md)\n\n[fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\](fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&%20'.md)\n\n## Meeting\n\n*2025-11-05T01:46:40 · 1:00:00*\n\n## Überschrift\n\n### Überschrift\n\n#### Überschrift\n\n- Punkt\n\n1. Nummer\n\n- [x] Aufgabe\n"
+    },
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "p-asset",
+        "set" : "corpus"
+      },
+      "name" : "Markdown: p-asset",
+      "output" : "# fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\\n"
+    },
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "row-1",
+        "set" : "corpus"
+      },
+      "name" : "Markdown: row-1",
+      "output" : "# Zeile 1\n\nNotiz: fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f <tag> & ' \" \\\nPriorität: -3.75\nTag: A\nTags: B\nStatus: Fertig\nFällig: November 5, 2025\nPerson: user-1, user-2\nDateien: a.pdf, Link\nErledigt: true\nURL: https://example.com/x?y=1&z=2\nMail: a@b.c\nTelefon: +43 1 234\nRollup: 0\nErstellt: November 5, 2025 1:46 AM\nVon: user-1\nGeändert: November 5, 2025 2:46 AM\nGeändert von: user-1\nID: 42\nOrt: Wien\n"
+    },
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "row-2",
+        "set" : "corpus"
+      },
+      "name" : "Markdown: row-2",
+      "output" : "# Untitled\n\nPriorität: 1000000000000000\nErledigt: false\nRollup: 0\nErstellt: November 5, 2025 1:46 AM\nGeändert: November 5, 2025 1:46 AM\n"
+    },
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "home",
+        "set" : "export"
+      },
+      "name" : "Markdown: home",
+      "output" : "# Home\n\n[Aufgaben](Aufgaben.csv)\n\n[Projekte](Projekte.csv)\n"
+    },
+    {
+      "input" : {
+        "op" : "markdown",
+        "page" : "x-trip",
+        "set" : "export"
+      },
+      "name" : "Markdown: x-trip",
+      "output" : "# Trip\n\nSee [Day 1](Day%201.md) and [Notes](Notes.md)\n\n![A photo](assets/photo.png)\n\n[Day 1](Day%201.md)\n"
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "csv",
+        "set" : "export",
+        "view" : null
+      },
+      "name" : "CSV: tasks -",
+      "output" : "Name,Points,Kind,Tags,Status,Done,Due,Note,Who,Double,Label,Project,Project name,ID,Created\nCrash beim Start,,,,Erledigt,Yes,\"October 28, 2023\",,user-1,0,Crash beim Start (),Based,Based,T-1,\"November 5, 2025 1:46 AM\"\nLogin,,,UI,Erledigt,Yes,,,,0,Login (),Publit,Publit,T-2,\"November 5, 2025 2:46 AM\"\nTypo,5,Chore,,Erledigt,No,,wichtig,user-1,10,Typo (5),Leer,Leer,T-3,\"November 5, 2025 3:46 AM\"\nSync-Konflikt,5,Bug,,Offen,No,\"December 8, 2023 10:13 PM\",später,,10,Sync-Konflikt (5),Publit,Publit,T-4,\"November 5, 2025 4:46 AM\"\nDark Mode,,Chore,\"Sync, Sync\",Erledigt,No,,später,user-1,0,Dark Mode (),Based,Based,T-5,\"November 5, 2025 5:46 AM\"\nExport,3.5,Bug,\"AI, AI\",Erledigt,No,\"November 15, 2023\",,,7,Export (3.5),,,T-6,\"November 5, 2025 6:46 AM\"\nImport,6.5,,,Erledigt,No,\"November 2, 2023 10:13 PM\",,,13,Import (6.5),Leer,Leer,T-7,\"November 5, 2025 7:46 AM\"\nSuche,-1.5,,,Offen,Yes,\"November 16, 2023 10:13 PM\",später,\"user-2, user-1\",-3,Suche (-1.5),Publit,Publit,T-8,\"November 5, 2025 8:46 AM\"\nKalender,,Bug,AI,In Arbeit,No,\"December 10, 2023\",,,0,Kalender (),Based,Based,T-9,\"November 5, 2025 9:46 AM\"\nAgent,,Chore,Sync,In Arbeit,No,\"November 28, 2023\",wichtig,,0,Agent (),Based,Based,T-10,\"November 5, 2025 10:46 AM\"\nSidebar,4,,Sync,Offen,No,\"November 21, 2023\",,\"user-2, user-1\",8,Sidebar (4),Publit,Publit,T-11,\"November 5, 2025 11:46 AM\"\nFormeln,11,,,Erledigt,No,,,,22,Formeln (11),Based,Based,T-12,\"November 5, 2025 12:46 PM\"\nRollup,2.5,Chore,AI,Offen,Yes,\"October 26, 2023 10:13 PM\",Notiz mit Text,,5,Rollup (2.5),Based,Based,T-13,\"November 5, 2025 1:46 PM\"\nBoard,,Chore,Sync,Erledigt,No,,wichtig,,0,Board (),Publit,Publit,T-14,\"November 5, 2025 2:46 PM\"\n,,,,,No,,,,0, (),,,T-15,\"November 5, 2025 3:46 PM\"\nÄÖÜ Umlaute,7,,Sync,Erledigt,Yes,,später,,14,ÄÖÜ Umlaute (7),Leer,Leer,T-16,\"November 5, 2025 4:46 PM\"\nemoji 🚀,0,Bug,\"Sync, AI\",Offen,Yes,\"October 29, 2023 10:13 PM\",,,0,emoji 🚀 (0),Publit,Publit,T-17,\"November 5, 2025 5:46 PM\"\nzebra,0,,,Offen,No,\"November 14, 2023\",später,user-1,0,zebra (0),Based,Based,T-18,\"November 5, 2025 6:46 PM\"\nAlpha,2,Chore,,Offen,No,,,user-1,4,Alpha (2),Leer,Leer,T-19,\"November 5, 2025 7:46 PM\"\nalpha,12,,,In Arbeit,Yes,\"November 30, 2023 10:13 PM\",später,,24,alpha (12),Based,Based,T-20,\"November 5, 2025 8:46 PM\"\n"
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "csv",
+        "set" : "export",
+        "view" : null
+      },
+      "name" : "CSV: projects -",
+      "output" : "Name,Tasks,Total,Average,Count,Done %,Latest due,Open tasks\nBased,\"Crash beim Start, Dark Mode, Kalender, Agent, Formeln, Rollup, zebra, alpha\",25.5,6.375,8,0.375,\"December 10, 2023\",5\nPublit,\"Login, Sync-Konflikt, Suche, Sidebar, Board, Untitled, emoji 🚀\",7.5,1.875,7,0.4285714286,\"December 8, 2023\",4\nLeer,\"Typo, Import, ÄÖÜ Umlaute, Alpha\",20.5,5.125,4,0.25,\"November 2, 2023\",3\n"
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "csv",
+        "set" : "export",
+        "view" : "v-tasks-table"
+      },
+      "name" : "CSV: tasks v-tasks-table",
+      "output" : "Name,Points,Due,Tags,Status,Done,Note,Who,Double,Label,Project,Project name,ID,Created\nalpha,12,\"November 30, 2023 10:13 PM\",,In Arbeit,Yes,später,,24,alpha (12),Based,Based,T-20,\"November 5, 2025 8:46 PM\"\nFormeln,11,,,Erledigt,No,,,22,Formeln (11),Based,Based,T-12,\"November 5, 2025 12:46 PM\"\nÄÖÜ Umlaute,7,,Sync,Erledigt,Yes,später,,14,ÄÖÜ Umlaute (7),Leer,Leer,T-16,\"November 5, 2025 4:46 PM\"\nImport,6.5,\"November 2, 2023 10:13 PM\",,Erledigt,No,,,13,Import (6.5),Leer,Leer,T-7,\"November 5, 2025 7:46 AM\"\nTypo,5,,,Erledigt,No,wichtig,user-1,10,Typo (5),Leer,Leer,T-3,\"November 5, 2025 3:46 AM\"\nSync-Konflikt,5,\"December 8, 2023 10:13 PM\",,Offen,No,später,,10,Sync-Konflikt (5),Publit,Publit,T-4,\"November 5, 2025 4:46 AM\"\nSidebar,4,\"November 21, 2023\",Sync,Offen,No,,\"user-2, user-1\",8,Sidebar (4),Publit,Publit,T-11,\"November 5, 2025 11:46 AM\"\nExport,3.5,\"November 15, 2023\",\"AI, AI\",Erledigt,No,,,7,Export (3.5),,,T-6,\"November 5, 2025 6:46 AM\"\nRollup,2.5,\"October 26, 2023 10:13 PM\",AI,Offen,Yes,Notiz mit Text,,5,Rollup (2.5),Based,Based,T-13,\"November 5, 2025 1:46 PM\"\nAlpha,2,,,Offen,No,,user-1,4,Alpha (2),Leer,Leer,T-19,\"November 5, 2025 7:46 PM\"\nemoji 🚀,0,\"October 29, 2023 10:13 PM\",\"Sync, AI\",Offen,Yes,,,0,emoji 🚀 (0),Publit,Publit,T-17,\"November 5, 2025 5:46 PM\"\nzebra,0,\"November 14, 2023\",,Offen,No,später,user-1,0,zebra (0),Based,Based,T-18,\"November 5, 2025 6:46 PM\"\nSuche,-1.5,\"November 16, 2023 10:13 PM\",,Offen,Yes,später,\"user-2, user-1\",-3,Suche (-1.5),Publit,Publit,T-8,\"November 5, 2025 8:46 AM\"\nCrash beim Start,,\"October 28, 2023\",,Erledigt,Yes,,user-1,0,Crash beim Start (),Based,Based,T-1,\"November 5, 2025 1:46 AM\"\nLogin,,,UI,Erledigt,Yes,,,0,Login (),Publit,Publit,T-2,\"November 5, 2025 2:46 AM\"\nDark Mode,,,\"Sync, Sync\",Erledigt,No,später,user-1,0,Dark Mode (),Based,Based,T-5,\"November 5, 2025 5:46 AM\"\nKalender,,\"December 10, 2023\",AI,In Arbeit,No,,,0,Kalender (),Based,Based,T-9,\"November 5, 2025 9:46 AM\"\nAgent,,\"November 28, 2023\",Sync,In Arbeit,No,wichtig,,0,Agent (),Based,Based,T-10,\"November 5, 2025 10:46 AM\"\nBoard,,,Sync,Erledigt,No,wichtig,,0,Board (),Publit,Publit,T-14,\"November 5, 2025 2:46 PM\"\n,,,,,No,,,0, (),,,T-15,\"November 5, 2025 3:46 PM\"\n"
+    },
+    {
+      "input" : {
+        "op" : "html",
+        "page" : "p-root",
+        "set" : "corpus"
+      },
+      "name" : "HTML-Seite: p-root",
+      "output" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Startseite</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js\" async></script>\n</head>\n<body>\n<article class=\"page\">\n<div class=\"icon\">🏠</div>\n<h1 class=\"title\">Startseite</h1>\n<p class=\"page-link\"><a href=\"fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&amp;%20&#39;.html\">📄 fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</a></p>\n<p>Einfacher Text</p>\n<p class=\"page-link\"><a href=\"URL-Icon.html\">📄 URL-Icon</a></p>\n<ul class=\"todo\">\n<li class=\"\"><input type=\"checkbox\" disabled> <span>Offen</span></li>\n</ul>\n<details open><summary>Toggle</summary></details>\n<blockquote class=\"color-magentaBackground\">Zitat</blockquote>\n<aside class=\"callout\"><span class=\"callout-icon\">💡</span><div><p>Hinweis</p></div></aside>\n<hr>\n<pre><code class=\"language-swift\">let x = 1\nprint(\"/pfad\")</code></pre>\n<p class=\"caption\">Beispiel</p>\n<div class=\"equation\">\\[\\int_0^1 x^2\\,dx\\]</div>\n<figure><img src=\"assets/bild.heic\" alt=\"fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; &#39; &quot; \\\"><figcaption><strong>fett </strong><a href=\"https://example.com/a?b=c\"><span class=\"color-redBackground\"><s><u><em><code>kursiv+farbig </code></em></u></s></span></a><a class=\"mention\" href=\"Startseite.html\">Startseite</a><span class=\"mention\">Datum</span><span class=\"mention\">Elija</span><a class=\"mention\" href=\"https://friedrich-ulrich.com\">Link</a><span class=\"equation inline\">\\(e^{i\\pi}+1=0\\)</span> Ende <br>\t\u001f &lt;tag&gt; &amp; ' \" \\</figcaption></figure>\n<figure><video controls src=\"https://youtube.com/watch?v=x\"></video></figure>\n<figure><audio controls src=\"assets/ton.m4a\"></audio></figure>\n<p class=\"color-gray\"><strong>fett </strong><a href=\"https://example.com/a?b=c\"><span class=\"color-redBackground\"><s><u><em><code>kursiv+farbig </code></em></u></s></span></a><a class=\"mention\" href=\"Startseite.html\">Startseite</a><span class=\"mention\">Datum</span><span class=\"mention\">Elija</span><a class=\"mention\" href=\"https://friedrich-ulrich.com\">Link</a><span class=\"equation inline\">\\(e^{i\\pi}+1=0\\)</span> Ende <br>\t\u001f &lt;tag&gt; &amp; ' \" \\</p>\n<p class=\"page-link\"><a href=\"Untitled.html\">📄 Untitled</a></p>\n<a class=\"bookmark\" href=\"assets/datei.zip\"><span class=\"bookmark-title\">datei.zip</span><span class=\"bookmark-url\">assets/datei.zip</span></a>\n<a class=\"bookmark\" href=\"https://example.com/doc.pdf\"><span class=\"bookmark-title\">https://example.com/doc.pdf</span><span class=\"bookmark-url\">https://example.com/doc.pdf</span></a>\n<a class=\"bookmark\" href=\"https://example.com\"><span class=\"bookmark-title\">Titel</span><span class=\"bookmark-desc\">Kurz</span><span class=\"bookmark-url\">https://example.com</span></a>\n<figure><iframe class=\"embed\" src=\"https://figma.com/x\" loading=\"lazy\"></iframe></figure>\n<div class=\"columns\"></div>\n<table class=\"simple\">\n</table>\n<h2>Überschrift</h2>\n<h4 class=\"db-title\">fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</h4>\n<table class=\"database\">\n<tr><th>Name</th><th>Notiz</th><th>Priorität</th><th>Anteil</th><th>Tag</th><th>Tags</th><th>Status</th><th>Fällig</th><th>Person</th><th>Dateien</th><th>Erledigt</th><th>URL</th><th>Mail</th><th>Telefon</th><th>Formel</th><th>Relation</th><th>Relation zurück</th><th>Rollup</th><th>Rollup 2</th><th>Erstellt</th><th>Von</th><th>Geändert</th><th>Geändert von</th><th>Knopf</th><th>ID</th><th>Ort</th><th>Verifiziert</th></tr>\n<tr><td><a href=\"Zeile%201.html\">Zeile 1</a></td><td>fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</td><td>-3.75</td><td></td><td>A</td><td>B</td><td>Fertig</td><td>November 5, 2025</td><td>user-1, user-2</td><td>a.pdf, Link</td><td>☑︎</td><td>https://example.com/x?y=1&amp;z=2</td><td>a@b.c</td><td>+43 1 234</td><td></td><td></td><td></td><td>0</td><td></td><td>November 5, 2025 1:46 AM</td><td>user-1</td><td>November 5, 2025 2:46 AM</td><td>user-1</td><td></td><td>42</td><td>Wien</td><td></td></tr>\n<tr><td><a href=\"Untitled.html\">Untitled</a></td><td></td><td>1000000000000000</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>☐</td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td><td></td><td>November 5, 2025 1:46 AM</td><td></td><td>November 5, 2025 1:46 AM</td><td></td><td></td><td></td><td></td><td></td></tr>\n<tr><td><a href=\"Untitled.html\">Untitled</a></td><td></td><td>3</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>☐</td><td></td><td></td><td></td><td></td><td></td><td></td><td>0</td><td></td><td>November 5, 2025 1:46 AM</td><td></td><td>November 5, 2025 1:46 AM</td><td></td><td></td><td></td><td></td><td></td></tr>\n</table>\n<p class=\"page-link\"><a href=\"fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&amp;%20&#39;.html\">✅ fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</a></p>\n<p class=\"page-link\"><a href=\"fett%20kursiv+farbig%20SeiteDatumElijaLinkx%20Ende%20%20%09%1F%20%20tag%20%20&amp;%20&#39;.html\">📄 fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</a></p>\n<section class=\"meeting\"><h2>Meeting</h2>\n</section>\n<details><summary><h3>Überschrift</h3></summary></details>\n<h4>Überschrift</h4>\n<h5>Überschrift</h5>\n<ul>\n<li>Punkt</li>\n</ul>\n<ol>\n<li>Nummer</li>\n</ol>\n<ul class=\"todo\">\n<li class=\"checked\"><input type=\"checkbox\" disabled checked> <span>Aufgabe</span></li>\n</ul>\n</article>\n\n</body>\n</html>\n"
+    },
+    {
+      "input" : {
+        "op" : "html",
+        "page" : "row-1",
+        "set" : "corpus"
+      },
+      "name" : "HTML-Seite: row-1",
+      "output" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Zeile 1</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<div class=\"icon\">📌</div>\n<h1 class=\"title\">Zeile 1</h1>\n<table class=\"properties\">\n<tr><th>Notiz</th><td>fett kursiv+farbig SeiteDatumElijaLinkx Ende \n\t\u001f &lt;tag&gt; &amp; ' \" \\</td></tr>\n<tr><th>Priorität</th><td>-3.75</td></tr>\n<tr><th>Tag</th><td>A</td></tr>\n<tr><th>Tags</th><td>B</td></tr>\n<tr><th>Status</th><td>Fertig</td></tr>\n<tr><th>Fällig</th><td>November 5, 2025</td></tr>\n<tr><th>Person</th><td>user-1, user-2</td></tr>\n<tr><th>Dateien</th><td>a.pdf, Link</td></tr>\n<tr><th>Erledigt</th><td>true</td></tr>\n<tr><th>URL</th><td>https://example.com/x?y=1&amp;z=2</td></tr>\n<tr><th>Mail</th><td>a@b.c</td></tr>\n<tr><th>Telefon</th><td>+43 1 234</td></tr>\n<tr><th>Rollup</th><td>0</td></tr>\n<tr><th>Erstellt</th><td>November 5, 2025 1:46 AM</td></tr>\n<tr><th>Von</th><td>user-1</td></tr>\n<tr><th>Geändert</th><td>November 5, 2025 2:46 AM</td></tr>\n<tr><th>Geändert von</th><td>user-1</td></tr>\n<tr><th>ID</th><td>42</td></tr>\n<tr><th>Ort</th><td>Wien</td></tr>\n</table>\n</article>\n\n</body>\n</html>\n"
+    },
+    {
+      "input" : {
+        "format" : "markdown",
+        "op" : "plan",
+        "set" : "export"
+      },
+      "name" : "Workspace-Export markdown",
+      "output" : {
+        "assets" : [
+          {
+            "available" : true,
+            "name" : "photo.png",
+            "page" : "Trip",
+            "path" : "assets/photo.png"
+          },
+          {
+            "available" : true,
+            "name" : "photo.png",
+            "page" : "Day 1",
+            "path" : "assets/photo (2).png"
+          },
+          {
+            "available" : true,
+            "name" : "Plan.pdf",
+            "page" : "Day 1",
+            "path" : "assets/Plan.pdf"
+          },
+          {
+            "available" : false,
+            "name" : "gone.mov",
+            "page" : "Day 1",
+            "path" : "assets/gone.mov"
+          }
+        ],
+        "directories" : [
+          "Trip",
+          "notes (2)",
+          "Notes (3)",
+          "assets"
+        ],
+        "files" : [
+          {
+            "contents" : "# Home\n\n[Aufgaben](Aufgaben.csv)\n\n[Projekte](Projekte.csv)\n",
+            "path" : "Home.md"
+          },
+          {
+            "contents" : "# Trip\n\nSee [Day 1](Trip/Day%201.md) and [Notes](Notes%20%283%29.md)\n\n![A photo](assets/photo.png)\n\n[Day 1](Trip/Day%201.md)\n",
+            "path" : "Trip.md"
+          },
+          {
+            "contents" : "# Day 1\n\n![](../assets/photo%20%282%29.png)\n\n[Plan.pdf](../assets/Plan.pdf)\n\n[gone.mov](../assets/gone.mov)\n",
+            "path" : "Trip/Day 1.md"
+          },
+          {
+            "contents" : "# Notes\n\n[Notes](Notes%20%283%29.md)\n",
+            "path" : "Notes.md"
+          },
+          {
+            "contents" : "# notes\n\n[Child](notes%20%282%29/Child.md)\n",
+            "path" : "notes (2).md"
+          },
+          {
+            "contents" : "# Child\n",
+            "path" : "notes (2)/Child.md"
+          },
+          {
+            "contents" : "# Notes\n\n[Child](Notes%20%283%29/Child.md)\n",
+            "path" : "Notes (3).md"
+          },
+          {
+            "contents" : "# Child\n",
+            "path" : "Notes (3)/Child.md"
+          },
+          {
+            "contents" : "# assets\n",
+            "path" : "assets (2).md"
+          },
+          {
+            "contents" : "# A/B: C?\n",
+            "path" : "A B  C.md"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "format" : "html",
+        "op" : "plan",
+        "set" : "export"
+      },
+      "name" : "Workspace-Export html",
+      "output" : {
+        "assets" : [
+          {
+            "available" : true,
+            "name" : "photo.png",
+            "page" : "Trip",
+            "path" : "assets/photo.png"
+          },
+          {
+            "available" : true,
+            "name" : "photo.png",
+            "page" : "Day 1",
+            "path" : "assets/photo (2).png"
+          },
+          {
+            "available" : true,
+            "name" : "Plan.pdf",
+            "page" : "Day 1",
+            "path" : "assets/Plan.pdf"
+          },
+          {
+            "available" : false,
+            "name" : "gone.mov",
+            "page" : "Day 1",
+            "path" : "assets/gone.mov"
+          }
+        ],
+        "directories" : [
+          "Trip",
+          "notes (2)",
+          "Notes (3)",
+          "assets"
+        ],
+        "files" : [
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Home</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Home</h1>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Home.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Trip</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<div class=\"icon\">🧭</div>\n<h1 class=\"title\">Trip</h1>\n<p>See <a class=\"mention\" href=\"Trip/Day%201.html\">Day 1</a> and <a class=\"mention\" href=\"Notes%20%283%29.html\">Notes</a></p>\n<figure><img src=\"assets/photo.png\" alt=\"A photo\"><figcaption>A photo</figcaption></figure>\n<p class=\"page-link\"><a href=\"Trip/Day%201.html\">📄 Day 1</a></p>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Trip.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Day 1</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Day 1</h1>\n<figure><img src=\"../assets/photo%20%282%29.png\" alt=\"\"></figure>\n<a class=\"bookmark\" href=\"../assets/Plan.pdf\"><span class=\"bookmark-title\">Plan.pdf</span><span class=\"bookmark-url\">../assets/Plan.pdf</span></a>\n<figure><video controls src=\"../assets/gone.mov\"></video></figure>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Trip/Day 1.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Notes</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Notes</h1>\n<p class=\"page-link\"><a href=\"Notes%20%283%29.html\">📄 Notes</a></p>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Notes.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>notes</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">notes</h1>\n<p class=\"page-link\"><a href=\"notes%20%282%29/Child.html\">📄 Child</a></p>\n</article>\n\n</body>\n</html>\n",
+            "path" : "notes (2).html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Child</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Child</h1>\n</article>\n\n</body>\n</html>\n",
+            "path" : "notes (2)/Child.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Notes</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Notes</h1>\n<p class=\"page-link\"><a href=\"Notes%20%283%29/Child.html\">📄 Child</a></p>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Notes (3).html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>Child</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">Child</h1>\n</article>\n\n</body>\n</html>\n",
+            "path" : "Notes (3)/Child.html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>assets</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">assets</h1>\n</article>\n\n</body>\n</html>\n",
+            "path" : "assets (2).html"
+          },
+          {
+            "contents" : "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"generator\" content=\"Based\">\n<title>A/B: C?</title>\n<style>:root { color-scheme: light dark; --text: #37352f; --muted: #787774; --line: #e9e9e7; --bg: #ffffff; --soft: #f7f6f3; --accent: #2383e2; }\n@media (prefers-color-scheme: dark) { :root { --text: #e6e6e4; --muted: #9b9b9b; --line: #2f2f2f; --bg: #191919; --soft: #252525; --accent: #529cca; } }\nhtml { background: var(--bg); color: var(--text); }\nbody { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", Helvetica, Arial, sans-serif; }\n.page { max-width: 708px; margin: 0 auto; padding: 64px 24px 96px; }\n.icon { font-size: 64px; line-height: 1; margin-bottom: 8px; }\nh1.title { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }\nh2 { font-size: 1.875em; margin: 1.4em 0 .3em; } h3 { font-size: 1.5em; margin: 1.2em 0 .2em; }\nh4 { font-size: 1.25em; margin: 1em 0 .2em; } h5 { font-size: 1.1em; margin: 1em 0 .2em; }\np { margin: 2px 0; min-height: 1.6em; } p.empty { min-height: 1.6em; }\n.indent { padding-left: 1.6em; }\na { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); }\ncode { font: .85em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--soft); color: #eb5757; padding: .1em .35em; border-radius: 4px; }\npre { background: var(--soft); padding: 16px; border-radius: 6px; overflow-x: auto; }\npre code { background: none; color: inherit; padding: 0; font-size: .85em; }\nblockquote { border-left: 3px solid currentColor; margin: 6px 0; padding: 0 14px; }\nhr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }\nul, ol { margin: 2px 0; padding-left: 1.6em; } ul.todo { list-style: none; padding-left: .2em; }\nul.todo li.checked > span { text-decoration: line-through; color: var(--muted); }\ndetails { margin: 2px 0; } details > summary { cursor: pointer; } details > summary h2, details > summary h3, details > summary h4, details > summary h5 { display: inline; }\n.callout { display: flex; gap: 10px; background: var(--soft); border-radius: 6px; padding: 16px 16px 16px 12px; margin: 6px 0; }\n.callout-icon { font-size: 1.3em; line-height: 1.2; }\nfigure { margin: 8px 0; } img, video { max-width: 100%; border-radius: 4px; } figcaption, .caption { color: var(--muted); font-size: 14px; }\niframe.embed { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 6px; }\n.html-block iframe { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 6px; background: transparent; }\n.bookmark { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin: 6px 0; text-decoration: none; }\n.bookmark-title { font-weight: 500; } .bookmark-desc, .bookmark-url { color: var(--muted); font-size: 13px; }\n.page-link a { text-decoration: none; border-bottom: 1px solid var(--line); }\n.mention { color: var(--muted); }\ntable { border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 14px; }\nth, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }\nth { color: var(--muted); font-weight: 500; }\ntable.properties { width: auto; margin-bottom: 24px; } table.properties th, table.properties td { border: 0; padding: 3px 12px 3px 0; }\n.db-title { margin-top: 1.4em; }\n.columns { display: flex; gap: 24px; } .column { flex: 1; min-width: 0; }\n.equation { text-align: center; margin: 8px 0; overflow-x: auto; } .equation.inline { display: inline; }\n.color-gray { color: #787774; } .color-brown { color: #9f6b53; } .color-orange { color: #d9730d; } .color-yellow { color: #cb912f; }\n.color-green { color: #448361; } .color-blue { color: #337ea9; } .color-purple { color: #9065b0; } .color-pink { color: #c14c8a; } .color-red { color: #d44c47; }\n.color-grayBackground { background: #f1f1ef; } .color-brownBackground { background: #f4eeee; } .color-orangeBackground { background: #fbecdd; }\n.color-yellowBackground { background: #fbf3db; } .color-greenBackground { background: #edf3ec; } .color-blueBackground { background: #e7f3f8; }\n.color-purpleBackground { background: rgba(244,240,247,.8); } .color-pinkBackground { background: rgba(249,238,243,.8); } .color-redBackground { background: #fdebec; }\n@media (prefers-color-scheme: dark) { [class*=\"Background\"] { background: rgba(255,255,255,.08); } }\n@media print { .page { padding: 0; } iframe { display: none; } }</style>\n\n</head>\n<body>\n<article class=\"page\">\n<h1 class=\"title\">A/B: C?</h1>\n</article>\n\n</body>\n</html>\n",
+            "path" : "A B  C.html"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "items" : [
+          {
+            "op" : "fileName",
+            "raw" : "Notes"
+          },
+          {
+            "op" : "fileName",
+            "raw" : "A/B: C?"
+          },
+          {
+            "op" : "fileName",
+            "raw" : ""
+          },
+          {
+            "op" : "fileName",
+            "raw" : "  "
+          },
+          {
+            "op" : "fileName",
+            "raw" : "x\ny|z*\"<>\\"
+          },
+          {
+            "op" : "fileName",
+            "raw" : "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long "
+          },
+          {
+            "dir" : "",
+            "op" : "relative",
+            "path" : "a.md"
+          },
+          {
+            "dir" : "A",
+            "op" : "relative",
+            "path" : "A/B/x.md"
+          },
+          {
+            "dir" : "A/B",
+            "op" : "relative",
+            "path" : "A/C/x.md"
+          },
+          {
+            "dir" : "A/B",
+            "op" : "relative",
+            "path" : "assets/p.png"
+          },
+          {
+            "dir" : "A",
+            "op" : "relative",
+            "path" : "A.md"
+          },
+          {
+            "op" : "encode",
+            "raw" : "Notes (2).md"
+          },
+          {
+            "op" : "encode",
+            "raw" : "A b/C#d?.md"
+          },
+          {
+            "op" : "encode",
+            "raw" : "ü/ä ö.html"
+          },
+          {
+            "op" : "encode",
+            "raw" : "100%.md"
+          }
+        ],
+        "op" : "helpers"
+      },
+      "name" : "Export-Hilfen",
+      "output" : [
+        "Notes",
+        "A B  C",
+        "Untitled",
+        "Untitled",
+        "x y z",
+        "long long long long long long long long long long long long long long long long long long long long long long long long ",
+        "a.md",
+        "B/x.md",
+        "../C/x.md",
+        "../../assets/p.png",
+        "../A.md",
+        "Notes%20%282%29.md",
+        "A%20b/C%23d%3F.md",
+        "%C3%BC/%C3%A4%20%C3%B6.html",
+        "100%25.md"
+      ]
+    }
+  ],
+  "exportRecords" : [
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "home",
+        "parent" : "w",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Home",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "tasks-block",
+        "parent" : "b:home",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Aufgaben",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "projects-block",
+        "parent" : "b:home",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Projekte",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "tasks-block",
+        "createdAt" : 784000000,
+        "id" : "tasks",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "points",
+            "name" : "Points",
+            "numberFormat" : "number",
+            "type" : "number"
+          },
+          {
+            "id" : "kind",
+            "name" : "Kind",
+            "options" : [
+              {
+                "color" : "red",
+                "id" : "k-bug",
+                "name" : "Bug"
+              },
+              {
+                "color" : "blue",
+                "id" : "k-feat",
+                "name" : "Feature"
+              },
+              {
+                "color" : "gray",
+                "id" : "k-chore",
+                "name" : "Chore"
+              }
+            ],
+            "type" : "select"
+          },
+          {
+            "id" : "tags",
+            "name" : "Tags",
+            "options" : [
+              {
+                "color" : "purple",
+                "id" : "t-ui",
+                "name" : "UI"
+              },
+              {
+                "color" : "green",
+                "id" : "t-sync",
+                "name" : "Sync"
+              },
+              {
+                "color" : "orange",
+                "id" : "t-ai",
+                "name" : "AI"
+              }
+            ],
+            "type" : "multiSelect"
+          },
+          {
+            "id" : "status",
+            "name" : "Status",
+            "options" : [
+              {
+                "color" : "default",
+                "id" : "s-open",
+                "name" : "Offen"
+              },
+              {
+                "color" : "blue",
+                "id" : "s-doing",
+                "name" : "In Arbeit"
+              },
+              {
+                "color" : "green",
+                "id" : "s-done",
+                "name" : "Erledigt"
+              }
+            ],
+            "statusGroups" : [
+              {
+                "color" : "gray",
+                "id" : "g-todo",
+                "name" : "To-do",
+                "optionIDs" : [
+                  "s-open"
+                ]
+              },
+              {
+                "color" : "blue",
+                "id" : "g-prog",
+                "name" : "In progress",
+                "optionIDs" : [
+                  "s-doing"
+                ]
+              },
+              {
+                "color" : "green",
+                "id" : "g-done",
+                "name" : "Complete",
+                "optionIDs" : [
+                  "s-done"
+                ]
+              }
+            ],
+            "type" : "status"
+          },
+          {
+            "id" : "done",
+            "name" : "Done",
+            "type" : "checkbox"
+          },
+          {
+            "id" : "due",
+            "name" : "Due",
+            "type" : "date"
+          },
+          {
+            "id" : "note",
+            "name" : "Note",
+            "type" : "text"
+          },
+          {
+            "id" : "who",
+            "name" : "Who",
+            "type" : "person"
+          },
+          {
+            "formula" : "prop(\"Points\") * 2",
+            "id" : "double",
+            "name" : "Double",
+            "type" : "formula"
+          },
+          {
+            "formula" : "prop(\"Name\") + \" (\" + format(prop(\"Points\")) + \")\"",
+            "id" : "label",
+            "name" : "Label",
+            "type" : "formula"
+          },
+          {
+            "id" : "project",
+            "name" : "Project",
+            "relation" : {
+              "databaseID" : "projects",
+              "syncedPropertyID" : "ptasks"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "pname",
+            "name" : "Project name",
+            "rollup" : {
+              "function" : "showOriginal",
+              "relationPropertyID" : "project",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "uid",
+            "idPrefix" : "T",
+            "name" : "ID",
+            "type" : "uniqueID"
+          },
+          {
+            "id" : "created",
+            "name" : "Created",
+            "type" : "createdTime"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Aufgaben",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "blockID" : "projects-block",
+        "createdAt" : 784000000,
+        "id" : "projects",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "ptasks",
+            "name" : "Tasks",
+            "relation" : {
+              "databaseID" : "tasks",
+              "syncedPropertyID" : "project"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "total",
+            "name" : "Total",
+            "rollup" : {
+              "function" : "sum",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "avg",
+            "name" : "Average",
+            "rollup" : {
+              "function" : "average",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "count",
+            "name" : "Count",
+            "rollup" : {
+              "function" : "countAll",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "pct",
+            "name" : "Done %",
+            "rollup" : {
+              "function" : "percentChecked",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "done"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "latest",
+            "name" : "Latest due",
+            "rollup" : {
+              "function" : "latest",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "due"
+            },
+            "type" : "rollup"
+          },
+          {
+            "formula" : "prop(\"Tasks\").filter(current.prop(\"Done\") == false).length()",
+            "id" : "open",
+            "name" : "Open tasks",
+            "type" : "formula"
+          }
+        ],
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Projekte",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "task-1",
+        "parent" : "d:tasks",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Crash beim Start",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 720224000
+              }
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 1
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784003600,
+        "createdBy" : "user-1",
+        "id" : "task-2",
+        "parent" : "d:tasks",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Login",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ui"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 2
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784007200,
+        "createdBy" : "user-1",
+        "id" : "task-3",
+        "parent" : "d:tasks",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Typo",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 3
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784010800,
+        "createdBy" : "user-1",
+        "id" : "task-4",
+        "parent" : "d:tasks",
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sync-Konflikt",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723766400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 4
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784014400,
+        "createdBy" : "user-1",
+        "id" : "task-5",
+        "parent" : "d:tasks",
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Dark Mode",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 5
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784018000,
+        "createdBy" : "user-1",
+        "id" : "task-6",
+        "parent" : "d:tasks",
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Export",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721779200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 3.5
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 6
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784021600,
+        "createdBy" : "user-1",
+        "id" : "task-7",
+        "parent" : "d:tasks",
+        "sk" : "a6",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Import",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720656000
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 6.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 7
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784025200,
+        "createdBy" : "user-1",
+        "id" : "task-8",
+        "parent" : "d:tasks",
+        "sk" : "a7",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Suche",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 721865600
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : -1.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 8
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784028800,
+        "createdBy" : "user-1",
+        "id" : "task-9",
+        "parent" : "d:tasks",
+        "sk" : "a8",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Kalender",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 723939200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 9
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784032400,
+        "createdBy" : "user-1",
+        "id" : "task-10",
+        "parent" : "d:tasks",
+        "sk" : "a9",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Agent",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722902400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 10
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784036000,
+        "createdBy" : "user-1",
+        "id" : "task-11",
+        "parent" : "d:tasks",
+        "sk" : "aA",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sidebar",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722297600
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 4
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 11
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784039600,
+        "createdBy" : "user-1",
+        "id" : "task-12",
+        "parent" : "d:tasks",
+        "sk" : "aB",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Formeln",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "points" : {
+            "number" : {
+              "_0" : 11
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 12
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784043200,
+        "createdBy" : "user-1",
+        "id" : "task-13",
+        "parent" : "d:tasks",
+        "sk" : "aC",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Rollup",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720051200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "Notiz mit Text"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 13
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784046800,
+        "createdBy" : "user-1",
+        "id" : "task-14",
+        "parent" : "d:tasks",
+        "sk" : "aD",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Board",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 14
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784050400,
+        "createdBy" : "user-1",
+        "id" : "task-15",
+        "parent" : "d:tasks",
+        "sk" : "aE",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 15
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784054000,
+        "createdBy" : "user-1",
+        "id" : "task-16",
+        "parent" : "d:tasks",
+        "sk" : "aF",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "ÄÖÜ Umlaute",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 7
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 16
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784057600,
+        "createdBy" : "user-1",
+        "id" : "task-17",
+        "parent" : "d:tasks",
+        "sk" : "aG",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "emoji 🚀",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720310400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 17
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784061200,
+        "createdBy" : "user-1",
+        "id" : "task-18",
+        "parent" : "d:tasks",
+        "sk" : "aH",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "zebra",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721692800
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 18
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784064800,
+        "createdBy" : "user-1",
+        "id" : "task-19",
+        "parent" : "d:tasks",
+        "sk" : "aI",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 19
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784068400,
+        "createdBy" : "user-1",
+        "id" : "task-20",
+        "parent" : "d:tasks",
+        "sk" : "aJ",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723075200
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 12
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 20
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-1",
+        "parent" : "d:projects",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Based",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-1",
+                "task-5",
+                "task-9",
+                "task-10",
+                "task-12",
+                "task-13",
+                "task-18",
+                "task-20"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-2",
+        "parent" : "d:projects",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Publit",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-2",
+                "task-4",
+                "task-8",
+                "task-11",
+                "task-14",
+                "task-15",
+                "task-17"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-3",
+        "parent" : "d:projects",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Leer",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-3",
+                "task-7",
+                "task-16",
+                "task-19"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-trip",
+        "parent" : "w",
+        "props" : {
+          "icon" : "🧭"
+        },
+        "sk" : "b0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Trip",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-trip-1",
+        "parent" : "b:x-trip",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : [
+          {
+            "t" : "See "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "x-day"
+              }
+            },
+            "t" : "Day 1"
+          },
+          {
+            "t" : " and "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "x-notes-3"
+              }
+            },
+            "t" : "Notes"
+          }
+        ],
+        "type" : "text",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-trip-2",
+        "parent" : "b:x-trip",
+        "props" : {
+          "asset" : {
+            "id" : "as-a",
+            "mime" : "image/png",
+            "name" : "photo.png",
+            "size" : 5
+          },
+          "caption" : "A photo"
+        },
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "type" : "image",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-day",
+        "parent" : "b:x-trip",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Day 1",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-day-1",
+        "parent" : "b:x-day",
+        "props" : {
+          "asset" : {
+            "id" : "as-b",
+            "mime" : "image/png",
+            "name" : "photo.png",
+            "size" : 5
+          }
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "type" : "image",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-day-2",
+        "parent" : "b:x-day",
+        "props" : {
+          "asset" : {
+            "id" : "as-c",
+            "mime" : "application/pdf",
+            "name" : "Plan.pdf",
+            "size" : 5
+          }
+        },
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "type" : "file",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-day-3",
+        "parent" : "b:x-day",
+        "props" : {
+          "asset" : {
+            "id" : "as-missing",
+            "mime" : "video/quicktime",
+            "name" : "gone.mov",
+            "size" : 5
+          }
+        },
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "type" : "video",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-notes-1",
+        "parent" : "w",
+        "sk" : "b1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Notes",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-notes-1a",
+        "parent" : "b:x-notes-1",
+        "props" : {
+          "linkTarget" : "x-notes-3"
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "type" : "linkToPage",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-notes-2",
+        "parent" : "w",
+        "sk" : "b2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "notes",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-child-2",
+        "parent" : "b:x-notes-2",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Child",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-notes-3",
+        "parent" : "w",
+        "sk" : "b3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Notes",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-child-3",
+        "parent" : "b:x-notes-3",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "Child",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-assets",
+        "parent" : "w",
+        "sk" : "b4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "assets",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "x-slash",
+        "parent" : "w",
+        "sk" : "b5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "text" : "A/B: C?",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "tasks-block",
+        "createdAt" : 784000000,
+        "databaseID" : "tasks",
+        "id" : "v-tasks-table",
+        "name" : "Table",
+        "properties" : [
+          {
+            "id" : "points",
+            "visible" : true
+          },
+          {
+            "id" : "title",
+            "visible" : true
+          },
+          {
+            "id" : "kind",
+            "visible" : false
+          },
+          {
+            "id" : "due",
+            "visible" : true
+          }
+        ],
+        "sortKey" : "a0",
+        "sorts" : [
+          {
+            "ascending" : false,
+            "propertyID" : "points"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 4,
+          "node" : "fx"
+        },
+        "type" : "table",
+        "updatedAt" : 784000000
+      },
+      "kind" : "view"
+    }
+  ],
+  "module" : "export",
+  "note" : "Markdown/CSV/HTML über RecordFixtures.corpus (set corpus) bzw. Abfrage-Workspace + Export-Seiten (set export). Workspace-Export: alle Seiten der obersten Ebene; available = Datei im Asset-Speicher vorhanden (assetFiles).",
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "favorites" : [
+          "p-root"
+        ],
+        "homePageID" : "p-root",
+        "icon" : "🧠",
+        "id" : "workspace",
+        "name" : "Elijas Workspace / Test \"Ä\" 🚀",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300001,
+          "node" : "3c8ed7c0"
+        },
+        "teamspaces" : [
+          {
+            "createdAt" : 784000000.25,
+            "icon" : {
+              "symbol" : "person.2"
+            },
+            "id" : "team-1",
+            "name" : "Team"
+          }
+        ],
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "p-root",
+        "parent" : "w",
+        "props" : {
+          "cover" : {
+            "gradient" : {
+              "_0" : 3
+            }
+          },
+          "format" : {
+            "coverPosition" : 0.35,
+            "font" : "serif",
+            "fullWidth" : false,
+            "hideBacklinks" : true,
+            "hideOutline" : false,
+            "locked" : true,
+            "smallText" : true
+          },
+          "icon" : "🏠",
+          "teamspace" : "team-1"
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300000,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Startseite",
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-2"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "p-asset",
+        "parent" : "b:p-root",
+        "props" : {
+          "cover" : {
+            "asset" : {
+              "_0" : {
+                "id" : "asset-2",
+                "name" : "cover.jpg"
+              }
+            }
+          },
+          "icon" : {
+            "asset" : {
+              "id" : "asset-1",
+              "mime" : "image/png",
+              "name" : "icon.png",
+              "size" : 2048
+            }
+          }
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300000,
+          "node" : "3c8ed7c0"
+        },
+        "text" : [
+          {
+            "m" : {
+              "b" : true
+            },
+            "t" : "fett "
+          },
+          {
+            "m" : {
+              "c" : true,
+              "color" : "redBackground",
+              "i" : true,
+              "link" : "https://example.com/a?b=c",
+              "s" : true,
+              "u" : true
+            },
+            "t" : "kursiv+farbig "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "p-root"
+              }
+            },
+            "t" : "Seite"
+          },
+          {
+            "mention" : {
+              "date" : {
+                "_0" : {
+                  "end" : 784003600.5,
+                  "includeTime" : true,
+                  "remind" : true,
+                  "start" : 784000000.25
+                }
+              }
+            },
+            "t" : "Datum"
+          },
+          {
+            "mention" : {
+              "user" : {
+                "_0" : "user-1"
+              }
+            },
+            "t" : "Elija"
+          },
+          {
+            "mention" : {
+              "link" : {
+                "_0" : "https://friedrich-ulrich.com"
+              }
+            },
+            "t" : "Link"
+          },
+          {
+            "eq" : "e^{i\\pi}+1=0",
+            "t" : "x"
+          },
+          {
+            "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+          }
+        ],
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-2"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "p-url",
+        "parent" : "b:p-root",
+        "props" : {
+          "cover" : {
+            "url" : {
+              "_0" : "https://example.com/c.jpg"
+            }
+          },
+          "icon" : {
+            "url" : "https://example.com/i.png"
+          },
+          "isTemplate" : true
+        },
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300000,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "URL-Icon",
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-2"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "p-symbol",
+        "parent" : "b:p-root",
+        "props" : {
+          "cover" : {
+            "color" : {
+              "_0" : "blue"
+            }
+          },
+          "format" : {
+            "font" : "mono"
+          },
+          "icon" : {
+            "symbol" : "star.fill"
+          }
+        },
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300000,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-2"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "p-trash",
+        "parent" : "w",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300000,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Im Papierkorb",
+        "trashedAt" : 784003600.5,
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-2"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btex-0001-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300001,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Einfacher Text",
+        "type" : "text",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btex-0002-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "color" : "gray"
+        },
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300002,
+          "node" : "3c8ed7c0"
+        },
+        "text" : [
+          {
+            "m" : {
+              "b" : true
+            },
+            "t" : "fett "
+          },
+          {
+            "m" : {
+              "c" : true,
+              "color" : "redBackground",
+              "i" : true,
+              "link" : "https://example.com/a?b=c",
+              "s" : true,
+              "u" : true
+            },
+            "t" : "kursiv+farbig "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "p-root"
+              }
+            },
+            "t" : "Seite"
+          },
+          {
+            "mention" : {
+              "date" : {
+                "_0" : {
+                  "end" : 784003600.5,
+                  "includeTime" : true,
+                  "remind" : true,
+                  "start" : 784000000.25
+                }
+              }
+            },
+            "t" : "Datum"
+          },
+          {
+            "mention" : {
+              "user" : {
+                "_0" : "user-1"
+              }
+            },
+            "t" : "Elija"
+          },
+          {
+            "mention" : {
+              "link" : {
+                "_0" : "https://friedrich-ulrich.com"
+              }
+            },
+            "t" : "Link"
+          },
+          {
+            "eq" : "e^{i\\pi}+1=0",
+            "t" : "x"
+          },
+          {
+            "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+          }
+        ],
+        "type" : "text",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bhea-0003-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "isOpen" : false,
+          "toggleable" : false
+        },
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300003,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Überschrift",
+        "type" : "heading1",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bhea-0004-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "isOpen" : false,
+          "toggleable" : true
+        },
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 4,
+          "millis" : 1793974300004,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Überschrift",
+        "type" : "heading2",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bhea-0005-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "isOpen" : false,
+          "toggleable" : false
+        },
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300005,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Überschrift",
+        "type" : "heading3",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bhea-0006-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "isOpen" : false,
+          "toggleable" : false
+        },
+        "sk" : "a6",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300006,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Überschrift",
+        "type" : "heading4",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bbul-0007-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a7",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300007,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Punkt",
+        "type" : "bulletedList",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bnum-0008-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a8",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300008,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Nummer",
+        "type" : "numberedList",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btod-0009-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "checked" : true
+        },
+        "sk" : "a9",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300009,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Aufgabe",
+        "type" : "todo",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btod-0010-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "checked" : false
+        },
+        "sk" : "a10",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300010,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Offen",
+        "type" : "todo",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btog-0011-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "isOpen" : true
+        },
+        "sk" : "a11",
+        "stamp" : {
+          "counter" : 4,
+          "millis" : 1793974300011,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Toggle",
+        "type" : "toggle",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bquo-0012-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "color" : "magentaBackground"
+        },
+        "sk" : "a12",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300012,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Zitat",
+        "type" : "quote",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bcal-0013-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "color" : "yellowBackground",
+          "icon" : "💡"
+        },
+        "sk" : "a13",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300013,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Hinweis",
+        "type" : "callout",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bdiv-0014-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a14",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300014,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "divider",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bcod-0015-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "caption" : "Beispiel",
+          "language" : "swift",
+          "wrap" : true
+        },
+        "sk" : "a15",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300015,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "let x = 1\nprint(\"/pfad\")",
+        "type" : "code",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bequ-0016-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "expression" : "\\int_0^1 x^2\\,dx"
+        },
+        "sk" : "a16",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300016,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "equation",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bima-0017-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "asset" : {
+            "id" : "asset-3",
+            "mime" : "image/heic",
+            "name" : "bild.heic",
+            "size" : 123456
+          },
+          "caption" : [
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "fett "
+            },
+            {
+              "m" : {
+                "c" : true,
+                "color" : "redBackground",
+                "i" : true,
+                "link" : "https://example.com/a?b=c",
+                "s" : true,
+                "u" : true
+              },
+              "t" : "kursiv+farbig "
+            },
+            {
+              "mention" : {
+                "page" : {
+                  "_0" : "p-root"
+                }
+              },
+              "t" : "Seite"
+            },
+            {
+              "mention" : {
+                "date" : {
+                  "_0" : {
+                    "end" : 784003600.5,
+                    "includeTime" : true,
+                    "remind" : true,
+                    "start" : 784000000.25
+                  }
+                }
+              },
+              "t" : "Datum"
+            },
+            {
+              "mention" : {
+                "user" : {
+                  "_0" : "user-1"
+                }
+              },
+              "t" : "Elija"
+            },
+            {
+              "mention" : {
+                "link" : {
+                  "_0" : "https://friedrich-ulrich.com"
+                }
+              },
+              "t" : "Link"
+            },
+            {
+              "eq" : "e^{i\\pi}+1=0",
+              "t" : "x"
+            },
+            {
+              "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+            }
+          ],
+          "width" : 0.75
+        },
+        "sk" : "a17",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300017,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "image",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bvid-0018-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "ratio" : 1.7777777777777777,
+          "url" : "https://youtube.com/watch?v=x"
+        },
+        "sk" : "a18",
+        "stamp" : {
+          "counter" : 4,
+          "millis" : 1793974300018,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "video",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "baud-0019-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "asset" : {
+            "id" : "asset-4",
+            "name" : "ton.m4a"
+          }
+        },
+        "sk" : "a19",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300019,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "audio",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bfil-0020-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "asset" : {
+            "id" : "asset-5",
+            "name" : "datei.zip",
+            "size" : 0
+          }
+        },
+        "sk" : "a20",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300020,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "file",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bpdf-0021-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "url" : "https://example.com/doc.pdf"
+        },
+        "sk" : "a21",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300021,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "pdf",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bboo-0022-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "bookmark" : {
+            "iconURL" : "https://example.com/fav.ico",
+            "imageURL" : "https://example.com/og.png",
+            "summary" : "Kurz",
+            "title" : "Titel"
+          },
+          "url" : "https://example.com"
+        },
+        "sk" : "a22",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300022,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "bookmark",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bemb-0023-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "ratio" : 0.5,
+          "url" : "https://figma.com/x"
+        },
+        "sk" : "a23",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300023,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "embed",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btab-0024-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "color" : "blue"
+        },
+        "sk" : "a24",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300024,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "tableOfContents",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bbre-0025-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a25",
+        "stamp" : {
+          "counter" : 4,
+          "millis" : 1793974300025,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "breadcrumb",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bcol-0026-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "sk" : "a26",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300026,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "columnList",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bcol-0027-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "ratio" : 0.333
+        },
+        "sk" : "a27",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300027,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "column",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btab-0028-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "tableColumnColors" : [
+            null,
+            "green",
+            null
+          ],
+          "tableColumnWidths" : [
+            120,
+            80.5,
+            200
+          ],
+          "tableColumns" : 3,
+          "tableHeaderColumn" : false,
+          "tableHeaderRow" : true
+        },
+        "sk" : "a28",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300028,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "table",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btab-0029-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "cellColors" : [
+            "redBackground",
+            null,
+            null
+          ],
+          "cells" : [
+            "a",
+            [
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "fett "
+              },
+              {
+                "m" : {
+                  "c" : true,
+                  "color" : "redBackground",
+                  "i" : true,
+                  "link" : "https://example.com/a?b=c",
+                  "s" : true,
+                  "u" : true
+                },
+                "t" : "kursiv+farbig "
+              },
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "p-root"
+                  }
+                },
+                "t" : "Seite"
+              },
+              {
+                "mention" : {
+                  "date" : {
+                    "_0" : {
+                      "end" : 784003600.5,
+                      "includeTime" : true,
+                      "remind" : true,
+                      "start" : 784000000.25
+                    }
+                  }
+                },
+                "t" : "Datum"
+              },
+              {
+                "mention" : {
+                  "user" : {
+                    "_0" : "user-1"
+                  }
+                },
+                "t" : "Elija"
+              },
+              {
+                "mention" : {
+                  "link" : {
+                    "_0" : "https://friedrich-ulrich.com"
+                  }
+                },
+                "t" : "Link"
+              },
+              {
+                "eq" : "e^{i\\pi}+1=0",
+                "t" : "x"
+              },
+              {
+                "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+              }
+            ],
+            ""
+          ]
+        },
+        "sk" : "a29",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300029,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "tableRow",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bdat-0030-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "databaseID" : "db-1",
+          "viewIDs" : [
+            "v-table",
+            "v-board"
+          ]
+        },
+        "sk" : "a30",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300030,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "databaseInline",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bdat-0031-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "databaseID" : "db-1",
+          "icon" : "✅"
+        },
+        "sk" : "a31",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300031,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Aufgaben",
+        "type" : "databasePage",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "blin-0032-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "linkTarget" : "p-asset"
+        },
+        "sk" : "a32",
+        "stamp" : {
+          "counter" : 4,
+          "millis" : 1793974300032,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "linkToPage",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bsyn-0033-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "syncSource" : "p-url"
+        },
+        "sk" : "a33",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300033,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "syncedBlock",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bbut-0034-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "buttonAction" : {
+            "kind" : "addPage",
+            "mode" : "centerPeek",
+            "openAfter" : true,
+            "targetID" : "db-1",
+            "title" : "Neu",
+            "values" : {
+              "prio" : {
+                "number" : {
+                  "_0" : 2.5
+                }
+              },
+              "status" : {
+                "status" : {
+                  "_0" : "opt-s1"
+                }
+              }
+            }
+          },
+          "buttonActions" : [
+            {
+              "kind" : "insertBlocks",
+              "step" : 1,
+              "targetID" : "p-url"
+            },
+            {
+              "kind" : "openURL",
+              "url" : "https://example.com"
+            },
+            {
+              "kind" : "confirm",
+              "message" : "Sicher?"
+            },
+            {
+              "kind" : "sendMail"
+            }
+          ],
+          "buttonLabel" : "Neue Aufgabe"
+        },
+        "sk" : "a34",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300034,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "button",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bmee-0035-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "meeting" : {
+            "attendees" : [
+              "Elija",
+              "Gast"
+            ],
+            "consentNotice" : true,
+            "context" : [
+              {
+                "id" : "ctx-1",
+                "kind" : "page",
+                "pageID" : "p-root",
+                "title" : "Kontext"
+              },
+              {
+                "id" : "ctx-2",
+                "kind" : "text",
+                "text" : "Agenda"
+              }
+            ],
+            "duration" : 3600.25,
+            "endedAt" : 784003600.5,
+            "engine" : "whisper",
+            "language" : "de",
+            "speakers" : [
+              {
+                "color" : "blue",
+                "id" : "me",
+                "isMe" : true,
+                "name" : "Elija"
+              },
+              {
+                "id" : "s2",
+                "name" : "Gast"
+              }
+            ],
+            "startedAt" : 784000000.25,
+            "status" : "done",
+            "summary" : "done",
+            "summaryEngine" : "claude",
+            "summaryInstructions" : "kurz",
+            "tracks" : [
+              {
+                "asset" : {
+                  "id" : "asset-6",
+                  "name" : "mic.m4a"
+                },
+                "duration" : 3599,
+                "offset" : 0.5,
+                "role" : "microphone"
+              }
+            ],
+            "vocabulary" : [
+              "Based",
+              "Yjs"
+            ]
+          }
+        },
+        "sk" : "a35",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974300035,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Meeting",
+        "type" : "meeting",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bmee-0036-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "meetingSection" : "summary"
+        },
+        "sk" : "a36",
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 1793974300036,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "meetingSection",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "bmee-0037-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "meetingSection" : "actionItems"
+        },
+        "sk" : "a37",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300037,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "meetingSection",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "btra-0038-0000-4000-8000-000000000000",
+        "parent" : "b:p-root",
+        "props" : {
+          "meetingTime" : 12.5,
+          "segments" : [
+            {
+              "e" : 4.25,
+              "id" : "seg-1",
+              "s" : 0,
+              "sp" : "me",
+              "t" : "Hallo",
+              "tr" : "microphone"
+            },
+            {
+              "e" : 9,
+              "id" : "seg-2",
+              "p" : true,
+              "s" : 4.25,
+              "t" : "…"
+            }
+          ]
+        },
+        "sk" : "a38",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300038,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "transcript",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "defaultTemplateID" : "p-url",
+        "id" : "db-1",
+        "locked" : false,
+        "nextUniqueID" : 168,
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "description" : "Freitext",
+            "id" : "text",
+            "name" : "Notiz",
+            "type" : "text"
+          },
+          {
+            "id" : "prio",
+            "name" : "Priorität",
+            "numberFormat" : "euro",
+            "type" : "number"
+          },
+          {
+            "id" : "pct",
+            "name" : "Anteil",
+            "numberFormat" : "permille",
+            "type" : "number"
+          },
+          {
+            "id" : "tag",
+            "name" : "Tag",
+            "options" : [
+              {
+                "color" : "purple",
+                "id" : "opt-1",
+                "name" : "A"
+              }
+            ],
+            "type" : "select"
+          },
+          {
+            "id" : "tags",
+            "name" : "Tags",
+            "options" : [
+              {
+                "color" : "teal",
+                "id" : "opt-2",
+                "name" : "B"
+              }
+            ],
+            "type" : "multiSelect"
+          },
+          {
+            "id" : "status",
+            "name" : "Status",
+            "options" : [
+              {
+                "color" : "default",
+                "id" : "opt-s1",
+                "name" : "Offen"
+              },
+              {
+                "color" : "green",
+                "id" : "opt-s2",
+                "name" : "Fertig"
+              }
+            ],
+            "statusGroups" : [
+              {
+                "color" : "gray",
+                "id" : "g1",
+                "name" : "To-do",
+                "optionIDs" : [
+                  "opt-s1"
+                ]
+              },
+              {
+                "color" : "green",
+                "id" : "g2",
+                "name" : "Complete",
+                "optionIDs" : [
+                  "opt-s2"
+                ]
+              }
+            ],
+            "type" : "status"
+          },
+          {
+            "dateFormat" : "dd.MM.yyyy",
+            "id" : "due",
+            "name" : "Fällig",
+            "type" : "date"
+          },
+          {
+            "id" : "who",
+            "name" : "Person",
+            "type" : "person"
+          },
+          {
+            "id" : "files",
+            "name" : "Dateien",
+            "type" : "files"
+          },
+          {
+            "id" : "done",
+            "name" : "Erledigt",
+            "type" : "checkbox"
+          },
+          {
+            "id" : "url",
+            "name" : "URL",
+            "type" : "url"
+          },
+          {
+            "id" : "mail",
+            "name" : "Mail",
+            "type" : "email"
+          },
+          {
+            "id" : "tel",
+            "name" : "Telefon",
+            "type" : "phone"
+          },
+          {
+            "formula" : "prop(\"prio\") * 2 + if(prop(\"done\"), 1, 0)",
+            "id" : "f",
+            "name" : "Formel",
+            "type" : "formula"
+          },
+          {
+            "id" : "rel",
+            "name" : "Relation",
+            "relation" : {
+              "databaseID" : "db-1",
+              "limitOne" : true,
+              "syncedPropertyID" : "rel2"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "rel2",
+            "name" : "Relation zurück",
+            "relation" : {
+              "databaseID" : "db-1"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "roll",
+            "name" : "Rollup",
+            "rollup" : {
+              "function" : "sum",
+              "relationPropertyID" : "rel",
+              "targetPropertyID" : "prio"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "roll2",
+            "name" : "Rollup 2",
+            "rollup" : {
+              "function" : "geomean",
+              "relationPropertyID" : "rel",
+              "targetPropertyID" : "prio"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "ct",
+            "name" : "Erstellt",
+            "type" : "createdTime"
+          },
+          {
+            "id" : "cb",
+            "name" : "Von",
+            "type" : "createdBy"
+          },
+          {
+            "id" : "lt",
+            "name" : "Geändert",
+            "type" : "lastEditedTime"
+          },
+          {
+            "id" : "lb",
+            "name" : "Geändert von",
+            "type" : "lastEditedBy"
+          },
+          {
+            "id" : "btn",
+            "name" : "Knopf",
+            "type" : "button"
+          },
+          {
+            "id" : "uid",
+            "idPrefix" : "BSD",
+            "name" : "ID",
+            "type" : "uniqueID"
+          },
+          {
+            "id" : "place",
+            "name" : "Ort",
+            "type" : "place"
+          },
+          {
+            "id" : "ver",
+            "name" : "Verifiziert",
+            "type" : "verification"
+          }
+        ],
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974300500,
+          "node" : "3c8ed7c0"
+        },
+        "summary" : "Alle Aufgaben",
+        "templateIDs" : [
+          "p-url"
+        ],
+        "title" : [
+          {
+            "m" : {
+              "b" : true
+            },
+            "t" : "fett "
+          },
+          {
+            "m" : {
+              "c" : true,
+              "color" : "redBackground",
+              "i" : true,
+              "link" : "https://example.com/a?b=c",
+              "s" : true,
+              "u" : true
+            },
+            "t" : "kursiv+farbig "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "p-root"
+              }
+            },
+            "t" : "Seite"
+          },
+          {
+            "mention" : {
+              "date" : {
+                "_0" : {
+                  "end" : 784003600.5,
+                  "includeTime" : true,
+                  "remind" : true,
+                  "start" : 784000000.25
+                }
+              }
+            },
+            "t" : "Datum"
+          },
+          {
+            "mention" : {
+              "user" : {
+                "_0" : "user-1"
+              }
+            },
+            "t" : "Elija"
+          },
+          {
+            "mention" : {
+              "link" : {
+                "_0" : "https://friedrich-ulrich.com"
+              }
+            },
+            "t" : "Link"
+          },
+          {
+            "eq" : "e^{i\\pi}+1=0",
+            "t" : "x"
+          },
+          {
+            "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+          }
+        ],
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "createdBy" : "user-1",
+        "id" : "row-1",
+        "parent" : "d:db-1",
+        "props" : {
+          "icon" : "📌"
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 5,
+          "millis" : 1793974300600,
+          "node" : "3c8ed7c0"
+        },
+        "text" : "Zeile 1",
+        "type" : "page",
+        "updatedAt" : 784003600.5,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 784000000.25
+              }
+            }
+          },
+          "files" : {
+            "files" : {
+              "_0" : [
+                {
+                  "asset" : {
+                    "id" : "asset-7",
+                    "mime" : "application/pdf",
+                    "name" : "a.pdf",
+                    "size" : 10
+                  },
+                  "name" : "a.pdf"
+                },
+                {
+                  "name" : "Link",
+                  "url" : "https://example.com/f"
+                }
+              ]
+            }
+          },
+          "mail" : {
+            "email" : {
+              "_0" : "a@b.c"
+            }
+          },
+          "place" : {
+            "place" : {
+              "_0" : "{\"name\":\"Wien\",\"lat\":48.2}"
+            }
+          },
+          "prio" : {
+            "number" : {
+              "_0" : -3.75
+            }
+          },
+          "rel" : {
+            "relation" : {
+              "_0" : [
+                "row-2"
+              ]
+            }
+          },
+          "rel2" : {
+            "relation" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "opt-s2"
+            }
+          },
+          "tag" : {
+            "select" : {
+              "_0" : "opt-1"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "opt-2",
+                "opt-x"
+              ]
+            }
+          },
+          "tel" : {
+            "phone" : {
+              "_0" : "+43 1 234"
+            }
+          },
+          "text" : {
+            "text" : {
+              "_0" : [
+                {
+                  "m" : {
+                    "b" : true
+                  },
+                  "t" : "fett "
+                },
+                {
+                  "m" : {
+                    "c" : true,
+                    "color" : "redBackground",
+                    "i" : true,
+                    "link" : "https://example.com/a?b=c",
+                    "s" : true,
+                    "u" : true
+                  },
+                  "t" : "kursiv+farbig "
+                },
+                {
+                  "mention" : {
+                    "page" : {
+                      "_0" : "p-root"
+                    }
+                  },
+                  "t" : "Seite"
+                },
+                {
+                  "mention" : {
+                    "date" : {
+                      "_0" : {
+                        "end" : 784003600.5,
+                        "includeTime" : true,
+                        "remind" : true,
+                        "start" : 784000000.25
+                      }
+                    }
+                  },
+                  "t" : "Datum"
+                },
+                {
+                  "mention" : {
+                    "user" : {
+                      "_0" : "user-1"
+                    }
+                  },
+                  "t" : "Elija"
+                },
+                {
+                  "mention" : {
+                    "link" : {
+                      "_0" : "https://friedrich-ulrich.com"
+                    }
+                  },
+                  "t" : "Link"
+                },
+                {
+                  "eq" : "e^{i\\pi}+1=0",
+                  "t" : "x"
+                },
+                {
+                  "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                }
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 42
+            }
+          },
+          "url" : {
+            "url" : {
+              "_0" : "https://example.com/x?y=1&z=2"
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1",
+                "user-2"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000.25,
+        "id" : "row-2",
+        "parent" : "d:db-1",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 6,
+          "millis" : 1793974300601,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "page",
+        "updatedAt" : 784000000.25,
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "prio" : {
+            "number" : {
+              "_0" : 1000000000000000
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "calculations" : {
+          "done" : "percentChecked",
+          "prio" : "sum",
+          "tags" : "countDistinctTags",
+          "title" : "countAll"
+        },
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "filter" : {
+          "combinator" : "and",
+          "items" : [
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc1",
+                  "op" : "contains",
+                  "propertyID" : "text",
+                  "value" : {
+                    "text" : {
+                      "_0" : "x"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc2",
+                  "op" : "greaterOrEqual",
+                  "propertyID" : "prio",
+                  "value" : {
+                    "number" : {
+                      "_0" : 2
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc3",
+                  "op" : "equals",
+                  "propertyID" : "done",
+                  "value" : {
+                    "bool" : {
+                      "_0" : true
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc4",
+                  "op" : "onOrAfter",
+                  "propertyID" : "due",
+                  "value" : {
+                    "date" : {
+                      "_0" : 784000000.25
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc5",
+                  "op" : "within",
+                  "propertyID" : "due",
+                  "value" : {
+                    "relative" : {
+                      "_0" : "nextWeek"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc6",
+                  "op" : "contains",
+                  "propertyID" : "tags",
+                  "value" : {
+                    "options" : {
+                      "_0" : [
+                        "opt-2"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "condition" : {
+                "_0" : {
+                  "id" : "fc7",
+                  "op" : "isEmpty",
+                  "propertyID" : "url"
+                }
+              }
+            },
+            {
+              "group" : {
+                "_0" : {
+                  "combinator" : "or",
+                  "items" : [
+                    {
+                      "condition" : {
+                        "_0" : {
+                          "id" : "fc8",
+                          "op" : "notEquals",
+                          "propertyID" : "tag",
+                          "value" : {
+                            "options" : {
+                              "_0" : [
+                                "opt-1"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "id" : "v-table",
+        "loadLimit" : 50,
+        "name" : "Ansicht table",
+        "openIn" : "sidePeek",
+        "properties" : [
+          {
+            "id" : "title",
+            "visible" : true,
+            "width" : 280
+          },
+          {
+            "id" : "prio",
+            "visible" : false
+          }
+        ],
+        "showIcons" : true,
+        "sortKey" : "a0",
+        "sorts" : [
+          {
+            "ascending" : false,
+            "propertyID" : "prio"
+          },
+          {
+            "ascending" : true,
+            "propertyID" : "title"
+          }
+        ],
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "table",
+        "updatedAt" : 784003600.5,
+        "wrapCells" : true
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "cardCover" : {
+          "pageCover" : {
+
+          }
+        },
+        "cardSize" : "large",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "groupBy" : {
+          "groupOrder" : [
+            "opt-s1",
+            "opt-s2"
+          ],
+          "hiddenGroups" : [
+            "opt-s2"
+          ],
+          "hideEmptyGroups" : true,
+          "propertyID" : "status"
+        },
+        "id" : "v-board",
+        "name" : "Ansicht board",
+        "openIn" : "popover",
+        "sortKey" : "a1",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "board",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "cardCover" : {
+          "none" : {
+
+          }
+        },
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-list",
+        "name" : "Ansicht list",
+        "sortKey" : "a2",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "list",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "cardCover" : {
+          "property" : {
+            "_0" : "files"
+          }
+        },
+        "cardSize" : "small",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-gallery",
+        "name" : "Ansicht gallery",
+        "sortKey" : "a3",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "gallery",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "cardCover" : {
+          "pageContent" : {
+
+          }
+        },
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-gallery2",
+        "name" : "Ansicht gallery",
+        "sortKey" : "a4",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "gallery",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "cardCover" : {
+          "pageIcon" : {
+
+          }
+        },
+        "cardSize" : "medium",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-gallery3",
+        "name" : "Ansicht gallery",
+        "sortKey" : "a5",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "gallery",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "datePropertyID" : "due",
+        "groupBy" : {
+          "dateGrouping" : "week",
+          "propertyID" : "due"
+        },
+        "id" : "v-cal",
+        "name" : "Ansicht calendar",
+        "sortKey" : "a6",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "calendar",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "datePropertyID" : "ct",
+        "endDatePropertyID" : "due",
+        "id" : "v-time",
+        "name" : "Ansicht timeline",
+        "sortKey" : "a7",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "timeline",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "chart" : {
+          "aggregate" : "median",
+          "caption" : "Verteilung",
+          "colorTheme" : "warm",
+          "dateBucket" : "quarter",
+          "height" : "large",
+          "kind" : "donut",
+          "limit" : 10,
+          "showLegend" : false,
+          "showValues" : true,
+          "sortByValue" : true,
+          "xPropertyID" : "status",
+          "yPropertyID" : "prio"
+        },
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-chart",
+        "name" : "Ansicht chart",
+        "sortKey" : "a8",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "chart",
+        "updatedAt" : 784003600.5,
+        "widgetOf" : "v-dash"
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "chart" : {
+          "aggregate" : "p90",
+          "dateBucket" : "decade",
+          "kind" : "radar",
+          "showLegend" : true,
+          "showValues" : true,
+          "sortByValue" : false
+        },
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-chart2",
+        "name" : "Ansicht chart",
+        "sortKey" : "a9",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "chart",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-feed",
+        "name" : "Ansicht feed",
+        "sortKey" : "b0",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "feed",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-map",
+        "mapHeight" : "medium",
+        "mapPropertyID" : "place",
+        "name" : "Ansicht map",
+        "sortKey" : "b1",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "map",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "databaseID" : "db-1",
+        "id" : "v-form",
+        "name" : "Ansicht form",
+        "sortKey" : "b2",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "form",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "blockID" : "bdbp-0039-0000-4000-8000-000000000000",
+        "createdAt" : 784000000.25,
+        "dashboard" : {
+          "rows" : [
+            {
+              "height" : 320,
+              "id" : "r1",
+              "widgets" : [
+                {
+                  "id" : "w1",
+                  "viewID" : "v-chart",
+                  "width" : 8
+                },
+                {
+                  "id" : "w2",
+                  "viewID" : "v-table",
+                  "width" : 4
+                }
+              ]
+            },
+            {
+              "id" : "r2",
+              "widgets" : [
+                {
+                  "id" : "w3",
+                  "viewID" : "v-board",
+                  "width" : 12
+                }
+              ]
+            }
+          ]
+        },
+        "databaseID" : "db-1",
+        "id" : "v-dash",
+        "name" : "Ansicht dashboard",
+        "sortKey" : "b3",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 1793974300702,
+          "node" : "3c8ed7c0"
+        },
+        "type" : "dashboard",
+        "updatedAt" : 784003600.5
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "aiSummary" : "neu",
+        "createdAt" : 784000000,
+        "id" : "fut-1",
+        "parent" : "b:p-root",
+        "props" : {
+          "color" : "blue",
+          "glow" : true,
+          "nested" : {
+            "a" : [
+              1,
+              2.5,
+              null,
+              "x"
+            ]
+          }
+        },
+        "sk" : "z0",
+        "stamp" : {
+          "counter" : 3,
+          "millis" : 1793974309999,
+          "node" : "ffff0000"
+        },
+        "text" : "Neu",
+        "type" : "kanbanCard",
+        "updatedAt" : 784000001.5,
+        "version" : 7
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "fut-2",
+        "parent" : "d:db-1",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1793974310000,
+          "node" : "ffff0000"
+        },
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "values" : {
+          "prio" : {
+            "number" : {
+              "_0" : 3
+            }
+          },
+          "rating" : {
+            "stars" : {
+              "_0" : 4
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "aiAutofill" : {
+          "enabled" : true
+        },
+        "blockID" : "fut-blk",
+        "createdAt" : 784000000,
+        "id" : "db-fut",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "choices" : 3,
+            "id" : "vote",
+            "name" : "Abstimmung",
+            "type" : "poll"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "a"
+        },
+        "title" : "Zukunft",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "blockID" : "fut-blk",
+        "cardCover" : {
+          "aiImage" : {
+
+          }
+        },
+        "chart" : {
+          "aggregate" : "count",
+          "dateBucket" : "month",
+          "kind" : "bar",
+          "showLegend" : true,
+          "showValues" : false,
+          "sortByValue" : false,
+          "stacked" : true
+        },
+        "createdAt" : 784000000,
+        "dashboard" : {
+          "rows" : [
+            {
+              "collapsed" : false,
+              "id" : "r",
+              "widgets" : [
+                {
+                  "id" : "w",
+                  "pinned" : true,
+                  "viewID" : "v-fut",
+                  "width" : 12
+                }
+              ]
+            }
+          ],
+          "theme" : "dark"
+        },
+        "databaseID" : "db-fut",
+        "filter" : {
+          "combinator" : "xor",
+          "items" : [
+            {
+              "condition" : {
+                "_0" : {
+                  "hint" : "neu",
+                  "id" : "c1",
+                  "op" : "isTopVoted",
+                  "propertyID" : "vote",
+                  "value" : {
+                    "vote" : {
+                      "_0" : 1
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "aiFilter" : {
+                "prompt" : "nur wichtige"
+              }
+            }
+          ],
+          "mode" : "strict"
+        },
+        "id" : "v-fut",
+        "name" : "Neu",
+        "sortKey" : "c0",
+        "sorts" : [
+          {
+            "ascending" : true,
+            "nulls" : "last",
+            "propertyID" : "title"
+          }
+        ],
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 2,
+          "node" : "b"
+        },
+        "type" : "whiteboard",
+        "updatedAt" : 784000000
+      },
+      "kind" : "view"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace-2",
+        "name" : "Zweiter",
+        "plan" : "pro",
+        "stamp" : {
+          "counter" : 2,
+          "millis" : 3,
+          "node" : "c"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    }
+  ]
+}

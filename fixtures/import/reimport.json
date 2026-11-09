@@ -1,0 +1,3659 @@
+{
+  "cases" : [
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a",
+            "2" : "b"
+          }
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a2",
+            "2" : "b2"
+          }
+        }
+      ],
+      "name" : "unverändert wird überschrieben",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "7b6317179d065191b486590c55217880",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "40f9e7478b6db8d5448aa5c2665dd445",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 4 existing blocks from an earlier import."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a",
+            "2" : "b"
+          }
+        },
+        {
+          "n" : 1,
+          "op" : "setText",
+          "text" : "edited in Based"
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "changed in Notion",
+            "2" : "b2"
+          }
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "again",
+            "2" : "b3"
+          }
+        }
+      ],
+      "name" : "lokal geänderter Block bleibt",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "edited in Based",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "edited in Based",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "40f9e7478b6db8d5448aa5c2665dd445",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 1,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 3 existing blocks from an earlier import.",
+              "Kept 1 block changed in Based since the last import (not overwritten)."
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "edited in Based",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "64a495bc8e3cf50322991134afc55e86",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b3",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 1,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 3 existing blocks from an earlier import.",
+              "Kept 1 block changed in Based since the last import (not overwritten)."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a"
+          }
+        },
+        {
+          "id" : "mine",
+          "op" : "insert",
+          "parent" : null,
+          "text" : "my own note"
+        },
+        {
+          "id" : "child",
+          "op" : "insert",
+          "parent" : 1,
+          "text" : "nested note"
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a2"
+          }
+        }
+      ],
+      "name" : "lokal hinzugefügte Blöcke bleiben",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "mine",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "zz",
+                "text" : "my own note",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "child",
+                "parent" : "b:22222222-0000-0000-0000-000000000001",
+                "sk" : "zz",
+                "text" : "nested note",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "mine",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "zz",
+                "text" : "my own note",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "7b6317179d065191b486590c55217880",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "child",
+                "parent" : "b:22222222-0000-0000-0000-000000000001",
+                "sk" : "zz",
+                "text" : "nested note",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "mine",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "zz",
+                "text" : "my own note",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 2,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 3 existing blocks from an earlier import.",
+              "Kept 2 blocks added in Based (not in the source)."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+            "4" : {
+              "5" : "inside d"
+            }
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a",
+            "2" : "b",
+            "3" : "c",
+            "4" : "d"
+          }
+        },
+        {
+          "n" : 2,
+          "op" : "setText",
+          "text" : "edited b"
+        },
+        {
+          "id" : "note",
+          "op" : "insert",
+          "parent" : 4,
+          "text" : "mine"
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : false,
+          "texts" : {
+            "1" : "a"
+          }
+        }
+      ],
+      "name" : "in Notion gelöscht: nur unverändert weg",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a4",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000003",
+                "importFingerprint" : "c4849231496f84dbd675418fa9fb9a1f",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "c",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000004",
+                "importFingerprint" : "813eba5577ef3328ae52703d72831529",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a3",
+                "text" : "d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000005",
+                "importFingerprint" : "b48a09283c4c0c2066f4dcfdb688f771",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "a0",
+                "text" : "inside d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a4",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "edited b",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000003",
+                "importFingerprint" : "c4849231496f84dbd675418fa9fb9a1f",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "c",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000004",
+                "importFingerprint" : "813eba5577ef3328ae52703d72831529",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a3",
+                "text" : "d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000005",
+                "importFingerprint" : "b48a09283c4c0c2066f4dcfdb688f771",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "a0",
+                "text" : "inside d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a4",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "edited b",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000003",
+                "importFingerprint" : "c4849231496f84dbd675418fa9fb9a1f",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "c",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000004",
+                "importFingerprint" : "813eba5577ef3328ae52703d72831529",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a3",
+                "text" : "d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000005",
+                "importFingerprint" : "b48a09283c4c0c2066f4dcfdb688f771",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "a0",
+                "text" : "inside d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "note",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "zz",
+                "text" : "mine",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a4",
+                "text" : "Sub",
+                "trashedAt" : "now",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "edited b",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000004",
+                "importFingerprint" : "813eba5577ef3328ae52703d72831529",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a3",
+                "text" : "d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000005",
+                "importFingerprint" : "b48a09283c4c0c2066f4dcfdb688f771",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "a0",
+                "text" : "inside d",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : "now",
+                "id" : "note",
+                "parent" : "b:22222222-0000-0000-0000-000000000004",
+                "sk" : "zz",
+                "text" : "mine",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 2,
+            "pages" : 1,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 0 existing blocks from an earlier import.",
+              "Kept 2 blocks changed in Based since the last import (not overwritten)."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : 2,
+          "op" : "commit",
+          "subPage" : false,
+          "texts" : {
+            "1" : "a",
+            "2" : "toggle"
+          }
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : false,
+          "texts" : {
+            "1" : "a"
+          }
+        }
+      ],
+      "name" : "entfernter Block rettet Unterseite in den Papierkorb",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "5404f10a37cd0aeef2924fe9759235c6",
+                "parent" : "b:22222222-0000-0000-0000-000000000002",
+                "sk" : "a0",
+                "text" : "Inside",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "8be1fc42f30838c567e6a8e579d81f80",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "toggle",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "5404f10a37cd0aeef2924fe9759235c6",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Inside",
+                "trashedAt" : "now",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 1,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 2 existing blocks from an earlier import."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a",
+            "2" : "b"
+          }
+        },
+        {
+          "ns" : [
+            1,
+            2
+          ],
+          "op" : "strip"
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a2"
+          }
+        }
+      ],
+      "name" : "ältere Importe ohne Fingerabdruck",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "importFingerprint" : "ca32d75449550a1dbb01227a295a895e",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a2",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "7b6317179d065191b486590c55217880",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000002",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "b",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 1,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 3 existing blocks from an earlier import.",
+              "Kept 1 block added in Based (not in the source)."
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a"
+          }
+        },
+        {
+          "nested" : {
+
+          },
+          "nestedPage" : null,
+          "op" : "commit",
+          "subPage" : true,
+          "texts" : {
+            "1" : "a2"
+          }
+        },
+        {
+          "op" : "undo"
+        }
+      ],
+      "name" : "Reimport ist ein Undo-Schritt",
+      "output" : [
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "7b6317179d065191b486590c55217880",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a2",
+                "type" : "text",
+                "updatedAt" : 784000000,
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : {
+            "assets" : 0,
+            "databases" : 0,
+            "keptLocalAdditions" : 0,
+            "keptLocalChanges" : 0,
+            "pages" : 2,
+            "rootIDs" : [
+              "11111111-0000-0000-0000-000000000001"
+            ],
+            "rows" : 0,
+            "warnings" : [
+              "Updated 3 existing blocks from an earlier import."
+            ]
+          }
+        },
+        {
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000001",
+                "importFingerprint" : "02186b27ec132d5790842c90f8849870",
+                "parent" : "w",
+                "sk" : "a0",
+                "text" : "Notes",
+                "type" : "page",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "11111111-0000-0000-0000-000000000002",
+                "importFingerprint" : "83d1470f40821917d24efb8afea8af07",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a1",
+                "text" : "Sub",
+                "type" : "page",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "createdBy" : "me",
+                "id" : "22222222-0000-0000-0000-000000000001",
+                "importFingerprint" : "cd21973fd5ccc09a2606ef08db478025",
+                "parent" : "b:11111111-0000-0000-0000-000000000001",
+                "sk" : "a0",
+                "text" : "a",
+                "type" : "text",
+                "updatedAt" : "now",
+                "updatedBy" : "me"
+              },
+              "kind" : "block"
+            }
+          ],
+          "result" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "op" : "fingerprints",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "p-root",
+              "parent" : "w",
+              "props" : {
+                "cover" : {
+                  "gradient" : {
+                    "_0" : 3
+                  }
+                },
+                "format" : {
+                  "coverPosition" : 0.35,
+                  "font" : "serif",
+                  "fullWidth" : false,
+                  "hideBacklinks" : true,
+                  "hideOutline" : false,
+                  "locked" : true,
+                  "smallText" : true
+                },
+                "icon" : "🏠",
+                "teamspace" : "team-1"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300000,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Startseite",
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-2"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "p-asset",
+              "parent" : "b:p-root",
+              "props" : {
+                "cover" : {
+                  "asset" : {
+                    "_0" : {
+                      "id" : "asset-2",
+                      "name" : "cover.jpg"
+                    }
+                  }
+                },
+                "icon" : {
+                  "asset" : {
+                    "id" : "asset-1",
+                    "mime" : "image/png",
+                    "name" : "icon.png",
+                    "size" : 2048
+                  }
+                }
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300000,
+                "node" : "3c8ed7c0"
+              },
+              "text" : [
+                {
+                  "m" : {
+                    "b" : true
+                  },
+                  "t" : "fett "
+                },
+                {
+                  "m" : {
+                    "c" : true,
+                    "color" : "redBackground",
+                    "i" : true,
+                    "link" : "https://example.com/a?b=c",
+                    "s" : true,
+                    "u" : true
+                  },
+                  "t" : "kursiv+farbig "
+                },
+                {
+                  "mention" : {
+                    "page" : {
+                      "_0" : "p-root"
+                    }
+                  },
+                  "t" : "Seite"
+                },
+                {
+                  "mention" : {
+                    "date" : {
+                      "_0" : {
+                        "end" : 784003600.5,
+                        "includeTime" : true,
+                        "remind" : true,
+                        "start" : 784000000.25
+                      }
+                    }
+                  },
+                  "t" : "Datum"
+                },
+                {
+                  "mention" : {
+                    "user" : {
+                      "_0" : "user-1"
+                    }
+                  },
+                  "t" : "Elija"
+                },
+                {
+                  "mention" : {
+                    "link" : {
+                      "_0" : "https://friedrich-ulrich.com"
+                    }
+                  },
+                  "t" : "Link"
+                },
+                {
+                  "eq" : "e^{i\\pi}+1=0",
+                  "t" : "x"
+                },
+                {
+                  "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                }
+              ],
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-2"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "p-url",
+              "parent" : "b:p-root",
+              "props" : {
+                "cover" : {
+                  "url" : {
+                    "_0" : "https://example.com/c.jpg"
+                  }
+                },
+                "icon" : {
+                  "url" : "https://example.com/i.png"
+                },
+                "isTemplate" : true
+              },
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300000,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "URL-Icon",
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-2"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "p-symbol",
+              "parent" : "b:p-root",
+              "props" : {
+                "cover" : {
+                  "color" : {
+                    "_0" : "blue"
+                  }
+                },
+                "format" : {
+                  "font" : "mono"
+                },
+                "icon" : {
+                  "symbol" : "star.fill"
+                }
+              },
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300000,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-2"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "p-trash",
+              "parent" : "w",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300000,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Im Papierkorb",
+              "trashedAt" : 784003600.5,
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-2"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btex-0001-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300001,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Einfacher Text",
+              "type" : "text",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btex-0002-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "color" : "gray"
+              },
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300002,
+                "node" : "3c8ed7c0"
+              },
+              "text" : [
+                {
+                  "m" : {
+                    "b" : true
+                  },
+                  "t" : "fett "
+                },
+                {
+                  "m" : {
+                    "c" : true,
+                    "color" : "redBackground",
+                    "i" : true,
+                    "link" : "https://example.com/a?b=c",
+                    "s" : true,
+                    "u" : true
+                  },
+                  "t" : "kursiv+farbig "
+                },
+                {
+                  "mention" : {
+                    "page" : {
+                      "_0" : "p-root"
+                    }
+                  },
+                  "t" : "Seite"
+                },
+                {
+                  "mention" : {
+                    "date" : {
+                      "_0" : {
+                        "end" : 784003600.5,
+                        "includeTime" : true,
+                        "remind" : true,
+                        "start" : 784000000.25
+                      }
+                    }
+                  },
+                  "t" : "Datum"
+                },
+                {
+                  "mention" : {
+                    "user" : {
+                      "_0" : "user-1"
+                    }
+                  },
+                  "t" : "Elija"
+                },
+                {
+                  "mention" : {
+                    "link" : {
+                      "_0" : "https://friedrich-ulrich.com"
+                    }
+                  },
+                  "t" : "Link"
+                },
+                {
+                  "eq" : "e^{i\\pi}+1=0",
+                  "t" : "x"
+                },
+                {
+                  "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bhea-0003-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "isOpen" : false,
+                "toggleable" : false
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300003,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bhea-0004-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "isOpen" : false,
+                "toggleable" : true
+              },
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 4,
+                "millis" : 1793974300004,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Überschrift",
+              "type" : "heading2",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bhea-0005-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "isOpen" : false,
+                "toggleable" : false
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300005,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Überschrift",
+              "type" : "heading3",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bhea-0006-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "isOpen" : false,
+                "toggleable" : false
+              },
+              "sk" : "a6",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300006,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Überschrift",
+              "type" : "heading4",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bbul-0007-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a7",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300007,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Punkt",
+              "type" : "bulletedList",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bnum-0008-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a8",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300008,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Nummer",
+              "type" : "numberedList",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btod-0009-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a9",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300009,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Aufgabe",
+              "type" : "todo",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btod-0010-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "checked" : false
+              },
+              "sk" : "a10",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300010,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Offen",
+              "type" : "todo",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btog-0011-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "isOpen" : true
+              },
+              "sk" : "a11",
+              "stamp" : {
+                "counter" : 4,
+                "millis" : 1793974300011,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Toggle",
+              "type" : "toggle",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bquo-0012-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "color" : "magentaBackground"
+              },
+              "sk" : "a12",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300012,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Zitat",
+              "type" : "quote",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bcal-0013-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "color" : "yellowBackground",
+                "icon" : "💡"
+              },
+              "sk" : "a13",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300013,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Hinweis",
+              "type" : "callout",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bdiv-0014-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a14",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300014,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "divider",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bcod-0015-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "caption" : "Beispiel",
+                "language" : "swift",
+                "wrap" : true
+              },
+              "sk" : "a15",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300015,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "let x = 1\nprint(\"/pfad\")",
+              "type" : "code",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bequ-0016-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "expression" : "\\int_0^1 x^2\\,dx"
+              },
+              "sk" : "a16",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300016,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "equation",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bima-0017-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "asset" : {
+                  "id" : "asset-3",
+                  "mime" : "image/heic",
+                  "name" : "bild.heic",
+                  "size" : 123456
+                },
+                "caption" : [
+                  {
+                    "m" : {
+                      "b" : true
+                    },
+                    "t" : "fett "
+                  },
+                  {
+                    "m" : {
+                      "c" : true,
+                      "color" : "redBackground",
+                      "i" : true,
+                      "link" : "https://example.com/a?b=c",
+                      "s" : true,
+                      "u" : true
+                    },
+                    "t" : "kursiv+farbig "
+                  },
+                  {
+                    "mention" : {
+                      "page" : {
+                        "_0" : "p-root"
+                      }
+                    },
+                    "t" : "Seite"
+                  },
+                  {
+                    "mention" : {
+                      "date" : {
+                        "_0" : {
+                          "end" : 784003600.5,
+                          "includeTime" : true,
+                          "remind" : true,
+                          "start" : 784000000.25
+                        }
+                      }
+                    },
+                    "t" : "Datum"
+                  },
+                  {
+                    "mention" : {
+                      "user" : {
+                        "_0" : "user-1"
+                      }
+                    },
+                    "t" : "Elija"
+                  },
+                  {
+                    "mention" : {
+                      "link" : {
+                        "_0" : "https://friedrich-ulrich.com"
+                      }
+                    },
+                    "t" : "Link"
+                  },
+                  {
+                    "eq" : "e^{i\\pi}+1=0",
+                    "t" : "x"
+                  },
+                  {
+                    "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                  }
+                ],
+                "width" : 0.75
+              },
+              "sk" : "a17",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300017,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "image",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bvid-0018-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "ratio" : 1.7777777777777777,
+                "url" : "https://youtube.com/watch?v=x"
+              },
+              "sk" : "a18",
+              "stamp" : {
+                "counter" : 4,
+                "millis" : 1793974300018,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "video",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "baud-0019-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "asset" : {
+                  "id" : "asset-4",
+                  "name" : "ton.m4a"
+                }
+              },
+              "sk" : "a19",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300019,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "audio",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bfil-0020-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "asset" : {
+                  "id" : "asset-5",
+                  "name" : "datei.zip",
+                  "size" : 0
+                }
+              },
+              "sk" : "a20",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300020,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "file",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bpdf-0021-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "url" : "https://example.com/doc.pdf"
+              },
+              "sk" : "a21",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300021,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "pdf",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bboo-0022-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "bookmark" : {
+                  "iconURL" : "https://example.com/fav.ico",
+                  "imageURL" : "https://example.com/og.png",
+                  "summary" : "Kurz",
+                  "title" : "Titel"
+                },
+                "url" : "https://example.com"
+              },
+              "sk" : "a22",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300022,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "bookmark",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bemb-0023-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "ratio" : 0.5,
+                "url" : "https://figma.com/x"
+              },
+              "sk" : "a23",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300023,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "embed",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btab-0024-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "color" : "blue"
+              },
+              "sk" : "a24",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300024,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "tableOfContents",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bbre-0025-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a25",
+              "stamp" : {
+                "counter" : 4,
+                "millis" : 1793974300025,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "breadcrumb",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bcol-0026-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "sk" : "a26",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300026,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "columnList",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bcol-0027-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "ratio" : 0.333
+              },
+              "sk" : "a27",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300027,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "column",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btab-0028-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "tableColumnColors" : [
+                  null,
+                  "green",
+                  null
+                ],
+                "tableColumnWidths" : [
+                  120,
+                  80.5,
+                  200
+                ],
+                "tableColumns" : 3,
+                "tableHeaderColumn" : false,
+                "tableHeaderRow" : true
+              },
+              "sk" : "a28",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300028,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "table",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btab-0029-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "cellColors" : [
+                  "redBackground",
+                  null,
+                  null
+                ],
+                "cells" : [
+                  "a",
+                  [
+                    {
+                      "m" : {
+                        "b" : true
+                      },
+                      "t" : "fett "
+                    },
+                    {
+                      "m" : {
+                        "c" : true,
+                        "color" : "redBackground",
+                        "i" : true,
+                        "link" : "https://example.com/a?b=c",
+                        "s" : true,
+                        "u" : true
+                      },
+                      "t" : "kursiv+farbig "
+                    },
+                    {
+                      "mention" : {
+                        "page" : {
+                          "_0" : "p-root"
+                        }
+                      },
+                      "t" : "Seite"
+                    },
+                    {
+                      "mention" : {
+                        "date" : {
+                          "_0" : {
+                            "end" : 784003600.5,
+                            "includeTime" : true,
+                            "remind" : true,
+                            "start" : 784000000.25
+                          }
+                        }
+                      },
+                      "t" : "Datum"
+                    },
+                    {
+                      "mention" : {
+                        "user" : {
+                          "_0" : "user-1"
+                        }
+                      },
+                      "t" : "Elija"
+                    },
+                    {
+                      "mention" : {
+                        "link" : {
+                          "_0" : "https://friedrich-ulrich.com"
+                        }
+                      },
+                      "t" : "Link"
+                    },
+                    {
+                      "eq" : "e^{i\\pi}+1=0",
+                      "t" : "x"
+                    },
+                    {
+                      "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                    }
+                  ],
+                  ""
+                ]
+              },
+              "sk" : "a29",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300029,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "tableRow",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bdat-0030-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "databaseID" : "db-1",
+                "viewIDs" : [
+                  "v-table",
+                  "v-board"
+                ]
+              },
+              "sk" : "a30",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300030,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "databaseInline",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bdat-0031-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "databaseID" : "db-1",
+                "icon" : "✅"
+              },
+              "sk" : "a31",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300031,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Aufgaben",
+              "type" : "databasePage",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "blin-0032-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "linkTarget" : "p-asset"
+              },
+              "sk" : "a32",
+              "stamp" : {
+                "counter" : 4,
+                "millis" : 1793974300032,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "linkToPage",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bsyn-0033-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "syncSource" : "p-url"
+              },
+              "sk" : "a33",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300033,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "syncedBlock",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bbut-0034-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "buttonAction" : {
+                  "kind" : "addPage",
+                  "mode" : "centerPeek",
+                  "openAfter" : true,
+                  "targetID" : "db-1",
+                  "title" : "Neu",
+                  "values" : {
+                    "prio" : {
+                      "number" : {
+                        "_0" : 2.5
+                      }
+                    },
+                    "status" : {
+                      "status" : {
+                        "_0" : "opt-s1"
+                      }
+                    }
+                  }
+                },
+                "buttonActions" : [
+                  {
+                    "kind" : "insertBlocks",
+                    "step" : 1,
+                    "targetID" : "p-url"
+                  },
+                  {
+                    "kind" : "openURL",
+                    "url" : "https://example.com"
+                  },
+                  {
+                    "kind" : "confirm",
+                    "message" : "Sicher?"
+                  },
+                  {
+                    "kind" : "sendMail"
+                  }
+                ],
+                "buttonLabel" : "Neue Aufgabe"
+              },
+              "sk" : "a34",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300034,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "button",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bmee-0035-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "meeting" : {
+                  "attendees" : [
+                    "Elija",
+                    "Gast"
+                  ],
+                  "consentNotice" : true,
+                  "context" : [
+                    {
+                      "id" : "ctx-1",
+                      "kind" : "page",
+                      "pageID" : "p-root",
+                      "title" : "Kontext"
+                    },
+                    {
+                      "id" : "ctx-2",
+                      "kind" : "text",
+                      "text" : "Agenda"
+                    }
+                  ],
+                  "duration" : 3600.25,
+                  "endedAt" : 784003600.5,
+                  "engine" : "whisper",
+                  "language" : "de",
+                  "speakers" : [
+                    {
+                      "color" : "blue",
+                      "id" : "me",
+                      "isMe" : true,
+                      "name" : "Elija"
+                    },
+                    {
+                      "id" : "s2",
+                      "name" : "Gast"
+                    }
+                  ],
+                  "startedAt" : 784000000.25,
+                  "status" : "done",
+                  "summary" : "done",
+                  "summaryEngine" : "claude",
+                  "summaryInstructions" : "kurz",
+                  "tracks" : [
+                    {
+                      "asset" : {
+                        "id" : "asset-6",
+                        "name" : "mic.m4a"
+                      },
+                      "duration" : 3599,
+                      "offset" : 0.5,
+                      "role" : "microphone"
+                    }
+                  ],
+                  "vocabulary" : [
+                    "Based",
+                    "Yjs"
+                  ]
+                }
+              },
+              "sk" : "a35",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974300035,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Meeting",
+              "type" : "meeting",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bmee-0036-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "meetingSection" : "summary"
+              },
+              "sk" : "a36",
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 1793974300036,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "meetingSection",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "bmee-0037-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "meetingSection" : "actionItems"
+              },
+              "sk" : "a37",
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 1793974300037,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "meetingSection",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "btra-0038-0000-4000-8000-000000000000",
+              "parent" : "b:p-root",
+              "props" : {
+                "meetingTime" : 12.5,
+                "segments" : [
+                  {
+                    "e" : 4.25,
+                    "id" : "seg-1",
+                    "s" : 0,
+                    "sp" : "me",
+                    "t" : "Hallo",
+                    "tr" : "microphone"
+                  },
+                  {
+                    "e" : 9,
+                    "id" : "seg-2",
+                    "p" : true,
+                    "s" : 4.25,
+                    "t" : "…"
+                  }
+                ]
+              },
+              "sk" : "a38",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974300038,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "transcript",
+              "updatedAt" : 784003600.5
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "createdBy" : "user-1",
+              "id" : "row-1",
+              "parent" : "d:db-1",
+              "props" : {
+                "icon" : "📌"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 5,
+                "millis" : 1793974300600,
+                "node" : "3c8ed7c0"
+              },
+              "text" : "Zeile 1",
+              "type" : "page",
+              "updatedAt" : 784003600.5,
+              "updatedBy" : "user-1",
+              "values" : {
+                "done" : {
+                  "checkbox" : {
+                    "_0" : true
+                  }
+                },
+                "due" : {
+                  "date" : {
+                    "_0" : {
+                      "includeTime" : false,
+                      "start" : 784000000.25
+                    }
+                  }
+                },
+                "files" : {
+                  "files" : {
+                    "_0" : [
+                      {
+                        "asset" : {
+                          "id" : "asset-7",
+                          "mime" : "application/pdf",
+                          "name" : "a.pdf",
+                          "size" : 10
+                        },
+                        "name" : "a.pdf"
+                      },
+                      {
+                        "name" : "Link",
+                        "url" : "https://example.com/f"
+                      }
+                    ]
+                  }
+                },
+                "mail" : {
+                  "email" : {
+                    "_0" : "a@b.c"
+                  }
+                },
+                "place" : {
+                  "place" : {
+                    "_0" : "{\"name\":\"Wien\",\"lat\":48.2}"
+                  }
+                },
+                "prio" : {
+                  "number" : {
+                    "_0" : -3.75
+                  }
+                },
+                "rel" : {
+                  "relation" : {
+                    "_0" : [
+                      "row-2"
+                    ]
+                  }
+                },
+                "rel2" : {
+                  "relation" : {
+                    "_0" : [
+
+                    ]
+                  }
+                },
+                "status" : {
+                  "status" : {
+                    "_0" : "opt-s2"
+                  }
+                },
+                "tag" : {
+                  "select" : {
+                    "_0" : "opt-1"
+                  }
+                },
+                "tags" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "opt-2",
+                      "opt-x"
+                    ]
+                  }
+                },
+                "tel" : {
+                  "phone" : {
+                    "_0" : "+43 1 234"
+                  }
+                },
+                "text" : {
+                  "text" : {
+                    "_0" : [
+                      {
+                        "m" : {
+                          "b" : true
+                        },
+                        "t" : "fett "
+                      },
+                      {
+                        "m" : {
+                          "c" : true,
+                          "color" : "redBackground",
+                          "i" : true,
+                          "link" : "https://example.com/a?b=c",
+                          "s" : true,
+                          "u" : true
+                        },
+                        "t" : "kursiv+farbig "
+                      },
+                      {
+                        "mention" : {
+                          "page" : {
+                            "_0" : "p-root"
+                          }
+                        },
+                        "t" : "Seite"
+                      },
+                      {
+                        "mention" : {
+                          "date" : {
+                            "_0" : {
+                              "end" : 784003600.5,
+                              "includeTime" : true,
+                              "remind" : true,
+                              "start" : 784000000.25
+                            }
+                          }
+                        },
+                        "t" : "Datum"
+                      },
+                      {
+                        "mention" : {
+                          "user" : {
+                            "_0" : "user-1"
+                          }
+                        },
+                        "t" : "Elija"
+                      },
+                      {
+                        "mention" : {
+                          "link" : {
+                            "_0" : "https://friedrich-ulrich.com"
+                          }
+                        },
+                        "t" : "Link"
+                      },
+                      {
+                        "eq" : "e^{i\\pi}+1=0",
+                        "t" : "x"
+                      },
+                      {
+                        "t" : " Ende \n\t\u001f <tag> & ' \" \\"
+                      }
+                    ]
+                  }
+                },
+                "uid" : {
+                  "uniqueID" : {
+                    "_0" : 42
+                  }
+                },
+                "url" : {
+                  "url" : {
+                    "_0" : "https://example.com/x?y=1&z=2"
+                  }
+                },
+                "who" : {
+                  "person" : {
+                    "_0" : [
+                      "user-1",
+                      "user-2"
+                    ]
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000.25,
+              "id" : "row-2",
+              "parent" : "d:db-1",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 6,
+                "millis" : 1793974300601,
+                "node" : "3c8ed7c0"
+              },
+              "type" : "page",
+              "updatedAt" : 784000000.25,
+              "values" : {
+                "done" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "prio" : {
+                  "number" : {
+                    "_0" : 1000000000000000
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "aiSummary" : "neu",
+              "createdAt" : 784000000,
+              "id" : "fut-1",
+              "parent" : "b:p-root",
+              "props" : {
+                "color" : "blue",
+                "glow" : true,
+                "nested" : {
+                  "a" : [
+                    1,
+                    2.5,
+                    null,
+                    "x"
+                  ]
+                }
+              },
+              "sk" : "z0",
+              "stamp" : {
+                "counter" : 3,
+                "millis" : 1793974309999,
+                "node" : "ffff0000"
+              },
+              "text" : "Neu",
+              "type" : "kanbanCard",
+              "updatedAt" : 784000001.5,
+              "version" : 7
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "fut-2",
+              "parent" : "d:db-1",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1793974310000,
+                "node" : "ffff0000"
+              },
+              "type" : "page",
+              "updatedAt" : 784000000,
+              "values" : {
+                "prio" : {
+                  "number" : {
+                    "_0" : 3
+                  }
+                },
+                "rating" : {
+                  "stars" : {
+                    "_0" : 4
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          }
+        ]
+      },
+      "name" : "Fingerabdrücke (Record-Korpus)",
+      "output" : [
+        "b028df8711635adac395d59e3e548897",
+        "a6e1dcc6ee6d599efb26cbba049bed3e",
+        "4a42f1133acb97158be4b5326b66de53",
+        "a160eaa8b694a419d178caf88093d6a8",
+        "7af40fec0d8b97004f32d8abbd44f7a2",
+        "6dfb69c4247356ce49a695373d064e6c",
+        "e182abfc253416ee325d164b3f327e16",
+        "3c69e454a090816915f36124516a7175",
+        "fe784a89466ddab85e68695e0a27375c",
+        "9c1cabed050c045589acf41536ed768a",
+        "001fc385611b1aad11ff98fb435482f5",
+        "9c3c01ca9cbf270d7ce18ba0e0cbf9e7",
+        "e63f0e930def0bdea1d20d4186209a43",
+        "362bba2715c41f91319417a683526e4a",
+        "f1ff563a2e34ba0b56a4b7bf79016a9c",
+        "0b7e2dd5f6404ec089fd85d12e0e75e6",
+        "8e5424bf5a47fc312e89b4b6bc0e45c7",
+        "3f9458d3c7a262ee8803ba02af67a810",
+        "bc0d4b6dcec55f024d7cbfe35be76709",
+        "9a6aa717b78623e8c62165c1ec802c45",
+        "129ac759854e31b0e516393088bca45e",
+        "d6d78e3618ff461354e36bd72643194e",
+        "0b64bc5e666fd48625d57136f45077ec",
+        "405ae3f84dbf8232154240d44858457b",
+        "2867b46f56b8a677a17415bc9a482bfc",
+        "826d49d619d7eeb38f7c482733dc9503",
+        "1062d92995fee901d80951c9241555ff",
+        "6fea6cea2d81d417008794d603d00d52",
+        "0d619a856032fb7305962fb649af6df9",
+        "4820cc424e3cd2c28d86c1d041e2893f",
+        "ab5061abc37050cbb09fb94d97909176",
+        "27cc67776b02c0e466f305f79700e74d",
+        "3f8287d2ffd41326a95b85468af25976",
+        "eaa857976b68656fd224ffe7c83bd89b",
+        "c435f3ae4a48add33ff9675920d4bc40",
+        "46214f85c1f91f14458fe7866b753fe8",
+        "76e4b423fa9247fac31ef5d12bd4ec00",
+        "c8a76e9d4223e37fbf7f6a85c98924d5",
+        "de2d0e65d45829fb21419e90f25b05ee",
+        "557dc20d3cceced8ab3a2491c55052df",
+        "65765914a0c8d951c984f27e68a23f98",
+        "ad4ed488246345939604002673016b23",
+        "3b93bf74c00408999b7f47681413b27a",
+        "13e3b2ff233ea3cc52ea230a1e148c5b",
+        "c7ec2a5b668e7ac23ca7f209831e281f",
+        "b5996c79d1ad05023d450f1623cbb54d",
+        "0a0e9c9a4bc7b18de748ac58a17c416d"
+      ]
+    }
+  ],
+  "module" : "reimport",
+  "note" : "ImportBuilder (createdBy me) + commitImport in einen leeren Store (node fx). Seite 11111111-0000-0000-0000-000000000001, Blöcke 22222222-0000-0000-0000-<n>, Unterseite 11111111-0000-0000-0000-000000000002. insert: Block mit fester id, sk zz, über transact. records wie im Modul import."
+}

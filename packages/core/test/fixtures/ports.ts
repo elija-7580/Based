@@ -9,6 +9,7 @@ import { ClipboardHTMLImporter, HTMLExporter, importedJSON, titleOf } from "../.
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
 import { expect } from "vitest";
+import { reimport } from "./import-ports.js";
 
 export type Port = (input: FixtureCase["input"], meta: Record<string, unknown>) => unknown;
 
@@ -230,4 +231,4 @@ const clipboard: Port = (raw, meta) => {
   return { html, reparsed: new ClipboardHTMLImporter().parse(html).map(importedJSON) };
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard };
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard, reimport };

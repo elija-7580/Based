@@ -26,3 +26,10 @@ export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
 export type { HTMLExporterOptions } from "./interop/export.js";
 export { relationLimitViolations, setRelation } from "./store/relations.js";
+// BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
+export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
+export { ImportFiles, basename, dirname, extname, joinPath, normalizePath, stripExtension } from "./interop/files.js";
+export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData } from "./interop/zip.js";
+export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
+export { ImportBuilder, MemoryAssetSink, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
+export type { AssetRef, AssetSink, ImportBuilderOptions, ImportReport, NewBlock } from "./interop/builder.js";

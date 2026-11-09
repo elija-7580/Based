@@ -11,7 +11,8 @@ public enum FixtureExport {
     }
 
     /// Dateien, deren Inhalt von der Zeitzone abhängt (Kalendertage, Datumsgruppen, relative Datumsfilter).
-    public static let timeZoneDependent: Set<String> = ["formulas/formulas.utc.json", "queries/queries.utc.json", "queries/values.utc.json", "conversion/conversion.utc.json", "clipboard/export.utc.json"]
+    public static let timeZoneDependent: Set<String> = ["formulas/formulas.utc.json", "queries/queries.utc.json", "queries/values.utc.json", "conversion/conversion.utc.json", "clipboard/export.utc.json",
+                                                            "import/notion-html.utc.json", "import/markdown.utc.json", "import/reimport.json", "export/export.utc.json"]
 
     public static func all(includeTimeZoneDependent: Bool = FixtureExport.isUTC) throws -> [String: String] {
         var files: [String: String] = [:]
@@ -25,12 +26,18 @@ public enum FixtureExport {
         files["search/fulltext.json"] = try pretty(SearchFixtures.fulltext())
         files["clipboard/clipboard.json"] = try pretty(ExtraFixtures.clipboard(export: false))
         files["undo-remote/undo-remote.json"] = try pretty(ExtraFixtures.undoRemote())
+        files["archive/archive.json"] = try pretty(ImportFixtures.archive())
         if includeTimeZoneDependent {
             files["formulas/formulas.utc.json"] = try pretty(CoreFixtures.formulas(utc: true))
             files["queries/queries.utc.json"] = try pretty(StoreFixtures.queries())
             files["queries/values.utc.json"] = try pretty(StoreFixtures.values())
             files["conversion/conversion.utc.json"] = try pretty(ExtraFixtures.conversion())
             files["clipboard/export.utc.json"] = try pretty(ExtraFixtures.clipboard(export: true))
+            // BSD-156: Datumsangaben im Import (Notion-Zeiten, CSV) und im Export hängen von der Zeitzone ab.
+            files["import/notion-html.utc.json"] = try pretty(ImportFixtures.notionHTML())
+            files["import/markdown.utc.json"] = try pretty(ImportFixtures.markdown())
+            files["import/reimport.json"] = try pretty(ImportFixtures.reimport())
+            files["export/export.utc.json"] = try pretty(ImportFixtures.export())
         }
         return files
     }
