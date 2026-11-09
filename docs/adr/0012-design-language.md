@@ -27,3 +27,11 @@ Einstellungen schalten über Attribute am Wurzelelement: `data-theme`, `data-sty
 - Oberflächen in `apps/*` importieren `@based/design-tokens/tokens.css` und nutzen nur `var(--…)`.
 - Der Marker ist reserviert für Agent-Arbeit; Reviews und der Nachtlauf melden andere Verwendungen.
 - Neue Werte kommen zuerst in `tokens.json`, danach `pnpm --filter @based/design-tokens css`.
+
+## Nachtrag v8/v9 (2026-11-09, Elija)
+
+- Mehr Fläche statt Haarlinien: `canvas`, `surface-raised`, größere Radien, Pillen für Buttons und Picker.
+- Icons mit 2 px Strich und gefüllten aktiven Zuständen; Menü-Icon mit zwei Strichen.
+- Kleine Schrift mit eigener Laufweite/Gewicht (Test: unter 20 px nie negativ gesperrt).
+- Plattform-Material über `data-material`: Liquid Glass nur auf Apple-Plattformen und nur auf schwebender
+  Bedienung; sonst solide, ebenso bei „Transparenz reduzieren“ und im Calm-Modus.

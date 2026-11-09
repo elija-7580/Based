@@ -18,6 +18,8 @@ export const spacing = tokens.spacing.tokens as PlainToken[];
 export const radius = tokens.radius.tokens as PlainToken[];
 export const shadows = tokens.shadow.tokens as ShadowToken[];
 export const motion = tokens.motion.tokens as PlainToken[];
+export const material = tokens.material.tokens as PlainToken[];
+export const icon = tokens.icon.tokens as PlainToken[];
 export const families = tokens.type.families as Record<"sans" | "mono" | "bold-sans" | "bold-serif", string>;
 export const typeGroups = tokens.type.groups as { name: string; family: string; styles: TypeStyle[] }[];
 
@@ -42,6 +44,8 @@ export function buildCss(): string {
     ...spacing.map((t): [string, string] => [t.name, t.value]),
     ...radius.map((t): [string, string] => [t.name, t.value]),
     ...motion.map((t): [string, string] => [t.name, t.value]),
+    ...material.map((t): [string, string] => [t.name, t.value]),
+    ...icon.map((t): [string, string] => [t.name, t.value]),
     ["font-sans", families.sans],
     ["font-mono", families.mono],
     // Semantic type roles, switched by data-style and data-density.
@@ -52,7 +56,17 @@ export function buildCss(): string {
     ["size-greeting", "28px"], ["weight-heading", "600"],
     ["size-body", "16px"], ["leading-body", "1.68"],
     ["row-pad", "10px"], ["cell-pad", "8px"],
+    // Floating chrome (tab bar, toolbars, sheets, popovers): solid unless data-material says otherwise.
+    ["chrome-bg", "var(--surface-raised)"],
+    ["chrome-filter", "none"],
+    ["chrome-edge", "none"],
   ];
+  const glass: [string, string][] = [
+    ["chrome-bg", "var(--glass-fill)"],
+    ["chrome-filter", "blur(var(--glass-blur)) saturate(var(--glass-saturate))"],
+    ["chrome-edge", "inset 0 1px 0 var(--glass-edge)"],
+  ];
+  const solid: [string, string][] = [["chrome-bg", "var(--surface-raised)"], ["chrome-filter", "none"], ["chrome-edge", "none"]];
   const bold: [string, string][] = [
     ["font-ui", families["bold-sans"]], ["font-head", families["bold-sans"]], ["font-body", families["bold-serif"]],
     ["size-title", "40px"], ["weight-title", "800"], ["tracking-title", "-0.035em"],
@@ -70,6 +84,10 @@ export function buildCss(): string {
     block('[data-density="compact"]', compact),
     ...markers.map((m) => block(`[data-marker="${m}"]`, [["marker", `var(--marker-${m})`], ["marker-strong", `var(--marker-${m}-strong)`]])),
     block("[data-calm]", [["marker", "var(--marker-calm)"], ["marker-strong", "var(--marker-calm)"]]),
+    // data-material: "glass" on Apple platforms; Windows draws Mica/Acrylic natively and stays "solid" here.
+    block('[data-material="glass"]', glass),
+    block('[data-material="glass"][data-calm]', solid),
+    `@media (prefers-reduced-transparency: reduce) {\n${block('  [data-material="glass"]', solid)}}\n`,
   ].join("\n");
 }
 
