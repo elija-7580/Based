@@ -45,6 +45,11 @@ struct AISettingsView: View {
                 Picker("Run scheduled agents on", selection: $brain.scheduleHost) {
                     ForEach(ScheduleHost.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
+                // BSD-105: ⌘J talks to the main agent by default; "New chat" stays in the chat menu.
+                Picker("⌘J opens", selection: $brain.chatShortcut) {
+                    ForEach(ChatShortcutTarget.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .accessibilityIdentifier("settings.chatShortcut")
                 ForEach(brain.brain.agents()) { a in
                     HStack {
                         VStack(alignment: .leading) {

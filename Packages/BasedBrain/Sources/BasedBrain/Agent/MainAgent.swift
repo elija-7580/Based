@@ -188,6 +188,10 @@ public final class MainAgent: @unchecked Sendable {
     static func updateLine(_ r: AgentRun) -> String {
         let mark = r.status == .done ? "✓" : r.status == .failed ? "✗" : "–"
         let result = r.result.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        // BSD-105: a result page is linked instead of the long text.
+        if let page = r.resultPageID {
+            return "\(mark) \(r.title) — " + String(result.prefix(160)) + (result.count > 160 ? "…" : "") + " → " + PageLink.markdown(page, title: "Result")
+        }
         return "\(mark) \(r.title)" + (result.isEmpty ? "" : " — " + String(result.prefix(300)))
     }
 
@@ -242,7 +246,10 @@ public final class MainAgent: @unchecked Sendable {
         let level = ComputeLevel(rawValue: (args["compute"]?.stringValue ?? "").lowercased()) ?? .auto
         let (projectID, projectError) = await project(args["project"]?.stringValue)
         if let projectError { return .init(text: projectError, isError: true) }
-        let d = router.decision(routeID: kind.routeID, reason: "delegated \(kind.rawValue) task", compute: level, forceLow: false,
+        // BSD-105: the main agent's monthly budget covers its sub-agents: none at 100 %, low compute from 80 %.
+        let money = await budget()
+        if money.level == .exhausted { return .init(text: money.exhaustedMessage, isError: true) }
+        let d = router.decision(routeID: kind.routeID, reason: "delegated \(kind.rawValue) task", compute: level, forceLow: money.level == .warning,
                                 registry: runtime.registry, installed: installed, defaultModel: defaultModel)
         // A CLI needs a launcher (the app's coding sessions); otherwise the next API model of the chain.
         var choice = d.choice
@@ -279,7 +286,7 @@ public final class MainAgent: @unchecked Sendable {
             case .cli:
                 guard let cliLauncher else { throw AIError.unavailable("no coding CLI launcher") }
                 let text = try await cliLauncher(job)
-                await MainActor.run { brain.finish(run: job.runID, status: .done, result: text) }
+                await MainActor.run { brain.finish(run: job.runID, status: .done, result: text, resultPageID: Self.resultPage(brain, job, text)) }
             case .model(let ref):
                 let o = try await runtime.run(
                     prompt: job.task,
@@ -288,7 +295,7 @@ public final class MainAgent: @unchecked Sendable {
                     permissions: permissions)
                 await MainActor.run {
                     brain.finish(run: job.runID, status: .done, result: o.text, usage: o.usage,
-                                 cost: ModelPricing.estimate(model: ref, usage: o.usage))
+                                 cost: ModelPricing.estimate(model: ref, usage: o.usage), resultPageID: Self.resultPage(brain, job, o.text))
                 }
             case .none:
                 throw AIError.unavailable("no model")
@@ -296,6 +303,12 @@ public final class MainAgent: @unchecked Sendable {
         } catch {
             await MainActor.run { brain.finish(run: job.runID, status: .failed, result: "Error: \(error)") }
         }
+    }
+
+    /// BSD-105: a long result becomes a page under the job's project (nil = short result or no project).
+    @MainActor static func resultPage(_ brain: BrainStore, _ job: DelegatedJob, _ text: String) -> RecordID? {
+        guard text.count > resultPageThreshold, let project = job.projectID else { return nil }
+        return brain.createResultPage(title: brain.run(job.runID)?.title ?? String(job.task.prefix(80)), markdown: text, in: project)
     }
 
     /// Waits until every delegated job started by this instance has ended (tests, shutdown).
@@ -343,6 +356,10 @@ public struct MainAgentChatBackend: ChatBackend {
     public var resumeKind: String? { nil }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
         let brain = agent.runtime.tools.brain
+        // BSD-105: the monthly budget holds in the chat too — no model call at 100 %, a notice from 80 %.
+        let money = await agent.budget()
+        if money.level == .exhausted { return ChatReply(text: money.exhaustedMessage) }
+        if money.level == .warning { emit(.notice(money.warningNotice)) }
         let system = await MainActor.run { () -> String in
             let main = brain.ensureMainAgent()
             return MainAgent.systemPrompt(instructions: main.instructions, projects: brain.projectBriefs())

@@ -965,6 +965,7 @@ final class AppModel {
     func toggleChatPanel() {
         if showChatPanel { showChatPanel = false; return }
         if case .side? = peek { peek = nil }
+        brain.prepareChatPanel()   // BSD-105: ⌘J opens the main agent's thread unless set to "Last chat"
         showChatPanel = true
     }
 

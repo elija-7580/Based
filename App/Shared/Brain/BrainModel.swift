@@ -183,6 +183,18 @@ final class BrainModel {
         didSet { UserDefaults.standard.set(permissionMode.rawValue, forKey: "ai.permissionMode") }
     }
 
+    /// BSD-105: what ⌘J opens — the main agent's thread (default) or the last chat.
+    var chatShortcut: ChatShortcutTarget = ChatShortcutTarget(rawValue: UserDefaults.standard.string(forKey: "ai.chatShortcut") ?? "") ?? .mainAgent {
+        didSet { UserDefaults.standard.set(chatShortcut.rawValue, forKey: "ai.chatShortcut") }
+    }
+
+    /// ⌘J opened the panel: switch to the chat the setting asks for.
+    func prepareChatPanel() {
+        let running = turns.contains { $0.isRunning }
+        let target = chatShortcut.chatToOpen(current: chatID, currentIsRunning: running, mainThread: { mainThreadID() })
+        if target != chatID { openChat(target) }
+    }
+
     /// BSD-49: compute level for Auto (Low / Auto / High), picked under "Auto" in the model picker.
     var compute: ComputeLevel = ComputeLevel(rawValue: UserDefaults.standard.string(forKey: "ai.compute") ?? "") ?? .auto {
         didSet { UserDefaults.standard.set(compute.rawValue, forKey: "ai.compute") }
@@ -242,7 +254,14 @@ final class BrainModel {
     /// The main agent for the current providers (delegation tools, routing, permissions).
     var mainAgent: MainAgent {
         let m = MainAgent(runtime: runtime)
-        m.installed = []          // sub-agents use API models until coding sessions are wired as launcher (follow-up of BSD-52)
+        #if os(macOS)
+        // BSD-105: "code" jobs go to a coding session (Claude Code / Codex …) under the main thread when one is installed.
+        m.installed = installedCLIs
+        let brain = brain
+        m.cliLauncher = happier.runtime.mainAgentLauncher(thread: { await MainActor.run { brain.mainThread() } })
+        #else
+        m.installed = []          // no local coding agents on iOS: sub-agents use API models
+        #endif
         m.defaultModel = defaultModel
         m.permissions = brain.permissions(mode: permissionMode)
         return m
