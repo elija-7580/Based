@@ -1,5 +1,5 @@
-// Beispielinhalt wie im Prototyp v6/v8 (Canvas „Based – Design“). Die echten Daten kommen mit dem Store-Anschluss
-// (Phase 2, @based/sync + @based/core); bis dahin zeigt die Web-App diese Demo, damit Design geprüft werden kann.
+// Beispielinhalt wie im Prototyp v6/v8 (Canvas „Based – Design“) für die Teile, die noch keine echten Daten haben:
+// Agenten-Abschnitte auf Home und der Graph. Seiten, Seitenleiste und Papierkorb sind echt (BSD-153).
 import type { IconName } from "./icons.js";
 
 export interface AgentTask {
@@ -24,34 +24,6 @@ export const THIS_WEEK = [
   { day: "Thu 12", title: "Essay draft due" },
   { day: "Sat 14", title: "Statistics exam" },
 ];
-
-export type Screen = "home" | "page" | "db" | "graph" | "settings";
-
-export const RECENT: { title: string; space: string; when: string; go: Screen; icon: IconName }[] = [
-  { title: "Lecture 4 — Confidence intervals", space: "University", when: "1 h", go: "page", icon: "page" },
-  { title: "Based Backlog", space: "Based", when: "2 h", go: "db", icon: "database" },
-  { title: "Team sync – 9 Nov", space: "Work", when: "3 h", go: "home", icon: "calendar" },
-  { title: "Graph view", space: "Based", when: "Yesterday", go: "graph", icon: "graph" },
-];
-
-export type Status = "Ready" | "In progress" | "Review" | "Backlog";
-export interface Row { id: string; title: string; status: Status; area: string; owner: string; updated: string; changed: boolean }
-
-export const ROWS: Row[] = [
-  { id: "BSD-112", title: "Block menu on BlockNote", status: "In progress", area: "Editor", owner: "Nachtschicht", updated: "17:02", changed: true },
-  { id: "BSD-115", title: "Slash menu: Ask Based", status: "Ready", area: "Editor", owner: "Nachtschicht", updated: "16:40", changed: true },
-  { id: "BSD-109", title: "Yjs document per page", status: "In progress", area: "Sync", owner: "Researcher", updated: "16:21", changed: true },
-  { id: "BSD-104", title: "Tauri shell + auto-update", status: "Review", area: "Desktop", owner: "Elija", updated: "Sat", changed: false },
-  { id: "BSD-118", title: "Meeting notes: speaker labels", status: "Ready", area: "Meetings", owner: "Nachtschicht", updated: "Sat", changed: false },
-  { id: "BSD-121", title: "Database chart view", status: "Ready", area: "Database", owner: "Nachtschicht", updated: "Fri", changed: false },
-  { id: "BSD-099", title: "Design tokens package", status: "Ready", area: "Design", owner: "Nachtschicht", updated: "Fri", changed: false },
-  { id: "BSD-117", title: "Graph view, 5k nodes", status: "Backlog", area: "Graph", owner: "Elija", updated: "Sun", changed: false },
-  { id: "BSD-125", title: "Quick capture shortcut", status: "Backlog", area: "Capture", owner: "Elija", updated: "Thu", changed: false },
-  { id: "BSD-126", title: "Semantic search with citations", status: "Backlog", area: "AI", owner: "Researcher", updated: "Thu", changed: false },
-  { id: "BSD-131", title: "Android via Tauri Mobile", status: "Backlog", area: "Mobile", owner: "—", updated: "Tue", changed: false },
-];
-
-export const STATUS_CLASS: Record<Status, string> = { Ready: "ready", "In progress": "progress", Review: "review", Backlog: "neutral" };
 
 /** Graph: p = Projekt (gefüllt), s = ausgewählt, c = vom Agenten geändert, n = Seite (Ring), d = Punkt. */
 export const GRAPH_NODES: Record<string, [number, number, string, "p" | "s" | "c" | "n" | "d"]> = {

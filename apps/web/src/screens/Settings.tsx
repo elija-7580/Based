@@ -1,5 +1,11 @@
-// Einstellungen → Darstellung: Theme, Stil, Marker, Dichte, Calm, Agent-Details.
+// Einstellungen: Darstellung (Theme, Stil, Marker, Dichte, Calm, Agent-Details) und Sync-Server (BSD-153). Nur
+// Optionen, die wirken.
+import { useState } from "react";
 import type { Appearance } from "../appearance.js";
+import { SYNC_LABEL } from "../components/Sidebar.js";
+import { syncConfig } from "../shell/storage.js";
+import type { StoreClient } from "../worker/client.js";
+import type { StatusInfo } from "../worker/protocol.js";
 
 type Key = "theme" | "style" | "marker" | "density";
 interface Group { key: Key; label: string; hint?: string; options: { value: string; label: string; swatch?: string }[] }
@@ -14,7 +20,7 @@ const GROUPS: Group[] = [
   { key: "density", label: "Density", options: [{ value: "comfortable", label: "Comfortable" }, { value: "compact", label: "Compact" }] },
 ];
 
-export function Settings({ value, onChange }: { value: Appearance; onChange: (a: Appearance) => void }) {
+export function Settings({ value, onChange, client, status }: { value: Appearance; onChange: (a: Appearance) => void; client: StoreClient; status: StatusInfo }) {
   const toggle = (key: "calm" | "agentDetails", label: string, hint: string) => (
     <div className="setting inline">
       <div className="setting-label" id={`l-${key}`}>{label}</div>
@@ -51,7 +57,65 @@ export function Settings({ value, onChange }: { value: Appearance; onChange: (a:
         ))}
         {toggle("calm", "Calm mode", "Agent marks turn grey — on with Focus")}
         {toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home")}
+        <SyncSettings client={client} status={status} />
       </div>
     </div>
+  );
+}
+
+/** Sync-Server (Sync v2): URL und Token; leer = nur auf diesem Gerät. */
+function SyncSettings({ client, status }: { client: StoreClient; status: StatusInfo }) {
+  const saved = syncConfig.get();
+  const [url, setURL] = useState(saved?.url ?? "");
+  const [token, setToken] = useState(saved?.token ?? "");
+  const [connected, setConnected] = useState(!!saved);
+  const connect = () => {
+    const cfg = { url: url.trim(), token: token.trim() };
+    if (!cfg.url) return;
+    syncConfig.set(cfg);
+    setConnected(true);
+    void client.setSync(cfg);
+  };
+  const disconnect = () => {
+    syncConfig.set(undefined);
+    setConnected(false);
+    void client.setSync(undefined);
+  };
+  return (
+    <>
+      <div style={{ marginTop: "var(--space-5)" }}>
+        <h2 className="t-heading">Sync server</h2>
+        <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>
+          {status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}
+          {" "}Connect a based-server to use it on your other devices.
+        </p>
+      </div>
+      <form className="setting" onSubmit={(e) => { e.preventDefault(); connect(); }}>
+        <div>
+          <div className="setting-label">Server</div>
+          <div className="t-desc" data-testid="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}</div>
+        </div>
+        <div className="fields">
+          <label className="field">
+            <span className="t-meta">Server URL</span>
+            <input type="url" inputMode="url" placeholder="https://based.example.com" value={url} disabled={connected} onChange={(e) => setURL(e.target.value)} />
+          </label>
+          <label className="field">
+            <span className="t-meta">Token</span>
+            <input type="password" autoComplete="off" value={token} disabled={connected} onChange={(e) => setToken(e.target.value)} />
+          </label>
+          <div className="choices">
+            {connected ? (
+              <>
+                <button type="button" className="btn" onClick={() => void client.syncNow()}>Sync now</button>
+                <button type="button" className="btn ghost" onClick={disconnect}>Disconnect</button>
+              </>
+            ) : (
+              <button type="submit" className="btn primary" disabled={!url.trim()}>Connect</button>
+            )}
+          </div>
+        </div>
+      </form>
+    </>
   );
 }

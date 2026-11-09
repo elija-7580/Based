@@ -1,0 +1,112 @@
+// BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
+// auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
+// Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
+import type { DropZone, Outline, RecordKeyString, WireRecord } from "@based/core";
+
+export interface SyncConfig {
+  url: string;
+  token: string;
+}
+
+/** Zustand des Speichers und des Syncs, wie ihn die Seitenleiste zeigt. */
+export type SyncState =
+  | "starting"
+  /** Kein Server eingestellt, Daten bleiben auf diesem Gerät. */
+  | "local"
+  | "syncing"
+  | "synced"
+  | "offline"
+  | "error"
+  /** Speichern gescheitert: Store schreibgeschützt (nie stiller RAM-Fallback). */
+  | "readonly"
+  /** Kein OPFS (z. B. privates Fenster) oder Datei in einem anderen Tab offen: nur im Speicher. */
+  | "memory";
+
+export interface StatusInfo {
+  state: SyncState;
+  /** Kurzer Text für Tooltip/Einstellungen (Fehlermeldung, letzte Runde …). */
+  detail?: string;
+  /** Daten liegen dauerhaft im OPFS. */
+  persistent: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
+export type Command =
+  | { op: "createPage"; parent?: string; section?: string; title?: string; after?: string }
+  | { op: "rename"; id: string; title: string }
+  | { op: "trash"; ids: string[] }
+  | { op: "restore"; ids: string[] }
+  | { op: "deleteForever"; ids: string[] }
+  | { op: "emptyTrash" }
+  | { op: "drop"; ids: string[]; target: string; zone: DropZone }
+  | { op: "moveToSection"; ids: string[]; section: string }
+  | { op: "favorite"; ids: string[]; on: boolean }
+  | { op: "undo" }
+  | { op: "redo" }
+  /** Testdaten: `count` Seiten mit je einem Absatz (E2E, Messungen). */
+  | { op: "seed"; count: number; prefix?: string };
+
+export interface QuickFindHit {
+  pageID: string;
+  title: string;
+  /** Pfad über der Seite („Teamspace / Elternseite“). */
+  path: string;
+  snippet?: string;
+  kind: "page" | "database" | "row";
+}
+
+export interface SearchResult {
+  query: string;
+  hits: QuickFindHit[];
+  /** Rechenzeit im Worker (ms). */
+  took: number;
+}
+
+/** Records einer offenen Seite (Seite, alles darin, eigene Datenbanken, Ansichten, Workspace). */
+export interface PageRecords {
+  pageID: string;
+  node: string;
+  records: WireRecord[];
+}
+
+export type Request =
+  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string }
+  | { type: "command"; command: Command }
+  | { type: "search"; query: string; limit?: number }
+  | { type: "warmSearch" }
+  | { type: "openPage"; pageID: string }
+  | { type: "closePage"; pageID: string }
+  /** Änderungen aus einer Seiten-Replik (Editor) übernehmen. */
+  | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
+  | { type: "setSync"; sync?: SyncConfig }
+  | { type: "syncNow" };
+
+export type RequestMessage = Request & { id: number };
+
+export interface InitResult {
+  node: string;
+  persistent: boolean;
+  created: boolean;
+  homePageID?: string;
+}
+
+export type Event =
+  | { type: "reply"; id: number; ok: true; result: unknown }
+  | { type: "reply"; id: number; ok: false; error: string; cancelled?: boolean }
+  /** Seitenleisten-Struktur (vollständig, nur wenn sie sich ändert). */
+  | { type: "outline"; outline: Outline }
+  /** Titel: vollständig (`full`) oder nur geänderte (`""` = gelöscht). */
+  | { type: "titles"; titles: Record<string, string>; full: boolean }
+  | { type: "status"; status: StatusInfo }
+  /** Die Gerätekennung hat sich geändert (Hauptthread speichert sie in localStorage). */
+  | { type: "device"; node: string }
+  /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
+  | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] };
+
+/** Was Worker und Hauptthread zum Reden brauchen (Worker, MessagePort oder ein Test-Kanal). */
+export interface Endpoint<In, Out> {
+  postMessage(msg: Out): void;
+  addEventListener(type: "message", fn: (e: { data: In }) => void): void;
+  removeEventListener(type: "message", fn: (e: { data: In }) => void): void;
+}

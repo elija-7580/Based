@@ -1,16 +1,36 @@
 // Home: Begrüßung, Hauptagent (Nachricht + Composer), „Based is working on“, „This week“, „Pick up again“.
-// Listen als Flächen (v8), keine Karten. Agent-Details nur mit „Show agent details“.
+// Listen als Flächen (v8), keine Karten. Agent-Details nur mit „Show agent details“. Agent-Abschnitte sind noch
+// Demo (src/data.ts); „Pick up again“ zeigt die zuletzt geöffneten echten Seiten (BSD-153).
 import { AgentBar } from "../components/AgentMark.js";
 import { Composer } from "../components/Composer.js";
-import { AGENT_TASKS, RECENT, THIS_WEEK, type Screen } from "../data.js";
+import { AGENT_TASKS, THIS_WEEK } from "../data.js";
 import { Icon } from "../icons.js";
+import { relative } from "../shell/format.js";
+import type { RecentEntry } from "../shell/storage.js";
+import type { ShellState } from "../worker/client.js";
 
 function greeting(now: Date) {
   const h = now.getHours();
   return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
-export function Home({ showDetails, onNavigate, now = new Date() }: { showDetails: boolean; onNavigate: (s: Screen) => void; now?: Date }) {
+interface Props {
+  showDetails: boolean;
+  recent: RecentEntry[];
+  state: ShellState;
+  onOpenPage: (id: string) => void;
+  onNewPage: () => void;
+  now?: Date;
+}
+
+export function Home({ showDetails, recent, state, onOpenPage, onNewPage, now = new Date() }: Props) {
+  const pickUp = recent.filter((r) => state.titles.has(r.id) && !state.outline?.trash.some((t) => t.id === r.id)).slice(0, 5);
+  const sectionOf = (id: string) => {
+    const o = state.outline;
+    let n = o?.nodes[id];
+    for (let i = 0; n?.parent && i < 100; i++) n = o?.nodes[n.parent];
+    return n ? o?.sections.find((s) => s.id === n!.section)?.name ?? "" : "";
+  };
   const date = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   return (
     <div className="content">
@@ -28,7 +48,7 @@ export function Home({ showDetails, onNavigate, now = new Date() }: { showDetail
               <p className="t-body">Lecture 4 is summarised. I'm drafting your statistics study plan — about ten minutes left. One thing needs you: approve a test run for BSD-112.</p>
             </div>
             <div className="actions">
-              <button type="button" className="btn" onClick={() => onNavigate("page")}>Open summary</button>
+              <button type="button" className="btn" disabled={!pickUp[0]} onClick={() => pickUp[0] && onOpenPage(pickUp[0].id)}>Open summary</button>
               <button type="button" className="btn primary">Approve</button>
             </div>
           </div>
@@ -71,14 +91,18 @@ export function Home({ showDetails, onNavigate, now = new Date() }: { showDetail
         </div>
 
         <section aria-labelledby="recent">
-          <div className="group-title"><h2 id="recent" className="t-section">Pick up again</h2></div>
+          <div className="group-title">
+            <h2 id="recent" className="t-section">Pick up again</h2>
+            <button type="button" className="btn ghost" style={{ marginLeft: "auto" }} onClick={onNewPage}><Icon name="plus" size={16} />New page</button>
+          </div>
           <div className="group">
-            {RECENT.map((r) => (
-              <button key={r.title} type="button" className="row" onClick={() => onNavigate(r.go)}>
-                <span className="tile"><Icon name={r.icon} /></span>
-                <strong className="grow">{r.title}</strong>
-                <span className="t-desc">{r.space}</span>
-                <span className="t-desc" style={{ width: "var(--space-8)", textAlign: "right" }}>{r.when}</span>
+            {pickUp.length === 0 ? <div className="row t-desc">{state.ready ? "Pages you open show up here." : "Opening your workspace…"}</div> : null}
+            {pickUp.map((r) => (
+              <button key={r.id} type="button" className="row" onClick={() => onOpenPage(r.id)}>
+                <span className="tile"><Icon name={state.outline?.nodes[r.id]?.kind === "database" ? "database" : "page"} /></span>
+                <strong className="grow">{state.titles.get(r.id)}</strong>
+                <span className="t-desc">{sectionOf(r.id)}</span>
+                <span className="t-desc" style={{ width: "var(--space-8)", textAlign: "right" }}>{relative(new Date(r.at), now)}</span>
               </button>
             ))}
           </div>

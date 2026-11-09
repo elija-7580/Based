@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 // BSD-178: Shell lädt, Navigation, und die Darstellungs-Umschalter setzen die Wurzel-Attribute (persistiert).
+// BSD-153: auf echten Daten – Erststart mit Willkommensseite statt Demo-Seite.
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 });
 
 test("Shell mit Seitenleiste und Home", async ({ page }) => {
@@ -12,9 +14,15 @@ test("Shell mit Seitenleiste und Home", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Elija");
   await expect(page.getByRole("button", { name: "Home" })).toHaveAttribute("aria-current", "page");
-  await page.getByRole("button", { name: /Lecture 4/ }).click();
-  await expect(page.getByRole("heading", { name: "Lecture 4 — Confidence intervals" })).toBeVisible();
-  await expect(page.getByLabel("Written by Based")).toBeVisible();
+  await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toBeVisible();
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  await expect(page.getByTestId("page-content")).toContainText("This is your workspace");
+  await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveAttribute("aria-selected", "true");
+  // „Pick up again“ auf Home zeigt die zuletzt geöffnete Seite
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: /Welcome to Based/ }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 });
 
 test("Composer-Picker öffnen ein Menü und übernehmen die Wahl", async ({ page }) => {
