@@ -1,7 +1,11 @@
 // Type-check stub of SwiftUI (subset used by Based). Signatures follow Apple's API; bodies are dummies.
 @_exported import Foundation
 @_exported import Observation
+#if STUB_IOS
+@_exported import UIKit
+#else
 @_exported import AppKit
+#endif
 @_exported import Combine
 import UniformTypeIdentifiers
 
@@ -140,8 +144,13 @@ public struct Color: Hashable, CustomStringConvertible, Sendable, ShapeStyle, _P
     public init(white: Double, opacity: Double = 1) {}
     public init(_ colorSpace: RGBColorSpace, white: Double, opacity: Double = 1) {}
     public init(hue: Double, saturation: Double, brightness: Double, opacity: Double = 1) {}
+    #if STUB_IOS
+    public init(uiColor: UIColor) {}
+    public init(_ uiColor: UIColor) {}
+    #else
     public init(nsColor: NSColor) {}
     public init(_ nsColor: NSColor) {}
+    #endif
     public init(cgColor: CGColor) {}
     public var description: String { "" }
     public func opacity(_ o: Double) -> Color { self }
@@ -152,7 +161,11 @@ public struct Color: Hashable, CustomStringConvertible, Sendable, ShapeStyle, _P
 extension ShapeStyle where Self == Color {
     public static var black: Color { .black }; public static var white: Color { .white }; public static var gray: Color { .gray }; public static var red: Color { .red }; public static var green: Color { .green }; public static var blue: Color { .blue }; public static var orange: Color { .orange }; public static var yellow: Color { .yellow }; public static var pink: Color { .pink }; public static var purple: Color { .purple }; public static var clear: Color { .clear }; public static var mint: Color { .mint }; public static var teal: Color { .teal }; public static var cyan: Color { .cyan }; public static var indigo: Color { .indigo }; public static var brown: Color { .brown }; public static var accentColor: Color { .accentColor }
 }
+#if STUB_IOS
+extension UIColor { public convenience init(_ color: Color) { self.init() } }
+#else
 extension NSColor { public convenience init(_ color: Color) { self.init() } }
+#endif
 
 public struct Font: Hashable, Sendable {
     public struct Weight: Hashable, Sendable { public static let ultraLight = Weight(), thin = Weight(), light = Weight(), regular = Weight(), medium = Weight(), semibold = Weight(), bold = Weight(), heavy = Weight(), black = Weight() }
@@ -160,8 +173,13 @@ public struct Font: Hashable, Sendable {
     public enum Design: Hashable, Sendable { case `default`, serif, rounded, monospaced }
     public enum TextStyle: Hashable, CaseIterable, Sendable { case largeTitle, extraLargeTitle, extraLargeTitle2, title, title2, title3, headline, subheadline, body, callout, footnote, caption, caption2 }
     public enum Leading: Hashable, Sendable { case standard, tight, loose }
+    #if STUB_IOS
+    public init(_ font: UIFont) {}
+    #else
     public init(_ font: NSFont) {}
-    public static let largeTitle = Font(NSFont()), title = largeTitle, title2 = largeTitle, title3 = largeTitle, headline = largeTitle, subheadline = largeTitle, body = largeTitle, callout = largeTitle, footnote = largeTitle, caption = largeTitle, caption2 = largeTitle
+    #endif
+    init() {}
+    public static let largeTitle = Font(), title = largeTitle, title2 = largeTitle, title3 = largeTitle, headline = largeTitle, subheadline = largeTitle, body = largeTitle, callout = largeTitle, footnote = largeTitle, caption = largeTitle, caption2 = largeTitle
     public static func system(size: CGFloat, weight: Weight? = nil, design: Design? = nil) -> Font { .body }
     public static func system(_ style: TextStyle, design: Design? = nil, weight: Weight? = nil) -> Font { .body }
     public static func custom(_ name: String, size: CGFloat) -> Font { .body }
@@ -252,7 +270,11 @@ public struct Image: Equatable, Sendable, _PrimitiveView {
     public init(systemName: String, variableValue: Double?) {}
     public init(_ name: String, bundle: Bundle? = nil) {}
     public init(decorative name: String, bundle: Bundle? = nil) {}
+    #if STUB_IOS
+    public init(uiImage: UIImage) {}
+    #else
     public init(nsImage: NSImage) {}
+    #endif
     public init(_ cgImage: CGImage, scale: CGFloat, label: Text) {}
     public func resizable(capInsets: EdgeInsets = EdgeInsets(), resizingMode: ResizingMode = .stretch) -> Image { self }
     public func renderingMode(_ m: TemplateRenderingMode?) -> Image { self }

@@ -204,7 +204,11 @@ struct TableLayout: View {
                         .onChanged { g in
                             guard g.startLocation.x <= Self.gutter + 6 else { return }
                             if dragBase == nil {
+                                #if os(macOS)
                                 dragBase = NSEvent.modifierFlags.contains(.shift) || NSEvent.modifierFlags.contains(.command) ? selection : []
+                                #else
+                                dragBase = []   // BSD-95: NSEvent is AppKit-only; no modifier keys on touch
+                                #endif
                             }
                             let lo = min(g.startLocation.y, g.location.y), hi = max(g.startLocation.y, g.location.y)
                             let hit = ordered.filter { id in rowFrames.frames[id].map { $0.maxY > lo && $0.minY < hi } ?? false }

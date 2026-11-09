@@ -141,6 +141,7 @@ public final class QueryEngine {
     public static func value(of pv: PropertyValue?, _ p: PropertySchema) -> Value {
         guard let pv else { return p.type == .checkbox ? .bool(false) : .empty }
         switch pv {
+        case .unknown: return .empty   // BSD-107: value kind from a newer version
         case .text(let t): return .string(t.plainText)
         case .number(let n): return .number(n)
         case .select(let id), .status(let id): return p.option(id).map { .string($0.name) } ?? .empty
@@ -324,6 +325,7 @@ public final class QueryEngine {
     }
 
     public func matches(_ row: Block, _ c: FilterCondition, _ db: Database) -> Bool {
+        if c.op == .unknown { return true }   // BSD-107: operator from a newer version hides nothing
         guard let p = db.property(c.propertyID) ?? (c.propertyID == Database.titlePropertyID ? db.titleProperty : nil) else { return true }
         let v = value(row, p, db)
         switch c.op {

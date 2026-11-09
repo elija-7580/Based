@@ -800,6 +800,7 @@ public extension PropertyValue {
     /// Plain string form (used for conversions, search and CSV).
     func plainString(_ schema: PropertySchema?) -> String {
         switch self {
+        case .unknown: return ""
         case .text(let t): return t.plainText
         case .number(let n): return NumberFormatting.plain(n)
         case .select(let id), .status(let id): return schema?.option(id)?.name ?? ""

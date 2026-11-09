@@ -1,4 +1,8 @@
+#if STUB_IOS
+import StubBase
+#else
 import AppKit
+#endif
 public struct UTType: Hashable, Sendable {
     public init?(filenameExtension: String) {}
     public init?(_ identifier: String) {}
@@ -16,6 +20,8 @@ extension NSItemProvider {
     public func hasItemConformingToTypeIdentifier(_ t: UTType) -> Bool { false }
     public func registeredContentTypes() -> [UTType] { [] }
 }
+#if !STUB_IOS
 extension NSSavePanel {
     public var allowedContentTypes: [UTType] { get { [] } set {} }
 }
+#endif

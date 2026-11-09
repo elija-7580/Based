@@ -129,6 +129,10 @@ public struct EnvironmentValues {
     public init() {}
     public subscript<K: EnvironmentKey>(key: K.Type) -> K.Value { get { fatalError() } set {} }
     public var colorScheme: ColorScheme = .light
+    #if STUB_IOS
+    public var horizontalSizeClass: UserInterfaceSizeClass? = nil
+    public var verticalSizeClass: UserInterfaceSizeClass? = nil
+    #endif
     public var colorSchemeContrast: ColorSchemeContrast { .standard }
     public var openURL: OpenURLAction { get { fatalError() } set {} }
     public var dismiss: DismissAction { fatalError() }

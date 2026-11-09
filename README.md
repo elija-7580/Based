@@ -365,14 +365,18 @@ Pass 11 found that the app had not compiled since Pass 8/9; that is fixed and `b
 type-checks all of `App/Shared` on Linux against signature stubs of SwiftUI, AppKit, MapKit, CoreLocation,
 Charts, WebKit, CoreGraphics, … (`ci/typecheck/stubs`) plus the real BasedCore/BasedBrain modules — current
 result with Swift 6.2 on Linux: *typecheck OK* (0 errors). It checks the macOS paths (`os(macOS)` → true,
-`os(iOS)` → false); an iOS run is not there yet. The stubs can't prove the code builds with Apple's SDK, so
+`os(iOS)` → false); `bash ci/typecheck/run.sh --ios` checks the iOS paths instead (`os(iOS)` → true,
+`os(macOS)` → false) against a UIKit stub, with no AppKit module visible, so AppKit use outside `#if os(macOS)`
+is caught (also *typecheck OK*, 0 errors). Shared Objective-C/TextKit pieces live in `stubs/StubBase.swift`,
+which both the AppKit and the UIKit stub re-export; the SwiftUI, WebKit, PDFKit and SwiftTerm stubs switch on
+`-D STUB_IOS`. The stubs can't prove the code builds with Apple's SDK, so
 expect a few fixes on the first Xcode run. When a symbol is missing, add it to the matching stub file (Apple's
 signature, dummy body); when the type checker gives up on a long SwiftUI expression, split it into a
 `@ViewBuilder` helper — that helps Xcode too. `TYPECHECK_OUT=<dir>` sets the scratch folder.
 
 **Automatic build (CI):** `ci/github-actions-ci.yml` runs four jobs on every push and pull request:
-`core` (BasedCore `swift test`) and `typecheck` (BasedBrain `swift test`, `ci/typecheck/run.sh`, and the iOS
-type-check once `run.sh --ios` exists) in the pinned `swift:6.2-noble` container with a SwiftPM cache and a
+`core` (BasedCore `swift test`) and `typecheck` (BasedBrain `swift test`, `ci/typecheck/run.sh` and
+`run.sh --ios`) in the pinned `swift:6.2-noble` container with a SwiftPM cache and a
 30-minute limit; `apps` (Debug build of the macOS app and the iOS Simulator app on GitHub's Mac servers); and
 `uitests` (the XCUITests in `App/UITests` on macOS — optional, a failure there doesn't fail the run yet).
 On pushes (not pull requests) the results are published to the `ci-logs` branch. Releases (DMG/Sparkle) are a

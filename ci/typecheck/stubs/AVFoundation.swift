@@ -68,3 +68,18 @@ public struct AVMediaType: Hashable { public static let audio = AVMediaType(), v
 open class AVCaptureDevice: NSObject {
     open class func requestAccess(for mediaType: AVMediaType) async -> Bool { true }
 }
+
+#if STUB_IOS
+/// iOS audio session (AVFAudio), BSD-95.
+open class AVAudioSession: NSObject, @unchecked Sendable {
+    open class func sharedInstance() -> AVAudioSession { AVAudioSession() }
+    public struct Category: Hashable, Sendable { public static let playAndRecord = Category(), record = Category(), playback = Category(), ambient = Category() }
+    public struct Mode: Hashable, Sendable { public static let `default` = Mode(), measurement = Mode(), voiceChat = Mode(), videoRecording = Mode(), spokenAudio = Mode() }
+    public struct CategoryOptions: OptionSet, Sendable { public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }; public static let mixWithOthers = CategoryOptions(rawValue: 1), duckOthers = CategoryOptions(rawValue: 2), allowBluetooth = CategoryOptions(rawValue: 4), defaultToSpeaker = CategoryOptions(rawValue: 8), allowBluetoothA2DP = CategoryOptions(rawValue: 32) }
+    public struct SetActiveOptions: OptionSet, Sendable { public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }; public static let notifyOthersOnDeactivation = SetActiveOptions(rawValue: 1) }
+    open func setCategory(_ c: Category, mode: Mode, options: CategoryOptions = []) throws {}
+    open func setCategory(_ c: Category, options: CategoryOptions = []) throws {}
+    open func setActive(_ a: Bool, options: SetActiveOptions = []) throws {}
+    open func requestRecordPermission(_ h: @escaping (Bool) -> Void) {}
+}
+#endif

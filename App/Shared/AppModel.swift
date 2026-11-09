@@ -1,6 +1,8 @@
 import SwiftUI
 #if os(macOS)
 import AppKit
+#else
+import UIKit
 #endif
 import Observation
 import BasedCore
@@ -127,6 +129,7 @@ final class AppModel {
     /// Mac updates: checks GitHub for newer commits and installs them through the updater agent.
     let updater: Updater
     @ObservationIgnored private(set) var persistence: SQLitePersistence?
+    @ObservationIgnored private var saveObservers: [NSObjectProtocol] = []
     /// Folder of based.sqlite and the assets (Application Support/Based).
     @ObservationIgnored let dataDirectory: URL
     /// The workspace file couldn't be opened (BSD-15): RootView shows `StorageErrorView` instead of the shell.
@@ -348,7 +351,8 @@ final class AppModel {
         persistence = p
         let node = Self.deviceNodeID()
         // In-memory only for previews/tests (`inMemory`) and behind the error screen (nothing is shown or saved).
-        store = WorkspaceStore(persistence: p ?? (try? SQLitePersistence(url: nil)), node: node)
+        // BSD-42: commits only enqueue; a background writer saves them (flushed on quit and background, below).
+        store = WorkspaceStore(persistence: p.map { PersistenceWriter($0) } ?? (try? SQLitePersistence(url: nil)), node: node)
         storeWriteFailure = store.writeFailure
         registry = Registry(store: store)
         queryCache = QueryCache(store: store)
@@ -386,8 +390,29 @@ final class AppModel {
             self.showToast("Based was updated to build \(self.updater.build) (\(self.updater.shortCommit))")
         }
         updater.start()
+        installSaveOnQuit()
         if !inMemory { Self.current = self }   // BSD-65: App Intents reach the model through this
         Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms (store \(storeMS) ms, agent brain \(brainMS) ms)", category: "app")
+    }
+
+    /// BSD-42: waits (at most 2 s) for the background writer when the app quits or goes to the background, so the
+    /// last keystrokes reach the disk.
+    private func installSaveOnQuit() {
+        #if os(macOS)
+        let names = [NSApplication.willTerminateNotification, NSApplication.didResignActiveNotification]
+        #else
+        let names = [UIApplication.willTerminateNotification, UIApplication.didEnterBackgroundNotification]
+        #endif
+        for name in names {
+            saveObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] n in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if !self.store.flushSync(timeout: 2) {
+                        Log.warning("Not every change was saved on \(n.name.rawValue) (\(self.store.unsavedChangeCount) pending)", category: "store")
+                    }
+                }
+            })
+        }
     }
 
     /// "Try again" on the storage error screen: if the file opens now, BasedApp replaces this model.
