@@ -457,6 +457,7 @@ public extension WorkspaceStore {
                 guard let src = blocks[id] else { continue }
                 let nid = copySubtree(src, parent: anchor.parent, sortKey: key, tx: tx,
                                       titleSuffix: src.type.isPageLike ? " (1)" : nil)
+                linkMirrors(ofRow: nid, tx: tx)
                 result.append(nid)
             }
             return result
@@ -478,6 +479,8 @@ public extension WorkspaceStore {
             var ndb = db
             ndb.id = RecordIDs.make()
             ndb.blockID = copy.id
+            // The copy's relations are one-way: the mirrors on other databases belong to the original (BSD-31).
+            for i in ndb.properties.indices { ndb.properties[i].relation?.syncedPropertyID = nil }
             tx.put(ndb)
             copy.props.databaseID = ndb.id
             copy.props.viewIDs = copyViews(of: src.id, to: copy.id, databaseID: ndb.id, tx: tx)
@@ -577,6 +580,7 @@ public extension WorkspaceStore {
     /// Hard-remove a block and everything below it (inside a transaction).
     func removeSubtree(_ id: RecordID, tx: Tx) {
         let all = [id] + descendants(of: id)
+        unlinkRemovedRows(Set(all), tx: tx)
         for d in all {
             if let b = blocks[d] {
                 for v in viewIDs(forBlock: d) { tx.remove(RecordKey(.view, v)) }

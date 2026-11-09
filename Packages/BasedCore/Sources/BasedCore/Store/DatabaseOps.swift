@@ -121,6 +121,7 @@ public extension WorkspaceStore {
                     if !title.isEmpty { b.text = title }
                     for (k, v) in values { b.values[k] = v }
                 }
+                linkMirrors(ofRow: id, tx: tx)
                 if let db = tx.database(databaseID), let uid = db.properties.first(where: { $0.type == .uniqueID }) {
                     let next = db.nextUniqueID ?? 1
                     tx.update(id) { $0.values[uid.id] = .uniqueID(next) }
@@ -221,29 +222,35 @@ public extension WorkspaceStore {
         }
     }
 
+    /// Renames a property and rewrites `prop("old")` in the database's formulas (one undo step, BSD-31).
     func renameProperty(_ databaseID: RecordID, _ propertyID: String, to name: String) {
-        updateProperty(databaseID, propertyID, name: "Rename property") { $0.name = name }
+        guard let old = databases[databaseID]?.property(propertyID)?.name, old != name else { return }
+        transact("Rename property") { tx in
+            tx.updateDatabase(databaseID) { d in
+                if let i = d.properties.firstIndex(where: { $0.id == propertyID }) { d.properties[i].name = name }
+            }
+            rewriteFormulaReferences(databaseID, from: old, to: name, tx: tx)
+        }
     }
 
+    /// Deletes a property with everything that refers to it (see `purgeProperty`): a two-way partner becomes
+    /// one-way and keeps its values, rollups/charts/card covers/filters that used it are cleared (BSD-31).
     func deleteProperty(_ databaseID: RecordID, _ propertyID: String) {
         guard let db = databases[databaseID], let p = db.property(propertyID), p.type != .title else { return }
-        let affectedViews = views.values.filter { $0.databaseID == databaseID }
-        transact("Delete property") { tx in
-            tx.updateDatabase(databaseID) { $0.properties.removeAll { $0.id == propertyID } }
-            for v in affectedViews {
-                tx.updateView(v.id) { view in
-                    view.properties?.removeAll { $0.id == propertyID }
-                    view.sorts?.removeAll { $0.propertyID == propertyID }
-                    if view.groupBy?.propertyID == propertyID { view.groupBy = nil }
-                    if view.datePropertyID == propertyID { view.datePropertyID = nil }
-                    if view.endDatePropertyID == propertyID { view.endDatePropertyID = nil }
-                    if view.mapPropertyID == propertyID { view.mapPropertyID = nil }
-                    view.calculations?[propertyID] = nil
-                    if let f = view.filter { view.filter = f.removing(propertyID: propertyID) }
-                }
-            }
-            for r in rows(of: databaseID) where r.values[propertyID] != nil {
-                tx.update(r.id) { $0.values[propertyID] = nil }
+        transact("Delete property") { tx in purgeProperty(databaseID, propertyID, tx: tx) }
+    }
+
+    /// Points a relation at another database (nil: none). Like Notion, the old links don't carry over: values are
+    /// cleared, the two-way partner on the old target is removed and rollups through this relation are reset.
+    func setRelationTarget(_ databaseID: RecordID, _ propertyID: String, to target: RecordID?) {
+        guard let p = databases[databaseID]?.property(propertyID), p.type == .relation,
+              p.relation?.databaseID != target else { return }
+        transact("Relation") { tx in
+            dropRelationLinks(databaseID, propertyID, tx: tx)
+            for r in rows(of: databaseID) where r.values[propertyID] != nil { tx.update(r.id) { $0.values[propertyID] = nil } }
+            tx.updateDatabase(databaseID) { d in
+                guard let i = d.properties.firstIndex(where: { $0.id == propertyID }) else { return }
+                d.properties[i].relation = target.map { RelationConfig(databaseID: $0, limitOne: p.relation?.limitOne) }
             }
         }
     }
@@ -254,6 +261,8 @@ public extension WorkspaceStore {
         let old = p.id
         p.id = RecordIDs.make()
         p.name = uniquePropertyName(p.name, in: db)
+        // The copy is a one-way relation: only one property can own the mirror on the other side (BSD-31).
+        p.relation?.syncedPropertyID = nil
         let copy = p
         return transact("Duplicate property") { tx in
             tx.updateDatabase(databaseID) { d in
@@ -270,7 +279,10 @@ public extension WorkspaceStore {
     /// (the change is one undo step).
     func changePropertyType(_ databaseID: RecordID, _ propertyID: String, to type: PropertyType) {
         guard let plan = propertyConversion(databaseID, propertyID, to: type) else { return }
+        let wasRelation = databases[databaseID]?.property(propertyID)?.type == .relation
         transact("Change property type") { tx in
+            // Away from Relation: the two-way partner and rollups through it go too (BSD-31).
+            if wasRelation { dropRelationLinks(databaseID, propertyID, tx: tx) }
             tx.updateDatabase(databaseID) { d in
                 if let i = d.properties.firstIndex(where: { $0.id == propertyID }) { d.properties[i] = plan.schema }
             }
@@ -385,6 +397,7 @@ public extension WorkspaceStore {
         }
         if type == .formula, schema.formula == nil { schema.formula = "" }
         if type == .relation, schema.relation == nil { schema.relation = RelationConfig(databaseID: databaseID) }
+        if type != .relation { schema.relation = nil }
         return (schema, converted)
     }
 
@@ -444,6 +457,11 @@ public extension WorkspaceStore {
         guard databases[databaseID] != nil else { return }
         let affected = rows(of: databaseID)
         transact("Delete option") { tx in
+            for v in views.values where v.databaseID == databaseID {
+                var nv = v
+                nv.forgetOption(optionID, of: propertyID)
+                if nv != v { tx.updateView(v.id) { $0 = nv } }
+            }
             tx.updateDatabase(databaseID) { d in
                 guard let i = d.properties.firstIndex(where: { $0.id == propertyID }) else { return }
                 d.properties[i].options?.removeAll { $0.id == optionID }

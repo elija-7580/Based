@@ -932,7 +932,7 @@ struct PropertyConfigEditor: View {
     private func relationEditor(_ p: PropertySchema) -> some View {
         let dbs = store.databases.values.filter { !store.isTrashed($0.blockID) }.sorted { store.title(of: $0.blockID) < store.title(of: $1.blockID) }
         Picker("Related to", selection: Binding(get: { p.relation?.databaseID ?? "" }, set: { id in
-            store.updateProperty(db.id, p.id, name: "Relation") { $0.relation = id.isEmpty ? nil : RelationConfig(databaseID: id) }
+            store.setRelationTarget(db.id, p.id, to: id.isEmpty ? nil : id)
         })) {
             Text("Select a database").tag("")
             ForEach(dbs, id: \.id) { d in Text(store.title(of: d.blockID)).tag(d.id) }

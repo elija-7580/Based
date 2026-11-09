@@ -96,10 +96,19 @@ public final class QueryEngine {
         case .createdBy: v = row.createdBy.map(Value.person) ?? .empty
         case .lastEditedBy: v = row.updatedBy.map(Value.person) ?? .empty
         case .button, .verification: v = .empty
+        case .relation:
+            // Linked pages in the Trash (or gone) don't show up, like in Notion (BSD-31).
+            if case .relation(let ids)? = row.values[p.id] { v = .list(liveRelationTargets(ids).map(Value.page)) }
+            else { v = Self.value(of: row.values[p.id], p) }
         default: v = Self.value(of: row.values[p.id], p)
         }
         memo[key] = v
         return v
+    }
+
+    /// Relation targets that still exist and aren't in the Trash.
+    public func liveRelationTargets(_ ids: [RecordID]) -> [RecordID] {
+        ids.filter { store.blocks[$0] != nil && !store.isTrashed($0) }
     }
 
     /// Stored value → computed value.
@@ -312,7 +321,7 @@ public final class QueryEngine {
                 switch row.values[p.id] {
                 case .multiSelect(let ids)?: return ids
                 case .person(let ids)?: return ids
-                case .relation(let ids)?: return ids
+                case .relation(let ids)?: return liveRelationTargets(ids)
                 case .files(let f)?: return f.map(\.name)
                 default:
                     if p.type == .createdBy { return row.createdBy.map { [$0] } ?? [] }

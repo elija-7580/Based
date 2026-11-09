@@ -23,6 +23,7 @@ public extension WorkspaceStore {
                 }
             }
             tx.put(b)
+            linkMirrors(ofRow: b.id, tx: tx)
             return b.id
         }
     }
