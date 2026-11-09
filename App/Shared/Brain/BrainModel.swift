@@ -332,8 +332,11 @@ final class BrainModel {
         let existingChat = chatID.flatMap { store.blocks[$0] != nil ? $0 : nil }
         let task = RouteTask(text: trimmed, attachmentChars: attachmentTexts.reduce(0) { $0 + $1.count },
                              folder: chatFolder == NSHomeDirectory() ? nil : chatFolder)
-        let decision = ChatRouting.route(engineSpec, task: task, compute: compute, registry: registry,
-                                         installed: installedCLIs, defaultModel: defaultModel)
+        // BSD-97: routes come from the Routing database in the Agent Brain (edited rows count from this turn on).
+        let routing = brain.routes()
+        for note in routing.notes { Log.info(note, category: "ai") }
+        let decision = ChatRouting.route(engineSpec, task: task, compute: compute, router: ModelRouter(routes: routing.routes),
+                                         registry: registry, installed: installedCLIs, defaultModel: defaultModel)
             .keepingConversation(resumeKey: existingChat.flatMap { brain.resumeKey($0) }, hasHistory: !turns.isEmpty)
         // BSD-52: the main agent's thread always runs the main agent (low compute, delegation tools).
         let mainRef = existingChat.flatMap { brain.isMainThread($0) ? $0 : nil }.flatMap { _ in mainAgent.modelRef() }
@@ -362,27 +365,37 @@ final class BrainModel {
             .filter { !$0.1.isEmpty }.map { ChatMessage(role: $0.0, content: $0.1) }
         runtime.onProgress = nil
         // BSD-45: the turn runs in BasedBrain's ChatEngine; this view model only picks the backend and renders events.
-        let backend: ChatBackend
         let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
-        switch engine {
-        case .model(let ref) where mainRef != nil:
-            backend = MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid))
-        case .model(let ref):
-            // BSD-98: global → project of this chat; "ask" shows an approval card in the chat (Inbox item of the session).
-            let project = brain.sessions().first { $0.id == sid }?.projectID
-            backend = ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode, project: project),
-                                       approve: brain.inboxApprover(session: sid))
-        case .cli(var spec):
-            // Auto picked a CLI: it runs with the composer's permission mode (an explicit CLI choice has its own).
-            if engineSpec.kind == .auto, spec.permission.isEmpty { spec.permission = permissionMode.cliPermission(for: spec.kind) }
-            if spec.kind == .claudeCode {
-                backend = ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
-            } else {
+        func makeBackend(_ choice: ChatEngineChoice) -> ChatBackend {
+            switch choice {
+            case .model(let ref) where mainRef != nil:
+                return MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid))
+            case .model(let ref):
+                // BSD-98: global → project of this chat; "ask" shows an approval card in the chat (Inbox item of the session).
+                let project = brain.sessions().first { $0.id == sid }?.projectID
+                return ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode, project: project),
+                                        approve: brain.inboxApprover(session: sid))
+            case .cli(var spec):
+                // Auto picked a CLI: it runs with the composer's permission mode (an explicit CLI choice has its own).
+                if engineSpec.kind == .auto, spec.permission.isEmpty { spec.permission = permissionMode.cliPermission(for: spec.kind) }
+                if spec.kind == .claudeCode {
+                    return ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
+                }
                 // BSD-33: the chat's own short-lived MCP token, not the endpoint's master token.
-                backend = CLIChatBackend(spec: spec, mcp: happier.runtime.mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", happier.runtime.mcpToken(for: sid) ?? $0.1) })
+                return CLIChatBackend(spec: spec, mcp: happier.runtime.mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", happier.runtime.mcpToken(for: sid) ?? $0.1) })
+            case .none:
+                return UnavailableChatBackend(ChatError.noEngine.description)
             }
-        case .none:
-            backend = UnavailableChatBackend(ChatError.noEngine.description)
+        }
+        // BSD-97: when the routed engine fails before answering (overload, not logged in, crash), the rest of the
+        // route's chain answers, with a notice in the reply.
+        let backend: ChatBackend
+        if mainRef == nil, decision.route != nil, !decision.fallbacks.isEmpty, engine != .none {
+            backend = FallbackChatBackend(([engine] + decision.fallbacks).map {
+                FallbackChatBackend.Candidate(label: ChatRouting.label($0), backend: makeBackend($0))
+            })
+        } else {
+            backend = makeBackend(engine)
         }
         // The chat keeps the folder it started in (reopened chats resume there).
         let folder: String = {

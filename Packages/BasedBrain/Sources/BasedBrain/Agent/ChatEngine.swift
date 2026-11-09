@@ -187,6 +187,8 @@ final class ChatTurnSaver {
 
     func apply(_ e: ChatEvent) {
         if case .result = e { sawResult = true }
+        // BSD-97: hints such as "Claude Code failed, answered by Codex" are kept in the transcript.
+        if case .notice(let n) = e { sink.appendTranscript(session, role: "Notice", markdown: n) }
         builder.apply(e)
         save(all: false)
     }
@@ -354,5 +356,85 @@ public struct UnavailableChatBackend: ChatBackend {
     struct Failure: Error, CustomStringConvertible { let description: String }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
         throw Failure(description: message)
+    }
+}
+
+/// BSD-97: runs the router's chain. When an engine fails before it produced anything (overload 429/529, not logged
+/// in, the CLI crashed), the next one answers and a notice says so ("Claude Code failed, answered by Codex").
+/// Once output has started, an error ends the turn as usual. Events of the failed attempt (e.g. its `.started`
+/// with a session id) are dropped, and `resumeKind` follows the engine that answered, so the stored resume key
+/// belongs to the right CLI.
+public final class FallbackChatBackend: ChatBackend, @unchecked Sendable {
+    public struct Candidate: Sendable {
+        public var label: String
+        public var backend: ChatBackend
+        public init(label: String, backend: ChatBackend) { self.label = label; self.backend = backend }
+    }
+    public let candidates: [Candidate]
+    private let answered = Locked(0)
+
+    public init(_ candidates: [Candidate]) {
+        precondition(!candidates.isEmpty, "FallbackChatBackend needs at least one engine")
+        self.candidates = candidates
+    }
+
+    /// Index of the engine that answered the last turn (0 before the first run).
+    public var answeredIndex: Int { answered.current }
+    public var resumeKind: String? { candidates[answered.current].backend.resumeKind }
+
+    /// Events that mean the engine is answering (after one of these, no fallback).
+    static func isOutput(_ e: ChatEvent) -> Bool {
+        switch e {
+        case .started, .notice: return false
+        case .result(_, _, _, let isError): return !isError
+        default: return true
+        }
+    }
+
+    struct EngineFailed: Error, CustomStringConvertible { let description: String }
+
+    public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
+        var failures: [String] = []
+        for (i, c) in candidates.enumerated() {
+            try Task.checkCancellation()
+            // Held back until the engine produces output; dropped when it fails first.
+            let state = Locked((live: false, held: [ChatEvent](), errorResult: String?.none))
+            var req = request
+            if i > 0 { req.resume = nil }   // another engine can't continue the first one's session
+            do {
+                let reply = try await c.backend.run(req, session: session, emit: { e in
+                    let pass: [ChatEvent] = state.sync { s in
+                        if s.live { return [e] }
+                        if case .result(let t, _, _, true) = e { s.errorResult = t.isEmpty ? "failed" : t; return [] }
+                        guard Self.isOutput(e) else { s.held.append(e); return [] }
+                        s.live = true
+                        defer { s.held = [] }
+                        return s.held + [e]
+                    }
+                    for x in pass { emit(x) }
+                })
+                let s = state.current
+                if !s.live, let err = s.errorResult, i < candidates.count - 1 { throw EngineFailed(description: err) }
+                // Finished without output and without error: still this engine's answer.
+                if !s.live { for x in s.held { emit(x) }; if let err = s.errorResult { emit(.result(text: err, sessionID: nil, costUSD: nil, isError: true)) } }
+                answered.sync { $0 = i }
+                return reply
+            } catch {
+                if error is CancellationError || Task.isCancelled { throw error }
+                if state.current.live || i == candidates.count - 1 {
+                    answered.sync { $0 = i }
+                    if !failures.isEmpty, !state.current.live { throw EngineFailed(description: (failures + ["\(c.label): \(error)"]).joined(separator: "; ")) }
+                    throw error
+                }
+                failures.append("\(c.label): \(error)")
+                emit(.notice("\(c.label) failed (\(Self.short(error))), answered by \(candidates[i + 1].label)"))
+            }
+        }
+        throw EngineFailed(description: failures.joined(separator: "; "))
+    }
+
+    static func short(_ error: Error) -> String {
+        let s = "\(error)".replacingOccurrences(of: "\n", with: " ")
+        return s.count > 80 ? String(s.prefix(79)) + "…" : s
     }
 }

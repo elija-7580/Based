@@ -223,6 +223,7 @@ final class HappierModel {
         Log.measure("HappierModel.refresh", warnAfter: 0.05) {
             let ids = brain.ensureHappier()
             let projectsDB = brain.ensureProjects()
+            brain.ensureRouting()   // BSD-97: routes of Auto-Routing, editable in the Agent Brain
             happierIDs = [ids.sessions, ids.inbox, ids.connections, projectsDB]
             let s = brain.sessions().sorted { $0.updatedAt > $1.updatedAt }
             if s != sessions { sessions = s; sessionIDSet = Set(s.map(\.id)) }

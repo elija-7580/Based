@@ -265,16 +265,39 @@ public struct ModelRouter: Sendable {
                         installed: installed, defaultModel: defaultModel)
     }
 
-    /// Like `decide`, but asks `classifier` when no rule matches (its answer must be a known route id).
+    /// Like `decide`, but asks `classifier` when no rule matches (its answer must be a known route id). The
+    /// classifier gets `timeout` seconds (BSD-97: 1.5 s); a slower or failed answer falls back to General.
     public func route(_ task: RouteTask, compute: ComputeLevel, forceLow: Bool = false, classifier: RouteClassifier?,
+                      timeout: TimeInterval = 1.5,
                       registry: ModelRegistry, installed: Set<ChatEngineSpec.Kind>, defaultModel: String) async -> RouteDecision {
         var picked = ruleRoute(task)
-        if picked == nil, let classifier, let id = await classifier.classify(task, routes: routes), routes.contains(where: { $0.id == id }) {
-            picked = (id, "classified")
+        var timedOut = false
+        if picked == nil, let classifier {
+            let routes = self.routes
+            let answer = await Self.firstAnswer(within: timeout) { await classifier.classify(task, routes: routes) }
+            switch answer {
+            case .some(let id?) where routes.contains(where: { $0.id == id }): picked = (id, "classified")
+            case .none: timedOut = true
+            default: break
+            }
         }
-        let (id, why) = picked ?? ("general", "no specific route matched")
+        let (id, why) = picked ?? ("general", timedOut ? "classifier too slow; no rule matched" : "no specific route matched")
         return decision(routeID: id, reason: why, compute: compute, forceLow: forceLow, registry: registry,
                         installed: installed, defaultModel: defaultModel)
+    }
+
+    /// `work`'s answer, or `.none` when it takes longer than `timeout` (the work is cancelled, but nobody waits
+    /// for it to notice).
+    static func firstAnswer(within timeout: TimeInterval, _ work: @escaping @Sendable () async -> String?) async -> String?? {
+        await withCheckedContinuation { (cont: CheckedContinuation<String??, Never>) in
+            let done = Locked(false)
+            let claim: @Sendable () -> Bool = { done.sync { d in defer { d = true }; return !d } }
+            let job = Task { let r = await work(); if claim() { cont.resume(returning: .some(r)) } }
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(max(0, timeout) * 1_000_000_000))
+                if claim() { job.cancel(); cont.resume(returning: .none) }
+            }
+        }
     }
 
     func decision(routeID: String, reason: String, compute: ComputeLevel, forceLow: Bool, registry: ModelRegistry,
@@ -378,4 +401,52 @@ public extension RouteDecision {
         d.reason += "; stays on " + ChatRouting.label(picked) + " to keep the conversation"
         return d
     }
+}
+
+// MARK: - Text format (Routing database, BSD-97)
+
+public extension RouteTarget {
+    /// "claudeCode:sonnet@high", "api:@small", "api:anthropic/claude-haiku-4-5", "codex", "codex@low".
+    /// Kind names are case-insensitive; "claude" is accepted for Claude Code.
+    var text: String {
+        var s = kind.rawValue
+        if !model.isEmpty { s += ":" + model }
+        if !effort.isEmpty { s += "@" + effort }
+        return s
+    }
+
+    /// Parses one target; nil when the kind is unknown or the text is empty.
+    static func parse(_ text: String) -> RouteTarget? {
+        var t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return nil }
+        var effort = ""
+        // The effort is the last "@word" that is not a tier token at the start of the model ("api:@small@high").
+        if let at = t.lastIndex(of: "@") {
+            let tail = String(t[t.index(after: at)...])
+            let beforeAt = t[..<at]
+            let isTierToken = beforeAt.hasSuffix(":") || beforeAt.isEmpty
+            if !isTierToken, !tail.isEmpty, tail.allSatisfy({ $0.isLetter }) {
+                effort = tail.lowercased(); t = String(beforeAt)
+            }
+        }
+        let kindText: String, model: String
+        if let colon = t.firstIndex(of: ":") {
+            kindText = String(t[..<colon]); model = String(t[t.index(after: colon)...]).trimmingCharacters(in: .whitespaces)
+        } else { kindText = t; model = "" }
+        let k = kindText.trimmingCharacters(in: .whitespaces).lowercased()
+        let aliases: [String: ChatEngineSpec.Kind] = ["claude": .claudeCode, "claudecode": .claudeCode, "claude-code": .claudeCode,
+                                                      "codex": .codex, "gemini": .gemini, "opencode": .opencode, "api": .api]
+        guard let kind = aliases[k], kind != .auto else { return nil }
+        return RouteTarget(kind, model, effort: effort)
+    }
+
+    /// A comma-separated chain. Returns nil when any entry is unparsable (the caller falls back and says so).
+    static func parseList(_ text: String) -> [RouteTarget]? {
+        let pieces = text.split(whereSeparator: { $0 == "," || $0 == "\n" }).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        var out: [RouteTarget] = []
+        for p in pieces { guard let t = parse(p) else { return nil }; out.append(t) }
+        return out
+    }
+
+    static func listText(_ targets: [RouteTarget]) -> String { targets.map(\.text).joined(separator: ", ") }
 }
