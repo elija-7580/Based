@@ -1,4 +1,8 @@
+#if STUB_IOS
+import UIKit
+#else
 import AppKit
+#endif
 @preconcurrency @MainActor open class WKUserContentController: NSObject { public override init() {}; open func add(_ h: WKScriptMessageHandler, name: String) {}; open func removeScriptMessageHandler(forName: String) {}; open func addUserScript(_ s: WKUserScript) {} }
 @preconcurrency @MainActor open class WKUserScript: NSObject { public enum InjectionTime: Int { case atDocumentStart, atDocumentEnd }; public init(source: String, injectionTime: InjectionTime, forMainFrameOnly: Bool) {} }
 @preconcurrency @MainActor open class WKPreferences: NSObject { open var javaScriptCanOpenWindowsAutomatically = false; open var isElementFullscreenEnabled = false }
@@ -28,10 +32,13 @@ extension WKNavigationDelegate {
     public func webView(_ w: WKWebView, didFail n: WKNavigation!, withError e: Error) {}
 }
 @preconcurrency @MainActor public protocol WKUIDelegate: NSObjectProtocol {}
-@preconcurrency @MainActor open class WKWebView: NSView {
+@preconcurrency @MainActor open class WKWebView: _PlatformView {
     public init(frame: CGRect, configuration: WKWebViewConfiguration) { super.init(frame: frame) }
     public required init?(coder: NSCoder) { super.init(coder: coder) }
     open weak var navigationDelegate: (any WKNavigationDelegate)?
+    #if STUB_IOS
+    open var scrollView: UIScrollView { UIScrollView() }
+    #endif
     open weak var uiDelegate: (any WKUIDelegate)?
     open var configuration: WKWebViewConfiguration { WKWebViewConfiguration() }
     open var url: URL? { nil }
@@ -40,7 +47,7 @@ extension WKNavigationDelegate {
     open var customUserAgent: String?
     open var allowsBackForwardNavigationGestures = false
     open var allowsMagnification = false
-    open var underPageBackgroundColor: NSColor!
+    open var underPageBackgroundColor: _PlatformColor!
     open var isInspectable = false
     open func setValue(_ v: Any?, forKey k: String) {}
     @discardableResult open func load(_ r: URLRequest) -> WKNavigation? { nil }

@@ -1,7 +1,7 @@
 # Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files):
 #   github.com/elija-7580/Based → Add file → Create new file → name ".github/workflows/ci.yml" → paste → Commit.
 # Afterwards GitHub builds and tests everything on each push; results appear in the "Actions" tab and as ✓ / ✗ next to each commit.
-# Jobs: core (BasedCore tests) · typecheck (BasedBrain tests + app type-check, macOS paths; iOS paths once run.sh has --ios)
+# Jobs: core (BasedCore tests) · typecheck (BasedBrain tests + app type-check, macOS and iOS paths)
 #   — both in the pinned swift:6.2-noble container with a SwiftPM cache — · apps (Debug build macOS + iOS Simulator)
 #   · uitests (XCUITests on macOS, optional). Logs go to the ci-logs branch on pushes only (not for pull requests).
 # The release build (DMG/Sparkle) is a separate, already active workflow (.github/workflows/release.yml); this file
@@ -97,7 +97,7 @@ jobs:
           mkdir -p /tmp/out
           { grep -E "error:|failed|Executed|Test run with" brain-test.log | tail -n 60
             grep -E "error:|typecheck OK" typecheck.log | sed "s|/tmp/based-typecheck/src/||" | head -n 200
-            echo "--- iOS"; grep -E "error:|typecheck OK|not available" typecheck-ios.log | sed "s|/tmp/based-typecheck-ios/src/||" | head -n 200
+            echo "--- iOS"; grep -E "error:|typecheck OK|not available" typecheck-ios.log | sed "s|/tmp/based-typecheck-ios/ios/src/||" | head -n 200
           } > /tmp/out/typecheck.txt || true
           bash scripts/publish-logs.sh typecheck
 

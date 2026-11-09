@@ -120,6 +120,9 @@ public struct _T<T>: _PrimitiveToolbarContent, CustomizableToolbarContent {}
 }
 public struct ToolbarItemPlacement: Sendable {
     public static let automatic = ToolbarItemPlacement(), principal = ToolbarItemPlacement(), navigation = ToolbarItemPlacement(), primaryAction = ToolbarItemPlacement(), secondaryAction = ToolbarItemPlacement(), status = ToolbarItemPlacement(), confirmationAction = ToolbarItemPlacement(), cancellationAction = ToolbarItemPlacement(), destructiveAction = ToolbarItemPlacement(), keyboard = ToolbarItemPlacement()
+    #if STUB_IOS
+    public static let topBarLeading = ToolbarItemPlacement(), topBarTrailing = ToolbarItemPlacement(), bottomBar = ToolbarItemPlacement(), navigationBarLeading = ToolbarItemPlacement(), navigationBarTrailing = ToolbarItemPlacement()
+    #endif
 }
 public struct ToolbarItem<ID, Content: View>: _PrimitiveToolbarContent, CustomizableToolbarContent {
     public init(placement: ToolbarItemPlacement = .automatic, @ViewBuilder content: () -> Content) where ID == () {}
@@ -130,6 +133,42 @@ public struct ToolbarItemGroup<Content: View>: _PrimitiveToolbarContent, Customi
 }
 public struct ToolbarSpacer: _PrimitiveToolbarContent { public init() {} }
 
+#if STUB_IOS
+// Representables (iOS)
+@MainActor @preconcurrency public protocol UIViewRepresentable: View where Body == Never {
+    associatedtype UIViewType: UIView
+    associatedtype Coordinator = Void
+    func makeUIView(context: Context) -> UIViewType
+    func updateUIView(_ uiView: UIViewType, context: Context)
+    static func dismantleUIView(_ uiView: UIViewType, coordinator: Coordinator)
+    func makeCoordinator() -> Coordinator
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIViewType, context: Context) -> CGSize?
+    typealias Context = UIViewRepresentableContext<Self>
+}
+extension UIViewRepresentable {
+    public static func dismantleUIView(_ uiView: UIViewType, coordinator: Coordinator) {}
+    public func sizeThatFits(_ proposal: ProposedViewSize, uiView: UIViewType, context: Context) -> CGSize? { nil }
+    public var body: Never { fatalError() }
+}
+extension UIViewRepresentable where Coordinator == Void { public func makeCoordinator() -> Coordinator { () } }
+@MainActor public struct UIViewRepresentableContext<Representable: UIViewRepresentable> {
+    public var coordinator: Representable.Coordinator { fatalError() }
+    public var environment: EnvironmentValues { fatalError() }
+    public var transaction: Transaction { fatalError() }
+}
+@MainActor @preconcurrency public protocol UIViewControllerRepresentable: View where Body == Never {
+    associatedtype UIViewControllerType: UIViewController
+    associatedtype Coordinator = Void
+    func makeUIViewController(context: Context) -> UIViewControllerType
+    func updateUIViewController(_ c: UIViewControllerType, context: Context)
+    func makeCoordinator() -> Coordinator
+    typealias Context = UIViewControllerRepresentableContext<Self>
+}
+extension UIViewControllerRepresentable { public var body: Never { fatalError() } }
+extension UIViewControllerRepresentable where Coordinator == Void { public func makeCoordinator() -> Coordinator { () } }
+@MainActor public struct UIViewControllerRepresentableContext<R: UIViewControllerRepresentable> { public var coordinator: R.Coordinator { fatalError() }; public var environment: EnvironmentValues { fatalError() } }
+@MainActor open class UIHostingController<Content: View>: UIViewController { public init(rootView: Content) {}; open var rootView: Content { fatalError() } }
+#else
 // Representables
 @MainActor @preconcurrency public protocol NSViewRepresentable: View where Body == Never {
     associatedtype NSViewType: NSView
@@ -171,6 +210,7 @@ extension NSViewControllerRepresentable where Coordinator == Void { public func 
 }
 public struct NSHostingSizingOptions: OptionSet, Sendable { public let rawValue: Int; public init(rawValue: Int) { self.rawValue = rawValue }; public static let minSize = NSHostingSizingOptions(rawValue: 1), intrinsicContentSize = NSHostingSizingOptions(rawValue: 2), maxSize = NSHostingSizingOptions(rawValue: 4), preferredContentSize = NSHostingSizingOptions(rawValue: 8) }
 @MainActor open class NSHostingController<Content: View>: NSViewController { public init(rootView: Content) {}; open var rootView: Content { fatalError() } }
+#endif
 
 // AttributedString SwiftUI scope
 extension AttributeScopes { public var swiftUI: SwiftUIAttributes.Type { SwiftUIAttributes.self }
