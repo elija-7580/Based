@@ -1,0 +1,141 @@
+// MCP: Werkzeuge und Ressourcen über das offizielle SDK – über Streamable HTTP (/mcp, Bearer-Token) und stdio.
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { openWorkspace, SyncClient } from "@based/sync";
+import { openNodeDatabase } from "@based/sync/node";
+import { startApp, TOKEN } from "./helpers.js";
+
+type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
+const textOf = (r: unknown) => (r as ToolResult).content.map((c) => c.text).join("\n");
+
+let cleanup: (() => Promise<void>)[] = [];
+afterEach(async () => {
+  for (const c of cleanup.reverse()) await c();
+  cleanup = [];
+});
+
+async function httpClient(token = TOKEN) {
+  const app = await startApp();
+  cleanup.push(() => app.close());
+  const client = new Client({ name: "test", version: "1" });
+  const transport = new StreamableHTTPClientTransport(new URL(`${app.url}/mcp`), { requestInit: { headers: { Authorization: `Bearer ${token}` } } });
+  await client.connect(transport);
+  cleanup.push(() => client.close());
+  const call = async (name: string, args: Record<string, unknown> = {}) => (await client.callTool({ name, arguments: args })) as ToolResult;
+  return { app, client, call };
+}
+
+const idIn = (s: string) => /id: ([0-9A-Fa-f-]{36})/.exec(s)?.[1] ?? "";
+
+describe("MCP über Streamable HTTP", () => {
+  it("initialize mit Anleitung, Werkzeugliste", async () => {
+    const { client } = await httpClient();
+    expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
+    const names = (await client.listTools()).tools.map((t) => t.name).sort();
+    expect(names).toEqual(
+      ["append_markdown", "based_guide", "create_page", "list_pages", "list_trash", "read_page", "replace_page_content", "restore_page", "search", "trash_page", "update_page"].sort(),
+    );
+  });
+
+  it("ohne gültigen Token: 401, keine Verbindung", async () => {
+    await expect(httpClient("falsch")).rejects.toThrow();
+  });
+
+  it("Seiten anlegen, lesen, suchen, bearbeiten, Papierkorb", async () => {
+    const { app, call } = await httpClient();
+    const created = await call("create_page", { markdown: "# Projektplan\n\nErster Absatz\n\n- Punkt eins\n- Punkt zwei\n\n- [ ] Aufgabe" });
+    const id = idIn(textOf(created));
+    expect(app.sync.store.blocks.get(id)?.text).toBe("Projektplan");
+    expect(textOf(await call("read_page", { id }))).toBe("# Projektplan\n\nErster Absatz\n\n- Punkt eins\n- Punkt zwei\n\n- [ ] Aufgabe\n");
+
+    const sub = idIn(textOf(await call("create_page", { title: "Unterseite", parent: id, markdown: `Siehe [Plan](based://page/${id})` })));
+    expect(textOf(await call("list_pages", { parent: id }))).toBe(`- Unterseite (id: ${sub})`);
+    expect(textOf(await call("list_pages"))).toBe(`- Projektplan (id: ${id})`);
+    // Link auf eine Seite wird eine Erwähnung und kommt als based://page-Link zurück.
+    expect(textOf(await call("read_page", { id: sub }))).toContain(`(based://page/${id})`);
+
+    await call("append_markdown", { id, markdown: "## Nachtrag\n\nMehr Text mit Suchwort Zebrafink" });
+    expect(textOf(await call("read_page", { id }))).toContain("## Nachtrag");
+    expect(textOf(await call("search", { query: "Zebrafink" }))).toContain(`(id: ${id})`);
+
+    await call("replace_page_content", { id, markdown: "Nur noch das" });
+    const md = textOf(await call("read_page", { id }));
+    expect(md).toContain("Nur noch das");
+    expect(md).not.toContain("Punkt eins");
+    expect(app.sync.store.blocks.has(sub)).toBe(true); // Unterseiten bleiben
+
+    await call("update_page", { id, title: "Neuer Titel", icon: "🚀" });
+    expect(app.sync.store.blocks.get(id)?.props?.icon).toBe("🚀");
+    expect(textOf(await call("read_page", { id }))).toMatch(/^# Neuer Titel/);
+
+    expect(textOf(await call("trash_page", { id }))).toContain("Trash");
+    expect(textOf(await call("list_pages"))).toBe("(none)");
+    expect(textOf(await call("list_trash"))).toContain(id);
+    const editTrashed = await call("append_markdown", { id, markdown: "x" });
+    expect(editTrashed.isError).toBe(true);
+    await call("restore_page", { id });
+    expect(textOf(await call("list_pages"))).toContain(id);
+
+    const missing = await call("read_page", { id: "gibt-es-nicht" });
+    expect(missing.isError).toBe(true);
+    expect(textOf(missing)).toContain("No page");
+  });
+
+  it("Ressourcen: Anleitung und Seiten", async () => {
+    const { client, call } = await httpClient();
+    const id = idIn(textOf(await call("create_page", { title: "Ressource", markdown: "Inhalt" })));
+    const list = (await client.listResources()).resources.map((r) => r.uri);
+    expect(list).toContain("based://docs/overview");
+    expect(list).toContain(`based://page/${id}`);
+    const page = await client.readResource({ uri: `based://page/${id}` });
+    expect((page.contents[0] as { text: string }).text).toBe("# Ressource\n\nInhalt\n");
+    const guide = await client.readResource({ uri: "based://docs/markdown" });
+    expect((guide.contents[0] as { text: string }).text).toContain("Markdown");
+  });
+
+  it("MCP-Änderungen kommen per Sync v2 bei Geräten an", async () => {
+    const { app, call } = await httpClient();
+    const id = idIn(textOf(await call("create_page", { title: "Vom Agenten", markdown: "Hallo Gerät" })));
+    const d = openWorkspace(openNodeDatabase());
+    await new SyncClient(d.store, d.persistence, { baseURL: app.url, token: TOKEN }).syncOnce();
+    expect(d.store.blocks.get(id)?.text).toBe("Vom Agenten");
+    expect(d.store.children("b:" + id).length).toBe(1);
+  });
+
+  it("GET /mcp: 405 (kein SSE)", async () => {
+    const app = await startApp();
+    cleanup.push(() => app.close());
+    const r = await fetch(`${app.url}/mcp`, { headers: { Authorization: `Bearer ${TOKEN}` } });
+    expect(r.status).toBe(405);
+  });
+});
+
+describe("MCP über stdio", () => {
+  it("startet ohne Token, schreibt in die Datenbank", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "based-mcp-"));
+    const db = join(dir, "based.sqlite");
+    const root = fileURLToPath(new URL("..", import.meta.url));
+    const transport = new StdioClientTransport({
+      command: join(root, "node_modules/.bin/tsx"),
+      args: [join(root, "src/main.ts"), "--stdio", "--db", db],
+      env: { PATH: process.env.PATH ?? "", BASED_LOG_LEVEL: "warning" },
+      stderr: "ignore",
+    });
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(transport);
+    try {
+      const r = (await client.callTool({ name: "create_page", arguments: { title: "Über stdio" } })) as ToolResult;
+      expect(textOf(r)).toContain("Created Über stdio");
+    } finally {
+      await client.close();
+    }
+    const after = openWorkspace(openNodeDatabase(db));
+    expect([...after.store.blocks.values()].map((b) => b.text)).toContain("Über stdio");
+  }, 30_000);
+});
