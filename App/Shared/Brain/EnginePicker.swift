@@ -52,7 +52,7 @@ struct EnginePickerButton: View {
     private var label: String {
         switch brain.engineSpec.kind {
         case .auto:
-            return "Auto"
+            return brain.compute == .auto ? "Auto" : "Auto · " + brain.compute.title
         default:
             return CLICatalog.label(brain.engineSpec)
         }
@@ -74,7 +74,7 @@ struct EnginePickerPanel: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 1) {
-                        ModelRow(title: "Auto", detail: "Picks the best available · now \(brain.chatEngine)",
+                        ModelRow(title: "Auto", detail: "Picks a model per task · \(brain.compute.title) compute",
                                  symbol: "sparkles", selected: brain.engineSpec.kind == .auto) {
                             brain.engineSpec = .auto; done()
                         }
@@ -112,6 +112,11 @@ struct EnginePickerPanel: View {
                     let id = spec.kind == .auto ? "auto" : spec.kind == .api ? "api:\(spec.model ?? "")" : "\(spec.kind.rawValue):\(spec.model ?? "")"
                     proxy.scrollTo(id, anchor: .center)
                 }
+            }
+            if brain.engineSpec.kind == .auto {
+                Rectangle().fill(Theme.gridLine).frame(height: 1)
+                ComputeRow()
+                    .padding(.horizontal, 12).padding(.vertical, 10)
             }
             if brain.engineSpec.kind != .auto, !CLICatalog.efforts(for: brain.engineSpec.kind).isEmpty {
                 Rectangle().fill(Theme.gridLine).frame(height: 1)
@@ -259,6 +264,51 @@ struct EffortRow: View {
             }
             .padding(2)
             .background(RoundedRectangle(cornerRadius: 7).fill(Theme.hoverFill))
+        }
+    }
+}
+
+/// BSD-49: compute level for Auto — Low (cheap, fast), Auto (route default), High (strongest model).
+struct ComputeRow: View {
+    @Environment(BrainModel.self) private var brain
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Compute").font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.secondary)
+                Spacer()
+                Text(detail(brain.compute)).font(.system(size: 11)).foregroundStyle(Theme.secondary)
+            }
+            HStack(spacing: 0) {
+                ForEach(ComputeLevel.allCases, id: \.self) { c in
+                    Button { brain.compute = c } label: {
+                        Text(c.title)
+                            .font(.system(size: 11, weight: brain.compute == c ? .semibold : .regular))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
+                            .background {
+                                if brain.compute == c {
+                                    RoundedRectangle(cornerRadius: 5).fill(.background)
+                                        .shadow(color: .black.opacity(0.12), radius: 1, y: 0.5)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.hoverFill)
+                    .foregroundStyle(brain.compute == c ? Theme.primary : Theme.secondary)
+                    .accessibilityIdentifier("ai.compute.\(c.rawValue)")
+                }
+            }
+            .padding(2)
+            .background(RoundedRectangle(cornerRadius: 7).fill(Theme.hoverFill))
+        }
+    }
+
+    private func detail(_ c: ComputeLevel) -> String {
+        switch c {
+        case .low: return "Cheapest model that fits"
+        case .auto: return "Picked per task"
+        case .high: return "Strongest model"
         }
     }
 }

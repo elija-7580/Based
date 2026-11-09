@@ -36,6 +36,27 @@ public enum ChatRouting {
         return .none
     }
 
+    /// BSD-49: the engine for one turn. An explicit choice in the picker wins (the router is not asked; fallback
+    /// only as in `resolve`); Auto asks `router` with the task and the compute level (Low / Auto / High).
+    public static func route(_ spec: ChatEngineSpec, task: RouteTask, compute: ComputeLevel, forceLow: Bool = false,
+                             router: ModelRouter = ModelRouter(), registry: ModelRegistry,
+                             installed: Set<ChatEngineSpec.Kind>, defaultModel: String) -> RouteDecision {
+        guard spec.kind == .auto else {
+            let c = resolve(spec, registry: registry, installed: installed, defaultModel: defaultModel)
+            let honoured: Bool = {
+                switch c {
+                case .cli(let s): return s == spec
+                case .model(let r): return spec.kind == .api && r == spec.model
+                case .none: return false
+                }
+            }()
+            return RouteDecision(choice: c, effort: spec.effort, compute: compute,
+                                 reason: honoured ? "chosen in the picker" : "\(spec.kind.title) is not available; Auto fallback")
+        }
+        return router.decide(task, compute: compute, forceLow: forceLow, registry: registry, installed: installed,
+                             defaultModel: defaultModel)
+    }
+
     /// Label for meta lines ("Claude Code · Opus 5.5").
     public static func label(_ c: ChatEngineChoice) -> String {
         switch c {

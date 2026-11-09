@@ -14,6 +14,8 @@ struct ChatTurn: Identifiable, Equatable {
     var attachments: [String] = []
     /// Assistant turns: "Claude Code · 12 s · $0.01".
     var meta: String?
+    /// BSD-49: why the router picked this engine (tooltip on the meta line).
+    var why: String?
     var isRunning = false
     var failed = false
     var started = Date()
@@ -157,6 +159,11 @@ final class BrainModel {
 
     typealias Engine = ChatEngineChoice
 
+    /// BSD-49: compute level for Auto (Low / Auto / High), picked under "Auto" in the model picker.
+    var compute: ComputeLevel = ComputeLevel(rawValue: UserDefaults.standard.string(forKey: "ai.compute") ?? "") ?? .auto {
+        didSet { UserDefaults.standard.set(compute.rawValue, forKey: "ai.compute") }
+    }
+
     /// Auto: API model → Claude Code → Codex → on device (BSD-94: decided in BasedBrain, `ChatRouting.resolve`).
     var resolvedEngine: Engine {
         ChatRouting.resolve(engineSpec, registry: registry, installed: installedCLIs, defaultModel: defaultModel)
@@ -252,13 +259,22 @@ final class BrainModel {
     private func startTurn(_ prompt: String, pageContext: RecordID?, attachments: [ChatAttachment]) -> ChatTurnHandle? {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !attachments.isEmpty else { return nil }
-        let engine = resolvedEngine
+        // BSD-49: Auto routes by task and compute level; an explicit picker choice wins. Within a chat, Auto stays
+        // on the engine family of the previous turn so the conversation's context is kept.
+        let attachmentTexts = attachments.map { $0.promptText() }
+        let existingChat = chatID.flatMap { store.blocks[$0] != nil ? $0 : nil }
+        let task = RouteTask(text: trimmed, attachmentChars: attachmentTexts.reduce(0) { $0 + $1.count },
+                             folder: chatFolder == NSHomeDirectory() ? nil : chatFolder)
+        let decision = ChatRouting.route(engineSpec, task: task, compute: compute, registry: registry,
+                                         installed: installedCLIs, defaultModel: defaultModel)
+            .keepingConversation(resumeKey: existingChat.flatMap { brain.resumeKey($0) }, hasHistory: !turns.isEmpty)
+        let engine = decision.choice
         let page = ChatRouting.page(pageContext, in: store, onDevice: engine.isOnDevice)
-        let p = ChatRouting.prompt(trimmed, attachments: attachments.map { $0.promptText() }, page: page, onDevice: engine.isOnDevice)
+        let p = ChatRouting.prompt(trimmed, attachments: attachmentTexts, page: page, onDevice: engine.isOnDevice)
         let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
         // Persist: the first message creates the chat.
         let sid: RecordID
-        if let c = chatID, store.blocks[c] != nil { sid = c } else {
+        if let c = existingChat { sid = c } else {
             sid = brain.createSession(title: String(shown.prefix(60)), agentID: "based", machine: happier.machineName,
                                       cwd: engine.isCLI ? chatFolder : "", encrypted: false)
             chatID = sid
@@ -299,8 +315,10 @@ final class BrainModel {
         let chat = ChatEngine(sink: brain)
         let request = ChatRequest(prompt: p, displayPrompt: shown + attachNote, history: history,
                                   resume: chat.resume(for: sid, with: backend), cwd: folder, system: system)
-        let engineLabel = chatEngine
+        let engineLabel = [ChatRouting.label(engine), decision.routeLabel].filter { !$0.isEmpty }.joined(separator: " · ")
+        let routeWhy = decision.route == nil ? nil : "\(decision.compute.title): \(decision.reason)"
         let turn = chat.send(request, session: sid, via: backend)
+        brain.noteRoute(session: sid, decision)
         Task {
             // Events land on the reply turn (looked up by id: the list may change while it runs).
             for await e in turn.events {
@@ -318,6 +336,7 @@ final class BrainModel {
                 if let c = r.costUSD { meta.append(String(format: "$%.3f", c)) }
                 meta += r.notices   // BSD-46: "continued after the length limit" / "cut off"
                 turns[i].meta = meta.joined(separator: " · ")
+                turns[i].why = routeWhy
                 if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
             }
         }

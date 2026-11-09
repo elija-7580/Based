@@ -266,6 +266,16 @@ extension BrainStore {
         writeRun(id, db, values, name: "Finish run")
     }
 
+    /// BSD-49: records the router's decision on the session's current run (model, compute level) and logs why.
+    public func noteRoute(session sid: RecordID, _ d: RouteDecision) {
+        guard let r = latestRun(forSession: sid) else { return }
+        let db = runsDB
+        writeRun(r.id, db, [(RunCol.model, .text(RichText(ChatRouting.label(d.choice)))),
+                            (RunCol.compute, runOption(db, RunCol.compute, d.compute.runCompute.rawValue))], name: "Run route")
+        let route = d.route.map { "Route **\($0.name)**" } ?? "Model chosen in the picker"
+        logRun(r.id, "\(route) · \(d.compute.title) → \(ChatRouting.label(d.choice)) — \(d.reason)")
+    }
+
     /// Appends a line to the run's short protocol (the page body; not the full transcript).
     public func logRun(_ id: RecordID, _ markdown: String) {
         guard store.blocks[id] != nil, !markdown.isEmpty else { return }

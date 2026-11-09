@@ -89,7 +89,7 @@ struct AssistantMessageView: View {
             if !turn.isRunning {
                 HStack(spacing: 10) {
                     CopyButton(text: turn.reply.text)
-                    if let meta = turn.meta { Text(meta).font(.system(size: 11)).foregroundStyle(Theme.secondary) }
+                    if let meta = turn.meta { Text(meta).font(.system(size: 11)).foregroundStyle(Theme.secondary).help(turn.why ?? "") }
                 }
                 .opacity(hover ? 1 : 0)
             }
