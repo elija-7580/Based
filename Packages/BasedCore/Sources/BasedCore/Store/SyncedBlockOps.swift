@@ -23,8 +23,9 @@ public enum SyncedBlockClipboard {
 public enum SyncedPasteProblem: Error, Equatable, Sendable {
     /// The clipboard names no synced block (or one that was deleted forever).
     case noSource
-    /// The original (or a copy of it) is already on this page. One page shows each synced block once, because the
-    /// editor tracks text fields by block ID (same block twice on a page would fight over focus and selection).
+    /// Pasted right next to itself: the anchor is a copy of the same original (BSD-120). Elsewhere on the same
+    /// page is fine – the editor keeps one text view per synced path, so two copies don't fight over focus.
+    /// (The name is kept for source compatibility.)
     case alreadyOnPage
     /// Pasting into the synced block's own content would make it contain itself.
     case insideItself
@@ -59,9 +60,7 @@ public extension WorkspaceStore {
     func syncedPasteProblem(source: RecordID, at anchor: RecordID) -> SyncedPasteProblem? {
         guard let original = syncedOriginal(of: source), blocks[original] != nil, blocks[anchor] != nil else { return .noSource }
         if anchor == original || isDescendant(anchor, of: original) { return .insideItself }
-        let page = containingPage(of: anchor)
-        let places = [original] + syncedCopies(of: original)
-        if places.contains(where: { containingPage(of: $0) == page }) { return .alreadyOnPage }
+        if blocks[anchor]?.props.syncSource == original { return .alreadyOnPage }
         return nil
     }
 

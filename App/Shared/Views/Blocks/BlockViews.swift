@@ -796,6 +796,15 @@ struct ColumnView: View {
     }
 }
 
+/// BSD-120: the synced copies a block is rendered inside (see `TextHost.hostPath`).
+private struct SyncedPathKey: EnvironmentKey { static let defaultValue = "" }
+extension EnvironmentValues {
+    var syncedPath: String {
+        get { self[SyncedPathKey.self] }
+        set { self[SyncedPathKey.self] = newValue }
+    }
+}
+
 /// A sub-page, full-page database or "link to page" block.
 struct PageLinkView: View {
     let pageID: RecordID
@@ -834,6 +843,7 @@ struct SyncedBlockView: View {
     let block: Block
     let editor: EditorController
     @Environment(AppModel.self) private var model
+    @Environment(\.syncedPath) private var syncedPath
     @State private var hovering = false
 
     var body: some View {
@@ -866,7 +876,9 @@ struct SyncedBlockView: View {
                     Button("Restore") { model.restore([root]) }.buttonStyle(.plain).foregroundStyle(Color.accentColor)
                 }
             } else {
+                // BSD-120: a copy's text views carry its path, so the same blocks can show twice on one page.
                 BlockList(parentID: source, editor: editor)
+                    .environment(\.syncedPath, isCopy ? syncedPath + "/" + block.id : syncedPath)
             }
         }
         .padding(6)
