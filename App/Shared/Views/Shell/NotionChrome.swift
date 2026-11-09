@@ -903,9 +903,8 @@ struct WorkspaceMenu: View {
                     .accessibilityIdentifier("workspace.name")
             }
             .padding(.bottom, 6)
-            if model.syncStatus != "Off" && model.syncStatus != "Not configured" {
-                Text("Sync: \(model.syncStatus)").font(.caption).foregroundStyle(Theme.secondary).padding(.bottom, 4)
-            }
+            Text("Sync: \(model.syncChannelStatus)").font(.caption).foregroundStyle(Theme.secondary).padding(.bottom, 4)
+                .accessibilityIdentifier("workspace.syncStatus")
             Divider().padding(.vertical, 4)
             row("Settings", "gearshape") { model.openSettings() }
             row("Import from Notion…", "square.and.arrow.down.on.square") { model.showNotionImport = true }

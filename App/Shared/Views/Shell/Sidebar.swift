@@ -242,9 +242,8 @@ struct WorkspaceHeader: View {
                 .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.1)))
             Text(w.name).font(.system(size: 14, weight: .semibold)).lineLimit(1)
             Spacer(minLength: 4)
-            if model.syncStatus != "Off" && model.syncStatus != "Not configured" {
-                Text(model.syncStatus).font(.caption2).foregroundStyle(Theme.secondary).lineLimit(1)
-            }
+            Text(model.syncChannels.label).font(.caption2).foregroundStyle(Theme.secondary).lineLimit(1)
+                .help(model.syncChannelStatus)
         }
         .textCase(nil)
         .foregroundStyle(Theme.primary)

@@ -117,6 +117,23 @@ grows in arrival order.
 app. It has a `changes(seq, kind, id, deleted, local)` table with one row per record: its latest change.
 `pull` reads that table by `seq`. v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
 
+## Channels
+
+Based has two sync channels, and they don't forward to each other:
+
+- **Based server (sync v2, this document)** — the main channel (ADR 0001). Pushes every change from the
+  local change log with `local=1`.
+- **iCloud / CloudKit** — experimental, off by default (Settings → Sync & server → iCloud (experimental)).
+  Changes that arrive through CloudKit are logged with `local=0`, so they are never pushed to a server;
+  changes pulled from a server don't reach CloudKit either.
+
+A device that uses only one channel therefore never sees edits made through the other: use one channel on
+all devices. The app decides which channels run with `SyncChannelPolicy.active(serverConfigured:
+cloudKitSetting:buildHasContainer:usedCloudKitBefore:)` in BasedBrain: iCloud runs only when the switch is
+on and the build has a container; a workspace that already synced through iCloud and has no server keeps
+iCloud once after updating. With both on, Settings and the log show a warning. The sidebar shows the active
+channel ("Server", "iCloud", "Server + iCloud", "Local only").
+
 ## Implementations
 
 | client                 | status                                                                   |

@@ -440,21 +440,10 @@ struct ImportSettings: View {
 struct SyncSettings: View {
     @Environment(AppModel.self) private var model
     @Environment(BrainModel.self) private var brain
-    @State private var syncOn = true
+    @State private var syncOn = false
     @State private var serverToken = Secrets.get("server.token") ?? ""
     var body: some View {
         @Bindable var brain = brain
-        Section("iCloud") {
-            LabeledContent("Status", value: model.syncStatus)
-            if let d = model.lastSyncDate { LabeledContent("Last synced", value: d.formatted(date: .abbreviated, time: .shortened)) }
-            Toggle("Sync with iCloud", isOn: Binding(get: { syncOn }, set: { v in syncOn = v; model.syncEnabled = v }))
-                .disabled(!AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil)
-            if !AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil {
-                Text("This build has no iCloud container. Set BASED_CLOUD_SYNC = YES, a development team and an iCloud container in Config/Local.xcconfig, then rebuild.")
-                    .font(.caption).foregroundStyle(Theme.secondary)
-            }
-            Button("Sync now") { model.syncNow() }.disabled(!syncOn)
-        }
         Section("Based server (your VPS)") {
             TextField("Server URL (https://based.example.com)", text: $brain.serverURL).accessibilityIdentifier("settings.serverURL")
             SecureField("Server token", text: $serverToken)
@@ -463,7 +452,24 @@ struct SyncSettings: View {
                 Spacer()
                 LabeledContent("Status", value: brain.serverStatus)
             }
-            Text("The server is the sync hub, MCP endpoint for Claude/ChatGPT/Cursor, scheduler for the Agent Brain and the daemon that runs coding agents for your iPhone.").font(.caption).foregroundStyle(Theme.secondary)
+            Text("The server is the main sync channel, MCP endpoint for Claude/ChatGPT/Cursor, scheduler for the Agent Brain and the daemon that runs coding agents for your iPhone.").font(.caption).foregroundStyle(Theme.secondary)
+        }
+        Section("iCloud (experimental)") {
+            Toggle("Sync with iCloud", isOn: Binding(get: { syncOn }, set: { v in syncOn = v; model.syncEnabled = v }))
+                .disabled(!AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil)
+                .accessibilityIdentifier("settings.icloudSync")
+            if syncOn { LabeledContent("Status", value: model.syncStatus) }
+            if let d = model.lastSyncDate, syncOn { LabeledContent("Last synced", value: d.formatted(date: .abbreviated, time: .shortened)) }
+            Text("Use one sync channel on all devices. iCloud and the Based server don't pass changes to each other, so a device that only uses one of them won't see edits made through the other.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            if syncOn && model.serverSyncConfigured {
+                Label("Server and iCloud are both on.", systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange)
+            }
+            if !AppModel.cloudSyncBuildFlag || model.cloudContainerID == nil {
+                Text("This build has no iCloud container. Set BASED_CLOUD_SYNC = YES, a development team and an iCloud container in Config/Local.xcconfig, then rebuild.")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+            }
+            Button("Sync now") { model.syncNow() }.disabled(!syncOn)
         }
         .onAppear { syncOn = model.syncEnabled }
     }

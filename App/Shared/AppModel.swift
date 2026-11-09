@@ -4,6 +4,7 @@ import AppKit
 #endif
 import Observation
 import BasedCore
+import BasedBrain
 
 enum Peek: Identifiable, Equatable {
     case side(RecordID)
@@ -423,17 +424,51 @@ final class AppModel {
         return false
     }
 
+    /// Server URL and token are set (Server sync is the main channel, BSD-28).
+    var serverSyncConfigured: Bool {
+        !brain.serverURL.isEmpty && !(Secrets.get("server.token") ?? "").isEmpty
+    }
+
+    /// Which sync channels run. iCloud is experimental and off unless switched on (ADR 0001); a workspace that
+    /// already synced through iCloud without a server keeps it once (see `SyncChannelPolicy`).
+    var syncChannels: SyncChannelPolicy.Decision {
+        SyncChannelPolicy.active(
+            serverConfigured: serverSyncConfigured,
+            cloudKitSetting: UserDefaults.standard.object(forKey: SyncChannelPolicy.cloudKitSettingKey) as? Bool,
+            buildHasContainer: cloudContainerID != nil && Self.cloudSyncBuildFlag,
+            usedCloudKitBefore: persistence?.meta("ck:state") != nil)
+    }
+
+    /// The iCloud switch (Settings → Sync & server). Default off.
     var syncEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: "based.sync") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "based.sync"); newValue ? startSyncIfConfigured() : stopSync() }
+        get { syncChannels.cloudKitSetting }
+        set {
+            UserDefaults.standard.set(newValue, forKey: SyncChannelPolicy.cloudKitSettingKey)
+            newValue ? startSyncIfConfigured() : stopSync()
+        }
+    }
+
+    /// Short sync status for the sidebar: active channel(s), plus the server/iCloud state.
+    var syncChannelStatus: String {
+        let d = syncChannels
+        var parts: [String] = []
+        if d.server { parts.append("Server: \(brain.serverStatus)") }
+        if d.cloudKit { parts.append("iCloud: \(syncStatus)") }
+        return parts.isEmpty ? d.label : parts.joined(separator: " · ")
     }
 
     func startSyncIfConfigured() {
         #if canImport(CloudKit)
-        guard cloud == nil, syncEnabled, let id = cloudContainerID, Self.cloudSyncBuildFlag else {
-            syncStatus = cloudContainerID == nil ? "Not configured" : "Off"
+        let channels = syncChannels
+        if UserDefaults.standard.object(forKey: SyncChannelPolicy.cloudKitSettingKey) == nil {
+            // Resolve the never-chosen switch once, so a later server setup doesn't flip iCloud off by itself.
+            UserDefaults.standard.set(channels.cloudKitSetting, forKey: SyncChannelPolicy.cloudKitSettingKey)
+        }
+        guard cloud == nil, channels.cloudKit, let id = cloudContainerID else {
+            if cloud == nil { syncStatus = cloudContainerID == nil || !Self.cloudSyncBuildFlag ? "Not configured" : "Off" }
             return
         }
+        if let w = channels.warning { Log.warning(w, category: "sync") }
         let c = CloudSync(store: store, containerIdentifier: id, assets: assets)
         c.onStatus = { [weak self] s in self?.updateSyncStatus(s) }
         cloud = c

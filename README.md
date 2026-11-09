@@ -46,8 +46,10 @@ workspace archive; and a first **web client** at `based-server /app` ([`docs/pla
   side peek / center peek / full page. All property types incl. status, date
   ranges, relation (two-way), rollup, formula (Formula 2.0 subset), unique ID,
   files, number formats, type conversion.
-- **Sync**: CloudKit `CKSyncEngine` (private DB), offline-first, HLC
-  last-writer-wins per record, fractional-index ordering, assets as CKAssets.
+- **Sync**: your own Based server is the main channel (sync v2, change log,
+  offline-first, HLC last-writer-wins per record, fractional-index ordering).
+  iCloud (CloudKit `CKSyncEngine`, private DB) is experimental and off by
+  default; use one channel on all devices (see [sync channels](docs/sync-protocol.md#channels)).
 - **Import / export**: **1:1 import from Notion** — through the Notion API
   (paste page / database links or import everything shared with an
   integration: formatting, colors, toggles, callouts, columns, tables, synced
@@ -208,9 +210,12 @@ set up once with `scripts/setup-release-key.sh` on a Mac.
 background; Based quits and reopens when the build is done. Progress: `~/Library/Logs/Based/update.log`.
 If the repository is in Documents or Desktop and macOS blocks the background job, use **Run in Terminal**.
 
-### iCloud sync
+### iCloud sync (experimental)
 
-Without an Apple Developer team the app runs local-only. To enable sync:
+The recommended sync channel is your own Based server (Settings → Sync & server). iCloud is a second,
+experimental channel: it is off by default and the two channels don't forward changes to each other, so
+use one of them on all devices. Without an Apple Developer team the app runs local-only or with a server.
+To enable iCloud:
 
 1. `cp Config/Local.xcconfig.example Config/Local.xcconfig` and fill in
    `DEVELOPMENT_TEAM`, `BASED_BUNDLE_ID`, `BASED_CLOUDKIT_CONTAINER`
@@ -219,7 +224,8 @@ Without an Apple Developer team the app runs local-only. To enable sync:
 2. Create the iCloud container in the Developer portal; the schema is created
    on first sync in the development environment (deploy to production before
    shipping).
-3. `make project`, run on both devices with the same Apple ID.
+3. `make project`, run on both devices with the same Apple ID, then turn on
+   Settings → Sync & server → iCloud (experimental) → Sync with iCloud on each device.
 
 ### Running local coding agents (Claude Code, Codex, …)
 
