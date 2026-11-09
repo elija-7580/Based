@@ -19,11 +19,6 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 > @based/web@0.0.0 e2e /home/runner/work/Based/Based/apps/web
 > playwright test
 
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
 [WebServer] 
 [WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
@@ -31,10 +26,15 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 [WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 
 Running 2 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (220ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (889ms)
+  ✓  1 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (139ms)
+  ✓  2 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (4.6s)
 
-  2 passed (5.1s)
+  2 passed (7.7s)
