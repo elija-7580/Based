@@ -727,12 +727,12 @@
     },
     {
       "input" : {
-        "source" : "cbrt(27)"
+        "source" : "round(cbrt(27), 10)"
       },
-      "name" : "cbrt(27)",
+      "name" : "round(cbrt(27), 10)",
       "output" : {
         "t" : "number",
-        "v" : 3.0000000000000004
+        "v" : 3
       }
     },
     {

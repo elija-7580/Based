@@ -1,9 +1,10 @@
 // BSD-149/151: Welche Module im TS-Kern schon portiert sind. Ein Port bekommt die Eingabe eines Falls und die
 // Datei-Metadaten (z. B. Records, `now`) und liefert die Ausgabe im Fixture-Format. Nicht eingetragene Module
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
-// Offen: formulas, queries, values, conversion, search, clipboard.
+// Offen: queries, values, conversion, search, clipboard.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
-import type { RecordKeyString, WireRecord } from "../../src/index.js";
+import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
+import { Formula, FormulaError } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
 
@@ -98,4 +99,35 @@ const undoRemote: Port = (raw, meta) => {
   });
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote };
+/** Wert im Fixture-Format: nicht endliche Zahlen als Text wie Swift `String(Double)`. */
+export function valueJSON(v: Value): unknown {
+  switch (v.t) {
+    case "number": return Number.isFinite(v.v) ? v : { t: "number", v: Number.isNaN(v.v) ? "nan" : v.v > 0 ? "inf" : "-inf" };
+    case "list": return { t: "list", v: v.v.map(valueJSON) };
+    default: return v;
+  }
+}
+
+const formulas: Port = (raw, meta) => {
+  const env = meta.env as { props: Record<string, Value>; now: number; currentPage: string };
+  try {
+    const v = Formula.evaluate((raw as { source: string }).source, {
+      prop: (name) => {
+        const v = env.props[name];
+        if (!v) throw new FormulaError(`Property “${name}” not found`);
+        return v;
+      },
+      pageTitle: (id) => "Titel " + id,
+      personName: (id) => "Name " + id,
+      personEmail: (id) => id + "@example.com",
+      currentPage: env.currentPage,
+      now: env.now / 1000 - 978_307_200,
+    });
+    return valueJSON(v);
+  } catch (e) {
+    if (e instanceof FormulaError) return { error: e.message };
+    throw e;
+  }
+};
+
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas };

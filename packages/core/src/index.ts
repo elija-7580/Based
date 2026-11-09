@@ -10,3 +10,7 @@ export { FIRST_KEY, isValidKey, keyBetween, keysBetween } from "./sortkeys.js";
 export { plainText } from "./richtext.js";
 export { MemoryPersistence, Tx, WorkspaceStore, keyOf, parseKey, recordKey, WORKSPACE_ID } from "./store/store.js";
 export type { ChangeOrigin, Persistence, RecordKeyString, RemoteMergeResult, StoreOptions, UndoOutcome } from "./store/store.js";
+export { Formula, FormulaError, FUNCTION_NAMES, referencedProperties } from "./query/formula.js";
+export type { FormulaEnvironment, FormulaExpr } from "./query/formula.js";
+export * as values from "./query/value.js";
+export type { DateValue, Value } from "./query/value.js";

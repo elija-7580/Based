@@ -8,7 +8,7 @@ cd Packages/BasedCore && swift run based-fixtures      # schreibt ../../fixtures
 pnpm --filter @based/core test                         # Bericht: "<modul>: x/y grün" bzw. "nicht portiert"
 ```
 
-Zweimal erzeugen ergibt identische Dateien. Der Swift-Test `FixtureExportTests.committedFixturesAreCurrent`
+Zweimal erzeugen ergibt identische Dateien. Erzeugt wird unter Linux; Fälle, deren Ergebnis von der libm der Plattform abhängt (z. B. `cbrt(27)` = 3.0000000000000004 unter Linux), werden gerundet, damit sie dem Verhalten auf dem Mac entsprechen. Der Swift-Test `FixtureExportTests.committedFixturesAreCurrent`
 schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 
 | Modul | Datei | Inhalt |

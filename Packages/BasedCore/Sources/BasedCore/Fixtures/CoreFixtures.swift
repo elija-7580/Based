@@ -158,7 +158,7 @@ public enum CoreFixtures {
         "contains(\"Based\", \"as\")", "repeat(\"ab\", 3)", "padStart(\"7\", 3, \"0\")", "padEnd(\"7\", 3, \"_\")", "trim(\"  x  \")", "concat([1], [2, 3])",
         "format(1.5)", "format(true)", "toNumber(\"42\")", "toNumber(\"x\")", "toNumber(true)", "\"x\".style(\"b\")", "link(\"Based\", \"https://x.y\")",
         // Zahlen
-        "round(3.14159, 2)", "round(2.5)", "round(-2.5)", "ceil(1.2)", "floor(-1.2)", "abs(-3)", "sqrt(16)", "cbrt(27)", "exp(0)", "ln(e)", "log10(1000)", "log2(8)",
+        "round(3.14159, 2)", "round(2.5)", "round(-2.5)", "ceil(1.2)", "floor(-1.2)", "abs(-3)", "sqrt(16)", "round(cbrt(27), 10)", "exp(0)", "ln(e)", "log10(1000)", "log2(8)",
         "sign(-4)", "min(3, 1, 2)", "max(1, 5, 3)", "sum([1, 2, 3])", "sum(1, 2, 3)", "mean([1, 2, 3, 4])", "median([3, 1, 2])", "pi", "e", "pow(2, 10)", "mod(10, 3)",
         "add(1, 2)", "subtract(5, 2)", "multiply(3, 4)", "divide(9, 3)",
         // Listen
