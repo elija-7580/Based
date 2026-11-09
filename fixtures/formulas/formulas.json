@@ -1,0 +1,1466 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "source" : "1 + 2 * 3"
+      },
+      "name" : "1 + 2 * 3",
+      "output" : {
+        "t" : "number",
+        "v" : 7
+      }
+    },
+    {
+      "input" : {
+        "source" : "2 ^ 3 ^ 2"
+      },
+      "name" : "2 ^ 3 ^ 2",
+      "output" : {
+        "t" : "number",
+        "v" : 512
+      }
+    },
+    {
+      "input" : {
+        "source" : "-2 ^ 2"
+      },
+      "name" : "-2 ^ 2",
+      "output" : {
+        "t" : "number",
+        "v" : -4
+      }
+    },
+    {
+      "input" : {
+        "source" : "10 / 4"
+      },
+      "name" : "10 / 4",
+      "output" : {
+        "t" : "number",
+        "v" : 2.5
+      }
+    },
+    {
+      "input" : {
+        "source" : "10 % 3"
+      },
+      "name" : "10 % 3",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "-7 % 3"
+      },
+      "name" : "-7 % 3",
+      "output" : {
+        "t" : "number",
+        "v" : -1
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 / 0"
+      },
+      "name" : "1 / 0",
+      "output" : {
+        "error" : "Division by zero"
+      }
+    },
+    {
+      "input" : {
+        "source" : "0 / 0"
+      },
+      "name" : "0 / 0",
+      "output" : {
+        "error" : "Division by zero"
+      }
+    },
+    {
+      "input" : {
+        "source" : "1e3 + .5"
+      },
+      "name" : "1e3 + .5",
+      "output" : {
+        "t" : "number",
+        "v" : 1000.5
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"a\" + 1"
+      },
+      "name" : "\"a\" + 1",
+      "output" : {
+        "t" : "string",
+        "v" : "a1"
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 + \"a\""
+      },
+      "name" : "1 + \"a\"",
+      "output" : {
+        "t" : "string",
+        "v" : "1a"
+      }
+    },
+    {
+      "input" : {
+        "source" : "true + 1"
+      },
+      "name" : "true + 1",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 == 1"
+      },
+      "name" : "1 == 1",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 != 2"
+      },
+      "name" : "1 != 2",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"a\" == \"a\""
+      },
+      "name" : "\"a\" == \"a\"",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 < 2 and not false"
+      },
+      "name" : "1 < 2 and not false",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "true or false and false"
+      },
+      "name" : "true or false and false",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "5 > 3 ? \"big\" : \"small\""
+      },
+      "name" : "5 > 3 ? \"big\" : \"small\"",
+      "output" : {
+        "t" : "string",
+        "v" : "big"
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 > 2 ? 1 : 2 > 1 ? 3 : 4"
+      },
+      "name" : "1 > 2 ? 1 : 2 > 1 ? 3 : 4",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "if(true, \"yes\", \"no\")"
+      },
+      "name" : "if(true, \"yes\", \"no\")",
+      "output" : {
+        "t" : "string",
+        "v" : "yes"
+      }
+    },
+    {
+      "input" : {
+        "source" : "ifs(false, 1, true, 2, 3)"
+      },
+      "name" : "ifs(false, 1, true, 2, 3)",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "ifs(false, 1)"
+      },
+      "name" : "ifs(false, 1)",
+      "output" : {
+        "t" : "empty"
+      }
+    },
+    {
+      "input" : {
+        "source" : "empty(\"\")"
+      },
+      "name" : "empty(\"\")",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "empty(0)"
+      },
+      "name" : "empty(0)",
+      "output" : {
+        "t" : "bool",
+        "v" : false
+      }
+    },
+    {
+      "input" : {
+        "source" : "empty([])"
+      },
+      "name" : "empty([])",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "not empty(prop(\"Name\"))"
+      },
+      "name" : "not empty(prop(\"Name\"))",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Price\") * prop(\"Qty\")"
+      },
+      "name" : "prop(\"Price\") * prop(\"Qty\")",
+      "output" : {
+        "t" : "number",
+        "v" : 10
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Name\")"
+      },
+      "name" : "prop(\"Name\")",
+      "output" : {
+        "t" : "string",
+        "v" : "Based App"
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Empty\")"
+      },
+      "name" : "prop(\"Empty\")",
+      "output" : {
+        "t" : "empty"
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Missing\")"
+      },
+      "name" : "prop(\"Missing\")",
+      "output" : {
+        "error" : "Property “Missing” not found"
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Tags\")"
+      },
+      "name" : "prop(\"Tags\")",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "string",
+            "v" : "b"
+          },
+          {
+            "t" : "string",
+            "v" : "a"
+          },
+          {
+            "t" : "string",
+            "v" : "c"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Done\") ? 1 : 0"
+      },
+      "name" : "prop(\"Done\") ? 1 : 0",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Tags\").sort()"
+      },
+      "name" : "prop(\"Tags\").sort()",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "string",
+            "v" : "a"
+          },
+          {
+            "t" : "string",
+            "v" : "b"
+          },
+          {
+            "t" : "string",
+            "v" : "c"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Tags\").length()"
+      },
+      "name" : "prop(\"Tags\").length()",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Owner\")"
+      },
+      "name" : "prop(\"Owner\")",
+      "output" : {
+        "t" : "person",
+        "v" : "user-1"
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Linked\")"
+      },
+      "name" : "prop(\"Linked\")",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "page",
+            "v" : "p1"
+          },
+          {
+            "t" : "page",
+            "v" : "p2"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(\"Due\")"
+      },
+      "name" : "prop(\"Due\")",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "end" : 722592800,
+          "includeTime" : true,
+          "start" : 722292800
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"Hello\".length()"
+      },
+      "name" : "\"Hello\".length()",
+      "output" : {
+        "t" : "number",
+        "v" : 5
+      }
+    },
+    {
+      "input" : {
+        "source" : "upper(\"abc\")"
+      },
+      "name" : "upper(\"abc\")",
+      "output" : {
+        "t" : "string",
+        "v" : "ABC"
+      }
+    },
+    {
+      "input" : {
+        "source" : "lower(\"ÄBC\")"
+      },
+      "name" : "lower(\"ÄBC\")",
+      "output" : {
+        "t" : "string",
+        "v" : "äbc"
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"a,b,c\".split(\",\").join(\"-\")"
+      },
+      "name" : "\"a,b,c\".split(\",\").join(\"-\")",
+      "output" : {
+        "t" : "string",
+        "v" : "a-b-c"
+      }
+    },
+    {
+      "input" : {
+        "source" : "replaceAll(\"a1b2\", \"[0-9]\", \"#\")"
+      },
+      "name" : "replaceAll(\"a1b2\", \"[0-9]\", \"#\")",
+      "output" : {
+        "t" : "string",
+        "v" : "a#b#"
+      }
+    },
+    {
+      "input" : {
+        "source" : "replace(\"a1b2\", \"[0-9]\", \"#\")"
+      },
+      "name" : "replace(\"a1b2\", \"[0-9]\", \"#\")",
+      "output" : {
+        "t" : "string",
+        "v" : "a#b2"
+      }
+    },
+    {
+      "input" : {
+        "source" : "test(\"abc\", \"b\")"
+      },
+      "name" : "test(\"abc\", \"b\")",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "match(\"a1b22\", \"[0-9]+\")"
+      },
+      "name" : "match(\"a1b22\", \"[0-9]+\")",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "string",
+            "v" : "1"
+          },
+          {
+            "t" : "string",
+            "v" : "22"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "substring(\"Based\", 1, 3)"
+      },
+      "name" : "substring(\"Based\", 1, 3)",
+      "output" : {
+        "t" : "string",
+        "v" : "as"
+      }
+    },
+    {
+      "input" : {
+        "source" : "substring(\"Based\", 2)"
+      },
+      "name" : "substring(\"Based\", 2)",
+      "output" : {
+        "t" : "string",
+        "v" : "sed"
+      }
+    },
+    {
+      "input" : {
+        "source" : "contains(\"Based\", \"as\")"
+      },
+      "name" : "contains(\"Based\", \"as\")",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "repeat(\"ab\", 3)"
+      },
+      "name" : "repeat(\"ab\", 3)",
+      "output" : {
+        "t" : "string",
+        "v" : "ababab"
+      }
+    },
+    {
+      "input" : {
+        "source" : "padStart(\"7\", 3, \"0\")"
+      },
+      "name" : "padStart(\"7\", 3, \"0\")",
+      "output" : {
+        "t" : "string",
+        "v" : "007"
+      }
+    },
+    {
+      "input" : {
+        "source" : "padEnd(\"7\", 3, \"_\")"
+      },
+      "name" : "padEnd(\"7\", 3, \"_\")",
+      "output" : {
+        "t" : "string",
+        "v" : "7__"
+      }
+    },
+    {
+      "input" : {
+        "source" : "trim(\"  x  \")"
+      },
+      "name" : "trim(\"  x  \")",
+      "output" : {
+        "t" : "string",
+        "v" : "x"
+      }
+    },
+    {
+      "input" : {
+        "source" : "concat([1], [2, 3])"
+      },
+      "name" : "concat([1], [2, 3])",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 1
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 3
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "format(1.5)"
+      },
+      "name" : "format(1.5)",
+      "output" : {
+        "t" : "string",
+        "v" : "1.5"
+      }
+    },
+    {
+      "input" : {
+        "source" : "format(true)"
+      },
+      "name" : "format(true)",
+      "output" : {
+        "t" : "string",
+        "v" : "true"
+      }
+    },
+    {
+      "input" : {
+        "source" : "toNumber(\"42\")"
+      },
+      "name" : "toNumber(\"42\")",
+      "output" : {
+        "t" : "number",
+        "v" : 42
+      }
+    },
+    {
+      "input" : {
+        "source" : "toNumber(\"x\")"
+      },
+      "name" : "toNumber(\"x\")",
+      "output" : {
+        "t" : "empty"
+      }
+    },
+    {
+      "input" : {
+        "source" : "toNumber(true)"
+      },
+      "name" : "toNumber(true)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"x\".style(\"b\")"
+      },
+      "name" : "\"x\".style(\"b\")",
+      "output" : {
+        "t" : "string",
+        "v" : "x"
+      }
+    },
+    {
+      "input" : {
+        "source" : "link(\"Based\", \"https://x.y\")"
+      },
+      "name" : "link(\"Based\", \"https://x.y\")",
+      "output" : {
+        "t" : "string",
+        "v" : "Based"
+      }
+    },
+    {
+      "input" : {
+        "source" : "round(3.14159, 2)"
+      },
+      "name" : "round(3.14159, 2)",
+      "output" : {
+        "t" : "number",
+        "v" : 3.14
+      }
+    },
+    {
+      "input" : {
+        "source" : "round(2.5)"
+      },
+      "name" : "round(2.5)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "round(-2.5)"
+      },
+      "name" : "round(-2.5)",
+      "output" : {
+        "t" : "number",
+        "v" : -3
+      }
+    },
+    {
+      "input" : {
+        "source" : "ceil(1.2)"
+      },
+      "name" : "ceil(1.2)",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "floor(-1.2)"
+      },
+      "name" : "floor(-1.2)",
+      "output" : {
+        "t" : "number",
+        "v" : -2
+      }
+    },
+    {
+      "input" : {
+        "source" : "abs(-3)"
+      },
+      "name" : "abs(-3)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "sqrt(16)"
+      },
+      "name" : "sqrt(16)",
+      "output" : {
+        "t" : "number",
+        "v" : 4
+      }
+    },
+    {
+      "input" : {
+        "source" : "cbrt(27)"
+      },
+      "name" : "cbrt(27)",
+      "output" : {
+        "t" : "number",
+        "v" : 3.0000000000000004
+      }
+    },
+    {
+      "input" : {
+        "source" : "exp(0)"
+      },
+      "name" : "exp(0)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "ln(e)"
+      },
+      "name" : "ln(e)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "log10(1000)"
+      },
+      "name" : "log10(1000)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "log2(8)"
+      },
+      "name" : "log2(8)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "sign(-4)"
+      },
+      "name" : "sign(-4)",
+      "output" : {
+        "t" : "number",
+        "v" : -1
+      }
+    },
+    {
+      "input" : {
+        "source" : "min(3, 1, 2)"
+      },
+      "name" : "min(3, 1, 2)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "max(1, 5, 3)"
+      },
+      "name" : "max(1, 5, 3)",
+      "output" : {
+        "t" : "number",
+        "v" : 5
+      }
+    },
+    {
+      "input" : {
+        "source" : "sum([1, 2, 3])"
+      },
+      "name" : "sum([1, 2, 3])",
+      "output" : {
+        "t" : "number",
+        "v" : 6
+      }
+    },
+    {
+      "input" : {
+        "source" : "sum(1, 2, 3)"
+      },
+      "name" : "sum(1, 2, 3)",
+      "output" : {
+        "t" : "number",
+        "v" : 6
+      }
+    },
+    {
+      "input" : {
+        "source" : "mean([1, 2, 3, 4])"
+      },
+      "name" : "mean([1, 2, 3, 4])",
+      "output" : {
+        "t" : "number",
+        "v" : 2.5
+      }
+    },
+    {
+      "input" : {
+        "source" : "median([3, 1, 2])"
+      },
+      "name" : "median([3, 1, 2])",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "pi"
+      },
+      "name" : "pi",
+      "output" : {
+        "t" : "number",
+        "v" : 3.141592653589793
+      }
+    },
+    {
+      "input" : {
+        "source" : "e"
+      },
+      "name" : "e",
+      "output" : {
+        "t" : "number",
+        "v" : 2.718281828459045
+      }
+    },
+    {
+      "input" : {
+        "source" : "pow(2, 10)"
+      },
+      "name" : "pow(2, 10)",
+      "output" : {
+        "t" : "number",
+        "v" : 1024
+      }
+    },
+    {
+      "input" : {
+        "source" : "mod(10, 3)"
+      },
+      "name" : "mod(10, 3)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "add(1, 2)"
+      },
+      "name" : "add(1, 2)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "subtract(5, 2)"
+      },
+      "name" : "subtract(5, 2)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "multiply(3, 4)"
+      },
+      "name" : "multiply(3, 4)",
+      "output" : {
+        "t" : "number",
+        "v" : 12
+      }
+    },
+    {
+      "input" : {
+        "source" : "divide(9, 3)"
+      },
+      "name" : "divide(9, 3)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "[3, 1, 2].sort()"
+      },
+      "name" : "[3, 1, 2].sort()",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 1
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 3
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].map(current * 2)"
+      },
+      "name" : "[1, 2, 3].map(current * 2)",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 4
+          },
+          {
+            "t" : "number",
+            "v" : 6
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3, 4].filter(current % 2 == 0)"
+      },
+      "name" : "[1, 2, 3, 4].filter(current % 2 == 0)",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 4
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].map(index)"
+      },
+      "name" : "[1, 2, 3].map(index)",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 0
+          },
+          {
+            "t" : "number",
+            "v" : 1
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].reverse()"
+      },
+      "name" : "[1, 2, 3].reverse()",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 3
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 1
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].first()"
+      },
+      "name" : "[1, 2, 3].first()",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].last()"
+      },
+      "name" : "[1, 2, 3].last()",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].at(1)"
+      },
+      "name" : "[1, 2, 3].at(1)",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].at(5)"
+      },
+      "name" : "[1, 2, 3].at(5)",
+      "output" : {
+        "t" : "empty"
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 2, 3].unique()"
+      },
+      "name" : "[1, 2, 2, 3].unique()",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 1
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 3
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, [2, [3]]].flat()"
+      },
+      "name" : "[1, [2, [3]]].flat()",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 1
+          },
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "list",
+            "v" : [
+              {
+                "t" : "number",
+                "v" : 3
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].slice(1)"
+      },
+      "name" : "[1, 2, 3].slice(1)",
+      "output" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "number",
+            "v" : 2
+          },
+          {
+            "t" : "number",
+            "v" : 3
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].find(current > 1)"
+      },
+      "name" : "[1, 2, 3].find(current > 1)",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].findIndex(current > 1)"
+      },
+      "name" : "[1, 2, 3].findIndex(current > 1)",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].some(current > 2)"
+      },
+      "name" : "[1, 2, 3].some(current > 2)",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].every(current > 0)"
+      },
+      "name" : "[1, 2, 3].every(current > 0)",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].includes(2)"
+      },
+      "name" : "[1, 2, 3].includes(2)",
+      "output" : {
+        "t" : "bool",
+        "v" : true
+      }
+    },
+    {
+      "input" : {
+        "source" : "[\"b\", \"a\"].sort().join(\", \")"
+      },
+      "name" : "[\"b\", \"a\"].sort().join(\", \")",
+      "output" : {
+        "t" : "string",
+        "v" : "a, b"
+      }
+    },
+    {
+      "input" : {
+        "source" : "[].length()"
+      },
+      "name" : "[].length()",
+      "output" : {
+        "t" : "number",
+        "v" : 0
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2, 3].count()"
+      },
+      "name" : "[1, 2, 3].count()",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "let(x, 5, x * x)"
+      },
+      "name" : "let(x, 5, x * x)",
+      "output" : {
+        "t" : "number",
+        "v" : 25
+      }
+    },
+    {
+      "input" : {
+        "source" : "lets(a, 1, b, a + 1, a + b)"
+      },
+      "name" : "lets(a, 1, b, a + 1, a + b)",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "timestamp(now())"
+      },
+      "name" : "timestamp(now())",
+      "output" : {
+        "t" : "number",
+        "v" : 1700000000000
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateBetween(prop(\"Due\").dateEnd(), prop(\"Due\").dateStart(), \"hours\")"
+      },
+      "name" : "dateBetween(prop(\"Due\").dateEnd(), prop(\"Due\").dateStart(), \"hours\")",
+      "output" : {
+        "t" : "number",
+        "v" : 83
+      }
+    },
+    {
+      "input" : {
+        "source" : "fromTimestamp(1700000000000)"
+      },
+      "name" : "fromTimestamp(1700000000000)",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : true,
+          "start" : 721692800
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateBetween(fromTimestamp(1700086400000), fromTimestamp(1700000000000), \"days\")"
+      },
+      "name" : "dateBetween(fromTimestamp(1700086400000), fromTimestamp(1700000000000), \"days\")",
+      "output" : {
+        "t" : "number",
+        "v" : 1
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateAdd(fromTimestamp(1700000000000), 90, \"minutes\")"
+      },
+      "name" : "dateAdd(fromTimestamp(1700000000000), 90, \"minutes\")",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : true,
+          "start" : 721698200
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "timestamp(dateAdd(fromTimestamp(1700000000000), 1, \"seconds\"))"
+      },
+      "name" : "timestamp(dateAdd(fromTimestamp(1700000000000), 1, \"seconds\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 1700000001000
+      }
+    },
+    {
+      "input" : {
+        "source" : "1 +"
+      },
+      "name" : "1 +",
+      "output" : {
+        "error" : "Unexpected end of formula"
+      }
+    },
+    {
+      "input" : {
+        "source" : "foo(1)"
+      },
+      "name" : "foo(1)",
+      "output" : {
+        "error" : "Unknown function “foo”"
+      }
+    },
+    {
+      "input" : {
+        "source" : "if(true)"
+      },
+      "name" : "if(true)",
+      "output" : {
+        "error" : "if() takes 3 arguments"
+      }
+    },
+    {
+      "input" : {
+        "source" : "\"unterminated"
+      },
+      "name" : "\"unterminated",
+      "output" : {
+        "error" : "Unterminated string"
+      }
+    },
+    {
+      "input" : {
+        "source" : "prop(1)"
+      },
+      "name" : "prop(1)",
+      "output" : {
+        "error" : "Property “1” not found"
+      }
+    },
+    {
+      "input" : {
+        "source" : "[1, 2"
+      },
+      "name" : "[1, 2",
+      "output" : {
+        "error" : "Expected “]”"
+      }
+    },
+    {
+      "input" : {
+        "source" : "let(1, 2, 3)"
+      },
+      "name" : "let(1, 2, 3)",
+      "output" : {
+        "error" : "let(name, value, expression)"
+      }
+    },
+    {
+      "input" : {
+        "source" : "upper()"
+      },
+      "name" : "upper()",
+      "output" : {
+        "error" : "upper() is missing an argument"
+      }
+    }
+  ],
+  "env" : {
+    "currentPage" : "p0",
+    "now" : 1700000000000,
+    "pageTitle" : "Titel <id>",
+    "personEmail" : "<id>@example.com",
+    "personName" : "Name <id>",
+    "props" : {
+      "Day" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : false,
+          "start" : 721612800
+        }
+      },
+      "Done" : {
+        "t" : "bool",
+        "v" : true
+      },
+      "Due" : {
+        "t" : "date",
+        "v" : {
+          "end" : 722592800,
+          "includeTime" : true,
+          "start" : 722292800
+        }
+      },
+      "Empty" : {
+        "t" : "empty"
+      },
+      "Linked" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "page",
+            "v" : "p1"
+          },
+          {
+            "t" : "page",
+            "v" : "p2"
+          }
+        ]
+      },
+      "Name" : {
+        "t" : "string",
+        "v" : "Based App"
+      },
+      "Owner" : {
+        "t" : "person",
+        "v" : "user-1"
+      },
+      "Price" : {
+        "t" : "number",
+        "v" : 2.5
+      },
+      "Qty" : {
+        "t" : "number",
+        "v" : 4
+      },
+      "Tags" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "string",
+            "v" : "b"
+          },
+          {
+            "t" : "string",
+            "v" : "a"
+          },
+          {
+            "t" : "string",
+            "v" : "c"
+          }
+        ]
+      }
+    }
+  },
+  "module" : "formulas",
+  "timeZone" : null
+}

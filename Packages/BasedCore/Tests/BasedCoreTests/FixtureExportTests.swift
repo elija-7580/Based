@@ -3,6 +3,7 @@ import Testing
 @testable import BasedCore
 
 /// BSD-148/149 (ADR 0011): Golden Fixtures für den TypeScript-Stack.
+@MainActor
 @Suite struct FixtureExportTests {
     @Test func exportIsDeterministic() throws {
         #expect(try FixtureExport.all() == FixtureExport.all())
@@ -22,6 +23,7 @@ import Testing
     /// Die eingecheckten Dateien unter fixtures/ sind aktuell. Bei Fehlschlag: `swift run based-fixtures`.
     @Test func committedFixturesAreCurrent() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../fixtures").standardizedFileURL
+        // Auf einem Mac in Wien fehlen die *.utc.json-Dateien hier (andere Zeitzone); die prüft Linux/CI.
         for (path, text) in try FixtureExport.all() {
             let onDisk = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)
             #expect(onDisk == text, "fixtures/\(path) ist veraltet – swift run based-fixtures")

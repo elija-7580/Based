@@ -6,6 +6,8 @@ import Foundation
 //   swift run based-fixtures --records-from <based.sqlite> <ausgabe.jsonl>
 //       exportiert alle Records einer echten Datenbank als JSONL (eine Zeile pro Record, Swift-Bytes),
 //       z. B. für `BASED_RECORDS=<ausgabe.jsonl> pnpm --filter @based/core test`.
+// Zeitzonenabhängige Fixtures entstehen immer in UTC, damit jede Maschine dieselben Dateien schreibt.
+setenv("TZ", "UTC", 1)
 let args = Array(CommandLine.arguments.dropFirst())
 
 func fail(_ msg: String) -> Never {
@@ -27,7 +29,8 @@ let here = URL(fileURLWithPath: #filePath)
 let defaultOut = here.deletingLastPathComponent().appendingPathComponent("../../../../fixtures").standardizedFileURL
 let out = args.first.map { URL(fileURLWithPath: $0) } ?? defaultOut
 do {
-    let files = try FixtureExport.all()
+    guard FixtureExport.isUTC else { fail("based-fixtures: Zeitzone ist nicht UTC (\(TimeZone.current.identifier))") }
+    let files = try MainActor.assumeIsolated { try FixtureExport.all() }
     for (path, text) in files.sorted(by: { $0.key < $1.key }) {
         let url = out.appendingPathComponent(path)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
