@@ -219,3 +219,55 @@ describe("Store-Worker-Schnittstelle", () => {
     expect(client.getState().outline).toEqual(buildOutline(host.ws!.store));
   });
 });
+
+// BSD-73: Versionsverlauf über die Worker-Schnittstelle.
+describe("Versionsverlauf", () => {
+  it("Seite ändern → Version; Wiederherstellen holt den alten Inhalt, der neue bleibt als Version; Undo", async () => {
+    const { client, host } = setup();
+    const { homePageID } = await client.init({});
+    const page = await client.openPage(homePageID!); // „opened“: erste Version
+    const first = page.store.children("b:" + homePageID)[0]!;
+    const original = page.store.blocks.get(first)?.text;
+    page.store.setText(first, "Neuer Stand");
+    page.store.transact("neu", (tx) => tx.put({ kind: "block", data: { id: "NEW", type: "text", parent: "b:" + homePageID, sk: "zz", text: "dazugekommen", createdAt: 0, updatedAt: 0 } }));
+    await settle();
+
+    const list = await client.historyList(homePageID!);
+    expect(list.versions.map((v) => v.reason)).toEqual(["edit", "opened"]);
+    expect(list.stats?.versions).toBe(2);
+    const old = list.versions[1]!;
+    const content = await client.historyContent(homePageID!, old.id);
+    expect(content.missing).toEqual([]);
+    expect(content.blocks.find((b) => b.id === first)?.text).toEqual(original);
+
+    const r = await client.historyRestore(homePageID!, old.id);
+    expect(r).toMatchObject({ removed: 1, copied: 0 });
+    await settle();
+    expect(host.ws!.store.blocks.get(first)?.text).toEqual(original);
+    expect(host.ws!.store.blocks.has("NEW")).toBe(false);
+    expect(page.store.blocks.get(first)?.text).toEqual(original); // Replik bekommt es mit
+    // der neue Stand ist als Version erhalten
+    const after = await client.historyList(homePageID!);
+    expect(after.versions.map((v) => v.reason)).toEqual(["restored", "edit", "opened"]);
+    const kept = await client.historyContent(homePageID!, after.versions[1]!.id);
+    expect(kept.blocks.find((b) => b.id === "NEW")?.text).toBe("dazugekommen");
+
+    // ein Undo-Schritt im Worker
+    expect(await client.command({ op: "undo" })).toBe("Restore version");
+    await settle();
+    expect(host.ws!.store.blocks.get(first)?.text).toBe("Neuer Stand");
+    expect(host.ws!.store.blocks.has("NEW")).toBe(true);
+    page.close();
+  });
+
+  it("endgültig gelöschte Seiten verlieren ihren Verlauf", async () => {
+    const { client, host } = setup();
+    await client.init({});
+    const id = await client.command<string>({ op: "createPage", title: "Weg" });
+    (await client.openPage(id)).close();
+    expect((await client.historyList(id)).versions.length).toBe(1);
+    await client.command({ op: "trash", ids: [id] });
+    await client.command({ op: "emptyTrash" });
+    expect(host.history!.history.versions(id)).toEqual([]);
+  });
+});

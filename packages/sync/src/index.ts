@@ -12,3 +12,5 @@ export { SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspac
 export type { ChangeEntry, DeviceNodeStore, NodeResolution, UndecodableRow } from "./persistence.js";
 export { PULLED_KEY, PUSHED_KEY, SyncClient, SyncHTTPError, decodeDeletions, decodeRecords } from "./client.js";
 export type { SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";
+// BSD-73: Versionsverlauf in einer eigenen Datei (history.sqlite, Format wie Swift)
+export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";

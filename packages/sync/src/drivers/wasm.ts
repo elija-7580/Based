@@ -16,6 +16,8 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
   const file = opts.opfs ? "/" + opts.opfs.replace(/^\/+/, "") : undefined;
   if (file) {
     pool = await sqlite3.installOpfsSAHPoolVfs({ name: "based-sahpool" });
+    // Platz für based.sqlite, history.sqlite (BSD-73), ihre Journale und eine Sicherung.
+    if (pool.getCapacity() < 10) await pool.reserveMinimumCapacity(10);
     db = new pool.OpfsSAHPoolDb(file);
   } else {
     db = new sqlite3.oo1.DB(":memory:", "c");

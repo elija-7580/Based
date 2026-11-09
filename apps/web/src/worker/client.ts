@@ -10,7 +10,7 @@ import {
   type RecordKeyString,
   type WireRecord,
 } from "@based/core";
-import type { Command, Endpoint, Event, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
+import type { Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -151,6 +151,19 @@ export class StoreClient {
 
   setSync(sync: SyncConfig | undefined): Promise<boolean> {
     return this.request<boolean>(sync ? { type: "setSync", sync } : { type: "setSync" });
+  }
+
+  /** Versionsverlauf einer Seite (BSD-73): Liste (neueste zuerst), Inhalt einer Version, Wiederherstellen. */
+  historyList(pageID: string): Promise<HistoryList> {
+    return this.request<HistoryList>({ type: "history", action: { op: "list", pageID } });
+  }
+
+  historyContent(pageID: string, versionID: number): Promise<HistoryContent> {
+    return this.request<HistoryContent>({ type: "history", action: { op: "content", pageID, versionID } });
+  }
+
+  historyRestore(pageID: string, versionID: number): Promise<HistoryRestoreResult> {
+    return this.request<HistoryRestoreResult>({ type: "history", action: { op: "restore", pageID, versionID } });
   }
 
   syncNow(): Promise<boolean> {

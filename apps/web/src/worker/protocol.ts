@@ -1,7 +1,7 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { DropZone, Outline, RecordKeyString, WireRecord } from "@based/core";
+import type { Block, DropZone, HistoryStats, HistoryVersion, Outline, RecordKeyString, WireRecord } from "@based/core";
 
 export interface SyncConfig {
   url: string;
@@ -81,7 +81,36 @@ export type Request =
   /** Änderungen aus einer Seiten-Replik (Editor) übernehmen. */
   | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
   | { type: "setSync"; sync?: SyncConfig }
-  | { type: "syncNow" };
+  | { type: "syncNow" }
+  /** Versionsverlauf einer Seite (BSD-73). */
+  | { type: "history"; action: HistoryAction };
+
+export type HistoryAction =
+  | { op: "list"; pageID: string }
+  | { op: "content"; pageID: string; versionID: number }
+  | { op: "restore"; pageID: string; versionID: number };
+
+export interface HistoryList {
+  /** Neueste zuerst; `at` in Unix-Sekunden. */
+  versions: HistoryVersion[];
+  stats?: HistoryStats;
+  /** Speichern einer Version ist gescheitert (sichtbar statt verschluckt). */
+  error?: string;
+}
+
+export interface HistoryContent {
+  blocks: Block[];
+  /** Fehlende Objekte: die Version ist unvollständig. */
+  missing: string[];
+}
+
+export interface HistoryRestoreResult {
+  restored: number;
+  removed: number;
+  /** Blöcke, die inzwischen auf einer anderen Seite stehen und hier als Kopie zurückkamen. */
+  copied: number;
+  trashed: number;
+}
 
 export type RequestMessage = Request & { id: number };
 

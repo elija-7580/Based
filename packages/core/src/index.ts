@@ -74,3 +74,8 @@ export {
   READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
+// BSD-73: Versionsverlauf pro Seite (git-artig, dedupliziert; Format wie Swift VersionHistory.swift)
+export { MemoryHistoryStorage, VersionHistory, compressObject, decompressObject, encodeVersionBlock, versionHash as historyHash, wordCount as versionWordCount } from "./history/version-history.js";
+export type { HistoryStats, HistoryStorage, HistoryVersion, VersionContent, VersionHistoryOptions } from "./history/version-history.js";
+export { restoreVersion, versionBlocks } from "./history/restore.js";
+export type { RestoreOptions, RestoreResult } from "./history/restore.js";

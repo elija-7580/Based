@@ -4,12 +4,14 @@
 import { rowsOf, type WorkspaceStore } from "@based/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
+import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
 import type { History, Route } from "../shell/router.js";
 import { slots } from "../slots.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
+import type { HistoryRestoreResult } from "../worker/protocol.js";
 
 interface Props {
   client: StoreClient;
@@ -44,6 +46,9 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     };
   }, [client, pageID]);
   useRevision(replica?.store);
+  const [menu, setMenu] = useState<{ top: number; right: number } | undefined>();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [restored, setRestored] = useState<HistoryRestoreResult | undefined>();
   useSyncExternalStore(history.subscribe, () => `${history.canBack}${history.canForward}`);
 
   const store = replica?.store;
@@ -106,6 +111,12 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
               <Icon name="star" size={18} filled={favorite} />
             </button>
+            <button type="button" className="icon-btn ghost" aria-label="Page menu" data-menu-trigger="" aria-haspopup="menu" aria-expanded={menu !== undefined} title="More" onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setMenu(menu ? undefined : { top: r.bottom + 4, right: window.innerWidth - r.right });
+            }}>
+              <Icon name="more" size={18} />
+            </button>
             <button type="button" className="icon-btn ghost" aria-label="Move to Trash" title="Move to Trash" onClick={() => {
               void client.command({ op: "trash", ids: [pageID] });
               onNavigate({ name: "home" });
@@ -115,6 +126,23 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           </>
         ) : null}
       </header>
+      {menu ? <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }} /> : null}
+      {historyOpen ? (
+        <VersionHistory client={client} pageID={pageID} current={store} onClose={() => setHistoryOpen(false)} onRestored={(r) => {
+          setHistoryOpen(false);
+          setRestored(r);
+        }} />
+      ) : null}
+      {restored ? (
+        <div className="vh-toast" role="status" data-testid="restored-banner">
+          <span>Version restored. The previous state is kept in Version history.{restored.copied ? ` ${restored.copied} ${restored.copied === 1 ? "block lives" : "blocks live"} on another page now and came back as a copy.` : ""}</span>
+          <button type="button" className="btn" onClick={() => {
+            setRestored(undefined);
+            void client.command({ op: "undo" });
+          }}>Undo</button>
+          <button type="button" className="btn ghost" onClick={() => setRestored(undefined)}>Dismiss</button>
+        </div>
+      ) : null}
       {trashed ? (
         <div className="trash-banner" role="status">
           <span>This page is in the Trash.</span>
@@ -143,6 +171,30 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         </div>
       </article>
     </>
+  );
+}
+
+/** Seitenmenü (⋯) in der Kopfzeile. */
+function PageMenu({ pos, onClose, onHistory }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
+    const down = (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (!ref.current?.contains(t) && !t.closest?.("[data-menu-trigger]")) onClose();
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("mousedown", down);
+    window.addEventListener("keydown", key);
+    return () => {
+      window.removeEventListener("mousedown", down);
+      window.removeEventListener("keydown", key);
+    };
+  }, [onClose]);
+  return (
+    <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
+      <button type="button" role="menuitem" className="menu-item" onClick={onHistory}><Icon name="restore" size={18} />Version history</button>
+    </div>
   );
 }
 

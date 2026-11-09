@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 // BSD-153: Dedicated Worker mit dem Store. SQLite-WASM auf OPFS (opfs-sahpool); geht das nicht (kein OPFS, privates
 // Fenster, Datei schon in einem anderen Tab offen), läuft der Workspace im Speicher und der Status sagt es.
-import { openWorkspace } from "@based/sync";
+import { openWorkspace, SqliteHistoryStorage } from "@based/sync";
 import { openWasmDatabase } from "@based/sync/wasm";
 import { StoreHost } from "./host.js";
 import type { Event, RequestMessage } from "./protocol.js";
@@ -15,7 +15,7 @@ const host = new StoreHost({
     if (opfs) {
       try {
         const db = await openWasmDatabase({ opfs });
-        return { ...openWorkspace(db, { device }), persistent: true };
+        return { ...openWorkspace(db, { device }), persistent: true, ...(await openHistory()) };
       } catch (e) {
         const note = `Not saved on this device: ${e instanceof Error ? e.message : String(e)}`;
         const db = await openWasmDatabase();
@@ -26,6 +26,15 @@ const host = new StoreHost({
     return { ...openWorkspace(db, { device }), persistent: false, note: "In memory only" };
   },
 });
+
+/** Versionsverlauf in history.sqlite neben dem Workspace (wie die Swift-App); geht das nicht, im Speicher. */
+async function openHistory() {
+  try {
+    return { history: new SqliteHistoryStorage(await openWasmDatabase({ opfs: "history.sqlite" })) };
+  } catch {
+    return {};
+  }
+}
 
 // Nachrichten der Reihe nach: `init` ist asynchron, alles danach wartet darauf.
 let queue: Promise<void> = Promise.resolve();
