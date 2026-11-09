@@ -1,0 +1,54 @@
+// BSD-155: Zustand einer Datenbank-Ansicht: Store, QueryEngine, Version (nur Änderungen der eigenen
+// Datenbank bzw. ihrer Relationsziele zählen – watchDatabase), Sperre und Rückrufe der Shell.
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { QueryEngine, watchDatabase, type Block, type Database, type WorkspaceStore } from "@based/core";
+import { defaultIsAgentEdit } from "./logic/values.js";
+
+export interface DBContextValue {
+  store: WorkspaceStore;
+  engine: QueryEngine;
+  /** Steigt bei jeder Änderung, die diese Datenbank betrifft. */
+  version: number;
+  db: Database;
+  /** Datenbank gesperrt oder `readOnly`: keine Schreiboperationen. */
+  locked: boolean;
+  onOpenPage: ((rowID: string) => void) | undefined;
+  isAgentEdit: (row: Block) => boolean;
+}
+
+export const DBContext = createContext<DBContextValue | null>(null);
+
+export function useDB(): DBContextValue {
+  const c = useContext(DBContext);
+  if (!c) throw new Error("DBContext fehlt");
+  return c;
+}
+
+/** Version, die nur bei Änderungen dieser Datenbank (oder ihrer Relationsziele) steigt. */
+export function useDatabaseVersion(store: WorkspaceStore, databaseID: string): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    setVersion((v) => v + 1);
+    return watchDatabase(store, databaseID, () => setVersion((v) => v + 1));
+  }, [store, databaseID]);
+  return version;
+}
+
+export interface ContextOptions {
+  readOnly?: boolean | undefined;
+  onOpenPage?: ((rowID: string) => void) | undefined;
+  isAgentEdit?: ((row: Block) => boolean) | undefined;
+}
+
+/** Baut den Kontext für eine Datenbank; `undefined`, wenn es sie (noch) nicht gibt. */
+export function useDatabaseContext(store: WorkspaceStore, databaseID: string, opts: ContextOptions): DBContextValue | undefined {
+  const version = useDatabaseVersion(store, databaseID);
+  const engine = useMemo(() => new QueryEngine(store), [store]);
+  // Neu rechnen nur bei betroffenen Änderungen: der Memo der Engine wird pro Version einmal geleert.
+  useMemo(() => engine.reset(), [engine, version]);
+  const db = store.databases.get(databaseID);
+  const { readOnly, onOpenPage, isAgentEdit } = opts;
+  return useMemo(() => db && {
+    store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit,
+  }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit]);
+}

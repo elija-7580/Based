@@ -1,0 +1,6 @@
+/* Testseite: die Ansicht füllt das Fenster wie eine ganze Datenbank-Seite. */
+html, body, #root { margin: 0; height: 100%; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-ui); }
+.page { height: 100vh; display: flex; flex-direction: column; background: var(--bg); }
+.page > .dbui-root { flex: 1; min-height: 0; }
+.opened { margin: 0; padding: var(--space-1) var(--space-6); min-height: var(--space-5); color: var(--muted); font-size: var(--type-meta-size); }
