@@ -12,13 +12,17 @@ import UniformTypeIdentifiers
 
 #if os(macOS)
 /// Mirrors the enabled Based skills into a folder (default ~/.claude/skills) a few seconds after skills change.
+/// BSD-129: @Observable, so the SKILL.md menu and Settings → Agents → Skills show report, conflicts and folders live.
 @MainActor
+@Observable
 final class SkillMirrorService {
     static let shared = SkillMirrorService()
     static let enabledKey = "skills.mirror.enabled"
     static let folderKey = "skills.mirror.folder"
     /// BSD-109: more mirror folders (e.g. ~/.codex/skills), each with its own manifest.
     static let extraFoldersKey = "skills.mirror.extraFolders"
+    /// BSD-129: when the mirror last finished a sync (seconds since 1970).
+    static let lastSyncKey = "skills.mirror.lastSync"
 
     static var defaultFolder: String { NSHomeDirectory() + "/.claude/skills" }
     var enabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
@@ -26,16 +30,23 @@ final class SkillMirrorService {
     private(set) var lastReport: String = ""
     /// Files changed in a mirror folder after Based wrote them: (folder root, "skill/file").
     private(set) var conflicts: [(root: URL, path: String)] = []
+    /// BSD-129: end of the last sync (persisted), nil = never.
+    private(set) var lastSync: Date? = {
+        let t = UserDefaults.standard.double(forKey: SkillMirrorService.lastSyncKey)
+        return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }()
+    /// True while a sync runs (Settings shows a spinner).
+    private(set) var syncing = false
 
-    var extraFolders: [String] {
-        get { UserDefaults.standard.stringArray(forKey: Self.extraFoldersKey) ?? [] }
-        set { UserDefaults.standard.set(newValue, forKey: Self.extraFoldersKey) }
+    /// Stored (observable) copy of the extra folders; written through to UserDefaults only when it really changes.
+    var extraFolders: [String] = UserDefaults.standard.stringArray(forKey: SkillMirrorService.extraFoldersKey) ?? [] {
+        didSet { if extraFolders != oldValue { UserDefaults.standard.set(extraFolders, forKey: Self.extraFoldersKey) } }
     }
     var allFolders: [URL] { [folder] + extraFolders.map { URL(fileURLWithPath: $0) } }
 
-    private weak var model: AppModel?
-    private var token: ObservationToken?
-    private var pending: Task<Void, Never>?
+    @ObservationIgnored private weak var model: AppModel?
+    @ObservationIgnored private var token: ObservationToken?
+    @ObservationIgnored private var pending: Task<Void, Never>?
 
     func start(_ model: AppModel) {
         guard token == nil else { return }
@@ -50,7 +61,8 @@ final class SkillMirrorService {
     private func touchesSkills(_ c: ChangeSet) -> Bool {
         guard let brain = model?.brain.brain, !brain.skillsDB.isEmpty else { return false }
         let store = brain.store
-        let skillRows = Set(brain.skills().map(\.id))
+        // Row ids only (no bodies): this runs for every store change while the mirror is on.
+        let skillRows = Set(store.rows(of: brain.skillsDB).map(\.id))
         if c.parents.contains(ParentRef.database(brain.skillsDB).key) { return true }
         // A block inside a skill row (its body or file pages) changed.
         for id in c.blockIDs {
@@ -78,6 +90,8 @@ final class SkillMirrorService {
     @discardableResult
     func syncNow() async -> String {
         guard let brain = model?.brain.brain else { return "" }
+        syncing = true
+        defer { syncing = false }
         let folders = brain.skills(enabledOnly: true).compactMap { brain.exportSkill($0.id) }
         let roots = allFolders
         let results = await Task.detached(priority: .utility) { SkillMirror.sync(folders, to: roots) }.value
@@ -96,12 +110,36 @@ final class SkillMirrorService {
         }
         conflicts = found
         lastReport = lines.joined(separator: " · ")
+        let now = Date()
+        lastSync = now
+        UserDefaults.standard.set(now.timeIntervalSince1970.rounded(), forKey: Self.lastSyncKey)
         if !found.isEmpty { model?.showToast("Skills: \(found.count) file(s) changed in the mirror folder were kept — resolve in SKILL.md menu") }
         return lastReport
     }
 }
 
 extension SkillMirrorService {
+    /// BSD-129: shared by the SKILL.md menu and Settings — asks for a folder and adds it (no duplicates).
+    func addFolderWithPanel() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory() + "/.codex")
+        panel.message = "Another folder to mirror the skills into (e.g. ~/.codex/skills)"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if !allFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) { extraFolders.append(url.path) }
+        schedule(delay: 0.2)
+    }
+
+    func removeFolder(_ path: String) {
+        extraFolders.removeAll { $0 == path }
+        conflicts.removeAll { $0.root.standardizedFileURL == URL(fileURLWithPath: path).standardizedFileURL }
+    }
+
+    /// "~/.claude/skills" instead of the full home path.
+    static func display(_ path: String) -> String { path.replacingOccurrences(of: NSHomeDirectory(), with: "~") }
+
     /// BSD-109: resolve a conflict — take the folder's file into Based, or write Based's file into the folder.
     func resolve(_ c: (root: URL, path: String), takeFolder: Bool) {
         guard let brain = model?.brain.brain else { return }
@@ -148,11 +186,9 @@ struct SkillSyncMenu: View {
                 .disabled(!mirror)
             Menu("Mirror folders") {
                 ForEach(SkillMirrorService.shared.extraFolders, id: \.self) { f in
-                    Button("Remove \(f.replacingOccurrences(of: NSHomeDirectory(), with: "~"))") {
-                        SkillMirrorService.shared.extraFolders.removeAll { $0 == f }
-                    }
+                    Button("Remove \(SkillMirrorService.display(f))") { SkillMirrorService.shared.removeFolder(f) }
                 }
-                Button("Add mirror folder…") { addMirrorFolder() }
+                Button("Add mirror folder…") { SkillMirrorService.shared.addFolderWithPanel() }
             }
             .disabled(!mirror)
             let conflicts = SkillMirrorService.shared.conflicts
@@ -206,19 +242,6 @@ struct SkillSyncMenu: View {
         model.showToast("Skills: \(created) imported, \(updated) updated" + (failed.isEmpty ? "" : ", \(failed.count) failed"))
     }
 
-    private func addMirrorFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = true
-        panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory() + "/.codex")
-        panel.message = "Another folder to mirror the skills into (e.g. ~/.codex/skills)"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let svc = SkillMirrorService.shared
-        if !svc.allFolders.contains(where: { $0.standardizedFileURL == url.standardizedFileURL }) { svc.extraFolders.append(url.path) }
-        svc.schedule(delay: 0.2)
-    }
-
     private func importAll(from root: URL) {
         let dirs = SkillFolderIO.discover(root)
         guard !dirs.isEmpty else { model.showToast("No SKILL.md found in \(root.lastPathComponent)"); return }
@@ -249,6 +272,56 @@ struct SkillSyncMenu: View {
             catch { Log.error("skill export \(s.name): \(error)", category: "agents") }
         }
         model.showToast("Exported \(n) skill\(n == 1 ? "" : "s")")
+    }
+}
+/// BSD-129: Settings → Agents & AI → Skills: mirror on/off, folders, last sync, conflicts.
+struct SkillsSettingsSection: View {
+    @Environment(AppModel.self) private var model
+    @AppStorage(SkillMirrorService.enabledKey) private var mirror = false
+    private var svc: SkillMirrorService { SkillMirrorService.shared }
+
+    var body: some View {
+        Section("Skills") {
+            Text("Based skills are SKILL.md folders. Mirroring writes the enabled skills into these folders a few seconds after a change, so Claude Code and Codex use the same skills. Files you change there are kept and listed below.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            Toggle("Mirror skills to folders", isOn: $mirror)
+                .onChange(of: mirror) { _, on in if on { svc.schedule(delay: 0.2) } }
+                .accessibilityIdentifier("settings.skills.mirror")
+            LabeledContent("Main folder") {
+                Text(SkillMirrorService.display(svc.folder.path)).font(.caption.monospaced()).textSelection(.enabled)
+            }
+            ForEach(svc.extraFolders, id: \.self) { f in
+                LabeledContent("Also") {
+                    HStack {
+                        Text(SkillMirrorService.display(f)).font(.caption.monospaced()).textSelection(.enabled)
+                        Button("Remove") { svc.removeFolder(f) }.controlSize(.small)
+                    }
+                }
+            }
+            HStack {
+                Button("Add folder…") { svc.addFolderWithPanel() }
+                Button("Sync now") { Task { await svc.syncNow() } }
+                    .disabled(!mirror || svc.syncing)
+                if svc.syncing { ProgressView().controlSize(.small) }
+                Spacer()
+                Text(svc.lastSync.map { "Last synced " + $0.formatted(.relative(presentation: .named)) } ?? "Never synced")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+            }
+            if !svc.lastReport.isEmpty {
+                Text(svc.lastReport).font(.caption).foregroundStyle(Theme.secondary).lineLimit(3)
+            }
+            if !svc.conflicts.isEmpty {
+                Text("Changed in a mirror folder (\(svc.conflicts.count))").font(.callout.weight(.medium)).foregroundStyle(.orange)
+                ForEach(Array(svc.conflicts.enumerated()), id: \.offset) { _, c in
+                    HStack {
+                        Text("\(SkillMirrorService.display(c.root.path))/\(c.path)").font(.caption.monospaced()).lineLimit(1).truncationMode(.middle)
+                        Spacer()
+                        Button("Use folder's version") { svc.resolve(c, takeFolder: true) }.controlSize(.small)
+                        Button("Write Based's version") { svc.resolve(c, takeFolder: false) }.controlSize(.small)
+                    }
+                }
+            }
+        }
     }
 }
 #else
