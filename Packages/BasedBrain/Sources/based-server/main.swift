@@ -43,6 +43,10 @@ struct Options {
     var sandboxEnv: [String] = (ProcessInfo.processInfo.environment["BASED_SANDBOX_ENV"] ?? "").split(separator: ",").map(String.init)
     /// BSD-106: Docker Engine socket for `--sandbox docker-api`.
     var dockerSocket = ProcessInfo.processInfo.environment["BASED_DOCKER_SOCKET"] ?? "/var/run/docker.sock"
+    /// BSD-62: OpenAI-compatible embeddings endpoint for semantic search (e.g. Ollama http://127.0.0.1:11434/v1).
+    var embeddings = ProcessInfo.processInfo.environment["BASED_EMBEDDINGS_URL"]
+    var embeddingModel = ProcessInfo.processInfo.environment["BASED_EMBEDDING_MODEL"] ?? "nomic-embed-text"
+    var embeddingKey = ProcessInfo.processInfo.environment["BASED_EMBEDDINGS_KEY"] ?? ""
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -66,8 +70,10 @@ struct Options {
             case "--sandbox-env": if let e = it.next() { sandboxEnv.append(e) }
             case "--sandbox-no-network": sandboxNetwork = false
             case "--docker-socket": dockerSocket = it.next() ?? dockerSocket
+            case "--embeddings": embeddings = it.next()
+            case "--embedding-model": embeddingModel = it.next() ?? embeddingModel
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network] [--embeddings http://host:11434/v1] [--embedding-model nomic-embed-text]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -120,6 +126,33 @@ _ = store
 let share = await MainActor.run { ShareService(store: store) }
 // BSD-58: MCP clients can hand work to the main agent (`ask_main_agent`).
 mcp.mainAgent = MainAgent(runtime: runtime)
+
+// BSD-62: semantic search over an OpenAI-compatible embeddings endpoint. The index (embeddings.sqlite next to the
+// database, never synced) is brought up to date at start and every 5 minutes; only changed pages are re-embedded.
+if let u = opts.embeddings, let url = URL(string: u) {
+    do {
+        let provider = try await OpenAIEmbeddingProvider.probe(baseURL: url, model: opts.embeddingModel, apiKey: opts.embeddingKey)
+        let indexURL = URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("embeddings.sqlite")
+        let index = try SemanticIndex(url: indexURL, providerID: provider.id, dimension: provider.dimension)
+        let context = SemanticContext(index: index, provider: provider)
+        await MainActor.run {
+            tools.semantic = context
+            let indexer = SemanticIndexer(store: store, context: context, excludedRoots: [tools.brain.rootID])
+            Task { @MainActor in
+                while !Task.isCancelled {
+                    let r = await indexer.update()
+                    if r.embedded + r.removed + r.failed > 0 {
+                        log("Semantic index: \(r.embedded) pages embedded, \(r.removed) removed, \(r.failed) failed", category: "search")
+                    }
+                    try? await Task.sleep(nanoseconds: 300_000_000_000)
+                }
+            }
+        }
+        log("Semantic search on (\(provider.id), \(provider.dimension) dimensions)", category: "search")
+    } catch {
+        Log.warning("Semantic search off: embeddings endpoint \(u) not usable (\(error))", category: "search")
+    }
+}
 // BSD-98: deny rules of Agent Brain → Permissions also hold for MCP clients (they ask their user themselves).
 mcp.permissions = { [tools] in tools.brain.permissions(mode: .bypass) }
 

@@ -218,6 +218,7 @@ struct MySettings: View {
             Toggle("Autocorrect", isOn: .constant(true)).disabled(true)
         }
         MeetingVoiceSettings()
+        SemanticSearchSettings()
         Section("Privacy") {
             Toggle("Cookie / analytics", isOn: .constant(false)).disabled(true)
             Text("Based never sends telemetry. AI requests go only to the providers you configured.").font(.caption).foregroundStyle(Theme.secondary)
