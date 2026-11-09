@@ -5,6 +5,9 @@ client can do in the workspace what the user does in the app — and learn how B
 
 - **Implementation**: `Packages/BasedBrain/Sources/BasedBrain/MCP/MCPServer.swift` (JSON-RPC 2.0, transport-agnostic),
   tools in `Agent/AgentTools.swift`, guide in `MCP/BasedGuide.swift`.
+- **TypeScript server** (`apps/server`, BSD-158): official MCP SDK, stdio and `POST /mcp`; so far the page tools
+  (`search`, `read_page`, `list_pages`, `create_page`, `append_markdown`, `replace_page_content`, `update_page`,
+  `trash_page`, `restore_page`, `list_trash`, `based_guide`) and the page/guide resources. See `docs/server.md`.
 - **Transports**: `based-server --stdio --db …` (one JSON message per line; what desktop clients spawn) and
   Streamable HTTP `POST /mcp` on the server (JSON responses, `Authorization: Bearer <token>`).
   Coding sessions started by Based get `POST /mcp/session/<id>` (session-scoped; adds the `approval` tool).

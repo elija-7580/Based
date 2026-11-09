@@ -157,7 +157,7 @@ and then hourly the server removes deletion rows whose stamp is older than 90 da
 (`SyncServer.compactTombstones`; records are never touched, unstamped pre-v3 rows stay) and raises
 `meta sync.oldestSeq` to the highest removed `seq`; a device offline for longer does a full pull (see
 `/sync/v2/info`). Share guests (`ShareService` pulls) don't check `oldestSeq` yet; clients don't compact their own
-logs. v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps.
+logs. v1 endpoints (`/sync/push`, `/sync/pull`) remain for older apps. The TypeScript server (`apps/server`, `docs/server.md`) implements the same endpoints and rules.
 
 ## Channels
 
@@ -183,4 +183,5 @@ channel ("Server", "iCloud", "Server + iCloud", "Local only").
 | macOS / iOS (Swift)    | `ServerSync` in BasedBrain; v2 with automatic fallback to v1               |
 | Linux (Swift)          | BasedCore + BasedBrain build and test on Linux; `based-server` runs there |
 | TypeScript (`packages/sync`) | v2 only (BSD-152): `SqlitePersistence` (same file format and migrations as the Swift app), `SyncClient`; drivers `@based/sync/node` (node:sqlite) and `@based/sync/wasm` (SQLite-WASM + OPFS in a worker). Tested against an in-process server and, with `BASED_SERVER_BIN`, the Swift `based-server`. Orphan rescue (BSD-104) not ported yet |
+| TypeScript server (`apps/server`) | v2 + v1 (BSD-158) on the same file format; long poll event-driven; tested with `SyncClient` and the unchanged Swift `ServerSync` (`ci/server/swift-client-compat.sh`). See `docs/server.md` |
 | Web / Windows / Linux UI | planned. See `docs/platforms.md`                                         |
