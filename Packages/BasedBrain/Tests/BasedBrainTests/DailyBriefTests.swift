@@ -143,4 +143,30 @@ struct DailyBriefTests {
         #expect(blocks.count > before)
         #expect(blocks.contains { $0.text.plainText.hasPrefix("Update ") })
     }
+    /// BSD-119: a page with a date mention / reminder of today shows up in the brief's "Today" section.
+    @Test func remindersAndDateMentionsOfTodayAreInTheBrief() async {
+        let (brain, provider, rt) = make()
+        let agent = briefAgent(brain)
+        let now = Date()
+        let page = brain.store.createPage(title: "Errands")
+        _ = brain.store.insertBlock(.todo, text: RichText(runs: [TextRun("Call the bank "),
+                                                               TextRun("@Today", mention: .date(DateValue(start: Calendar.current.startOfDay(for: now), remind: true)))]),
+                                    in: .block(page))
+        let input = brain.briefInput(for: agent, now: now)
+        #expect(input.dueToday.count == 1)
+        #expect(input.dueToday.first?.title == "Errands")
+        #expect(input.dueToday.first?.detail == "reminder · Call the bank @Today")
+        #expect(input.headline == "1 due today.")
+        #expect(input.markdown.hasPrefix("## Today\n\n- Errands — reminder · Call the bank @Today"))
+        _ = await rt.run(agent: agent, trigger: "manual")
+        #expect(provider.prompts.count == 1 && provider.prompts[0].contains("Call the bank"))
+        #expect(brain.todaysBrief()?.summary == "1 due today.")
+
+        // Timed lines carry the time; without anything due the input is unchanged (quiet day).
+        let cal = Calendar.current
+        let timed = DueItem(pageID: "p", blockID: "b", pageTitle: "Team", text: "Standup", date: DateValue(start: cal.date(bySettingHour: 9, minute: 30, second: 0, of: now)!, includeTime: true), isReminder: false)
+        let overview = RunOverview(runs: [], inbox: [], agents: [])
+        #expect(BriefInput.make(overview: overview, now: now, due: [timed], calendar: cal).dueToday.first?.detail == "09:30 · Standup")
+        #expect(BriefInput.make(overview: overview, now: now, calendar: cal).isEmpty)
+    }
 }
