@@ -127,7 +127,7 @@ Number formats,properties,should,yes,yes,,
 Change property type with value conversion,properties,should,yes,yes,,
 Sync between Mac and iPhone,sync,must,yes,partial,"Server sync v2 is the primary channel (BSD-28, ADR 0001); iCloud is an opt-in experimental switch. Stamped tombstones (BSD-24), orphan rescue + 90-day tombstone GC (BSD-104), unknown fields kept (BSD-25); untested between real devices",
 Offline editing,sync,must,yes,yes,local-first,
-Conflict handling,sync,must,yes,partial,"HLC LWW per record + fractional ordering; stamped deletions (newer edit/restore wins, BSD-24); undo skips records changed remotely (BSD-27); text CRDT proposed (ADR 0010, Automerge) but not integrated",
+Conflict handling,sync,must,yes,partial,"HLC LWW per record + fractional ordering; stamped deletions (newer edit/restore wins, BSD-24); undo skips records changed remotely (BSD-27); text CRDT proposed (ADR 0010, Automerge) but not integrated","partial: HLC + Sortierschlüssel portiert (fixtures grün), Merge offen"
 Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested",
 Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now,
 Page history / versions,history,should,yes,no,,

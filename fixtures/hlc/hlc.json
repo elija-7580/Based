@@ -986,7 +986,139 @@
         },
         "maxDrift" : 3600000,
         "node" : "n0",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000128,
+              "node" : "r1"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "now",
+            "wall" : 1000182
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000185,
+              "node" : "r2"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "now",
+            "wall" : 1000182
+          },
+          {
+            "op" : "now",
+            "wall" : 1000182
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000204,
+              "node" : "r2"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000242,
+              "node" : "r2"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600183,
+              "node" : "r2"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600183,
+              "node" : "r2"
+            },
+            "wall" : 1000182
+          },
+          {
+            "op" : "now",
+            "wall" : 1000184
+          },
+          {
+            "op" : "now",
+            "wall" : 1000184
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 4600185,
+              "node" : "r2"
+            },
+            "wall" : 1000184
+          },
+          {
+            "op" : "now",
+            "wall" : 1000184
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000161,
+              "node" : "r1"
+            },
+            "wall" : 1000184
+          },
+          {
+            "op" : "now",
+            "wall" : 1000184
+          },
+          {
+            "op" : "now",
+            "wall" : 1000185
+          },
+          {
+            "op" : "now",
+            "wall" : 1000187
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 4600188,
+              "node" : "r2"
+            },
+            "wall" : 1000187
+          },
+          {
+            "op" : "now",
+            "wall" : 1000187
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600188,
+              "node" : "r2"
+            },
+            "wall" : 1000187
+          }
+        ]
       },
       "name" : "clock-0",
       "output" : [
@@ -996,23 +1128,14 @@
             "millis" : 1000128,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000128,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000182
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000182,
             "node" : "n0"
-          },
-          "wall" : 1000182
+          }
         },
         {
           "current" : {
@@ -1020,32 +1143,21 @@
             "millis" : 1000185,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000185,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000182
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000185,
             "node" : "n0"
-          },
-          "wall" : 1000182
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000185,
             "node" : "n0"
-          },
-          "wall" : 1000182
+          }
         },
         {
           "current" : {
@@ -1053,14 +1165,7 @@
             "millis" : 1000204,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000204,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000182
+          "result" : true
         },
         {
           "current" : {
@@ -1068,14 +1173,7 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000242,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000182
+          "result" : true
         },
         {
           "current" : {
@@ -1083,14 +1181,7 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600183,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000182
+          "result" : false
         },
         {
           "current" : {
@@ -1098,32 +1189,21 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600183,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000182
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000184
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000184
+          }
         },
         {
           "current" : {
@@ -1131,23 +1211,14 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 4600185,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000184
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000184
+          }
         },
         {
           "current" : {
@@ -1155,41 +1226,28 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000161,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000184
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000184
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000185
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000187
+          }
         },
         {
           "current" : {
@@ -1197,23 +1255,14 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 4600188,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000187
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000242,
             "node" : "n0"
-          },
-          "wall" : 1000187
+          }
         },
         {
           "current" : {
@@ -1221,14 +1270,7 @@
             "millis" : 1000242,
             "node" : "n0"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600188,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000187
+          "result" : false
         }
       ]
     },
@@ -1241,45 +1283,154 @@
         },
         "maxDrift" : 3600000,
         "node" : "n1",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000899
+          },
+          {
+            "op" : "now",
+            "wall" : 1000900
+          },
+          {
+            "op" : "now",
+            "wall" : 1000900
+          },
+          {
+            "op" : "now",
+            "wall" : 1000900
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000844,
+              "node" : "r0"
+            },
+            "wall" : 1000900
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000988,
+              "node" : "r1"
+            },
+            "wall" : 1000900
+          },
+          {
+            "op" : "now",
+            "wall" : 1000901
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000845,
+              "node" : "r1"
+            },
+            "wall" : 1000901
+          },
+          {
+            "op" : "now",
+            "wall" : 1000901
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000808,
+              "node" : "r0"
+            },
+            "wall" : 1000901
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000865,
+              "node" : "r0"
+            },
+            "wall" : 1000901
+          },
+          {
+            "op" : "now",
+            "wall" : 1000901
+          },
+          {
+            "op" : "now",
+            "wall" : 1000901
+          },
+          {
+            "op" : "now",
+            "wall" : 1000901
+          },
+          {
+            "op" : "now",
+            "wall" : 1000902
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000979,
+              "node" : "r2"
+            },
+            "wall" : 1000902
+          },
+          {
+            "op" : "now",
+            "wall" : 1000902
+          },
+          {
+            "op" : "now",
+            "wall" : 1000903
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 4600904,
+              "node" : "r0"
+            },
+            "wall" : 1000903
+          },
+          {
+            "op" : "now",
+            "wall" : 1000903
+          }
+        ]
       },
       "name" : "clock-1",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1000949,
             "node" : "n1"
-          },
-          "wall" : 1000899
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000949,
             "node" : "n1"
-          },
-          "wall" : 1000900
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000949,
             "node" : "n1"
-          },
-          "wall" : 1000900
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000949,
             "node" : "n1"
-          },
-          "wall" : 1000900
+          }
         },
         {
           "current" : {
@@ -1287,14 +1438,7 @@
             "millis" : 1000949,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000844,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000900
+          "result" : true
         },
         {
           "current" : {
@@ -1302,23 +1446,14 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000988,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000900
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000901
+          }
         },
         {
           "current" : {
@@ -1326,23 +1461,14 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000845,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000901
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000901
+          }
         },
         {
           "current" : {
@@ -1350,14 +1476,7 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000808,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000901
+          "result" : true
         },
         {
           "current" : {
@@ -1365,50 +1484,35 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000865,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000901
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000901
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000901
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000901
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000902
+          }
         },
         {
           "current" : {
@@ -1416,32 +1520,21 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000979,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000902
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000902
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000903
+          }
         },
         {
           "current" : {
@@ -1449,23 +1542,14 @@
             "millis" : 1000988,
             "node" : "n1"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 4600904,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000903
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000988,
             "node" : "n1"
-          },
-          "wall" : 1000903
+          }
         }
       ]
     },
@@ -1478,7 +1562,144 @@
         },
         "maxDrift" : 3600000,
         "node" : "n2",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000874,
+              "node" : "r2"
+            },
+            "wall" : 1000807
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000853,
+              "node" : "r0"
+            },
+            "wall" : 1000807
+          },
+          {
+            "op" : "now",
+            "wall" : 1000807
+          },
+          {
+            "op" : "now",
+            "wall" : 1000809
+          },
+          {
+            "op" : "now",
+            "wall" : 1000809
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000777,
+              "node" : "r0"
+            },
+            "wall" : 1000809
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600810,
+              "node" : "r1"
+            },
+            "wall" : 1000809
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000841,
+              "node" : "r2"
+            },
+            "wall" : 1000809
+          },
+          {
+            "op" : "now",
+            "wall" : 1000809
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000731,
+              "node" : "r2"
+            },
+            "wall" : 1000809
+          },
+          {
+            "op" : "now",
+            "wall" : 1000809
+          },
+          {
+            "op" : "now",
+            "wall" : 1000809
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000827,
+              "node" : "r1"
+            },
+            "wall" : 1000809
+          },
+          {
+            "op" : "now",
+            "wall" : 1000810
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000722,
+              "node" : "r1"
+            },
+            "wall" : 1000810
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 4600811,
+              "node" : "r0"
+            },
+            "wall" : 1000810
+          },
+          {
+            "op" : "now",
+            "wall" : 1000812
+          },
+          {
+            "op" : "now",
+            "wall" : 1000814
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000756,
+              "node" : "r1"
+            },
+            "wall" : 1000814
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000877,
+              "node" : "r1"
+            },
+            "wall" : 1000814
+          }
+        ]
       },
       "name" : "clock-2",
       "output" : [
@@ -1488,14 +1709,7 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000874,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000807
+          "result" : true
         },
         {
           "current" : {
@@ -1503,41 +1717,28 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000853,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000807
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000807
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000809
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000809
+          }
         },
         {
           "current" : {
@@ -1545,14 +1746,7 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000777,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000809
+          "result" : true
         },
         {
           "current" : {
@@ -1560,14 +1754,7 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600810,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000809
+          "result" : false
         },
         {
           "current" : {
@@ -1575,23 +1762,14 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000841,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000809
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000809
+          }
         },
         {
           "current" : {
@@ -1599,32 +1777,21 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000731,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000809
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000809
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000809
+          }
         },
         {
           "current" : {
@@ -1632,23 +1799,14 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000827,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000809
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000810
+          }
         },
         {
           "current" : {
@@ -1656,14 +1814,7 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000722,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000810
+          "result" : true
         },
         {
           "current" : {
@@ -1671,32 +1822,21 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 4600811,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000810
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000812
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 12,
             "millis" : 1000874,
             "node" : "n2"
-          },
-          "wall" : 1000814
+          }
         },
         {
           "current" : {
@@ -1704,14 +1844,7 @@
             "millis" : 1000874,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000756,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000814
+          "result" : true
         },
         {
           "current" : {
@@ -1719,14 +1852,7 @@
             "millis" : 1000877,
             "node" : "n2"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000877,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000814
+          "result" : true
         }
       ]
     },
@@ -1739,72 +1865,180 @@
         },
         "maxDrift" : 3600000,
         "node" : "n3",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000637
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000639
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000563,
+              "node" : "r0"
+            },
+            "wall" : 1000639
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000616,
+              "node" : "r2"
+            },
+            "wall" : 1000639
+          },
+          {
+            "op" : "now",
+            "wall" : 1000640
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000728,
+              "node" : "r0"
+            },
+            "wall" : 1000640
+          },
+          {
+            "op" : "now",
+            "wall" : 1000642
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000615,
+              "node" : "r1"
+            },
+            "wall" : 1000642
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600643,
+              "node" : "r0"
+            },
+            "wall" : 1000642
+          },
+          {
+            "op" : "now",
+            "wall" : 1000643
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600644,
+              "node" : "r2"
+            },
+            "wall" : 1000643
+          },
+          {
+            "op" : "now",
+            "wall" : 1000643
+          },
+          {
+            "op" : "now",
+            "wall" : 1000644
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000688,
+              "node" : "r1"
+            },
+            "wall" : 1000644
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600645,
+              "node" : "r1"
+            },
+            "wall" : 1000644
+          }
+        ]
       },
       "name" : "clock-3",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000637,
             "node" : "n3"
-          },
-          "wall" : 1000637
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000639,
             "node" : "n3"
-          },
-          "wall" : 1000639
+          }
         },
         {
           "current" : {
@@ -1812,14 +2046,7 @@
             "millis" : 1000639,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000563,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000639
+          "result" : true
         },
         {
           "current" : {
@@ -1827,23 +2054,14 @@
             "millis" : 1000639,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000616,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000639
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000640,
             "node" : "n3"
-          },
-          "wall" : 1000640
+          }
         },
         {
           "current" : {
@@ -1851,23 +2069,14 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000728,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000640
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000728,
             "node" : "n3"
-          },
-          "wall" : 1000642
+          }
         },
         {
           "current" : {
@@ -1875,14 +2084,7 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000615,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000642
+          "result" : true
         },
         {
           "current" : {
@@ -1890,23 +2092,14 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600643,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000642
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000728,
             "node" : "n3"
-          },
-          "wall" : 1000643
+          }
         },
         {
           "current" : {
@@ -1914,32 +2107,21 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600644,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000643
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000728,
             "node" : "n3"
-          },
-          "wall" : 1000643
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000728,
             "node" : "n3"
-          },
-          "wall" : 1000644
+          }
         },
         {
           "current" : {
@@ -1947,14 +2129,7 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000688,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000644
+          "result" : true
         },
         {
           "current" : {
@@ -1962,14 +2137,7 @@
             "millis" : 1000728,
             "node" : "n3"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600645,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000644
+          "result" : false
         }
       ]
     },
@@ -1982,7 +2150,144 @@
         },
         "maxDrift" : 3600000,
         "node" : "n4",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000919,
+              "node" : "r1"
+            },
+            "wall" : 1000991
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000965,
+              "node" : "r1"
+            },
+            "wall" : 1000991
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000977,
+              "node" : "r1"
+            },
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000921,
+              "node" : "r2"
+            },
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000992
+          },
+          {
+            "op" : "now",
+            "wall" : 1000993
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1001044,
+              "node" : "r2"
+            },
+            "wall" : 1000993
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000999,
+              "node" : "r1"
+            },
+            "wall" : 1000993
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600994,
+              "node" : "r0"
+            },
+            "wall" : 1000993
+          },
+          {
+            "op" : "now",
+            "wall" : 1000995
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1001003,
+              "node" : "r2"
+            },
+            "wall" : 1000995
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1001064,
+              "node" : "r1"
+            },
+            "wall" : 1000995
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000913,
+              "node" : "r1"
+            },
+            "wall" : 1000995
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000947,
+              "node" : "r1"
+            },
+            "wall" : 1000995
+          },
+          {
+            "op" : "now",
+            "wall" : 1000995
+          }
+        ]
       },
       "name" : "clock-4",
       "output" : [
@@ -1992,14 +2297,7 @@
             "millis" : 1001041,
             "node" : "old"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000919,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000991
+          "result" : true
         },
         {
           "current" : {
@@ -2007,32 +2305,21 @@
             "millis" : 1001041,
             "node" : "old"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000965,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000991
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
           "current" : {
@@ -2040,41 +2327,28 @@
             "millis" : 1001041,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000977,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000992
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
           "current" : {
@@ -2082,32 +2356,21 @@
             "millis" : 1001041,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000921,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000992
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000992
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1001041,
             "node" : "n4"
-          },
-          "wall" : 1000993
+          }
         },
         {
           "current" : {
@@ -2115,14 +2378,7 @@
             "millis" : 1001044,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1001044,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000993
+          "result" : true
         },
         {
           "current" : {
@@ -2130,14 +2386,7 @@
             "millis" : 1001044,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000999,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000993
+          "result" : true
         },
         {
           "current" : {
@@ -2145,23 +2394,14 @@
             "millis" : 1001044,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600994,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000993
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1001044,
             "node" : "n4"
-          },
-          "wall" : 1000995
+          }
         },
         {
           "current" : {
@@ -2169,14 +2409,7 @@
             "millis" : 1001044,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1001003,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000995
+          "result" : true
         },
         {
           "current" : {
@@ -2184,14 +2417,7 @@
             "millis" : 1001064,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1001064,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000995
+          "result" : true
         },
         {
           "current" : {
@@ -2199,14 +2425,7 @@
             "millis" : 1001064,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000913,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000995
+          "result" : true
         },
         {
           "current" : {
@@ -2214,23 +2433,14 @@
             "millis" : 1001064,
             "node" : "n4"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000947,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000995
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1001064,
             "node" : "n4"
-          },
-          "wall" : 1000995
+          }
         }
       ]
     },
@@ -2243,27 +2453,145 @@
         },
         "maxDrift" : 3600000,
         "node" : "n5",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000132
+          },
+          {
+            "op" : "now",
+            "wall" : 1000134
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600135,
+              "node" : "r0"
+            },
+            "wall" : 1000134
+          },
+          {
+            "op" : "now",
+            "wall" : 1000134
+          },
+          {
+            "op" : "now",
+            "wall" : 1000134
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000118,
+              "node" : "r1"
+            },
+            "wall" : 1000134
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000056,
+              "node" : "r2"
+            },
+            "wall" : 1000134
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000184,
+              "node" : "r0"
+            },
+            "wall" : 1000136
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000213,
+              "node" : "r1"
+            },
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000066,
+              "node" : "r0"
+            },
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000192,
+              "node" : "r2"
+            },
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "now",
+            "wall" : 1000136
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000055,
+              "node" : "r1"
+            },
+            "wall" : 1000136
+          }
+        ]
       },
       "name" : "clock-5",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000182,
             "node" : "n5"
-          },
-          "wall" : 1000132
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000182,
             "node" : "n5"
-          },
-          "wall" : 1000134
+          }
         },
         {
           "current" : {
@@ -2271,32 +2599,21 @@
             "millis" : 1000182,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600135,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000134
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000182,
             "node" : "n5"
-          },
-          "wall" : 1000134
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000182,
             "node" : "n5"
-          },
-          "wall" : 1000134
+          }
         },
         {
           "current" : {
@@ -2304,14 +2621,7 @@
             "millis" : 1000182,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000118,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000134
+          "result" : true
         },
         {
           "current" : {
@@ -2319,23 +2629,14 @@
             "millis" : 1000182,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000056,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000134
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000182,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
           "current" : {
@@ -2343,14 +2644,7 @@
             "millis" : 1000184,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000184,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000136
+          "result" : true
         },
         {
           "current" : {
@@ -2358,23 +2652,14 @@
             "millis" : 1000213,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000213,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000136
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
           "current" : {
@@ -2382,41 +2667,28 @@
             "millis" : 1000213,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000066,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000136
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
           "current" : {
@@ -2424,41 +2696,28 @@
             "millis" : 1000213,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000192,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000136
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000213,
             "node" : "n5"
-          },
-          "wall" : 1000136
+          }
         },
         {
           "current" : {
@@ -2466,14 +2725,7 @@
             "millis" : 1000213,
             "node" : "n5"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000055,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000136
+          "result" : true
         }
       ]
     },
@@ -2486,7 +2738,139 @@
         },
         "maxDrift" : 3600000,
         "node" : "n6",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000084,
+              "node" : "r2"
+            },
+            "wall" : 1000016
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000040,
+              "node" : "r2"
+            },
+            "wall" : 1000016
+          },
+          {
+            "op" : "now",
+            "wall" : 1000016
+          },
+          {
+            "op" : "now",
+            "wall" : 1000018
+          },
+          {
+            "op" : "now",
+            "wall" : 1000020
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000088,
+              "node" : "r2"
+            },
+            "wall" : 1000020
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 999924,
+              "node" : "r2"
+            },
+            "wall" : 1000020
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000119,
+              "node" : "r2"
+            },
+            "wall" : 1000020
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000115,
+              "node" : "r2"
+            },
+            "wall" : 1000020
+          },
+          {
+            "op" : "now",
+            "wall" : 1000022
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000101,
+              "node" : "r1"
+            },
+            "wall" : 1000022
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000045,
+              "node" : "r0"
+            },
+            "wall" : 1000022
+          },
+          {
+            "op" : "now",
+            "wall" : 1000022
+          },
+          {
+            "op" : "now",
+            "wall" : 1000023
+          },
+          {
+            "op" : "now",
+            "wall" : 1000023
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 4600024,
+              "node" : "r2"
+            },
+            "wall" : 1000023
+          },
+          {
+            "op" : "now",
+            "wall" : 1000023
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000081,
+              "node" : "r0"
+            },
+            "wall" : 1000023
+          },
+          {
+            "op" : "now",
+            "wall" : 1000023
+          },
+          {
+            "op" : "now",
+            "wall" : 1000023
+          }
+        ]
       },
       "name" : "clock-6",
       "output" : [
@@ -2496,14 +2880,7 @@
             "millis" : 1000084,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000084,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000016
+          "result" : true
         },
         {
           "current" : {
@@ -2511,41 +2888,28 @@
             "millis" : 1000084,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000040,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000016
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000084,
             "node" : "n6"
-          },
-          "wall" : 1000016
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000084,
             "node" : "n6"
-          },
-          "wall" : 1000018
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000084,
             "node" : "n6"
-          },
-          "wall" : 1000020
+          }
         },
         {
           "current" : {
@@ -2553,14 +2917,7 @@
             "millis" : 1000088,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000088,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000020
+          "result" : true
         },
         {
           "current" : {
@@ -2568,14 +2925,7 @@
             "millis" : 1000088,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 999924,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000020
+          "result" : true
         },
         {
           "current" : {
@@ -2583,14 +2933,7 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000119,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000020
+          "result" : true
         },
         {
           "current" : {
@@ -2598,23 +2941,14 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000115,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000020
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000022
+          }
         },
         {
           "current" : {
@@ -2622,14 +2956,7 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000101,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000022
+          "result" : true
         },
         {
           "current" : {
@@ -2637,41 +2964,28 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000045,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000022
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000022
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000023
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000023
+          }
         },
         {
           "current" : {
@@ -2679,23 +2993,14 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 4600024,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000023
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000023
+          }
         },
         {
           "current" : {
@@ -2703,32 +3008,21 @@
             "millis" : 1000119,
             "node" : "n6"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000081,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000023
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000023
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000119,
             "node" : "n6"
-          },
-          "wall" : 1000023
+          }
         }
       ]
     },
@@ -2741,27 +3035,140 @@
         },
         "maxDrift" : 3600000,
         "node" : "n7",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000301
+          },
+          {
+            "op" : "now",
+            "wall" : 1000301
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000203,
+              "node" : "r0"
+            },
+            "wall" : 1000301
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 4600302,
+              "node" : "r1"
+            },
+            "wall" : 1000301
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000390,
+              "node" : "r2"
+            },
+            "wall" : 1000301
+          },
+          {
+            "op" : "now",
+            "wall" : 1000302
+          },
+          {
+            "op" : "now",
+            "wall" : 1000302
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000303,
+              "node" : "r1"
+            },
+            "wall" : 1000302
+          },
+          {
+            "op" : "now",
+            "wall" : 1000303
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 4600304,
+              "node" : "r1"
+            },
+            "wall" : 1000303
+          },
+          {
+            "op" : "now",
+            "wall" : 1000303
+          },
+          {
+            "op" : "now",
+            "wall" : 1000303
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000379,
+              "node" : "r2"
+            },
+            "wall" : 1000303
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600307,
+              "node" : "r0"
+            },
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          }
+        ]
       },
       "name" : "clock-7",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000351,
             "node" : "n7"
-          },
-          "wall" : 1000301
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000351,
             "node" : "n7"
-          },
-          "wall" : 1000301
+          }
         },
         {
           "current" : {
@@ -2769,14 +3176,7 @@
             "millis" : 1000351,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000203,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000301
+          "result" : true
         },
         {
           "current" : {
@@ -2784,14 +3184,7 @@
             "millis" : 1000351,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 4600302,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000301
+          "result" : false
         },
         {
           "current" : {
@@ -2799,32 +3192,21 @@
             "millis" : 1000390,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000390,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000301
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000302
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000302
+          }
         },
         {
           "current" : {
@@ -2832,23 +3214,14 @@
             "millis" : 1000390,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000303,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000302
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000303
+          }
         },
         {
           "current" : {
@@ -2856,32 +3229,21 @@
             "millis" : 1000390,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 4600304,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000303
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000303
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000303
+          }
         },
         {
           "current" : {
@@ -2889,50 +3251,35 @@
             "millis" : 1000390,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000379,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000303
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000305
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000306
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000306
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000306
+          }
         },
         {
           "current" : {
@@ -2940,32 +3287,21 @@
             "millis" : 1000390,
             "node" : "n7"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600307,
-            "node" : "r0"
-          },
-          "result" : false,
-          "wall" : 1000306
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000306
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000390,
             "node" : "n7"
-          },
-          "wall" : 1000306
+          }
         }
       ]
     },
@@ -2978,7 +3314,134 @@
         },
         "maxDrift" : 3600000,
         "node" : "n8",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000913,
+              "node" : "r2"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000904,
+              "node" : "r0"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000798,
+              "node" : "r0"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000732,
+              "node" : "r0"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "now",
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000832,
+              "node" : "r1"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "now",
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000771,
+              "node" : "r0"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000803,
+              "node" : "r1"
+            },
+            "wall" : 1000821
+          },
+          {
+            "op" : "now",
+            "wall" : 1000821
+          },
+          {
+            "op" : "now",
+            "wall" : 1000821
+          },
+          {
+            "op" : "now",
+            "wall" : 1000822
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000832,
+              "node" : "r1"
+            },
+            "wall" : 1000822
+          },
+          {
+            "op" : "now",
+            "wall" : 1000823
+          },
+          {
+            "op" : "now",
+            "wall" : 1000823
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000804,
+              "node" : "r0"
+            },
+            "wall" : 1000823
+          },
+          {
+            "op" : "now",
+            "wall" : 1000823
+          },
+          {
+            "op" : "now",
+            "wall" : 1000823
+          },
+          {
+            "op" : "now",
+            "wall" : 1000825
+          },
+          {
+            "op" : "now",
+            "wall" : 1000825
+          }
+        ]
       },
       "name" : "clock-8",
       "output" : [
@@ -2988,14 +3451,7 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000913,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
           "current" : {
@@ -3003,14 +3459,7 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000904,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
           "current" : {
@@ -3018,14 +3467,7 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000798,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
           "current" : {
@@ -3033,23 +3475,14 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000732,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000821
+          }
         },
         {
           "current" : {
@@ -3057,23 +3490,14 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000832,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000821
+          }
         },
         {
           "current" : {
@@ -3081,14 +3505,7 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000771,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
           "current" : {
@@ -3096,41 +3513,28 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000803,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000821
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000821
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000821
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000822
+          }
         },
         {
           "current" : {
@@ -3138,32 +3542,21 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000832,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000822
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000823
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000823
+          }
         },
         {
           "current" : {
@@ -3171,50 +3564,35 @@
             "millis" : 1000913,
             "node" : "n8"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000804,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000823
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000823
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000823
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 12,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000825
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 13,
             "millis" : 1000913,
             "node" : "n8"
-          },
-          "wall" : 1000825
+          }
         }
       ]
     },
@@ -3227,27 +3605,130 @@
         },
         "maxDrift" : 3600000,
         "node" : "n9",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000231
+          },
+          {
+            "op" : "now",
+            "wall" : 1000232
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 4600233,
+              "node" : "r2"
+            },
+            "wall" : 1000232
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000326,
+              "node" : "r1"
+            },
+            "wall" : 1000233
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000198,
+              "node" : "r1"
+            },
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000233
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000181,
+              "node" : "r1"
+            },
+            "wall" : 1000233
+          },
+          {
+            "op" : "now",
+            "wall" : 1000235
+          },
+          {
+            "op" : "now",
+            "wall" : 1000235
+          },
+          {
+            "op" : "now",
+            "wall" : 1000235
+          },
+          {
+            "op" : "now",
+            "wall" : 1000235
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000149,
+              "node" : "r2"
+            },
+            "wall" : 1000235
+          },
+          {
+            "op" : "now",
+            "wall" : 1000237
+          },
+          {
+            "op" : "now",
+            "wall" : 1000237
+          },
+          {
+            "op" : "now",
+            "wall" : 1000237
+          }
+        ]
       },
       "name" : "clock-9",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000231,
             "node" : "n9"
-          },
-          "wall" : 1000231
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000232,
             "node" : "n9"
-          },
-          "wall" : 1000232
+          }
         },
         {
           "current" : {
@@ -3255,41 +3736,28 @@
             "millis" : 1000232,
             "node" : "n9"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 4600233,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000232
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 0,
             "millis" : 1000233,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1000233,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000233,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
           "current" : {
@@ -3297,14 +3765,7 @@
             "millis" : 1000326,
             "node" : "n9"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000326,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000233
+          "result" : true
         },
         {
           "current" : {
@@ -3312,41 +3773,28 @@
             "millis" : 1000326,
             "node" : "n9"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000198,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000233
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000233
+          }
         },
         {
           "current" : {
@@ -3354,50 +3802,35 @@
             "millis" : 1000326,
             "node" : "n9"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000181,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000233
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000235
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000235
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000235
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000235
+          }
         },
         {
           "current" : {
@@ -3405,41 +3838,28 @@
             "millis" : 1000326,
             "node" : "n9"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000149,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000235
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000237
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 12,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000237
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 13,
             "millis" : 1000326,
             "node" : "n9"
-          },
-          "wall" : 1000237
+          }
         }
       ]
     },
@@ -3452,7 +3872,124 @@
         },
         "maxDrift" : 3600000,
         "node" : "n10",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000402,
+              "node" : "r2"
+            },
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000304
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 4600305,
+              "node" : "r1"
+            },
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000304
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000371,
+              "node" : "r0"
+            },
+            "wall" : 1000304
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000239,
+              "node" : "r1"
+            },
+            "wall" : 1000305
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000384,
+              "node" : "r0"
+            },
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000313,
+              "node" : "r0"
+            },
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000305
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000306
+          },
+          {
+            "op" : "now",
+            "wall" : 1000307
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 0,
+              "millis" : 1000222,
+              "node" : "r0"
+            },
+            "wall" : 1000307
+          }
+        ]
       },
       "name" : "clock-10",
       "output" : [
@@ -3462,23 +3999,14 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000402,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000304
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 1,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000304
+          }
         },
         {
           "current" : {
@@ -3486,50 +4014,35 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 4600305,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000304
+          "result" : false
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000304
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000304
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000304
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000304
+          }
         },
         {
           "current" : {
@@ -3537,23 +4050,14 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000371,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000304
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000305
+          }
         },
         {
           "current" : {
@@ -3561,14 +4065,7 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000239,
-            "node" : "r1"
-          },
-          "result" : true,
-          "wall" : 1000305
+          "result" : true
         },
         {
           "current" : {
@@ -3576,32 +4073,21 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000384,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000305
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000305
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000305
+          }
         },
         {
           "current" : {
@@ -3609,59 +4095,42 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000313,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000305
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000305
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000305
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000306
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 12,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000306
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 13,
             "millis" : 1000402,
             "node" : "n10"
-          },
-          "wall" : 1000307
+          }
         },
         {
           "current" : {
@@ -3669,14 +4138,7 @@
             "millis" : 1000402,
             "node" : "n10"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 0,
-            "millis" : 1000222,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000307
+          "result" : true
         }
       ]
     },
@@ -3689,18 +4151,148 @@
         },
         "maxDrift" : 3600000,
         "node" : "n11",
-        "op" : "clock"
+        "op" : "clock",
+        "steps" : [
+          {
+            "op" : "now",
+            "wall" : 1000715
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000633,
+              "node" : "r0"
+            },
+            "wall" : 1000715
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 4600716,
+              "node" : "r1"
+            },
+            "wall" : 1000715
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000809,
+              "node" : "r0"
+            },
+            "wall" : 1000715
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000756,
+              "node" : "r2"
+            },
+            "wall" : 1000715
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000637,
+              "node" : "r2"
+            },
+            "wall" : 1000715
+          },
+          {
+            "op" : "now",
+            "wall" : 1000716
+          },
+          {
+            "op" : "now",
+            "wall" : 1000718
+          },
+          {
+            "op" : "now",
+            "wall" : 1000718
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 4600719,
+              "node" : "r2"
+            },
+            "wall" : 1000718
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 2,
+              "millis" : 1000671,
+              "node" : "r0"
+            },
+            "wall" : 1000718
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 3,
+              "millis" : 1000805,
+              "node" : "r2"
+            },
+            "wall" : 1000718
+          },
+          {
+            "op" : "now",
+            "wall" : 1000718
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000743,
+              "node" : "r0"
+            },
+            "wall" : 1000718
+          },
+          {
+            "op" : "now",
+            "wall" : 1000718
+          },
+          {
+            "op" : "now",
+            "wall" : 1000719
+          },
+          {
+            "op" : "now",
+            "wall" : 1000721
+          },
+          {
+            "op" : "now",
+            "wall" : 1000721
+          },
+          {
+            "op" : "now",
+            "wall" : 1000721
+          },
+          {
+            "op" : "observe",
+            "remote" : {
+              "counter" : 1,
+              "millis" : 1000632,
+              "node" : "r0"
+            },
+            "wall" : 1000721
+          }
+        ]
       },
       "name" : "clock-11",
       "output" : [
         {
-          "op" : "now",
           "result" : {
             "counter" : 2,
             "millis" : 1000765,
             "node" : "n11"
-          },
-          "wall" : 1000715
+          }
         },
         {
           "current" : {
@@ -3708,14 +4300,7 @@
             "millis" : 1000765,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000633,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000715
+          "result" : true
         },
         {
           "current" : {
@@ -3723,14 +4308,7 @@
             "millis" : 1000765,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 4600716,
-            "node" : "r1"
-          },
-          "result" : false,
-          "wall" : 1000715
+          "result" : false
         },
         {
           "current" : {
@@ -3738,14 +4316,7 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000809,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000715
+          "result" : true
         },
         {
           "current" : {
@@ -3753,14 +4324,7 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000756,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000715
+          "result" : true
         },
         {
           "current" : {
@@ -3768,41 +4332,28 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000637,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000715
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 3,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000716
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 4,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000718
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 5,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000718
+          }
         },
         {
           "current" : {
@@ -3810,14 +4361,7 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 4600719,
-            "node" : "r2"
-          },
-          "result" : false,
-          "wall" : 1000718
+          "result" : false
         },
         {
           "current" : {
@@ -3825,14 +4369,7 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 2,
-            "millis" : 1000671,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000718
+          "result" : true
         },
         {
           "current" : {
@@ -3840,23 +4377,14 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 3,
-            "millis" : 1000805,
-            "node" : "r2"
-          },
-          "result" : true,
-          "wall" : 1000718
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 6,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000718
+          }
         },
         {
           "current" : {
@@ -3864,59 +4392,42 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000743,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000718
+          "result" : true
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 7,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000718
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 8,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000719
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 9,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000721
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 10,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000721
+          }
         },
         {
-          "op" : "now",
           "result" : {
             "counter" : 11,
             "millis" : 1000809,
             "node" : "n11"
-          },
-          "wall" : 1000721
+          }
         },
         {
           "current" : {
@@ -3924,14 +4435,7 @@
             "millis" : 1000809,
             "node" : "n11"
           },
-          "op" : "observe",
-          "remote" : {
-            "counter" : 1,
-            "millis" : 1000632,
-            "node" : "r0"
-          },
-          "result" : true,
-          "wall" : 1000721
+          "result" : true
         }
       ]
     }

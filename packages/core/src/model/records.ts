@@ -47,9 +47,4 @@ export function recordKeyOf(record: WireRecord): RecordKey {
   return { kind: record.kind, id: record.data.id };
 }
 
-/** HLC-Ordnung: millis, dann counter, dann node (wie Swift `Stamp <`). */
-export function compareStamps(a: Stamp, b: Stamp): number {
-  if (a.millis !== b.millis) return a.millis < b.millis ? -1 : 1;
-  if (a.counter !== b.counter) return a.counter < b.counter ? -1 : 1;
-  return a.node < b.node ? -1 : a.node > b.node ? 1 : 0;
-}
+export { compareStamps } from "../hlc.js";

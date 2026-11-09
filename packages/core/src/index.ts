@@ -5,3 +5,5 @@ export * from "./json.js";
 export * as schema from "./model/schema.js";
 export { ENUMS, KNOWN_KEYS } from "./model/schema.js";
 export * from "./model/records.js";
+export { StampClock, ZERO_STAMP, parseStamp, stampToString } from "./hlc.js";
+export { FIRST_KEY, isValidKey, keyBetween, keysBetween } from "./sortkeys.js";

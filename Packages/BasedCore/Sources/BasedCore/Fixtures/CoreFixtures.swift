@@ -77,6 +77,7 @@ public enum CoreFixtures {
             if seq == 11 { clock.observe(Stamp(millis: wall + 10, counter: UInt32.max - 1, node: "x")) }
             let initial = clock.current
             var steps: [JSONValue] = []
+            var inputs: [JSONValue] = []
             for _ in 0..<20 {
                 let r = rng.int(10)
                 if r < 3 { wall += Int64(rng.int(3)) }                          // Wanduhr springt (oder bleibt stehen)
@@ -84,16 +85,17 @@ public enum CoreFixtures {
                 clock.wallClock = { w }
                 if r < 6 {
                     let s = clock.now()
-                    steps.append(["op": "now", "wall": .number(Double(w)), "result": stampJSON(s)])
+                    inputs.append(["op": "now", "wall": .number(Double(w))])
+                    steps.append(["result": stampJSON(s)])
                 } else {
                     let drift: Int64 = r == 9 ? StampClock.maxDrift + 1 : Int64(rng.int(200)) - 100
                     let remote = Stamp(millis: w + drift, counter: UInt32(rng.int(4)), node: "r\(rng.int(3))")
                     let accepted = clock.observe(remote)
-                    steps.append(["op": "observe", "wall": .number(Double(w)), "remote": stampJSON(remote),
-                                  "result": .bool(accepted), "current": stampJSON(clock.current)])
+                    inputs.append(["op": "observe", "wall": .number(Double(w)), "remote": stampJSON(remote)])
+                    steps.append(["result": .bool(accepted), "current": stampJSON(clock.current)])
                 }
             }
-            cases.append(testCase("clock-\(seq)", ["op": "clock", "node": .string("n\(seq)"), "last": stampJSON(initial), "maxDrift": .number(Double(StampClock.maxDrift))], .array(steps)))
+            cases.append(testCase("clock-\(seq)", ["op": "clock", "node": .string("n\(seq)"), "last": stampJSON(initial), "maxDrift": .number(Double(StampClock.maxDrift)), "steps": .array(inputs)], .array(steps)))
         }
         return file("hlc", cases)
     }
