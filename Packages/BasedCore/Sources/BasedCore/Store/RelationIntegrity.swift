@@ -84,7 +84,7 @@ extension WorkspaceStore {
                 for i in d.properties.indices where broken.contains(d.properties[i].id) { d.properties[i].rollup = nil }
             }
         }
-        for r in rows(of: databaseID) where r.values[propertyID] != nil {
+        for r in allRows(of: databaseID) where r.values[propertyID] != nil {
             tx.update(r.id) { $0.values[propertyID] = nil }
         }
     }
@@ -162,7 +162,7 @@ extension WorkspaceStore {
         for db in databases.values where !removedDBs.contains(db.id) {
             let rels = db.properties.filter { $0.type == .relation && $0.relation.map { rowDBs.contains($0.databaseID) } == true }
             if !rels.isEmpty {
-                for r in rows(of: db.id) where !ids.contains(r.id) {
+                for r in allRows(of: db.id) where !ids.contains(r.id) {
                     for p in rels {
                         guard case .relation(let targets)? = r.values[p.id], targets.contains(where: ids.contains) else { continue }
                         let rest = targets.filter { !ids.contains($0) }

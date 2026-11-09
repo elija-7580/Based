@@ -92,8 +92,43 @@ public extension WorkspaceStore {
         return databases[did]
     }
 
+    /// Live rows (what views show).
     func rows(of databaseID: RecordID) -> [Block] {
         childBlocks(of: .database(databaseID)).filter { $0.trashedAt == nil }
+    }
+
+    /// Every row including those in the Trash (BSD-122). Schema-wide changes (type change, deleting an option or
+    /// property, relation changes, new ID property) go over these, so a row restored later matches the schema.
+    func allRows(of databaseID: RecordID) -> [Block] {
+        children(of: .database(databaseID)).compactMap { blocks[$0] }
+    }
+
+    /// `values` without what no longer fits `db`'s schema (BSD-122, used when a row comes back from the Trash): a
+    /// value whose kind doesn't match its property's type, and option IDs the property no longer has. Values of
+    /// properties this version doesn't know (missing, `.unknown` type or value) and computed types stay as they are.
+    static func valuesMatchingSchema(_ values: [String: PropertyValue], _ db: Database) -> [String: PropertyValue] {
+        var out = values
+        for (pid, v) in values {
+            guard let p = db.property(pid), !v.isUnknown else { continue }
+            let options = Set((p.options ?? []).map(\.id))
+            switch (p.type, v) {
+            case (.title, .text), (.text, .text), (.number, .number), (.date, .date), (.person, .person), (.files, .files),
+                 (.checkbox, .checkbox), (.url, .url), (.email, .email), (.phone, .phone), (.relation, .relation),
+                 (.uniqueID, .uniqueID), (.place, .place):
+                break
+            case (.select, .select(let o)), (.status, .status(let o)):
+                if !options.contains(o) { out[pid] = nil }
+            case (.multiSelect, .multiSelect(let ids)):
+                let rest = ids.filter(options.contains)
+                if rest.count != ids.count { out[pid] = rest.isEmpty ? nil : .multiSelect(rest) }
+            case (.title, _), (.text, _), (.number, _), (.date, _), (.person, _), (.files, _), (.checkbox, _), (.url, _),
+                 (.email, _), (.phone, _), (.relation, _), (.uniqueID, _), (.place, _), (.select, _), (.status, _), (.multiSelect, _):
+                out[pid] = nil
+            default:
+                break   // formula, rollup, created/edited, button, verification, unknown: not touched
+            }
+        }
+        return out
     }
 
     func setDatabaseTitle(_ id: RecordID, _ title: RichText) {
@@ -178,7 +213,7 @@ public extension WorkspaceStore {
         var prop = PropertySchema(name: uniquePropertyName(name, in: db), type: type)
         if type == .formula { prop.formula = "" }
         if type == .uniqueID { prop.idPrefix = nil }
-        let rowsToNumber = type == .uniqueID ? rows(of: databaseID).sorted { $0.createdAt < $1.createdAt } : []
+        let rowsToNumber = type == .uniqueID ? allRows(of: databaseID).sorted { $0.createdAt < $1.createdAt } : []
         return transact("Add property") { tx in
             tx.updateDatabase(databaseID) { d in
                 if let after, let i = d.properties.firstIndex(where: { $0.id == after }) {
@@ -247,7 +282,7 @@ public extension WorkspaceStore {
               p.relation?.databaseID != target else { return }
         transact("Relation") { tx in
             dropRelationLinks(databaseID, propertyID, tx: tx)
-            for r in rows(of: databaseID) where r.values[propertyID] != nil { tx.update(r.id) { $0.values[propertyID] = nil } }
+            for r in allRows(of: databaseID) where r.values[propertyID] != nil { tx.update(r.id) { $0.values[propertyID] = nil } }
             tx.updateDatabase(databaseID) { d in
                 guard let i = d.properties.firstIndex(where: { $0.id == propertyID }) else { return }
                 d.properties[i].relation = target.map { RelationConfig(databaseID: $0, limitOne: p.relation?.limitOne) }
@@ -269,7 +304,7 @@ public extension WorkspaceStore {
                 let i = d.properties.firstIndex { $0.id == old } ?? d.properties.count - 1
                 d.properties.insert(copy, at: i + 1)
             }
-            for r in rows(of: databaseID) { if let v = r.values[old] { tx.update(r.id) { $0.values[copy.id] = v } } }
+            for r in allRows(of: databaseID) { if let v = r.values[old] { tx.update(r.id) { $0.values[copy.id] = v } } }
             return copy.id
         }
     }
@@ -339,7 +374,8 @@ public extension WorkspaceStore {
         var newOptionIDs: [String] = []
         var converted: [RecordID: PropertyValue?] = [:]
         let palette = TColor.textColors
-        for r in rows(of: databaseID) {
+        // Trashed rows too (BSD-122): a restored row must not keep a value of the old type.
+        for r in allRows(of: databaseID) {
             guard let v = r.values[propertyID] else { continue }
             var names = v.optionNames(old)
             var text = v.plainString(old)
@@ -455,7 +491,7 @@ public extension WorkspaceStore {
 
     func deleteOption(_ databaseID: RecordID, _ propertyID: String, _ optionID: String) {
         guard databases[databaseID] != nil else { return }
-        let affected = rows(of: databaseID)
+        let affected = allRows(of: databaseID)
         transact("Delete option") { tx in
             for v in views.values where v.databaseID == databaseID {
                 var nv = v
@@ -491,7 +527,7 @@ public extension WorkspaceStore {
                                     type: .relation)
         mirror.relation = RelationConfig(databaseID: databaseID, syncedPropertyID: propertyID)
         let m = mirror
-        let sourceRows = rows(of: databaseID)
+        let sourceRows = allRows(of: databaseID)
         transact("Two-way relation") { tx in
             tx.updateDatabase(target.id) { $0.properties.append(m) }
             tx.updateDatabase(databaseID) { d in
