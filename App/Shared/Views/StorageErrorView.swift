@@ -58,7 +58,9 @@ struct StorageWriteBanner: View {
             Image(systemName: "exclamationmark.triangle.fill")
             Text("Based can't save. Changes are paused.")
                 .font(.system(size: 13, weight: .semibold))
-            Text(failure.message)
+            // BSD-121: with the background writer, edits made before the failure may still be waiting.
+            let unsaved = model.store.unsavedChangeCount
+            Text(unsaved > 0 ? "Some changes aren't saved yet (\(unsaved)). \(failure.message)" : failure.message)
                 .font(.system(size: 12))
                 .lineLimit(1)
                 .opacity(0.85)

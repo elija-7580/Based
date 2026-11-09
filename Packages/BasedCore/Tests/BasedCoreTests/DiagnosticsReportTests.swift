@@ -38,6 +38,28 @@ import Testing
         #expect(!hangLine.contains("2026-"), "compact lines carry the time only")
     }
 
+    /// BSD-121: the "Storage" fact counts changes the background writer still holds.
+    @MainActor @Test func storageFactShowsUnsavedChanges() {
+        let base = LockedFailingPersistence()
+        let s = WorkspaceStore(persistence: PersistenceWriter(base), node: "a")
+        let page = s.createPage(title: "A")
+        #expect(s.flushWrites())
+        #expect(s.storageSummary(location: "/data") == "writable · /data")
+        base.failing = true
+        s.setText(page, "B")
+        #expect(s.flushWrites() == false)
+        let stopped = s.storageSummary(location: "/data")
+        #expect(stopped.contains("1 change not saved yet"), "\(stopped)")
+        #expect(stopped.contains("background save failed: disk full"), "\(stopped)")
+        s.setText(page, "C")   // the store notices and turns read-only
+        let readOnly = s.storageSummary(location: "/data")
+        #expect(readOnly.hasPrefix("read-only since"), "\(readOnly)")
+        #expect(readOnly.contains("1 changes rejected") && readOnly.contains("1 change not saved yet"), "\(readOnly)")
+        base.failing = false
+        #expect(s.retryWrites())
+        #expect(s.storageSummary(location: "/data") == "writable · /data")
+    }
+
     @Test func emptyReport() {
         let text = DiagnosticReport().render()
         #expect(text.contains("HANGS: none this session"))
