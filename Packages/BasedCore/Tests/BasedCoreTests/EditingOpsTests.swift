@@ -135,13 +135,33 @@ import Testing
         s.toggleOpen(t)
         #expect(s.blocks[t]?.props.isOpen == false)
         s.toggleOpen(t)
-        let outcome = s.undo()
-        // Open/close isn't an undo step, so ⌘Z should remove the inserted toggle. Today the local toggle counts as
-        // "changed elsewhere" and the insert step is dropped instead (BSD-134).
-        withKnownIssue("BSD-134: undo skips a step whose block was only opened/closed since") {
-            #expect(s.blocks[t] == nil, "undo removes the inserted block (\(outcome))")
-        }
+        _ = s.undo()
+        // BSD-134: open/close isn't an undo step and doesn't make the insert step look "changed elsewhere".
+        #expect(s.blocks[t] == nil, "undo removes the inserted toggle")
         s.toggleOpen("missing")   // no crash
+    }
+
+    /// BSD-134: undo restores the content but leaves the toggle as open as it is now; a real edit made since
+    /// (e.g. by sync) still protects the step.
+    @Test func undoAfterOpeningAToggleKeepsItOpen() {
+        let (s, page) = store()
+        let t = s.insertBlock(.toggle, text: "Title", in: .block(page))
+        s.setText(t, "Changed")
+        s.toggleOpen(t)
+        _ = s.undo()
+        #expect(s.blocks[t]?.text.plainText == "Title")
+        #expect(s.blocks[t]?.props.isOpen == true, "undo doesn't close the toggle")
+        _ = s.redo()
+        #expect(s.blocks[t]?.text.plainText == "Changed")
+        #expect(s.blocks[t]?.props.isOpen == true)
+
+        let u = s.insertBlock(.toggle, text: "Mine", in: .block(page))
+        var remote = s.blocks[u]!
+        remote.text = RichText("From another device")
+        remote.stamp = Stamp(millis: remote.stamp.millis + 10_000, counter: 0, node: "zz")
+        _ = s.applyRemote([.block(remote)])
+        _ = s.undo()
+        #expect(s.blocks[u]?.text.plainText == "From another device", "a newer edit from elsewhere is kept")
     }
 
     @Test func columnRatiosNeedOneRatioPerColumn() {

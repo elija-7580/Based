@@ -814,7 +814,7 @@ public final class WorkspaceStore {
                 continue
             }
             let tx = Tx(store: self)
-            for key in keys { apply(entry[keyPath: restore][key]?.value, key, tx) }
+            for key in keys { apply(Self.keepingOpenState(entry[keyPath: restore][key]?.value, current: record(key)), key, tx) }
             guard commit(tx, name: entry.name, coalesce: nil, origin: origin, undoable: false) else {
                 if undo { undoStack.append(entry) } else { redoStack.append(entry) }   // not saved: keep it
                 outcome.skipped -= skipped
@@ -836,12 +836,15 @@ public final class WorkspaceStore {
         return outcome
     }
 
-    /// Same record content, ignoring what every write changes anyway (stamp, `updatedAt`, `updatedBy`).
+    /// Same record content, ignoring what every write changes anyway (stamp, `updatedAt`, `updatedBy`) and a
+    /// block's open/closed state: opening a toggle isn't an undo step (`toggleOpen`), so it mustn't make an
+    /// earlier step look "changed elsewhere" (BSD-134).
     static func sameContent(_ a: Record?, _ b: Record?) -> Bool {
         switch (a, b) {
         case (nil, nil): return true
         case (.block(var x)?, .block(var y)?):
             x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt; x.updatedBy = y.updatedBy
+            if x.props.isOpen != y.props.isOpen { x.props.isOpen = y.props.isOpen }
             return x == y
         case (.database(var x)?, .database(var y)?):
             x.stamp = .zero; y.stamp = .zero; x.updatedAt = y.updatedAt
@@ -854,6 +857,13 @@ public final class WorkspaceStore {
             return x == y
         default: return false
         }
+    }
+
+    /// BSD-134: undo/redo restore a block's content but keep whether it is open now (view state, never an undo step).
+    static func keepingOpenState(_ value: Record?, current: Record?) -> Record? {
+        guard case .block(var b)? = value, case .block(let c)? = current, b.props.isOpen != c.props.isOpen else { return value }
+        b.props.isOpen = c.props.isOpen
+        return .block(b)
     }
 
     private func apply(_ value: Record?, _ key: RecordKey, _ tx: Tx) {
