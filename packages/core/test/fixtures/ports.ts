@@ -7,5 +7,5 @@ import type { FixtureCase } from "./load.js";
 export type Port = (input: FixtureCase["input"], meta: Record<string, unknown>) => unknown;
 
 export const PORTS: Record<string, Port | undefined> = {
-  // hlc: …, sortkeys: …, formulas: …, queries: …, values: …, merge: …
+  // hlc, sortkeys, formulas, queries, values, merge, conversion, search, clipboard, undo-remote
 };

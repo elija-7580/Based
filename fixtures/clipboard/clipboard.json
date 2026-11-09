@@ -1,0 +1,588 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "html" : "<meta charset=\"utf-8\"><h2>Plan</h2>\n<p>Some <strong>bold</strong> and <span class=\"highlight-red\">red</span> text with a\n<a href=\"https://www.notion.so/Tasks-1fe618c1167e80f8946ec1a7918dfc28\">Tasks</a> link.</p>\n<ul class=\"to-do-list\"><li><div class=\"checkbox checkbox-on\"></div><span class=\"to-do-children-checked\">Done thing</span></li>\n<li><div class=\"checkbox checkbox-off\"></div><span>Open thing</span></li></ul>\n<ul><li>Bullet<ul><li>Nested</li></ul></li></ul>\n<details><summary>Toggle title</summary><p>Inside toggle</p></details>\n<aside><span class=\"icon\">💡</span><div>Callout text</div></aside>\n<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>\n<pre><code class=\"language-swift\">let x = 1</code></pre><hr>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Notion-Zwischenablage",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "Plan",
+            "type" : "heading2"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "t" : "Some "
+              },
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "bold"
+              },
+              {
+                "t" : " and "
+              },
+              {
+                "m" : {
+                  "color" : "red"
+                },
+                "t" : "red"
+              },
+              {
+                "t" : " text with a "
+              },
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "1fe618c1-167e-80f8-946e-c1a7918dfc28"
+                  }
+                },
+                "t" : "Tasks"
+              },
+              {
+                "t" : " link."
+              }
+            ],
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "checked" : true
+            },
+            "text" : "Done thing",
+            "type" : "todo"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "checked" : false
+            },
+            "text" : "Open thing",
+            "type" : "todo"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "Nested",
+                "type" : "bulletedList"
+              }
+            ],
+            "text" : "Bullet",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "Inside toggle",
+                "type" : "text"
+              }
+            ],
+            "text" : "Toggle title",
+            "type" : "toggle"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "color" : "grayBackground",
+              "icon" : "💡"
+            },
+            "text" : "Callout text",
+            "type" : "callout"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "A",
+                    "B"
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              },
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "1",
+                    "2"
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              }
+            ],
+            "props" : {
+              "tableColumns" : 2,
+              "tableHeaderRow" : true
+            },
+            "text" : "",
+            "type" : "table"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "language" : "swift"
+            },
+            "text" : "let x = 1",
+            "type" : "code"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "",
+            "type" : "divider"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<h1>Eins</h1><h2>Zwei</h2><h3>Drei</h3><h4>Vier</h4><h5>Fünf</h5><p>Text <em>kursiv</em> <u>unter</u> <s>durch</s> <code>code</code></p><p>zweiter</p>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Überschriften und Absätze",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "Eins",
+            "type" : "heading1"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Zwei",
+            "type" : "heading2"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Drei",
+            "type" : "heading3"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Vier",
+            "type" : "heading3"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Fünf",
+            "type" : "heading3"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "t" : "Text "
+              },
+              {
+                "m" : {
+                  "i" : true
+                },
+                "t" : "kursiv"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "m" : {
+                  "u" : true
+                },
+                "t" : "unter"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "m" : {
+                  "s" : true
+                },
+                "t" : "durch"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "m" : {
+                  "c" : true
+                },
+                "t" : "code"
+              }
+            ],
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "zweiter",
+            "type" : "text"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<ol><li>Eins<ol><li>Eins.a</li></ol></li><li>Zwei</li></ol><ul><li>A<ul><li>B<ul><li>C</li></ul></li></ul></li></ul>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Listen verschachtelt",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "Eins.a",
+                "type" : "numberedList"
+              }
+            ],
+            "text" : "Eins",
+            "type" : "numberedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Zwei",
+            "type" : "numberedList"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+                  {
+                    "children" : [
+
+                    ],
+                    "text" : "C",
+                    "type" : "bulletedList"
+                  }
+                ],
+                "text" : "B",
+                "type" : "bulletedList"
+              }
+            ],
+            "text" : "A",
+            "type" : "bulletedList"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<blockquote>Zitat <b>fett</b></blockquote><img src=\"https://example.com/a.png\" alt=\"Bild\"><figure><img src=\"https://example.com/b.png\"><figcaption>Unterschrift</figcaption></figure>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Zitat, Bild, Figure",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "t" : "Zitat "
+              },
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "fett"
+              }
+            ],
+            "type" : "quote"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "url" : "https://example.com/a.png"
+            },
+            "text" : "",
+            "type" : "image"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "caption" : "Unterschrift",
+              "url" : "https://example.com/b.png"
+            },
+            "text" : "",
+            "type" : "image"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<p class=\"block-color-blue_background\">Blau hinterlegt</p><p><span class=\"highlight-yellow_background\">gelb</span> <mark class=\"highlight-teal\">unbekannt</mark></p>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Farben",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "color" : "blueBackground"
+            },
+            "text" : "Blau hinterlegt",
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "m" : {
+                  "color" : "yellowBackground"
+                },
+                "t" : "gelb"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "m" : {
+                  "color" : "yellowBackground"
+                },
+                "t" : "unbekannt"
+              }
+            ],
+            "type" : "text"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<p><a href=\"https://example.com\">extern</a> <a href=\"based://page/doc-1\">intern</a> <a href=\"mailto:a@b.c\">Mail</a></p>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Links",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "m" : {
+                  "link" : "https://example.com"
+                },
+                "t" : "extern"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "doc-1"
+                  }
+                },
+                "t" : "intern"
+              },
+              {
+                "t" : " "
+              },
+              {
+                "m" : {
+                  "link" : "mailto:a@b.c"
+                },
+                "t" : "Mail"
+              }
+            ],
+            "type" : "text"
+          }
+        ],
+        "isStructured" : false
+      }
+    },
+    {
+      "input" : {
+        "html" : "<meta charset=\"utf-8\"><b style=\"font-weight:normal;\" id=\"docs-internal-guid-1\"><p dir=\"ltr\"><span style=\"font-weight:700\">Fett</span><span> normal</span></p><ul><li dir=\"ltr\"><p dir=\"ltr\"><span>Punkt</span></p></li></ul></b>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Google Docs",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "Fett normalPunkt"
+              }
+            ],
+            "type" : "text"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<span>just text</span>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Leer und Text",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "just text",
+            "type" : "text"
+          }
+        ],
+        "isStructured" : false
+      }
+    },
+    {
+      "input" : {
+        "html" : "<p>  A &amp; B &lt;tag&gt; &quot;x&quot; &#x1F680; &nbsp;Ende  </p>\n\n<p></p>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Entities und Leerraum",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "A & B <tag> \"x\" 🚀  Ende",
+            "type" : "text"
+          }
+        ],
+        "isStructured" : true
+      }
+    },
+    {
+      "input" : {
+        "html" : "<table><tbody><tr><td><strong>K</strong></td><td>V</td></tr><tr><td>a</td><td>1</td></tr></tbody></table>",
+        "op" : "parse"
+      },
+      "name" : "einlesen: Tabelle mit Kopfspalte",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    [
+                      {
+                        "m" : {
+                          "b" : true
+                        },
+                        "t" : "K"
+                      }
+                    ],
+                    "V"
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              },
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "a",
+                    "1"
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              }
+            ],
+            "props" : {
+              "tableColumns" : 2,
+              "tableHeaderRow" : false
+            },
+            "text" : "",
+            "type" : "table"
+          }
+        ],
+        "isStructured" : true
+      }
+    }
+  ],
+  "module" : "clipboard",
+  "note" : "parse: ImportedBlock ohne id.",
+  "resolvePage" : [
+    "1fe618c1-167e-80f8-946e-c1a7918dfc28",
+    "doc-1"
+  ]
+}

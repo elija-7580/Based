@@ -29,7 +29,7 @@ recordTally.passed = corpus.filter((l) => {
 describe("Fixture-Dateien sind gültig", () => {
   it("es gibt Fixtures für die Kernmodule", () => {
     const modules = new Set(files.map((f) => f.module));
-    for (const m of ["hlc", "sortkeys", "formulas", "merge", "queries", "values"]) expect(modules, m).toContain(m);
+    for (const m of ["hlc", "sortkeys", "formulas", "merge", "queries", "values", "conversion", "search", "clipboard", "undo-remote"]) expect(modules, m).toContain(m);
   });
   it.each(files.map((f) => [f.file, f] as const))("%s hat Fälle mit name/input/output", (_n, f) => {
     expect(f.cases.length).toBeGreaterThan(0);

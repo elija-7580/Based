@@ -20,6 +20,10 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | queries | `queries/queries.utc.json` | Filter (alle Operatoren, verschachtelt, unbekannt), Sortierung je Property, Gruppen (inkl. Datumsgruppen, versteckt/Reihenfolge), Suche in Ansichten |
 | values | `queries/values.utc.json` | Berechnete Werte jeder Zeile (Formeln, Relationen, Rollups) und alle Spalten-Berechnungen |
 | merge | `merge/merge.json` | Last-Writer-Wins, Tombstones mit/ohne Stempel, kein Wiederbeleben, Batches |
+| conversion | `conversion/conversion.utc.json` | Property-Typwechsel jeder Aufgaben-Property in jeden Zieltyp (Schema, Werte, verlorene Zellen); neue IDs als `new:<Name>` / `group:<Name>` |
+| search | `search/search.json` | Quick-Find-Index (SearchCorpus): Titel/Inhalt/Zeilen, Faltung (Groß/klein, Umlaute), Filter, alle Sortierungen, Limit. Gleichstand: pageID aufsteigend; Inhalts-Snippet als Kandidatenliste |
+| clipboard | `clipboard/clipboard.json`, `clipboard/export.utc.json` | Eingefügtes HTML (Notion, Google Docs, Listen, Farben, Links, Tabellen, Entities) → Blöcke; HTML-Export von Seiten und wieder einlesen |
+| undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
 
 Format: `{"module": "…", "cases": [{"name", "input", "output"}], …Metadaten}`. Fehler als `{"error": "…"}`,
 berechnete Werte als `{"t": "<typ>", "v": …}`, Datum wie in Swift (Sekunden seit 2001-01-01).
@@ -29,5 +33,8 @@ die TS-Tests laufen dafür mit `TZ=UTC`.
 Echte Daten prüfen (BSD-148): `swift run based-fixtures --records-from <based.sqlite> /tmp/records.jsonl`, dann
 `BASED_RECORDS=/tmp/records.jsonl pnpm --filter @based/core test`.
 
-Noch nicht exportiert (eigener Backlog-Eintrag): Property-Umwandlung, Suchindex (SearchEngine), Notion-HTML-Import,
-Clipboard-HTML, Undo gegen Remote.
+Noch nicht exportiert: Notion-HTML-Import (ganzer Export-Ordner mit Dateien; kommt mit dem Import-Eintrag in Phase 2).
+
+Hinweis Swift: Bei der Quick-Find-Suche hängt das Inhalts-Snippet und die Reihenfolge bei Gleichstand von der
+Dictionary-Reihenfolge ab (nicht stabil). Die Fixtures halten deshalb die Kandidaten fest; der TS-Port nimmt den
+ersten passenden Block in Dokumentreihenfolge und sortiert Gleichstände nach pageID.

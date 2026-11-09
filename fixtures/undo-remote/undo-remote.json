@@ -1,0 +1,994 @@
+{
+  "cases" : [
+    {
+      "input" : [
+        {
+          "id" : "l1",
+          "op" : "setText",
+          "text" : "lokal"
+        },
+        {
+          "op" : "remote",
+          "record" : {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "l1",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 62010,
+                "node" : "zz-other"
+              },
+              "text" : "von drüben",
+              "type" : "text",
+              "updatedAt" : 784002020,
+              "updatedBy" : "zz-other"
+            },
+            "kind" : "block"
+          }
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "Remote-Änderung desselben Blocks bleibt",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "lokal",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "von drüben",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "von drüben",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 1,
+            "name" : "Typing",
+            "skipped" : 1
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "von drüben",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "ids" : [
+            "l1"
+          ],
+          "op" : "delete"
+        },
+        {
+          "op" : "remote",
+          "record" : {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "l2",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 61000,
+                "node" : "zz-other"
+              },
+              "text" : "remote",
+              "type" : "text",
+              "updatedAt" : 784002020,
+              "updatedBy" : "zz-other"
+            },
+            "kind" : "block"
+          }
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "lokales Löschen wird wiederhergestellt",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 0,
+            "name" : "Delete",
+            "skipped" : 0
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 0,
+            "name" : "Delete",
+            "skipped" : 0
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "id" : "l1",
+          "op" : "setText",
+          "text" : "lokal"
+        },
+        {
+          "id" : "l1",
+          "op" : "remoteDelete",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 62010,
+            "node" : "zz-other"
+          }
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "remote gelöschter Block lebt nicht wieder auf",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "lokal",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 1,
+            "name" : "Typing",
+            "skipped" : 1
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "id" : "l1",
+          "op" : "setText",
+          "text" : "A"
+        },
+        {
+          "id" : "l2",
+          "op" : "setText",
+          "text" : "B"
+        },
+        {
+          "op" : "remote",
+          "record" : {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "l2",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 62020,
+                "node" : "zz-other"
+              },
+              "text" : "B remote",
+              "type" : "text",
+              "updatedAt" : 784002030,
+              "updatedBy" : "zz-other"
+            },
+            "kind" : "block"
+          }
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "redo"
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "unabhängige Schritte",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "A",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "A",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "A",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 1,
+            "name" : "Typing",
+            "skipped" : 1
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "A",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 0,
+            "name" : "Typing",
+            "skipped" : 0
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "A",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "B remote",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "ids" : [
+            "l1",
+            "l2"
+          ],
+          "op" : "delete"
+        },
+        {
+          "op" : "remote",
+          "record" : {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "l2",
+              "parent" : "b:page",
+              "sk" : "a9",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 60000,
+                "node" : "zz-other"
+              },
+              "text" : "x",
+              "type" : "text",
+              "updatedAt" : 784002020,
+              "updatedBy" : "zz-other"
+            },
+            "kind" : "block"
+          }
+        },
+        {
+          "op" : "undo"
+        }
+      ],
+      "name" : "mehrere Blöcke in einem Schritt",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : null,
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : null,
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "x",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "x",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 0,
+            "name" : "Delete",
+            "skipped" : 1
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "nichts rückgängig zu machen",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 0,
+            "name" : null,
+            "skipped" : 0
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "id" : "l3",
+          "op" : "setText",
+          "text" : "neu"
+        },
+        {
+          "op" : "undo"
+        },
+        {
+          "op" : "remote",
+          "record" : {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "l3",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 62020,
+                "node" : "zz-other"
+              },
+              "text" : "remote",
+              "type" : "todo",
+              "updatedAt" : 784002030,
+              "updatedBy" : "zz-other"
+            },
+            "kind" : "block"
+          }
+        },
+        {
+          "op" : "redo"
+        }
+      ],
+      "name" : "Undo, dann Remote, dann Redo",
+      "output" : [
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "neu",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : true,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "drei",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 1,
+            "droppedSteps" : 0,
+            "name" : "Typing",
+            "skipped" : 0
+          }
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "remote",
+              "trashed" : false
+            }
+          },
+          "canRedo" : true,
+          "canUndo" : false,
+          "result" : null
+        },
+        {
+          "blocks" : {
+            "l1" : {
+              "parent" : "b:page",
+              "text" : "eins",
+              "trashed" : false
+            },
+            "l2" : {
+              "parent" : "b:page",
+              "text" : "zwei",
+              "trashed" : false
+            },
+            "l3" : {
+              "parent" : "b:page",
+              "text" : "remote",
+              "trashed" : false
+            }
+          },
+          "canRedo" : false,
+          "canUndo" : false,
+          "result" : {
+            "applied" : 0,
+            "droppedSteps" : 1,
+            "name" : "Typing",
+            "skipped" : 1
+          }
+        }
+      ]
+    }
+  ],
+  "module" : "undo-remote",
+  "note" : "Lokale Uhr: node local, Wanduhr ab 2000 ms, +10 je Schritt; Undo-Verlauf vor dem ersten Schritt geleert.",
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "page",
+        "parent" : "w",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Seite",
+        "type" : "page",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "l1",
+        "parent" : "b:page",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "eins",
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "l2",
+        "parent" : "b:page",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "zwei",
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "l3",
+        "parent" : "b:page",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "drei",
+        "type" : "todo",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    }
+  ]
+}
