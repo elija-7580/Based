@@ -26,6 +26,12 @@ public struct AnthropicProvider: AIProvider {
         self.apiKey = apiKey; self.baseURL = baseURL; self.models = models; self.effort = effort
     }
 
+    /// BSD-126: effort per turn (from the router's decision); "" keeps the configured one.
+    public func withEffort(_ effort: String) -> AIProvider {
+        guard !effort.isEmpty else { return self }
+        var p = self; p.effort = effort; return p
+    }
+
     /// Server-side fallback on refusals is offered for these models (Claude API).
     static func supportsFallbacks(_ model: String) -> Bool {
         ["claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1"].contains(model)

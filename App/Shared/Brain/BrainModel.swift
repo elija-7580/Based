@@ -335,9 +335,12 @@ final class BrainModel {
         // BSD-97: routes come from the Routing database in the Agent Brain (edited rows count from this turn on).
         let routing = brain.routes()
         for note in routing.notes { Log.info(note, category: "ai") }
-        let decision = ChatRouting.route(engineSpec, task: task, compute: compute, router: ModelRouter(routes: routing.routes),
+        let router = ModelRouter(routes: routing.routes)
+        let resumeKey = existingChat.flatMap { brain.resumeKey($0) }
+        let hasHistory = !turns.isEmpty
+        let decision = ChatRouting.route(engineSpec, task: task, compute: compute, router: router,
                                          registry: registry, installed: installedCLIs, defaultModel: defaultModel)
-            .keepingConversation(resumeKey: existingChat.flatMap { brain.resumeKey($0) }, hasHistory: !turns.isEmpty)
+            .keepingConversation(resumeKey: resumeKey, hasHistory: hasHistory)
         // BSD-52: the main agent's thread always runs the main agent (low compute, delegation tools).
         let mainRef = existingChat.flatMap { brain.isMainThread($0) ? $0 : nil }.flatMap { _ in mainAgent.modelRef() }
         let engine = mainRef.map(ChatEngineChoice.model) ?? decision.choice
@@ -366,15 +369,16 @@ final class BrainModel {
         runtime.onProgress = nil
         // BSD-45: the turn runs in BasedBrain's ChatEngine; this view model only picks the backend and renders events.
         let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
-        func makeBackend(_ choice: ChatEngineChoice) -> ChatBackend {
+        let makeBackend: @MainActor @Sendable (ChatEngineChoice, String) -> ChatBackend = { [self] choice, effort in
             switch choice {
             case .model(let ref) where mainRef != nil:
                 return MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid))
             case .model(let ref):
                 // BSD-98: global → project of this chat; "ask" shows an approval card in the chat (Inbox item of the session).
+                // BSD-126: the route's effort goes along for this turn.
                 let project = brain.sessions().first { $0.id == sid }?.projectID
                 return ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode, project: project),
-                                        approve: brain.inboxApprover(session: sid))
+                                        approve: brain.inboxApprover(session: sid), effort: effort)
             case .cli(var spec):
                 // Auto picked a CLI: it runs with the composer's permission mode (an explicit CLI choice has its own).
                 if engineSpec.kind == .auto, spec.permission.isEmpty { spec.permission = permissionMode.cliPermission(for: spec.kind) }
@@ -388,15 +392,25 @@ final class BrainModel {
             }
         }
         // BSD-97: when the routed engine fails before answering (overload, not logged in, crash), the rest of the
-        // route's chain answers, with a notice in the reply.
-        let backend: ChatBackend
-        if mainRef == nil, decision.route != nil, !decision.fallbacks.isEmpty, engine != .none {
-            backend = FallbackChatBackend(([engine] + decision.fallbacks).map {
-                FallbackChatBackend.Candidate(label: ChatRouting.label($0), backend: makeBackend($0))
-            })
-        } else {
-            backend = makeBackend(engine)
+        // route's chain answers, with a notice in the reply. BSD-126: also for an engine chosen in the picker.
+        let build: RoutedChatBackend.Make = { d in
+            mainRef != nil ? makeBackend(engine, "") : ChatRouting.backend(for: d, make: makeBackend)
         }
+        // BSD-126: no rule is sure → the classifier (on device, else the small model) decides when the turn runs
+        // (at most 1.5 s), without holding up the prompt queue.
+        let refine: RoutedChatBackend.Refine?
+        if mainRef == nil, engineSpec.kind == .auto, router.needsClassifier(task),
+           let classifier = ModelRouter.classifier(registry: registry, defaultModel: defaultModel) {
+            let (reg, installed, dm, level) = (registry, installedCLIs, defaultModel, compute)
+            refine = {
+                await router.route(task, compute: level, classifier: classifier, registry: reg, installed: installed, defaultModel: dm)
+                    .keepingConversation(resumeKey: resumeKey, hasHistory: hasHistory)
+            }
+        } else {
+            refine = nil
+        }
+        let routed = RoutedChatBackend(decision: decision, refine: refine, make: build, initial: build(decision))
+        let backend: ChatBackend = routed
         // The chat keeps the folder it started in (reopened chats resume there).
         let folder: String = {
             let saved = brain.sessions().first { $0.id == sid }?.cwd ?? ""
@@ -405,11 +419,8 @@ final class BrainModel {
         let chat = ChatEngine(sink: brain)
         let request = ChatRequest(prompt: p, displayPrompt: shown + attachNote, history: history,
                                   resume: chat.resume(for: sid, with: backend), cwd: folder, system: system)
-        let engineLabel = mainRef != nil ? "Main agent · " + ChatRouting.label(engine)
-            : [ChatRouting.label(engine), decision.routeLabel].filter { !$0.isEmpty }.joined(separator: " · ")
-        let routeWhy = mainRef != nil || decision.route == nil ? nil : "\(decision.compute.title): \(decision.reason)"
         let turn = chat.send(request, session: sid, via: backend)
-        if mainRef == nil { brain.noteRoute(session: sid, decision) }
+        if mainRef == nil, refine == nil { brain.noteRoute(session: sid, decision) }
         Task {
             // Events land on the reply turn (looked up by id: the list may change while it runs).
             for await e in turn.events {
@@ -417,6 +428,13 @@ final class BrainModel {
                 turns[i].reply.apply(e)
             }
             await turn.finished()
+            // BSD-126: the decision after the classifier, and the engine that actually answered (fallback chain).
+            let final = routed.decision
+            if mainRef == nil, refine != nil { brain.noteRoute(session: sid, final) }
+            let answered = routed.answeredLabel ?? ChatRouting.label(final.choice)
+            let engineLabel = mainRef != nil ? "Main agent · " + ChatRouting.label(engine)
+                : [answered, final.routeLabel].filter { !$0.isEmpty }.joined(separator: " · ")
+            let routeWhy = mainRef != nil || final.route == nil ? nil : "\(final.compute.title): \(final.reason)"
             if let i = turns.firstIndex(where: { $0.id == replyID }) {
                 let r = turns[i].reply
                 let failed = r.isError

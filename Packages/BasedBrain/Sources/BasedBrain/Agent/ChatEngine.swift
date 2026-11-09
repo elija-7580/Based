@@ -265,14 +265,17 @@ public struct ModelChatBackend: ChatBackend {
     /// BSD-98: asks the user when mode or rules say "ask" (the app: `BrainStore.inboxApprover`, a card in the chat).
     /// nil = as before: rule-"ask" and the always-ask list are refused, other asks run.
     public var approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)?
+    /// BSD-126: reasoning effort for this turn (the route's), "" = the provider's default.
+    public var effort: String
     public init(runtime: AgentRuntime, modelRef: String, permissions: AgentPermissions? = nil,
-                approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil) {
+                approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil, effort: String = "") {
         self.runtime = runtime; self.modelRef = modelRef; self.permissions = permissions; self.approve = approve
+        self.effort = effort
     }
     public var resumeKind: String? { nil }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
         let o = try await runtime.run(prompt: request.prompt, modelRef: modelRef, history: request.history,
-                                      callerSession: session, permissions: permissions, approve: approve, events: emit)
+                                      callerSession: session, permissions: permissions, approve: approve, effort: effort, events: emit)
         try Task.checkCancellation()
         return ChatReply(text: o.text)
     }

@@ -40,10 +40,12 @@ public final class AgentRuntime: @unchecked Sendable {
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
                     callerSession: String? = nil, permissions: AgentPermissions? = nil,
                     approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil,
-                    extraTools: AgentToolSet? = nil,
+                    extraTools: AgentToolSet? = nil, effort: String = "",
                     events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
         let onEvent = events
-        guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
+        guard let (base, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
+        // BSD-126: the router's effort for this turn (Anthropic: output_config.effort); "" = the provider's setting.
+        let provider = base.withEffort(effort)
         if provider.isOnDevice {
             return try await runOnDevice(provider: provider, model: model, prompt: prompt, systemExtra: systemExtra, history: history)
         }
@@ -209,10 +211,23 @@ public final class AgentRuntime: @unchecked Sendable {
             brain.logRun(id, "Trigger: \(trigger)")
             return id
         }
+        // BSD-126: Model "auto" / "auto:low" / "auto:high" asks the router (scheduled runs → route Background);
+        // from 80 % of the agent's budget it runs on Low. The decision is noted in the run.
+        var modelRef = agent.model, effort = ""
+        if let level = ModelRouter.autoLevel(agent.model) {
+            let (routes, forceLow) = await MainActor.run {
+                (brain.routes().routes, AgentBudget.forceLow(agent, runs: brain.runs(RunFilter(agentID: agent.id)), now: Date()))
+            }
+            let d = ModelRouter(routes: routes).decide(RouteTask(text: agent.instructions, scheduled: trigger.hasPrefix("schedule")),
+                                                       compute: level, forceLow: forceLow, registry: registry, installed: [],
+                                                       defaultModel: "")
+            if case .model(let ref) = d.choice { modelRef = ref; effort = d.effort } else { modelRef = nil }
+            await MainActor.run { brain.noteRoute(run: runID, d) }
+        }
         do {
-            let resolvedModel = registry.resolve(agent.model ?? "").map { "\($0.0.id)/\($0.1)" } ?? (agent.model ?? "")
+            let resolvedModel = registry.resolve(modelRef ?? "").map { "\($0.0.id)/\($0.1)" } ?? (modelRef ?? "")
             let o = try await run(prompt: "Trigger: \(trigger). Carry out your instructions now and report briefly what you did.",
-                                  modelRef: agent.model, systemExtra: agent.instructions, permissions: effective)
+                                  modelRef: modelRef, systemExtra: agent.instructions, permissions: effective, effort: effort)
             await MainActor.run {
                 brain.markRun(agent.id); brain.logRun(agent.id, summary: o.text, usage: o.usage)
                 // BSD-51: budgets need a cost; estimate it from the model when the provider reports none.
