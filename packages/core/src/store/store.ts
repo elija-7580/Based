@@ -29,6 +29,8 @@ export interface Persistence {
   write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>, local: boolean): void;
   /** Stempel der Löschung, falls der Record hier gelöscht wurde (und die Löschung einen Stempel hatte). */
   tombstone(key: RecordKeyString): Stamp | undefined;
+  /** Schreibt eine Probe; wirft, wenn die Datenbank nicht beschreibbar ist (für `retryWrites`). */
+  checkWritable?(): void;
 }
 
 export class MemoryPersistence implements Persistence {
@@ -54,6 +56,29 @@ export class MemoryPersistence implements Persistence {
   tombstone(key: RecordKeyString): Stamp | undefined {
     return this.tombs.get(key);
   }
+}
+
+/** Schreiben auf die Platte ist gescheitert: der Store ist schreibgeschützt, bis `retryWrites()` klappt. */
+export interface WriteFailure {
+  message: string;
+  /** Swift-Datum (Sekunden seit 2001). */
+  since: number;
+  /** Änderungen, die seitdem abgewiesen wurden. */
+  rejected: number;
+}
+
+/** Der Store nimmt keine Änderungen an, weil das Speichern gescheitert ist (nie stiller RAM-Fallback). */
+export class StoreReadOnlyError extends Error {
+  constructor(message: string) {
+    super(`read-only: ${message}`);
+    this.name = "StoreReadOnlyError";
+  }
+}
+
+/** Eine gespeicherte Transaktion (für UI und Sync-Client). */
+export interface StoreChange {
+  keys: RecordKeyString[];
+  origin: ChangeOrigin;
 }
 
 export interface RemoteMergeResult {
@@ -144,6 +169,11 @@ export class WorkspaceStore {
   undoCoalesceInterval = 1.5;
   maxUndo = 300;
   revision = 0;
+  /** Gesetzt, wenn ein Schreiben gescheitert ist (BSD-152 Punkt 4, wie Swift `writeFailure`). Der Store ist dann schreibgeschützt. */
+  writeFailure: WriteFailure | undefined;
+  /** Wird gerufen, wenn `writeFailure` gesetzt oder gelöscht wird (Banner in der UI). */
+  onWriteFailureChanged: (() => void) | undefined;
+  private observers = new Set<(change: StoreChange) => void>();
   private undoStack: UndoEntry[] = [];
   private redoStack: UndoEntry[] = [];
   private childIndex = new Map<string, string[]>();
@@ -199,6 +229,30 @@ export class WorkspaceStore {
       stack.push(...[...this.children("b:" + cur)].reverse());
     }
     return out;
+  }
+
+  /** Nach jeder gespeicherten Transaktion benachrichtigt werden; gibt die Abmeldung zurück. */
+  observe(fn: (change: StoreChange) => void): () => void {
+    this.observers.add(fn);
+    return () => this.observers.delete(fn);
+  }
+
+  get isReadOnly(): boolean {
+    return this.writeFailure !== undefined;
+  }
+
+  /** Prüft, ob die Datenbank wieder beschreibbar ist; hebt den Schreibschutz dann auf. */
+  retryWrites(): boolean {
+    if (!this.writeFailure) return true;
+    try {
+      this.persistence?.checkWritable?.();
+    } catch (e) {
+      this.writeFailure.message = String(e);
+      return false;
+    }
+    this.writeFailure = undefined;
+    this.onWriteFailureChanged?.();
+    return true;
   }
 
   get canUndo() {
@@ -303,7 +357,13 @@ export class WorkspaceStore {
     return c;
   }
 
+  /** `false`: nicht gespeichert (schreibgeschützt oder Schreiben gescheitert); die Änderungen sind im Speicher zurückgedreht. */
   private commit(tx: Tx, name: string, coalesce: string | undefined, origin: ChangeOrigin, undoable: boolean): boolean {
+    if (this.persistence && this.writeFailure && tx.order.length > 0) {
+      this.rollback(tx);
+      this.writeFailure.rejected += 1;
+      return false;
+    }
     const upserts: WireRecord[] = [];
     const deletions: RecordKeyString[] = [];
     const tombstones = new Map<RecordKeyString, Stamp>();
@@ -336,7 +396,15 @@ export class WorkspaceStore {
       after.set(key, cur);
     }
     if (upserts.length === 0 && deletions.length === 0) return true;
-    this.persistence?.write(upserts, deletions, tombstones, isLocalWrite(origin));
+    try {
+      this.persistence?.write(upserts, deletions, tombstones, isLocalWrite(origin));
+    } catch (e) {
+      // Speicher und Platte bleiben gleich: Transaktion im Speicher zurückdrehen, ab jetzt schreibgeschützt.
+      this.rollback(tx);
+      this.writeFailure = { message: e instanceof Error ? e.message : String(e), since: now, rejected: 1 };
+      this.onWriteFailureChanged?.();
+      return false;
+    }
 
     if (origin === "local" && undoable) {
       const top = this.undoStack[this.undoStack.length - 1];
@@ -351,6 +419,10 @@ export class WorkspaceStore {
       this.redoStack = [];
     }
     this.revision += 1;
+    if (this.observers.size > 0) {
+      const change: StoreChange = { keys: [...upserts.map(recordKey), ...deletions], origin };
+      for (const fn of this.observers) fn(change);
+    }
     return true;
   }
 
@@ -487,7 +559,8 @@ export class WorkspaceStore {
       }
       tx.remove(key);
     }
-    this.commit(tx, "Sync", undefined, "remote", false);
+    // Ohne Speichern darf der Sync seinen Cursor nicht weiterschieben: werfen statt still verwerfen.
+    if (!this.commit(tx, "Sync", undefined, "remote", false)) throw new StoreReadOnlyError(this.writeFailure?.message ?? "write failed");
     return { stale, tombstoned };
   }
 

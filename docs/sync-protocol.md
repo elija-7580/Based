@@ -182,4 +182,5 @@ channel ("Server", "iCloud", "Server + iCloud", "Local only").
 |------------------------|--------------------------------------------------------------------------|
 | macOS / iOS (Swift)    | `ServerSync` in BasedBrain; v2 with automatic fallback to v1               |
 | Linux (Swift)          | BasedCore + BasedBrain build and test on Linux; `based-server` runs there |
+| TypeScript (`packages/sync`) | v2 only (BSD-152): `SqlitePersistence` (same file format and migrations as the Swift app), `SyncClient`; drivers `@based/sync/node` (node:sqlite) and `@based/sync/wasm` (SQLite-WASM + OPFS in a worker). Tested against an in-process server and, with `BASED_SERVER_BIN`, the Swift `based-server`. Orphan rescue (BSD-104) not ported yet |
 | Web / Windows / Linux UI | planned. See `docs/platforms.md`                                         |

@@ -89,6 +89,13 @@ importers:
       '@based/core':
         specifier: workspace:*
         version: link:../core
+      '@sqlite.org/sqlite-wasm':
+        specifier: 3.54.1-build1
+        version: 3.54.1-build1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
 packages:
 
@@ -680,6 +687,10 @@ packages:
     resolution: {integrity: sha512-ee+c14ggUiM7lg4PtCjSBYU9O9dHp4FFespRnd5yj7SilUBJCL3x3aHlB+sIqbGjcPo3pEyODASnfKJuZ26YBw==}
     cpu: [x64]
     os: [win32]
+
+  '@sqlite.org/sqlite-wasm@3.54.1-build1':
+    resolution: {integrity: sha512-foW427VBLJ3G87bsnvQTZCc9zYe0Fq1wH0pz1I6BlKLKXcArIAyTkHtq0iT2llmhcMQt9T/p6l5PpQQh+6O8uQ==}
+    engines: {node: '>=22'}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -1881,6 +1892,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.68.2':
     optional: true
+
+  '@sqlite.org/sqlite-wasm@3.54.1-build1': {}
 
   '@types/babel__core@7.20.5':
     dependencies:
