@@ -36,18 +36,22 @@ struct AISettingsView: View {
             Section("Based server (VPS)") {
                 TextField("Server URL (https://based.example.com)", text: $brain.serverURL)
                 SecureField("Server token", text: $serverToken)
-                Button("Connect") { Secrets.set("server.token", serverToken); brain.startServerSyncIfConfigured() }
+                Button("Connect") { Secrets.set("server.token", serverToken); brain.startServerSyncIfConfigured(); brain.configureScheduler() }
                 LabeledContent("Status", value: brain.serverStatus)
                 Button("Sync now") { brain.syncServerNow() }.disabled(brain.serverSync == nil)
                 Text("The server keeps the workspace online around the clock, runs scheduled agents and serves MCP to Claude, ChatGPT and Cursor. iCloud sync can stay on as a second channel.").font(.caption).foregroundStyle(Theme.secondary)
             }
             Section("Agents") {
-                Toggle("Run scheduled agents on this device too", isOn: $brain.runSchedulesLocally)
+                Picker("Run scheduled agents on", selection: $brain.scheduleHost) {
+                    ForEach(ScheduleHost.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
                 ForEach(brain.brain.agents()) { a in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(a.name)
-                            Text([a.schedule, a.model, a.lastRun.map { "last " + $0.formatted(date: .abbreviated, time: .shortened) }].compactMap { $0 }.joined(separator: " · "))
+                            Text([a.schedule, a.model, a.lastRun.map { "last " + $0.formatted(date: .abbreviated, time: .shortened) },
+                                  a.monthlyBudget.map { String(format: "€%.2f of €%.2f this month", brain.brain.spentThisMonth(agent: a.id), $0) },
+                                  a.runningNode.map { "running on " + $0 }].compactMap { $0 }.joined(separator: " · "))
                                 .font(.caption).foregroundStyle(Theme.secondary)
                         }
                         Spacer()

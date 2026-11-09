@@ -321,7 +321,7 @@ try server.start()
 log("based-server listening on :\(opts.port) · db \(opts.db) · providers: \(runtime.registry.all.map(\.id).joined(separator: ", ").nonEmptyOrNone)")
 
 if !opts.noScheduler {
-    let scheduler = AgentScheduler(runtime: runtime)
+    let scheduler = AgentScheduler(runtime: runtime, node: "server")
     scheduler.onEvent = { log($0, category: "scheduler") }
     scheduler.start()
     log("scheduler started (tick 60s)")

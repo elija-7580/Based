@@ -180,11 +180,14 @@ public final class AgentRuntime: @unchecked Sendable {
             return id
         }
         do {
+            let resolvedModel = registry.resolve(agent.model ?? "").map { "\($0.0.id)/\($0.1)" } ?? (agent.model ?? "")
             let o = try await run(prompt: "Trigger: \(trigger). Carry out your instructions now and report briefly what you did.",
                                   modelRef: agent.model, systemExtra: agent.instructions)
             await MainActor.run {
                 brain.markRun(agent.id); brain.logRun(agent.id, summary: o.text, usage: o.usage)
-                brain.finish(run: runID, status: .done, result: o.text, usage: o.usage)
+                // BSD-51: budgets need a cost; estimate it from the model when the provider reports none.
+                brain.finish(run: runID, status: .done, result: o.text, usage: o.usage,
+                             cost: ModelPricing.estimate(model: resolvedModel, usage: o.usage))
             }
             return o
         } catch {

@@ -99,44 +99,63 @@ public struct Schedule: Equatable, Sendable {
             }
             return t
         case .monthly(let day, let hour, let minute):
-            var comps = calendar.dateComponents([.year, .month], from: after)
-            comps.day = day; comps.hour = hour; comps.minute = minute
-            var t = calendar.date(from: comps) ?? after
-            if t <= after { comps.month = (comps.month ?? 1) + 1; t = calendar.date(from: comps) ?? t }
-            return t
+            // BSD-51: "monthly 31" fires on the last day of shorter months instead of rolling over to the 1st.
+            let start = calendar.dateComponents([.year, .month], from: after)
+            for offset in 0..<14 {
+                guard let first = calendar.date(from: DateComponents(year: start.year, month: (start.month ?? 1) + offset, day: 1)),
+                      let days = calendar.range(of: .day, in: .month, for: first) else { continue }
+                var comps = calendar.dateComponents([.year, .month], from: first)
+                comps.day = min(day, days.count); comps.hour = hour; comps.minute = minute
+                if let t = calendar.date(from: comps), t > after { return t }
+            }
+            return after
         case .cron(let minute, let hour, let day, let month, let weekday):
+            // BSD-51: standard cron semantics — when both day-of-month and weekday are restricted, either may match.
+            let dayRestricted = day.count < 31, weekdayRestricted = weekday.count < 7
+            func dayMatches(_ d: Int, _ wd: Int) -> Bool {
+                if dayRestricted && weekdayRestricted { return day.contains(d) || weekday.contains(wd) }
+                return day.contains(d) && weekday.contains(wd)
+            }
+            let wall: (Date) -> DateComponents = { calendar.dateComponents([.year, .month, .day, .hour, .minute], from: $0) }
+            let afterWall = wall(after)
             var t = calendar.date(bySetting: .second, value: 0, of: after).map { $0 <= after ? $0.addingTimeInterval(60) : $0 } ?? after
             t = calendar.date(bySetting: .second, value: 0, of: t) ?? t
             for _ in 0..<(60 * 24 * 366) {
-                let c = calendar.dateComponents([.minute, .hour, .day, .month, .weekday], from: t)
-                if minute.contains(c.minute!), hour.contains(c.hour!), day.contains(c.day!), month.contains(c.month!), weekday.contains(c.weekday! - 1) { return t }
+                let c = calendar.dateComponents([.year, .minute, .hour, .day, .month, .weekday], from: t)
+                if minute.contains(c.minute!), hour.contains(c.hour!), month.contains(c.month!), dayMatches(c.day!, c.weekday! - 1),
+                   // The hour repeated when clocks fall back: the same wall-clock minute must not fire twice.
+                   wall(t) != afterWall { return t }
                 t = t.addingTimeInterval(60)
             }
             return t
         }
     }
 
-    public func isDue(now: Date, lastRun: Date?) -> Bool {
+    /// `since` is when the schedule was set up (the agent row's creation): a new agent without a last run is due
+    /// from its next fire time on, not at once (BSD-51). Interval schedules without a last run start right away.
+    public func isDue(now: Date, lastRun: Date?, since: Date? = nil, calendar: Calendar = .current) -> Bool {
         switch kind {
-        case .every: return lastRun.map { nextRun(after: $0, lastRun: $0) <= now } ?? true
+        case .every: return lastRun.map { nextRun(after: $0, lastRun: $0, calendar: calendar) <= now } ?? true
         default:
-            // Due when the most recent fire time (<= now) is after the last run.
-            let probe = lastRun ?? now.addingTimeInterval(-86400 * 32)
-            return nextRun(after: probe, lastRun: lastRun) <= now
+            // Due when the most recent fire time (<= now) is after the last run (or after the setup time).
+            let probe = lastRun ?? since ?? now.addingTimeInterval(-86400 * 32)
+            return nextRun(after: probe, lastRun: lastRun, calendar: calendar) <= now
         }
     }
 }
 
-/// Runs scheduled agents. Owned by the server (always on) and by the Mac app (while it runs).
+/// Runs scheduled agents. Owned by the server (always on) and by the Mac app (when it is the schedule host, see
+/// `ScheduleHost`). BSD-51: before a run the scheduler takes a lease on the agent row (Running since + Node, synced),
+/// so a second node skips it; budgets come from the Runs database, so they hold across restarts and devices.
 public final class AgentScheduler: @unchecked Sendable {
     public let runtime: AgentRuntime
+    /// Name of this node in leases ("server", the Mac's name).
+    public let node: String
     public var tick: TimeInterval = 60
     public var onEvent: (@Sendable (String) -> Void)?
     private var task: Task<Void, Never>?
-    private var tokensToday: [RecordID: (day: String, used: Int)] = [:]
-    private let lock = NSLock()
 
-    public init(runtime: AgentRuntime) { self.runtime = runtime }
+    public init(runtime: AgentRuntime, node: String = "server") { self.runtime = runtime; self.node = node }
 
     public func start() {
         task?.cancel()
@@ -150,27 +169,29 @@ public final class AgentScheduler: @unchecked Sendable {
     public func stop() { task?.cancel(); task = nil }
 
     /// Agents whose schedule is due now (pure; used by tests and by the UI).
-    public static func due(_ agents: [Agent], now: Date = Date()) -> [Agent] {
+    public static func due(_ agents: [Agent], now: Date = Date(), calendar: Calendar = .current) -> [Agent] {
         agents.filter { a in
             guard a.enabled, let s = a.schedule, let sched = Schedule.parse(s) else { return false }
-            return sched.isDue(now: now, lastRun: a.lastRun)
+            return sched.isDue(now: now, lastRun: a.lastRun, since: a.createdAt, calendar: calendar)
         }
     }
 
     public func runDue(now: Date = Date()) async {
-        let agents = await MainActor.run { runtime.tools.brain.agents() }
+        let brain = runtime.tools.brain
+        let node = node
+        let agents = await MainActor.run { brain.agents() }
         for a in Self.due(agents, now: now) {
-            if let budget = a.dailyTokenBudget, usedToday(a.id) >= budget { onEvent?("Skip \(a.name): daily token budget reached"); continue }
+            let decision = await MainActor.run { brain.beginScheduledRun(a, node: node, now: now) }
+            switch decision {
+            case .skipLeased(let other, _): onEvent?("Skip \(a.name): already running on \(other)"); continue
+            case .skipBudget(let why): onEvent?("Skip \(a.name): \(why)"); continue
+            case .skipNotDue: continue
+            case .run: break
+            }
             onEvent?("Run \(a.name) (\(a.schedule ?? ""))")
-            if let o = await runtime.run(agent: a, trigger: "schedule \(a.schedule ?? "")") { addUsage(a.id, o.usage.total); onEvent?("Done \(a.name): \(o.usage.total) tokens") }
+            let o = await runtime.run(agent: a, trigger: "schedule \(a.schedule ?? "")")
+            await MainActor.run { brain.releaseLease(agent: a.id, node: node) }
+            if let o { onEvent?("Done \(a.name): \(o.usage.total) tokens") }
         }
-    }
-
-    private func dayKey() -> String { let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f.string(from: Date()) }
-    private func usedToday(_ id: RecordID) -> Int { lock.lock(); defer { lock.unlock() }; let e = tokensToday[id]; return e?.day == dayKey() ? e!.used : 0 }
-    private func addUsage(_ id: RecordID, _ n: Int) {
-        lock.lock(); defer { lock.unlock() }
-        let day = dayKey(), prev = tokensToday[id]
-        tokensToday[id] = (day, (prev?.day == day ? prev!.used : 0) + n)
     }
 }

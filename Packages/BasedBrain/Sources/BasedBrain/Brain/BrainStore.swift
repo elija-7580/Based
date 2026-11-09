@@ -30,6 +30,13 @@ public struct Agent: Sendable, Identifiable, Equatable {
     public var enabled: Bool
     public var lastRun: Date?
     public var dailyTokenBudget: Int?   // nil = unlimited
+    /// BSD-51: euros per calendar month (nil = unlimited); spending is summed from the Runs database.
+    public var monthlyBudget: Double? = nil
+    /// Lease of the node that runs this agent right now (synced, so other nodes skip it).
+    public var runningSince: Date? = nil
+    public var runningNode: String? = nil
+    /// When the agent row was created: a new schedule is due from its next fire time on, not at once.
+    public var createdAt: Date? = nil
 }
 
 /// The "Agent Brain" lives inside the workspace as a page with three databases, so it syncs like
@@ -153,6 +160,7 @@ public final class BrainStore {
         _ = store.addProperty(to: db, name: "Enabled", type: .checkbox)
         _ = store.addProperty(to: db, name: "Last run", type: .date)
         _ = store.addProperty(to: db, name: "Daily token budget", type: .number)
+        agentBudgetColumns(db)
         return db
     }
 
@@ -254,9 +262,14 @@ public final class BrainStore {
             var budget: Int?
             if let p = propID(agentsDB, "Daily token budget"), case .number(let n)? = row.values[p] { budget = Int(n) }
             let sched = text(row, agentsDB, "Schedule"), model = text(row, agentsDB, "Model")
+            var monthly: Double?, since: Date?
+            if let p = propID(agentsDB, AgentCol.monthlyBudget), case .number(let n)? = row.values[p] { monthly = n }
+            if let p = propID(agentsDB, AgentCol.runningSince), case .date(let d)? = row.values[p] { since = d.start }
+            let node = text(row, agentsDB, AgentCol.node)
             return Agent(id: row.id, name: row.title, instructions: body(of: row.id),
                          schedule: sched.isEmpty ? nil : sched, model: model.isEmpty ? nil : model,
-                         enabled: bool(row, agentsDB, "Enabled", default: true), lastRun: last, dailyTokenBudget: budget)
+                         enabled: bool(row, agentsDB, "Enabled", default: true), lastRun: last, dailyTokenBudget: budget,
+                         monthlyBudget: monthly, runningSince: since, runningNode: node.isEmpty ? nil : node, createdAt: row.createdAt)
         }
     }
 

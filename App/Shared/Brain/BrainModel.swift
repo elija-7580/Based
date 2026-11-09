@@ -94,9 +94,11 @@ final class BrainModel {
         get { UserDefaults.standard.string(forKey: "ai.ollama") ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "ai.ollama") }
     }
-    var runSchedulesLocally: Bool {
-        get { UserDefaults.standard.object(forKey: "ai.localScheduler") as? Bool ?? false }
-        set { UserDefaults.standard.set(newValue, forKey: "ai.localScheduler"); configureScheduler() }
+    /// BSD-51: where scheduled agents run (default: the server when one is configured, otherwise this device).
+    var scheduleHost: ScheduleHost {
+        get { ScheduleHost.stored(UserDefaults.standard.string(forKey: "ai.scheduleHost"),
+                                  legacyLocal: UserDefaults.standard.object(forKey: "ai.localScheduler") as? Bool) }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "ai.scheduleHost"); configureScheduler() }
     }
 
     init(store: WorkspaceStore) {
@@ -376,10 +378,10 @@ final class BrainModel {
         Task { if let o = await runtime.run(agent: a) { schedulerLog.append("\(a.name): \(o.usage.total) tokens") } else { schedulerLog.append("\(a.name) failed") } }
     }
 
-    private func configureScheduler() {
+    func configureScheduler() {
         scheduler?.stop(); scheduler = nil
-        guard runSchedulesLocally, hasProvider else { return }
-        let s = AgentScheduler(runtime: runtime)
+        guard scheduleHost.runsOnThisDevice(serverConfigured: !serverURL.isEmpty), hasProvider else { return }
+        let s = AgentScheduler(runtime: runtime, node: happier.machineName)
         s.onEvent = { [weak self] line in Task { @MainActor in self?.schedulerLog.append(line); if (self?.schedulerLog.count ?? 0) > 200 { self?.schedulerLog.removeFirst() } } }
         s.start(); scheduler = s
     }
