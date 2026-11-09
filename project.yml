@@ -54,6 +54,32 @@ targets:
         CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX)$(BASED_AGENTS_SUFFIX).entitlements
         ENABLE_HARDENED_RUNTIME: YES
         COMBINE_HIDPI_IMAGES: YES
+        # BSD-118: the script below runs `swift build` on Packages/BasedBrain, which script sandboxing would block.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Embed based command line
+        basedOnDependencyAnalysis: false
+        # BSD-118: ships `based` in Based.app/Contents/Helpers for Settings → Diagnostics → "Install command line".
+        # Never fails the app build: without it the section reports that this build has no CLI. BASED_SKIP_CLI=1 skips it.
+        script: |
+          set -u
+          [ "${BASED_SKIP_CLI:-}" = "1" ] && exit 0
+          PKG="$SRCROOT/Packages/BasedBrain"
+          SCRATCH="$DERIVED_FILE_DIR/based-cli"
+          DEST="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Helpers"
+          LOG="$DERIVED_FILE_DIR/based-cli.log"
+          mkdir -p "$DERIVED_FILE_DIR"
+          swiftpm() { env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$HOME" DEVELOPER_DIR="$DEVELOPER_DIR" xcrun swift build -c release --product based --package-path "$PKG" --scratch-path "$SCRATCH" "$@"; }
+          if swiftpm >"$LOG" 2>&1; then
+            BIN="$(swiftpm --show-bin-path 2>>"$LOG")/based"
+            mkdir -p "$DEST" && cp -f "$BIN" "$DEST/based"
+            if [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+              codesign --force --options runtime --timestamp=none --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$DEST/based" || echo "warning: could not sign Contents/Helpers/based"
+            fi
+          else
+            echo "warning: based command line not built (see $LOG); Settings → Install command line will say so"
+          fi
+          exit 0
   Based-iOS:
     type: application
     platform: iOS
