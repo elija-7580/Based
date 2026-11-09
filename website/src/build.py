@@ -46,14 +46,14 @@ for name,key,title,desc,on,hgt,extra in pages:
 </body>
 </html>
 '''
-    open(f'../project/{name}.dc.html','w').write(html)
+    open(f'../canvas/{name}.dc.html','w').write(html)
     if re.search(r'[—–]',html): print('DASH',name); bad=True
     open('/tmp/c.js','w').write("class DCLogic{constructor(p){this.props=p||{};this.state={}}setState(o){Object.assign(this.state,o)}}\n"+js+"\nconst c=new Component({});const v=c.renderVals();const holes="+json.dumps(sorted(set(re.findall(r'\{\{\s*([a-zA-Z_$][\w$]*)',body+n+foot))-set(re.findall(r'as="(\w+)"',body))-{'true','false'}))+";const miss=holes.filter(h=>!(h in v));console.log('"+name+"', Object.keys(v).length, 'missing:', miss.join(','));")
     print(os.popen('node /tmp/c.js 2>&1').read().strip())
 from html.parser import HTMLParser
 void={'meta','link','img','input','br','hr','path','circle','rect','stop'}
 for name,*_ in pages:
-    s=open(f'../project/{name}.dc.html').read().split('<x-dc>')[1].split('</x-dc>')[0]
+    s=open(f'../canvas/{name}.dc.html').read().split('<x-dc>')[1].split('</x-dc>')[0]
     class P(HTMLParser):
         def __init__(s): super().__init__(); s.st=[]; s.err=[]
         def handle_starttag(s,t,a):
