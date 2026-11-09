@@ -405,6 +405,9 @@ public final class AgentTools {
             if let s = r.sessionID { out += "\nSession: \(s)" }
             if let ag = r.agentID { out += "\nAgent: \(ag)" }
             if !r.model.isEmpty { out += "\nModel: \(r.model)" }
+            // BSD-54: the CLI's `based sandbox shell` reads this line.
+            let sb = brain.sandboxInfo(run: id).reference
+            if !sb.isEmpty { out += "\nSandbox: \(sb)" }
             if let e = r.endedAt { out += "\nEnded: \(ISO8601DateFormatter().string(from: e))" }
             if !r.result.isEmpty { out += "\n\nResult:\n\(r.result)" }
             let log = brain.body(of: id)

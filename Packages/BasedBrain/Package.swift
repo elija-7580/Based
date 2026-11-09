@@ -7,11 +7,14 @@ let package = Package(
     products: [
         .library(name: "BasedBrain", targets: ["BasedBrain"]),
         .executable(name: "based-server", targets: ["based-server"]),
+        // BSD-54: the `based` command line (Developer option).
+        .executable(name: "based", targets: ["based-cli"]),
     ],
     dependencies: [.package(path: "../BasedCore")],
     targets: [
         .target(name: "BasedBrain", dependencies: [.product(name: "BasedCore", package: "BasedCore")]),
         .executableTarget(name: "based-server", dependencies: ["BasedBrain"]),
+        .executableTarget(name: "based-cli", dependencies: ["BasedBrain"]),
         .testTarget(name: "BasedBrainTests", dependencies: ["BasedBrain"], exclude: ["Fixtures"]),
     ]
 )
