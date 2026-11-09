@@ -83,10 +83,9 @@ function Toolbar({ view, search, setSearch, onNew }: { view: View; search: strin
   const showsRows = view.type !== "dashboard";
   return (
     <div className="dbui-actions">
-      {showsRows && chips.map(({ path, condition }) => (
+      {showsRows && chips.map(({ condition }) => (
         <button key={condition.id} type="button" className="dbui-chip" data-testid="filter-chip" onClick={(e) => setFilter(e.currentTarget)} aria-label={`Filter: ${describeCondition(store, db, condition)}`}>
           {describeCondition(store, db, condition)}
-          <span hidden>{path.join(".")}</span>
         </button>
       ))}
       {showsRows && nested > 0 && <button type="button" className="dbui-chip" onClick={(e) => setFilter(e.currentTarget)}>+{nested} rules</button>}

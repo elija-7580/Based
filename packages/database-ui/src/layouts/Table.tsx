@@ -24,6 +24,10 @@ interface Editing extends Active { anchor: Anchor; initialText?: string }
 
 interface RowProps {
   row: Block;
+  /** Sichtbare Spalten [from, to) – Spalten werden horizontal virtualisiert. */
+  from: number;
+  to: number;
+  lead: number;
   props: PropertySchema[];
   widths: number[];
   activeCol: number;
@@ -35,14 +39,15 @@ interface RowProps {
   onToggle: (row: Block, p: PropertySchema) => void;
 }
 
-const TableRow = memo(function TableRow({ row, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle }: RowProps) {
+const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle }: RowProps) {
   return (
     <>
       <div className="dbui-gutter" role="presentation">
         {agent && <span className="dbui-agent-bar" role="img" aria-label="Changed by Based" />}
         <button type="button" className="dbui-row-handle" aria-label="Row actions" tabIndex={-1} onClick={(e) => onMenu(row, e.currentTarget)}><Icon name="more" size={14} /></button>
       </div>
-      {props.map((p, col) => (
+      {lead > 0 && <div className="dbui-col-spacer" style={{ width: lead }} aria-hidden />}
+      {props.slice(from, to).map((p, i) => { const col = from + i; return (
         <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
           data-cell={`${row.id}:${col}`} aria-selected={col === activeCol} onClick={(e) => onCell(row, col, e.currentTarget)}>
           <CellView row={row} prop={p} wrap={wrap} onToggleCheckbox={() => onToggle(row, p)} />
@@ -52,7 +57,7 @@ const TableRow = memo(function TableRow({ row, props, widths, activeCol, agent, 
             </button>
           )}
         </div>
-      ))}
+      ); })}
     </>
   );
 });
@@ -125,6 +130,25 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   const widthKey = props.map((p) => liveWidths[p.id] ?? columnWidth(view, db, p.id)).join(",");
   const widths = useMemo(() => widthKey.split(",").map(Number), [widthKey]);
   const total = GUTTER + widths.reduce((a, b) => a + b, 0) + 40;
+  // Horizontale Virtualisierung: nur Spalten im sichtbaren Bereich (plus Puffer) rendern.
+  const offsets = useMemo(() => { const o = [GUTTER]; for (const w of widths) o.push(o[o.length - 1]! + w); return o; }, [widths]);
+  const [view_, setView_] = useState({ left: 0, width: 1600 });
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => setView_((v) => (Math.abs(v.left - el.scrollLeft) < 40 && v.width === el.clientWidth ? v : { left: el.scrollLeft, width: el.clientWidth }));
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", update); ro.disconnect(); };
+  }, []);
+  const overscanPx = 400;
+  let from = 0;
+  while (from < widths.length - 1 && offsets[from + 1]! < view_.left - overscanPx) from++;
+  let to = from;
+  while (to < widths.length && offsets[to]! < view_.left + view_.width + overscanPx) to++;
+  const lead = offsets[from]! - GUTTER;
   const items = useMemo(() => flatten(result, { collapsed, newRow: !locked }), [result, collapsed, locked]);
   const gp = groupProperty(db, view);
 
@@ -141,6 +165,15 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
 
   const cellEl = (rowID: string, col: number) => gridRef.current?.querySelector<HTMLElement>(`[data-cell="${CSS.escape(rowID)}:${col}"]`) ?? null;
 
+  const revealCol = useCallback((col: number) => {
+    const el = scrollRef.current;
+    const a = offsets[col], b = offsets[col + 1];
+    if (!el || a === undefined || b === undefined) return;
+    if (a - GUTTER < el.scrollLeft) el.scrollLeft = a - GUTTER;
+    else if (b > el.scrollLeft + el.clientWidth) el.scrollLeft = b - el.clientWidth + GUTTER;
+  }, [offsets]);
+  useEffect(() => { if (active) revealCol(active.col); }, [active, revealCol]);
+
   const beginEdit = useCallback((rowID: string, col: number, initialText?: string) => {
     const row = store.blocks.get(rowID);
     const p = props[col];
@@ -151,9 +184,18 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
       return;
     }
     if (!isEditable(p.type)) return;
-    const el = cellEl(rowID, col);
+    let el = cellEl(rowID, col);
+    if (!el) {
+      // Spalte (noch) nicht gerendert: hinscrollen, dann im nächsten Frame öffnen.
+      revealCol(col);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el = cellEl(rowID, col);
+        if (el) setEditing({ rowID, col, anchor: el, ...(initialText !== undefined ? { initialText } : {}) });
+      }));
+      return;
+    }
     if (el) setEditing({ rowID, col, anchor: el, ...(initialText !== undefined ? { initialText } : {}) });
-  }, [store, props, locked]);
+  }, [store, props, locked, revealCol]);
 
   const onCell = useCallback((row: Block, col: number, el: HTMLElement) => {
     setActive({ rowID: row.id, col });
@@ -262,7 +304,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           return (
             <div key={vi.key} role="row" className={"dbui-vrow" + (wrap ? " wrap" : "")} style={style} data-index={vi.index} data-row-id={it.row.id}
               aria-rowindex={vi.index + 2} ref={wrap ? virtualizer.measureElement : undefined}>
-              <TableRow row={it.row} props={props} widths={widths} activeCol={active?.rowID === it.row.id ? active.col : -1} agent={isAgentEdit(it.row)} wrap={wrap}
+              <TableRow row={it.row} from={from} to={to} lead={lead} props={props} widths={widths} activeCol={active?.rowID === it.row.id ? active.col : -1} agent={isAgentEdit(it.row)} wrap={wrap}
                 onCell={onCell} onMenu={onMenu} onOpen={onOpenPage} onToggle={onToggle} />
             </div>
           );

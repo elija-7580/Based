@@ -1,6 +1,6 @@
 // BSD-155: Zellen-Editoren für alle bearbeitbaren Property-Typen. Jede Änderung geht über eine
 // Store-Transaktion (setValue/setRelation/addOption); Text wird beim Schließen übernommen (wie Notion).
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   addOption, pv, rowsOf, setRelation, setValue, titleOf, valueCase,
   type Block, type DateValue, type PropertySchema,
@@ -44,6 +44,9 @@ function TextEditor({ row, prop, anchor, onClose, onCommitNext, initialText }: C
   const [text, setText] = useState(initialText ?? editText(row, prop));
   const [invalid, setInvalid] = useState(false);
   const done = useRef(false);
+  const field = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  // Einmal beim Öffnen: Cursor ans Ende (nach dem Autofokus des Popovers).
+  useEffect(() => { const el = field.current; if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, []);
   const commit = () => {
     if (done.current) return true;
     if (text === editText(row, prop)) { done.current = true; return true; }
@@ -67,11 +70,7 @@ function TextEditor({ row, prop, anchor, onClose, onCommitNext, initialText }: C
         if (commit()) { onClose(); onCommitNext?.(); }
       }
     },
-    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const el = e.target;
-      const n = el.value.length;
-      el.setSelectionRange(n, n);
-    },
+    ref: (el: HTMLInputElement | HTMLTextAreaElement | null) => { field.current = el; },
   };
   return (
     <Popover anchor={anchor} onClose={() => { commit(); onClose(); }} cover matchWidth className="dbui-cell-editor" label={`Edit ${prop.name}`}>

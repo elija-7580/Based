@@ -368,3 +368,4 @@ textarea.dbui-input { padding: var(--space-1) var(--space-2); resize: vertical; 
   .dbui-table, .dbui-tfoot, .dbui-vlist { margin: 0 var(--space-4); }
   .dbui-board { padding: var(--space-3) var(--space-4); }
 }
+.dbui-col-spacer { flex: none; }
