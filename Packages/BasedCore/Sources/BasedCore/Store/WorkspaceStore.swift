@@ -378,6 +378,12 @@ public final class WorkspaceStore {
         }
         clock = StampClock(node: nodeID)
         self.persistence = persistence
+        if let writer = persistence as? PersistenceWriter {
+            // BSD-42: background writes report failures asynchronously; the store turns read-only on the main actor.
+            writer.onFailure = { [weak self] error in
+                Task { @MainActor in self?.backgroundWriteFailed(error) }
+            }
+        }
         var loadedWorkspace = false
         if let persistence {
             do {
@@ -404,8 +410,9 @@ public final class WorkspaceStore {
     /// a newer version, damaged), copy it to `quarantine` first — the fresh record replaces that row (BSD-23).
     private func createFreshWorkspace() {
         let key = RecordKey(.workspace, Workspace.mainID)
-        if frozenKeys.contains(key), let sqlite = persistence as? SQLitePersistence {
+        if frozenKeys.contains(key), let sqlite = persistence?.sqliteBase {
             do {
+                persistence?.flushPendingWrites()
                 try sqlite.preserveInQuarantine(key, reason: "undecodable workspace record replaced by a new one")
                 frozenKeys.remove(key)
             } catch {
@@ -528,6 +535,7 @@ public final class WorkspaceStore {
     /// store is read-only or the write failed; undo, observers and `onLocalChange` then don't run.
     @discardableResult
     private func commit(_ tx: Tx, name: String, coalesce: String?, origin: ChangeOrigin, undoable: Bool) -> Bool {
+        if writeFailure == nil, let e = (persistence as? PersistenceWriter)?.failure { backgroundWriteFailed(e) }
         if persistence != nil, writeFailure != nil, !tx.order.isEmpty {
             rollback(tx)
             writeFailure?.rejected += 1
@@ -632,6 +640,40 @@ public final class WorkspaceStore {
         }
         for (key, snap) in before { note(snap.value); note(after[key]?.value) }
         for id in change.changedDatabases { databaseRevisions[id, default: 0] &+= 1 }
+    }
+
+    /// BSD-42: a background write (`PersistenceWriter`) failed. The change is already visible in memory and can't
+    /// be rolled back; the writer keeps it (and everything after it) pending, `retryWrites()` saves it. From now on
+    /// the store is read-only as after a synchronous failure.
+    func backgroundWriteFailed(_ error: Error) {
+        // A late notification after a successful retry: nothing is failing any more.
+        guard writeFailure == nil, (persistence as? PersistenceWriter)?.failure != nil else { return }
+        lastError = error
+        writeFailure = WriteFailure(message: "\(error)")
+        Log.error("Saving in the background failed: \(error) — store is read-only until a retry succeeds; unsaved changes are kept",
+                  category: "store")
+        onWriteFailureChanged?()
+    }
+
+    /// Changes not yet saved by a background writer (0 for synchronous persistence).
+    public var unsavedChangeCount: Int { (persistence as? PersistenceWriter)?.pendingCount ?? 0 }
+
+    /// Blocks until queued background writes are saved (sync readers, tests). False if some are unsaved.
+    @discardableResult
+    public func flushWrites() -> Bool { persistence?.flushPendingWrites() ?? true }
+
+    /// Waits until queued background writes are saved without blocking the main thread.
+    @discardableResult
+    public func flush() async -> Bool {
+        guard let writer = persistence as? PersistenceWriter else { return true }
+        return await writer.flush()
+    }
+
+    /// Blocks at most `timeout` seconds until background writes are saved (app quit / background).
+    @discardableResult
+    public func flushSync(timeout: TimeInterval) -> Bool {
+        guard let writer = persistence as? PersistenceWriter else { return true }
+        return writer.flushSync(timeout: timeout)
     }
 
     /// Tries to leave the read-only state: checks that the persistence can be written (and loads the workspace
