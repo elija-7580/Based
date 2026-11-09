@@ -675,6 +675,7 @@ final class EditorController {
     /// Multi-line paste becomes blocks (Markdown aware). Returns true when handled.
     func paste(_ string: String, into id: RecordID, selection: NSRange) -> Bool {
         guard let b = store.blocks[id], b.type != .code, b.type != .page else { return false }
+        if let source = SyncedBlockClipboard.sourceID(in: string) { return pasteSyncedCopy(of: source, at: id) }
         let normalized = string.replacingOccurrences(of: "\r\n", with: "\n")
         let trimmed = normalized.trimmingCharacters(in: .newlines)
         guard trimmed.contains("\n") || MarkdownImporter.heading(trimmed) != nil || trimmed.hasPrefix("- ") else {
@@ -684,6 +685,22 @@ final class EditorController {
             return false
         }
         return paste(blocks: MarkdownImporter(resolveLink: { _ in nil }).parse(trimmed), into: id, selection: selection)
+    }
+
+    /// "Copy and sync" clipboard (`based-sync:<id>`): a synced copy after `id` (BSD-41). Returns true when the
+    /// clipboard named a synced block (also when the copy can't go here: the reason is shown as a toast).
+    func pasteSyncedCopy(of source: RecordID, at id: RecordID) -> Bool {
+        do {
+            let copy = try store.pasteSyncedCopy(of: source, at: id)
+            selectedBlocks = [copy]
+        } catch SyncedPasteProblem.alreadyOnPage {
+            model.showToast("This synced block is already on this page.")
+        } catch SyncedPasteProblem.insideItself {
+            model.showToast("A synced block can't be pasted into itself.")
+        } catch {
+            model.showToast("The original synced block no longer exists.")
+        }
+        return true
     }
 
     /// Rich clipboard content (Notion, web pages) as blocks. Returns false when the HTML is just inline text,
@@ -780,6 +797,10 @@ final class EditorController {
         let order = store.documentOrder(Array(selectedBlocks))
         guard let last = order.last, let anchor = store.blocks[last] else { return }
         let pb = NSPasteboard.general
+        if let s = pb.string(forType: .string), let source = SyncedBlockClipboard.sourceID(in: s) {
+            _ = pasteSyncedCopy(of: source, at: last)
+            return
+        }
         if let raw = pb.string(forType: Self.blocksPasteboardType) {
             let src = raw.split(separator: "\n").compactMap { store.blocks[String($0)] }.filter { $0.trashedAt == nil }
             if !src.isEmpty {

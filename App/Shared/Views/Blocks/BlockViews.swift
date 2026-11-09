@@ -847,7 +847,10 @@ struct SyncedBlockView: View {
                         .font(.system(size: 12))
                     Spacer()
                     Button(isCopy ? "Unsync" : "Copy and sync") {
-                        if isCopy { unsync(source) } else { Clipboard.copy("based-sync:" + block.id) }
+                        if isCopy { model.store.unsyncCopy(block.id) } else {
+                            Clipboard.copy(SyncedBlockClipboard.string(for: block.id))
+                            model.showToast("Copied. Paste on another page to sync.")
+                        }
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 12))
@@ -856,6 +859,12 @@ struct SyncedBlockView: View {
             }
             if model.store.blocks[source] == nil {
                 Text("The original synced block was deleted.").foregroundStyle(Theme.secondary)
+            } else if isCopy, let root = model.store.trashedRoot(of: source) {
+                // BSD-41: the original is in the Trash: its content would be hidden or editable only from here.
+                HStack(spacing: 6) {
+                    Text("The original synced block is in the Trash.").foregroundStyle(Theme.secondary)
+                    Button("Restore") { model.restore([root]) }.buttonStyle(.plain).foregroundStyle(Color.accentColor)
+                }
             } else {
                 BlockList(parentID: source, editor: editor)
             }
@@ -863,17 +872,6 @@ struct SyncedBlockView: View {
         .padding(6)
         .overlay(RoundedRectangle(cornerRadius: 4).stroke(hovering ? Color.orange.opacity(0.8) : Color.clear, lineWidth: 2))
         .onHover { hovering = $0 }
-    }
-
-    /// Turn a synced copy into independent blocks.
-    private func unsync(_ source: RecordID) {
-        let store = model.store
-        store.transact("Unsync") { tx in
-            let kids = store.contentBlocks(of: source)
-            let keys = FractionalIndex.keys(count: kids.count, between: nil, nil)
-            for (k, key) in zip(kids, keys) { _ = store.copySubtree(k, parent: .block(block.id), sortKey: key, tx: tx) }
-            tx.update(block.id) { $0.props.syncSource = nil }
-        }
     }
 }
 

@@ -52,7 +52,7 @@ Table of contents,blocks,should,yes,yes,
 Breadcrumb block,blocks,could,yes,yes,
 Columns (2-5),blocks,should,yes,yes,
 Simple table block,blocks,should,yes,partial,plain-text cells; header row/col toggles
-Synced block,blocks,could,yes,partial,original + unsync; no cross-page references
+Synced block,blocks,could,yes,partial,"Copy and sync + paste on another page, unsync, original-in-Trash notice (BSD-41); same block twice on one page refused (editor tracks text fields by block ID)"
 Button block,blocks,could,yes,partial,block exists; actions limited
 Tabs block,blocks,could,yes,no,
 Child page block in content,blocks,must,yes,yes,
