@@ -1,10 +1,10 @@
 // BSD-149/151: Welche Module im TS-Kern schon portiert sind. Ein Port bekommt die Eingabe eines Falls und die
 // Datei-Metadaten (z. B. Records, `now`) und liefert die Ausgabe im Fixture-Format. Nicht eingetragene Module
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
-// Offen: conversion, search, clipboard.
+// Offen: search, clipboard.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
 import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
-import { Formula, FormulaError, QueryEngine, rowsOf, schema } from "../../src/index.js";
+import { conversionLoss, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
 import type { DatabaseView } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
@@ -162,4 +162,22 @@ const values: Port = (raw, meta) => {
   return Object.fromEntries(CALCULATIONS.map((fn) => [fn, valueJSON(QueryEngine.aggregate(rows.map((r) => engine.value(r, p, db)), fn, p))]));
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values };
+const conversion: Port = (raw, meta) => {
+  const { store } = queryStore(meta);
+  const input = raw as { database: string; property: string; to: string };
+  const old = store.databases.get(input.database)!.properties.find((p) => p.id === input.property)!;
+  let n = 0;
+  const plan = propertyConversion(store, input.database, input.property, input.to, () => `tmp-${n++}`)!;
+  const rename = new Map<string, string>();
+  for (const o of plan.schema.options ?? []) if (!(old.options ?? []).some((x) => x.id === o.id)) rename.set(o.id, "new:" + o.name);
+  for (const g of plan.schema.statusGroups ?? []) if (!(old.statusGroups ?? []).some((x) => x.id === g.id)) rename.set(g.id, "group:" + g.name);
+  const norm = (v: unknown): unknown =>
+    typeof v === "string" ? rename.get(v) ?? v : Array.isArray(v) ? v.map(norm) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, norm(x)])) : v;
+  return {
+    schema: norm(plan.schema),
+    values: Object.fromEntries([...plan.values].map(([k, v]) => [k, v === null ? null : norm(v)])),
+    lossCells: conversionLoss(store, input.database, input.property, input.to),
+  };
+};
+
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion };

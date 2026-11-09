@@ -16,3 +16,5 @@ export * as values from "./query/value.js";
 export type { DateValue, Value } from "./query/value.js";
 export { QueryEngine, TITLE_PROPERTY_ID, cellText, databaseOfRow, durationText, isTrashed, liveRelationTargets, rowsOf, titleOf, titleProperty } from "./query/engine.js";
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
+export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
+export type { ConversionPlan } from "./store/conversion.js";
