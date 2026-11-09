@@ -1,7 +1,7 @@
 // BSD-155: Zustand einer Datenbank-Ansicht: Store, QueryEngine, Version (nur Änderungen der eigenen
 // Datenbank bzw. ihrer Relationsziele zählen – watchDatabase), Sperre und Rückrufe der Shell.
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { QueryEngine, watchDatabase, type Block, type Database, type WorkspaceStore } from "@based/core";
+import { QueryEngine, watchDatabase, weekStartForLocale, type Block, type Database, type WorkspaceStore } from "@based/core";
 import { defaultIsAgentEdit } from "./logic/values.js";
 
 export interface DBContextValue {
@@ -14,6 +14,8 @@ export interface DBContextValue {
   locked: boolean;
   onOpenPage: ((rowID: string) => void) | undefined;
   isAgentEdit: (row: Block) => boolean;
+  /** Erster Wochentag für Kalender/Timeline (0 = Sonntag … 6 = Samstag): Einstellung der Shell, sonst Locale. */
+  weekStart: number;
 }
 
 export const DBContext = createContext<DBContextValue | null>(null);
@@ -38,6 +40,7 @@ export interface ContextOptions {
   readOnly?: boolean | undefined;
   onOpenPage?: ((rowID: string) => void) | undefined;
   isAgentEdit?: ((row: Block) => boolean) | undefined;
+  weekStart?: number | undefined;
 }
 
 /** Baut den Kontext für eine Datenbank; `undefined`, wenn es sie (noch) nicht gibt. */
@@ -48,7 +51,8 @@ export function useDatabaseContext(store: WorkspaceStore, databaseID: string, op
   useMemo(() => engine.reset(), [engine, version]);
   const db = store.databases.get(databaseID);
   const { readOnly, onOpenPage, isAgentEdit } = opts;
+  const weekStart = opts.weekStart !== undefined && opts.weekStart >= 0 && opts.weekStart <= 6 ? Math.floor(opts.weekStart) : weekStartForLocale();
   return useMemo(() => db && {
-    store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit,
-  }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit]);
+    store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit, weekStart,
+  }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit, weekStart]);
 }

@@ -4,11 +4,13 @@ import { useMemo } from "react";
 import type { DatabaseView, QueryResult } from "@based/core";
 import { useDB } from "./context.js";
 import { BoardLayout } from "./layouts/Board.js";
+import { CalendarLayout } from "./layouts/Calendar.js";
 import { ChartLayout } from "./layouts/Chart.js";
 import { DashboardLayout } from "./layouts/Dashboard.js";
 import { GalleryLayout, ListLayout } from "./layouts/List.js";
 import { EmptyState } from "./layouts/shared.js";
 import { TableLayout } from "./layouts/Table.js";
+import { TimelineLayout } from "./layouts/Timeline.js";
 
 /** Abfrageergebnis einer Ansicht (memoisiert auf Version/Ansicht/Suche). */
 export function useQuery(view: DatabaseView, search: string): QueryResult {
@@ -25,12 +27,8 @@ export function ViewBody({ view, search, compact, requestEdit }: { view: Databas
     case "gallery": return <GalleryLayout view={view} result={result} />;
     case "chart": return <ChartLayout view={view} result={result} {...(compact ? { height: 240 } : {})} />;
     case "dashboard": return <DashboardLayout view={view} />;
-    case "calendar": case "timeline":
-      return (
-        <EmptyState>
-          <strong>{view.type === "calendar" ? "Calendar" : "Timeline"}</strong> is coming soon ({result.rows.length} pages). Switch the layout in View settings to see them.
-        </EmptyState>
-      );
+    case "calendar": return <CalendarLayout view={view} result={result} />;
+    case "timeline": return <TimelineLayout view={view} result={result} />;
     default:
       return <EmptyState>This layout (“{view.type}”) isn’t available here yet ({result.rows.length} pages).</EmptyState>;
   }

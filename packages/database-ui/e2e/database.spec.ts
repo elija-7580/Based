@@ -258,7 +258,9 @@ test.describe("Bearbeiten (kleine Datenbank)", () => {
     await expect(page.getByTestId("chart-number")).toBeVisible();
     await expect(page.getByTestId("chart-slice")).toHaveCount(3);
     await page.getByRole("tab", { name: "Calendar", exact: true }).click();
-    await expect(page.getByText("is coming soon")).toBeVisible();
+    await expect(page.getByTestId("calendar")).toBeVisible();
+    await page.getByRole("tab", { name: "Timeline", exact: true }).click();
+    await expect(page.getByTestId("timeline")).toBeVisible();
 
     await page.getByRole("button", { name: "Add view" }).click();
     await page.getByTestId("add-view-board").click();

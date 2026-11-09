@@ -2,7 +2,7 @@
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  addRow, addView, plainText, setDatabaseTitle, viewsForBlock,
+  addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
 import { DBContext, useDatabaseContext, useDB } from "./context.js";
@@ -27,6 +27,8 @@ export interface DatabaseViewProps {
   onViewChange?: ((viewID: string) => void) | undefined;
   /** Agent-Strich: Standard ist `updatedBy` „agent…“/„based“. */
   isAgentEdit?: ((row: Block) => boolean) | undefined;
+  /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
+  weekStart?: number | undefined;
   /** Nur lesen (zusätzlich zur Sperre der Datenbank). */
   readOnly?: boolean | undefined;
   /** Titel der Datenbank über den Tabs zeigen (Standard: ja). */
@@ -133,7 +135,13 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
   const { onOpenPage } = useDB();
   if (!active) return <div className="dbui-empty">This database has no views.</div>;
   const onNew = () => {
-    const id = addRow(store, db.id, { values: newRowValues(db, active, groupProperty(db, active), null) });
+    const values = newRowValues(db, active, groupProperty(db, active), null);
+    // BSD-8: in Kalender und Timeline bekommt die neue Zeile heute als Datum (sonst landet sie unter „No date“).
+    const dateProp = active.type === "calendar" || active.type === "timeline" ? calendarDateProperty(db, active) : undefined;
+    const endProp = calendarEndProperty(db, active);
+    const id = dateProp?.type === "date" && (!endProp || endProp.type === "date")
+      ? addRowOnDay(store, db.id, { dateID: dateProp.id, ...(endProp && endProp.id !== dateProp.id ? { endID: endProp.id } : {}) }, today(), { values })
+      : addRow(store, db.id, { values });
     if (!id) return;
     if (active.type === "table") setRequestEdit({ rowID: id });
     else onOpenPage?.(id);
@@ -160,7 +168,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
  */
 export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
-  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit });
+  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart });
   const style = { height: props.height ?? "100%" };
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (

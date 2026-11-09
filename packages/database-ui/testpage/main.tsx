@@ -15,6 +15,10 @@ if (params.get("theme")) document.documentElement.dataset.theme = params.get("th
 
 const stamp = { millis: 1, counter: 0, node: "seed" };
 const T0 = 784_000_000; // Swift-Datum (Nov 2025)
+// BSD-8: Fälligkeiten rund um heute (lokale Mitternacht − 60 Tage), damit Kalender und Timeline beim Öffnen Einträge zeigen.
+const now = new Date();
+const DUE0 = (new Date(now.getFullYear(), now.getMonth(), now.getDate() - 60).getTime() - 978_307_200_000) / 1000;
+const dueAt = (days: number) => { const d = new Date((DUE0 * 1000) + 978_307_200_000); d.setDate(d.getDate() + days); return (d.getTime() - 978_307_200_000) / 1000; };
 const opt = (id: string, name: string, color: string) => ({ id, name, color });
 const STATUS = [opt("s-backlog", "Backlog", "default"), opt("s-ready", "Ready", "blue"), opt("s-progress", "In progress", "yellow"), opt("s-review", "Review", "pink"), opt("s-done", "Done", "green")];
 const PRIO = [opt("p-low", "Low", "gray"), opt("p-mid", "Medium", "orange"), opt("p-high", "High", "red")];
@@ -26,7 +30,7 @@ function seed(): WireRecord[] {
   const out: WireRecord[] = [];
   const view = (data: Record<string, unknown>): WireRecord => ({ kind: "view", data: { databaseID: "tasks", blockID: "tasks-block", createdAt: T0, updatedAt: T0, stamp, ...data } as never });
   out.push(
-    { kind: "block", data: { id: "tasks-block", type: "databasePage", parent: "w", sk: "a0", props: { databaseID: "tasks", viewIDs: ["v-table", "v-board", "v-list", "v-gallery", "v-chart", "v-dash", "v-cal"] }, createdAt: T0, updatedAt: T0, stamp } },
+    { kind: "block", data: { id: "tasks-block", type: "databasePage", parent: "w", sk: "a0", props: { databaseID: "tasks", viewIDs: ["v-table", "v-board", "v-list", "v-gallery", "v-chart", "v-dash", "v-cal", "v-timeline"] }, createdAt: T0, updatedAt: T0, stamp } },
     { kind: "block", data: { id: "proj-block", type: "databasePage", parent: "w", sk: "a1", props: { databaseID: "projects", viewIDs: ["pv-table"] }, createdAt: T0, updatedAt: T0, stamp } },
     {
       kind: "database",
@@ -78,6 +82,7 @@ function seed(): WireRecord[] {
     view({ id: "w-donut", name: "By priority", type: "chart", sortKey: "a0", widgetOf: "v-dash", chart: { kind: "donut", xPropertyID: "prio", aggregate: "count", dateBucket: "month", showLegend: true, showValues: true, sortByValue: false } }),
     view({ id: "w-table", name: "Projects", type: "table", sortKey: "a0", widgetOf: "v-dash", databaseID: "projects", blockID: "proj-block" }),
     view({ id: "v-cal", name: "Calendar", type: "calendar", sortKey: "a6", datePropertyID: "due" }),
+    view({ id: "v-timeline", name: "Timeline", type: "timeline", sortKey: "a7", datePropertyID: "due", timelineScale: "week" }),
     { kind: "view", data: { id: "pv-table", databaseID: "projects", blockID: "proj-block", name: "Projects", type: "table", sortKey: "a0", createdAt: T0, updatedAt: T0, stamp } },
   );
   const projects = ["Alpha", "Beta", "Gamma", "Delta"];
@@ -93,10 +98,11 @@ function seed(): WireRecord[] {
       prio: pv("select", PRIO[(i * 7) % 3]!.id),
       tags: pv("multiSelect", [TAGS[i % 4]!.id, ...(i % 3 === 0 ? [TAGS[(i + 1) % 4]!.id] : [])]),
       est: pv("number", (i * 37) % 13 + 1),
-      due: pv("date", { start: T0 + (i % 120) * 86_400, includeTime: false }),
       done: pv("checkbox", i % 5 === 4),
       owner: pv("person", [i % 2 ? "me" : "lena"]),
     };
+    // jede zehnte Zeile ohne Datum, jede sechste als Zeitraum über mehrere Tage
+    if (i % 10 !== 9) values.due = pv("date", i % 6 === 0 ? { start: dueAt(i % 120), end: dueAt(i % 120 + (i % 5) + 1), includeTime: false } : { start: dueAt(i % 120), includeTime: false });
     if (p >= 0) values.project = pv("relation", [`proj-${p}`]);
     if (i % 4 === 0) values.url = pv("url", `based.app/t/${i}`);
     if (i % 9 === 0) values.notes = pv("text", "Follow up with design");
@@ -133,7 +139,7 @@ function App() {
   const [opened, setOpened] = useState<string | null>(null);
   return (
     <div className="page">
-      <DatabaseView store={store} databaseID="tasks" viewID={view} onViewChange={setView}
+      <DatabaseView store={store} databaseID="tasks" viewID={view} onViewChange={setView} weekStart={params.has("weekStart") ? Number(params.get("weekStart")) : undefined}
         onOpenPage={(id) => { window.__opened.push(id); setOpened(id); }} />
       <p className="opened" data-testid="opened">{opened ? `Opened ${opened}` : ""}</p>
     </div>

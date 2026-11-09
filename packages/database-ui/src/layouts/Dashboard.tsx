@@ -39,7 +39,7 @@ function Widget({ viewID, height }: { viewID: string; height: number }) {
 /** Widget aus einer anderen Datenbank: eigener Kontext (eigene Beobachtung und Engine). */
 function ForeignWidget({ view, height }: { view: DatabaseView; height: number }) {
   const outer = useDB();
-  const ctx = useDatabaseContext(outer.store, view.databaseID, { readOnly: outer.locked, onOpenPage: outer.onOpenPage, isAgentEdit: outer.isAgentEdit });
+  const ctx = useDatabaseContext(outer.store, view.databaseID, { readOnly: outer.locked, onOpenPage: outer.onOpenPage, isAgentEdit: outer.isAgentEdit, weekStart: outer.weekStart });
   if (!ctx) return <section className="dbui-widget missing"><EmptyState>The database of this widget is gone.</EmptyState></section>;
   return <DBContext.Provider value={ctx}><WidgetFrame view={view} height={height} /></DBContext.Provider>;
 }

@@ -74,3 +74,12 @@ export {
   READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
+// BSD-8: Kalender und Timeline – Datumslogik (Tagesraster, Zeiträume, Spuren, Zeitachse) und Schreib-Operationen.
+export {
+  CALENDAR_PROPERTY_TYPES, SpanIndex, TIMELINE_SCALES, addMonths, calendarDateProperty, calendarEndProperty, dateOfDay, dayFromYMD, dayOf,
+  dayStart, daysInMonth, formatDay, layoutLanes, monthGrid, nextUnit, resizeSpan, rowSpan, rowSpans, shiftSpan, spanLabel, startOfMonth,
+  startOfQuarter, startOfWeek, startOfYear, timelineRange, timelineTicks, today, unitStart, weekStartForLocale, weekdayOf, ymdOf,
+} from "./query/calendar.js";
+export type { LaneLayout, LanePlacement, RowSpan, TimelineScale, TimelineTick } from "./query/calendar.js";
+export { addRowOnDay, canWriteSpan, databaseIDOfRow, moveRowSpan, resizeRowSpan, setRowSpan, storedDate, storedSpanDays } from "./store/calendar-ops.js";
+export type { SpanProperties } from "./store/calendar-ops.js";
