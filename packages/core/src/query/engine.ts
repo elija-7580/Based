@@ -5,7 +5,7 @@ import type { Block, Database, DatabaseView, PropertySchema, PropertyValue, Rich
 import type { WorkspaceStore } from "../store/store.js";
 import { Formula, FormulaError, type FormulaEnvironment } from "./formula.js";
 import {
-  addCalendar, asList, bool, compareValues, date, describe, EMPTY, formatICU, fromJSDate, isEmptyValue, list,
+  addCalendar, typeName, asList, bool, compareValues, date, describe, EMPTY, formatICU, fromJSDate, isEmptyValue, list,
   localizedStandardCompare, num, parseDate, parseSwiftDouble, plainNumber, startOfDay, str, toJSDate, truthy,
   type DateValue, type Value,
 } from "./value.js";
@@ -191,6 +191,15 @@ export class QueryEngine {
     if (!row || !db) return EMPTY;
     const p = propertyById(db, propertyID) ?? (propertyID === TITLE_PROPERTY_ID ? titleProperty(db) : undefined);
     return p ? this.value(row, p, db) : EMPTY;
+  }
+
+  /** Ergebnistyp einer Formel/eines Rollups: Typ des ersten nicht-leeren Werts in der Datenbank (BSD-9). */
+  resultType(db: Database, p: PropertySchema): string | undefined {
+    for (const row of rowsOf(this.store, db.id)) {
+      const v = this.value(row, p, db);
+      if (!isEmptyValue(v)) return typeName(v);
+    }
+    return undefined;
   }
 
   value(row: Block, p: PropertySchema, db: Database): Value {
@@ -717,4 +726,36 @@ export function durationText(seconds: number): string {
   if (days >= 30) { const n = Math.trunc(days / 30); return `${n} month${n === 1 ? "" : "s"}`; }
   if (days >= 7) { const n = Math.trunc(days / 7); return `${n} week${n === 1 ? "" : "s"}`; }
   return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+// MARK: Filter-Operatoren (Swift `FilterOp.ops(for:)`), BSD-9: Formeln und Rollups nach ihrem Ergebnistyp
+
+const TEXT_OPS = ["equals", "notEquals", "contains", "notContains", "startsWith", "endsWith", "isEmpty", "isNotEmpty"];
+const NUMBER_OPS = ["equals", "notEquals", "greater", "less", "greaterOrEqual", "lessOrEqual", "isEmpty", "isNotEmpty"];
+const DATE_OPS = ["equals", "before", "after", "onOrBefore", "onOrAfter", "within", "isEmpty", "isNotEmpty"];
+const LIST_OPS = ["contains", "notContains", "isEmpty", "isNotEmpty"];
+
+/**
+ * Operatoren, die der Filter für eine Property anbietet. Für `formula`/`rollup` entscheidet der Ergebnistyp
+ * (`typeName` des Werts: "number", "date", "boolean", "text", "list", "page", "person"); ohne ihn wie bisher Text.
+ */
+export function filterOps(type: string, resultType?: string): string[] {
+  if (type === "formula" || type === "rollup") {
+    switch (resultType) {
+      case "number": return NUMBER_OPS;
+      case "date": return DATE_OPS;
+      case "boolean": return ["equals", "notEquals"];
+      case "list": case "page": case "person": return LIST_OPS;
+      default: return TEXT_OPS;
+    }
+  }
+  switch (type) {
+    case "title": case "text": case "url": case "email": case "phone": case "place": return TEXT_OPS;
+    case "number": case "uniqueID": return NUMBER_OPS;
+    case "select": case "status": return ["equals", "notEquals", "isEmpty", "isNotEmpty"];
+    case "multiSelect": case "person": case "relation": case "files": return LIST_OPS;
+    case "date": case "createdTime": case "lastEditedTime": return DATE_OPS;
+    case "checkbox": return ["equals", "notEquals"];
+    default: return ["isEmpty", "isNotEmpty"];
+  }
 }

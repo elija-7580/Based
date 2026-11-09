@@ -105,6 +105,8 @@ export function valueJSON(v: Value): unknown {
   switch (v.t) {
     case "number": return Number.isFinite(v.v) ? v : { t: "number", v: Number.isNaN(v.v) ? "nan" : v.v > 0 ? "inf" : "-inf" };
     case "list": return { t: "list", v: v.v.map(valueJSON) };
+    // BSD-9: Formatierung (style/link) gibt es nur im TS-Kern; gegen Swift zählt der reine Text.
+    case "string": return { t: "string", v: v.v };
     default: return v;
   }
 }

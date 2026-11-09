@@ -12,13 +12,22 @@ export interface DateValue {
 
 export type Value =
   | { t: "empty" }
-  | { t: "string"; v: string }
+  | { t: "string"; v: string; rich?: FormulaRun[] }
   | { t: "number"; v: number }
   | { t: "bool"; v: boolean }
   | { t: "date"; v: DateValue }
   | { t: "list"; v: Value[] }
   | { t: "page"; v: string }
   | { t: "person"; v: string };
+
+/**
+ * BSD-9: Formatierung eines Formel-Texts (style/link). `v` bleibt der reine Text, sodass alles, was mit
+ * Text rechnet, unverändert bleibt; die Zelle rendert `rich`, wenn vorhanden. Gleiche Marken wie Rich Text.
+ */
+export interface FormulaRun {
+  t: string;
+  m?: { b?: boolean; i?: boolean; u?: boolean; s?: boolean; c?: boolean; color?: string; link?: string };
+}
 
 export const EMPTY: Value = { t: "empty" };
 export const str = (v: string): Value => ({ t: "string", v });

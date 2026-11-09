@@ -13,8 +13,8 @@ export type { ChangeOrigin, Persistence, RecordKeyString, RemoteMergeResult, Sto
 export { Formula, FormulaError, FUNCTION_NAMES, referencedProperties } from "./query/formula.js";
 export type { FormulaEnvironment, FormulaExpr } from "./query/formula.js";
 export * as values from "./query/value.js";
-export type { DateValue, Value } from "./query/value.js";
-export { QueryEngine, TITLE_PROPERTY_ID, cellText, databaseOfRow, durationText, isTrashed, liveRelationTargets, rowsOf, titleOf, titleProperty } from "./query/engine.js";
+export type { DateValue, FormulaRun, Value } from "./query/value.js";
+export { QueryEngine, TITLE_PROPERTY_ID, filterOps, cellText, databaseOfRow, durationText, isTrashed, liveRelationTargets, rowsOf, titleOf, titleProperty } from "./query/engine.js";
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
 export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
 export type { ConversionPlan } from "./store/conversion.js";

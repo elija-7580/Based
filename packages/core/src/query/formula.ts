@@ -3,8 +3,33 @@
 import {
   addCalendar, asList, bool, compareValues, date, describe, EMPTY, formatMoment, fromJSDate, isEmptyValue,
   isoWeek, list, monthsBetween, num, parseDate, parseSwiftDouble, plainNumber, sameValue, startOfDay, str, toJSDate,
-  truthy, typeName, unixMillis, type CalendarUnit, type DateValue, type Value,
+  truthy, typeName, unixMillis, type CalendarUnit, type DateValue, type FormulaRun, type Value,
 } from "./value.js";
+
+// BSD-9: style()-Namen wie in Notion Formula 2.0 → Rich-Text-Marken.
+const STYLE_FLAGS: Record<string, "b" | "i" | "u" | "s" | "c"> = { b: "b", i: "i", u: "u", s: "s", c: "c" };
+const STYLE_COLORS = new Set(["gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"]);
+type Marks = NonNullable<FormulaRun["m"]>;
+
+function runsOf(v: Value): FormulaRun[] {
+  if (v.t === "string" && v.rich) return v.rich.map((r) => (r.m ? { t: r.t, m: { ...r.m } } : { t: r.t }));
+  const text = describe(v);
+  return text ? [{ t: text }] : [];
+}
+function richString(runs: FormulaRun[]): Value {
+  const cleaned = runs.filter((r) => r.t.length > 0).map((r) => (r.m && Object.keys(r.m).length > 0 ? r : { t: r.t }));
+  const text = cleaned.map((r) => r.t).join("");
+  return cleaned.some((r) => r.m) ? { t: "string", v: text, rich: cleaned } : str(text);
+}
+/** "b", "red", "red_background" (auch "redBackground") → Marke; unbekannte Namen: undefined. */
+function styleMark(name: string): ((m: Marks) => void) | undefined {
+  const flag = STYLE_FLAGS[name];
+  if (flag) return (m) => void (m[flag] = true);
+  const bg = /^([a-z]+)(?:_background|Background)$/.exec(name);
+  const color = bg ? bg[1]! : name;
+  if (!STYLE_COLORS.has(color)) return undefined;
+  return (m) => void (m.color = bg ? `${color}Background` : color);
+}
 
 export type FormulaErrorKind = "general" | "invalidArgument" | "divisionByZero" | "cycle" | "tooDeep";
 
@@ -497,7 +522,9 @@ class Evaluator {
     }
   }
 
-  call(name: string, argExprs: FormulaExpr[]): Value {
+  call(called: string, argExprs: FormulaExpr[]): Value {
+    // BSD-9: sort(list, expr) sortiert wie sortBy; sort(list) bleibt der Vergleich der Werte selbst.
+    const name = called === "sort" && argExprs.length >= 2 ? "sortBy" : called;
     // Lazy-Formen zuerst.
     switch (name) {
       case "if":
@@ -646,7 +673,38 @@ class Evaluator {
         const padding = graphemes(pad.repeat(Math.floor(needed / padChars.length) + 1)).slice(0, needed).join("");
         return str(name === "padStart" ? padding + text : text + padding);
       }
-      case "link": case "style": case "unstyle": return str(s(0));
+      case "link": {
+        const label = s(0);
+        const url = args.length > 1 ? s(1) : label;
+        return label ? { t: "string", v: label, rich: [{ t: label, m: { link: url } }] } : EMPTY;
+      }
+      case "style": {
+        const runs = runsOf(arg(0));
+        for (const a of args.slice(1)) {
+          const apply = styleMark(describe(a));
+          if (!apply) throw FormulaError.invalidArgument(name, `unknown style “${describe(a)}”`);
+          for (const r of runs) apply((r.m ??= {}));
+        }
+        return richString(runs);
+      }
+      case "unstyle": {
+        if (args.length < 2) return str(s(0));
+        const runs = runsOf(arg(0));
+        for (const a of args.slice(1)) {
+          const nm = describe(a);
+          for (const r of runs) {
+            if (!r.m) continue;
+            const flag = STYLE_FLAGS[nm];
+            if (flag) delete r.m[flag];
+            else if (styleMark(nm)) {
+              const probe: Marks = {};
+              styleMark(nm)!(probe);
+              if (r.m.color === probe.color) delete r.m.color;
+            }
+          }
+        }
+        return richString(runs);
+      }
       case "format": case "toString": return str(describe(arg(0)));
       case "toNumber": {
         const v = arg(0);
@@ -714,6 +772,11 @@ class Evaluator {
         return num(roundHalfAway(x * f) / f);
       }
       case "max": case "min": {
+        // BSD-9: Daten vergleichen (frühestes/spätestes), wenn alle Werte Daten sind.
+        const all = args.flatMap(asList).filter((v) => !isEmptyValue(v));
+        if (all.length > 0 && all.every((v) => v.t === "date")) {
+          return all.reduce((best, v) => ((compareValues(v, best) > 0) === (name === "max") && compareValues(v, best) !== 0 ? v : best));
+        }
         const xs = numbers();
         if (xs.length === 0) return EMPTY;
         return num(name === "max" ? Math.max(...xs) : Math.min(...xs));
