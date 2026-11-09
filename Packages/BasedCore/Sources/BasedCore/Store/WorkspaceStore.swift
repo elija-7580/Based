@@ -1,6 +1,19 @@
 import Foundation
 
-public enum ChangeOrigin: Sendable { case local, undo, redo, remote, load }
+public enum ChangeOrigin: Sendable {
+    case local, undo, redo, remote, load
+    /// Records restored from an archive (BSD-26): kept with their stamps and without undo — like `.remote` —
+    /// but logged as local changes and reported to `onLocalChange`, so sync pushes them to the server.
+    case `import`
+
+    /// Changes that originate on this device and must be uploaded (change log `local=1`, `onLocalChange`).
+    public var isLocalWrite: Bool {
+        switch self {
+        case .local, .undo, .redo, .import: return true
+        case .remote, .load: return false
+        }
+    }
+}
 
 /// What changed in one committed transaction.
 public struct ChangeSet: Sendable {
@@ -453,7 +466,7 @@ public final class WorkspaceStore {
         var before: [RecordKey: Snapshot] = [:]
         var after: [RecordKey: Snapshot] = [:]
         let now = Date()
-        let restamp = origin != .remote && origin != .load
+        let restamp = origin != .remote && origin != .load && origin != .import
         for key in tx.order {
             let prev = tx.before[key]?.value
             guard var cur = record(key) else {
@@ -482,7 +495,7 @@ public final class WorkspaceStore {
         if let persistence {
             do {
                 if let log = persistence as? ChangeLogging {
-                    try log.write(upserts: upserts, deletions: deletions, local: origin != .remote && origin != .load)
+                    try log.write(upserts: upserts, deletions: deletions, local: origin.isLocalWrite)
                 } else {
                     try persistence.write(upserts: upserts, deletions: deletions)
                 }
@@ -512,7 +525,7 @@ public final class WorkspaceStore {
             redoStack.removeAll()
         }
 
-        if origin == .local || origin == .undo || origin == .redo {
+        if origin.isLocalWrite {
             onLocalChange?(Array(change.keys))
         }
         revision &+= 1
@@ -642,6 +655,30 @@ public final class WorkspaceStore {
             }
             return []
         }
+        guard let stale = merge(records, deletions: deletions, origin: .remote, name: "Sync") else {
+            deferredRemote.append((records, deletions))
+            return []
+        }
+        return stale
+    }
+
+    /// Merges records restored from an archive (last-writer-wins by stamp, like `applyRemote`) as origin `.import`:
+    /// no restamping, no undo, but logged as local changes so sync uploads them (BSD-26).
+    /// Throws `StoreError.readOnly` instead of queueing while the store can't be written.
+    @discardableResult
+    public func applyImported(_ records: [Record], deletions: [RecordKey] = []) throws -> [RecordKey] {
+        if persistence != nil, let f = writeFailure {
+            writeFailure?.rejected += 1
+            throw StoreError.readOnly(f.message)
+        }
+        guard let stale = merge(records, deletions: deletions, origin: .import, name: "Import") else {
+            throw StoreError.readOnly(writeFailure?.message ?? "write failed")
+        }
+        return stale
+    }
+
+    /// LWW merge shared by `applyRemote` and `applyImported`. Nil if the commit failed.
+    private func merge(_ records: [Record], deletions: [RecordKey], origin: ChangeOrigin, name: String) -> [RecordKey]? {
         let tx = Tx(store: self)
         var stale: [RecordKey] = []
         var unfrozen: [RecordKey] = []
@@ -661,10 +698,7 @@ public final class WorkspaceStore {
             tx.put(r)
         }
         for key in deletions { tx.remove(key) }
-        guard commit(tx, name: "Sync", coalesce: nil, origin: .remote, undoable: false) else {
-            deferredRemote.append((records, deletions))
-            return []
-        }
+        guard commit(tx, name: name, coalesce: nil, origin: origin, undoable: false) else { return nil }
         for k in unfrozen { frozenKeys.remove(k) }
         return stale
     }

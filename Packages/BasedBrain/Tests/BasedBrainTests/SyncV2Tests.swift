@@ -90,6 +90,31 @@ struct SyncV2Tests {
         #expect(!log.paths.contains("/sync/v2/push"))
     }
 
+    /// BSD-26: an archive restored on a fresh device reaches the server (origin `.import` logs `local=1`).
+    @Test func archiveRestoreIsPushedToServer() async throws {
+        let original = try store("orig26")
+        let page = original.createPage(title: RichText("Archived page"))
+        let line = original.insertBlock(.text, text: RichText("archived line"), in: .block(page), at: .end)
+        let archive = try WorkspaceArchive.write(original)
+
+        let srvStore = try store("server26")
+        let server = SyncServer(store: srvStore)
+        let fresh = try store("fresh26")
+        let c = client(fresh, server: server)
+        await c.syncNow()                       // a client that has already synced once (cursor set)
+        let result = try WorkspaceArchive.importArchive(archive, into: fresh)
+        #expect(result.imported >= 2)
+        // Stamps are the archive's (not restamped on import).
+        #expect(fresh.blocks[page]?.stamp == original.blocks[page]?.stamp)
+        await c.syncNow()
+        #expect(srvStore.title(of: page) == "Archived page")
+        #expect(srvStore.blocks[line]?.text.plainText == "archived line")
+        // A second device gets the restore from the server.
+        let other = try store("other26")
+        await client(other, server: server).syncNow()
+        #expect(other.title(of: page) == "Archived page")
+    }
+
     @Test func pagesLargeWorkspaces() async throws {
         let srvStore = try store("server2")
         let server = SyncServer(store: srvStore)

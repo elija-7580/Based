@@ -192,7 +192,7 @@ public final class ServerSync {
 
     public func start(interval: TimeInterval = 20) {
         observer = store.observe { [weak self] change in
-            guard let self, change.origin == .local || change.origin == .undo || change.origin == .redo else { return }
+            guard let self, change.origin.isLocalWrite else { return }
             for k in change.keys { if self.store.record(k) == nil { self.pendingDeletions.insert(k) } else { self.pending.insert(k) } }
             self.schedulePush()
         }

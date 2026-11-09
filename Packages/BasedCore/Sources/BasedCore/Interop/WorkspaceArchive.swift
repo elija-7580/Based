@@ -116,7 +116,8 @@ public enum WorkspaceArchive {
                 }
             }
         }
-        let stale = store.applyRemote(records)
+        // Origin `.import`: stamps kept, no undo, but logged as local so sync pushes the restore (BSD-26).
+        let stale = try store.applyImported(records)
         return ImportResult(imported: records.count - stale.count + restoredWorkspace, keptNewer: stale.count, skipped: r.skipped)
     }
 
