@@ -10,10 +10,12 @@ import { Home } from "./screens/Home.js";
 import { Page } from "./screens/Page.js";
 import { Settings } from "./screens/Settings.js";
 
-const SCREENS: Screen[] = ["home", "page", "db", "graph", "settings"];
+// Hash-Namen: schlicht (#home), damit Links auch im claude.ai-Artefakt funktionieren (dort nur #name, und
+// „settings“ ist reserviert).
+const HASH: Record<Screen, string> = { home: "home", page: "lecture", db: "backlog", graph: "graph", settings: "appearance" };
 const fromHash = (): Screen => {
-  const h = globalThis.location?.hash.replace(/^#\/?/, "") as Screen;
-  return SCREENS.includes(h) ? h : "home";
+  const h = (globalThis.location?.hash ?? "").replace(/^#\/?/, "");
+  return (Object.keys(HASH) as Screen[]).find((s) => HASH[s] === h || s === h) ?? "home";
 };
 
 const BOLD_FONTS = "https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap";
@@ -45,7 +47,7 @@ export function App() {
   }, []);
 
   const navigate = (s: Screen) => {
-    window.location.hash = `/${s}`;
+    window.location.hash = HASH[s];
     setScreen(s);
   };
 
