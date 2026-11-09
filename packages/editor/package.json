@@ -8,7 +8,9 @@
   },
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "testpage": "vite"
   },
   "dependencies": {
     "@based/core": "workspace:*",

@@ -56,8 +56,6 @@ export interface DocSessionOptions {
 export class DocSession {
   readonly doc = new Y.Doc();
   readonly fragment: Y.XmlFragment;
-  /** Liefert die Blöcke des laufenden Editors (schneller als aus Y lesen); gesetzt, solange einer läuft. */
-  liveBlocks: (() => BNBlock[]) | undefined;
   private dirty = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -101,9 +99,9 @@ export class DocSession {
     return p === this.rootID || this.known.has(p);
   }
 
-  /** Aktuelle Blöcke des Dokuments. */
+  /** Aktuelle Blöcke des Dokuments – immer aus dem Y.Doc (der Editor zieht bei Undo/Remote erst danach nach). */
   blocks(): BNBlock[] {
-    return this.liveBlocks?.() ?? this.opts.converter.fromFragment(this.fragment);
+    return this.opts.converter.fromFragment(this.fragment);
   }
 
   private markDirty() {

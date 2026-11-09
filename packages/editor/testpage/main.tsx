@@ -4,6 +4,7 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { WorkspaceStore, type Persistence, type RecordKeyString, type WireRecord, recordKey, type Block } from "@based/core";
 import { PageEditor, type YDocStore } from "../src/index.js";
+import corpus from "../../../fixtures/records/corpus.jsonl?raw";
 import "./page.css";
 
 const RECORDS = "based-e2e-records";
@@ -39,6 +40,11 @@ const docStore: YDocStore = {
   },
 };
 
+/** Swift-Korpus (alle Blocktypen) plus die Testseiten. */
+function corpusRecords(): WireRecord[] {
+  return corpus.split("\n").filter(Boolean).map((l) => JSON.parse(l) as WireRecord);
+}
+
 function seed(): WireRecord[] {
   const t = 800_000_000;
   const b = (id: string, type: string, parent: string, sk: string, extra: Partial<Block> = {}): WireRecord =>
@@ -56,7 +62,7 @@ function seed(): WireRecord[] {
 const params = new URLSearchParams(location.search);
 if (params.has("reset") || !localStorage.getItem(RECORDS)) {
   for (const k of Object.keys(localStorage)) if (k === RECORDS || k.startsWith(YDOCS)) localStorage.removeItem(k);
-  localStorage.setItem(RECORDS, JSON.stringify(seed()));
+  localStorage.setItem(RECORDS, JSON.stringify([...seed(), ...(params.has("corpus") ? corpusRecords() : [])]));
 }
 const store = new WorkspaceStore({ persistence: new LocalPersistence(), node: "e2e" });
 (window as unknown as { __based: unknown }).__based = { store };

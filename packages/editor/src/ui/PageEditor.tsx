@@ -96,13 +96,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     return BlockNoteEditor.create(options) as unknown as BasedEditor;
   }, [session]);
   editorRef.current = editor;
-  useEffect(() => {
-    session.liveBlocks = () => editor.document as never;
-    return () => {
-      session.flush();
-      if (session.liveBlocks) session.liveBlocks = undefined;
-    };
-  }, [editor, session]);
+  useEffect(() => () => void session.flush(), [editor, session]);
 
   const env: EditorEnv = {
     store,
