@@ -23,13 +23,13 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 8 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (313ms)
-  ✓  3 [chromium] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (270ms)
-  ✓  4 [chromium] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (502ms)
-  ✓  5 [chromium] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (234ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (3.3s)
-  ✓  6 [webkit] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.8s)
-  ✓  7 [webkit] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (1.8s)
-  ✓  8 [webkit] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (984ms)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (300ms)
+  ✓  3 [chromium] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (216ms)
+  ✓  4 [chromium] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (672ms)
+  ✓  5 [chromium] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (276ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:10:1 › Shell mit Seitenleiste und Home (2.9s)
+  ✓  6 [webkit] › e2e/smoke.spec.ts:20:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.5s)
+  ✓  7 [webkit] › e2e/smoke.spec.ts:26:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (1.7s)
+  ✓  8 [webkit] › e2e/smoke.spec.ts:53:1 › Show agent details blendet Modell und Laufzeit auf Home ein (1.2s)
 
-  8 passed (12.0s)
+  8 passed (11.5s)
