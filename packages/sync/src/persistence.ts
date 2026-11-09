@@ -187,18 +187,64 @@ export class SqlitePersistence implements Persistence {
   }
 }
 
-/** Gerätekennung wie Swift (`meta.node`, 8 Zeichen); bleibt über Neustarts gleich. */
-export function nodeID(p: SqlitePersistence, make: () => string = () => crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()): string {
-  const existing = p.meta("node");
-  if (existing) return existing;
-  const id = make();
-  p.setMeta("node", id);
-  return id;
+const newNode = () => crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
+
+export interface NodeResolution {
+  node: string;
+  /** Neue Kennung gewählt (Datenbank stammt von einem anderen Gerät oder aus einer Sicherung). */
+  rotated: boolean;
+  reason: "same" | "new" | "adopted" | "copied" | "unknownDevice";
 }
 
-/** Öffnet einen Workspace auf einer SQLite-Datenbank (migriert sie, lädt alles, Gerätekennung aus `meta`). */
-export function openWorkspace(db: SqlDatabase, opts: Omit<StoreOptions, "persistence" | "node"> & { node?: string } = {}): { store: WorkspaceStore; persistence: SqlitePersistence } {
+/**
+ * BSD-145 (Rest von BSD-72): Gerätekennung für die HLC-Stempel. Die Kennung gehört dem Gerät (außerhalb der
+ * Datenbank gespeichert: localStorage, App-Einstellungen), `meta.node` merkt sich, welches Gerät die Datei zuletzt
+ * geöffnet hat. Passen sie nicht zusammen, ist die Datei kopiert oder wiederhergestellt; dann schreiben zwei Geräte
+ * sonst mit derselben Kennung gleiche Stempel für verschiedene Inhalte → neue Kennung. Im Zweifel neu wählen: das
+ * kostet nichts, eine geteilte Kennung kostet Divergenz. Reine Funktion; das Datenformat bleibt gleich (nur meta).
+ */
+export function resolveNode(deviceNode: string | undefined, dbNode: string | undefined, make: () => string = newNode): NodeResolution {
+  if (deviceNode && dbNode) return deviceNode === dbNode ? { node: deviceNode, rotated: false, reason: "same" } : { node: make(), rotated: true, reason: "copied" };
+  if (deviceNode) return { node: deviceNode, rotated: false, reason: "adopted" }; // alte Datei ohne meta.node
+  if (dbNode) return { node: make(), rotated: true, reason: "unknownDevice" }; // Datei ohne bekanntes Gerät (Kopie, Neuinstallation)
+  return { node: make(), rotated: false, reason: "new" };
+}
+
+/** Wo das Gerät seine Kennung außerhalb der Datenbank aufbewahrt. */
+export interface DeviceNodeStore {
+  get(): string | undefined;
+  set(node: string): void;
+}
+
+/** Löst die Kennung auf und trägt sie in Gerät und `meta.node` ein. */
+export function deviceNodeID(p: SqlitePersistence, device: DeviceNodeStore, make?: () => string): NodeResolution {
+  const r = resolveNode(device.get(), p.meta("node"), make);
+  if (device.get() !== r.node) device.set(r.node);
+  if (p.meta("node") !== r.node) p.setMeta("node", r.node);
+  if (r.rotated) p.setMeta("node.rotated", `${r.reason} at ${new Date().toISOString()}`);
+  return r;
+}
+
+/**
+ * Öffnet einen Workspace auf einer SQLite-Datenbank (migriert sie, lädt alles). Die Gerätekennung kommt aus
+ * `device` (BSD-145); ohne `device` aus `meta.node` der Datei (nur für Tests und Werkzeuge, die keine Geräte sind).
+ */
+export function openWorkspace(
+  db: SqlDatabase,
+  opts: Omit<StoreOptions, "persistence" | "node"> & { node?: string; device?: DeviceNodeStore; onNodeRotated?: (r: NodeResolution) => void } = {},
+): { store: WorkspaceStore; persistence: SqlitePersistence } {
+  const { device, onNodeRotated, node, ...rest } = opts;
   const persistence = new SqlitePersistence(db);
-  const store = new WorkspaceStore({ ...opts, persistence, node: opts.node ?? nodeID(persistence) });
+  let id = node;
+  if (!id && device) {
+    const r = deviceNodeID(persistence, device);
+    if (r.rotated) onNodeRotated?.(r);
+    id = r.node;
+  }
+  if (!id) {
+    id = persistence.meta("node") ?? newNode();
+    if (!persistence.meta("node")) persistence.setMeta("node", id);
+  }
+  const store = new WorkspaceStore({ ...rest, persistence, node: id });
   return { store, persistence };
 }
