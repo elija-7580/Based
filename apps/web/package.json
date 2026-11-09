@@ -17,7 +17,8 @@
     "@based/sync": "workspace:*",
     "@based/ui": "workspace:*",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@based/editor": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",

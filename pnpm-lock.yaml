@@ -50,6 +50,9 @@ importers:
       '@based/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@based/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       '@based/sync':
         specifier: workspace:*
         version: link:../../packages/sync

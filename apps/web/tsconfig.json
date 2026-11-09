@@ -1,9 +1,23 @@
+// exactOptionalPropertyTypes aus: die Web-App prüft die Quellen von @based/editor mit, und die BlockNote-Typen
+// kompilieren damit nicht (dort ebenfalls aus). Alle anderen Pakete behalten die strenge Einstellung.
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
-    "types": ["vite/client"]
+    "types": [
+      "vite/client"
+    ],
+    "exactOptionalPropertyTypes": false
   },
-  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
+  "include": [
+    "src",
+    "e2e",
+    "vite.config.ts",
+    "playwright.config.ts"
+  ]
 }
