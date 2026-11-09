@@ -25,3 +25,4 @@ export { ClipboardHTMLImporter, importedJSON, notionColor } from "./interop/clip
 export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
 export type { HTMLExporterOptions } from "./interop/export.js";
+export { relationLimitViolations, setRelation } from "./store/relations.js";
