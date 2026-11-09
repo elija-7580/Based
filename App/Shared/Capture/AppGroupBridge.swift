@@ -26,13 +26,23 @@ final class AppGroupBridge {
         (Bundle.main.object(forInfoDictionaryKey: "BasedAppGroup") as? String) ?? "group.\(Bundle.main.bundleIdentifier ?? "based")"
     }
 
-    static var container: URL? { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier) }
+    /// The App Group folder, only when it exists. On macOS `containerURL` returns a path even without the App Group
+    /// entitlement; the system creates the folder only for entitled apps. Without it we must not create or write
+    /// it ourselves (macOS asks "access data from other apps" for foreign group containers, and every write failed
+    /// and logged "Widget snapshot not written" a few seconds after each edit).
+    static var container: URL? {
+        guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier) else { return nil }
+        var isDir: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue ? url : nil
+    }
 
     private weak var model: AppModel?
     private var token: ObservationToken?
     private var pending: Task<Void, Never>?
     private var observers: [NSObjectProtocol] = []
     private var last: WidgetSnapshot?
+    /// Set after the first failed write: no retry (and no new log line) after every edit until the next start.
+    private var snapshotFailed = false
 
     func start(model: AppModel) {
         self.model = model
@@ -73,7 +83,7 @@ final class AppGroupBridge {
     }
 
     func writeSnapshot() {
-        guard let model, let url = Self.container?.appendingPathComponent("widget.json") else { return }
+        guard !snapshotFailed, let model, let url = Self.container?.appendingPathComponent("widget.json") else { return }
         let s = WidgetSnapshot.make(brain: model.brain.brain)
         if let last, last.sameContent(as: s) { return }
         do {
@@ -83,7 +93,8 @@ final class AppGroupBridge {
             WidgetCenter.shared.reloadAllTimelines()
             #endif
         } catch {
-            Log.warning("Widget snapshot not written: \(error)", category: "capture")
+            snapshotFailed = true
+            Log.warning("Widget snapshot not written (no more tries until the next start): \(error)", category: "capture")
         }
     }
 }
