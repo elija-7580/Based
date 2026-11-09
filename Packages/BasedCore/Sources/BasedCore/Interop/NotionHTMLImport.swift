@@ -216,8 +216,7 @@ public final class NotionHTMLImporter {
             if let img = iconBox.first(where: { $0.tag == "img" }), let src = img.attr("src") {
                 props.icon = media(src, ctx).map { r in r.asset.map(PageIcon.asset) ?? PageIcon.url(r.url ?? src) } ?? .url(src)
             } else {
-                let e = iconBox.textContent
-                if !e.isEmpty { props.icon = .emoji(e) }
+                if let e = PageIcon.importedEmoji(iconBox.textContent) { props.icon = e }   // BSD-35
             }
         }
         if let cover = header?.first(where: { $0.tag == "img" && $0.has(class: "page-cover-image") }), let src = cover.attr("src") {
@@ -531,8 +530,7 @@ public final class NotionHTMLImporter {
             if let img = iconBox.first(where: { $0.tag == "img" }), let src = img.attr("src") {
                 p.icon = media(src, ctx).map { r in r.asset.map(PageIcon.asset) ?? PageIcon.url(r.url ?? src) } ?? .url(src)
             } else {
-                let e = iconBox.textContent
-                if !e.isEmpty { p.icon = .emoji(e) }
+                if let e = PageIcon.importedEmoji(iconBox.textContent) { p.icon = e }   // BSD-35
             }
             content = Array(parts.dropFirst()).flatMap { $0.tag == "div" ? $0.children : [$0] }
         }
@@ -929,7 +927,7 @@ public final class NotionHTMLImporter {
             var row = RowSource(id: rid, title: richText(label, &tctx).trimmed(), file: file)
             if let icon = a?.first(where: { $0.has(class: "icon") }) {
                 if icon.tag == "img", let src = icon.attr("src") { row.icon = media(src, tctx).map { r in r.asset.map(PageIcon.asset) ?? PageIcon.url(r.url ?? src) } }
-                else if !icon.textContent.isEmpty { row.icon = .emoji(icon.textContent) }
+                else if let e = PageIcon.importedEmoji(icon.textContent) { row.icon = e }
             }
             for (i, td) in tds.enumerated() where i != ti && i < columns.count { row.cells[columns[i].name] = td; row.cellDirs[columns[i].name] = ctx.dir }
             if let file, !consumed.contains(Self.key(file)), let doc = load(file) {
@@ -957,7 +955,7 @@ public final class NotionHTMLImporter {
                     if let img = iconBox.first(where: { $0.tag == "img" }), let src = img.attr("src") {
                         let rctx = Ctx(dir: file.deletingLastPathComponent(), file: file, pageID: rid)
                         row.icon = media(src, rctx).map { r in r.asset.map(PageIcon.asset) ?? PageIcon.url(r.url ?? src) }
-                    } else if !iconBox.textContent.isEmpty { row.icon = .emoji(iconBox.textContent) }
+                    } else if let e = PageIcon.importedEmoji(iconBox.textContent) { row.icon = e }
                 }
             }
             rows.append(row)

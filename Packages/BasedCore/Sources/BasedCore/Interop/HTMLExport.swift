@@ -147,21 +147,21 @@ public struct HTMLExporter {
         case .image:
             let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
             let alt = b.props.caption?.plainText ?? ""
-            return "<figure><img src=\"\(Self.escapeAttribute(src))\" alt=\"\(Self.escapeAttribute(alt))\">\(caption(b, figure: true))</figure>\n"
+            return "<figure><img src=\"\(Self.escapeAttribute(SafeURL.sanitize(src, allowDataImages: true)))\" alt=\"\(Self.escapeAttribute(alt))\">\(caption(b, figure: true))</figure>\n"
         case .video:
             let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
-            return "<figure><video controls src=\"\(Self.escapeAttribute(src))\"></video>\(caption(b, figure: true))</figure>\n"
+            return "<figure><video controls src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\"></video>\(caption(b, figure: true))</figure>\n"
         case .audio:
             let src = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
-            return "<figure><audio controls src=\"\(Self.escapeAttribute(src))\"></audio>\(caption(b, figure: true))</figure>\n"
+            return "<figure><audio controls src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\"></audio>\(caption(b, figure: true))</figure>\n"
         case .embed:
             let src = b.props.url ?? ""
-            return "<figure><iframe class=\"embed\" src=\"\(Self.escapeAttribute(src))\" loading=\"lazy\"></iframe>\(caption(b, figure: true))</figure>\n"
+            return "<figure><iframe class=\"embed\" src=\"\(Self.escapeAttribute(SafeURL.sanitize(src)))\" loading=\"lazy\"></iframe>\(caption(b, figure: true))</figure>\n"
         case .file, .pdf, .bookmark:
             let url = b.props.url ?? b.props.asset.map { "assets/" + $0.name } ?? ""
             let label = b.props.bookmark?.title ?? b.props.caption?.plainText ?? b.props.asset?.name ?? url
             let detail = b.props.bookmark?.summary.map { "<span class=\"bookmark-desc\">\(Self.escape($0))</span>" } ?? ""
-            return "<a class=\"bookmark\" href=\"\(Self.escapeAttribute(url))\"><span class=\"bookmark-title\">\(Self.escape(label.isEmpty ? url : label))</span>\(detail)<span class=\"bookmark-url\">\(Self.escape(url))</span></a>\n"
+            return "<a class=\"bookmark\" href=\"\(Self.escapeAttribute(SafeURL.sanitize(url)))\"><span class=\"bookmark-title\">\(Self.escape(label.isEmpty ? url : label))</span>\(detail)<span class=\"bookmark-url\">\(Self.escape(url))</span></a>\n"
         case .page, .databasePage, .linkToPage:
             let target = b.type == .linkToPage ? (b.props.linkTarget ?? b.id) : b.id
             let t = store.title(of: target)
@@ -267,7 +267,7 @@ public struct HTMLExporter {
                     if let l = pageLink(id) { s = "<a class=\"mention\" href=\"\(Self.escapeAttribute(l.url))\">\(Self.escape(title))</a>" }
                     else { s = "<span class=\"mention\">\(Self.escape(title))</span>" }
                 case .link(let url):
-                    s = "<a class=\"mention\" href=\"\(Self.escapeAttribute(url))\">\(Self.escape(run.text))</a>"
+                    s = "<a class=\"mention\" href=\"\(Self.escapeAttribute(SafeURL.sanitize(url)))\">\(Self.escape(run.text))</a>"
                 case .date, .user:
                     s = "<span class=\"mention\">\(Self.escape(run.text))</span>"
                 }
@@ -281,7 +281,7 @@ public struct HTMLExporter {
             if m.underline { s = "<u>\(s)</u>" }
             if m.strikethrough { s = "<s>\(s)</s>" }
             if let c = m.color, c != .default { s = "<span class=\"color-\(c.rawValue)\">\(s)</span>" }
-            if let link = m.link { s = "<a href=\"\(Self.escapeAttribute(link))\">\(s)</a>" }
+            if let link = m.link { s = "<a href=\"\(Self.escapeAttribute(SafeURL.sanitize(link)))\">\(s)</a>" }   // BSD-35: no javascript:
             out += s
         }
         return out

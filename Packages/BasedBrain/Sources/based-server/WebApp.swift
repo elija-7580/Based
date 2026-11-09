@@ -1,8 +1,13 @@
 import Foundation
+import BasedBrain
 
 /// First web client (read-only), served by based-server at `/app`: pages through `GET /sync/v2/pull`, keeps the
 /// records in the browser and renders the page tree and pages — the same data any Based client syncs
 /// (docs/sync-protocol.md). A starting point for the full web / Windows / Linux client (docs/platforms.md).
+///
+/// BSD-35: every value from the workspace goes through `esc()` (also inside attributes), links only keep
+/// http/https/mailto/based (`safeUrl`, same rule as `SafeURL` in BasedCore), the token lives in `sessionStorage`
+/// unless "Keep me signed in" is ticked, and the page is served with a nonce CSP (`WebSecurity.page`).
 enum WebApp {
     static let html = #"""
 <!doctype html>
@@ -56,11 +61,37 @@ details.b > summary { cursor:pointer; }
 <body>
 <div id="root"></div>
 <script>
-const S = { token: localStorage.getItem("based.token") || "", recs: new Map(), kids: new Map(), current: null, open: new Set(), me: null };
+// BSD-35: the token stays in this tab (sessionStorage); localStorage only after "Keep me signed in".
+const Tok = {
+  get() { try { return sessionStorage.getItem("based.token") || localStorage.getItem("based.token") || ""; } catch (e) { return ""; } },
+  set(t, keep) {
+    try { sessionStorage.setItem("based.token", t); if (keep) localStorage.setItem("based.token", t); else localStorage.removeItem("based.token"); } catch (e) {}
+  },
+  kept() { try { return !!localStorage.getItem("based.token"); } catch (e) { return false; } },
+};
+const S = { token: Tok.get(), recs: new Map(), kids: new Map(), current: null, open: new Set(), me: null };
 // Shared links (/s/<secret>): the secret is the credential; it isn't stored.
 if (location.pathname.startsWith("/s/")) { S.token = location.pathname.slice(3); S.link = true; }
 const $ = (h) => { const t = document.createElement("template"); t.innerHTML = h.trim(); return t.content.firstChild; };
-const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+// Links keep only http, https, mailto, based (and relative references); everything else becomes "#".
+function safeUrl(u, img) {
+  const t = String(u ?? "").trim();
+  let scheme = "";
+  for (const ch of t) {
+    if (ch <= " " || ch === "\x7f") continue;   // browsers ignore these inside a scheme ("java\tscript:")
+    if (ch === ":") {
+      if (!scheme) return t;
+      scheme = scheme.toLowerCase();
+      if (["http", "https", "mailto", "based"].includes(scheme)) return t;
+      if (img && scheme === "data" && /^data:image\//i.test(t) && !/^data:image\/svg/i.test(t)) return t;
+      return "#";
+    }
+    if (ch === "/" || ch === "?" || ch === "#" || !/[A-Za-z0-9+.\-]/.test(ch)) return t;   // relative reference
+    scheme += ch;
+  }
+  return t;
+}
 
 function runs(t) { if (t == null) return []; if (typeof t === "string") return [{ t }]; return t; }
 function plain(t) { return runs(t).map(r => r.t || "").join(""); }
@@ -68,16 +99,16 @@ function rich(t) {
   return runs(t).map(r => {
     let h = esc(r.t || "").replace(/\n/g, "<br>");
     const m = r.m || {};
-    if (r.mention && r.mention.page) { const id = r.mention.page; return `<span class="pagelink" data-open="${id}">${esc(title(id))}</span>`; }
+    if (r.mention && r.mention.page) { const id = r.mention.page; return `<span class="pagelink" data-open="${esc(id)}">${esc(title(id))}</span>`; }
     if (m.c) h = `<code>${h}</code>`;
     if (m.b) h = `<b>${h}</b>`; if (m.i) h = `<i>${h}</i>`; if (m.u) h = `<u>${h}</u>`; if (m.s) h = `<s>${h}</s>`;
-    if (m.link) h = `<a href="${esc(m.link)}" target="_blank" rel="noopener">${h}</a>`;
+    if (m.link) h = `<a href="${esc(safeUrl(m.link))}" target="_blank" rel="noopener noreferrer">${h}</a>`;
     return h;
   }).join("");
 }
 function block(id) { return S.recs.get("block:" + id); }
 function title(id) { const b = block(id); return (b && plain(b.text)) || "Untitled"; }
-function icon(b) { const i = b && b.props && b.props.icon; return i && i.emoji ? i.emoji : ""; }
+function icon(b) { const i = b && b.props && b.props.icon; return i && typeof i.emoji === "string" ? esc([...i.emoji].slice(0, 8).join("")) : ""; }
 function children(key) { return (S.kids.get(key) || []).map(block).filter(b => b && !b.trashedAt); }
 
 function index() {
@@ -150,13 +181,15 @@ async function live() {
 function login(msg) {
   const root = document.getElementById("root");
   root.innerHTML = "";
-  const box = $(`<div id="login"><h2>Based</h2><p class="muted">Server token (BASED_TOKEN). It stays in this browser.</p>
-    <input id="tok" type="password" placeholder="Token" value="${esc(S.token)}"><button id="go">Open workspace</button>
+  const box = $(`<div id="login"><h2>Based</h2><p class="muted">Server token (BASED_TOKEN). It stays in this tab unless you keep it.</p>
+    <input id="tok" type="password" placeholder="Token" value="${esc(S.token)}">
+    <label class="muted" style="display:block;margin:4px 0 10px"><input id="keep" type="checkbox" style="width:auto;margin:0 6px 0 0" ${Tok.kept() ? "checked" : ""}>Keep me signed in on this device</label>
+    <button id="go">Open workspace</button>
     <p class="muted" id="msg">${esc(msg || "")}</p></div>`);
   root.appendChild(box);
   box.querySelector("#go").onclick = async () => {
     S.token = box.querySelector("#tok").value.trim();
-    try { await whoami(); await sync(t => box.querySelector("#msg").textContent = t); localStorage.setItem("based.token", S.token); shell(); }
+    try { await whoami(); await sync(t => box.querySelector("#msg").textContent = t); Tok.set(S.token, box.querySelector("#keep").checked); shell(); }
     catch (e) { box.querySelector("#msg").textContent = e.message; }
   };
 }
@@ -224,13 +257,13 @@ function render(b, number) {
     case "divider": return `<hr class="b">`;
     case "code": return `<pre class="b"><code style="background:none;color:inherit;padding:0">${esc(plain(b.text))}</code></pre>`;
     case "table": return `<table class="b">${children(k).map(r => `<tr>${((r.props && r.props.cells) || []).map(c => `<td>${rich(c)}</td>`).join("")}</tr>`).join("")}</table>`;
-    case "page": case "databasePage": return `<div class="b pagelink" data-open="${b.id}">${icon(b) || "📄"} ${esc(title(b.id))}</div>`;
-    case "image": { const u = b.props && b.props.url; return u ? `<img class="b" src="${esc(u)}" style="max-width:100%;border-radius:4px">` : `<div class="b muted">🖼 Image</div>`; }
+    case "page": case "databasePage": return `<div class="b pagelink" data-open="${esc(b.id)}">${icon(b) || "📄"} ${esc(title(b.id))}</div>`;
+    case "image": { const u = b.props && b.props.url; return u ? `<img class="b" src="${esc(safeUrl(u, true))}" style="max-width:100%;border-radius:4px">` : `<div class="b muted">🖼 Image</div>`; }
     case "databaseInline": return dbTable(b);
     case "meeting": return meeting(b);
     case "meetingSection": case "transcript": return "";
     case "columnList": return `<div class="b" style="display:flex;gap:24px">${children(k).map(c => `<div style="flex:1">${seq(children("b:" + c.id))}</div>`).join("")}</div>`;
-    default: return `<div class="b" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${b.id}"` : ""}>${rich(b.text)}</div>${inner()}`;
+    default: return `<div class="b" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${esc(b.id)}"` : ""}>${rich(b.text)}</div>${inner()}`;
   }
 }
 
@@ -267,15 +300,15 @@ function cell(v, p) {
   const opt = (id) => (p.options || []).find(o => o.id === id);
   switch (kind) {
     case "text": return rich(x);
-    case "number": return String(x);
+    case "number": return esc(String(x));
     case "select": case "status": return pill(opt(x));
     case "multiSelect": return (x || []).map(id => pill(opt(id))).join("");
     case "checkbox": return x ? "☑︎" : "☐";
     case "date": { const d = new Date((x.start + 978307200) * 1000); return d.toLocaleDateString(); }
-    case "url": return `<a href="${esc(x)}" target="_blank" rel="noopener">${esc(x)}</a>`;
+    case "url": return `<a href="${esc(safeUrl(x))}" target="_blank" rel="noopener noreferrer">${esc(x)}</a>`;
     case "email": case "phone": case "place": return esc(x);
-    case "relation": return (x || []).map(id => `<span class="pagelink" data-open="${id}">${esc(title(id))}</span>`).join(", ");
-    case "uniqueID": return (p.idPrefix ? p.idPrefix + "-" : "") + x;
+    case "relation": return (x || []).map(id => `<span class="pagelink" data-open="${esc(id)}">${esc(title(id))}</span>`).join(", ");
+    case "uniqueID": return esc((p.idPrefix ? p.idPrefix + "-" : "") + x);
     default: return "";
   }
 }
@@ -288,7 +321,7 @@ function dbTable(b) {
   const name = plain(db.title) || title(b.id);
   return `<div class="b" style="margin:12px 0"><div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(name)}</div>
     <div style="overflow-x:auto"><table class="db"><tr><th>${esc((db.properties || []).find(p => p.type === "title")?.name || "Name")}</th>${props.map(p => `<th>${esc(p.name)}</th>`).join("")}</tr>
-    ${rows.slice(0, 200).map(r => `<tr><td><span class="pagelink" data-open="${r.id}">${icon(r) || "📄"} ${esc(title(r.id))}</span></td>${props.map(p => `<td>${cell((r.values || {})[p.id], p)}</td>`).join("")}</tr>`).join("")}
+    ${rows.slice(0, 200).map(r => `<tr><td><span class="pagelink" data-open="${esc(r.id)}">${icon(r) || "📄"} ${esc(title(r.id))}</span></td>${props.map(p => `<td>${cell((r.values || {})[p.id], p)}</td>`).join("")}</tr>`).join("")}
     </table></div>${rows.length > 200 ? `<div class="muted">${rows.length - 200} more rows in the app</div>` : ""}</div>`;
 }
 
@@ -321,7 +354,7 @@ function showPage(id, keepScroll) {
   tree();
   const main = document.getElementById("main");
   const cover = b.props && b.props.cover ? `<div class="cover"></div>` : "";
-  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${id}"` : ""}>${esc(title(id))}</h1>${b.type === "databasePage" ? dbTable(b) : ""}${seq(children("b:" + id))}</div>`;
+  main.innerHTML = `${cover}<div class="page">${icon(b) ? `<div class="icon">${icon(b)}</div>` : ""}<h1 class="title" ${editable(b) ? `contenteditable="plaintext-only" data-edit="${esc(id)}"` : ""}>${esc(title(id))}</h1>${b.type === "databasePage" ? dbTable(b) : ""}${seq(children("b:" + id))}</div>`;
   main.scrollTop = keepScroll ? y : 0;
   main.querySelectorAll("[data-edit]").forEach(el => {
     el.onblur = () => saveText(el.dataset.edit, el.innerText.replace(/\n$/, "")).then(tree);
@@ -336,7 +369,7 @@ function showPage(id, keepScroll) {
       if (!r.ok) return;
       const { id: newID } = await r.json();
       await sync(); showPage(S.current, true);
-      const next = document.querySelector(`[data-edit="${newID}"]`);
+      const next = document.querySelector(`[data-edit="${CSS.escape(String(newID))}"]`);
       if (next) next.focus();
     };
   });
@@ -351,4 +384,37 @@ function showPage(id, keepScroll) {
 </body>
 </html>
 """#
+}
+
+/// BSD-35: HTML responses with a per-response nonce Content-Security-Policy. Our own `<script>` tags get the nonce;
+/// workspace content is escaped (`&lt;script`), so it never matches and an injected script can't run.
+enum WebSecurity {
+    static func nonce() -> String { SecureToken.make(bytes: 18) }
+
+    /// `scriptSources`: extra script origins (published pages: MathJax/Mermaid from jsDelivr). `embeds`: allow
+    /// https iframes and media (published pages show embeds, video and audio).
+    static func policy(nonce: String, scriptSources: [String] = [], embeds: Bool = false) -> String {
+        var p = ["default-src 'self'",
+                 "script-src 'nonce-\(nonce)'" + scriptSources.map { " " + $0 }.joined(),
+                 "style-src 'self' 'unsafe-inline'",
+                 "img-src 'self' data: https:",
+                 "connect-src 'self'",
+                 "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'"]
+        if embeds { p += ["frame-src https:", "media-src 'self' https: data:", "font-src 'self' https: data:"] }
+        return p.joined(separator: "; ")
+    }
+
+    /// Adds the nonce to every `<script` tag of `html` (our own markup only; content is escaped).
+    static func withNonce(_ html: String, _ nonce: String) -> String {
+        html.replacingOccurrences(of: "<script", with: "<script nonce=\"\(nonce)\"")
+    }
+
+    static func page(_ html: String, status: Int = 200, scriptSources: [String] = [], embeds: Bool = false) -> HTTPServer.Response {
+        let n = nonce()
+        return HTTPServer.Response(status: status, headers: [
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Security-Policy": policy(nonce: n, scriptSources: scriptSources, embeds: embeds),
+            "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "X-Robots-Tag": "noindex",
+        ], body: Data(withNonce(html, n).utf8))
+    }
 }

@@ -259,7 +259,7 @@ let server = HTTPServer(port: opts.port) { req in
         return .json(["id": .string(id)])
     case ("GET", "/app"), ("GET", "/app/"):
         // Web client (read-only for now): loads the workspace through /sync/v2/pull. The token is entered in the page.
-        return HTTPServer.Response(status: 200, headers: ["Content-Type": "text/html; charset=utf-8"], body: Data(WebApp.html.utf8))
+        return WebSecurity.page(WebApp.html)   // BSD-35: nonce CSP
     case ("GET", "/sync/v2/wait"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let after = req.query["after"].flatMap { Int64($0) } ?? 0

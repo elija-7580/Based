@@ -172,10 +172,8 @@ enum ShareRoutes {
         HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: (try? JSONEncoder().encode(v)) ?? Data())
     }
 
-    static func html(_ s: String) -> HTTPServer.Response {
-        HTTPServer.Response(status: 200, headers: ["Content-Type": "text/html; charset=utf-8", "Referrer-Policy": "no-referrer",
-                                                   "X-Robots-Tag": "noindex"], body: Data(s.utf8))
-    }
+    /// BSD-35: with a nonce CSP (`WebSecurity`).
+    static func html(_ s: String) -> HTTPServer.Response { WebSecurity.page(s) }
 
     static func failure(_ e: ShareError) -> HTTPServer.Response {
         switch e {
@@ -200,8 +198,8 @@ enum ShareRoutes {
             return exporter.export(page: target)
         }
         guard let out else { return .text("This page isn't published.", status: 404) }
-        return HTTPServer.Response(status: 200, headers: ["Content-Type": "text/html; charset=utf-8", "Referrer-Policy": "no-referrer"],
-                                   body: Data(out.utf8))
+        // BSD-35: CSP; MathJax/Mermaid come from jsDelivr, embeds/video/audio from https.
+        return WebSecurity.page(out, scriptSources: ["https://cdn.jsdelivr.net"], embeds: true)
     }
 
     /// Universal Links: BASED_APPLE_APP_ID = "<TeamID>.<bundle id>" makes /s/* and /p/* open in the Based app.
@@ -228,7 +226,9 @@ enum InvitePage {
         @media (prefers-color-scheme: dark){body{background:#191919;color:#d4d4d4}input{background:#252525;color:#d4d4d4;border-color:#373737}}</style></head>
         <body><h2>You're invited to “\(esc(title))”</h2>
         <p class="muted">\(esc(role.label)). Enter your name so others know who made changes.</p>
-        <input id="name" placeholder="Your name" autofocus><button id="go">Join</button><p class="muted" id="msg"></p>
+        <input id="name" placeholder="Your name" autofocus>
+        <label class="muted" style="display:block;margin-top:10px"><input id="keep" type="checkbox" checked style="width:auto;margin:0 6px 0 0">Keep me signed in on this device</label>
+        <button id="go">Join</button><p class="muted" id="msg"></p>
         <script>
         document.getElementById("go").onclick = async () => {
           const secret = location.pathname.split("/").pop();
@@ -236,7 +236,7 @@ enum InvitePage {
                                 body: JSON.stringify({ secret, name: document.getElementById("name").value }) });
           const j = await r.json();
           if (!r.ok) { document.getElementById("msg").textContent = j.error || "Couldn't join."; return; }
-          localStorage.setItem("based.token", j.token);
+          try { sessionStorage.setItem("based.token", j.token); if (document.getElementById("keep").checked) localStorage.setItem("based.token", j.token); } catch (e) {}
           location.href = "/app#" + j.pageID;
         };
         </script></body></html>
