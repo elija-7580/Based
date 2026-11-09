@@ -75,6 +75,10 @@ public final class LocalMCPHost: @unchecked Sendable {
 
     public func stop() { server?.stop(); server = nil }
 
+    /// BSD-58: offers `ask_main_agent` on the plain `/mcp` route (never on session routes). The provider is
+    /// asked on every call, so the app's current model and permission settings apply.
+    public func setMainAgent(_ provider: (@MainActor () -> MainAgent?)?) { mcp.mainAgentProvider = provider }
+
     /// The master token opens every route; a session token only its own `/mcp/session/<sid>`.
     static func authorized(bearer: String, path: String, master: String, sessions: MCPSessionTokens) -> Bool {
         if !master.isEmpty, SecureToken.equal(bearer, master) { return true }

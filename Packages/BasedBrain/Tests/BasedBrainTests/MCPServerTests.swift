@@ -163,6 +163,37 @@ struct MCPServerTests {
         #expect(bad.error && bad.text.contains("Unknown project"))
     }
 
+    /// BSD-58 follow-up: the app's local MCP host offers `ask_main_agent` through a provider (built per call).
+    @Test func localHostOffersTheMainAgentThroughAProvider() async {
+        let store = WorkspaceStore(persistence: nil, node: "t")
+        let brain = BrainStore(store: store)
+        let tools = AgentTools(store: store, brain: brain)
+        let host = LocalMCPHost(tools: tools, runtime: nil)
+        func names(_ session: String? = nil) async -> [String] {
+            (await rpc(host.mcp, "tools/list", session: session))["result"]?["tools"]?.array?.compactMap { $0["name"]?.string } ?? []
+        }
+        #expect(!(await names()).contains("ask_main_agent"), "no provider, no tool")
+        let reg = ModelRegistry(); reg.register(ReportProvider())
+        var built = 0
+        var last: MainAgent?
+        host.setMainAgent {
+            built += 1
+            let m = MainAgent(runtime: AgentRuntime(registry: reg, tools: tools)); last = m; return m
+        }
+        #expect((await names()).contains("ask_main_agent"))
+        #expect(!(await names("s1")).contains("ask_main_agent"), "coding sessions don't get the main agent")
+        #expect(built == 0, "listing does not build the agent")
+        let r = await call(host.mcp, "ask_main_agent", ["task": "Summarise the week"])
+        #expect(!r.error && r.text.contains("Started sub-agent run"))
+        #expect(built == 1)
+        await last?.waitForDelegations()
+        #expect(brain.delegatedRuns().first?.result == "Researched it.")
+        let denied = await call(host.mcp, "ask_main_agent", ["task": "x"], session: "s1")
+        #expect(denied.error, "not callable on a session endpoint")
+        host.setMainAgent(nil)
+        #expect(!(await names()).contains("ask_main_agent"))
+    }
+
     @Test func docsListEveryTool() async throws {
         let (_, mcp) = make(mainAgent: true)
         let docs = try String(contentsOf: URL(fileURLWithPath: #filePath)

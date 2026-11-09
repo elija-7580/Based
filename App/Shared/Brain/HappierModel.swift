@@ -38,6 +38,10 @@ final class HappierModel {
     var modes: [RecordID: String] = [:]
     /// The app's private MCP endpoint (agents started here get the workspace tools + Inbox approvals).
     @ObservationIgnored private var mcpHost: LocalMCPHost?
+    /// BSD-58: the main agent for `ask_main_agent` on the local MCP endpoint (set by `BrainModel`).
+    @ObservationIgnored var mainAgentProvider: (@MainActor () -> MainAgent?)? {
+        didSet { mcpHost?.setMainAgent(mainAgentProvider) }
+    }
     /// BSD-36: stops agent processes when Based quits.
     @ObservationIgnored private var quitObserver: NSObjectProtocol?
     var mcpBaseURL: String?
@@ -171,6 +175,7 @@ final class HappierModel {
     func startLocalMCP() {
         guard mcpHost == nil else { return }
         let host = LocalMCPHost(tools: tools, runtime: runtime)
+        host.setMainAgent(mainAgentProvider)
         do {
             mcpBaseURL = try host.start(runtime: runtime)
             mcpHost = host

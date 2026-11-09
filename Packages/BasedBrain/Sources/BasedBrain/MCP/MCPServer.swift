@@ -27,6 +27,17 @@ public final class MCPServer: @unchecked Sendable {
 
     /// BSD-58: the user's main agent, for `ask_main_agent` (set by the server; nil = tool not offered).
     public var mainAgent: MainAgent?
+    /// App variant of `mainAgent`: built per call so it follows the current model and permission settings
+    /// (the app's local MCP host). Used when `mainAgent` is nil.
+    public var mainAgentProvider: (@MainActor () -> MainAgent?)?
+
+    var offersMainAgent: Bool { mainAgent != nil || mainAgentProvider != nil }
+
+    func resolveMainAgent() async -> MainAgent? {
+        if let mainAgent { return mainAgent }
+        guard let p = mainAgentProvider else { return nil }
+        return await MainActor.run { p() }
+    }
 
     static let askMainAgentSpec = ToolSpec(
         name: "ask_main_agent",
@@ -87,7 +98,7 @@ public final class MCPServer: @unchecked Sendable {
         case "tools/list":
             var specs = await MainActor.run { tools.specs }
             if session != nil, approval != nil { specs.insert(Self.approvalSpec, at: 0) }
-            if session == nil, mainAgent != nil { specs.append(Self.askMainAgentSpec) }
+            if session == nil, offersMainAgent { specs.append(Self.askMainAgentSpec) }
             return ["tools": .array(specs.map { ["name": .string($0.name), "description": .string($0.description), "inputSchema": $0.inputSchema] })]
         case "tools/call":
             guard let name = p["name"]?.string else { throw RPCError(code: -32602, message: "name required") }
@@ -102,7 +113,7 @@ public final class MCPServer: @unchecked Sendable {
             if session != nil, name == "resolve_inbox" {
                 return ["content": [["type": "text", "text": "Not permitted: agents can't answer the user's inbox. Ask the user."]], "isError": true]
             }
-            if name == Self.askMainAgentSpec.name, session == nil, let mainAgent {
+            if name == Self.askMainAgentSpec.name, session == nil, let mainAgent = await resolveMainAgent() {
                 let thread = await MainActor.run { () -> RecordID in
                     tools.brain.ensureMainAgent()
                     return tools.brain.ensureMainThread(machine: "mcp")

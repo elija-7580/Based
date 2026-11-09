@@ -107,6 +107,8 @@ final class BrainModel {
         tools = AgentTools(store: store, brain: brain)
         happier = HappierModel(store: store, brain: brain, tools: tools)
         runtime = AgentRuntime(registry: registry, tools: tools)
+        // BSD-58: coding agents / MCP clients on the local endpoint can hand work to the main agent too.
+        happier.mainAgentProvider = { [weak self] in self?.mainAgent }
         reloadProviders()
         configureScheduler()
         startServerSyncIfConfigured()
