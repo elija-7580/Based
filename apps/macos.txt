@@ -1,1 +1,73 @@
 ** BUILD FAILED **
+--- Ende des Logs
+Command line invocation:
+    /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Debug -destination generic/platform=macOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY= build
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = 
+    CODE_SIGNING_ALLOWED = NO
+
+Resolve Package Graph
+
+Fetching from https://github.com/sparkle-project/Sparkle
+
+Fetching from https://github.com/migueldeicaza/SwiftTerm
+
+Fetching from https://github.com/FluidInference/FluidAudio
+
+Fetching from https://github.com/tayloraswift/swift-png
+
+Fetching from https://github.com/apple/swift-argument-parser
+
+Fetching from https://github.com/rarestype/h
+
+Creating working copy of package ‘swift-argument-parser’
+
+Checking out 1.8.2 of package ‘swift-argument-parser’
+
+Creating working copy of package ‘SwiftTerm’
+
+Checking out 1.99.3 of package ‘SwiftTerm’
+
+Creating working copy of package ‘swift-png’
+
+Checking out 4.5.2 of package ‘swift-png’
+
+Creating working copy of package ‘FluidAudio’
+
+Checking out 0.18.3 of package ‘FluidAudio’
+
+Creating working copy of package ‘Sparkle’
+
+Checking out 2.10.1 of package ‘Sparkle’
+
+Creating working copy of package ‘h’
+
+Checking out 1.0.1 of package ‘h’
+
+
+Resolved source packages:
+  BasedCore: Packages/BasedCore
+  swift-png: https://github.com/tayloraswift/swift-png @ 4.5.2
+  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.10.1
+  SwiftTerm: https://github.com/migueldeicaza/SwiftTerm @ 1.99.3
+  swift-argument-parser: https://github.com/apple/swift-argument-parser @ 1.8.2
+  h: https://github.com/rarestype/h @ 1.0.1
+  BasedBrain: Packages/BasedBrain
+  FluidAudio: https://github.com/FluidInference/FluidAudio @ 0.18.3
+
+note: Using codesigning identity override: 
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+Validate plug-in “SwiftTermBuildInfoPlugin” in package “swiftterm”
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	Validate plug-in “SwiftTermBuildInfoPlugin” in package “swiftterm”
+	eyJibHVlcHJpbnRQcm92aWRlcl9wcm92aWRlckZpbGVQYXRoU3RyaW5nIjoiXC9Vc2Vyc1wvcnVubmVyXC93b3JrXC9CYXNlZFwvQmFzZWRcL0Jhc2VkLnhjb2RlcHJvaiIsInR5cGUiOnsiYmx1ZXByaW50UHJvdmlkZXIiOnt9fX0=
+	Building project Based with scheme Based-macOS and configuration Debug
+(3 failures)

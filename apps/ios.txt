@@ -1,3 +1,84 @@
 ** BUILD FAILED **
 App/Shared/BasedApp.swift:244:9: error: extra argument in call
 App/Shared/Brain/AgentDetailViews.swift:182:138: error: 'link' is unavailable in iOS
+--- Ende des Logs
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Page/SharePanel.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Shell/Sidebar.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Blocks/SimpleTable.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Brain/SkillSyncView.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Updates/SparkleBridge.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/StorageErrorView.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Shell/TabStrip.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Database/TableLayout.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Brain/TerminalView.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Theme.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Views/Library/TrashView.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Updates/Updater.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Updates/UpdatesSettings.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/History/VersionHistorySheet.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Capture/VoiceCapture.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 App/Shared/Capture/WatchReceiver.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+SwiftCompile normal x86_64 build/Build/Intermediates.noindex/Based.build/Debug-iphonesimulator/Based-iOS.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Based-iOS' from project 'Based')
+    cd /Users/runner/work/Based/Based
+    
+
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftCompile normal x86_64 App/Shared/Brain/AgentDetailViews.swift (in target 'Based-iOS' from project 'Based')
+	SwiftCompile normal x86_64 App/Shared/BasedApp.swift (in target 'Based-iOS' from project 'Based')
+	SwiftCompile normal x86_64 Compiling\ AIGlyph.swift,\ AIViews.swift,\ AgentBoard.swift,\ AgentDetailViews.swift,\ AgentEnvSettingsSection.swift,\ AgentHomeView.swift,\ AgentSessionViews.swift,\ AppDiagnostics.swift,\ AppGroupBridge.swift,\ AppModel.swift,\ ArtifactViews.swift,\ AttributedBridge.swift,\ BasedApp.swift,\ BlockGutter.swift,\ BlockMarquee.swift,\ BlockMenus.swift,\ BlockSelectionKeys.swift,\ BlockSkeleton.swift,\ BlockViews.swift,\ BrainDashboard.swift,\ BrainModel+Complete.swift,\ BrainModel.swift,\ CalendarTimeline.swift,\ CaptureIntents.swift,\ CaptureSheet.swift App/Shared/Views/Shell/AIGlyph.swift /Users/runner/work/Based/Based/App/Shared/Brain/AIViews.swift /Users/runner/work/Based/Based/App/Shared/Brain/AgentBoard.swift /Users/runner/work/Based/Based/App/Shared/Brain/AgentDetailViews.swift /Users/runner/work/Based/Based/App/Shared/Brain/AgentEnvSettingsSection.swift /Users/runner/work/Based/Based/App/Shared/Brain/AgentHomeView.swift /Users/runner/work/Based/Based/App/Shared/Brain/AgentSessionViews.swift /Users/runner/work/Based/Based/App/Shared/Diagnostics/AppDiagnostics.swift /Users/runner/work/Based/Based/App/Shared/Capture/AppGroupBridge.swift /Users/runner/work/Based/Based/App/Shared/AppModel.swift /Users/runner/work/Based/Based/App/Shared/Brain/ArtifactViews.swift /Users/runner/work/Based/Based/App/Shared/Editor/AttributedBridge.swift /Users/runner/work/Based/Based/App/Shared/BasedApp.swift /Users/runner/work/Based/Based/App/Shared/Views/Blocks/BlockGutter.swift /Users/runner/work/Based/Based/App/Shared/Views/Blocks/BlockMarquee.swift /Users/runner/work/Based/Based/App/Shared/Views/Blocks/BlockMenus.swift /Users/runner/work/Based/Based/App/Shared/Editor/BlockSelectionKeys.swift /Users/runner/work/Based/Based/App/Shared/Views/Blocks/BlockSkeleton.swift /Users/runner/work/Based/Based/App/Shared/Views/Blocks/BlockViews.swift /Users/runner/work/Based/Based/App/Shared/Brain/BrainDashboard.swift /Users/runner/work/Based/Based/App/Shared/Brain/BrainModel+Complete.swift /Users/runner/work/Based/Based/App/Shared/Brain/BrainModel.swift /Users/runner/work/Based/Based/App/Shared/Views/Database/CalendarTimeline.swift /Users/runner/work/Based/Based/App/Shared/Capture/CaptureIntents.swift /Users/runner/work/Based/Based/App/Shared/Capture/CaptureSheet.swift (in target 'Based-iOS' from project 'Based')
+	Building project Based with scheme Based-iOS and configuration Debug
+(4 failures)
