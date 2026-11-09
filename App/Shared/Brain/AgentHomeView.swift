@@ -19,6 +19,9 @@ struct AgentHomeView: View {
     @AppStorage("home.sun") private var sunStyle = "auto"
     @AppStorage("home.lastSeen") private var lastSeen: Double = 0
     @State private var seenAtOpen: Date?
+    /// BSD-108: detail sheets (a running agent, a project).
+    @State private var detailRun: RecordID?
+    @State private var detailProject: RecordID?
 
     private var range: HomeRange { HomeRange(rawValue: rangeRaw) ?? .today }
 
@@ -35,6 +38,12 @@ struct AgentHomeView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) { MainAgentInput().padding(.horizontal, DS.Space.xxl).padding(.bottom, DS.Space.xl) }
+        }
+        .sheet(item: Binding(get: { detailRun.map(DetailID.init) }, set: { detailRun = $0?.id })) { d in
+            AgentRunDetailView(runID: d.id) { p in detailRun = nil; detailProject = p }
+        }
+        .sheet(item: Binding(get: { detailProject.map(DetailID.init) }, set: { detailProject = $0?.id })) { d in
+            ProjectDetailView(projectID: d.id)
         }
         .onAppear {
             seenAtOpen = lastSeen > 0 ? Date(timeIntervalSince1970: lastSeen) : nil
@@ -113,7 +122,11 @@ struct AgentHomeView: View {
         if model.store.blocks[id] != nil { model.selection = .page(id) }
     }
 
+    private struct DetailID: Identifiable { let id: RecordID }
+
     private func open(_ item: HomeItem) {
+        // Running agents open their detail (lanes, steps, cost); finished ones their result.
+        if item.lane == .running, let run = item.runID, model.brain.brain.run(run) != nil { detailRun = run; return }
         if let page = item.resultPageID, model.store.blocks[page] != nil { model.selection = .page(page); return }
         if let run = item.runID, model.store.blocks[run] != nil { model.selection = .page(run); return }
         if let agent = item.agentID, model.store.blocks[agent] != nil { model.selection = .page(agent); return }
