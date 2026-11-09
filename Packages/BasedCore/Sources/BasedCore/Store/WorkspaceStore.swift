@@ -22,8 +22,18 @@ public struct ChangeSet: Sendable {
     public var parents: Set<String> = []
     public var origin: ChangeOrigin
 
+    /// BSD-39: rows changed per database (before or after the change the row lived in that database, so a row
+    /// moved between databases is listed under both). Filled by the store for observers.
+    public var databaseRows: [RecordID: Set<RecordID>] = [:]
+    /// BSD-39: databases whose own record (schema, title …) changed.
+    public var databaseSchemas: Set<RecordID> = []
+    /// BSD-39: databases one of whose views changed.
+    public var databaseViews: Set<RecordID> = []
+
     public var isEmpty: Bool { keys.isEmpty && parents.isEmpty }
     public var blockIDs: [RecordID] { keys.filter { $0.kind == .block }.map(\.id) }
+    /// Every database touched by this change (rows, schema or views).
+    public var changedDatabases: Set<RecordID> { databaseSchemas.union(databaseViews).union(databaseRows.keys) }
 }
 
 public enum InsertPosition: Sendable, Equatable {
@@ -302,6 +312,13 @@ public final class WorkspaceStore {
     public private(set) var frozenKeys: Set<RecordKey> = []
     /// Monotonic counter bumped on every committed change (local, remote, undo). Use as a cache key.
     public private(set) var revision: Int = 0
+    /// BSD-39: per database, bumped when its schema, one of its views or one of its rows changes (also a row moved
+    /// in or out, trashed or restored). Typing in an ordinary page leaves every database revision alone, so caches
+    /// keyed on it (`QueryCache`) survive. Missing = 0.
+    public private(set) var databaseRevisions: [RecordID: Int] = [:]
+    /// BSD-39: bumped on a full reload (`retryWrites` after a failed load): every database counts as changed.
+    public private(set) var databaseEpoch: Int = 0
+    public func databaseRevision(_ id: RecordID) -> Int { databaseRevisions[id] ?? 0 }
     /// `topLevelPages()` memo (the workspace level also holds every trashed import — thousands of records the
     /// sidebar re-scanned on each render).
     var topLevelCache: (revision: Int, pages: [Block])?
@@ -584,6 +601,7 @@ public final class WorkspaceStore {
             onLocalChange?(Array(change.keys))
         }
         revision &+= 1
+        noteDatabaseChanges(&change, before: before, after: after)
         if linkIndexBuilt { for k in change.keys where k.kind == .block { reindexLinks(k.id) } }
         else if linkIndexPending != nil { for k in change.keys where k.kind == .block { linkIndexPending?.insert(k.id) } }
         let observeStart = DispatchTime.now().uptimeNanoseconds
@@ -593,6 +611,22 @@ public final class WorkspaceStore {
             Log.warning("Store observers took \(Int(observeMs)) ms for “\(name)”", category: "store")
         }
         return true
+    }
+
+    /// BSD-39: which databases a committed change touches; bumps their `databaseRevisions` and records the
+    /// changed rows in the change set (observers like `QueryCache` drop only those rows' memoized values).
+    private func noteDatabaseChanges(_ change: inout ChangeSet, before: [RecordKey: Snapshot], after: [RecordKey: Snapshot]) {
+        func note(_ r: Record?) {
+            switch r {
+            case .block(let b)?:
+                if case .database(let d) = b.parent { change.databaseRows[d, default: []].insert(b.id) }
+            case .database(let d)?: change.databaseSchemas.insert(d.id)
+            case .view(let v)?: change.databaseViews.insert(v.databaseID)
+            default: break
+            }
+        }
+        for (key, snap) in before { note(snap.value); note(after[key]?.value) }
+        for id in change.changedDatabases { databaseRevisions[id, default: 0] &+= 1 }
     }
 
     /// Tries to leave the read-only state: checks that the persistence can be written (and loads the workspace
@@ -615,6 +649,7 @@ public final class WorkspaceStore {
                     createFreshWorkspace()
                 }
                 revision &+= 1
+                databaseEpoch &+= 1
                 // A full reload: observers see every parent as changed.
                 var all = ChangeSet(origin: .load)
                 all.keys = Set(allRecords().map(\.key))

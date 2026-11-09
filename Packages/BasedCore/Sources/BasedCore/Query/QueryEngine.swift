@@ -20,7 +20,12 @@ public final class QueryEngine {
     public let store: WorkspaceStore
     public var now: Date
     private var formulas: [String: Result<Formula, FormulaError>] = [:]
-    private var memo: [String: Value] = [:]
+    /// Memoized cell values: row id → property id → value (BSD-39: per row, so a change drops only its rows).
+    private var memo: [RecordID: [String: Value]] = [:]
+    /// Rows with memoized values or errors, per database (for `invalidate(database:)`).
+    private var rowsByDB: [RecordID: Set<RecordID>] = [:]
+    /// Whether a formula evaluated since the last reset reads the clock (`now()` / `today()`).
+    public private(set) var usesNow = false
     /// Formula / rollup cells being evaluated right now, innermost last (cycle and depth guard, BSD-17).
     private var stack: [String] = []
     private var onStack: Set<String> = []
@@ -29,12 +34,16 @@ public final class QueryEngine {
     /// of a non-main thread in tests (48 still passed).
     public static let defaultMaxDepth = 32
     public var maxDepth = QueryEngine.defaultMaxDepth
-    /// Last error per property id (any row).
-    public private(set) var errors: [String: String] = [:]
-    /// Errors per cell (row id + property id): cycles, too deep, invalid arguments, division by zero.
-    private var cellErrors: [String: FormulaError] = [:]
+    /// Errors per cell (row id → property id): cycles, too deep, invalid arguments, division by zero.
+    private var cellErrors: [RecordID: [String: FormulaError]] = [:]
+    /// An error message per property id (any failing row).
+    public var errors: [String: String] {
+        var out: [String: String] = [:]
+        for row in cellErrors.values { for (prop, e) in row { out[prop] = e.message } }
+        return out
+    }
     /// Property ids with at least one failing cell.
-    public private(set) var failingProperties: Set<String> = []
+    public var failingProperties: Set<String> { Set(cellErrors.values.flatMap(\.keys)) }
 
     public init(store: WorkspaceStore, now: Date = Date()) {
         self.store = store
@@ -43,8 +52,19 @@ public final class QueryEngine {
 
     /// Drop memoized values (call after edits).
     public func reset(now: Date = Date()) {
-        memo.removeAll(); errors.removeAll(); cellErrors.removeAll(); failingProperties.removeAll(); self.now = now
+        memo.removeAll(); rowsByDB.removeAll(); cellErrors.removeAll(); usesNow = false; self.now = now
     }
+
+    /// BSD-39: drops memoized values and errors of these rows of a database, or of all its rows (`rows == nil`).
+    public func invalidate(database id: RecordID, rows: Set<RecordID>? = nil) {
+        guard let known = rowsByDB[id] else { return }
+        let drop = rows.map { known.intersection($0) } ?? known
+        for r in drop { memo[r] = nil; cellErrors[r] = nil }
+        if rows == nil { rowsByDB[id] = nil } else { rowsByDB[id] = known.subtracting(drop) }
+    }
+
+    /// Databases that hold memoized values right now.
+    public var memoizedDatabases: Set<RecordID> { Set(rowsByDB.keys) }
 
     // MARK: Values
 
@@ -55,19 +75,24 @@ public final class QueryEngine {
     }
 
     /// The error of a formula or rollup cell (after its value was computed), nil if it's fine.
-    public func error(row: RecordID, prop: String) -> FormulaError? { cellErrors[row + "\u{1}" + prop] }
+    public func error(row: RecordID, prop: String) -> FormulaError? { cellErrors[row]?[prop] }
+
+    private static func split(_ key: String) -> (row: RecordID, prop: String) {
+        let parts = key.split(separator: "\u{1}", maxSplits: 1, omittingEmptySubsequences: false)
+        return (String(parts.first ?? ""), parts.count > 1 ? String(parts[1]) : "")
+    }
 
     private func fail(_ key: String, _ propID: String, _ e: FormulaError) {
+        let row = Self.split(key).row
         // A cycle / depth error explains the cell best; follow-up errors (empty input) don't replace it.
-        if let old = cellErrors[key], old.kind == .cycle || old.kind == .tooDeep { return }
-        cellErrors[key] = e
-        errors[propID] = e.message
-        failingProperties.insert(propID)
+        if let old = cellErrors[row]?[propID], old.kind == .cycle || old.kind == .tooDeep { return }
+        cellErrors[row, default: [:]][propID] = e
+        if let b = store.blocks[row], case .database(let d) = b.parent { rowsByDB[d, default: []].insert(row) }
     }
 
     public func value(_ row: Block, _ p: PropertySchema, _ db: Database) -> Value {
         let key = row.id + "\u{1}" + p.id
-        if let v = memo[key] { return v }
+        if let v = memo[row.id]?[p.id] { return v }
         let v: Value
         switch p.type {
         case .title: v = .string(row.text.plainText)
@@ -90,7 +115,7 @@ public final class QueryEngine {
             stack.append(key); onStack.insert(key)
             let computed = p.type == .formula ? formulaValue(row, p, db, key: key) : rollupValue(row, p, db)
             stack.removeLast(); onStack.remove(key)
-            if let e = cellErrors[key], e.kind == .cycle || e.kind == .tooDeep { v = .empty } else { v = computed }
+            if let e = cellErrors[row.id]?[p.id], e.kind == .cycle || e.kind == .tooDeep { v = .empty } else { v = computed }
         case .createdTime: v = .date(DateValue(start: row.createdAt, includeTime: true))
         case .lastEditedTime: v = .date(DateValue(start: row.updatedAt, includeTime: true))
         case .createdBy: v = row.createdBy.map(Value.person) ?? .empty
@@ -102,7 +127,8 @@ public final class QueryEngine {
             else { v = Self.value(of: row.values[p.id], p) }
         default: v = Self.value(of: row.values[p.id], p)
         }
-        memo[key] = v
+        memo[row.id, default: [:]][p.id] = v
+        rowsByDB[db.id, default: []].insert(row.id)
         return v
     }
 
@@ -140,6 +166,7 @@ public final class QueryEngine {
 
     func formulaValue(_ row: Block, _ p: PropertySchema, _ db: Database, key: String) -> Value {
         guard let src = p.formula, !src.trimmingCharacters(in: .whitespaces).isEmpty else { return .empty }
+        if !usesNow { let l = src.lowercased(); if l.contains("now(") || l.contains("today(") { usesNow = true } }
         switch compiled(src) {
         case .failure(let e):
             fail(key, p.id, e)
@@ -483,6 +510,7 @@ public final class QueryEngine {
     public func group(_ rows: [Block], rule: GroupRule, _ p: PropertySchema, _ db: Database) -> [RowGroup] {
         var buckets: [String: [Block]] = [:]
         var order: [(String, String, TColor?)] = []
+        var seen = Set<String>()
         func add(_ key: String, _ row: Block) { buckets[key, default: []].append(row) }
 
         switch p.type {
@@ -505,7 +533,7 @@ public final class QueryEngine {
                 let people = value(r, p, db).list.compactMap { v -> String? in if case .person(let x) = v { return x }; return nil }
                 if people.isEmpty { add("", r) }
                 for x in people {
-                    if !order.contains(where: { $0.0 == x }) { order.append((x, x == "me" ? "Me" : x, nil)) }
+                    if seen.insert(x).inserted { order.append((x, x == "me" ? "Me" : x, nil)) }
                     add(x, r)
                 }
             }
@@ -514,7 +542,7 @@ public final class QueryEngine {
             for r in rows {
                 guard case .date(let d) = value(r, p, db) else { add("", r); continue }
                 let (k, title, sortDate) = dateBucket(d.start, rule.dateGrouping ?? .relative)
-                if !keys.contains(where: { $0.0 == k }) { keys.append((k, title, sortDate)) }
+                if seen.insert(k).inserted { keys.append((k, title, sortDate)) }
                 add(k, r)
             }
             order = keys.sorted { $0.2 < $1.2 }.map { ($0.0, $0.1, nil) }
@@ -523,7 +551,7 @@ public final class QueryEngine {
                 let v = value(r, p, db)
                 let text = CellFormatter.text(v, store: store)
                 if v.isEmpty || text.isEmpty { add("", r); continue }
-                if !order.contains(where: { $0.0 == text }) { order.append((text, text, nil)) }
+                if seen.insert(text).inserted { order.append((text, text, nil)) }
                 add(text, r)
             }
             order.sort { $0.1.localizedStandardCompare($1.1) == .orderedAscending }

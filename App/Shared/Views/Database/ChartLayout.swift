@@ -15,7 +15,8 @@ struct ChartLayout: View {
         ctx.db.properties.first { [.select, .status, .multiSelect, .checkbox, .date].contains($0.type) }
     }
     private var points: [ChartPoint] {
-        ChartData(engine: ctx.engine).points(rows: ctx.result.rows, db: ctx.db, config: config)
+        let (ctx, config) = (ctx, config)
+        return ctx.derived("chart.points") { ChartData(engine: ctx.engine).points(rows: ctx.result.rows, db: ctx.db, config: config) }
     }
     private var yTitle: String {
         guard let y = config.yPropertyID, let p = ctx.db.property(y) else { return "Count" }
@@ -33,7 +34,8 @@ struct ChartLayout: View {
 
     /// Notion "Number" chart: one big aggregate value.
     private var numberView: some View {
-        let value = ChartData(engine: ctx.engine).number(rows: ctx.result.rows, db: ctx.db, config: config)
+        let (ctx, config) = (ctx, config)
+        let value = ctx.derived("chart.number") { ChartData(engine: ctx.engine).number(rows: ctx.result.rows, db: ctx.db, config: config) }
         return VStack(alignment: compact ? .leading : .center, spacing: 4) {
             Text(format(value))
                 .font(.system(size: compact ? 40 : 56, weight: .semibold))

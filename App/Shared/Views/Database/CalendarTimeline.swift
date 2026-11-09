@@ -98,7 +98,12 @@ struct CalendarLayout: View {
         return (0..<(weeks * 7)).compactMap { cal.date(byAdding: .day, value: $0, to: gridStart) }
     }
 
+    /// Memoized per query result (BSD-39): a month grid re-renders on every hover.
     private func rowsByDay() -> [Date: [Block]] {
+        ctx.derived("calendar.rowsByDay") { computeRowsByDay() }
+    }
+
+    private func computeRowsByDay() -> [Date: [Block]] {
         var out: [Date: [Block]] = [:]
         for r in ctx.result.rows {
             guard let (s, e) = ctx.span(r) else { continue }

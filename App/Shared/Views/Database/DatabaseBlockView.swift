@@ -11,8 +11,14 @@ struct DBContext {
     let result: QueryResult
     let model: AppModel
     let locked: Bool
+    /// Search text the result was filtered with (cache key for `derived`).
+    var search: String? = nil
 
     var store: WorkspaceStore { model.store }
+    /// BSD-39: memoizes a computation over `result` until the query result changes (not on every render).
+    func derived<T>(_ tag: String, _ compute: () -> T) -> T {
+        model.queryCache.derived(view, search: search, tag: tag, compute)
+    }
     var visibleProperties: [PropertySchema] {
         view.visiblePropertyIDs(in: db).compactMap { db.property($0) ?? ($0 == db.titleProperty.id ? db.titleProperty : nil) }
     }
@@ -137,10 +143,12 @@ struct DatabaseBlockView: View {
     @ViewBuilder
     private func content(block: Block, db: Database, views: [DatabaseView], view: DatabaseView) -> some View {
         let engine = model.queryCache.queryEngine
-        let result = model.queryCache.run(view, search: searching ? search : nil)
+        let activeSearch = searching ? search : nil
+        let result = model.queryCache.run(view, search: activeSearch)
         let nested = !fullPage && isInsideToggle(block)
         let ctx = DBContext(block: block, db: db, view: view, engine: engine, result: result, model: model,
-                            locked: db.locked == true || model.store.blocks[model.store.containingPage(of: blockID) ?? ""]?.props.format?.locked == true)
+                            locked: db.locked == true || model.store.blocks[model.store.containingPage(of: blockID) ?? ""]?.props.format?.locked == true,
+                            search: activeSearch)
         VStack(alignment: .leading, spacing: 6) {
             // Under a toggle the toggle's own text already names the database, and the filter / sort chips
             // would only add noise: hide both there (the toolbar icons still light up when rules are active).
