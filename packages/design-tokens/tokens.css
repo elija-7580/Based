@@ -1,0 +1,145 @@
+/* Based — generated from tokens.json. Do not edit; run `pnpm --filter @based/design-tokens css`. */
+
+:root,
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --sidebar: #F7F7F5;
+  --surface-soft: #F5F5F2;
+  --surface-card: #FFFFFF;
+  --selected: #EBEBE7;
+  --line: #EAEAE6;
+  --control-border: #8E8D88;
+  --ink: #1F1F1D;
+  --ink-2: #37362F;
+  --muted: #6B6A65;
+  --button: #1F1F1D;
+  --button-ink: #FFFFFF;
+  --marker: #F1DE8A;
+  --marker-strong: #E0C24A;
+  --marker-deep: #B8982A;
+  --marker-calm: #CFCFCA;
+  --marker-mint: #C6E6BE;
+  --marker-mint-strong: #7FBF74;
+  --marker-sky: #C4DCF1;
+  --marker-sky-strong: #6FA6D6;
+  --marker-rose: #F2CCD6;
+  --marker-rose-strong: #E08AA0;
+  --status-ready: #DCE6F8;
+  --status-review: #F5DCE5;
+  --status-blocked: #F7DED3;
+  --status-neutral: #EBEBE7;
+  --synced: #3F8A5C;
+  --danger: #B3261E;
+  --shadow-menu: 0 10px 28px rgba(26,26,24,0.12);
+  --shadow-control: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+[data-theme="dark"] {
+  --bg: #191919;
+  --sidebar: #202020;
+  --surface-soft: #232323;
+  --surface-card: #1F1F1F;
+  --selected: #2E2E2E;
+  --line: #2F2F2F;
+  --control-border: #6E6E6A;
+  --ink: #E9E9E6;
+  --ink-2: #D0D0CB;
+  --muted: #9D9C97;
+  --button: #E9E9E6;
+  --button-ink: #191919;
+  --marker: #5A4E22;
+  --marker-strong: #C9A93A;
+  --marker-deep: #B8982A;
+  --marker-calm: #4A4A4A;
+  --marker-mint: #3F5A3A;
+  --marker-mint-strong: #6FAE66;
+  --marker-sky: #2F4A62;
+  --marker-sky-strong: #5E95C8;
+  --marker-rose: #5C3440;
+  --marker-rose-strong: #C97A90;
+  --status-ready: #26344D;
+  --status-review: #47283A;
+  --status-blocked: #4A2C20;
+  --status-neutral: #2E2E2E;
+  --synced: #5DB07E;
+  --danger: #F2867E;
+  --shadow-menu: 0 10px 28px rgba(0,0,0,0.5);
+  --shadow-control: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 56px;
+  --marker-width: 3px;
+  --sidebar-width: 232px;
+  --page-measure: 720px;
+  --margin-column: 120px;
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-icon: 23%;
+  --duration-fast: 120ms;
+  --duration: 180ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-ui: var(--font-sans);
+  --font-head: var(--font-sans);
+  --font-body: var(--font-sans);
+  --size-title: 32px;
+  --weight-title: 650;
+  --tracking-title: -0.015em;
+  --size-greeting: 28px;
+  --weight-heading: 600;
+  --size-body: 16px;
+  --leading-body: 1.68;
+  --row-pad: 10px;
+  --cell-pad: 8px;
+}
+
+[data-style="bold"] {
+  --font-ui: "Schibsted Grotesk", system-ui, sans-serif;
+  --font-head: "Schibsted Grotesk", system-ui, sans-serif;
+  --font-body: Literata, Georgia, serif;
+  --size-title: 40px;
+  --weight-title: 800;
+  --tracking-title: -0.035em;
+  --size-greeting: 36px;
+  --weight-heading: 700;
+  --size-body: 17px;
+  --leading-body: 1.7;
+}
+
+[data-density="compact"] {
+  --size-body: 14.5px;
+  --leading-body: 1.5;
+  --row-pad: 7px;
+  --cell-pad: 5px;
+}
+
+[data-marker="mint"] {
+  --marker: var(--marker-mint);
+  --marker-strong: var(--marker-mint-strong);
+}
+
+[data-marker="sky"] {
+  --marker: var(--marker-sky);
+  --marker-strong: var(--marker-sky-strong);
+}
+
+[data-marker="rose"] {
+  --marker: var(--marker-rose);
+  --marker-strong: var(--marker-rose-strong);
+}
+
+[data-calm] {
+  --marker: var(--marker-calm);
+  --marker-strong: var(--marker-calm);
+}

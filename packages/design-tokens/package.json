@@ -1,0 +1,16 @@
+{
+  "name": "@based/design-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css",
+    "./tokens.json": "./tokens.json"
+  },
+  "scripts": {
+    "css": "node scripts/build-css.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  }
+}

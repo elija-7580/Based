@@ -16,5 +16,6 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0009](0009-design-tokens.md) | Colours, spacing, fonts, radii and motion come only from `DS`/`Theme`. |
 | [0010](0010-text-crdt.md) | *Superseded by 0011:* Automerge als Text-CRDT pro Block vorgeschlagen; der Spike bleibt als Messgrundlage. |
 | [0011](0011-typescript-stack.md) | Neustart: TypeScript-Kern, BlockNote + Yjs, Tauri 2 (Desktop), Tauri Mobile/Capacitor, Watch nativ; Migration über Fixtures und Sync v2. |
+| [0012](0012-design-language.md) | Designsprache „Based Default“: leiser Standard, Agent-Marker als einziges Signal, Theme „Bold“; Werte im Paket `@based/design-tokens`. |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".
