@@ -251,18 +251,25 @@ import Testing
         let store = WorkspaceStore(persistence: MemoryPersistence(), node: "t")
         _ = try NotionImporter(store: store, assets: nil).importItems([root])
         let count = store.blocks.count
-        // Edit locally, then import the same export again: same records, no duplicates.
+        // Edit locally, then import the same export again: same records, no duplicates – and since BSD-32 the
+        // local edit and the locally added block survive the re-import.
         store.transact("edit") { tx in tx.update(self.dashed(self.home)) { $0.text = RichText("Renamed") } }
         let extra = store.transact("add") { tx -> RecordID in
             let b = Block(type: .text, parent: .block(self.dashed(self.home)), sortKey: "zz", text: "stale")
             tx.put(b); return b.id
         }
         let r2 = try NotionImporter(store: store, assets: nil).importItems([root])
-        #expect(store.blocks.count == count, "\(r2)")
-        #expect(store.blocks[extra] == nil)
-        #expect(store.blocks[dashed(home)]?.text.plainText == "Home")
-        #expect(store.topLevelPages().filter { $0.text.plainText == "Home" }.count == 1)
+        #expect(store.blocks.count == count + 1, "\(r2)")
+        #expect(store.blocks[extra]?.text.plainText == "stale", "block added in Based stays")
+        #expect(store.blocks[dashed(home)]?.text.plainText == "Renamed", "local edit is not overwritten")
+        #expect(store.topLevelPages().filter { $0.text.plainText == "Renamed" }.count == 1)
+        #expect(r2.keptLocalChanges == 1 && r2.keptLocalAdditions == 1)
         #expect(r2.warnings.contains { $0.contains("Updated") })
+        // Without local changes the next import updates in place again.
+        store.transact("undo rename") { tx in tx.update(self.dashed(self.home)) { $0.text = RichText("Home") } }
+        _ = try NotionImporter(store: store, assets: nil).importItems([root])
+        #expect(store.blocks[dashed(home)]?.text.plainText == "Home")
+        #expect(store.blocks.count == count + 1)
     }
 
     @Test func genericHTMLFileKeepsContent() throws {

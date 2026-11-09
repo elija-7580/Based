@@ -253,12 +253,22 @@ public extension WorkspaceStore {
     /// Writes an `ImportBuilder` in one undoable transaction. Records that already exist (same id, e.g. a second
     /// import of the same Notion page) are updated in place; their stale content is removed, stale pages and rows
     /// move to the trash. New top-level records are appended to `parent`.
+    ///
+    /// BSD-32: every imported block remembers a fingerprint of its content as written by the import
+    /// (`Block.importFingerprintKey` in `extra`). On a re-import a block whose content changed in Based since then
+    /// is kept as it is (counted in the report), blocks added in Based stay, and of the blocks that disappeared from
+    /// the source only unchanged imported ones are removed – pages and rows go to the Trash, nested pages inside
+    /// removed blocks are rescued to the Trash. Blocks imported before this existed (no fingerprint) are updated
+    /// as before when they are still in the source, but kept when they are gone (they can't be told apart from
+    /// blocks added in Based).
     @discardableResult
     func commitImport(_ builder: ImportBuilder, into parent: ParentRef = .workspace, name: String = "Import") -> ImportReport {
         var report = builder.report()
         let roots = Set(builder.roots)
         let importedIDs = Set(builder.blocks.map(\.id))
         var reimported = 0
+        var keptLocal = 0
+        var keptAdded = 0
         transact(name) { tx in
             tx.preserveTimestamps = true
             let now = Date()
@@ -274,9 +284,12 @@ public extension WorkspaceStore {
                 }
                 tx.put(d)
             }
+            var written: [RecordID] = []
             for var b in builder.blocks {
                 let existing = blocks[b.id]
                 if existing != nil { reimported += 1 }
+                // BSD-32: changed in Based since the last import → the local version wins.
+                if let e = existing, e.trashedAt == nil, e.changedSinceImport { keptLocal += 1; continue }
                 if roots.contains(b.id) {
                     if let e = existing, e.trashedAt == nil, parentExists(e.parent) {
                         b.parent = e.parent; b.sortKey = e.sortKey
@@ -292,15 +305,24 @@ public extension WorkspaceStore {
                 if b.updatedBy == nil { b.updatedBy = b.createdBy }
                 b.trashedAt = nil
                 tx.put(b)
+                written.append(b.id)
             }
-            // Re-import: drop content that disappeared from the source.
+            // Re-import: drop content that disappeared from the source – but only what the import itself put there
+            // and nobody changed since (BSD-32). Blocks added or edited in Based stay where they are.
             if reimported > 0 {
                 for key in builder.complete {
                     guard let p = ParentRef(key: key) else { continue }
                     for cid in children(of: p) where !importedIDs.contains(cid) {
                         guard let c = blocks[cid], c.trashedAt == nil else { continue }
-                        if c.type.isPageLike || p.isDatabase { tx.update(cid) { $0.trashedAt = now } }
-                        else { removeSubtree(cid, tx: tx) }
+                        if c.type.isPageLike || p.isDatabase {
+                            // Pages and rows only move to the Trash (restorable) – unless they never came from an import.
+                            if !wasImported(cid) { keptAdded += 1; continue }
+                            tx.update(cid) { $0.trashedAt = now }
+                        } else if !isUnchangedImport(subtree: cid) {
+                            if wasImported(cid) { keptLocal += 1 } else { keptAdded += 1 }
+                        } else {
+                            removeSubtreeKeepingPages(cid, trashedAt: now, tx: tx)
+                        }
                     }
                 }
                 // Views of re-imported database blocks that no longer exist in the source.
@@ -319,11 +341,67 @@ public extension WorkspaceStore {
                 for v in views.values where v.databaseID == oldDB && v.blockID == b.id { tx.remove(RecordKey(.view, v.id)) }
                 tx.remove(RecordKey(.database, oldDB))
             }
+            // Fingerprint what the import wrote, as it ends up stored (after every side effect of this transaction).
+            for id in written where blocks[id] != nil {
+                tx.update(id) { $0.extra[Block.importFingerprintKey] = .string($0.contentFingerprint) }
+            }
             report.rootIDs = builder.roots
             _ = newRoots
         }
-        if reimported > 0 { report.warnings.insert("Updated \(reimported) existing blocks from an earlier import.", at: 0) }
+        report.keptLocalChanges = keptLocal
+        report.keptLocalAdditions = keptAdded
+        if keptAdded > 0 {
+            report.warnings.insert("Kept \(keptAdded) block\(keptAdded == 1 ? "" : "s") added in Based (not in the source).", at: 0)
+        }
+        if keptLocal > 0 {
+            report.warnings.insert("Kept \(keptLocal) block\(keptLocal == 1 ? "" : "s") changed in Based since the last import (not overwritten).", at: 0)
+        }
+        if reimported > 0 { report.warnings.insert("Updated \(reimported - keptLocal) existing blocks from an earlier import.", at: 0) }
         return report
+    }
+
+    /// The block was written by an import (it carries a fingerprint). Blocks without one were added in Based – or
+    /// imported before BSD-32, which can't be told apart; both are kept rather than risk deleting local work.
+    func wasImported(_ id: RecordID) -> Bool {
+        blocks[id]?.importFingerprint != nil
+    }
+
+    /// `id` and everything below it (down to nested pages/databases, which are rescued separately) came from an
+    /// import and is unchanged since.
+    func isUnchangedImport(subtree id: RecordID) -> Bool {
+        var stack = [id]
+        while let cur = stack.popLast() {
+            guard let b = blocks[cur] else { continue }
+            if cur != id, isTrashable(b) { continue }
+            if !wasImported(cur) || b.changedSinceImport { return false }
+            stack.append(contentsOf: children(of: .block(cur)))
+        }
+        return true
+    }
+}
+
+public extension Block {
+    /// BSD-32: key in `extra` holding the content fingerprint written by the last import.
+    static let importFingerprintKey = "importFingerprint"
+
+    /// The fingerprint the last import stored, if any.
+    var importFingerprint: String? { extra[Self.importFingerprintKey]?.string }
+
+    /// Hash of what a user can change: type, text, properties, row values. Position, timestamps, authors, trash
+    /// state, sync stamp and `extra` are left out.
+    var contentFingerprint: String {
+        var c = self
+        c.parent = .workspace; c.sortKey = ""
+        c.createdAt = Date(timeIntervalSince1970: 0); c.updatedAt = c.createdAt
+        c.createdBy = nil; c.updatedBy = nil; c.trashedAt = nil
+        c.stamp = .zero; c.extra = [:]
+        return VersionHistory.encode(c).map(VersionHistory.hash) ?? ""
+    }
+
+    /// Imported earlier and edited in Based since (false when there is no fingerprint to compare with).
+    var changedSinceImport: Bool {
+        guard let f = importFingerprint else { return false }
+        return f != contentFingerprint
     }
 }
 

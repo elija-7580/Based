@@ -394,7 +394,10 @@ final class FakeNotion: NotionTransport, @unchecked Sendable {
         let count = store.blocks.count
         let views = store.views.count
         let dbs = store.databases.count
-        // Local edit, then the page changes in Notion: a block is removed.
+        // BSD-32: a real local edit and a block added in Based, then the page changes in Notion: a block is removed.
+        let before = try #require(store.blocks[b(1)]?.text.plainText)
+        store.setText(b(1), "Edited in Based")
+        let mine = store.insertBlock(.text, text: "Added in Based", in: .block(hub))
         let f = makeFake()
         var kids = f.routes["GET blocks/\(hub)/children"]!["results"]!.array!
         kids.removeAll { $0["id"]?.string == b(3) }
@@ -402,7 +405,10 @@ final class FakeNotion: NotionTransport, @unchecked Sendable {
         let r = try await importer(f).run(target, into: store, assets: nil)
         #expect(store.databases.count == dbs)
         #expect(store.views.count == views)
-        #expect(store.blocks.values.filter { $0.trashedAt == nil }.count == count - 1)
+        #expect(store.blocks[b(1)]?.text.plainText == "Edited in Based", "local edit not overwritten (was \(before))")
+        #expect(store.blocks[mine]?.text.plainText == "Added in Based", "local block stays")
+        #expect(r.keptLocalChanges == 1 && r.keptLocalAdditions == 1)
+        #expect(store.blocks.values.filter { $0.trashedAt == nil }.count == count - 1 + 1)
         #expect(store.blocks[b(3)].flatMap { $0.trashedAt == nil ? $0 : nil } == nil)
         #expect(store.children(of: .workspace).filter { store.blocks[$0]?.trashedAt == nil }.count == 2, "hub + Projects, no duplicates")
         #expect(r.warnings.contains { $0.contains("existing") })

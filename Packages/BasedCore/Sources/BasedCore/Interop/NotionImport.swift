@@ -7,6 +7,10 @@ public struct ImportReport: Sendable {
     public var assets = 0
     public var warnings: [String] = []
     public var rootIDs: [RecordID] = []
+    /// BSD-32 (re-import): blocks changed in Based since the last import, left as they are.
+    public var keptLocalChanges = 0
+    /// BSD-32 (re-import): blocks added in Based under imported pages, left in place.
+    public var keptLocalAdditions = 0
 }
 
 /// Expanded import sources: ZIP archives unpacked in a temporary folder, HTML exports already parsed into `builder`.
