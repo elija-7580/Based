@@ -415,12 +415,11 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-cal-day:hover .dbui-cal-add, .dbui-cal-add:focus-visible { opacity: 1; }
 .dbui-cal-add:hover { background: var(--surface-raised); color: var(--ink); }
 .dbui-cal-layer { position: absolute; inset: 0; pointer-events: none; }
-.dbui-cal-lane { position: absolute; top: 0; left: 0; right: 0; contain: layout style; }
+.dbui-cal-lane { position: absolute; top: 0; left: 0; right: 0; contain: layout style paint; }
 .dbui-cal-entry {
   position: absolute; height: calc(var(--space-5) - var(--space-1)); pointer-events: auto; display: flex; align-items: center; gap: var(--space-1);
-  padding: 0 var(--space-2); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); box-shadow: var(--shadow-control);
+  padding: 0 var(--space-2); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink);
   font-size: var(--type-description-size); font-weight: var(--type-meta-weight); white-space: nowrap; overflow: hidden; cursor: pointer;
-  transition: opacity var(--duration-fast) var(--ease-out);
 }
 .dbui-cal-entry.movable { cursor: grab; touch-action: none; }
 .dbui-cal-entry.before { border-top-left-radius: 0; border-bottom-left-radius: 0; }
@@ -477,7 +476,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-tl-open { border: 0; background: transparent; padding: 0; text-align: left; display: flex; min-width: 0; font-weight: inherit; overflow: hidden; }
 .dbui-tl-bar {
   position: absolute; display: flex; align-items: center; padding: 0 var(--space-2); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink);
-  box-shadow: var(--shadow-control); font-size: var(--type-description-size); font-weight: var(--type-meta-weight); white-space: nowrap; cursor: pointer; z-index: 1;
+  font-size: var(--type-description-size); font-weight: var(--type-meta-weight); white-space: nowrap; cursor: pointer; z-index: 1;
 }
 .dbui-tl-bar.movable { cursor: grab; touch-action: none; }
 .dbui-tl-bar:hover { background: var(--selected); }

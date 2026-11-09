@@ -221,6 +221,11 @@ test.describe("Kalender bearbeiten (kleine Datenbank)", () => {
     await cell.hover();
     await cell.getByRole("button", { name: /New page on/ }).click();
     await expect(page.getByLabel("Pages in view")).toHaveText("42");
+    // „New“ in der Werkzeugleiste: heute
+    await page.getByRole("button", { name: "New", exact: true }).click();
+    await expect(page.getByLabel("Pages in view")).toHaveText("43");
+    const last = await page.evaluate(() => window.__opened[window.__opened.length - 1]!);
+    expect(await storedDay(page, last)).toBe(await dayStr(page, 0));
   });
 
   test("Wochenbeginn Sonntag, Blättern, Zeilen ohne Datum", async ({ page }) => {

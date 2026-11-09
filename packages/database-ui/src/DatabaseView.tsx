@@ -2,7 +2,7 @@
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  addRow, addView, plainText, setDatabaseTitle, viewsForBlock,
+  addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
 import { DBContext, useDatabaseContext, useDB } from "./context.js";
@@ -135,7 +135,13 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
   const { onOpenPage } = useDB();
   if (!active) return <div className="dbui-empty">This database has no views.</div>;
   const onNew = () => {
-    const id = addRow(store, db.id, { values: newRowValues(db, active, groupProperty(db, active), null) });
+    const values = newRowValues(db, active, groupProperty(db, active), null);
+    // BSD-8: in Kalender und Timeline bekommt die neue Zeile heute als Datum (sonst landet sie unter „No date“).
+    const dateProp = active.type === "calendar" || active.type === "timeline" ? calendarDateProperty(db, active) : undefined;
+    const endProp = calendarEndProperty(db, active);
+    const id = dateProp?.type === "date" && (!endProp || endProp.type === "date")
+      ? addRowOnDay(store, db.id, { dateID: dateProp.id, ...(endProp && endProp.id !== dateProp.id ? { endID: endProp.id } : {}) }, today(), { values })
+      : addRow(store, db.id, { values });
     if (!id) return;
     if (active.type === "table") setRequestEdit({ rowID: id });
     else onOpenPage?.(id);
