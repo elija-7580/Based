@@ -1,16 +1,15 @@
-packages/core test: [90mstdout[2m | test/fixtures.test.ts[2m > [22m[2mundo-remote/undo-remote.json (nicht portiert)
 packages/core test:   clipboard  nicht portiert (13 Fälle)
 packages/core test:   conversion nicht portiert (117 Fälle)
 packages/core test:   formulas   nicht portiert (143 Fälle)
-packages/core test:   hlc        nicht portiert (74 Fälle)
-packages/core test:   merge      nicht portiert (13 Fälle)
+packages/core test:   hlc        74/74 grün
+packages/core test:   merge      13/13 grün
 packages/core test:   queries    nicht portiert (88 Fälle)
 packages/core test:   records    66/66 grün
 packages/core test:   search     nicht portiert (33 Fälle)
-packages/core test:   sortkeys   nicht portiert (343 Fälle)
-packages/core test:   undo-remote nicht portiert (7 Fälle)
+packages/core test:   sortkeys   343/343 grün
+packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     nicht portiert (46 Fälle)
-packages/core test: [2m      Tests [22m [1m[32m134 passed[39m[22m[2m | [22m[33m13 skipped[39m[90m (147)[39m
+packages/core test: [2m      Tests [22m [1m[32m577 passed[39m[22m[2m | [22m[33m9 skipped[39m[90m (586)[39m
 packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 packages/sync test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
@@ -34,7 +33,7 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 2 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (179ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (3.7s)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (223ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (1.1s)
 
-  2 passed (8.1s)
+  2 passed (5.3s)
