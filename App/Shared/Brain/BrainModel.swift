@@ -123,9 +123,14 @@ final class BrainModel {
         brainMergeToken = brain.mergeDuplicatesAfterRemoteChanges()
         #if os(macOS)
         // BSD-111: catch up on voice notes that arrived without text (also when the server runs "Sort captures").
+        // BSD-113: then every 15 minutes, so notes that reach this Mac by sync (or only the server has) get their
+        // transcript before the server's sorter runs. Cheap when nothing waits; never runs inside a store observer.
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 30_000_000_000)
-            await self?.transcribeWaitingCaptures()
+            while self != nil, !Task.isCancelled {
+                await self?.transcribeWaitingCaptures()
+                try? await Task.sleep(nanoseconds: 15 * 60 * 1_000_000_000)
+            }
         }
         #endif
         reloadProviders()
@@ -504,12 +509,30 @@ final class BrainModel {
 
     /// Transcribes voice notes in Captures that still have no text (on this device, with the meeting-notes model).
     func transcribeWaitingCaptures() async {
-        guard let r = await VoiceCaptureService.transcribeWaiting(brain: brain, assets: assets) else { return }
+        guard let r = await VoiceCaptureService.transcribeWaiting(brain: brain, assets: assets, download: serverAssetDownloader()) else { return }
         var line = "Transcribed \(r.transcribed) voice note(s)"
         if r.notOnDevice > 0 { line += ", \(r.notOnDevice) not on this Mac yet" }
         if !r.failed.isEmpty { line += ", \(r.failed.count) failed: " + r.failed.prefix(2).joined(separator: "; ") }
         schedulerLog.append(line)
         Log.notice("captures: " + line, category: "capture")
+    }
+
+    /// BSD-113: downloads a file from the Based server (GET /assets/<id>) into the local asset store; nil without a
+    /// configured server. Used for voice notes that were sent to the server and still need a transcript.
+    func serverAssetDownloader() -> ((AssetRef) async -> URL?)? {
+        guard let base = URL(string: serverURL), !serverURL.isEmpty, let token = Secrets.get("server.token"), !token.isEmpty,
+              let assets else { return nil }
+        return { ref in
+            var req = URLRequest(url: base.appendingPathComponent("assets").appendingPathComponent(ref.id))
+            req.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
+            req.timeoutInterval = 60
+            guard let (data, resp) = try? await URLSession.shared.data(for: req),
+                  (resp as? HTTPURLResponse)?.statusCode == 200, !data.isEmpty else { return nil }
+            do { try assets.store(data, for: ref) } catch {
+                Log.warning("could not store downloaded asset \(ref.id): \(error)", category: "capture"); return nil
+            }
+            return assets.url(for: ref)
+        }
     }
 
     // MARK: Smart properties

@@ -219,7 +219,10 @@ if !opts.noACP {
 }
 
 let router = await MainActor.run {
-    BasedServerRoutes.router(BasedServerServices(store: store, tools: tools, mcp: mcp, sync: sync, runtime: runtime, happier: happier, share: share),
+    // BSD-113: voice notes sent to POST /capture live next to the database (GET /assets/<id>).
+    let assets = FileAssetStore(root: URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("assets"))
+    return BasedServerRoutes.router(BasedServerServices(store: store, tools: tools, mcp: mcp, sync: sync, runtime: runtime, happier: happier,
+                                                        share: share, assets: assets),
                              ownerToken: opts.token, allowedOrigin: ServerExposure.allowedOrigin(publicURL: ProcessInfo.processInfo.environment["BASED_PUBLIC_URL"]))
 }
 let server = HTTPServer(port: opts.port, loopbackOnly: exposure.loopbackOnly,
