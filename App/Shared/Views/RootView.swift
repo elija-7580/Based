@@ -56,6 +56,7 @@ struct RootView: View {
         #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .modifier(SetupAssistantPresenter())   // BSD-56: first start in AI mode
+        .modifier(SkillMirrorStarter())        // BSD-60: mirror skills to ~/.claude/skills when turned on
         .sheet(isPresented: $model.showNewSession, onDismiss: { model.newSessionParent = nil }) {
             NewSessionSheet(parent: model.newSessionParent).environment(model.brain.happier)
         }

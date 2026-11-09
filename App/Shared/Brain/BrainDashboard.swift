@@ -35,6 +35,9 @@ struct BrainDashboard: View {
                         .font(.callout).foregroundStyle(Theme.secondary).lineLimit(2)
                 }
                 Spacer()
+                #if os(macOS)
+                if tab == .skills { SkillSyncMenu() }   // BSD-60: SKILL.md import / export / mirror
+                #endif
                 if let page = pageID(for: tab) {
                     Button { model.openRoot(page) } label: { Label("Open as page", systemImage: "arrow.up.right.square") }
                         .controlSize(.small)
