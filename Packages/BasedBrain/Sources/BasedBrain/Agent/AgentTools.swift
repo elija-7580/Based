@@ -39,6 +39,8 @@ public final class AgentTools {
             ToolSpec(name: "list_skills", description: "List available skills (reusable instructions).", inputSchema: .schema([:])),
             ToolSpec(name: "load_skill", description: "Load a skill's full instructions by name.",
                      inputSchema: .schema(["name": .str("Skill name")], required: ["name"])),
+            ToolSpec(name: "read_skill_file", description: "Read one file of a skill (a script or reference listed by load_skill).",
+                     inputSchema: .schema(["skill": .str("Skill name"), "path": .str("File path inside the skill, e.g. scripts/run.py")], required: ["skill", "path"])),
             ToolSpec(name: "about_user", description: "Read the user's About page.", inputSchema: .schema([:])),
             ToolSpec(name: "create_chart", description: "Add a chart view to a database (bar, horizontalBar, line, area, pie, donut). x_property groups rows (select/status/date/checkbox/text); y_property is a number property to aggregate (omit to count rows).",
                      inputSchema: .schema(["database_id": .str("Database id"), "kind": .str("bar | horizontalBar | line | area | pie | donut"), "x_property": .str("Property name for the x axis / slices"), "y_property": .str("Number property to aggregate (optional)"), "aggregate": .str("count | sum | average | min | max | median"), "name": .str("View name")], required: ["database_id", "kind"])),
@@ -297,7 +299,19 @@ public final class AgentTools {
         case "load_skill":
             let n = try req(a, "name")
             guard let s = brain.skills().first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw ToolError("No skill '\(n)'") }
-            return "# \(s.name)\n\(s.body)"
+            // BSD-109: the skill's files (scripts, references) — read them with read_skill_file.
+            let files = brain.skillFileList(s.id)
+            let list = files.isEmpty ? "" : "\n\n## Files (read with read_skill_file)\n" + files.map { "- `\($0.path)` [page: \($0.pageID)]" }.joined(separator: "\n")
+            return "# \(s.name)\n\(s.body)" + list
+        case "read_skill_file":
+            let n = try req(a, "skill"), path = try req(a, "path")
+            guard let s = brain.skills().first(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { throw ToolError("No skill '\(n)'") }
+            guard let data = brain.skillFile(s.id, path: path) else {
+                let known = brain.skillFiles(s.id)
+                throw ToolError("No file '\(path)' in skill '\(s.name)'. Files: " + (known.isEmpty ? "(none)" : known.joined(separator: ", ")))
+            }
+            if let text = String(data: data, encoding: .utf8), SkillCodec.isText(data) { return text }
+            return "(binary file, \(data.count) bytes — not shown)"
         case "about_user": return brain.about
         case "create_chart":
             let db = try database(a)

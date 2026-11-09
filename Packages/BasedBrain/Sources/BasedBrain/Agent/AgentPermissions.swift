@@ -346,7 +346,7 @@ public extension PermissionCall {
     /// Based's own tools (`AgentTools`): reads, edits, and destructive edits.
     static func based(_ name: String, _ args: JSONValue) -> PermissionCall {
         let reads: Set<String> = ["based_guide", "search", "read_page", "list_pages", "query_database", "list_databases", "memory_search",
-                                  "list_skills", "load_skill", "about_user", "list_connections", "list_trash", "backlinks", "list_views",
+                                  "list_skills", "load_skill", "read_skill_file", "about_user", "list_connections", "list_trash", "backlinks", "list_views",
                                   "inbox", "list_runs", "list_projects", "get_project", "get_run", "list_captures"]
         let arg = args["page_id"]?.string ?? args["database_id"]?.string ?? args["id"]?.string ?? args["query"]?.string
         if reads.contains(name) { return PermissionCall(tool: "based." + name, argument: arg, category: .read) }

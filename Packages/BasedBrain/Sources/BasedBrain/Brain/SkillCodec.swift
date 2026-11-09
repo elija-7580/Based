@@ -256,6 +256,17 @@ extension BrainStore {
         return SkillCodec.encode(doc)
     }
 
+    /// BSD-109: one file of a skill, exactly as exported (text unchanged, binary data as bytes).
+    public func skillFile(_ id: RecordID, path: String) -> Data? {
+        guard skillFilePages(id)[path] != nil else { return nil }
+        return exportSkill(id)?.files[path]
+    }
+
+    /// Files of a skill with the id of the page that holds each one.
+    public func skillFileList(_ id: RecordID) -> [(path: String, pageID: RecordID)] {
+        skillFilePages(id).sorted { $0.key < $1.key }.map { ($0.key, $0.value) }
+    }
+
     /// Paths of the files of a skill (its sub-pages, by title).
     public func skillFiles(_ id: RecordID) -> [String] { skillFilePages(id).keys.sorted() }
 
@@ -312,6 +323,45 @@ public enum SkillFolderIO {
             let url = dir.appendingPathComponent(rel)
             try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: url, options: .atomic)
+        }
+    }
+}
+
+// MARK: - ZIP (BSD-109)
+
+public extension SkillFolderIO {
+    /// Skill folders inside a ZIP: the archive itself, a top-level folder, or several skill folders (also one level
+    /// below a single wrapper folder). Unpacked with the system `unzip` into a temporary folder that is removed after.
+    static func readZip(_ zip: URL, unzip: String = "/usr/bin/unzip") throws -> [SkillFolder] {
+        let fm = FileManager.default
+        let tmp = fm.temporaryDirectory.appendingPathComponent("based-skillzip-\(UUID().uuidString)")
+        try fm.createDirectory(at: tmp, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: tmp) }
+        #if os(macOS) || os(Linux)
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: unzip)
+        p.arguments = ["-q", "-o", zip.path, "-d", tmp.path, "-x", "__MACOSX/*"]
+        p.standardOutput = FileHandle.nullDevice
+        let err = Pipe(); p.standardError = err
+        try p.run(); p.waitUntilExit()
+        guard p.terminationStatus == 0 else {
+            throw SkillCodecError.tooLarge("unzip failed (\(p.terminationStatus)): " + String(decoding: err.fileHandleForReading.readDataToEndOfFile().prefix(200), as: UTF8.self))
+        }
+        #else
+        throw SkillCodecError.missingSkillMD
+        #endif
+        var dirs = discover(tmp)
+        if dirs.isEmpty {
+            // One wrapper folder ("skills/") holding the skill folders.
+            let kids = ((try? fm.contentsOfDirectory(at: tmp, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? [])
+                .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+            if kids.count == 1 { dirs = discover(kids[0]) }
+        }
+        guard !dirs.isEmpty else { throw SkillCodecError.missingSkillMD }
+        return try dirs.map { d in
+            var f = try read(d)
+            if d.standardizedFileURL.path == tmp.standardizedFileURL.path { f.name = zip.deletingPathExtension().lastPathComponent }
+            return f
         }
     }
 }
@@ -422,6 +472,46 @@ public enum SkillMirror {
         let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         try enc.encode(manifest).write(to: mURL, options: .atomic)
         return r
+    }
+}
+
+// MARK: - Resolving mirror conflicts (BSD-109)
+
+public extension SkillMirror {
+    /// The folder's version of a conflicting file: the skill with that file replaced (to import into Based).
+    /// Afterwards `acknowledge` records the file as Based's, so the mirror stops reporting the conflict.
+    static func folderVersion(of skill: SkillFolder, file: String, in root: URL) throws -> SkillFolder {
+        try SkillCodec.checkPath(file)
+        let data = try Data(contentsOf: root.appendingPathComponent(skill.name).appendingPathComponent(file))
+        var s = skill
+        s.files[file] = data
+        return s
+    }
+
+    /// Overwrites the folder's file with Based's version.
+    static func writeBasedVersion(of skill: SkillFolder, file: String, to root: URL) throws {
+        guard let data = skill.files[file] else { throw SkillCodecError.missingSkillMD }
+        try SkillFolderIO.write(SkillFolder(name: skill.name, files: [file: data]), to: root.appendingPathComponent(skill.name))
+        try acknowledge(folder: skill.name, file: file, data: data, in: root)
+    }
+
+    /// Records `data` as what Based wrote for `folder/file` in the root's manifest.
+    static func acknowledge(folder: String, file: String, data: Data, in root: URL) throws {
+        let mURL = root.appendingPathComponent(manifestFile)
+        var manifest = (try? JSONDecoder().decode(Manifest.self, from: Data(contentsOf: mURL))) ?? Manifest()
+        manifest.folders[folder, default: [:]][file] = hash(data)
+        let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try enc.encode(manifest).write(to: mURL, options: .atomic)
+    }
+
+    /// Mirrors into several folders, each with its own manifest. Returns one report per folder (errors as reports).
+    static func sync(_ skills: [SkillFolder], to roots: [URL]) -> [(root: URL, report: Result<Report, Error>)] {
+        var seen: Set<String> = []
+        return roots.compactMap { r in
+            let key = r.standardizedFileURL.path
+            guard seen.insert(key).inserted else { return nil }
+            return (r, Result { try sync(skills, to: r) })
+        }
     }
 }
 

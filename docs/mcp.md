@@ -59,7 +59,7 @@ token) and ask "Which projects are running and what needs me?".
 |---|---|
 | `about_user` | The user's About page |
 | `memory_search` / `memory_save` | Durable memories |
-| `list_skills` / `load_skill` | Skills (reusable instructions); also offered as MCP prompts |
+| `list_skills` / `load_skill` / `read_skill_file` | Skills (reusable instructions); also offered as MCP prompts. `load_skill` lists the skill's files, `read_skill_file {skill, path}` returns one exactly |
 | `list_connections` | Connected external MCP servers and their tools |
 
 ### Projects, runs, inbox, main agent (BSD-58)

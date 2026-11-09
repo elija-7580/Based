@@ -178,10 +178,15 @@ public final class MCPServer: @unchecked Sendable {
                                                       "arguments": [["name": "input", "description": "What to apply the skill to", "required": false]]] })]
         case "prompts/get":
             guard let name = p["name"]?.string else { throw RPCError(code: -32602, message: "name required") }
-            let skill = await MainActor.run { tools.brain.skills().first { $0.name == name } }
-            guard let skill else { throw RPCError(code: -32602, message: "Unknown prompt") }
+            let found = await MainActor.run { () -> (Skill, [String])? in
+                guard let s = tools.brain.skills().first(where: { $0.name == name }) else { return nil }
+                return (s, tools.brain.skillFiles(s.id))
+            }
+            guard let (skill, files) = found else { throw RPCError(code: -32602, message: "Unknown prompt") }
             let input = p["arguments"]?["input"]?.string ?? ""
-            let text = "# Skill: \(skill.name)\n\(skill.body)" + (input.isEmpty ? "" : "\n\n# Input\n\(input)")
+            // BSD-109: the skill's files, readable with the read_skill_file tool.
+            let fileList = files.isEmpty ? "" : "\n\n# Files (read with read_skill_file)\n" + files.map { "- `\($0)`" }.joined(separator: "\n")
+            let text = "# Skill: \(skill.name)\n\(skill.body)" + fileList + (input.isEmpty ? "" : "\n\n# Input\n\(input)")
             return ["description": .string(skill.description), "messages": [["role": "user", "content": ["type": "text", "text": .string(text)]]]]
         case "completion/complete", "logging/setLevel": return .object([:])
         default: throw RPCError(code: -32601, message: "Method not found: \(method)")

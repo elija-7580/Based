@@ -22,7 +22,7 @@ public enum BasedGuide {
     5. Link pages as [Title](based://page/<id>) — the app, its agents and other apps all open that link. Always \
     give the user links to pages you created or changed.
     6. Durable facts about the user go to `memory_save`; check `memory_search` / `about_user` before asking. \
-    Load a skill with `load_skill` before following it.
+    Load a skill with `load_skill` before following it; read its scripts and references with `read_skill_file`.
 
     7. Agents: `list_projects` / `get_project` show what the user works on, `list_runs` / `get_run` what agents \
     did, `inbox` what waits for the user (answer with `resolve_inbox` only when the user said what to answer), \
