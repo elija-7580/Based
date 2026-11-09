@@ -342,6 +342,8 @@ public final class ServerSync {
     private var observer: ObservationToken?
     private var timer: Task<Void, Never>?
     private var syncing = false
+    /// Set when `syncNow` is called during a running sync (BSD-72).
+    private var rerun = false
     static let cursorKey = "sync.server.cursor"
 
     public init(store: WorkspaceStore, baseURL: URL, token: String) {
@@ -406,11 +408,22 @@ public final class ServerSync {
     public var pageSize = 500
 
     public func syncNow() async {
-        guard !syncing else { return }
+        // BSD-72: a push requested while a sync runs isn't dropped (it used to wait for the 20 s tick): the running
+        // sync goes round once more.
+        guard !syncing else { rerun = true; return }
         // Can't save locally (WorkspaceStore.writeFailure): don't pull pages whose cursor would advance past
         // changes that were never stored. Resumes after the store's retryWrites() succeeds.
         guard !store.isReadOnly else { onStatus?("Sync paused: Based can't save changes on this device"); return }
         syncing = true; defer { syncing = false }
+        var rounds = 0
+        repeat {
+            rerun = false
+            rounds += 1
+            await syncOnce()
+        } while rerun && rounds < 4 && !store.isReadOnly
+    }
+
+    private func syncOnce() async {
         do {
             if usesV2 != false, store.persistence is ChangeLogging {
                 do {

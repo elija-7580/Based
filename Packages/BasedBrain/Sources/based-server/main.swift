@@ -50,6 +50,8 @@ struct Options {
     /// BSD-110: environment variables approved per coding agent, `id=NAME[,NAME]` (also `BASED_AGENT_ENV`,
     /// several separated by `;`), e.g. `--agent-env claude=ANTHROPIC_API_KEY`.
     var agentEnv: [String] = ProcessInfo.processInfo.environment["BASED_AGENT_ENV"].map { [$0] } ?? []
+    /// BSD-72: HLC node of this server's stamps. Two servers syncing the same workspace need different names.
+    var node = ProcessInfo.processInfo.environment["BASED_NODE"] ?? "server"
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -72,12 +74,13 @@ struct Options {
             case "--sandbox-mount": if let m = it.next() { sandboxMounts.append(m) }
             case "--sandbox-env": if let e = it.next() { sandboxEnv.append(e) }
             case "--agent-env": if let e = it.next() { agentEnv.append(e) }
+            case "--node": node = it.next() ?? node
             case "--sandbox-no-network": sandboxNetwork = false
             case "--docker-socket": dockerSocket = it.next() ?? dockerSocket
             case "--embeddings": embeddings = it.next()
             case "--embedding-model": embeddingModel = it.next() ?? embeddingModel
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network] [--agent-env id=NAME[,NAME]] [--embeddings http://host:11434/v1] [--embedding-model nomic-embed-text]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network] [--agent-env id=NAME[,NAME]] [--node name] [--embeddings http://host:11434/v1] [--embedding-model nomic-embed-text]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -104,7 +107,7 @@ func log(_ s: String, category: String = "server") { Log.info(s, category: categ
 
 @MainActor func boot() throws -> (WorkspaceStore, AgentTools, MCPServer, SyncServer, AgentRuntime, HappierRuntime) {
     // BSD-121: writes go through a background writer (flushed on SIGTERM / SIGINT and before stdio exits).
-    let store = try ServerStorage.openStore(url: URL(fileURLWithPath: opts.db))
+    let store = try ServerStorage.openStore(url: URL(fileURLWithPath: opts.db), node: opts.node)
     let brain = BrainStore(store: store)
     let tools = AgentTools(store: store, brain: brain)
     let registry = ModelRegistry()

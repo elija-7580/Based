@@ -936,7 +936,10 @@ public final class WorkspaceStore {
                 continue
             }
             if frozenKeys.contains(r.key) { unfrozen.append(r.key) }
-            clock.observe(r.stamp)
+            if !clock.observe(r.stamp) {
+                // BSD-72: applied, but this device's clock doesn't follow a stamp from the far future.
+                Log.warning("Sync: \(r.key) carries a stamp \(r.stamp.millis - Int64(Date().timeIntervalSince1970 * 1000)) ms in the future (other device's clock wrong?)", category: "sync")
+            }
             if let local = record(r.key) {
                 if local == r { continue }
                 if local.stamp > r.stamp { stale.append(r.key); continue }

@@ -86,23 +86,36 @@ public final class StampClock: @unchecked Sendable {
         return last
     }
 
+    /// BSD-72: stamps further than this ahead of the local wall clock are not adopted by `observe` (a device
+    /// with a wrong clock would otherwise freeze every other device's time base at its future time).
+    public static let maxDrift: Int64 = 3_600_000
+    /// Wall clock in ms (test hook).
+    public var wallClock: () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
+
     public func now() -> Stamp {
         lock.lock(); defer { lock.unlock() }
-        let wall = Int64(Date().timeIntervalSince1970 * 1000)
+        let wall = wallClock()
         if wall > last.millis {
             last = Stamp(millis: wall, counter: 0, node: node)
+        } else if last.counter == .max {
+            // BSD-72: the counter would wrap to 0 and go backwards; move to the next millisecond instead.
+            last = Stamp(millis: last.millis + 1, counter: 0, node: node)
         } else {
-            last = Stamp(millis: last.millis, counter: last.counter &+ 1, node: node)
+            last = Stamp(millis: last.millis, counter: last.counter + 1, node: node)
         }
         return last
     }
 
-    /// Advance past a stamp seen from another device.
-    public func observe(_ remote: Stamp) {
+    /// Advance past a stamp seen from another device. A stamp more than `maxDrift` ahead of this device's
+    /// clock is still applied by the store, but the clock doesn't jump to it (BSD-72); it returns false then.
+    @discardableResult
+    public func observe(_ remote: Stamp) -> Bool {
         lock.lock(); defer { lock.unlock() }
+        if remote.millis > wallClock() + Self.maxDrift { return false }
         if remote.millis > last.millis || (remote.millis == last.millis && remote.counter > last.counter) {
             last = Stamp(millis: remote.millis, counter: remote.counter, node: node)
         }
+        return true
     }
 }
 
