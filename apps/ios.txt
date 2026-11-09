@@ -2,76 +2,76 @@
 App/Shared/BasedApp.swift:244:9: error: extra argument in call
 App/Shared/Brain/AgentDetailViews.swift:182:138: error: 'link' is unavailable in iOS
 --- Ende des Logs
+
+SwiftCompile normal x86_64 App/Shared/Views/Database/DatabaseSettings.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Meeting/MeetingBlockView.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Diagnostics/DebugDriver.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Meeting/MeetingEngine.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/DesignSystem.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Meeting/MeetingService.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Diagnostics/DiagnosticsView.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Shell/NavigationInput.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Editor/EditorCommands.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Nodes.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Editor/EditorController.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Shell/NotionChrome.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Editor/EmojiCatalog.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Import/NotionImportSheet.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Brain/EnginePicker.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Page/PDFExport.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Editor/FileDrop.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/History/PageHistory.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Page/FindBar.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Page/PageOptionsPanel.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Database/FormLayout.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Page/PageOutline.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Page/FormatToolbar.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Page/PageScreen.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Graph/GraphTemplate.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Pickers.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Graph/GraphView.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Database/PopoverKit.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Views/Blocks/HTMLPreview.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Views/Settings/Prefs.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Diagnostics/HangWatchdog.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Capture/QuickCaptureMac.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal x86_64 App/Shared/Brain/HappierModel.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal arm64 App/Shared/Editor/RichTextView.swift (in target 'Based-iOS' from project 'Based')
-    cd /Users/runner/work/Based/Based
-    
+SwiftDriverJobDiscovery normal x86_64 Compiling RootView.swift, SandboxCleanupSection.swift, SearchOverlay.swift, Secrets.swift, SemanticSearch.swift, SettingsView.swift, SetupAssistantView.swift, SharePanel.swift, Sidebar.swift, SimpleTable.swift, SkillSyncView.swift, SparkleBridge.swift, StorageErrorView.swift, TabStrip.swift, TableLayout.swift, TerminalView.swift, Theme.swift, TrashView.swift, Updater.swift, UpdatesSettings.swift, VersionHistorySheet.swift, VoiceCapture.swift, WatchReceiver.swift, GeneratedAssetSymbols.swift (in target 'Based-iOS' from project 'Based')
 
 ** BUILD FAILED **
 
