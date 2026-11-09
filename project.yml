@@ -25,7 +25,10 @@ packages:
     path: Packages/BasedBrain
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    from: 1.2.0
+    # 1.99.2/1.99.3 kompilieren mit Xcode 26.3 nicht (PowerlineRenderer.thinFlamePath: Array + DropFirstSequence).
+    # Obergrenze exklusiv; wieder öffnen, sobald upstream das behebt.
+    minVersion: 1.2.0
+    maxVersion: 1.99.2
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.6.4
