@@ -4,7 +4,7 @@ import BasedBrain
 
 // BSD-11: "Based" in the iPhone Share sheet. Whatever is shared (a link with its page title, text) is dropped as a
 // `SharedItem` into the App Group's ShareInbox; the app files it into Captures (source Share) when it next opens.
-// The extension never opens the workspace itself. Not covered by the Linux typecheck (extension APIs); keep it small.
+// The extension never opens the workspace itself. Type-checked on Linux by ci/typecheck/run.sh --ios (BSD-131).
 
 final class ShareViewController: UIViewController {
     private let label = UILabel()

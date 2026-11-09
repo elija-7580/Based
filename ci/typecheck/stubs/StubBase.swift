@@ -42,6 +42,18 @@ open class NSItemProvider: NSObject, @unchecked Sendable {
     open func canLoadObject(ofClass: Any.Type) -> Bool { false }
     open func registerDataRepresentation(forTypeIdentifier: String, visibility: Int = 0, loadHandler: @escaping @Sendable (@escaping (Data?, Error?) -> Void) -> Progress?) {}
     open func registerObject(_ o: Any, visibility: Int) {}
+    /// BSD-131: the async form the share extension uses.
+    open func loadItem(forTypeIdentifier: String, options: [AnyHashable: Any]? = nil) async throws -> any NSSecureCoding { NSString() }
+}
+/// BSD-131: app extension context (share extension).
+open class NSExtensionItem: NSObject, @unchecked Sendable {
+    open var attributedTitle: NSAttributedString?
+    open var attributedContentText: NSAttributedString?
+    open var attachments: [NSItemProvider]?
+}
+open class NSExtensionContext: NSObject, @unchecked Sendable {
+    open var inputItems: [Any] { [] }
+    open func completeRequest(returningItems items: [Any]?, completionHandler: ((Bool) -> Void)? = nil) {}
 }
 extension NSString { public static var readableTypeIdentifiersForItemProvider: [String] { [] } }
 extension NSURL { public static var readableTypeIdentifiersForItemProvider: [String] { [] } }

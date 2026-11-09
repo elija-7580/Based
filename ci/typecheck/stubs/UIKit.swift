@@ -64,6 +64,11 @@ public struct UIEdgeInsets: Hashable, Sendable {
     open var widthAnchor: NSLayoutDimension { NSLayoutDimension() }
     open var heightAnchor: NSLayoutDimension { NSLayoutDimension() }
     open func addInteraction(_ i: UIInteraction) {}
+    public struct AutoresizingMask: OptionSet, Sendable {
+        public let rawValue: UInt; public init(rawValue: UInt) { self.rawValue = rawValue }
+        public static let flexibleWidth = AutoresizingMask(rawValue: 2), flexibleHeight = AutoresizingMask(rawValue: 16)
+    }
+    open var autoresizingMask: AutoresizingMask = []
     open func setContentCompressionResistancePriority(_ p: UILayoutPriority, for axis: NSLayoutConstraint.Axis) {}
     open func setContentHuggingPriority(_ p: UILayoutPriority, for axis: NSLayoutConstraint.Axis) {}
 }
@@ -92,6 +97,9 @@ public struct UILayoutPriority: RawRepresentable, Hashable, Sendable, Expressibl
 }
 @preconcurrency @MainActor open class UIViewController: UIResponder {
     open var view: UIView! { nil }
+    open func viewDidLoad() {}
+    /// BSD-131: share extension host context.
+    open var extensionContext: NSExtensionContext? { nil }
     open func present(_ vc: UIViewController, animated: Bool, completion: (() -> Void)? = nil) {}
     open func dismiss(animated: Bool, completion: (() -> Void)? = nil) {}
 }
