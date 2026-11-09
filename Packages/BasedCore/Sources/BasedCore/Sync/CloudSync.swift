@@ -159,8 +159,8 @@ public final class CloudSync: CKSyncEngineDelegate {
                 status = .idle(lastSync: nil)
             case .signOut, .switchAccounts:
                 // Keep local data; forget server bookkeeping so a new account starts clean.
-                if let p = meta as? SQLitePersistence {
-                    for k in p.metaKeys(prefix: Self.systemPrefix) { p.setMeta(k, nil) }
+                if let p = meta {
+                    for k in p.storedMetaKeys(prefix: Self.systemPrefix) { p.setMeta(k, nil) }
                 }
                 status = .noAccount
             @unknown default:
@@ -170,8 +170,8 @@ public final class CloudSync: CKSyncEngineDelegate {
         case .fetchedDatabaseChanges(let e):
             for d in e.deletions where d.zoneID == zoneID {
                 // Zone deleted elsewhere (e.g. "Delete iCloud data"): re-upload.
-                if let p = meta as? SQLitePersistence {
-                    for k in p.metaKeys(prefix: Self.systemPrefix) { p.setMeta(k, nil) }
+                if let p = meta {
+                    for k in p.storedMetaKeys(prefix: Self.systemPrefix) { p.setMeta(k, nil) }
                 }
                 syncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: zoneID))])
                 enqueue(store.allRecords().map(\.key))
