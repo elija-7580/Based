@@ -14,3 +14,5 @@ export { Formula, FormulaError, FUNCTION_NAMES, referencedProperties } from "./q
 export type { FormulaEnvironment, FormulaExpr } from "./query/formula.js";
 export * as values from "./query/value.js";
 export type { DateValue, Value } from "./query/value.js";
+export { QueryEngine, TITLE_PROPERTY_ID, cellText, databaseOfRow, durationText, isTrashed, liveRelationTargets, rowsOf, titleOf, titleProperty } from "./query/engine.js";
+export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";

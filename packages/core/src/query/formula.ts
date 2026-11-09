@@ -1,7 +1,7 @@
 // Notion-Formeln, portiert aus BasedCore Query/Formula.swift (Lexer, Parser, Auswertung, absturzsicher: BSD-17).
 // Fehlermeldungen wörtlich wie in Swift. Verifiziert über fixtures/formulas/*.json (BSD-172).
 import {
-  addCalendar, asList, asNumber, bool, compareValues, date, describe, EMPTY, formatMoment, fromJSDate, isEmptyValue,
+  addCalendar, asList, bool, compareValues, date, describe, EMPTY, formatMoment, fromJSDate, isEmptyValue,
   isoWeek, list, monthsBetween, num, parseDate, parseSwiftDouble, plainNumber, sameValue, startOfDay, str, toJSDate,
   truthy, typeName, unixMillis, type CalendarUnit, type DateValue, type Value,
 } from "./value.js";

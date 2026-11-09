@@ -1,10 +1,11 @@
 // BSD-149/151: Welche Module im TS-Kern schon portiert sind. Ein Port bekommt die Eingabe eines Falls und die
 // Datei-Metadaten (z. B. Records, `now`) und liefert die Ausgabe im Fixture-Format. Nicht eingetragene Module
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
-// Offen: queries, values, conversion, search, clipboard.
+// Offen: conversion, search, clipboard.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
 import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
-import { Formula, FormulaError } from "../../src/index.js";
+import { Formula, FormulaError, QueryEngine, rowsOf, schema } from "../../src/index.js";
+import type { DatabaseView } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
 
@@ -130,4 +131,35 @@ const formulas: Port = (raw, meta) => {
   }
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas };
+function queryStore(meta: Record<string, unknown>) {
+  const records = (meta.records as unknown[]).map(parseRecord) as WireRecord[];
+  const store = new WorkspaceStore({ persistence: new MemoryPersistence(records), node: "fx" });
+  return { store, engine: new QueryEngine(store, { now: (meta.now as number) / 1000 - 978_307_200 }) };
+}
+
+const queries: Port = (raw, meta) => {
+  const { engine } = queryStore(meta);
+  const input = raw as { view: unknown; search: string | null };
+  const r = engine.run(schema.databaseView.parse(input.view) as DatabaseView, input.search);
+  const out: Record<string, unknown> = { rows: r.rows.map((b) => b.id) };
+  if (r.groups) out.groups = r.groups.map((g) => ({ id: g.id, title: g.title, color: g.color, rows: g.rows.map((b) => b.id) }));
+  return out;
+};
+
+const CALCULATIONS = ["countAll", "countValues", "countUnique", "countEmpty", "countNotEmpty", "percentEmpty", "percentNotEmpty", "sum", "average",
+  "median", "min", "max", "range", "earliest", "latest", "dateRange", "checked", "unchecked", "percentChecked", "percentUnchecked", "showOriginal"];
+
+const values: Port = (raw, meta) => {
+  const { store, engine } = queryStore(meta);
+  const input = raw as { op: "values"; database: string; row: string } | { op: "aggregate"; database: string; property: string };
+  const db = store.databases.get(input.database)!;
+  if (input.op === "values") {
+    const row = store.blocks.get(input.row)!;
+    return Object.fromEntries(db.properties.map((p) => [p.id, valueJSON(engine.value(row, p, db))]));
+  }
+  const p = db.properties.find((x) => x.id === input.property)!;
+  const rows = rowsOf(store, db.id);
+  return Object.fromEntries(CALCULATIONS.map((fn) => [fn, valueJSON(QueryEngine.aggregate(rows.map((r) => engine.value(r, p, db)), fn, p))]));
+};
+
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values };
