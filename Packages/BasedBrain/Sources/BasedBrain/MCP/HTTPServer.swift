@@ -48,6 +48,7 @@ public final class HTTPServer: @unchecked Sendable {
     }
 
     public func start() throws {
+        ProcessSupervisor.ignoreSIGPIPE()   // BSD-36: a client that hangs up mid-response must not kill the server
         #if canImport(Darwin)
         let sockStream = SOCK_STREAM
         #else

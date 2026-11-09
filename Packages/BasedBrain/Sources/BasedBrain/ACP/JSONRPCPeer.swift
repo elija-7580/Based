@@ -22,14 +22,15 @@ public final class JSONRPCPeer: @unchecked Sendable {
     private let lock = NSLock()
     private let idCounter = Locked(0)
     private var pending: [Int: CheckedContinuation<JSONValue, Error>] = [:]
-    private let write: @Sendable (Data) -> Void
+    private let write: @Sendable (Data) throws -> Void
     public var onRequest: RequestHandler?
     public var onNotification: NotificationHandler?
     public var onClose: (@Sendable () -> Void)?
     public var log: (@Sendable (String) -> Void)?
     private var buffer = Data()
 
-    public init(write: @escaping @Sendable (Data) -> Void) { self.write = write }
+    /// `write` may throw (BSD-36: the process behind the pipe is gone); pending requests then fail instead of hanging.
+    public init(write: @escaping @Sendable (Data) throws -> Void) { self.write = write }
 
     // MARK: Outgoing
 
@@ -53,7 +54,10 @@ public final class JSONRPCPeer: @unchecked Sendable {
         guard var data = try? v.encoded() else { return }
         data.append(0x0A)
         log?("→ \(String(decoding: data.prefix(300), as: UTF8.self))")
-        write(data)
+        do { try write(data) } catch {
+            log?("write failed: \(error)")
+            closed()
+        }
     }
 
     // MARK: Incoming
@@ -115,8 +119,14 @@ public final class ProcessTransport: @unchecked Sendable {
     public init(command: String, arguments: [String] = [], environment: [String: String] = [:], cwd: String? = nil,
                 passthrough: Set<String> = []) throws {
         #if os(macOS) || os(Linux)
+        ProcessSupervisor.ignoreSIGPIPE()
         let stdinHandle = stdin.fileHandleForWriting
-        peer = JSONRPCPeer { data in stdinHandle.write(data) }
+        let proc = process
+        // BSD-36: no exception (crash) when the child is gone – the write throws and pending requests fail.
+        peer = JSONRPCPeer { data in
+            guard proc.isRunning else { throw JSONRPCPeer.RPCError(code: -32000, message: "Process exited") }
+            try stdinHandle.write(contentsOf: data)
+        }
         process.executableURL = URL(fileURLWithPath: Self.resolve(command))
         process.arguments = arguments
         process.environment = ShellEnvironment.childEnvironment(extra: environment, passthrough: passthrough)
@@ -136,6 +146,14 @@ public final class ProcessTransport: @unchecked Sendable {
         isRunning = true
         #else
         throw JSONRPCPeer.RPCError(code: -32000, message: "Local agent processes are not available on this platform. Connect a Based server daemon instead.")
+        #endif
+    }
+
+    public var processID: Int32? {
+        #if os(macOS) || os(Linux)
+        return isRunning && process.isRunning ? process.processIdentifier : nil
+        #else
+        return nil
         #endif
     }
 

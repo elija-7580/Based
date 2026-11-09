@@ -8,6 +8,12 @@ public protocol AgentConnection: AnyObject, Sendable {
     func prompt(_ text: String, resources: [(uri: String, text: String)]) async throws -> ACPStopReason
     func cancel()
     func stop()
+    /// PID of the agent's process while it runs (BSD-36: `HappierRuntime.stopAll` ends its whole process tree).
+    var processID: Int32? { get }
+}
+
+public extension AgentConnection {
+    var processID: Int32? { nil }
 }
 
 extension ACPClient: AgentConnection {}
@@ -278,6 +284,7 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
 
     public func start() throws {
         #if os(macOS) || os(Linux)
+        ProcessSupervisor.ignoreSIGPIPE()   // BSD-36: a dead session's pipe returns EPIPE instead of killing Based
         let p = Process()
         p.executableURL = URL(fileURLWithPath: options.executable)
         var file: MCPConfigFile?
@@ -372,9 +379,29 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
             }
             previous?.resume(returning: .cancelled)
             #if os(macOS) || os(Linux)
-            stdinPipe?.fileHandleForWriting.write(line)
+            // BSD-36: `write(_:)` raised an exception (app crash) when the process was already gone; now the turn fails.
+            var failure: String?
+            if let h = stdinPipe?.fileHandleForWriting, process?.isRunning == true {
+                do { try h.write(contentsOf: line) } catch { failure = "\(error)" }
+            } else {
+                failure = "not running"
+            }
+            if let failure {
+                let w = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in s.running = false; let w = s.waiter; s.waiter = nil; return w }
+                Log.notice("Claude Code input closed (\(failure)); the session restarts on the next prompt", category: "agents")
+                w?.resume(throwing: JSONRPCPeer.RPCError(code: -32000, message: "Claude Code is no longer running. Send the message again to restart the session."))
+            }
             #endif
         }
+    }
+
+    public var processID: Int32? {
+        #if os(macOS) || os(Linux)
+        guard let p = process, p.isRunning else { return nil }
+        return p.processIdentifier
+        #else
+        return nil
+        #endif
     }
 
     /// Interrupts the current turn (SIGINT, like pressing Esc in Claude Code). The session resumes on the next prompt.

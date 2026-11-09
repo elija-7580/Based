@@ -359,6 +359,23 @@ public final class HappierRuntime: @unchecked Sendable {
         do { try await provider.destroy(h) } catch { Log.error("Could not remove sandbox \(h.reference): \(error)", category: "agents") }
     }
 
+    /// BSD-36: ends every live session and its whole process tree (adapters started via `npx` spawn children):
+    /// SIGTERM, SIGKILL after `timeout`. Called when Based quits; blocks for at most `timeout` (+1 s).
+    @discardableResult
+    public func stopAll(timeout: TimeInterval = 3) -> Int {
+        let conns = liveBox.sync { d -> [RecordID: AgentConnection] in let c = d; d.removeAll(); return c }
+        let pids = conns.values.compactMap(\.processID)
+        let tree = pids + ProcessSupervisor.descendants(of: pids)
+        for (sid, c) in conns {
+            turnGate(sid).cancelWaiting()
+            c.stop()
+            mcpSessionTokens?.revoke(sid)
+        }
+        ProcessSupervisor.terminateTree(of: tree, timeout: timeout)
+        if !conns.isEmpty { Log.info("Stopped \(conns.count) agent session(s), \(tree.count) process(es)", category: "agents") }
+        return conns.count
+    }
+
     public func stop(_ sid: RecordID) {
         turnGate(sid).cancelWaiting()
         let c = liveBox.sync { $0.removeValue(forKey: sid) }

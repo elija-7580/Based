@@ -158,6 +158,7 @@ public final class ACPClient: @unchecked Sendable {
 
     public func stop() { transport?.terminate(); transport = nil; sessionID = nil }
     public var isRunning: Bool { transport?.isRunning ?? false }
+    public var processID: Int32? { transport?.processID }
 
     // MARK: Incoming
 

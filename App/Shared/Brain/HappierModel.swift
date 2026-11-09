@@ -38,6 +38,8 @@ final class HappierModel {
     var modes: [RecordID: String] = [:]
     /// The app's private MCP endpoint (agents started here get the workspace tools + Inbox approvals).
     @ObservationIgnored private var mcpHost: LocalMCPHost?
+    /// BSD-36: stops agent processes when Based quits.
+    @ObservationIgnored private var quitObserver: NSObjectProtocol?
     var mcpBaseURL: String?
     @ObservationIgnored private var happierIDs: Set<RecordID> = []
     @ObservationIgnored private var sessionIDSet: Set<RecordID> = []
@@ -119,7 +121,7 @@ final class HappierModel {
                 self.refresh()
             }
         }
-        runtime.onLog = { [weak self] line in Task { @MainActor in self?.events[":log", default: []].append(.init(icon: "terminal", text: line, status: "")) } }
+        runtime.onLog = { [weak self] line in Task { @MainActor in self?.addEvent(":log", .init(icon: "terminal", text: line, status: "")) } }
         connections.onStatus = { [weak self] id, status in Task { @MainActor in self?.connectionStatus[id] = status; self?.brain.setConnectionStatus(id, status) } }
         refresh()
         token = store.observe { [weak self] change in self?.storeChanged(change) }
@@ -131,7 +133,21 @@ final class HappierModel {
             Log.info("Shell environment ready (\(env["PATH"]?.split(separator: ":").count ?? 0) PATH entries) — \(ShellEnvironment.note)", category: "agents")
         }
         if !AppDiagnostics.isUITesting { startLocalMCP() }
+        // BSD-36: ⌘Q ends every agent session and its process tree (npx adapters, claude …), SIGKILL after 3 s;
+        // then any other child (chat CLIs, MCP servers). iOS has no local agent processes.
+        quitObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.runtime.stopAll(timeout: 3)
+                self?.mcpHost?.stop()
+            }
+            ProcessSupervisor.terminateAllChildren(timeout: 1)
+        }
         #endif
+    }
+
+    /// BSD-36: session event lists keep the newest 2000 entries.
+    private func addEvent(_ sid: RecordID, _ e: SessionEvent) {
+        BoundedLog.append(e, to: &events[sid, default: []])
     }
 
     /// A fresh session key — but only once the Keychain load finished and no existing key is waiting for
@@ -280,17 +296,17 @@ final class HappierModel {
         case .agentText(let t): liveText[sid, default: ""] += t
         case .agentThought(let t): thoughts[sid, default: ""] += t
         case .userText: break
-        case .toolCall(_, let title, let kind, let status): events[sid, default: []].append(.init(icon: Self.icon(forToolKind: kind), text: title, status: status))
+        case .toolCall(_, let title, let kind, let status): addEvent(sid, .init(icon: Self.icon(forToolKind: kind), text: title, status: status))
         case .toolCallUpdate(_, let status, let output):
             if var last = events[sid]?.last { last.status = status; if let o = output, !o.isEmpty { last.text += " — " + o.prefix(200) }; events[sid]![events[sid]!.count - 1] = last }
-        case .plan(let steps): events[sid, default: []].append(.init(icon: "list.bullet.clipboard", text: steps.joined(separator: "\n"), status: "plan"))
+        case .plan(let steps): addEvent(sid, .init(icon: "list.bullet.clipboard", text: steps.joined(separator: "\n"), status: "plan"))
         case .usage: break
-        case .notice(let n): events[sid, default: []].append(.init(icon: "info.circle", text: n, status: ""))
-        case .modeChanged(let m): events[sid, default: []].append(.init(icon: "switch.2", text: "Mode: \(m)", status: ""))
-        case .other(let s): events[sid, default: []].append(.init(icon: "ellipsis.circle", text: s, status: ""))
+        case .notice(let n): addEvent(sid, .init(icon: "info.circle", text: n, status: ""))
+        case .modeChanged(let m): addEvent(sid, .init(icon: "switch.2", text: "Mode: \(m)", status: ""))
+        case .other(let s): addEvent(sid, .init(icon: "ellipsis.circle", text: s, status: ""))
         case .diff(let path, let old, let new):
             let c = LineDiff.counts(LineDiff.ops(old: old, new: new))
-            events[sid, default: []].append(.init(icon: "pencil.line", text: "Update(\(path)) +\(c.added) -\(c.removed)", status: "completed"))
+            addEvent(sid, .init(icon: "pencil.line", text: "Update(\(path)) +\(c.added) -\(c.removed)", status: "completed"))
         }
     }
 
