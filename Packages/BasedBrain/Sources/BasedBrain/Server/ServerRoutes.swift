@@ -251,8 +251,13 @@ public enum BasedServerRoutes {
             }
             if let memory { return memory ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409) }
             let first = await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected, device: device) }
-            // BSD-50: the first answer wins; a second device gets 409 instead of overwriting it.
-            return first ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409)
+            // BSD-50: the first answer wins; a second device gets 409 instead of overwriting it (BSD-115: with the
+            // device that answered first, so the client can say where).
+            if first { return .json(["ok": true]) }
+            let by = await MainActor.run { tools.brain.inbox(pendingOnly: false).first { $0.id == iid }?.answeredOn }
+            var reply: [String: JSONValue] = ["ok": false, "error": "already answered"]
+            if let by { reply["device"] = .string(by) }
+            return .json(.object(reply), status: 409)
         }
 
         // MARK: Sandboxes (BSD-53) – owner only, and only with a configured token (an open server never exposes them).

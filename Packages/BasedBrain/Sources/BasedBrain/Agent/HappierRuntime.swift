@@ -87,7 +87,13 @@ public final class HappierRuntime: @unchecked Sendable {
     public var agents: [AgentDefinition]
     public var machineName: String
     public var cipher: SessionCipher?
-    public var permissionPolicy: PermissionPolicy = .ask
+    /// BSD-115: how coding-agent permission requests are answered (the chat's modes; rules come first).
+    public var permissionMode: PermissionMode = .ask
+    /// The old three-way setting, mapped onto `permissionMode` (allowAll ↔ bypass, everything else ↔ ask).
+    public var permissionPolicy: PermissionPolicy {
+        get { permissionMode == .bypass ? .allowAll : .ask }
+        set { permissionMode = PermissionMode(legacyPolicy: newValue.rawValue) }
+    }
     /// BSD-50: allow / ask / deny rules (Agent Brain → Permissions), checked before `permissionPolicy`:
     /// an allow rule answers without the Inbox, a deny rule refuses, an ask rule always goes to the Inbox.
     public var permissionRules: (@MainActor @Sendable () -> AgentPermissions?)?
@@ -189,7 +195,7 @@ public final class HappierRuntime: @unchecked Sendable {
                                 "env": .object(sv.env.mapValues(JSONValue.string))]
             }
             var mode = claudeModes.sync { $0[sid] } ?? "default"
-            if permissionPolicy == .allowAll && mode == "default" { mode = "bypassPermissions" }
+            if mode == "default" { mode = permissionMode.claudePermissionMode }
             if promptTool == nil && mode == "default" { mode = "acceptEdits" }
             let context = await mainQueue.run { self.brain.systemContext(query: "") }
             var system = mcp["based"] != nil ? await orchestrationPrompt(for: sid) : ""
@@ -710,11 +716,7 @@ public final class HappierRuntime: @unchecked Sendable {
         let ruled = await ruleVerdict(call)
         if ruled?.effect == .allow { return allow }
         if ruled?.effect == .deny { Log.info("Permission denied by rule in \(sid): \(req.toolTitle)", category: "agents"); return reject }
-        if ruled == nil { switch permissionPolicy {
-        case .allowAll: return allow
-        case .allowReads where req.toolKind == "read" || req.toolKind == "search" || req.toolKind == "fetch": return allow
-        default: break
-        } }
+        if ruled == nil, let auto = permissionMode.autoAnswer(kind: req.toolKind) { return auto ? allow : reject }
         let r = await requestApproval(sid, title: req.toolTitle, kind: req.toolKind, detail: req.detail, options: req.options.map { ($0.id, $0.name) })
         if !r.approved { return reject }
         return r.option.flatMap { dec in req.options.first { $0.id == dec }?.id } ?? allow
@@ -734,8 +736,11 @@ public final class HappierRuntime: @unchecked Sendable {
         if ruled?.effect == .deny { return ["behavior": "deny", "message": .string("Blocked by the permission rules (\(ruled!.reason)).")] }
         if ruled?.effect == .allow { return allow }
         if ruled == nil {
-            if permissionPolicy == .allowAll { return allow }
-            if permissionPolicy == .allowReads, ["read", "search", "fetch"].contains(kind) { return allow }
+            switch permissionMode.autoAnswer(kind: kind) {
+            case true?: return allow
+            case false?: return ["behavior": "deny", "message": .string("Plan mode: nothing is changed.")]
+            case nil: break
+            }
             if alwaysAllowed.sync({ $0[sid]?.contains(tool) ?? false }) { return allow }
         }
         let detail: String
