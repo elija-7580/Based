@@ -12,11 +12,13 @@ public struct BasedServerServices {
     public var runtime: AgentRuntime
     public var happier: HappierRuntime
     public var share: ShareService
+    /// BSD-113: files sent to the server (voice notes via POST /capture); nil = audio captures are refused (503).
+    public var assets: FileAssetStore?
 
     public init(store: WorkspaceStore, tools: AgentTools, mcp: MCPServer, sync: SyncServer, runtime: AgentRuntime,
-                happier: HappierRuntime, share: ShareService) {
+                happier: HappierRuntime, share: ShareService, assets: FileAssetStore? = nil) {
         self.store = store; self.tools = tools; self.mcp = mcp; self.sync = sync; self.runtime = runtime
-        self.happier = happier; self.share = share
+        self.happier = happier; self.share = share; self.assets = assets
     }
 }
 
@@ -161,13 +163,32 @@ public enum BasedServerRoutes {
         // MARK: Capture (BSD-111)
         // Shortcuts, scripts, a watch or another AI drop a thought into Captures: {"text", "url", "source", "transcript"}.
         // Owner only (default). 201 with the new row, 400 with the reason for empty/invalid input.
-        r.add("POST", "/capture") { ctx in
+        // BSD-113: a voice note comes as {"audio": "<base64>", "audio_name": "note.m4a", "audio_mime": "audio/mp4"}; it is
+        // stored in the server's asset store (GET /assets/<id>) and waits as New until a device with the speech model
+        // adds the transcript. Larger than CaptureInput.maxAudioBytes → 413.
+        nonisolated(unsafe) let assets = s.assets
+        r.add("POST", "/capture", bodyLimit: large) { ctx in
             guard let body = try? JSONValue.parse(ctx.request.body), case .object = body else {
                 return .json(["error": #"send JSON: {"text": "…", "url": "https://…", "source": "Shortcut"}"#], status: 400)
             }
+            var input = CaptureInput.from(json: body, defaultSource: .shortcut)
+            if let b64 = body["audio"]?.string {
+                guard let audio = Data(base64Encoded: b64, options: .ignoreUnknownCharacters), !audio.isEmpty else {
+                    return .json(["error": "audio must be base64"], status: 400)
+                }
+                guard audio.count <= CaptureInput.maxAudioBytes else {
+                    return .json(["error": .string("voice note too large (\(audio.count) bytes, at most \(CaptureInput.maxAudioBytes))")], status: 413)
+                }
+                guard let assets else { return .json(["error": "this server stores no files (start it with a data folder)"], status: 503) }
+                let name = CaptureInput.audioFileName(body["audio_name"]?.string)
+                let stored: AssetRef? = await MainActor.run { try? assets.importData(audio, name: name, mime: body["audio_mime"]?.string) }
+                guard let stored else { return .json(["error": "could not store the voice note"], status: 500) }
+                input.audio = stored
+            }
+            let toAdd = input
             let outcome: (id: RecordID?, title: String, error: String?) = await MainActor.run {
                 do {
-                    let id = try tools.brain.addCapture(CaptureInput.from(json: body, defaultSource: .shortcut))
+                    let id = try tools.brain.addCapture(toAdd)
                     return (id, tools.brain.capture(id)?.title ?? "", nil)
                 } catch let p as CaptureInput.Problem {
                     return (nil, "", p.description)
@@ -178,6 +199,19 @@ public enum BasedServerRoutes {
             guard let id = outcome.id else { return .json(["error": .string(outcome.error ?? "invalid capture")], status: 400) }
             return .json(["id": .string(id), "title": .string(outcome.title),
                           "message": .string("Saved to Captures. \"\(BrainStore.captureSorterName)\" sorts it tonight.")], status: 201)
+        }
+
+        // BSD-113: the bytes of a stored file (a voice note sent to /capture), for the device that transcribes it.
+        r.add("GET", "/assets/*") { ctx in
+            let id = ctx.captures[0]
+            guard UUID(uuidString: id) != nil, let assets else { return .json(["error": "not found"], status: 404) }
+            let dir = assets.root.appendingPathComponent(id, isDirectory: true)
+            guard let name = (try? FileManager.default.contentsOfDirectory(atPath: dir.path))?.sorted().first,
+                  let data = FileManager.default.contents(atPath: dir.appendingPathComponent(name).path) else {
+                return .json(["error": "not found"], status: 404)
+            }
+            return HTTPServer.Response(status: 200, headers: ["Content-Type": FileAssetStore.mime(for: (name as NSString).pathExtension) ?? "application/octet-stream",
+                                                              "Content-Disposition": "attachment"], body: data)
         }
 
         // MARK: Happier-style control room (ACP agents, inbox, connections)

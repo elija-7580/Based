@@ -109,9 +109,11 @@ final class VoiceCaptureService {
 
     /// BSD-111: transcribes voice notes that still wait for text (from the watch, a device without the speech
     /// model, an interrupted run). Nil when this build/device has no on-device speech model.
-    static func transcribeWaiting(brain: BrainStore, assets: FileAssetStore?) async -> CaptureTranscription.Report? {
+    /// BSD-113: `download` fetches audio that only the Based server has (voice notes sent to its POST /capture).
+    static func transcribeWaiting(brain: BrainStore, assets: FileAssetStore?,
+                                  download: ((AssetRef) async -> URL?)? = nil) async -> CaptureTranscription.Report? {
         guard SpeechEngine.isAvailable, !CaptureTranscription.waiting(brain).isEmpty else { return nil }
-        return await CaptureTranscription.run(brain, assets: assets) { url in
+        return await CaptureTranscription.run(brain, assets: assets, download: download) { url in
             let words = try await SpeechEngine.shared.words(file: url, language: nil)
             return CaptureIntentLogic.transcriptText(words.map(\.text))
         }

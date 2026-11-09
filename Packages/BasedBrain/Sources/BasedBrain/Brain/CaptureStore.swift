@@ -76,6 +76,16 @@ public struct CaptureInput: Sendable, Equatable {
     }
 
     public static let maxLength = 20_000
+    /// BSD-113: largest voice note POST /capture accepts (decoded); ~20 minutes of AAC.
+    public static let maxAudioBytes = 20 << 20
+
+    /// A safe file name for an uploaded voice note (no paths, default "voice-note.m4a").
+    public static func audioFileName(_ raw: String?) -> String {
+        let base = (raw ?? "").split(separator: "/").last.map(String.init)?.split(separator: "\\").last.map(String.init) ?? ""
+        let cleaned = String(base.filter { $0.isLetter || $0.isNumber || "-_. ".contains($0) }.prefix(80))
+            .trimmingCharacters(in: CharacterSet(charactersIn: ". "))
+        return cleaned.isEmpty ? "voice-note.m4a" : cleaned
+    }
 
     /// Trims and checks the input: something must be there, the text fits, a link is http(s). A text that is only a
     /// link becomes the link (sharing a URL as text is common on iOS).
@@ -156,7 +166,8 @@ extension BrainStore {
     @discardableResult
     public func ensureCaptureSorter() -> RecordID {
         if let a = agents().first(where: { $0.name == Self.captureSorterName }) { return a.id }
-        return saveAgent(name: Self.captureSorterName, instructions: CaptureSorter.agentInstructions, schedule: "daily 23:00", model: nil)
+        // BSD-113: sorting is light work — the router's Low level (route Background/Quick, smallest model).
+        return saveAgent(name: Self.captureSorterName, instructions: CaptureSorter.agentInstructions, schedule: "daily 23:00", model: "auto:low")
     }
 
     // MARK: Writing

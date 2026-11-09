@@ -26,11 +26,17 @@ public enum CaptureTranscription {
 
     /// Transcribes up to `limit` waiting voice notes one after the other; each result goes in with
     /// `setTranscript` (status Transcribed, title from the text), so the capture becomes sortable.
+    /// BSD-113: `download` fetches audio that is not on this device (a voice note sent to the server's POST /capture)
+    /// and returns its local file; nil = not available (counted as `notOnDevice`, retried next time).
     public static func run(_ brain: BrainStore, assets: AssetStore?, limit: Int = 20,
+                           download: ((AssetRef) async -> URL?)? = nil,
                            transcribe: (URL) async throws -> String) async -> Report {
         var report = Report()
         for c in waiting(brain, limit: limit) {
-            guard let ref = c.audio?.asset, let url = assets?.url(for: ref) else { report.notOnDevice += 1; continue }
+            guard let ref = c.audio?.asset else { report.notOnDevice += 1; continue }
+            var local = assets?.url(for: ref)
+            if local == nil, let download { local = await download(ref) }
+            guard let url = local else { report.notOnDevice += 1; continue }
             do {
                 let text = try await transcribe(url).trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { report.failed.append("\(c.title) — no speech recognised"); continue }

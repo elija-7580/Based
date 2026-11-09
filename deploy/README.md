@@ -9,6 +9,8 @@
 | `POST /ask` `{prompt, model}` | Run the workspace agent once |
 | `POST /agents/run` `{agent}` | Run a stored agent now |
 | `POST /capture` `{text, url, source, transcript}` | Drop a thought or link into Agent Brain → Captures (201 with id; 400 when empty/invalid). For Shortcuts, scripts, a watch |
+| `POST /capture` `{audio (base64), audio_name, audio_mime, transcript?}` | Voice note (≤ 20 MB, else 413); stored in `assets/` next to the database, waits as New until the Mac transcribes it |
+| `GET /assets/<id>` | Bytes of a stored file (the Mac fetches voice notes to transcribe them) |
 | `GET /health` | Liveness |
 
 All endpoints except `/health`, `/app` and the sharing pages (`/s/…`, `/p/…`, invite accept) need
