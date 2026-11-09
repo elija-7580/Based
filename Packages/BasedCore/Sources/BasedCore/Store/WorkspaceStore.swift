@@ -927,6 +927,9 @@ public final class WorkspaceStore {
         }
         guard commit(tx, name: name, coalesce: nil, origin: origin, undoable: false) else { return nil }
         for k in unfrozen { frozenKeys.remove(k) }
+        // BSD-123: rows added on two devices between syncs can share an ID number.
+        let idChecks = databasesNeedingIDCheck(records)
+        if !idChecks.isEmpty { repairUniqueIDs(in: idChecks) }
         return RemoteMergeResult(stale: stale, tombstoned: tombstoned)
     }
 
