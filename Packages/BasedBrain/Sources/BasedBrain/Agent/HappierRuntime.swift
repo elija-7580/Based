@@ -216,8 +216,10 @@ public final class HappierRuntime: @unchecked Sendable {
             let h = try await ensureSandbox(sid, cwd: cwd)
             def = provider.wrap(def, in: h, environment: sandboxEnvironment.filter(ProcessInfo.processInfo.environment.merging(def.environment) { $1 }))
             acpCwd = h.workdir
-            // stdio MCP servers are host binaries and don't exist inside the container (HTTP MCP for ACP: follow-up).
-            servers = []
+            // stdio MCP servers are host binaries and don't exist inside the container. BSD-127: Based's own tools
+            // go over HTTP (`host.docker.internal`), with the session's token only — never the master token.
+            servers = SandboxMCP.servers(endpoint: mcpEndpoint, sessionToken: mcpSessionTokens?.token(for: sid), session: sid,
+                                         network: sandboxTemplate.network)
             box = h
         }
         let client = ACPClient(definition: def)
@@ -322,6 +324,7 @@ public final class HappierRuntime: @unchecked Sendable {
         spec.project = project.isEmpty ? URL(fileURLWithPath: cwd).lastPathComponent : project
         spec.hostWorkspace = cwd
         spec.runID = sid
+        spec.hostGateway = mcpEndpoint != nil
         let h = try await provider.create(spec)
         sandboxBox.sync { $0[sid] = h }
         await mainQueue.run { self.brain.noteSandbox(session: sid, h, log: "Sandbox \(h.reference) · \(h.workdir)") }

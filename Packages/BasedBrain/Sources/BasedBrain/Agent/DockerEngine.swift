@@ -179,6 +179,7 @@ public struct DockerEngineSandboxProvider: SandboxProvider {
             "PidsLimit": 1024, "SecurityOpt": ["no-new-privileges"], "Binds": .array(binds),
         ]
         if !spec.network { host["NetworkMode"] = "none" }
+        if spec.network && spec.hostGateway { host["ExtraHosts"] = [.string("\(SandboxMCP.hostName):host-gateway")] }
         return ["Image": .string(image ?? spec.image), "Cmd": ["sleep", "infinity"], "WorkingDir": .string(wd),
                 "Labels": .object(labels), "HostConfig": .object(host)]
     }
