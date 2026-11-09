@@ -371,3 +371,5 @@ button.row:hover, a.row:hover { background: var(--bg); }
 
 /* Editor (@based/editor): Text bündig mit dem Titel, Griffe und Plus in der linken Randspalte wie in Notion. */
 .shell-editor { margin-inline: calc(-1 * var(--space-8)); }
+.shell-database.full { height: calc(100vh - var(--space-8) * 4); min-height: calc(var(--page-measure) / 2); }
+.shell-database.inline { margin-block: var(--space-2); }

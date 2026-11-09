@@ -25,6 +25,7 @@ import {
   structureSignature,
   titleOf,
   trashPages,
+  createDatabase,
   type Block,
   type RecordKeyString,
   type StoreChange,
@@ -168,6 +169,12 @@ export class StoreHost {
         if (c.after) opts.position = { kind: "after", id: c.after };
         const id = createPage(store, opts);
         return store.blocks.has(id) ? id : undefined;
+      }
+      case "createDatabase": {
+        // Ganze Datenbankseite (Tabelle) oben in Private bzw. unter `parent` (Phase 2, @based/database-ui).
+        const parent = c.parent ? "b:" + c.parent : "w";
+        const created = createDatabase(store, { parent, ...(c.title ? { title: c.title } : {}) });
+        return store.blocks.has(created.blockID) ? created.blockID : undefined;
       }
       case "rename": return renamePage(store, c.id, c.title);
       case "trash": return trashPages(store, c.ids);
@@ -343,7 +350,7 @@ export class StoreHost {
     store.transact("Edit", (tx) => {
       for (const r of upserts) tx.put(r);
       for (const k of deletions) tx.remove(k);
-    }, { undoable: false });
+    }, { undoable: false, keepStamps: true });
     if (store.isReadOnly) throw new Error("read-only: " + (store.writeFailure?.message ?? ""));
   }
 

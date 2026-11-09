@@ -259,7 +259,12 @@ export class PageReplica {
   close() {
     this.refs -= 1;
     if (this.refs > 0) return;
-    this.unobserve();
-    this.client._release(this);
+    // Erst nach dem aktuellen Abbau freigeben: React räumt die Seite vor dem Editor auf, und der Editor schreibt beim
+    // Schließen seine gesammelten Änderungen (DocSession.close → flush). Ohne Aufschub gingen die verloren.
+    setTimeout(() => {
+      if (this.refs > 0) return;
+      this.unobserve();
+      this.client._release(this);
+    }, 0);
   }
 }

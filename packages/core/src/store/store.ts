@@ -293,11 +293,20 @@ export class WorkspaceStore {
     else if (kind === "view") this.views.delete(id);
   }
 
+  /** Sortiert einfügen (binäre Suche statt Neusortieren: Laden und große Pulls blieben sonst quadratisch). */
   private index(b: Block) {
-    const list = this.childIndex.get(b.parent) ?? [];
-    list.push(b.id);
-    list.sort((x, y) => this.compareSiblings(x, y));
-    this.childIndex.set(b.parent, list);
+    let list = this.childIndex.get(b.parent);
+    if (!list) {
+      list = [];
+      this.childIndex.set(b.parent, list);
+    }
+    let lo = 0, hi = list.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this.compareSiblings(list[mid]!, b.id) < 0) lo = mid + 1;
+      else hi = mid;
+    }
+    list.splice(lo, 0, b.id);
   }
   private unindex(b: Block) {
     const list = this.childIndex.get(b.parent);
@@ -322,11 +331,16 @@ export class WorkspaceStore {
 
   // MARK: Transaktionen
 
-  transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean } = {}): T {
+  /**
+   * Eine Transaktion. `keepStamps`: Records sind schon gestempelt (z. B. vom Editor im Hauptthread oder aus einem
+   * Import) und werden unverändert übernommen – trotzdem als lokale Änderung gespeichert und gesynct. Ohne würde der
+   * Worker neu stempeln, und das Echo überschriebe neuere Eingaben in der Replik.
+   */
+  transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean; keepStamps?: boolean } = {}): T {
     const tx = new Tx(this);
     try {
       const result = body(tx);
-      this.commit(tx, name, opts.coalesce, "local", opts.undoable ?? true);
+      this.commit(tx, name, opts.coalesce, opts.keepStamps ? "import" : "local", opts.keepStamps ? false : opts.undoable ?? true);
       return result;
     } catch (e) {
       this.rollback(tx);

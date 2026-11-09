@@ -18,7 +18,8 @@
     "@based/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@based/editor": "workspace:*"
+    "@based/editor": "workspace:*",
+    "@based/database-ui": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",

@@ -34,6 +34,7 @@ export interface StatusInfo {
 
 export type Command =
   | { op: "createPage"; parent?: string; section?: string; title?: string; after?: string }
+  | { op: "createDatabase"; parent?: string; title?: string }
   | { op: "rename"; id: string; title: string }
   | { op: "trash"; ids: string[] }
   | { op: "restore"; ids: string[] }

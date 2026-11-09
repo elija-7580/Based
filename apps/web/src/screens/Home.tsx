@@ -20,10 +20,11 @@ interface Props {
   state: ShellState;
   onOpenPage: (id: string) => void;
   onNewPage: () => void;
+  onNewDatabase?: () => void;
   now?: Date;
 }
 
-export function Home({ showDetails, recent, state, onOpenPage, onNewPage, now = new Date() }: Props) {
+export function Home({ showDetails, recent, state, onOpenPage, onNewPage, onNewDatabase, now = new Date() }: Props) {
   const pickUp = recent.filter((r) => state.titles.has(r.id) && !state.outline?.trash.some((t) => t.id === r.id)).slice(0, 5);
   const sectionOf = (id: string) => {
     const o = state.outline;
@@ -94,6 +95,7 @@ export function Home({ showDetails, recent, state, onOpenPage, onNewPage, now = 
           <div className="group-title">
             <h2 id="recent" className="t-section">Pick up again</h2>
             <button type="button" className="btn ghost" style={{ marginLeft: "auto" }} onClick={onNewPage}><Icon name="plus" size={16} />New page</button>
+            {onNewDatabase ? <button type="button" className="btn ghost" onClick={onNewDatabase}><Icon name="plus" size={16} />New database</button> : null}
           </div>
           <div className="group">
             {pickUp.length === 0 ? <div className="row t-desc">{state.ready ? "Pages you open show up here." : "Opening your workspace…"}</div> : null}

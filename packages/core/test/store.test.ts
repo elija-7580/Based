@@ -1,6 +1,6 @@
 // BSD-171: Store-Verhalten, das die Fixtures nicht direkt abdecken.
 import { describe, expect, it } from "vitest";
-import { MemoryPersistence, WorkspaceStore, keyOf, type WireRecord } from "../src/index.js";
+import { MemoryPersistence, WorkspaceStore, keyOf, type RecordKeyString, type Stamp, type WireRecord } from "../src/index.js";
 
 const block = (id: string, parent: string, sk: string, text = id, type = "text"): WireRecord => ({
   kind: "block",
@@ -74,5 +74,25 @@ describe("WorkspaceStore", () => {
     s.undo();
     expect(s.blocks.get("sub")?.parent).toBe("b:t");
     expect(s.blocks.has("x")).toBe(true);
+  });
+});
+
+describe("transact mit keepStamps", () => {
+  it("übernimmt Stempel unverändert und loggt als lokale Änderung", () => {
+    const writes: boolean[] = [];
+    class Spy extends MemoryPersistence {
+      override write(u: WireRecord[], d: RecordKeyString[], t: Map<RecordKeyString, Stamp>, local?: boolean) {
+        writes.push(local === true);
+        super.write(u, d, t);
+      }
+    }
+    const p = new Spy();
+    const s = new WorkspaceStore({ persistence: p, node: "n" });
+    const r = block("a", "w", "a0");
+    (r.data as { stamp: unknown }).stamp = { millis: 42, counter: 7, node: "n" };
+    s.transact("Edit", (tx) => tx.put(r), { keepStamps: true });
+    expect(s.blocks.get("a")?.stamp).toEqual({ millis: 42, counter: 7, node: "n" });
+    expect(writes).toEqual([true]);
+    expect(s.canUndo).toBe(false);
   });
 });

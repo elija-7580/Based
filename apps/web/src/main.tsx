@@ -9,10 +9,11 @@ import { deviceNode, recentPages, syncConfig } from "./shell/storage.js";
 import { StoreClient } from "./worker/client.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
 import "./styles.css";
+import { ShellDatabaseView } from "./databaseSlot.js";
 import { ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 
-registerSlots({ PageEditor: ShellPageEditor });
+registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(loadAppearance());

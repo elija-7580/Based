@@ -47,6 +47,9 @@ importers:
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@based/database-ui':
+        specifier: workspace:*
+        version: link:../../packages/database-ui
       '@based/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens

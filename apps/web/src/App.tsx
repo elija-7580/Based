@@ -73,6 +73,11 @@ export function App({ client, history }: { client: StoreClient; history: History
     return id;
   }, [client, openPage]);
 
+  const newDatabase = useCallback(async () => {
+    const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" });
+    if (id) openPage(id);
+  }, [client, openPage]);
+
   let screen;
   if (state.error) {
     screen = (
@@ -90,7 +95,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "settings") {
     screen = <Settings value={appearance} onChange={setAppearance} client={client} status={state.status} />;
   } else {
-    screen = <Home showDetails={appearance.agentDetails} recent={recent} state={state} onOpenPage={openPage} onNewPage={() => void newPage()} />;
+    screen = <Home showDetails={appearance.agentDetails} recent={recent} state={state} onOpenPage={openPage} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
   }
 
   return (
