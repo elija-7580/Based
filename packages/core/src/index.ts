@@ -26,3 +26,25 @@ export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
 export type { HTMLExporterOptions } from "./interop/export.js";
 export { relationLimitViolations, setRelation } from "./store/relations.js";
+// BSD-155: Datenbank-Operationen, Diagramme, Anzeige-Helfer und gefilterte Beobachtung für @based/database-ui.
+export * as dbops from "./store/database-ops.js";
+export {
+  addDashboardWidget, addOption, addProperty, addRow, addTemplate, addView, changePropertyType, createDatabase, createLinkedView,
+  dashboardInsert, dashboardMove, dashboardRemove, dashboardSetWidth, dashboardWidgetIDs, defaultViewName, deleteOption, deleteProperty,
+  deleteRows, deleteView, duplicateProperty, duplicateRow, duplicateView, evenWidths, filledCellCount, filterRemovingOption,
+  filterRemovingProperty, forgetOption, forgetProperty, formulaPropertyReferences, linkMirrors, makeRelationTwoWay, makeWidgetView,
+  movePropertyInView, moveDashboardWidget, moveRow, moveRowToGroup, moveView, propertyNamed, propertyOf, pv, removeDashboardWidget,
+  renameProperty, renameView, renamingFormulaReferences, renamingRelatedReferences, setAllPropertiesVisible, setCalculation,
+  setColumnWidth, setDashboardRowHeight, setDashboardWidgetWidth, setDatabaseLocked, setDatabaseTitle, setFilter, setGroupBy,
+  setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setViewType,
+  uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
+  wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
+} from "./store/database-ops.js";
+export type { AddRowOptions, CreatedDatabase, InsertPosition } from "./store/database-ops.js";
+export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
+export type { ChartPoint } from "./query/chart.js";
+export {
+  ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, FILTER_OP_LABELS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS,
+  READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
+} from "./query/display.js";
+export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
