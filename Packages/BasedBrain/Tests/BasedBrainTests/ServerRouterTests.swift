@@ -236,40 +236,65 @@ import Darwin
         return fd
     }
 
+    /// Sends `text` and reads until the server closes. A 30 s receive timeout only guards against a hung test.
     nonisolated static func exchange(_ fd: Int32, _ text: String) -> String {
-        _ = text.withCString { send(fd, $0, strlen($0), 0) }
+        var tv = timeval(); tv.tv_sec = 30
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+        if !text.isEmpty { _ = text.withCString { send(fd, $0, strlen($0), 0) } }
         var out = Data(), buf = [UInt8](repeating: 0, count: 4096)
         while true { let n = recv(fd, &buf, buf.count, 0); if n <= 0 { break }; out.append(buf, count: n) }
         close(fd)
         return String(decoding: out, as: UTF8.self)
     }
 
+    /// Runs blocking socket work on its own thread, so it never occupies the (small) cooperative pool that the
+    /// server's request handlers need.
+    nonisolated static func offPool<T: Sendable>(_ body: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { cont in Thread { cont.resume(returning: body()) }.start() }
+    }
+
+    nonisolated static func request(_ port: UInt16, _ text: String) async -> String {
+        await offPool { exchange(connect(port), text) }
+    }
+
+    /// BSD-114: no sleeps and no timing assumptions – the test waits for the server's own connection count
+    /// (signalled) and the silent client ends its connection itself.
     @Test func socketLimits() async throws {
-        let server = HTTPServer(port: 0, loopbackOnly: true, maxConnections: 1, receiveTimeout: 2,
+        let server = HTTPServer(port: 0, loopbackOnly: true, maxConnections: 1, receiveTimeout: 120,
                                 bodyLimit: { _, path in path == "/big" ? 10 << 20 : 1 << 10 }) { _ in .json(["ok": true]) }
         try server.start()
         defer { server.stop() }
         let port = server.boundPort
 
         // Announced body over the limit: 413 without reading it.
-        let tooLarge = Self.exchange(Self.connect(port), "POST /small HTTP/1.1\r\nContent-Length: 5000\r\n\r\n")
+        let tooLarge = await Self.request(port, "POST /small HTTP/1.1\r\nContent-Length: 5000\r\n\r\n")
         #expect(tooLarge.hasPrefix("HTTP/1.1 413"))
-        // No blanket CORS header any more.
-        let ok = Self.exchange(Self.connect(port), "GET /x?token=abc HTTP/1.1\r\n\r\n")
-        #expect(ok.hasPrefix("HTTP/1.1 200") && !ok.contains("Access-Control-Allow-Origin"))
+        // The slot is free as soon as the client sees the end of the answer: back-to-back requests never get 503.
+        for _ in 0..<20 {
+            let ok = await Self.request(port, "GET /x?token=abc HTTP/1.1\r\n\r\n")
+            #expect(ok.hasPrefix("HTTP/1.1 200") && !ok.contains("Access-Control-Allow-Origin"))
+        }
 
-        // One silent client holds the only slot: the next one gets 503 until it times out.
+        // One silent client holds the only slot: the next one gets 503.
         let idle = Self.connect(port)
-        var waited = 0
-        while server.activeConnections < 1, waited < 200 { try await Task.sleep(nanoseconds: 10_000_000); waited += 1 }
-        let busy = Self.exchange(Self.connect(port), "GET /x HTTP/1.1\r\n\r\n")
+        #expect(await Self.offPool { server.waitForActiveConnections { $0 == 1 } })
+        let busy = await Self.request(port, "")
         #expect(busy.hasPrefix("HTTP/1.1 503"))
-        // SO_RCVTIMEO drops the silent client, freeing the slot.
-        let idleResult = Self.exchange(idle, "")
-        #expect(idleResult.isEmpty)
-        waited = 0
-        while server.activeConnections > 0, waited < 400 { try await Task.sleep(nanoseconds: 10_000_000); waited += 1 }
-        #expect(Self.exchange(Self.connect(port), "GET /x HTTP/1.1\r\n\r\n").hasPrefix("HTTP/1.1 200"))
+        // The silent client hangs up → the slot is free again.
+        close(idle)
+        #expect(await Self.offPool { server.waitForActiveConnections { $0 == 0 } })
+        #expect(await Self.request(port, "GET /x HTTP/1.1\r\n\r\n").hasPrefix("HTTP/1.1 200"))
+    }
+
+    /// SO_RCVTIMEO drops a client that never sends anything (the read ends by itself; no clock in the test).
+    @Test func silentClientIsDroppedAfterTheReceiveTimeout() async throws {
+        let server = HTTPServer(port: 0, loopbackOnly: true, maxConnections: 1, receiveTimeout: 0.2) { _ in .json(["ok": true]) }
+        try server.start()
+        defer { server.stop() }
+        let port = server.boundPort
+        #expect(await Self.request(port, "").isEmpty)
+        #expect(await Self.offPool { server.waitForActiveConnections { $0 == 0 } })
+        #expect(await Self.request(port, "GET /x HTTP/1.1\r\n\r\n").hasPrefix("HTTP/1.1 200"))
     }
 }
 

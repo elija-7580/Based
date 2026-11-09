@@ -142,7 +142,7 @@ public final class ProcessTransport: @unchecked Sendable {
             if d.isEmpty { h.readabilityHandler = nil } else { self?.stderrLog?(String(decoding: d, as: UTF8.self)) }
         }
         process.terminationHandler = { [weak self] _ in self?.isRunning = false; p.closed() }
-        try process.run()
+        try ProcessSupervisor.launch(process)
         isRunning = true
         #else
         throw JSONRPCPeer.RPCError(code: -32000, message: "Local agent processes are not available on this platform. Connect a Based server daemon instead.")

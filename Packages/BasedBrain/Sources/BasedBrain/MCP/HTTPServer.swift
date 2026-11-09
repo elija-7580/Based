@@ -53,10 +53,22 @@ public final class HTTPServer: @unchecked Sendable {
     public let receiveTimeout: TimeInterval
     public let bodyLimit: @Sendable (_ method: String, _ path: String) -> Int
     public static let headerLimit = 64 << 10
-    private let countLock = NSLock()
+    private let countLock = NSCondition()
     private var active = 0
     /// Connections being served right now.
     public var activeConnections: Int { countLock.lock(); defer { countLock.unlock() }; return active }
+
+    /// BSD-114: blocks until `condition(activeConnections)` holds or `timeout` passes (signalled on every
+    /// change, no polling). Returns whether the condition was met. For tests and diagnostics.
+    @discardableResult
+    public func waitForActiveConnections(timeout: TimeInterval = 30, _ condition: (Int) -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        countLock.lock(); defer { countLock.unlock() }
+        while !condition(active) {
+            if !countLock.wait(until: deadline) { return condition(active) }
+        }
+        return true
+    }
 
     public init(port: UInt16, loopbackOnly: Bool = false, maxConnections: Int = 64, receiveTimeout: TimeInterval = 30,
                 bodyLimit: @escaping @Sendable (_ method: String, _ path: String) -> Int = { _, _ in 32 << 20 },
@@ -103,10 +115,13 @@ public final class HTTPServer: @unchecked Sendable {
                 Self.setTimeouts(c, seconds: receiveTimeout)
                 guard reserveSlot() else {
                     Self.write(c, Response.json(["error": "server busy"], status: 503))
+                    Self.discardPending(c)   // unread request bytes would turn close() into a RST that can eat the 503
                     close(c)
                     continue
                 }
-                Thread { self.serve(c); self.releaseSlot() }.start()
+                // BSD-114: free the slot *before* closing the socket – a client that sees EOF and connects again
+                // immediately must not get a spurious 503 because the old connection was still counted.
+                Thread { self.serve(c); self.releaseSlot(); close(c) }.start()
             }
         }
         t.name = "based-http"; t.start(); thread = t
@@ -117,9 +132,15 @@ public final class HTTPServer: @unchecked Sendable {
     private func reserveSlot() -> Bool {
         countLock.lock(); defer { countLock.unlock() }
         guard active < maxConnections else { return false }
-        active += 1; return true
+        active += 1; countLock.broadcast(); return true
     }
-    private func releaseSlot() { countLock.lock(); active -= 1; countLock.unlock() }
+    private func releaseSlot() { countLock.lock(); active -= 1; countLock.broadcast(); countLock.unlock() }
+
+    /// Reads whatever the client already sent, without blocking.
+    private static func discardPending(_ c: Int32) {
+        var buf = [UInt8](repeating: 0, count: 4096)
+        for _ in 0..<16 { if recv(c, &buf, buf.count, Int32(MSG_DONTWAIT)) <= 0 { break } }
+    }
 
     private static func setTimeouts(_ c: Int32, seconds: TimeInterval) {
         var tv = timeval()
@@ -129,8 +150,8 @@ public final class HTTPServer: @unchecked Sendable {
         setsockopt(c, SOL_SOCKET, SO_SNDTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
     }
 
+    /// Answers one request on `c`; the caller closes the socket (after releasing the slot).
     private func serve(_ c: Int32) {
-        defer { close(c) }
         let req: Request
         switch readRequest(c) {
         case .request(let r): req = r

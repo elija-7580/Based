@@ -305,7 +305,7 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
             if d.isEmpty { h.readabilityHandler = nil } else { self?.onLog?(String(decoding: d, as: UTF8.self)) }
         }
         p.terminationHandler = { [weak self] proc in self?.terminated(status: proc.terminationStatus) }
-        do { try p.run() } catch { file?.remove(); throw error }
+        do { try ProcessSupervisor.launch(p) } catch { file?.remove(); throw error }
         configFile.sync { $0?.remove(); $0 = file }
         process = p; stdinPipe = input
         state.sync { $0.running = true }
@@ -587,7 +587,7 @@ public extension ClaudePrint {
                         c.resume(returning: .failure(Failure(description: state.errorText.isEmpty ? "claude exited with status \(proc.terminationStatus)" : String(state.errorText.prefix(600)))))
                     }
                 }
-                do { try p.run() } catch {
+                do { try ProcessSupervisor.launch(p) } catch {
                     c.resume(returning: .failure(Failure(description: "Couldn't start claude: \(error.localizedDescription)")))
                 }
             }

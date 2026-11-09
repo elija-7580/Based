@@ -484,7 +484,7 @@ public enum CLIChatRunner {
                         c.resume(returning: .failure(ClaudePrint.Failure(description: e.isEmpty ? "\(name) exited with status \(proc.terminationStatus)" : String(e.suffix(800)))))
                     }
                 }
-                do { try p.run() } catch {
+                do { try ProcessSupervisor.launch(p) } catch {
                     c.resume(returning: .failure(ClaudePrint.Failure(description: "Couldn't start \(name): \(error.localizedDescription)")))
                 }
             }

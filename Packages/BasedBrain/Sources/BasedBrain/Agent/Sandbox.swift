@@ -383,7 +383,7 @@ public struct ProcessCommandRunner: CommandRunner {
                 if let cwd { p.currentDirectoryURL = URL(fileURLWithPath: cwd) }
                 let out = Pipe(), err = Pipe()
                 p.standardOutput = out; p.standardError = err; p.standardInput = FileHandle.nullDevice
-                do { try p.run() } catch { cont.resume(throwing: error); return }
+                do { try ProcessSupervisor.launch(p) } catch { cont.resume(throwing: error); return }
                 // Read both pipes concurrently so a chatty stderr can't block the child.
                 var errData = Data()
                 let g = DispatchGroup()

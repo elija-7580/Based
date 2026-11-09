@@ -23,6 +23,20 @@ public enum ProcessSupervisor {
     /// Idempotent; safe to call from anywhere.
     public static func ignoreSIGPIPE() { _ = once }
 
+    /// BSD-114: starts `process` with no blocked signals. On Linux a child inherits the signal mask of the thread
+    /// that spawns it, and Swift-concurrency/Dispatch worker threads block almost every signal – so agents started
+    /// from async code silently ignored SIGTERM (`terminateTree` always had to wait for SIGKILL). The calling
+    /// thread's mask is cleared only for the spawn and restored right after.
+    public static func launch(_ process: Process) throws {
+        #if os(Linux)
+        var empty = sigset_t(), saved = sigset_t()
+        sigemptyset(&empty)
+        pthread_sigmask(SIG_SETMASK, &empty, &saved)
+        defer { pthread_sigmask(SIG_SETMASK, &saved, nil) }
+        #endif
+        try process.run()
+    }
+
     /// `pid` → parent pid of every process (from `/proc` on Linux, `ps` elsewhere).
     public static func processTable() -> [Int32: Int32] {
         #if os(Linux)

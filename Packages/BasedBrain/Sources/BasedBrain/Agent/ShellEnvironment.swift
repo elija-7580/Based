@@ -208,7 +208,7 @@ public enum ShellEnvironment {
             let d = h.availableData
             if d.isEmpty { h.readabilityHandler = nil } else { box.append(d) }
         }
-        do { try p.run() } catch { return nil }
+        do { try ProcessSupervisor.launch(p) } catch { return nil }
         if done.wait(timeout: .now() + timeout) == .timedOut {
             p.terminate()
             out.fileHandleForReading.readabilityHandler = nil
