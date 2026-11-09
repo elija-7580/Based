@@ -302,7 +302,7 @@ public final class QueryEngine {
     }
 
     func matchesSearch(_ row: Block, _ q: String, _ db: Database) -> Bool {
-        if row.text.plainText.localizedCaseInsensitiveContains(q) { return true }
+        if store.plainTextResolvingMentions(row.text).localizedCaseInsensitiveContains(q) { return true }
         for p in db.properties where p.type != .title {
             let v = value(row, p, db)
             if !v.isEmpty, CellFormatter.text(v, store: store).localizedCaseInsensitiveContains(q) { return true }

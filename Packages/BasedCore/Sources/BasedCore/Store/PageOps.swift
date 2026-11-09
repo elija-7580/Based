@@ -121,6 +121,16 @@ public extension WorkspaceStore {
         return t.isEmpty ? "Untitled" : t
     }
 
+    /// BSD-40: `rt` with page mentions showing the linked page's current title (missing pages keep the stored text).
+    func displayText(_ rt: RichText) -> RichText {
+        rt.resolvingMentions { blocks[$0] != nil ? title(of: $0) : nil }
+    }
+
+    /// Plain text with current page titles for mentions (search, snippets).
+    func plainTextResolvingMentions(_ rt: RichText) -> String {
+        rt.hasMentions ? displayText(rt).plainText : rt.plainText
+    }
+
     func icon(of id: RecordID) -> PageIcon? { blocks[id]?.props.icon }
 
     /// Top-level pages and databases in sidebar order. Never lists a record twice, even if the index did.

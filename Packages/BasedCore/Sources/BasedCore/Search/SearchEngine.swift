@@ -67,7 +67,8 @@ public struct SearchEngine {
         // Content
         if !filters.titleOnly {
             for b in store.blocks.values where !b.type.isPageLike && b.trashedAt == nil {
-                var text = b.text.plainText
+                // Page mentions count with their current title, not the one stored when they were typed (BSD-40).
+                var text = store.plainTextResolvingMentions(b.text)
                 if let cells = b.props.cells { text += " " + cells.map(\.plainText).joined(separator: " ") }
                 if let c = b.props.caption { text += " " + c.plainText }
                 if let segs = b.props.segments { text += " " + segs.lazy.filter { !$0.isPartial }.map(\.text).joined(separator: " ") }

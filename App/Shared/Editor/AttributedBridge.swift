@@ -117,21 +117,21 @@ enum AttributedBridge {
                 a[.basedMention] = m.key
                 switch m {
                 case .page(let id):
-                    text = store.title(of: id)
+                    text = mentionText(m, run: run, store: store)
                     a[.underlineStyle] = NSUnderlineStyle.single.rawValue
                     a[.underlineColor] = Theme.divider
                     a[.font] = font(Theme.baseFont(for: style.type, format: style.format), bold: true, italic: run.marks.italic)
                     #if os(macOS)
                     a[.link] = URL(string: "based://page/" + id)
                     #endif
-                case .date(let d):
-                    text = "@" + (DateDisplay.relative(d.start) ?? DateDisplay.long(DateValue(start: d.start, includeTime: d.includeTime)))
+                case .date:
+                    text = mentionText(m, run: run, store: store)
                     a[.foregroundColor] = Theme.textSecondary
-                case .user(let u):
-                    text = "@" + (u == "me" ? "Me" : u)
+                case .user:
+                    text = mentionText(m, run: run, store: store)
                     a[.foregroundColor] = Theme.textSecondary
-                case .link(let u):
-                    if text.isEmpty { text = u }
+                case .link:
+                    text = mentionText(m, run: run, store: store)
                     a[.underlineStyle] = NSUnderlineStyle.single.rawValue
                 }
             }
@@ -144,6 +144,23 @@ enum AttributedBridge {
             out.append(NSAttributedString(string: text, attributes: a))
         }
         return out
+    }
+
+    /// What a mention shows: the page's current title, a relative date („Today“), a person (BSD-40: also used to
+    /// notice renames / a new day without comparing against the stored text).
+    static func mentionText(_ m: Mention, run: TextRun, store: WorkspaceStore) -> String {
+        switch m {
+        case .page(let id): return store.title(of: id)
+        case .date(let d): return "@" + (DateDisplay.relative(d.start) ?? DateDisplay.long(DateValue(start: d.start, includeTime: d.includeTime)))
+        case .user(let u): return "@" + (u == "me" ? "Me" : u)
+        case .link(let u): return run.text.isEmpty ? u : run.text
+        }
+    }
+
+    /// The displayed text of every mention in `rt`, in order (empty without mentions).
+    static func mentionSignature(_ rt: RichText, store: WorkspaceStore) -> [String] {
+        guard rt.hasMentions else { return [] }
+        return rt.runs.compactMap { r in r.mention.map { mentionText($0, run: r, store: store) } }
     }
 
     static func richText(_ s: NSAttributedString, plain: Bool = false) -> RichText {

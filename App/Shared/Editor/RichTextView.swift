@@ -16,7 +16,12 @@ final class TextCoordinator: NSObject, TextHost {
     var applied = RichText()
     var lastWasInsert = false
     var isApplying = false
-    private var normalizedOnce = false
+    /// BSD-40: the stored text last loaded into the view. Mentions show current titles / relative dates, so the
+    /// view's text (`applied`) can differ from it; comparing against this keeps renders from reloading the view
+    /// (caret jumps, lost IME composition) while nothing was edited.
+    private var loadedSource: RichText?
+    /// Displayed mention texts at the last load: a rename or a new day reloads once, not on every render.
+    private var loadedMentions: [String] = []
     #if os(macOS)
     weak var view: BasedNSTextView?
     #else
@@ -39,7 +44,12 @@ final class TextCoordinator: NSObject, TextHost {
         let styleChanged = newConfig != config
         config = newConfig
         applyConfig()
-        if styleChanged || text != applied {
+        // Never replace the storage while the input method composes (dead keys, IME): the next update after
+        // the composition ends catches up.
+        if hasMarkedText { return }
+        if styleChanged || TextReloadPolicy.needsReload(text: text, applied: applied, loadedSource: loadedSource,
+                                                       mentions: { AttributedBridge.mentionSignature(text, store: self.store) },
+                                                       loadedMentions: loadedMentions) {
             load(text, selection: currentSelection())
         }
     }
@@ -83,6 +93,8 @@ final class TextCoordinator: NSObject, TextHost {
         v.textStorage.setAttributedString(attr)
         #endif
         applied = AttributedBridge.richText(attr, plain: config.plain)
+        loadedSource = rt
+        loadedMentions = config.plain ? [] : AttributedBridge.mentionSignature(rt, store: store)
         let len = attr.length
         if let s = selection {
             let loc = max(0, min(s.location, len))
@@ -102,15 +114,21 @@ final class TextCoordinator: NSObject, TextHost {
         v.updatePlaceholder()
         v.invalidateIntrinsicContentSize()
         #endif
-        // Mentions display the current page title; persist it once so offsets match the view.
-        if !config.plain, applied.plainText != rt.plainText, !normalizedOnce {
-            normalizedOnce = true
-            let fixed = applied
-            let bid = id
-            let s = store
-            DispatchQueue.main.async {
-                s.transact("Update mentions", undoable: false) { tx in tx.update(bid) { $0.text = fixed } }
-            }
+    }
+
+    /// Mentions display the current page title, so the view's offsets can differ from the stored text. Before the
+    /// user edits (split, marks, slash commands use stored offsets) the displayed text is written once — on
+    /// focus, never from a render (BSD-40).
+    private func persistDisplayedMentions() {
+        guard !config.plain, config.editable, applied.hasMentions else { return }
+        // Async: focus can start inside a view update, and SwiftUI must not see the store change there.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.hasMarkedText, let stored = self.store.blocks[self.id]?.text,
+                  stored == self.loadedSource, stored != self.applied else { return }
+            let fixed = self.applied
+            let bid = self.id
+            self.store.transact("Update mentions", undoable: false) { tx in tx.update(bid) { $0.text = fixed } }
+            self.loadedSource = fixed
         }
     }
 
@@ -171,6 +189,7 @@ final class TextCoordinator: NSObject, TextHost {
     // MARK: Events
 
     func didBegin() {
+        persistDisplayedMentions()
         controller.didBeginEditing(id)
         #if os(macOS)
         view?.needsDisplay = true
@@ -205,6 +224,7 @@ final class TextCoordinator: NSObject, TextHost {
         #endif
         let rt = AttributedBridge.richText(storage, plain: config.plain)
         applied = rt
+        if !config.plain { loadedMentions = AttributedBridge.mentionSignature(rt, store: store) }
         // Code: re-colour while typing (attributes only; the text and selection don't change).
         if config.style.type == .code {
             isApplying = true

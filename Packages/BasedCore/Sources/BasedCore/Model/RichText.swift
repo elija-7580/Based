@@ -230,6 +230,20 @@ public struct RichText: Codable, Hashable, Sendable, ExpressibleByStringLiteral,
     }
 
     public var plainText: String { runs.map(\.text).joined() }
+    /// Whether any run is a page/date/user/link mention.
+    public var hasMentions: Bool { runs.contains { $0.mention != nil } }
+
+    /// BSD-40: the text with every page mention showing `title(id)` instead of the title stored when the mention
+    /// was typed (nil keeps the stored text). The stored text may be stale after a rename; search and anything
+    /// shown to people should use this.
+    public func resolvingMentions(_ title: (RecordID) -> String?) -> RichText {
+        guard hasMentions else { return self }
+        var out = self
+        for i in out.runs.indices {
+            if case .page(let id)? = out.runs[i].mention, let t = title(id) { out.runs[i].text = t }
+        }
+        return out
+    }
     public var description: String { plainText }
     public var length: Int { runs.reduce(0) { $0 + $1.length } }
     public var isEmpty: Bool { length == 0 }
