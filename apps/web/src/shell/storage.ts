@@ -50,6 +50,7 @@ export interface RecentEntry {
 }
 
 const RECENT_MAX = 20;
+const recentListeners = new Set<(r: RecentEntry[]) => void>();
 
 /** Zuletzt geöffnete Seiten, neueste zuerst. */
 export const recentPages = {
@@ -57,7 +58,12 @@ export const recentPages = {
   touch(id: string, now = Date.now()): RecentEntry[] {
     const next = [{ id, at: now }, ...recentPages.get().filter((e) => e.id !== id)].slice(0, RECENT_MAX);
     write("based.recent", next);
+    for (const fn of recentListeners) fn(next);
     return next;
+  },
+  subscribe(fn: (r: RecentEntry[]) => void): () => void {
+    recentListeners.add(fn);
+    return () => recentListeners.delete(fn);
   },
 };
 

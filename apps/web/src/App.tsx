@@ -38,13 +38,10 @@ export function App({ client, history }: { client: StoreClient; history: History
     if (appearance.style === "bold") ensureBoldFonts();
   }, [appearance]);
 
+  useEffect(() => recentPages.subscribe(setRecent), []);
   useEffect(() => {
-    if (route.name === "page") setRecent(recentPages.touch(route.id));
+    if (route.name === "page") recentPages.touch(route.id);
   }, [route]);
-  // Nach dem Erststart steht die Willkommensseite in „Pick up again“.
-  useEffect(() => {
-    if (state.ready) setRecent(recentPages.get());
-  }, [state.ready]);
 
   const navigate = useCallback((r: Route) => history.navigate(r), [history]);
   const openPage = useCallback((id: string) => history.navigate({ name: "page", id }), [history]);
@@ -55,6 +52,9 @@ export function App({ client, history }: { client: StoreClient; history: History
       if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setQuickFind((v) => !v);
+      } else if (mod && e.key === ",") {
+        e.preventDefault();
+        history.navigate({ name: "settings" });
       } else if (mod && e.key === "[") {
         e.preventDefault();
         history.back();

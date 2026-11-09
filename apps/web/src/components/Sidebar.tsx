@@ -260,7 +260,6 @@ const PageRow = memo(function PageRow(p: RowProps) {
     if (e.key === "Enter") p.onOpen(row.id);
     else if (e.key === "ArrowRight" && !row.expanded) p.onToggle(row.id);
     else if (e.key === "ArrowLeft" && row.expanded) p.onToggle(row.id);
-    else if (e.key === "F2") p.onMenu(row.id, -1, -1);
   };
   return (
     <div
@@ -386,7 +385,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
       {label}
     </button>
   );
-  const pos: CSSProperties = menu.x < 0 ? {} : { left: menu.x, top: menu.y };
+  const pos: CSSProperties = { left: menu.x, top: menu.y };
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
