@@ -1,6 +1,6 @@
 # ADR 0010: Text-CRDT für Echtzeit-Zusammenarbeit – Automerge (vorgeschlagen)
 
-- **Status:** vorgeschlagen (2026-11-09, Spike BSD-29, Nachtlauf) – nicht akzeptiert; Entscheidung durch Elija
+- **Status:** superseded by 0011 (2026-11-09) – ursprünglich vorgeschlagen (Spike BSD-29, Nachtlauf); mit dem TypeScript-Stack wird Yjs verwendet
 - **Bezug:** ADR 0008 (Kollaboration vorbereiten, LWW bis zum Spike), `docs/sync-protocol.md`, `Model/RichText.swift`
 - **Spike-Code:** `spikes/crdt/` (nicht in Pakete oder CI eingebunden, siehe README dort)
 
