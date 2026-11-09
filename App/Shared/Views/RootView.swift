@@ -55,6 +55,7 @@ struct RootView: View {
         .onAppear { NavigationInput.install(model: model) }
         #endif
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
+        .modifier(SetupAssistantPresenter())   // BSD-56: first start in AI mode
         .sheet(isPresented: $model.showNewSession, onDismiss: { model.newSessionParent = nil }) {
             NewSessionSheet(parent: model.newSessionParent).environment(model.brain.happier)
         }

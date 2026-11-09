@@ -491,6 +491,7 @@ struct BillingSettings: View {
 struct AgentSetupSection: View {
     @Environment(AppModel.self) private var model
     @State private var showDoctor = false
+    @State private var showSetup = false
 
     var body: some View {
         Section("Setup") {
@@ -505,8 +506,16 @@ struct AgentSetupSection: View {
                 Button("Agent setup & diagnosis…") { showDoctor = true }
                     .accessibilityIdentifier("settings.agentDoctor")
             }
+            HStack {
+                Text("Connect ChatGPT, Claude or an API key and get the main agent, routing and permissions preset.")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+                Spacer()
+                Button("Setup assistant…") { showSetup = true }
+                    .accessibilityIdentifier("settings.setupAssistant")
+            }
         }
         .sheet(isPresented: $showDoctor) { AgentDoctorView().environment(model.brain.happier).environment(model) }
+        .sheet(isPresented: $showSetup) { SetupAssistantView().environment(model) }
     }
 }
 
