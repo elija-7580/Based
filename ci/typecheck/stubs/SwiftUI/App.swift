@@ -37,7 +37,14 @@ public struct Settings<Content: View>: _PrimitiveScene { public init(@ViewBuilde
 public struct MenuBarExtra<Label: View, Content: View>: _PrimitiveScene {
     public init(_ titleKey: LocalizedStringKey, systemImage: String, @ViewBuilder content: () -> Content) where Label == SwiftUI.Label<Text, Image> {}
     public init(@ViewBuilder content: () -> Content, @ViewBuilder label: () -> Label) {}
+    public init(_ titleKey: LocalizedStringKey, systemImage: String, isInserted: Binding<Bool>, @ViewBuilder content: () -> Content) where Label == SwiftUI.Label<Text, Image> {}
 }
+public protocol MenuBarExtraStyle {}
+public struct WindowMenuBarExtraStyle: MenuBarExtraStyle { public init() {} }
+public struct PullDownMenuBarExtraStyle: MenuBarExtraStyle { public init() {} }
+extension MenuBarExtraStyle where Self == WindowMenuBarExtraStyle { public static var window: WindowMenuBarExtraStyle { .init() } }
+extension MenuBarExtraStyle where Self == PullDownMenuBarExtraStyle { public static var menu: PullDownMenuBarExtraStyle { .init() } }
+extension Scene { public func menuBarExtraStyle<S: MenuBarExtraStyle>(_ s: S) -> _S<Self> { .init() } }
 public protocol WindowStyle {}
 public struct HiddenTitleBarWindowStyle: WindowStyle { public init() {} }
 public struct TitleBarWindowStyle: WindowStyle { public init() {} }
