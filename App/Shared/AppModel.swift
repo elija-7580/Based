@@ -364,6 +364,7 @@ final class AppModel {
         let storeMS = Int(Date().timeIntervalSince(openStart) * 1000)
         let brainStart = Date()
         brain = BrainModel(store: store)
+        brain.happier.onNotice = { [weak self] m in self?.showToast(m) }   // BSD-115
         let brainMS = Int(Date().timeIntervalSince(brainStart) * 1000)
         brain.assets = assets
         semantic = SemanticService(store: store, directory: inMemory ? nil : dir,

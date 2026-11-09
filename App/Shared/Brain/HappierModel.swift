@@ -79,9 +79,13 @@ final class HappierModel {
     }
     func resetAgents() { UserDefaults.standard.removeObject(forKey: Self.agentsKey); agents = AgentDefinition.defaults }
 
-    var permissionPolicy: HappierRuntime.PermissionPolicy = HappierRuntime.PermissionPolicy(rawValue: UserDefaults.standard.string(forKey: "acp.permissions") ?? "") ?? .ask {
-        didSet { UserDefaults.standard.set(permissionPolicy.rawValue, forKey: "acp.permissions"); runtime.permissionPolicy = permissionPolicy }
+    /// BSD-115: the chat's permission modes for coding sessions too; the old "acp.permissions" value is migrated.
+    var permissionMode: PermissionMode = PermissionMode.stored(UserDefaults.standard.string(forKey: "acp.permissionMode"),
+                                                               legacyPolicy: UserDefaults.standard.string(forKey: "acp.permissions")) {
+        didSet { UserDefaults.standard.set(permissionMode.rawValue, forKey: "acp.permissionMode"); runtime.permissionMode = permissionMode }
     }
+    /// BSD-115: short hints for the user ("Already answered on iPhone"); the app shows them as a toast.
+    @ObservationIgnored var onNotice: ((String) -> Void)?
     /// macOS: run agents on this Mac (default) or through the server daemon. iOS always uses the daemon.
     var useServer: Bool = {
         #if os(iOS)
@@ -114,7 +118,7 @@ final class HappierModel {
         runtime = HappierRuntime(brain: brain, connections: connections, machineName: "device")
         runtime.machineName = machineName
         runtime.agents = agents
-        runtime.permissionPolicy = permissionPolicy
+        runtime.permissionMode = permissionMode
         // BSD-50: allow / ask / deny rules from Agent Brain → Permissions, read fresh for every request.
         runtime.permissionRules = { [weak brain] in brain?.permissions(mode: .ask) }
         ensureSessionKey()
@@ -453,7 +457,7 @@ final class HappierModel {
         // BSD-59: memory suggestions — saving happens once, where the answer lands (server if connected, else here).
         if item.kind == .memory {
             if useServer {
-                Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision), "device": .string(machineName)]); refresh() }
+                Task { await resolveOnServer(item, decision: decision); refresh() }
             } else {
                 brain.answerMemorySuggestion(item.id, save: decision == BrainStore.memorySaveOption, device: machineName)
                 refresh()
@@ -462,8 +466,17 @@ final class HappierModel {
         }
         let approved = decision.hasPrefix("allow") || decision == "approve"
         brain.resolveInbox(item.id, decision: decision, status: approved ? .approved : .rejected, device: machineName)
-        if useServer { Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision), "device": .string(machineName)]) } }
+        if useServer { Task { await resolveOnServer(item, decision: decision); refresh() } }
         refresh()
+    }
+
+    /// BSD-115: another device may have answered first (409) — say where instead of letting the card vanish.
+    private func resolveOnServer(_ item: InboxItem, decision: String) async {
+        do {
+            let (status, body) = try await serverCallWithStatus("POST", "/inbox/\(item.id)/resolve",
+                                                                ["decision": .string(decision), "device": .string(machineName)])
+            if let m = InboxResolveOutcome.parse(status: status, body: body).message { onNotice?(m) }
+        } catch { onNotice?("Could not answer: \(error)") }
     }
 
     // MARK: Connections
@@ -491,6 +504,10 @@ final class HappierModel {
     struct ServerError: Error, CustomStringConvertible { let description: String; init(_ d: String) { description = d } }
 
     private func serverCall(_ method: String, _ path: String, _ body: [String: JSONValue]? = nil) async throws -> JSONValue {
+        try await serverCallWithStatus(method, path, body).1
+    }
+
+    private func serverCallWithStatus(_ method: String, _ path: String, _ body: [String: JSONValue]? = nil) async throws -> (Int, JSONValue) {
         guard let base = UserDefaults.standard.string(forKey: "server.url"), let url = URL(string: base + path) else { throw ServerError("No Based server configured (Settings → Based server).") }
         var req = URLRequest(url: url)
         req.httpMethod = method
@@ -498,7 +515,8 @@ final class HappierModel {
         if let t = Secrets.get("server.token"), !t.isEmpty { req.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization") }
         if let body { req.httpBody = try JSONValue.object(body).encoded() }
         let (data, resp) = try await URLSession.shared.data(for: req)
-        if let http = resp as? HTTPURLResponse, http.statusCode == 401 { throw ServerError("Server token rejected") }
-        return (try? JSONValue.parse(data)) ?? .object([:])
+        let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 401 { throw ServerError("Server token rejected") }
+        return (status, (try? JSONValue.parse(data)) ?? .object([:]))
     }
 }

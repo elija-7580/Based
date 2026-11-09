@@ -316,11 +316,10 @@ struct AgentsSettingsView: View {
         .sheet(item: $editing) { a in AgentEditSheet(agent: a).environment(happier) }
 
         Section("Permissions & run location") {
-            Picker("When an agent asks for permission", selection: Binding(get: { happier.permissionPolicy }, set: { happier.permissionPolicy = $0 })) {
-                Text("Ask me in the Inbox").tag(HappierRuntime.PermissionPolicy.ask)
-                Text("Auto‑allow reads, ask for writes").tag(HappierRuntime.PermissionPolicy.allowReads)
-                Text("Allow everything (YOLO)").tag(HappierRuntime.PermissionPolicy.allowAll)
+            Picker("When an agent asks for permission", selection: Binding(get: { happier.permissionMode }, set: { happier.permissionMode = $0 })) {
+                ForEach(PermissionMode.allCases, id: \.self) { m in Text(m.title).tag(m) }
             }
+            .help(happier.permissionMode.detail)
             #if os(macOS)
             Toggle("Run agents on the Based server instead of this Mac", isOn: Binding(get: { happier.useServer }, set: { happier.useServer = $0 }))
             #else
