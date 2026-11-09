@@ -5,7 +5,13 @@ import BasedCore
 struct PageScreen: View {
     let pageID: RecordID
     var isPeek = false
-    @Environment(\.pageIsActive) private var pageIsActive
+    @Environment(\.pageKey) private var pageKey
+    @Environment(\.activePageTracker) private var activePageTracker
+    /// False for a page DetailContent keeps alive but hides (see `ActivePageTracker`).
+    private var pageIsActive: Bool {
+        guard let pageKey, let activePageTracker else { return true }
+        return activePageTracker.currentKey == pageKey
+    }
     @Environment(AppModel.self) private var model
     @State private var editor: EditorController
     @FocusState private var keyFocus: Bool
@@ -716,11 +722,31 @@ struct PeekView: View {
 }
 
 
-/// False for a page that DetailContent keeps alive but hides (recently visited pages stay built so going back is instant).
-private struct PageIsActiveKey: EnvironmentKey { static let defaultValue = true }
+/// Which of the pages DetailContent keeps alive (recently visited pages stay built but hidden, so going back is
+/// instant) is the visible one.
+///
+/// Deliberately NOT an environment value that flips per page: changing an environment value above a fully built
+/// page makes SwiftUI re-check every `Text` beneath it (`ResolvedTextFilter.hasDifferentUsedValues`), for the page
+/// being hidden and the page being shown. On a big page that froze the main thread for 4 s+ on a page switch
+/// (diagnostic report 2026-11-09). Instead every kept page gets its own key once (it never changes) and one shared
+/// observable tracker holds the current key; only `PageScreen.body` reads it, so a switch re-renders two page
+/// bodies, not every text view.
+@MainActor @Observable
+final class ActivePageTracker {
+    var currentKey: String?
+}
+
+private struct PageKeyKey: EnvironmentKey { static let defaultValue: String? = nil }
+private struct ActivePageTrackerKey: EnvironmentKey { static let defaultValue: ActivePageTracker? = nil }
 extension EnvironmentValues {
-    var pageIsActive: Bool {
-        get { self[PageIsActiveKey.self] }
-        set { self[PageIsActiveKey.self] = newValue }
+    /// The DetailContent keep-alive key of the page this view sits in; nil outside the keep-alive stack (iOS,
+    /// peeks in their own window …), which counts as active.
+    var pageKey: String? {
+        get { self[PageKeyKey.self] }
+        set { self[PageKeyKey.self] = newValue }
+    }
+    var activePageTracker: ActivePageTracker? {
+        get { self[ActivePageTrackerKey.self] }
+        set { self[ActivePageTrackerKey.self] = newValue }
     }
 }

@@ -145,6 +145,17 @@ final class SystemAudioCapture: @unchecked Sendable {
 
     init(writer: TrackWriter) { self.writer = writer }
 
+    /// `start()` on a background queue (not the IO queue, so Core Audio never waits on a queue we occupy). Creating the process tap, the aggregate device and the IO proc are
+    /// synchronous round trips to the Core Audio server that can take over a second; on the main thread that is a
+    /// visible hang.
+    func startOffMain() async throws {
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                do { try self.start(); c.resume() } catch { c.resume(throwing: error) }
+            }
+        }
+    }
+
     func start() throws {
         guard #available(macOS 14.2, *) else { throw CaptureError.unsupported }
         let description = CATapDescription(monoGlobalTapButExcludeProcesses: [])

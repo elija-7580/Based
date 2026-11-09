@@ -437,6 +437,9 @@ struct DetailContent: View {
     @State private var kept: [String] = []
     @State private var keptItems: [String: SidebarItem] = [:]
     private static let keepAlive = 4
+    /// Which kept page is visible. One stable object for all pages (see `ActivePageTracker` for why this is not a
+    /// per-page environment value that flips on every switch).
+    @State private var activePage = ActivePageTracker()
 
     private func isPageItem(_ item: SidebarItem) -> Bool {
         if case .page = item { return true }
@@ -459,7 +462,7 @@ struct DetailContent: View {
                         .animation(DS.Motion.page) { $0.opacity(active ? 1 : 0) }
                         .allowsHitTesting(active)
                         .accessibilityHidden(!active)
-                        .environment(\.pageIsActive, active)
+                        .environment(\.pageKey, k)
                         .zIndex(active ? 1 : 0)
                 }
             }
@@ -475,8 +478,10 @@ struct DetailContent: View {
                 .transition(.opacity.animation(DS.Motion.page))
             }
         }
+        .environment(\.activePageTracker, activePage)
         .auditLayout("content")
         .onAppear { remember(item) }
+        .onChange(of: current, initial: true) { _, k in activePage.currentKey = k }
         .onChange(of: current) { _, _ in remember(item) }
         .onChange(of: model.homePageID) { _, _ in kept = []; keptItems = [:]; remember(item) }
         #else

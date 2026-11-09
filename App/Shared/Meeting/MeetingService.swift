@@ -34,6 +34,9 @@ final class MeetingService {
 
     @ObservationIgnored private var ticker: Timer?
     @ObservationIgnored private var noteObserver: ObservationToken?
+    /// A start is under way (it awaits the permission prompt and the system-audio setup); a second click on
+    /// Record in that window must not start a second recording.
+    @ObservationIgnored private var starting = false
 
     func isRecording(_ id: RecordID) -> Bool { session?.meetingID == id }
 
@@ -43,7 +46,9 @@ final class MeetingService {
     // MARK: Recording
 
     func start(_ meetingID: RecordID, model: AppModel) async {
-        guard session == nil, let info = model.store.meetingInfo(meetingID) else { return }
+        guard session == nil, !starting, let info = model.store.meetingInfo(meetingID) else { return }
+        starting = true
+        defer { starting = false }
         lastError = nil
         guard await MicrophoneCapture.requestPermission() else {
             fail(meetingID, model: model, "Microphone access is off. Allow Based under System Settings → Privacy & Security → Microphone.")
@@ -84,7 +89,9 @@ final class MeetingService {
                                                    language: language, emit: emit)
                 sys.onSamples = { samples, _ in sysLive.append(samples) }
                 let sysCapture = SystemAudioCapture(writer: sys)
-                try sysCapture.start()
+                // Off the main thread: creating the tap/aggregate device waits on the Core Audio server (1.4 s
+                // main-thread hang when opening a new meeting note, diagnostic report 2026-11-09).
+                try await sysCapture.startOffMain()
                 writers.append(sys); transcribers.append(sysLive); stops.append { sysCapture.stop() }
             } catch {
                 // Microphone-only still works (in-person meeting, or permission denied).
