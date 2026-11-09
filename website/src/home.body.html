@@ -1,0 +1,252 @@
+<main id="top" style="flex: 1 1 auto;">
+
+<section aria-labelledby="hero-title" class="wrap" style="padding-top: 88px; padding-bottom: 48px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 26px;">
+<p class="rise d1 pill-hero" style="margin: 0; display: inline-flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: var(--surface-raised); font-size: 13px; font-weight: 500;"><span>Easy like Notion. Private like Obsidian.</span><a href="#between" style="white-space: nowrap; padding: 3px 10px; border-radius: 999px; background: var(--bg); text-decoration: none; font-weight: 600;">How →</a></p>
+<h1 id="hero-title" class="disp flipin" aria-label="{{heroLabel}}" style="margin: 0; max-width: 1080px; font-size: clamp(44px, 8vw, 108px);"><span aria-hidden="true"><sc-for list="{{hero1}}" as="w" hint-placeholder-count="4"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for><br><span class="hl"><sc-for list="{{hero2}}" as="w" hint-placeholder-count="3"><span class="chars-w"><sc-for list="{{w.chars}}" as="c" hint-placeholder-count="8"><span class="ch" style="animation-delay: {{c.d}};">{{c.c}}</span></sc-for></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></span></h1>
+<p class="rise d3" aria-live="off" style="margin: 0; min-height: 1.3em; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 2.8vw, 36px); letter-spacing: -0.02em; line-height: 1.2;"><span class="sentflip {{flipCls}}">A home for your <span style="color: var(--muted);">{{flapWord}}</span>.</span></p>
+<p class="lead rise d4" style="max-width: 700px;">Your data lives on your devices and belongs to you. Nothing gets lost, nothing gets read. Databases with a hundred thousand rows stay instant. And if you want it, a crew of agents works right inside them, from your terminal, the cloud or your phone.</p>
+
+<div id="waitlist" class="rise d5" style="width: 100%; max-width: 580px; scroll-margin-top: 100px;">
+<sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
+<form aria-label="Join the beta" onSubmit="{{join}}" style="padding: 8px; border-radius: 24px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px; text-align: left; box-shadow: var(--shadow-panel);">
+<fieldset style="margin: 0; padding: 4px 4px 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<legend style="float: left; margin-right: 6px; font-size: 13px; font-weight: 450; color: var(--muted);">I'll use it for</legend>
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}" style="min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; background: {{r.bg}}; color: {{r.fg}}; transition: background-color 180ms ease, color 180ms ease;">{{r.label}}</button>
+</sc-for>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;">
+<label for="wl-name" class="sr">First name (optional)</label>
+<input id="wl-name" type="text" autocomplete="given-name" placeholder="First name" value="{{name}}" onChange="{{setName}}" style="flex: 1 1 140px; min-width: 0; min-height: 50px; padding: 0 16px; border: 1px solid var(--control-border); border-radius: 16px; background: var(--bg); color: var(--ink); font: inherit; font-size: 16px;">
+<label for="wl-email" class="sr">Email address</label>
+<input id="wl-email" type="email" required autocomplete="email" placeholder="you@company.com" value="{{email}}" onChange="{{setEmail}}" style="flex: 2 1 220px; min-width: 0; min-height: 50px; padding: 0 16px; border: 1px solid var(--control-border); border-radius: 16px; background: var(--bg); color: var(--ink); font: inherit; font-size: 16px;">
+</div>
+<button type="submit" class="btn" style="min-height: 50px;">Join the beta</button>
+</form>
+</sc-if>
+<sc-if value="{{showReply}}" hint-placeholder-val="{{ false }}">
+<div class="fadein" role="status" aria-live="polite" style="padding: 8px; border-radius: 24px; background: var(--surface-raised); text-align: left;">
+<div style="padding: 18px 18px 18px 16px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; gap: 14px;">
+<span aria-hidden="true" class="bar" style="flex: 0 0 3px; opacity: {{barOpacity}}; transition: opacity 180ms ease-out;"></span>
+<div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+<p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--muted);"><span class="tag">Based</span><span>{{replyMeta}}</span></p>
+<sc-if value="{{thinking}}" hint-placeholder-val="{{ false }}"><p class="dots" style="margin: 0; height: 26px; display: flex; align-items: center;" aria-label="Based is writing"><span></span><span></span><span></span></p></sc-if>
+<sc-if value="{{writing}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); white-space: pre-line;">{{replyShown}}<sc-if value="{{typing}}" hint-placeholder-val="{{ false }}"><span class="caret" aria-hidden="true"></span></sc-if></p></sc-if>
+</div>
+</div>
+<sc-if value="{{replyDone}}" hint-placeholder-val="{{ false }}">
+<p class="fadein" style="margin: 0; padding: 12px 10px 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted);"><span style="min-width: 0; overflow-wrap: anywhere;">Written by Based for {{email}}. Marked, like everything it writes.</span><button type="button" onClick="{{reset}}" class="btn2" style="min-height: 32px; font-size: 13px; padding: 0 12px;">Change details</button></p>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<p class="rise d6" style="margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; font-size: 13px; font-weight: 500; color: var(--muted);"><span>Open source</span><span>Your data, your devices</span><span>AI only if you switch it on</span><span>Built in Vienna, EU servers</span></p>
+</section>
+
+<section aria-label="Based Home preview" class="wrap" style="padding-top: 24px; padding-bottom: 110px;">
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
+<div style="position: relative; overflow: hidden; border-radius: 22px; background: var(--bg); padding: clamp(28px, 5vw, 56px) clamp(14px, 4vw, 48px) 40px; min-height: 620px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 26px;">
+<div class="sun" aria-hidden="true"></div>
+<div style="position: relative; width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px;">
+<p style="margin: 0; font-family: var(--display); font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Today <span class="mono" style="font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--muted);">Tuesday {{nowTxt}}</span></p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;"><sc-for list="{{legend}}" as="g" hint-placeholder-count="4"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: {{g.bg}}; font-size: 12px; font-weight: 600;"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{g.dot}};"></span>{{g.t}}</span></sc-for></div>
+</div>
+<div class="tl" style="position: relative; padding: 14px; border-radius: 20px; background: var(--surface-soft); display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; gap: 12px;"><span class="tl-name"></span><div class="mono" style="flex: 1 1 auto; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted);"><span>06<span class="hr-m">:00</span></span><span>12<span class="hr-m">:00</span></span><span>18<span class="hr-m">:00</span></span><span>24<span class="hr-m">:00</span></span></div><span class="tl-chip" style="visibility: hidden;"></span></div>
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="5"><div class="tl-row" style="display: flex; align-items: center; gap: 12px; min-height: 44px;">
+<div class="tl-name" style="display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.t}}</span><span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{l.who}}</span></div>
+<div style="position: relative; flex: 1 1 auto; height: 28px;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line);"></div>
+<div title="{{l.label}}" style="position: absolute; left: {{l.x}}; width: {{l.w}}; top: 4px; height: 20px; border-radius: 8px; background: {{l.bg}}; overflow: hidden; transition: background-color 500ms ease;"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{l.fill}}; background: {{l.fillBg}}; transition: width 900ms linear;"></span></div>
+</div>
+<span class="tl-chip" style="text-align: center; padding: 4px 6px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 600; transition: background-color 500ms ease;">{{l.status}}</span>
+</div></sc-for>
+<div class="tl-now" aria-hidden="true" style="position: absolute; top: 14px; bottom: 10px; left: {{nowLeft}}; width: 2px; background: var(--ink); transition: left 2200ms linear;"><span class="mono" style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 6px; background: var(--ink); color: var(--bg); font-size: 11px; font-weight: 600; white-space: nowrap;">{{nowTxt}}</span></div>
+</div>
+</div>
+<div style="position: relative; margin-top: 6px; text-align: center; display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-family: var(--display); font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; letter-spacing: -0.03em;">Good morning. What should we do today?</p>
+</div>
+<div style="position: relative; width: 100%; max-width: 780px;">
+<div style="padding: 8px; border-radius: 24px; background: var(--surface-raised); box-shadow: var(--shadow-float);">
+<div style="padding: 16px 16px 12px; border-radius: 18px; background: var(--bg); display: flex; flex-direction: column; gap: 14px;">
+<p class="prompt-box" style="margin: 0; font-size: clamp(16px, 1.8vw, 19px); line-height: 1.5; text-align: left;">{{promptShown}}<span class="caret" aria-hidden="true"></span></p>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+<span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 50%; background: var(--surface-raised); display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">+</span>
+<sc-for list="{{pills}}" as="p" hint-placeholder-count="5"><span style="display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}; font-size: 13px; font-weight: 600; transition: background-color 200ms ease, color 200ms ease;"><span style="width: 24px; height: 24px; border-radius: 50%; background: {{p.dotBg}}; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;">{{p.icon}}</span><span class="hide-sm" style="font-weight: 500; opacity: .7;">{{p.k}}</span>{{p.v}} <span aria-hidden="true" style="opacity: .6;">▾</span></span></sc-for>
+<span aria-hidden="true" style="margin-left: auto; width: 38px; height: 38px; border-radius: 50%; background: var(--button); color: var(--button-ink); display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></span>
+</div>
+</div>
+</div>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 0; right: 0; bottom: calc(100% + 10px); z-index: 5; display: flex; justify-content: center; pointer-events: none;">
+<div class="menu-in" style="position: relative; width: min(460px, 100%); padding: 8px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-menu, var(--shadow-float)); text-align: left; transform-origin: 50% 100%;">
+<p style="margin: 6px 10px 8px; display: flex; justify-content: space-between; gap: 10px; font-size: 13px;"><b>{{menu.title}}</b><span style="color: var(--muted);">{{menu.hint}}</span></p>
+<sc-for list="{{menu.options}}" as="o" hint-placeholder-count="4"><div style="padding: 9px 10px; border-radius: 14px; background: {{o.bg}}; display: flex; align-items: center; gap: 12px;"><span style="flex: 0 0 34px; height: 34px; border-radius: 10px; background: {{o.tileBg}}; color: {{o.tileFg}}; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{o.icon}}</span><span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">{{o.n}}</span><span style="font-size: 12.5px; color: var(--muted);">{{o.d}}</span></span><span style="font-size: 14px;">{{o.check}}</span></div></sc-for>
+<p style="margin: 8px 10px 4px; font-size: 12px; color: var(--muted);">{{menu.foot}}</p>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+<p style="margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Home: one box for everything, with every choice in reach. Your day and your agents around it. Sample data.</p>
+</section>
+
+<section aria-labelledby="pillars-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 48px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Two things, done properly</p>
+<h2 id="pillars-title" class="h2">A workspace that never makes you wait. Agents that never work behind your back.</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 16px;">
+<a href="Workspace.dc.html" class="card lift reveal-l" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; color: var(--ink); min-height: 520px; box-sizing: border-box;">
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">01 The workspace</p>
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">Databases at the heart of it.</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">Tables, boards, timelines and calendars over the same data. Filters, relations, rollups, linked views and full pages inside every row. Local, so a hundred thousand rows feel like ten.</p>
+<div style="position: relative; flex: 1 1 auto; min-height: 220px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); overflow: hidden;">
+<div class="v1" style="padding: 16px; display: flex; flex-direction: column;">
+<p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--muted);">Clients, table view</p>
+<sc-for list="{{dbRows}}" as="r" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: minmax(0, 1fr) 96px 60px; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: center;"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.t}}</span><span style="justify-self: start; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{r.bg}};">{{r.s}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{r.v}}</span></div></sc-for>
+</div>
+<div class="v2" style="padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; opacity: 0;">
+<sc-for list="{{boardCols}}" as="c" hint-placeholder-count="3"><div style="padding: 8px; border-radius: 12px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 6px; min-width: 0;"><p style="margin: 0; font-size: 12px; font-weight: 600;">{{c.t}}</p><sc-for list="{{c.items}}" as="i" hint-placeholder-count="2"><p style="margin: 0; padding: 7px; border-radius: 8px; background: var(--bg); font-size: 12px; box-shadow: var(--shadow-panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{i}}</p></sc-for></div></sc-for>
+</div>
+<div class="v3" style="padding: 16px; opacity: 0;">
+<p style="margin: 0 0 12px; font-size: 12px; font-weight: 600; color: var(--muted);">Projects, timeline view</p>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="height: 26px; width: 46%; margin-left: 2%; border-radius: 8px; background: var(--status-ready); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Onboarding Acme</div>
+<div style="height: 26px; width: 40%; margin-left: 28%; border-radius: 8px; background: var(--marker); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Proposal, agent drafting</div>
+<div style="height: 26px; width: 30%; margin-left: 52%; border-radius: 8px; background: var(--status-review); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Review</div>
+<div style="height: 26px; width: 20%; margin-left: 78%; border-radius: 8px; background: var(--status-blocked); font-size: 12px; padding: 5px 10px; box-sizing: border-box; white-space: nowrap; overflow: hidden;">Launch</div>
+</div>
+</div>
+</div>
+<span style="font-size: 15px; font-weight: 600;">Explore the workspace →</span>
+</a>
+<a href="Agents.dc.html" class="card lift reveal-r ink-panel" style="padding: 32px; display: flex; flex-direction: column; gap: 18px; text-decoration: none; min-height: 520px; box-sizing: border-box;">
+<p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">02 The agents, opt-in</p>
+<h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink);">A crew that comes to you.</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">One main agent plans, hands work to specialists and checks back: done, needs you, here's your morning briefing. Every line they write is signed. Bring your own keys, or run models locally.</p>
+<div style="flex: 1 1 auto; min-height: 220px; display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+<sc-for list="{{pings}}" as="p" hint-placeholder-count="3"><div class="fadein" style="padding: 14px 16px 14px 12px; border-radius: 18px; background: var(--surface-raised); display: flex; gap: 12px; color: var(--ink);"><span class="bar" style="flex: 0 0 3px;"></span><span style="display: flex; flex-direction: column; gap: 3px;"><span class="mono" style="font-size: 11px; color: var(--muted);">{{p.time}} {{p.who}}</span><span style="font-size: 14px; line-height: 1.45;">{{p.t}}</span></span></div></sc-for>
+</div>
+<span style="font-size: 15px; font-weight: 600; color: var(--ink);">Meet mission control →</span>
+</a>
+</div>
+</div>
+</section>
+
+<section id="between" aria-labelledby="bt-title" class="wrap" style="padding-top: 120px; padding-bottom: 40px; display: flex; flex-wrap: wrap; gap: 48px; align-items: center; scroll-margin-top: 80px;">
+<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Where Based sits</p>
+<h2 id="bt-title" class="h2">Easy like Notion. Private like Obsidian.</h2>
+<p class="lead">Notion is easy, but your data lives in someone else's cloud. Obsidian keeps it on your machine, but asks you to become a plugin engineer. Based gives you both: set up in a minute, your data stays yours, and everything is there to tweak if you want to.</p>
+</div>
+<div class="reveal-r" style="flex: 1 1 440px; min-width: 0;">
+<div style="position: relative; aspect-ratio: 1 / 0.82; border-radius: 28px; background: var(--surface-raised); overflow: hidden;">
+<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .35;"></div>
+<div aria-hidden="true" style="position: absolute; top: 8%; bottom: 8%; left: 50%; width: 2px; background: var(--control-border); opacity: .35;"></div>
+<span class="mono" style="position: absolute; left: 50%; top: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">your data, your devices</span>
+<span class="mono" style="position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); font-size: 11px; color: var(--muted);">their cloud</span>
+<span class="mono" style="position: absolute; left: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">easy</span>
+<span class="mono" style="position: absolute; right: 3%; top: 50%; transform: translateY(-140%); font-size: 11px; color: var(--muted);">technical</span>
+<sc-for list="{{apps}}" as="a" hint-placeholder-count="3"><div class="dropin" style="position: absolute; left: {{a.x}}; top: {{a.y}}; transform: translate(-50%, -50%); animation-delay: {{a.d}}; display: flex; flex-direction: column; align-items: center; gap: 8px;"><span style="width: {{a.size}}; height: {{a.size}}; border-radius: 50%; background: {{a.bg}}; box-shadow: {{a.sh}};"></span><span style="font-size: 14px; font-weight: 700; white-space: nowrap;">{{a.n}}</span></div></sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="ev-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Everywhere</p>
+<h2 id="ev-title" class="h2">Start in your terminal. Finish on your phone.</h2>
+<p class="lead">The same workspace and the same agents on your laptop, in a cloud sandbox and in your pocket. Reachable through MCP from any AI you use. Every word lands in your workspace the moment it's written.</p>
+</div>
+<div class="zoomin" style="border-radius: 30px; background: var(--surface-raised); padding: clamp(24px, 4vw, 48px); display: flex; flex-direction: column; gap: 32px;">
+<div style="position: relative; height: 150px;">
+<div aria-hidden="true" style="position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: var(--control-border); opacity: .4;"></div>
+<span class="track-dot" aria-hidden="true" style="left: {{evDot}};"></span>
+<sc-for list="{{evNodes}}" as="n" hint-placeholder-count="4">
+<div style="position: absolute; left: {{n.x}}; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<div class="evn" style="width: 76px; height: 76px; border-radius: {{n.r}}; background: {{n.bg}}; color: {{n.fg}}; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 18px; font-weight: 700; transform: scale({{n.s}}); transition: transform 300ms cubic-bezier(.2,1.4,.4,1), background-color 300ms ease;">{{n.g}}</div>
+<span class="evl" style="font-size: 13px; font-weight: 600; white-space: nowrap;">{{n.t}}</span>
+</div>
+</sc-for>
+</div>
+<div style="min-height: 64px; display: flex; justify-content: center;">
+<p class="fadein" style="margin: 0; max-width: 620px; padding: 14px 18px 14px 14px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; gap: 12px; font-size: 15px; line-height: 1.5;"><span class="bar" style="flex: 0 0 3px;"></span><span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{evWhere}}</span><br>{{evMsg}}</span></p>
+</div>
+</div>
+<p class="reveal" style="margin: 0; font-size: 14px; color: var(--muted);">Cloud agents are opt-in and only see the pages you hand them, while they work. Based Cloud runs on EU servers and is end-to-end encrypted by release.</p>
+</section>
+
+<section aria-labelledby="when-title" class="wrap" style="padding-top: 20px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 28px;">
+<h2 id="when-title" class="h2 reveal" style="font-size: clamp(30px, 4vw, 52px);">What you get, and when.</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
+<div class="card reveal-l" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Beta on the Mac</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">The fast local workspace.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Mac app, data stored locally</li><li>Sync between your Apple devices through iCloud</li><li>Databases, pages, import from Notion</li><li>Agents with your own keys, opt-in</li><li>Meeting notes transcribed on your Mac, offline</li></ul></div>
+<div class="card reveal-r" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">Release</p><p style="margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em;">Everywhere, encrypted.</p><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; color: var(--ink-2);"><li>Based Cloud on EU servers, end-to-end encrypted</li><li>iPhone, iPad, web, then Windows, Linux and Android</li><li>One agent session across terminal, cloud and phone</li><li>MCP for every AI you use</li><li>Self-hosting for anyone who wants it</li></ul></div>
+</div>
+</section>
+
+<section aria-labelledby="pain-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 44px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Love Notion. Not everything about it.</p>
+<h2 id="pain-title" class="h2">We read r/Notion so you don't have to.</h2>
+<p class="lead">Six things you've definitely said out loud. Tap a card for what we did about it.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{pains}}" as="p" hint-placeholder-count="6">
+<div class="flip reveal" style="height: 300px;">
+<button type="button" onClick="{{p.toggle}}" aria-pressed="{{p.pressed}}" aria-label="{{p.aria}}" class="flip-in {{p.cls}}" style="display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;">
+<span class="face" style="background: var(--surface-raised);">
+<span class="mono" style="font-size: 12px; color: var(--muted);">{{p.n}}</span>
+<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.title}}</span>
+<span style="font-size: 15px; line-height: 1.55; color: var(--ink-2);">{{p.joke}}</span>
+<span style="margin-top: auto; font-size: 13px; font-weight: 600; color: var(--muted);">What Based does →</span>
+</span>
+<span class="face back" style="background: var(--button); color: var(--button-ink);">
+<span style="font-size: 12px; font-weight: 600; opacity: .7;">BASED</span>
+<span style="font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{p.fixTitle}}</span>
+<span style="font-size: 15px; line-height: 1.55; opacity: .85;">{{p.fix}}</span>
+<span style="margin-top: auto; font-size: 12px; opacity: .6;">{{p.src}}</span>
+</span>
+</button>
+</div>
+</sc-for>
+</div>
+<a href="Switch.dc.html" class="btn2 reveal" style="align-self: flex-start;">The full list, with sources →</a>
+</div>
+</section>
+
+<section aria-label="Numbers" class="wrap" style="padding-top: 110px; padding-bottom: 110px;">
+<div ref="{{statsRef}}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div class="reveal" style="padding: 28px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
+<p class="disp" style="margin: 0; font-size: clamp(48px, 6vw, 76px);">{{s.v}}</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">{{s.l}}</p>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="who-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<h2 id="who-title" class="h2 reveal">One workspace. Every kind of knowledge.</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{uses}}" as="u" hint-placeholder-count="4"><article class="card lift reveal" style="padding: 28px; display: flex; flex-direction: column; gap: 12px;"><p class="mono" style="margin: 0; font-size: 12px; color: var(--muted);">{{u.n}}</p><h3 style="margin: 0; font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{u.t}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink-2);">{{u.d}}</p></article></sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="cta-title" class="wrap" style="padding-top: 40px; padding-bottom: 120px;">
+<div class="zoomin ink-panel" style="padding: 88px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px;">
+<img src="{{markDarkSrc}}" alt="" width="64" height="64" class="float" style="width: 64px; height: 64px;">
+<h2 id="cta-title" class="disp" style="margin: 0; font-size: clamp(44px, 7vw, 96px);">Your knowledge.<br>Your devices.<br><span class="hl">Your move.</span></h2>
+<p class="lead" style="max-width: 560px;">Open source, built in Europe, yours to keep. Bring your Notion export and the AI you already pay for.</p>
+<a href="#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a>
+</div>
+</section>
+
+</main>

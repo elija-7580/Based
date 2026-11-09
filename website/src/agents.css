@@ -1,0 +1,5 @@
+.bsd .flowline{stroke-dasharray:6 10}
+@media (prefers-reduced-motion: no-preference){
+.bsd .flowline{animation:bsdFlow 1.2s linear infinite}
+}
+@keyframes bsdFlow{to{stroke-dashoffset:-32}}

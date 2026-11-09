@@ -1,0 +1,61 @@
+<main style="flex: 1 1 auto;">
+
+<section aria-labelledby="rm-title" class="wrap" style="padding-top: 96px; padding-bottom: 56px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
+<p class="eyebrow rise d1">Roadmap</p>
+<h1 id="rm-title" class="disp risew" aria-label="Build it with us." style="margin: 0; font-size: clamp(48px, 8.4vw, 116px);"><span aria-hidden="true"><sc-for list="{{hw}}" as="w" hint-placeholder-count="4"><span class="wm"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></span><span style="white-space: pre-wrap;">{{w.sp}}</span></sc-for></span></h1>
+<p class="lead rise d3" style="max-width: 640px;">Everything we're working on, in the open. Vote for what matters to you, or tell us what's missing. Your ideas go straight into our backlog.</p>
+<div class="rise d4" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="#suggest" class="btn">Suggest a feature</a><a href="Main.dc.html#waitlist" class="btn2">Join the beta</a></div>
+</section>
+
+<section aria-label="Roadmap board" class="wrap" style="padding-bottom: 80px; display: flex; flex-direction: column; gap: 20px;">
+<div role="tablist" aria-label="Filter by area" style="display: flex; flex-wrap: wrap; gap: 6px;">
+<sc-for list="{{areas}}" as="a" hint-placeholder-count="6"><button type="button" role="tab" aria-selected="{{a.on}}" onClick="{{a.pick}}" style="min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{a.bg}}; color: {{a.fg}};">{{a.label}}</button></sc-for>
+</div>
+<div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px;">
+<sc-for list="{{cols}}" as="col" hint-placeholder-count="5">
+<div style="padding: 12px; border-radius: 22px; background: {{col.bg}}; display: flex; flex-direction: column; gap: 10px; min-height: 420px;" class="mcol">
+<div style="padding: 4px 6px 6px; display: flex; flex-direction: column; gap: 2px;"><p style="margin: 0; display: flex; justify-content: space-between; font-size: 15px; font-weight: 700;"><span>{{col.t}}</span><span class="mono" style="font-size: 12px; color: var(--muted);">{{col.n}}</span></p><p style="margin: 0; font-size: 12.5px; color: var(--muted);">{{col.sub}}</p></div>
+<sc-for list="{{col.items}}" as="it" hint-placeholder-count="4">
+<div class="fadein" style="padding: 14px; border-radius: 16px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; flex-direction: column; gap: 10px;">
+<p style="margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.35;">{{it.t}}</p>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+<span style="padding: 2px 8px; border-radius: 3px; background: var(--selected); font-size: 12px; color: var(--muted);">{{it.area}}</span>
+<button type="button" aria-pressed="{{it.voted}}" aria-label="{{it.aria}}" onClick="{{it.vote}}" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; background: {{it.vbg}}; color: {{it.vfg}};">▲ {{it.votes}}</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{col.empty}}" hint-placeholder-val="{{ false }}"><p style="margin: 8px 6px; font-size: 13px; color: var(--muted);">{{col.emptyText}}</p></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+<p style="margin: 0; font-size: 12.5px; color: var(--muted);">Shipped means working in the prototype. The live roadmap is generated from our public backlog, so it is always current.</p>
+</section>
+
+<section id="suggest" aria-labelledby="sg-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); scroll-margin-top: 80px;">
+<div class="wrap" style="max-width: 820px; padding-top: 100px; padding-bottom: 100px; display: flex; flex-direction: column; gap: 24px;">
+<h2 id="sg-title" class="h2 reveal">What's missing?</h2>
+<p class="lead reveal">One line is enough. If it makes sense for Based, it lands in the backlog and shows up here with your idea's own vote button.</p>
+<form onSubmit="{{submit}}" aria-label="Suggest a feature" style="padding: 8px; border-radius: 24px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 8px;">
+<label for="sg-text" class="sr">Your idea</label>
+<input id="sg-text" type="text" required placeholder="I wish Based could…" value="{{draft}}" onChange="{{setDraft}}" style="min-height: 52px; padding: 0 16px; border: 1px solid var(--control-border); border-radius: 16px; background: var(--bg); color: var(--ink); font: inherit; font-size: 16px;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 4px;">
+<span style="font-size: 13px; color: var(--muted); margin-right: 4px;">Area</span>
+<sc-for list="{{draftAreas}}" as="a" hint-placeholder-count="5"><button type="button" aria-pressed="{{a.on}}" onClick="{{a.pick}}" style="min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; background: {{a.bg}}; color: {{a.fg}};">{{a.label}}</button></sc-for>
+<button type="submit" class="btn" style="margin-left: auto; min-height: 44px;">Add to ideas</button>
+</div>
+</form>
+<sc-if value="{{thanks}}" hint-placeholder-val="{{ false }}"><p class="fadein" role="status" style="margin: 0; padding: 14px 16px; border-radius: 16px; background: var(--surface-raised); font-size: 15px;">Thanks. Your idea is in the Ideas column. In the live version it goes straight to our backlog and we'll tell you when it ships.</p></sc-if>
+</div>
+</section>
+
+<section aria-labelledby="rm-cta" class="wrap" style="padding-top: 100px; padding-bottom: 120px;">
+<div class="zoomin ink-panel" style="padding: 80px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+<h2 id="rm-cta" class="disp" style="margin: 0; font-size: clamp(40px, 6vw, 84px);">Help decide<br><span class="hl">what ships next.</span></h2>
+<p class="lead" style="max-width: 560px;">Beta testers get a direct line into this board.</p>
+<a href="Main.dc.html#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a>
+</div>
+</section>
+
+</main>

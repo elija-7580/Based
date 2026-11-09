@@ -1,0 +1,147 @@
+body{margin:0}
+.bsd{--bg:#FFFFFF;--canvas:#F1F1EE;--surface-raised:#F2F2EF;--surface-soft:#F5F5F2;--selected:#EBEBE7;--line:#EAEAE6;--control-border:#8E8D88;--ink:#1F1F1D;--ink-2:#37362F;--muted:#6B6A65;--button:#1F1F1D;--button-ink:#FFFFFF;--marker:#F1DE8A;--marker-strong:#E0C24A;--status-ready:#DCE6F8;--status-review:#F5DCE5;--status-blocked:#F7DED3;--synced:#3F8A5C;--shadow-panel:0 1px 3px rgba(26,26,24,0.08),0 0 0 1px rgba(26,26,24,0.04);--shadow-float:0 10px 30px rgba(26,26,24,0.14),0 0 0 1px rgba(26,26,24,0.05);--shadow-big:0 40px 80px -20px rgba(26,26,24,0.25),0 0 0 1px rgba(26,26,24,0.05);--glass:rgba(241,241,238,0.72);--display:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-optical-sizing:auto;color:var(--ink);background:var(--canvas);overflow-x:hidden}
+.bsd[data-theme="dark"]{--bg:#191919;--canvas:#141414;--surface-raised:#262626;--surface-soft:#232323;--selected:#2E2E2E;--line:#2F2F2F;--control-border:#6E6E6A;--ink:#E9E9E6;--ink-2:#D0D0CB;--muted:#A3A29D;--button:#E9E9E6;--button-ink:#191919;--marker:#5A4E22;--marker-strong:#C9A93A;--status-ready:#26344D;--status-review:#47283A;--status-blocked:#4A2C20;--synced:#5DB07E;--shadow-panel:0 0 0 1px #2A2A2A;--shadow-float:0 10px 30px rgba(0,0,0,0.6),0 0 0 1px #333333;--shadow-big:0 40px 80px -20px rgba(0,0,0,0.8),0 0 0 1px #333333;--glass:rgba(20,20,20,0.72)}
+.bsd a{color:var(--ink)}.bsd a:hover{color:var(--muted)}
+.bsd input:focus-visible,.bsd button:focus-visible,.bsd a:focus-visible,.bsd summary:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+.bsd .disp{font-family:var(--display);font-weight:800;letter-spacing:-0.04em;line-height:0.98}
+.bsd .h2{font-family:var(--display);font-weight:800;letter-spacing:-0.035em;line-height:1.02;font-size:clamp(34px,5vw,64px);margin:0}
+.bsd .eyebrow{margin:0;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.bsd .lead{margin:0;font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:var(--ink-2)}
+.bsd .wrap{max-width:1200px;margin:0 auto;padding-left:24px;padding-right:24px}
+.bsd .nav{backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px)}
+.bsd .navlink{text-decoration:none;color:var(--muted);font-weight:500}
+.bsd .navlink:hover,.bsd .navlink.on{color:var(--ink)}
+.bsd .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--button);color:var(--button-ink);font:inherit;font-size:15px;font-weight:600;text-decoration:none;cursor:pointer;transition:transform 180ms cubic-bezier(.2,0,0,1),box-shadow 180ms cubic-bezier(.2,0,0,1)}
+.bsd .btn:hover{color:var(--button-ink);transform:translateY(-2px);box-shadow:var(--shadow-float)}
+.bsd .btn2{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:var(--surface-raised);color:var(--ink);font-size:15px;font-weight:600;text-decoration:none;border:0;font-family:inherit;cursor:pointer}
+.bsd .btn2:hover{color:var(--ink);background:var(--selected)}
+.bsd .card{border-radius:22px;background:var(--surface-raised)}
+.bsd .lift{transition:transform 220ms cubic-bezier(.2,0,0,1),box-shadow 220ms cubic-bezier(.2,0,0,1)}
+.bsd .lift:hover{transform:translateY(-4px);box-shadow:var(--shadow-float)}
+.bsd .hl{background-image:linear-gradient(var(--marker),var(--marker));background-repeat:no-repeat;background-position:0 86%;background-size:100% 34%}
+.bsd .bar{display:block;width:3px;border-radius:2px;background:var(--marker-strong)}
+.bsd .tag{display:inline-block;padding:1px 6px;border-radius:3px;background:var(--marker);color:var(--ink);font-size:12px;font-weight:600}
+.bsd .mono{font-family:var(--mono)}
+.bsd .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bsd .caret{display:inline-block;width:2px;height:1.05em;margin-left:1px;vertical-align:-0.15em;background:var(--ink)}
+.bsd .faq-item+.faq-item{border-top:1px solid var(--line)}
+.bsd .skel{background:linear-gradient(90deg,var(--selected) 0%,var(--surface-soft) 50%,var(--selected) 100%);background-size:200% 100%;border-radius:6px}
+.bsd .dark-sec{--bg:#191919;--canvas:#101010;--surface-raised:#232323;--surface-soft:#1E1E1E;--selected:#2E2E2E;--line:#2C2C2C;--ink:#EDEDEA;--ink-2:#CFCFCA;--muted:#A3A29D;--button:#EDEDEA;--button-ink:#141414;--marker:#5A4E22;--marker-strong:#D8B740;--shadow-panel:0 0 0 1px #2A2A2A;--shadow-float:0 10px 30px rgba(0,0,0,0.6),0 0 0 1px #333;background:#101010;color:var(--ink)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .rise{animation:bsdRise 700ms cubic-bezier(.2,0,0,1) both}
+.bsd .d1{animation-delay:60ms}.bsd .d2{animation-delay:160ms}.bsd .d3{animation-delay:300ms}.bsd .d4{animation-delay:440ms}.bsd .d5{animation-delay:600ms}.bsd .d6{animation-delay:780ms}
+.bsd .hl{animation:bsdSweep 900ms cubic-bezier(.2,0,0,1) 800ms both}
+.bsd .pop{animation:bsdPop 520ms cubic-bezier(.2,1.4,.4,1) both}
+.bsd .fadein{animation:bsdFade 220ms ease-out both}
+.bsd .caret{animation:bsdBlink 1s steps(1) infinite}
+.bsd .skel{animation:bsdShimmer 1.2s linear infinite}
+.bsd .spin{animation:bsdSpin 0.9s linear infinite}
+.bsd .float{animation:bsdFloat 6s ease-in-out infinite}
+.bsd .float2{animation:bsdFloat 7s ease-in-out 1s infinite}
+.bsd .marquee{animation:bsdMarquee 40s linear infinite}
+.bsd .dots span{display:inline-block;width:6px;height:6px;margin-right:4px;border-radius:50%;background:var(--muted);animation:bsdDot 1s ease-in-out infinite}
+.bsd .dots span:nth-child(2){animation-delay:150ms}.bsd .dots span:nth-child(3){animation-delay:300ms}
+.bsd .draw{stroke-dasharray:400;stroke-dashoffset:400;animation:bsdDraw 900ms cubic-bezier(.2,0,0,1) both}
+.bsd .grow{transform-origin:left center;animation:bsdGrow 2.4s cubic-bezier(.2,0,0,1) both}
+.bsd .loopgrow{transform-origin:left center;animation:bsdLoopGrow 6s cubic-bezier(.2,0,0,1) infinite}
+.bsd .pulse{animation:bsdPulse 1.6s ease-in-out infinite}
+@supports (animation-timeline: view()){
+.bsd .reveal{animation:bsdRise linear both;animation-timeline:view();animation-range:entry 0% entry 45%}
+.bsd .reveal-l{animation:bsdLeft linear both;animation-timeline:view();animation-range:entry 0% entry 50%}
+.bsd .reveal-r{animation:bsdRight linear both;animation-timeline:view();animation-range:entry 0% entry 50%}
+.bsd .zoomin{animation:bsdZoom linear both;animation-timeline:view();animation-range:entry 0% entry 80%}
+.bsd .parallax{animation:bsdPar linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
+}
+}
+@keyframes bsdRise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes bsdLeft{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:none}}
+@keyframes bsdRight{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+@keyframes bsdZoom{from{transform:scale(.9) translateY(40px)}to{transform:none}}
+@keyframes bsdPar{from{transform:translateY(60px)}to{transform:translateY(-60px)}}
+@keyframes bsdSweep{from{background-size:0% 34%}to{background-size:100% 34%}}
+@keyframes bsdPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes bsdFade{from{opacity:0}to{opacity:1}}
+@keyframes bsdBlink{50%{opacity:0}}
+@keyframes bsdShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes bsdSpin{to{transform:rotate(360deg)}}
+@keyframes bsdFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes bsdMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes bsdDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes bsdDraw{to{stroke-dashoffset:0}}
+@keyframes bsdGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes bsdLoopGrow{0%{transform:scaleX(0.04)}70%,100%{transform:scaleX(1)}}
+@keyframes bsdPulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+.bsd .ch{display:inline-block;white-space:pre}
+.bsd .w{display:inline-block;white-space:pre}
+.bsd .dark-sec .hl,.bsd .ink-panel .hl{background-image:linear-gradient(rgba(224,194,74,.6),rgba(224,194,74,.6))}
+.bsd .ink-panel{--ink:#F4F4F1;--ink-2:#DADAD5;--muted:#B5B4AE;--button:#F4F4F1;--button-ink:#1F1F1D;--surface-raised:#2A2A28;--line:#33332F;background:#1F1F1D;color:#F4F4F1}
+.bsd .flap{display:inline-flex;gap:4px;vertical-align:middle}
+.bsd .tile{position:relative;display:inline-flex;align-items:center;justify-content:center;width:.78em;height:1.18em;border-radius:.12em;background:var(--button);color:var(--button-ink);font-family:var(--mono);font-weight:700;font-size:.82em;overflow:hidden;box-shadow:inset 0 -1px 0 rgba(255,255,255,.08)}
+.bsd .tile::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.35)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .snap .ch{animation:bsdSnap 300ms cubic-bezier(.2,1.5,.4,1) both}
+.bsd .flipin .ch{animation:bsdFlipIn 650ms cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 60%}
+.bsd .packw .w{animation:bsdPack 750ms cubic-bezier(.2,1.25,.4,1) both}
+.bsd .blurw .w{animation:bsdBlur 1000ms ease-out both}
+.bsd .tile.fa{animation:bsdTileA 520ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .tile.fb{animation:bsdTileB 520ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .travel{animation:bsdTravel 1.2s cubic-bezier(.6,0,.4,1) both}
+}
+@keyframes bsdSnap{from{opacity:0;transform:translateY(-.55em) scale(1.25)}to{opacity:1;transform:none}}
+@keyframes bsdFlipIn{from{opacity:0;transform:perspective(600px) rotateX(-95deg)}to{opacity:1;transform:none}}
+@keyframes bsdPack{from{opacity:0;transform:translateX(90px) rotate(9deg)}to{opacity:1;transform:none}}
+@keyframes bsdBlur{from{opacity:0;filter:blur(16px);transform:translateY(12px)}to{opacity:1;filter:none;transform:none}}
+@keyframes bsdTileA{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
+@keyframes bsdTileB{0%{transform:perspective(300px) rotateX(0)}45%{transform:perspective(300px) rotateX(-90deg);filter:brightness(.6)}55%{transform:perspective(300px) rotateX(90deg);filter:brightness(.6)}100%{transform:perspective(300px) rotateX(0)}}
+@keyframes bsdTravel{from{offset-distance:0%}to{offset-distance:100%}}
+
+.bsd .sentflip{display:inline-block;transform-origin:50% 55%}
+.bsd .sun{position:absolute;left:50%;top:-180px;width:420px;height:420px;margin-left:-210px;border-radius:50%;background:radial-gradient(circle,rgba(255,206,120,.95) 0%,rgba(250,180,100,.55) 35%,rgba(248,196,150,.18) 60%,rgba(248,196,150,0) 72%);pointer-events:none}
+.bsd .ring{position:absolute;left:50%;top:50%;border-radius:50%;border:2px solid var(--marker-strong);transform:translate(-50%,-50%)}
+.bsd .track-dot{position:absolute;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:var(--marker-strong);box-shadow:0 0 0 6px rgba(224,194,74,.25);transition:left 1.2s cubic-bezier(.6,0,.3,1)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .sentflip.fa{animation:bsdSentA 700ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .sentflip.fb{animation:bsdSentB 700ms cubic-bezier(.3,.7,.3,1) both}
+.bsd .sun{animation:bsdSunrise 2.4s cubic-bezier(.2,0,0,1) 300ms both}
+.bsd .ring{animation:bsdRing 3s ease-out infinite}
+.bsd .nowline{animation:bsdPulse 2s ease-in-out infinite}
+}
+@keyframes bsdSentA{0%{opacity:0;transform:perspective(800px) rotateX(-90deg)}100%{opacity:1;transform:none}}
+@keyframes bsdSentB{0%{opacity:0;transform:perspective(800px) rotateX(-90deg)}100%{opacity:1;transform:none}}
+@keyframes bsdSunrise{from{transform:translateY(140px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes bsdRing{0%{width:60px;height:60px;opacity:.9}100%{width:340px;height:340px;opacity:0}}
+
+.bsd .logo-svg .lg-stem,.bsd .logo-svg .lg-bowl{transform-box:fill-box;transform-origin:50% 100%}
+.bsd .chars-w{display:inline-block;white-space:nowrap}
+@media (prefers-reduced-motion: no-preference){
+.bsd .logo-svg .lg-stem{animation:bsdStem 700ms cubic-bezier(.2,1.5,.4,1) 150ms both}
+.bsd .logo-svg .lg-bowl{animation:bsdBowl 700ms cubic-bezier(.2,1.5,.4,1) 380ms both}
+.bsd .logo-link:hover .lg-stem{animation:bsdStem 600ms cubic-bezier(.2,1.5,.4,1) both}
+.bsd .logo-link:hover .lg-bowl{animation:bsdBowl2 600ms cubic-bezier(.2,1.5,.4,1) 120ms both}
+.bsd .dropin{animation:bsdDrop 700ms cubic-bezier(.2,1.4,.4,1) both}
+.bsd .menu-in{animation:bsdMenu 260ms cubic-bezier(.2,0,0,1) both}
+}
+@keyframes bsdStem{0%{transform:translateY(-120%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdBowl{0%{transform:translateY(-160%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdBowl2{0%{transform:translateY(-160%);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes bsdDrop{from{opacity:0;transform:translateY(-24px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes bsdMenu{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+@media (max-width: 760px){
+.mcol{min-height:0!important}
+.orch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:16px!important}
+.orch-svg{min-width:640px}
+.evn{width:54px!important;height:54px!important;font-size:15px!important}
+.evl{font-size:11px!important;white-space:normal!important;text-align:center;max-width:64px;line-height:1.25}
+.pill-hero{font-size:12px!important;text-align:left}
+footer a{display:inline-block;padding:6px 0}
+
+.bsd .navlinks{display:none !important}
+.bsd .hide-sm{display:none !important}
+}
+.bsd .risew .wm{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em}
+.bsd .risew .w{display:inline-block}
+@media (prefers-reduced-motion: no-preference){
+.bsd .risew .w{animation:bsdRiseW 800ms cubic-bezier(.2,0,0,1) both}
+}
+@keyframes bsdRiseW{from{transform:translateY(105%)}to{transform:none}}

@@ -1,0 +1,38 @@
+.bsd .cycler{display:inline-block;height:1.1em;overflow:hidden;vertical-align:bottom}
+.bsd .cycler>span{display:flex;flex-direction:column}
+.bsd .cycler>span>span{display:block;height:1.1em;line-height:1.1em}
+.bsd .flip{perspective:1200px}
+.bsd .flip-in{position:relative;width:100%;height:100%;transition:transform 600ms cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d}
+.bsd .flip-in.on{transform:rotateY(180deg)}
+.bsd .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:22px;box-sizing:border-box;padding:26px;display:flex;flex-direction:column;gap:12px}
+.bsd .back{transform:rotateY(180deg)}
+.bsd .wave span{display:block;width:5px;border-radius:3px;background:var(--ink);height:100%;transform-origin:center}
+.bsd .v1,.bsd .v2,.bsd .v3{position:absolute;inset:0}
+.bsd .switch{position:relative;width:64px;height:36px;border-radius:999px;border:0;cursor:pointer;transition:background-color 220ms ease}
+.bsd .knob{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform 260ms cubic-bezier(.2,1.2,.4,1)}
+.bsd .knob.on{transform:translateX(28px)}
+@media (prefers-reduced-motion: no-preference){
+.bsd .cycler>span{animation:bsdCycle 12s cubic-bezier(.7,0,.3,1) infinite}
+.bsd .wave span{animation:bsdWave 1.1s ease-in-out infinite}
+.bsd .v1{animation:bsdV1 12s infinite}.bsd .v2{animation:bsdV2 12s infinite}.bsd .v3{animation:bsdV3 12s infinite}
+.bsd .slashpop{animation:bsdSlash 5s cubic-bezier(.2,0,0,1) infinite}
+.bsd .typeq{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;animation:bsdTypeQ 6s steps(18) infinite}
+.bsd .res{animation:bsdRes 6s ease-out infinite}
+.bsd .playhead{animation:bsdPlay 8s linear infinite}
+.bsd .node{animation:bsdFloat 5s ease-in-out infinite}
+}
+@keyframes bsdCycle{0%,16%{transform:translateY(0)}20%,36%{transform:translateY(-1.1em)}40%,56%{transform:translateY(-2.2em)}60%,76%{transform:translateY(-3.3em)}80%,96%{transform:translateY(-4.4em)}100%{transform:translateY(-5.5em)}}
+@keyframes bsdWave{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes bsdV1{0%,30%{opacity:1;transform:none}33%,97%{opacity:0;transform:translateY(8px)}100%{opacity:1}}
+@keyframes bsdV2{0%,30%{opacity:0;transform:translateY(8px)}33%,63%{opacity:1;transform:none}66%,100%{opacity:0}}
+@keyframes bsdV3{0%,63%{opacity:0;transform:translateY(8px)}66%,96%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes bsdSlash{0%,15%{opacity:0;transform:translateY(6px) scale(.96)}22%,80%{opacity:1;transform:none}90%,100%{opacity:0}}
+@keyframes bsdTypeQ{0%{width:0}35%,100%{width:18ch}}
+@keyframes bsdRes{0%,40%{opacity:0;transform:translateY(6px)}50%,92%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes bsdPlay{from{left:0%}to{left:100%}}
+
+.bsd .prompt-box{min-height:54px}
+.bsd .tl{--tl-name:190px;--tl-chip:84px;--tl-chipgap:96px}
+.bsd .tl-name{flex:0 0 var(--tl-name);min-width:0}
+.bsd .tl-chip{flex:0 0 var(--tl-chip);box-sizing:border-box;white-space:nowrap}
+@media (max-width:760px){.bsd .hr-m{display:none}.bsd .prompt-box{min-height:78px}.bsd .tl{--tl-name:108px;--tl-chip:0px;--tl-chipgap:0px}.bsd .tl .tl-chip{display:none}}

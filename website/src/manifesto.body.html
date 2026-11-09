@@ -1,0 +1,84 @@
+<main style="flex: 1 1 auto;">
+
+<section aria-labelledby="mf-title" class="wrap" style="padding-top: 104px; padding-bottom: 80px; display: flex; flex-direction: column; gap: 28px;">
+<p class="eyebrow rise d1">Manifesto</p>
+<h1 id="mf-title" class="disp blurw" aria-label="We are rebuilding knowledge work. Starting with what Notion got right." style="margin: 0; max-width: 1120px; font-size: clamp(46px, 8vw, 112px);"><span aria-hidden="true"><sc-for list="{{hw1}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for><br><span style="color: var(--muted);"><sc-for list="{{hw2}}" as="w" hint-placeholder-count="3"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span><span class="hl"><sc-for list="{{hw3}}" as="w" hint-placeholder-count="4"><span class="w" style="animation-delay: {{w.d}};">{{w.c}}</span></sc-for></span></span></h1>
+<p class="lead rise d3" style="max-width: 720px;">Notion showed the world that notes, docs and databases belong together. We think they also belong on your own devices: open, fast, encrypted, and ready for agents that work for you without working behind your back.</p>
+</section>
+
+<section aria-labelledby="pr-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 110px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 8px;">
+<h2 id="pr-title" class="sr">Principles</h2>
+<sc-for list="{{principles}}" as="p" hint-placeholder-count="5">
+<article class="reveal" style="display: grid; grid-template-columns: minmax(80px, 140px) minmax(0, 1fr); gap: 24px; padding: 36px 0; border-top: 1px solid var(--line); align-items: baseline;">
+<p class="disp" style="margin: 0; font-size: clamp(40px, 5vw, 72px); color: var(--muted);">{{p.n}}</p>
+<div style="display: flex; flex-direction: column; gap: 10px;"><h3 style="margin: 0; font-family: var(--display); font-size: clamp(28px, 3.4vw, 44px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;">{{p.t}}</h3><p style="margin: 0; max-width: 720px; font-size: 18px; line-height: 1.6; color: var(--ink-2);">{{p.d}}</p></div>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="crew-title" class="ink-panel">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div class="reveal-l" style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow" style="color: var(--marker-strong);">The team</p>
+<h2 id="crew-title" class="h2">One human.<br>A night shift.</h2>
+<p class="lead">Based is built by Elija in Vienna, together with the same kind of agents Based will give you. An architect agent plans with him during the day. A night shift picks up the backlog, writes the code, runs the tests and leaves a log by morning. Nothing merges unless the tests are green, and every line is in the public repo.</p>
+<p style="margin: 0; font-size: 15px; color: var(--muted);">We use what we build. If an agent workflow is annoying, we notice first.</p>
+</div>
+<div class="reveal-r" style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<sc-for list="{{crew}}" as="c" hint-placeholder-count="4">
+<div class="lift" style="padding: 18px 20px 18px 16px; border-radius: 20px; background: var(--surface-raised); display: flex; gap: 14px; align-items: center;">
+<span class="bar" style="flex: 0 0 3px; align-self: stretch; opacity: {{c.bar}};"></span>
+<div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px;"><p style="margin: 0; font-size: 16px; font-weight: 650;">{{c.t}}</p><p style="margin: 0; font-size: 14px; color: var(--muted);">{{c.d}}</p></div>
+<span class="mono" style="font-size: 11.5px; color: var(--muted); white-space: nowrap;">{{c.s}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="num-title" class="wrap" style="padding-top: 110px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 32px;">
+<h2 id="num-title" class="h2 reveal">Built in the open.</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{nums}}" as="s" hint-placeholder-count="4"><div class="card reveal" style="padding: 28px; display: flex; flex-direction: column; gap: 8px;"><p class="disp" style="margin: 0; font-size: clamp(44px, 5.5vw, 72px);">{{s.v}}</p><p style="margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted);">{{s.l}}</p></div></sc-for>
+</div>
+<p class="reveal" style="margin: 0; font-size: 13px; color: var(--muted);">From the public repo: <a href="https://github.com/elija-7580/Based/blob/main/replica/features.csv" style="color: var(--muted);">features.csv</a>, <a href="https://github.com/elija-7580/Based/blob/main/replica/build-log.md" style="color: var(--muted);">build-log.md</a>, <a href="https://github.com/elija-7580/Based/tree/main/fixtures" style="color: var(--muted);">fixtures/</a>.</p>
+</section>
+
+<section id="roadmap" aria-labelledby="rm-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); scroll-margin-top: 80px;">
+<div class="wrap" style="padding-top: 110px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Roadmap</p>
+<h2 id="rm-title" class="h2">Where we are.</h2>
+<p class="lead">A full rewrite onto one TypeScript core that runs everywhere: Mac, web, iPhone, Windows, Linux and Android. Each phase ships only when its tests prove it.</p>
+<a href="Roadmap.dc.html" class="btn2" style="align-self: flex-start;">Open the roadmap and vote →</a>
+</div>
+<div class="zoomin" style="overflow-x: auto;">
+<div style="min-width: 900px; position: relative; padding-top: 30px;">
+<div style="position: absolute; left: 0; right: 0; top: 41px; height: 4px; border-radius: 2px; background: var(--selected);"></div>
+<div class="grow" style="position: absolute; left: 0; top: 41px; height: 4px; width: 31%; border-radius: 2px; background: var(--marker-strong);"></div>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; position: relative;">
+<sc-for list="{{phases}}" as="p" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<span style="width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box; background: {{p.dotBg}}; border: 3px solid {{p.dotBorder}};"></span>
+<p class="mono" style="margin: 0; font-size: 11.5px; color: var(--muted);">Phase {{p.n}}, {{p.state}}</p>
+<p style="margin: 0; font-size: 16px; font-weight: 650; line-height: 1.25;">{{p.t}}</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted);">{{p.d}}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="mf-cta" class="wrap" style="padding-top: 110px; padding-bottom: 120px;">
+<div class="zoomin ink-panel" style="padding: 80px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+<h2 id="mf-cta" class="disp" style="margin: 0; font-size: clamp(40px, 6vw, 84px);">Come build<br><span class="hl">what comes after Notion.</span></h2>
+<p class="lead" style="max-width: 560px;">Join the beta, star the repo, or open an issue. All three make Based better.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="Main.dc.html#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a><a href="https://github.com/elija-7580/Based" class="btn2" style="min-height: 52px;">Star on GitHub</a></div>
+</div>
+</section>
+
+</main>

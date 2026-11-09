@@ -1,0 +1,217 @@
+<main style="flex: 1 1 auto;">
+
+<section aria-labelledby="ag-title" class="wrap" style="padding-top: 96px; padding-bottom: 40px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;">
+<p class="rise d1" style="margin: 0; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--surface-raised); font-size: 13px; font-weight: 600;"><span class="bar" style="height: 14px;"></span>Opt-in. Off until you switch it on.</p>
+<h1 id="ag-title" class="disp" aria-label="Mission control for everything you work on." style="margin: 0; max-width: 1040px; font-size: clamp(46px, 7.6vw, 104px);"><span aria-hidden="true">{{scr1}}<br><span class="hl">{{scr2}}</span></span></h1>
+<p class="lead rise d3" style="max-width: 680px;">One main agent plans, hands work to specialists and comes back to you. You watch it happen, approve what matters, and every line they write is signed. Off until you switch it on.</p>
+<div class="rise d4" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"><a href="Main.dc.html#waitlist" class="btn">Join the beta</a><a href="#modes" class="btn2">How control works</a></div>
+</section>
+
+<section aria-label="Live dashboard" class="wrap" style="padding-top: 24px; padding-bottom: 120px;">
+<div class="rise d5" style="border-radius: 30px; background: var(--surface-raised); padding: 12px; box-shadow: var(--shadow-big);">
+<div style="border-radius: 22px; background: var(--canvas); display: flex; flex-wrap: wrap; overflow: hidden; min-height: 600px;">
+<div style="flex: 0 0 210px; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; box-sizing: border-box;">
+<p style="margin: 0 0 14px 8px; display: flex; align-items: center; gap: 8px; font-weight: 650;"><img src="{{markSrc}}" alt="" width="20" height="20">based</p>
+<sc-for list="{{side}}" as="n" hint-placeholder-count="6"><p style="margin: 0; padding: 9px 12px; border-radius: 10px; display: flex; justify-content: space-between; background: {{n.bg}}; font-weight: {{n.w}}; box-shadow: {{n.sh}};"><span>{{n.t}}</span><span class="mono" style="font-size: 11px; color: var(--muted);">{{n.c}}</span></p></sc-for>
+</div>
+<div style="flex: 1 1 520px; min-width: 0; margin: 10px; border-radius: 18px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 30px; display: flex; flex-direction: column; gap: 22px; text-align: left;">
+<div><p style="margin: 0; font-size: 13px; color: var(--muted);">Monday, Mission control</p><p style="margin: 4px 0 0; font-size: 28px; font-weight: 650; letter-spacing: -0.015em;">Good evening, Lena</p></div>
+<div style="display: flex; gap: 14px;"><span class="bar" style="flex: 0 0 3px;"></span><div><p class="mono" style="margin: 0 0 4px; font-size: 11.5px; color: var(--muted);">Based main agent, {{clock}}</p><p style="margin: 0; font-size: 16px; line-height: 1.55;">{{mainMsg}}</p></div></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<p style="margin: 0; font-size: 15px; font-weight: 600;">Working on</p>
+<div style="border-radius: 18px; background: var(--surface-raised); padding: 6px;">
+<sc-for list="{{runs}}" as="r" hint-placeholder-count="4">
+<div style="padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; justify-content: space-between; gap: 8px;"><p style="margin: 0; font-size: 14px; font-weight: 600;">{{r.t}}</p><p class="mono" style="margin: 0; font-size: 11px; color: var(--muted);">{{r.pctTxt}}</p></div>
+<div style="height: 6px; border-radius: 999px; background: var(--selected); overflow: hidden;"><div style="height: 100%; width: {{r.pct}}; border-radius: 999px; background: {{r.c}}; transition: width 900ms cubic-bezier(.2,0,0,1);"></div></div>
+<p style="margin: 0; font-size: 12px; color: var(--muted);">{{r.sub}}</p>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<p style="margin: 0; font-size: 15px; font-weight: 600;">Live activity</p>
+<div style="border-radius: 18px; background: var(--surface-raised); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 280px;" class="mcol">
+<sc-for list="{{feed}}" as="f" hint-placeholder-count="6">
+<p class="fadein" style="margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--bg); font-size: 13px; line-height: 1.4; display: flex; gap: 10px;"><span class="mono" style="flex: 0 0 auto; font-size: 11px; color: var(--muted);">{{f.time}}</span><span><b>{{f.who}}</b> {{f.what}}</span></p>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="padding: 6px; border-radius: 18px; background: var(--surface-raised);"><div style="padding: 12px 14px; border-radius: 14px; background: var(--bg); display: flex; flex-wrap: wrap; align-items: center; gap: 8px;"><span style="flex: 1 1 200px; font-size: 15px; color: var(--muted);">Prepare the board meeting and keep the project page updated</span><span style="padding: 7px 12px; border-radius: 999px; background: var(--surface-raised); font-size: 13px;">Main</span><span style="padding: 7px 12px; border-radius: 999px; background: var(--surface-raised); font-size: 13px;">{{computeNow}}</span><span style="padding: 7px 12px; border-radius: 999px; background: var(--surface-raised); font-size: 13px;">Ask before edits</span><span style="padding: 7px 12px; border-radius: 999px; background: var(--surface-raised); font-size: 13px;">Privacy check on</span><span style="width: 36px; height: 36px; border-radius: 50%; background: var(--button); color: var(--button-ink); display: flex; align-items: center; justify-content: center;"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg></span></div></div>
+</div>
+</div>
+</div>
+<p style="margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--muted);">Live demo with sample data. Yes, it keeps going.</p>
+</section>
+
+<section aria-labelledby="pro-title" class="wrap" style="padding-top: 40px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div class="reveal-l" style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Proactive</p>
+<h2 id="pro-title" class="h2">It comes to you.</h2>
+<p class="lead">You don't check on agents. They check in: when something is done, when they need a decision, and every morning with a briefing. On your Mac, on your phone, in your inbox.</p>
+</div>
+<div class="reveal-r" style="flex: 1 1 460px; min-width: 0;">
+<div style="position: relative; height: 460px; border-radius: 28px; background: var(--surface-raised); overflow: hidden;">
+<span class="ring" aria-hidden="true"></span>
+<span class="ring" aria-hidden="true" style="animation-delay: 1s;"></span>
+<span class="ring" aria-hidden="true" style="animation-delay: 2s;"></span>
+<div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 24px; background: var(--ink); display: flex; align-items: center; justify-content: center;"><img src="{{markSrcDark}}" alt="" width="44" height="44"></div>
+<sc-for list="{{notifs}}" as="n" hint-placeholder-count="4">
+<div class="pop" style="position: absolute; left: {{n.x}}; top: {{n.y}}; width: 230px; max-width: 46%; padding: 12px 14px 12px 12px; border-radius: 16px; background: var(--bg); box-shadow: var(--shadow-float); display: flex; gap: 10px; animation-delay: {{n.d}};">
+<span class="bar" style="flex: 0 0 3px;"></span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 12px; font-weight: 600;">{{n.title}} <span class="mono" style="font-weight: 400; color: var(--muted);">{{n.time}}</span></span><span style="font-size: 13px; line-height: 1.35; color: var(--ink-2);">{{n.t}}</span></span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="brief-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Native to your databases</p>
+<h2 id="brief-title" class="h2">Your morning briefing is a database row.</h2>
+<p class="lead">Agents don't live in a chat window next to your work. They read and write your databases like you do. Every briefing, run and decision becomes a row you can filter, relate and search, so the history of your work builds itself.</p>
+</div>
+<div class="zoomin" style="border-radius: 28px; background: var(--surface-raised); padding: 12px;">
+<div style="border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-panel); padding: 20px; overflow-x: auto;">
+<div style="min-width: 640px;">
+<p style="margin: 0 0 12px; font-size: 20px; font-weight: 650;">Morning briefings</p>
+<div class="mono" style="display: grid; grid-template-columns: 110px minmax(0, 1.6fr) 90px 100px 120px; gap: 12px; padding: 8px 10px; font-size: 11px; color: var(--muted);"><span>Date</span><span>Summary</span><span>Deadlines</span><span>Needs you</span><span>Linked</span></div>
+<sc-for list="{{briefs}}" as="b" hint-placeholder-count="5"><div class="reveal" style="display: grid; grid-template-columns: 110px minmax(0, 1.6fr) 90px 100px 120px; gap: 12px; padding: 12px 10px; border-top: 1px solid var(--line); font-size: 13.5px; align-items: center;"><span class="mono" style="font-size: 12px;">{{b.d}}</span><span style="display: flex; gap: 10px; min-width: 0;"><span class="bar" style="flex: 0 0 3px;"></span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{b.s}}</span></span><span class="mono" style="font-size: 12px;">{{b.dl}}</span><span style="justify-self: start; padding: 1px 8px; border-radius: 3px; font-size: 12px; background: {{b.bg}};">{{b.n}}</span><span style="color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{b.l}}</span></div></sc-for>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="ev2-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 860px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">One session, everywhere</p>
+<h2 id="ev2-title" class="h2">Terminal, cloud, phone. Same conversation.</h2>
+<p class="lead">Start a task from your terminal, let it keep running in the cloud sandbox when you close the lid, answer its question from your phone. Any AI can join through MCP. Every message and every result is saved to your workspace as it happens.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px;">
+<sc-for list="{{places}}" as="p" hint-placeholder-count="4"><div class="card lift reveal" style="padding: 24px; display: flex; flex-direction: column; gap: 10px;"><p class="mono" style="margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--bg); font-size: 12px; overflow-wrap: anywhere;">{{p.cmd}}</p><p style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">{{p.t}}</p><p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted);">{{p.d}}</p></div></sc-for>
+</div>
+<p class="reveal" style="margin: 0; font-size: 14px; color: var(--muted);">Cloud agents are opt-in and only read the pages you hand them, while they work. Based Cloud runs on EU servers and is end-to-end encrypted by release. The beta starts on the Mac with local storage and iCloud.</p>
+</section>
+
+<section id="modes" aria-labelledby="modes-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); scroll-margin-top: 80px;">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div class="reveal-l" style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Control</p>
+<h2 id="modes-title" class="h2">You set the leash.</h2>
+<p class="lead">Four positions, per task. Change it any time, even mid-run.</p>
+<div role="radiogroup" aria-label="Agent permission" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; border-radius: 999px; background: var(--selected); align-self: flex-start;">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{m.checked}}" onClick="{{m.pick}}" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: {{m.bg}}; color: var(--ink); box-shadow: {{m.sh}}; transition: background-color 180ms ease;">{{m.label}}</button></sc-for>
+</div>
+</div>
+<div class="reveal-r" style="flex: 1 1 460px; min-width: 0; padding: 12px; border-radius: 28px; background: var(--surface-raised);">
+<div style="padding: 28px; border-radius: 20px; background: var(--bg); box-shadow: var(--shadow-panel); min-height: 300px; display: flex; flex-direction: column; gap: 14px;">
+<p class="mono" style="margin: 0; font-size: 11.5px; color: var(--muted);">{{modeKicker}}</p>
+<p style="margin: 0; font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;">{{modeTitle}}</p>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2);">{{modeText}}</p>
+<sc-if value="{{modeAsk}}" hint-placeholder-val="{{ false }}"><div class="pop" style="margin-top: auto; padding: 14px; border-radius: 16px; background: var(--surface-raised); display: flex; flex-wrap: wrap; align-items: center; gap: 10px;"><span style="flex: 1 1 200px; font-size: 14px;"><b>Writer</b> wants to replace 2 paragraphs in “Thesis ch. 2”.</span><span class="btn2" style="min-height: 36px; background: var(--bg);">Show diff</span><span class="btn" style="min-height: 36px;">Approve</span></div></sc-if>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="orch-title" class="ink-panel">
+<div class="wrap" style="padding-top: 130px; padding-bottom: 130px; display: flex; flex-direction: column; gap: 48px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow" style="color: var(--marker-strong);">Orchestration</p>
+<h2 id="orch-title" class="h2">One main agent.<br>As many hands as the job needs.</h2>
+<p class="lead">You talk to one agent. It picks the models, spawns specialists, checks their work and writes the update into your project page. Like a chief of staff who never sleeps and always cites.</p>
+</div>
+<div class="zoomin" style="border-radius: 28px; background: var(--surface-raised); padding: 12px;">
+<div class="orch-wrap" style="border-radius: 20px; background: var(--bg); padding: 24px;">
+<svg role="img" aria-label="You ask the main agent. It delegates to a researcher, a writer, a coder and a reviewer, whose results flow into your project page, the daily brief and your inbox." viewBox="0 0 1000 420" width="100%" class="orch-svg">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--marker-strong)"></path></marker></defs>
+<g fill="none" stroke="var(--marker-strong)" stroke-width="2" stroke-linecap="round">
+<path class="flowline" d="M150 210 L330 210" marker-end="url(#arr)"></path>
+<path class="flowline" d="M470 210 C540 210, 540 70, 610 70" marker-end="url(#arr)"></path>
+<path class="flowline" d="M470 210 C540 210, 540 165, 610 165" marker-end="url(#arr)"></path>
+<path class="flowline" d="M470 210 C540 210, 540 255, 610 255" marker-end="url(#arr)"></path>
+<path class="flowline" d="M470 210 C540 210, 540 350, 610 350" marker-end="url(#arr)"></path>
+<path class="flowline" d="M760 70 C820 70, 820 210, 860 210"></path>
+<path class="flowline" d="M760 165 C820 165, 820 210, 860 210"></path>
+<path class="flowline" d="M760 255 C820 255, 820 210, 860 210"></path>
+<path class="flowline" d="M760 350 C820 350, 820 210, 860 210"></path>
+</g>
+<g><rect x="30" y="182" width="120" height="56" rx="28" fill="var(--surface-raised)"></rect><text x="90" y="216" text-anchor="middle" fill="var(--ink)" font-size="17" font-weight="600" font-family="system-ui">You</text></g>
+<circle cx="400" cy="210" r="56" fill="none" stroke="#E0C24A" stroke-width="2" opacity=".35"></circle><g><rect x="330" y="176" width="140" height="68" rx="34" fill="#E0C24A"></rect><text x="400" y="216" text-anchor="middle" fill="#1F1F1D" font-size="17" font-weight="800" font-family="system-ui">Main agent</text></g>
+<g><rect x="610" y="48" width="150" height="44" rx="22" fill="var(--surface-raised)"></rect><text x="685" y="75" text-anchor="middle" fill="var(--ink)" font-size="15" font-family="system-ui">Researcher</text></g>
+<g><rect x="610" y="143" width="150" height="44" rx="22" fill="var(--surface-raised)"></rect><text x="685" y="170" text-anchor="middle" fill="var(--ink)" font-size="15" font-family="system-ui">Writer</text></g>
+<g><rect x="610" y="233" width="150" height="44" rx="22" fill="var(--surface-raised)"></rect><text x="685" y="260" text-anchor="middle" fill="var(--ink)" font-size="15" font-family="system-ui">Coder</text></g>
+<g><rect x="610" y="328" width="150" height="44" rx="22" fill="var(--surface-raised)"></rect><text x="685" y="355" text-anchor="middle" fill="var(--ink)" font-size="15" font-family="system-ui">Reviewer</text></g>
+
+<g><rect x="860" y="160" width="120" height="100" rx="18" fill="var(--marker)"></rect><text x="920" y="200" text-anchor="middle" fill="var(--ink)" font-size="15" font-weight="700" font-family="system-ui">Project</text><text x="920" y="222" text-anchor="middle" fill="var(--ink)" font-size="13" font-family="system-ui">page, brief</text><text x="920" y="240" text-anchor="middle" fill="var(--ink)" font-size="13" font-family="system-ui">inbox</text></g>
+</svg>
+</div>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="board-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Progress</p>
+<h2 id="board-title" class="h2">Progress you can see, not promises you have to trust.</h2>
+<p class="lead">Projects, runs and tasks on one board. Cards move as agents finish. Click any card to see what was done, with which model, at what cost.</p>
+</div>
+<div class="zoomin" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px;">
+<sc-for list="{{board}}" as="col" hint-placeholder-count="4">
+<div style="padding: 12px; border-radius: 22px; background: var(--surface-raised); display: flex; flex-direction: column; gap: 10px; min-height: 300px;" class="mcol">
+<p style="margin: 4px 6px; display: flex; justify-content: space-between; font-size: 14px; font-weight: 600;"><span>{{col.t}}</span><span class="mono" style="font-size: 11.5px; color: var(--muted);">{{col.n}}</span></p>
+<sc-for list="{{col.cards}}" as="c" hint-placeholder-count="2">
+<div class="pop" style="padding: 14px 14px 14px 12px; border-radius: 16px; background: var(--bg); box-shadow: var(--shadow-panel); display: flex; gap: 10px;"><span class="bar" style="flex: 0 0 3px; opacity: {{c.bar}};"></span><div style="display: flex; flex-direction: column; gap: 4px;"><p style="margin: 0; font-size: 14px; font-weight: 600;">{{c.t}}</p><p class="mono" style="margin: 0; font-size: 11px; color: var(--muted);">{{c.m}}</p></div></div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="night-title" style="background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+<div class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-wrap: wrap; gap: 56px; align-items: center;">
+<div class="reveal-l" style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<p class="eyebrow">Night shift</p>
+<h2 id="night-title" class="h2">Go to bed. Wake up to progress.</h2>
+<p class="lead">Schedule agents to run while you sleep: file the day's voice notes, refresh the project pages, prepare tomorrow's brief. In the morning, the marker shows exactly what changed.</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted);">True story: Based itself is built this way. A night shift of agents picks tasks from the backlog, runs the tests and leaves a log by morning.</p>
+</div>
+<div class="reveal-r ink-panel" style="flex: 1 1 460px; min-width: 0; padding: 24px; border-radius: 24px; font-family: var(--mono); font-size: 13px; line-height: 1.7; min-height: 320px; box-sizing: border-box;">
+<p style="margin: 0 0 10px; color: var(--muted);">night-shift.log</p>
+<sc-for list="{{log}}" as="l" hint-placeholder-count="8"><p class="fadein" style="margin: 0; color: {{l.c}};">{{l.t}}</p></sc-for>
+<p style="margin: 0;"><span class="caret" aria-hidden="true" style="background: var(--ink);"></span></p>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="any-title" class="wrap" style="padding-top: 120px; padding-bottom: 120px; display: flex; flex-direction: column; gap: 40px;">
+<div class="reveal" style="max-width: 820px; display: flex; flex-direction: column; gap: 16px;">
+<p class="eyebrow">Models</p>
+<h2 id="any-title" class="h2">Any model. Your keys. No credits.</h2>
+<p class="lead">Connect the ChatGPT or Claude account you already pay for, plug in an API key, or drive the coding CLIs you already use. Pick per task: Auto, Fast, Deep or a specific model. Or run one locally.</p>
+</div>
+<div class="reveal" style="overflow: hidden; border-radius: 22px; background: var(--surface-raised); padding: 18px 0;">
+<div class="marquee" style="display: flex; gap: 12px; width: max-content;">
+<sc-for list="{{engines}}" as="e" hint-placeholder-count="12"><span style="padding: 12px 20px; border-radius: 999px; background: var(--bg); font-size: 16px; font-weight: 600; white-space: nowrap; box-shadow: var(--shadow-panel);">{{e}}</span></sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px;">
+<sc-for list="{{brain}}" as="b" hint-placeholder-count="6"><article class="card lift reveal" style="padding: 26px; display: flex; flex-direction: column; gap: 10px;"><h3 style="margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">{{b.t}}</h3><p style="margin: 0; font-size: 15px; line-height: 1.55; color: var(--muted);">{{b.d}}</p></article></sc-for>
+</div>
+</section>
+
+<section aria-labelledby="ag-cta" class="wrap" style="padding-top: 20px; padding-bottom: 120px;">
+<div class="zoomin ink-panel" style="padding: 80px 32px; border-radius: 36px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+<h2 id="ag-cta" class="disp" style="margin: 0; font-size: clamp(40px, 6vw, 84px);">They do the work.<br><span class="hl">You stay in charge.</span></h2>
+<p class="lead" style="max-width: 560px;">Agents are optional, marked and on your terms. Join the beta for the Mac.</p>
+<a href="Main.dc.html#waitlist" class="btn" style="min-height: 52px; padding: 0 28px; font-size: 16px;">Join the beta</a>
+</div>
+</section>
+
+</main>
