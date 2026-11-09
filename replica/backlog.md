@@ -1,6 +1,6 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 24 (Nachtlauf 2026-11-08/09, Abschnitt direkt unten); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 25 (Lauf 2026-11-09, Abschnitt direkt unten; davor Pass 24); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
@@ -8,8 +8,23 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
 > geprüft. `bash ci/typecheck/run.sh` prüft `App/Shared` unter Linux gegen SwiftUI/AppKit/MapKit-Stubs.
 
+## Lauf 2026-11-09 (Pass 25)
+Endstand der Nacht (Pass 24) per Fast-Forward auf GitHub-main gebracht (c65b2fe), danach zwei Schichten bis 14:10, alles auf `main` = GitHub. Unter Linux/Swift 6.2 nach jedem Merge geprüft (sauberer Build): BasedCore 322, BasedBrain 408 Tests grün; `ci/typecheck/run.sh`, `run.sh --ios` (neu, BSD-95) und `run-watch.sh` (neu, BSD-66) je 0 Fehler. Auf dem Mac nicht geprüft; Klick-Anleitungen in den Backlog-Einträgen.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| Hänger beim Start (Elijas Hang-Bericht) | 🟡 | BSD-135: App-body/MenuBarExtra-Schleife und HappierModel-Refresh-Rekursion behoben, Mac-Test offen |
+| Kein stiller Datenverlust | 🟡 | BSD-42/121 Persistenz im Hintergrund mit Flush (App + based-server), BSD-107/130 unbekannte Werte bleiben erhalten, BSD-122 Schema erreicht Papierkorb-Zeilen, BSD-134 Undo nach Auf-/Zuklappen |
+| Sync | 🟡 | BSD-123 doppelte Unique-IDs, BSD-72 HLC-Drift/Push nach Edit; Node-ID nach Restore offen (BSD-145) |
+| Performance | 🟡 | BSD-117 Titel getrennt von Struktur, BSD-137 ⌘K off-main |
+| Editor / Datenbanken | 🟡 | BSD-100 Turn into, BSD-120 Synced Block mehrfach, BSD-103 Tests, BSD-112 Relationen Teil 2, BSD-68 Design-Tokens Teil 1, BSD-71 Einstellungen Teil 1 |
+| Sicherheit | 🟡 | BSD-136 HTML-Blöcke auf /p/ sandboxed, BSD-110 Env-Freigaben pro Agent |
+| Agenten | 🟡 | BSD-96 Coding-Sessions, 97/126 Auto-Routing, 106/127/132 Sandbox, 108/128 Startseite, 109/129 Skills, 115 Berechtigungen, 116 Hauptfaden, 118 CLI, 119 Brief, 144 Watch-Status entprellt |
+| Suche nach Bedeutung | 🟡 | BSD-62 lokale Embeddings, Related pages |
+| Erfassen überall | 🟡 | BSD-64 Mac-Hotkey/Menüleiste, BSD-66 Apple Watch, BSD-11/131 Share Extension + Widgets (nicht eingebettet), BSD-113 Audio per POST /capture |
+
 ## Nachtlauf 2026-11-08/09 (Pass 24)
-Alle Einträge sind Commits auf `main` dieser Nacht (lokal; Einspielen per Patch-Serie, siehe Notion „Pass 24“). Unter Linux/Swift 6.2 verifiziert: `swift test` ohne `--disable-xctest` (BasedCore 252, BasedBrain 330) und `bash ci/typecheck/run.sh` → 0 Fehler. Auf dem Mac nicht geprüft; Klick-Anleitungen stehen in den Backlog-Einträgen (Notion „Based Backlog“).
+Alle Einträge sind Commits auf `main` dieser Nacht (seit 09.11. auf GitHub-main, c65b2fe). Unter Linux/Swift 6.2 verifiziert: `swift test` ohne `--disable-xctest` (BasedCore 252, BasedBrain 330) und `bash ci/typecheck/run.sh` → 0 Fehler. Auf dem Mac nicht geprüft; Klick-Anleitungen stehen in den Backlog-Einträgen (Notion „Based Backlog“).
 
 | Anforderung | Status | Notiz |
 |---|---|---|

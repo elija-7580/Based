@@ -19,7 +19,7 @@ Breadcrumbs,navigation,should,yes,yes,
 Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)"
 Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system
 Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs"
-Quick Find search (titles + content),search,must,yes,yes,
+Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)"
 Recent pages in search,search,should,yes,yes,
 Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter"
 Backlinks,linking,should,yes,yes,
@@ -144,8 +144,8 @@ Settings,app,must,yes,yes,
 iPhone keyboard toolbar,mobile,must,yes,yes,
 iPhone long-press block menu,mobile,must,yes,yes,
 iPad layout,mobile,could,yes,partial,runs; layout not tuned
-Share extension (save to Based),mobile,could,yes,no,
-Widgets,mobile,could,yes,no,
+Share extension (save to Based),mobile,could,yes,partial,"BSD-11/131: iOS Share Extension target (shared links/text → Captures via App Group); not embedded yet, App Group capability to enable on the Mac (BSD-141)"
+Widgets,mobile,could,yes,partial,BSD-11/131: iOS widgets Capture / Running now / Needs you (snapshot via App Group); not embedded yet (BSD-141)
 Notion AI,ai,could,yes,skip,out of scope
 Integrations / connections marketplace,integrations,could,yes,skip,their network is not part of the product you can rebuild
 Floating page outline (right rail),pages,should,yes,yes,hover to expand; per-page toggle
@@ -214,8 +214,9 @@ Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: A
 Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)"
 Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108
 Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief"
-Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111: Captures DB, Sort captures agent, iPhone shortcuts (untested), POST /capture, Mac menu capture; rest BSD-113"
+Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111/113: Captures DB, Sort captures agent (auto:low), iPhone shortcuts (untested), POST /capture incl. audio, Mac hot key ⌥⇧Space + menu bar (BSD-64), Apple Watch app (BSD-66)"
 CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118
 Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block"
 Schema version + migrations for based.sqlite,app,must,n/a,yes,"BSD-23: PRAGMA user_version, numbered migrations, backup before migrating, refuses newer files (now v3)"
 Visible save errors (no silent in-memory fallback),app,must,n/a,yes,"BSD-15: rollback + read-only banner + storage error screen; undecodable records kept frozen, never synced as deletions (BSD-16)"
+Related pages (by meaning),search,could,n/a,yes,"BSD-62: on-device sentence embeddings (embeddings.sqlite, not synced), end of page + agents' search tool"

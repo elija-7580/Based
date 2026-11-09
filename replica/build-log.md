@@ -561,4 +561,11 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - based.sqlite Format v3 (Schema-Version + Migrationsliste, Backup vor Migration).
 - Server: Routen in `Packages/BasedBrain/Sources/BasedBrain/Server/` (Router mit Auth-Middleware, owner-only als Default).
 - Nicht auf GitHub gepusht (Repo in der geplanten Sitzung nicht freigegeben); Patch-Serie im Notion-Abschnitt „Pass 24“.
+- Nachtrag 09.11.: am Vormittag per Fast-Forward nach GitHub-main eingespielt (04dc255 → c65b2fe).
 
+## Pass 25 — Lauf 2026-11-09 (Hauptlauf + Schicht A + B, tagsüber)
+- 47 Commits c65b2fe → 5bbac62 (BSD-42 … BSD-144, siehe replica/backlog.md „Lauf 2026-11-09“ und Notion „Based Backlog“).
+- P0 BSD-135 (Hänger beim Start auf dem Mac): App-body hing an @AppStorage (MenuBarExtra isInserted) und baute bei jeder Neuauswertung den ganzen Fensterinhalt neu → `MainWindowRoot`; HappierModel.refresh schrieb synchron im Store-Observer, `ensureColumn` verglich Namen exakt → endlose „Goal 2, 3 …“-Rekursion; beides behoben.
+- Typecheck jetzt dreifach: macOS, `--ios` (UIKit-Stub, BSD-95), `run-watch.sh` (BSD-66); je 0 Fehler.
+- Tests (sauberer Build): BasedCore 252 → 322, BasedBrain 330 → 408.
+- Neue Xcode-Targets in project.yml (Watch-App + Complication, Share Extension, Widgets) und ein Post-Build-Skript für die `based`-CLI (BSD-118): unter Linux nur YAML geprüft, xcodegen/Xcode-Build am Mac offen.
