@@ -18,3 +18,5 @@ export { QueryEngine, TITLE_PROPERTY_ID, cellText, databaseOfRow, durationText, 
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
 export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
 export type { ConversionPlan } from "./store/conversion.js";
+export { SearchCorpus, contentText, fold, rowText, snippet } from "./search/search.js";
+export type { SearchFilters, SearchHit, SearchSort } from "./search/search.js";

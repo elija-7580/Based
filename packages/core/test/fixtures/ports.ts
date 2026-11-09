@@ -1,11 +1,11 @@
 // BSD-149/151: Welche Module im TS-Kern schon portiert sind. Ein Port bekommt die Eingabe eines Falls und die
 // Datei-Metadaten (z. B. Records, `now`) und liefert die Ausgabe im Fixture-Format. Nicht eingetragene Module
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
-// Offen: search, clipboard.
+// Offen: clipboard.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
 import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
-import { conversionLoss, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
-import type { DatabaseView } from "../../src/index.js";
+import { conversionLoss, fold, SearchCorpus, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
+import type { DatabaseView, SearchFilters, SearchSort } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
 
@@ -180,4 +180,17 @@ const conversion: Port = (raw, meta) => {
   };
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion };
+const search: Port = (raw, meta) => {
+  const { store } = queryStore(meta);
+  const input = raw as { query: string; filters: SearchFilters; sort: SearchSort; limit: number };
+  const corpus = new SearchCorpus(store);
+  const terms = fold(input.query.trim()).split(" ").filter(Boolean);
+  return corpus.search(input.query, input.filters, input.sort, input.limit, (meta.now as number) / 1000 - 978_307_200).map((h) => {
+    if (h.blockID === undefined) return { pageID: h.pageID, score: h.score, snippet: h.snippet ?? null };
+    const candidates = corpus.contents.filter((e) => e.page === h.pageID && terms.every((t) => e.folded.includes(t))).map((e) => e.blockID).sort();
+    if (!candidates.includes(h.blockID)) throw new Error(`Snippet-Block ${h.blockID} passt nicht`);
+    return { pageID: h.pageID, score: h.score, snippetBlocks: candidates };
+  });
+};
+
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search };
