@@ -160,6 +160,8 @@ final class AppModel {
     }
     /// Page versions (git-like, deduplicated; `history.sqlite` next to the workspace).
     @ObservationIgnored private(set) var pageHistory: PageHistory!
+    /// BSD-62: semantic search + related pages (`embeddings.sqlite` next to the workspace, never synced).
+    @ObservationIgnored private(set) var semantic: SemanticService?
     /// Page whose version history is open (page menu → Version history).
     var versionHistoryPage: RecordID?
     /// Tab shown by the Diagnostics screen (Developer section of the sidebar: Logs / Hangs / Layout / System).
@@ -359,6 +361,8 @@ final class AppModel {
         brain = BrainModel(store: store)
         let brainMS = Int(Date().timeIntervalSince(brainStart) * 1000)
         brain.assets = assets
+        semantic = SemanticService(store: store, directory: inMemory ? nil : dir,
+                                   excludedRoots: [brain.brain.rootID]) { [weak brain] ctx in brain?.tools.semantic = ctx }
         if let first = store.topLevelPages().first(where: { $0.id != brain.brain.rootID }) { selection = .page(first.id) }
         tabs = [BrowserTab(id: activeTabID, selection: selection)]
         lastSnapshot = NavSnapshot(selection: selection, path: [])

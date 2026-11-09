@@ -25,7 +25,7 @@ token) and ask "Which projects are running and what needs me?".
 | Tool | What it does |
 |---|---|
 | `based_guide` | How Based works, by topic (overview, markdown, databases, agents, safety) |
-| `search` | Titles and full text of pages and rows; ids, links, snippets |
+| `search` | Titles and full text of pages and rows; ids, links, snippets. With a semantic index (app: on-device; server: `--embeddings`) also by meaning (keyword + vector, Reciprocal Rank Fusion) |
 | `read_page` | A page as Markdown, with its properties when it is a database row |
 | `list_pages` | Top-level pages or the sub-pages of a page |
 | `create_page` | New page from Markdown under a parent (or at the root) |
