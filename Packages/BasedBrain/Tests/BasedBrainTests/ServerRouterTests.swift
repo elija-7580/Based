@@ -69,7 +69,8 @@ import Darwin
         #expect(open == ["GET /health", "GET /", "GET /mcp", "GET /app", "GET /.well-known/apple-app-site-association",
                          "GET /s/*", "GET /p/*", "GET /p/*/*", "GET /p/*/*/html/*", "POST /share/v1/invites/accept"])
         let configured = Set(f.router.routes.filter { $0.access == .ownerConfigured }.map(\.pattern))
-        #expect(configured == ["/sandboxes", "/sandboxes/*/snapshot", "/sandboxes/*/restore", "/sandboxes/*/destroy"])
+        #expect(configured == ["/sandboxes", "/sandboxes/*/snapshot", "/sandboxes/*/restore", "/sandboxes/*/destroy",
+                               "/sandbox/leftovers", "/sandbox/cleanup"])   // BSD-132
         #expect(f.router.routes.filter { $0.access == .session }.map(\.pattern) == ["/mcp/session/*"])
     }
 

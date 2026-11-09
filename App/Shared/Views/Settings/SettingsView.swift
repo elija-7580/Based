@@ -120,6 +120,7 @@ struct SettingsView: View {
                 #if os(macOS)
                 SkillsSettingsSection()
                 #endif
+                SandboxCleanupSection()
                 AgentsSettingsView().environment(model.brain.happier)
                 AISettingsView()
             case .connections: ConnectionsSettingsView().environment(model.brain.happier)
