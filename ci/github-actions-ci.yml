@@ -1,7 +1,8 @@
 # Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files):
 #   github.com/elija-7580/Based → Add file → Create new file → name ".github/workflows/ci.yml" → paste → Commit.
 # Afterwards GitHub builds and tests everything on each push; results appear in the "Actions" tab and as ✓ / ✗ next to each commit.
-# Jobs: core (BasedCore tests) · typecheck (BasedBrain tests + app type-check, macOS and iOS paths)
+# Jobs: ts (TypeScript-Stack, ADR 0011: pnpm typecheck/lint/test inkl. Golden Fixtures, Playwright WebKit + Chromium)
+#   · core (BasedCore tests, prüft auch, ob fixtures/ aktuell ist) · typecheck (BasedBrain tests + app type-check, macOS and iOS paths)
 #   — both in the pinned swift:6.2-noble container with a SwiftPM cache — · apps (Debug build macOS + iOS Simulator)
 #   · uitests (XCUITests on macOS, optional). Logs go to the ci-logs branch on pushes only (not for pull requests).
 # The release build (DMG/Sparkle) is a separate, already active workflow (.github/workflows/release.yml); this file
@@ -28,6 +29,36 @@ permissions:
   contents: write
 
 jobs:
+  # BSD-13: TypeScript-Stack (ADR 0011). Gleiche Prüfungen wie ci/typecheck/run-ts.sh --e2e.
+  ts:
+    name: TypeScript (pnpm, Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck, Lint, Tests (inkl. Fixture-Runner)
+        run: |
+          set -o pipefail
+          { pnpm -r typecheck && pnpm lint && pnpm -r test; } 2>&1 | tee ts.log
+      - name: Playwright (WebKit + Chromium)
+        if: always()
+        run: |
+          set -o pipefail
+          pnpm --filter @based/web exec playwright install --with-deps chromium webkit
+          CI=1 pnpm --filter @based/web e2e 2>&1 | tee e2e.log
+      - name: Publish log
+        if: always() && github.event_name == 'push'
+        run: |
+          mkdir -p /tmp/out
+          { grep -E "error|FAIL|Tests |grün|portiert" ts.log | head -n 200; echo "--- e2e"; tail -n 40 e2e.log 2>/dev/null; } > /tmp/out/ts.txt || true
+          bash scripts/publish-logs.sh ts
+
   # Linux jobs run in the pinned Swift 6.2 container — the same toolchain the night shift uses locally.
   core:
     name: BasedCore tests (Linux, Swift 6.2)
