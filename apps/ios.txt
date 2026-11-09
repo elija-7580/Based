@@ -5,71 +5,71 @@ App/Shared/Brain/AgentDetailViews.swift:182:138: error: 'link' is unavailable in
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Page/SharePanel.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Meeting/MeetingBlockView.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Shell/Sidebar.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Meeting/MeetingEngine.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Blocks/SimpleTable.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Meeting/MeetingService.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Brain/SkillSyncView.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Shell/NavigationInput.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Updates/SparkleBridge.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Nodes.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/StorageErrorView.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Shell/NotionChrome.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Shell/TabStrip.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Import/NotionImportSheet.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Database/TableLayout.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Page/PDFExport.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Brain/TerminalView.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/History/PageHistory.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Theme.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Page/PageOptionsPanel.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Views/Library/TrashView.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Page/PageOutline.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Updates/Updater.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Page/PageScreen.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Updates/UpdatesSettings.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Pickers.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/History/VersionHistorySheet.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Database/PopoverKit.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Capture/VoiceCapture.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Views/Settings/Prefs.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 App/Shared/Capture/WatchReceiver.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Capture/QuickCaptureMac.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
-SwiftCompile normal x86_64 build/Build/Intermediates.noindex/Based.build/Debug-iphonesimulator/Based-iOS.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Based-iOS' from project 'Based')
+SwiftCompile normal arm64 App/Shared/Editor/RichTextView.swift (in target 'Based-iOS' from project 'Based')
     cd /Users/runner/work/Based/Based
     
 
