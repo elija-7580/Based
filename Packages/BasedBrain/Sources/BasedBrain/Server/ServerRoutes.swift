@@ -337,6 +337,22 @@ public enum BasedServerRoutes {
             return .json(["ok": true])
         }
 
+        // BSD-132: old snapshots — list, then remove what the owner confirmed (only items a fresh scan reports).
+        r.add("GET", "/sandbox/leftovers", access: .ownerConfigured) { _ in
+            let items = await happier.sandboxLeftovers()
+            return .json(["sandbox": .string(happier.sandbox?.kind ?? "none"), "leftovers": .array(items.map(\.json))])
+        }
+        r.add("POST", "/sandbox/cleanup", access: .ownerConfigured) { ctx in
+            guard let body = try? JSONValue.parse(ctx.request.body), let refs = body["references"]?.array?.compactMap(\.string) else {
+                return .json(["error": #"send {"references": ["…"], "confirm": true}"#], status: 400)
+            }
+            guard body["confirm"]?.bool == true else { return .json(["error": "confirm must be true"], status: 400) }
+            do {
+                let removed = try await happier.cleanUpSandbox(references: refs, confirmed: true)
+                return .json(["removed": .array(removed.map(\.json))])
+            } catch { return .json(["error": .string("\(error)")], status: 500) }
+        }
+
         // MARK: Connections
         r.add("GET", "/connections") { _ in
             let list = await MainActor.run { tools.brain.connections() }

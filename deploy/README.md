@@ -135,8 +135,15 @@ based-server --token "$BASED_TOKEN" --sandbox docker \
   create / exec / snapshot / restore / destroy over the Docker Engine socket (HTTP/JSON) instead of the docker CLI; only
   long-running agents still start with `docker exec -i`. Snapshots and restores can be started in the app (session ⋯ →
   Sandbox). Real-daemon test: `BASED_DOCKER_TESTS=1 swift test --filter DockerEngineTests`.
-- Not yet: stdio MCP servers (incl. `based`) inside the container – sandboxed agents currently get no MCP servers;
-  Claude Code runs through its ACP adapter instead of the native driver in this mode.
+- **Based MCP inside the container (BSD-127):** ACP agents in a container reach `based` over HTTP at
+  `http://host.docker.internal:<port>/mcp/session/<session>` with their own session token (never the owner token).
+  The server must therefore listen on an address the Docker bridge reaches (`0.0.0.0` or the bridge IP, behind TLS and
+  a firewall for the public side); the Mac app's local endpoint listens on 127.0.0.1 only. Claude Code still runs through
+  its ACP adapter in a container, not the native driver.
+- **Cleaning up (BSD-132):** `GET /sandbox/leftovers` lists old snapshot archives, `based-snapshot/*` images and
+  `<folder>.before-restore-<time>` folders (snapshots of live sandboxes are left out); `POST /sandbox/cleanup
+  {"references": [...], "confirm": true}` removes those of them a fresh scan still reports – nothing else. In the app:
+  Settings → Agents & AI → Sandbox snapshots (server) → Scan → Remove… (asks first).
 
 ## Secrets and coding agents (BSD-33)
 
