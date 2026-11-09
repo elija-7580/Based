@@ -25,6 +25,16 @@ struct Options {
     var cipherKey = ProcessInfo.processInfo.environment["BASED_CIPHER_KEY"]
     var machine = ProcessInfo.processInfo.environment["BASED_MACHINE"] ?? (ProcessInfo.processInfo.hostName)
     var noACP = false
+    // BSD-53: where coding agents run – "docker" (one container per run) or "local" (directly in the folder).
+    var sandbox = ProcessInfo.processInfo.environment["BASED_SANDBOX"] ?? "local"
+    var sandboxImage = ProcessInfo.processInfo.environment["BASED_SANDBOX_IMAGE"] ?? SandboxSpec.defaultImage
+    var sandboxCPUs = Double(ProcessInfo.processInfo.environment["BASED_SANDBOX_CPUS"] ?? "") ?? 2
+    var sandboxMemoryMB = Int(ProcessInfo.processInfo.environment["BASED_SANDBOX_MEMORY_MB"] ?? "") ?? 4096
+    var sandboxNetwork = ProcessInfo.processInfo.environment["BASED_SANDBOX_NETWORK"] != "none"
+    /// "host:container" pairs mounted read-only (agent CLI logins), e.g. /home/based/.claude:/root/.claude
+    var sandboxMounts: [String] = (ProcessInfo.processInfo.environment["BASED_SANDBOX_MOUNTS"] ?? "").split(separator: ",").map(String.init)
+    /// Extra environment variable names that may enter the sandbox (allowlist).
+    var sandboxEnv: [String] = (ProcessInfo.processInfo.environment["BASED_SANDBOX_ENV"] ?? "").split(separator: ",").map(String.init)
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -41,8 +51,13 @@ struct Options {
             case "--cipher-key": cipherKey = it.next()
             case "--machine": machine = it.next() ?? machine
             case "--no-acp": noACP = true
+            case "--sandbox": sandbox = it.next() ?? sandbox
+            case "--sandbox-image": sandboxImage = it.next() ?? sandboxImage
+            case "--sandbox-mount": if let m = it.next() { sandboxMounts.append(m) }
+            case "--sandbox-env": if let e = it.next() { sandboxEnv.append(e) }
+            case "--sandbox-no-network": sandboxNetwork = false
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--sandbox local|docker] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -81,6 +96,7 @@ func log(_ s: String, category: String = "server") { Log.info(s, category: categ
     let publicURL = ProcessInfo.processInfo.environment["BASED_PUBLIC_URL"] ?? "http://127.0.0.1:\(opts.port)"
     happier.mcpEndpoint = (publicURL, opts.token)
     tools.hostSpecs = HappierRuntime.subAgentSpecs
+    configureSandbox(happier)
     tools.hostCall = { [happier] name, args in await happier.hostTool(name, args) }
     let mcp = MCPServer(tools: tools)
     mcp.approval = { [happier] session, tool, input in await happier.claudeApproval(session: session, tool: tool, input: input) }
@@ -101,6 +117,36 @@ if opts.token.isEmpty { log("WARNING: no --token set; the server is open to anyo
 if !opts.noACP {
     await happier.connections?.reload()
     log("connections: \(await MainActor.run { tools.brain.connections().filter(\.enabled).count }) enabled")
+}
+
+/// BSD-53: sandbox provider from the options. Secrets never enter the sandbox through the environment; logins come
+/// from read-only mounts (see deploy/README.md).
+@MainActor func configureSandbox(_ happier: HappierRuntime) {
+    let snapshots = URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("sandbox-snapshots").path
+    switch opts.sandbox {
+    case "docker":
+        happier.sandbox = DockerSandboxProvider(runner: ProcessCommandRunner(), snapshotDirectory: snapshots)
+        let mounts: [(host: String, container: String)] = opts.sandboxMounts.compactMap { m in
+            let parts = m.split(separator: ":", maxSplits: 1).map(String.init)
+            return parts.count == 2 ? (host: parts[0], container: parts[1]) : nil
+        }
+        happier.sandboxTemplate = SandboxSpec(project: "", hostWorkspace: "", image: opts.sandboxImage, cpus: opts.sandboxCPUs,
+                                              memoryMB: opts.sandboxMemoryMB, network: opts.sandboxNetwork, readOnlyMounts: mounts)
+        happier.sandboxEnvironment.allow.formUnion(opts.sandboxEnv)
+        log("sandbox: docker (\(opts.sandboxImage), \(opts.sandboxCPUs) CPU, \(opts.sandboxMemoryMB) MB, network \(opts.sandboxNetwork ? "on" : "off"))")
+    case "local":
+        happier.sandbox = LocalSandboxProvider(runner: ProcessCommandRunner(), snapshotDirectory: snapshots,
+                                               baseEnvironment: DockerSandboxProvider.cliEnvironment())
+    default:
+        FileHandle.standardError.write(Data("unknown sandbox \(opts.sandbox) (local|docker)\n".utf8)); exit(2)
+    }
+}
+
+func sandboxJSON(_ sid: RecordID, _ h: SandboxHandle) -> JSONValue {
+    .object(["session": .string(sid), "provider": .string(h.provider), "id": .string(h.id), "reference": .string(h.reference),
+             "project": .string(h.project), "workdir": .string(h.workdir), "image": .string(h.image),
+             "snapshots": .array(h.snapshots.map { .object(["name": .string($0.name), "image": .string($0.image),
+                                                             "created": .string(ISO8601DateFormatter().string(from: $0.createdAt))]) })])
 }
 
 /// Path matcher for "/sessions/{id}/prompt"‑style routes.
@@ -304,6 +350,33 @@ let server = HTTPServer(port: opts.port) { req in
         let first = await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected, device: device) }
         // BSD-50: the first answer wins; a second device gets 409 instead of overwriting it.
         return first ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409)
+    // BSD-53: sandboxes – owner only (a configured token is required; an open server never exposes them).
+    case ("GET", "/sandboxes"):
+        guard !opts.token.isEmpty, authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        return .json(["sandbox": .string(happier.sandbox?.kind ?? "none"),
+                      "sandboxes": .array(happier.sandboxes.sorted { $0.key < $1.key }.map { sandboxJSON($0.key, $0.value) })])
+    case ("POST", _) where match(req.path, "/sandboxes/*/snapshot") != nil:
+        guard !opts.token.isEmpty, authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sandboxes/*/snapshot")![0]
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        let name = body["name"]?.string ?? "snap-\(Int(Date().timeIntervalSince1970))"
+        do { return .json(sandboxJSON(sid, try await happier.snapshotSandbox(sid, name: name))) }
+        catch SandboxError.invalidName(let n) { return .json(["error": .string("invalid name \(n)")], status: 400) }
+        catch { return .json(["error": .string("\(error)")], status: 500) }
+    case ("POST", _) where match(req.path, "/sandboxes/*/restore") != nil:
+        guard !opts.token.isEmpty, authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sandboxes/*/restore")![0]
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        guard let name = body["snapshot"]?.string else { return .json(["error": "snapshot missing"], status: 400) }
+        do { return .json(sandboxJSON(sid, try await happier.restoreSandbox(sid, snapshot: name))) }
+        catch SandboxError.unknownSnapshot(let n) { return .json(["error": .string("unknown snapshot \(n)")], status: 404) }
+        catch { return .json(["error": .string("\(error)")], status: 500) }
+    case ("POST", _) where match(req.path, "/sandboxes/*/destroy") != nil:
+        guard !opts.token.isEmpty, authorized() else { return .json(["error": "unauthorized"], status: 401) }
+        let sid = match(req.path, "/sandboxes/*/destroy")![0]
+        happier.stop(sid)
+        await happier.destroySandbox(sid)
+        return .json(["ok": true])
     case ("GET", "/connections"):
         guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let list = await MainActor.run { tools.brain.connections() }

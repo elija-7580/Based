@@ -90,3 +90,34 @@ based-server --db /var/lib/based/based.sqlite --token "$TOKEN" \
 Secrets for connections come from environment variables named after the
 Keychain key (`CONNECTION.GITHUB` → `CONNECTION_GITHUB` works too). Sessions,
 Inbox and Connections are ordinary records, so they sync to every app.
+
+## Sandbox for coding agents (BSD-53)
+
+By default (`--sandbox local`) coding agents run directly in the project folder, as on the Mac. With
+`--sandbox docker` (or `BASED_SANDBOX=docker`) every agent session/run gets its own container:
+
+```sh
+docker build -f deploy/sandbox.Dockerfile -t based-sandbox:latest deploy
+based-server --token "$BASED_TOKEN" --sandbox docker \
+  --sandbox-mount /home/based/.claude:/root/.claude \
+  --sandbox-mount /home/based/.codex:/root/.codex
+```
+
+- Container: `based-<project>-<session>`, project folder mounted at `/workspace/<project>`, `--cpus 2 --memory 4096m
+  --pids-limit 1024 --security-opt no-new-privileges` (`BASED_SANDBOX_CPUS`, `BASED_SANDBOX_MEMORY_MB`), network on
+  (`--sandbox-no-network` / `BASED_SANDBOX_NETWORK=none` turns it off).
+- **Secrets:** nothing from the server's environment enters the container except an allowlist (`LANG`, `LC_*`, `TERM`,
+  `TZ`, `CI`, `NO_COLOR`; more names with `--sandbox-env NAME`). Names that look like secrets (`*TOKEN*`, `*_KEY`,
+  `*SECRET*`, …) are dropped even when listed. Values are passed as `docker exec -e NAME`, never on the command line.
+  Agent logins come from read-only mounts (`--sandbox-mount host:container`, `:ro` is added).
+- **Snapshots** (owner token required; an open server without token never exposes these routes):
+  `GET /sandboxes`, `POST /sandboxes/{session}/snapshot {"name":"green"}` (= `docker commit` + tar.gz of the folder in
+  `sandbox-snapshots/` next to the database), `POST /sandboxes/{session}/restore {"snapshot":"green"}` (new container
+  from the snapshot image; the current folder is kept as `<folder>.before-restore-<time>`), `POST /sandboxes/{session}/destroy`.
+  The Runs database shows `Sandbox` (`docker:<id>`) and `Snapshots` per run.
+- **Docker socket:** based-server needs to run `docker`, i.e. its user must be in the `docker` group (bare metal) or the
+  container gets `-v /var/run/docker.sock:/var/run/docker.sock` plus the docker CLI. **Security:** access to the Docker
+  socket is root-equivalent on the host. Only enable `--sandbox docker` on a machine dedicated to Based, with a token,
+  behind TLS.
+- Not yet: stdio MCP servers (incl. `based`) inside the container – sandboxed agents currently get no MCP servers;
+  Claude Code runs through its ACP adapter instead of the native driver in this mode.

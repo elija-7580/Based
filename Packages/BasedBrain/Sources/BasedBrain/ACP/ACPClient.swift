@@ -96,6 +96,9 @@ public final class ACPClient: @unchecked Sendable {
     /// BSD-50: rules checked for `fs/write_text_file` (deny rules and plan mode block the write; the agent asked
     /// for the edit itself via `session/request_permission`, so there is no second prompt).
     public var permissions: AgentPermissions?
+    /// BSD-53: the agent runs in a sandbox and reports paths as seen inside it; this maps them to host paths
+    /// (nil = outside the mounted workspace → denied). Unset = paths are host paths.
+    public var pathMap: (@Sendable (String) -> String?)?
 
     public init(definition: AgentDefinition) { self.definition = definition }
 
@@ -206,11 +209,11 @@ public final class ACPClient: @unchecked Sendable {
             }
             return .success(["outcome": ["outcome": "cancelled"]])
         case "fs/read_text_file":
-            guard let path = params?["path"]?.string, allowed(path) else { return .failure(.init(code: -32001, message: "Read not permitted")) }
+            guard let path = hostPath(params?["path"]?.string), allowed(path) else { return .failure(.init(code: -32001, message: "Read not permitted")) }
             do { return .success(["content": .string(try String(contentsOfFile: path, encoding: .utf8))]) }
             catch { return .failure(.internalError("\(error)")) }
         case "fs/write_text_file":
-            guard let path = params?["path"]?.string, allowed(path), let content = params?["content"]?.string else { return .failure(.init(code: -32001, message: "Write not permitted")) }
+            guard let path = hostPath(params?["path"]?.string), allowed(path), let content = params?["content"]?.string else { return .failure(.init(code: -32001, message: "Write not permitted")) }
             if let permissions, permissions.decide(PermissionCall(tool: "Write", argument: path, category: .edit)).effect == .deny {
                 return .failure(.init(code: -32001, message: "Write not permitted by the permission rules"))
             }
@@ -223,6 +226,12 @@ public final class ACPClient: @unchecked Sendable {
 
     /// Inside one of `allowedRoots`, component-wise and with symlinks resolved (BSD-50: `/p/proj` no longer
     /// allows `/p/proj-secret`, and a symlink inside the project can't point outside it).
+    func hostPath(_ path: String?) -> String? {
+        guard let path else { return nil }
+        guard let pathMap else { return path }
+        return pathMap(path)
+    }
+
     func allowed(_ path: String) -> Bool {
         allowedRoots.contains { PathScope.contains(root: $0, path: path) }
     }

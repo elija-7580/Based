@@ -81,6 +81,7 @@ extension BrainStore {
         static let engine = "Engine", model = "Model", compute = "Compute", started = "Started", ended = "Ended"
         static let tokens = "Tokens", cost = "Cost", result = "Result", resultPage = "Result page"
         static let project = "Project"
+        static let sandbox = "Sandbox", snapshots = "Snapshots"
     }
 
     /// Creates the Runs database on first use, adopts a synced one by title, adds missing columns and protects it
@@ -274,6 +275,29 @@ extension BrainStore {
                             (RunCol.compute, runOption(db, RunCol.compute, d.compute.runCompute.rawValue))], name: "Run route")
         let route = d.route.map { "Route **\($0.name)**" } ?? "Model chosen in the picker"
         logRun(r.id, "\(route) · \(d.compute.title) → \(ChatRouting.label(d.choice)) — \(d.reason)")
+    }
+
+    /// BSD-53: records the sandbox of the session's current run ("docker:<id>" or "local:<path>") and its snapshot
+    /// names (comma-separated). The two text columns are added on first use, older Runs databases included.
+    public func noteSandbox(session sid: RecordID, _ sandbox: SandboxHandle, log line: String? = nil) {
+        guard let r = latestRun(forSession: sid) else { return }
+        let db = runsDB
+        ensureColumn(db, RunCol.sandbox, .text)
+        ensureColumn(db, RunCol.snapshots, .text)
+        writeRun(r.id, db, [(RunCol.sandbox, .text(RichText(sandbox.reference))),
+                            (RunCol.snapshots, .text(RichText(sandbox.snapshots.map(\.name).joined(separator: ", "))))], name: "Run sandbox")
+        if let line { logRun(r.id, line) }
+    }
+
+    /// Sandbox reference and snapshot names stored on a run ("" / [] when none).
+    public func sandboxInfo(run id: RecordID) -> (reference: String, snapshots: [String]) {
+        guard let db = existingRunsDB, let row = store.blocks[id] else { return ("", []) }
+        func text(_ col: String) -> String {
+            guard let pid = propID(db, col), case .text(let t)? = row.values[pid] else { return "" }
+            return t.plainText
+        }
+        let snaps = text(RunCol.snapshots).split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return (text(RunCol.sandbox), snaps)
     }
 
     /// Appends a line to the run's short protocol (the page body; not the full transcript).

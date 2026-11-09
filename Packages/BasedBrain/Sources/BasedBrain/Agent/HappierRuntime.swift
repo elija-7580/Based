@@ -157,7 +157,8 @@ public final class HappierRuntime: @unchecked Sendable {
     }
 
     private func useNative(_ def: AgentDefinition) -> String? {
-        guard preferNativeClaude, def.id == "claude" else { return nil }
+        // BSD-53: in a container sandbox every agent goes through ACP (`docker exec -i … <agent>`).
+        guard preferNativeClaude, def.id == "claude", !usesContainerSandbox else { return nil }
         return ShellEnvironment.which("claude")
     }
 
@@ -201,20 +202,31 @@ public final class HappierRuntime: @unchecked Sendable {
             await mainQueue.run { brain.updateSession(sid, status: .idle, agentID: def.id) }
             return
         }
+        var def = def, acpCwd = cwd
+        var box: SandboxHandle?
+        if usesContainerSandbox, let provider = sandbox {
+            let h = try await ensureSandbox(sid, cwd: cwd)
+            def = provider.wrap(def, in: h, environment: sandboxEnvironment.filter(ProcessInfo.processInfo.environment.merging(def.environment) { $1 }))
+            acpCwd = h.workdir
+            // stdio MCP servers are host binaries and don't exist inside the container (HTTP MCP for ACP: follow-up).
+            servers = []
+            box = h
+        }
         let client = ACPClient(definition: def)
         client.allowedRoots = [cwd]
+        if let box { client.pathMap = { box.hostPath(for: $0) } }
         client.onLog = { [weak self] in self?.onLog?("[\(def.id)] \($0)") }
         client.onUpdate = { [weak self] u in self?.handle(sid, u) }
         client.onPermission = { [weak self] req in await self?.decide(sid, req) }
         try client.start(cwd: cwd)
         try await client.initialize()
-        if let b = basedMCPServer { servers.insert(b, at: 0) }
+        if let b = basedMCPServer, box == nil { servers.insert(b, at: 0) }
         let acpID: String
         if let resume, !resume.hasPrefix("claude:") {
-            try await client.loadSession(resume, cwd: cwd, mcpServers: servers)
+            try await client.loadSession(resume, cwd: acpCwd, mcpServers: servers)
             acpID = resume
         } else {
-            acpID = try await client.newSession(cwd: cwd, mcpServers: servers)
+            acpID = try await client.newSession(cwd: acpCwd, mcpServers: servers)
         }
         liveBox.sync { $0[sid] = client }
         await mainQueue.run { self.brain.updateSession(sid, status: .idle, acpSessionID: acpID, agentID: def.id) }
@@ -275,6 +287,69 @@ public final class HappierRuntime: @unchecked Sendable {
     }
     /// Follow-ups waiting for the running turn of a session.
     public func queuedPrompts(_ sid: RecordID) -> Int { turnGate(sid).waitingCount }
+
+    // MARK: Sandbox (BSD-53)
+
+    /// Where coding agents run. nil or a local provider = directly in the project folder (Mac); a container
+    /// provider (server) = one container per session/run with the folder mounted at /workspace/<project>.
+    public var sandbox: SandboxProvider?
+    /// Image, limits, network and read-only login mounts for new sandboxes (project and folder are filled in).
+    public var sandboxTemplate = SandboxSpec(project: "", hostWorkspace: "")
+    /// Which environment variables reach a sandboxed agent (allowlist; secrets only when named explicitly).
+    public var sandboxEnvironment = SandboxEnvironmentPolicy()
+    private let sandboxBox = Locked<[RecordID: SandboxHandle]>([:])
+
+    var usesContainerSandbox: Bool { sandbox.map { $0.kind != "local" } ?? false }
+
+    public func sandboxHandle(for sid: RecordID) -> SandboxHandle? { sandboxBox.sync { $0[sid] } }
+    public var sandboxes: [RecordID: SandboxHandle] { sandboxBox.sync { $0 } }
+
+    /// The session's sandbox, created on first use and recorded on its run.
+    @discardableResult
+    public func ensureSandbox(_ sid: RecordID, cwd: String) async throws -> SandboxHandle {
+        if let h = sandboxHandle(for: sid) { return h }
+        guard let provider = sandbox else { throw SandboxError.unavailable("no sandbox provider configured") }
+        let project = await mainQueue.run { self.brain.sessions().first { $0.id == sid }?.project } ?? ""
+        var spec = sandboxTemplate
+        spec.project = project.isEmpty ? URL(fileURLWithPath: cwd).lastPathComponent : project
+        spec.hostWorkspace = cwd
+        spec.runID = sid
+        let h = try await provider.create(spec)
+        sandboxBox.sync { $0[sid] = h }
+        await mainQueue.run { self.brain.noteSandbox(session: sid, h, log: "Sandbox \(h.reference) · \(h.workdir)") }
+        Log.info("Sandbox \(h.reference) for session \(sid)", category: "agents")
+        return h
+    }
+
+    /// Saves the session's sandbox (container image + workspace archive) under `name`.
+    public func snapshotSandbox(_ sid: RecordID, name: String) async throws -> SandboxHandle {
+        guard let provider = sandbox else { throw SandboxError.unavailable("no sandbox provider configured") }
+        var h = sandboxHandle(for: sid)
+        if h == nil, let cwd = await mainQueue.run({ self.brain.sessions().first { $0.id == sid }?.cwd }), !cwd.isEmpty {
+            h = try await ensureSandbox(sid, cwd: cwd)   // local: the folder itself
+        }
+        guard let h else { throw SandboxError.unavailable("session has no sandbox") }
+        let n = try await provider.snapshot(h, name: name)
+        sandboxBox.sync { $0[sid] = n }
+        await mainQueue.run { self.brain.noteSandbox(session: sid, n, log: "Snapshot **\(name)** saved") }
+        return n
+    }
+
+    /// Restores a snapshot: the agent process stops and restarts in the restored sandbox on the next prompt.
+    public func restoreSandbox(_ sid: RecordID, snapshot name: String) async throws -> SandboxHandle {
+        guard let provider = sandbox, let h = sandboxHandle(for: sid) else { throw SandboxError.unavailable("session has no sandbox") }
+        stop(sid)
+        let n = try await provider.restore(h, snapshot: name)
+        sandboxBox.sync { $0[sid] = n }
+        await mainQueue.run { self.brain.noteSandbox(session: sid, n, log: "Snapshot **\(name)** restored") }
+        return n
+    }
+
+    /// Removes the session's container (the project folder and snapshots stay).
+    public func destroySandbox(_ sid: RecordID) async {
+        guard let provider = sandbox, let h = sandboxBox.sync({ $0.removeValue(forKey: sid) }) else { return }
+        do { try await provider.destroy(h) } catch { Log.error("Could not remove sandbox \(h.reference): \(error)", category: "agents") }
+    }
 
     public func stop(_ sid: RecordID) {
         turnGate(sid).cancelWaiting()
