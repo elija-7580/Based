@@ -30,6 +30,7 @@ enum SidebarItem: Hashable {
     case diagnostics       // logs, hangs, layout audit
     case library           // every page / database / memory / skill / file, with bulk actions
     case graph             // pages and their connections (hierarchy, relations, mentions) as a graph / family tree
+    case agentHome         // BSD-55: AI home – sun, orbits, main agent
 
     /// Short label for tabs, breadcrumbs and logs.
     @MainActor func title(in model: AppModel) -> String {
@@ -46,6 +47,7 @@ enum SidebarItem: Hashable {
         case .diagnostics: return "Diagnostics"
         case .library: return "Library"
         case .graph: return "Graph"
+        case .agentHome: return "Home"
         }
     }
 
@@ -63,6 +65,7 @@ enum SidebarItem: Hashable {
         case .diagnostics: return "stethoscope"
         case .library: return "books.vertical"
         case .graph: return "point.3.connected.trianglepath.dotted"
+        case .agentHome: return "sun.horizon"
         }
     }
 
@@ -71,7 +74,7 @@ enum SidebarItem: Hashable {
     /// Which sidebar mode the item belongs to (AI: chats, agents, inbox, Agent Brain; Notes: everything else).
     var mode: SidebarMode {
         switch self {
-        case .chat, .sessions, .projects, .inbox, .brain: return .ai
+        case .chat, .sessions, .projects, .inbox, .brain, .agentHome: return .ai
         default: return .notes
         }
     }

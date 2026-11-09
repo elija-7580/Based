@@ -49,6 +49,7 @@ enum DebugDriver {
             case "home": model.selection = .home
             case "library": model.selection = .library
             case "graph": model.selection = .graph
+            case "agentHome": model.selection = .agentHome
             case "settings": model.selection = .settings
             case "brain": model.selection = .brain
             case "projects": model.selection = .projects

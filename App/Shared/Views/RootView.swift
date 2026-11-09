@@ -500,6 +500,7 @@ struct DetailContent: View {
         case .diagnostics: DiagnosticsView()
         case .library: LibraryView()
         case .graph: GraphView()
+        case .agentHome: AgentHomeView()
         }
     }
 }

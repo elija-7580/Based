@@ -354,6 +354,7 @@ struct NotionSidebar: View {
                     }
 
                     } else {
+                    SidebarNavRow(item: .agentHome, title: "Home", symbol: "sun.horizon").accessibilityIdentifier("sidebar.agentHome")
                     SidebarNavRow(item: .chat(nil), title: "New chat", symbol: SymbolImage.ai).accessibilityIdentifier("sidebar.askAI")
                     SidebarNavRow(item: .projects, title: "Agents", symbol: "square.grid.2x2").accessibilityIdentifier("sidebar.sessions")
                     SidebarNavRow(item: .inbox, title: "Inbox", symbol: "tray", badge: happier.pendingCount).accessibilityIdentifier("sidebar.inbox")
