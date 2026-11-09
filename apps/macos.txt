@@ -2,50 +2,51 @@
 build/SourcePackages/checkouts/SwiftTerm/Sources/SwiftTerm/Apple/PowerlineRenderer.swift:386:26: error: binary operator '+' cannot be applied to operands of type '[DropFirstSequence<[PowerlineRenderer.FlameSegment]>.Element]' (aka 'Array<PowerlineRenderer.FlameSegment>') and 'DropFirstSequence<[PowerlineRenderer.FlameSegment]>'
 build/SourcePackages/checkouts/SwiftTerm/Sources/SwiftTerm/Apple/PowerlineRenderer.swift:386:9: error: binary operator '+' cannot be applied to two '[DropFirstSequence<[PowerlineRenderer.FlameSegment]>.Element]' (aka 'Array<PowerlineRenderer.FlameSegment>') operands
 --- Ende des Logs
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/CoreML-DKSU94NWV8XE6X9YRES38IWYT.pcm
+    cd Packages/BasedBrain
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/Build/Intermediates.noindex/BasedBrain.build/Debug/BasedBrain.build/Objects-normal/arm64/BasedBrain.abi.json /Users/runner/work/Based/Based/build/Build/Products/Debug/BasedBrain.swiftmodule/arm64-apple-macos.abi.json
 
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/CoreImage-ATP63QZJR21IDRA8KHGAKK3EM.pcm
+Copy build/Build/Products/Debug/BasedBrain.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /Users/runner/work/Based/Based/build/Build/Intermediates.noindex/BasedBrain.build/Debug/BasedBrain.build/Objects-normal/arm64/BasedBrain.swiftsourceinfo (in target 'BasedBrain' from project 'BasedBrain')
+    cd Packages/BasedBrain
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename build/Build/Intermediates.noindex/BasedBrain.build/Debug/BasedBrain.build/Objects-normal/arm64/BasedBrain.swiftsourceinfo /Users/runner/work/Based/Based/build/Build/Products/Debug/BasedBrain.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
 
 SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/SwiftUICore-6JYICJEVA5R3T4RZSGDGHBSJ9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AudioToolbox-B2COZTKN9ZN4H0A4GFE9Z2FMN.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/CoreVideo-35PU9RP013RKS2YKPD6F5FN8X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/CoreML-DKSU94NWV8XE6X9YRES38IWYT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/MediaToolbox-2KGAZVSN94JMOUEK9CVT850Y5.pcm
 
 SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/CoreML-3504HHI33WWYMPXVZ00WKEE6A.pcm
 
 SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/QuartzCore-8AZD678XR81PWZNOVKX7YCR8W.pcm
 
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AppKit-BWUD8LW43C48JJUT81J4XUIHP.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/CoreMedia-4BFSEJ6LTZ6CJZT4BG9OJPBX6.pcm
-
-SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/SwiftUICore-88PQRPRR4KTODPAMY4SUW5YGW.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AudioToolbox-B2COZTKN9ZN4H0A4GFE9Z2FMN.pcm
-
-SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/AVFoundation-EAWL4RMYMJVIPPMGTDGG5WQBN.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/Accessibility-6YQ89OJFNQ6128B0KDOTGGQOG.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/MediaToolbox-2KGAZVSN94JMOUEK9CVT850Y5.pcm
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/CoreImage-486OC5X8SOHQWRMNS0WL02EFB.pcm
 
 SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AVFAudio-W2TAWJNC8NOA24FFNQX22W2H.pcm
 
-SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/CoreImage-486OC5X8SOHQWRMNS0WL02EFB.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AVFoundation-7MALWC208ONKNN7S7UQ79S15I.pcm
-
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/Spatial-DQXDUAGFVZRIZN5WLC74KFK1Q.pcm
-
-SwiftEmitModule normal x86_64 Emitting\ module\ for\ FluidAudio (in target 'FluidAudio' from project 'FluidAudio')
-EmitSwiftModule normal x86_64 (in target 'FluidAudio' from project 'FluidAudio')
-    cd Based.xcodeproj
-    
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/SwiftUICore-88PQRPRR4KTODPAMY4SUW5YGW.pcm
 
 SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/AppKit-5SZ716IVYJ0ARCJ8JYTOBK9FN.pcm
 
-SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/MetalKit-7B3XXHDDIL6SSE0TOF2PJI3IF.pcm
+SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/AVFoundation-7MALWC208ONKNN7S7UQ79S15I.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/Accelerate-BB0AEN5Q1B0S68VF7CTJYTOC2.pcm
 
 SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/SwiftUI-1FW4Z3JBJPZZYKDQF35JI6Z4V.pcm
 
-SwiftExplicitDependencyGeneratePcm arm64 build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/MachTaskSelfWrapper-8VLJDTRSZXPAD070STR5V4IMB.pcm
+SwiftEmitModule normal arm64 Emitting\ module\ for\ FluidAudio (in target 'FluidAudio' from project 'FluidAudio')
+EmitSwiftModule normal arm64 (in target 'FluidAudio' from project 'FluidAudio')
+    cd Based.xcodeproj
+    
+
+SwiftExplicitDependencyGeneratePcm arm64 build/ModuleCache.noindex/MetalKit-7B3XXHDDIL6SSE0TOF2PJI3IF.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/CoreMedia-BXG3I1V5S1VNEQ97QASCJ6FYM.pcm
+
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/MetalKit-3YVSSYXRHPO15QW3C85TECVUM.pcm
 
 SwiftEmitModule normal arm64 Emitting\ module\ for\ SwiftTerm (in target 'SwiftTerm' from project 'SwiftTerm')
 Failed frontend command:
@@ -61,17 +62,16 @@ build/SourcePackages/checkouts/SwiftTerm/Sources/SwiftTerm/Apple/PowerlineRender
         + flameUpperPath + flameLowerPath.dropFirst()
         ^ ~~~~~~~~~~~~~~
 
-SwiftExplicitDependencyGeneratePcm arm64 build/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules/CNemoTextProcessing-4R6OX2W58V1KUFAEQAEUDDRVS.pcm
-
 SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/SwiftUI-F5OQ95RKFMWEKKJLH24A3WY5.pcm
 
-SwiftEmitModule normal arm64 Emitting\ module\ for\ FluidAudio (in target 'FluidAudio' from project 'FluidAudio')
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/MediaToolbox-DSLZ1ACG64SWFA006PO0939N2.pcm
 
-EmitSwiftModule normal arm64 (in target 'FluidAudio' from project 'FluidAudio')
+SwiftEmitModule normal x86_64 Emitting\ module\ for\ SwiftTerm (in target 'SwiftTerm' from project 'SwiftTerm')
+EmitSwiftModule normal x86_64 (in target 'SwiftTerm' from project 'SwiftTerm')
     cd Based.xcodeproj
     
 
-SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/MetalKit-3YVSSYXRHPO15QW3C85TECVUM.pcm
+SwiftExplicitDependencyGeneratePcm x86_64 build/ModuleCache.noindex/AVFAudio-D85CMGL525P6WIZT4GF7J0E01.pcm
 
 note: Run script build phase 'Embed based command line' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'Based-macOS' from project 'Based')
 ** BUILD FAILED **
