@@ -214,12 +214,12 @@ export function sanitizedZipPath(path: string): string | undefined {
 }
 
 export interface ExtractOptions {
-  limits?: Partial<ZipLimits>;
+  limits?: Partial<ZipLimits> | undefined;
   /** Verschachtelte .zip (Notion „Part-1.zip“) als gleichnamigen Ordner auspacken. */
-  expandNested?: boolean;
+  expandNested?: boolean | undefined;
   /** Fortschritt 0…1 nach entpackten Bytes. */
-  progress?: (fraction: number) => void;
-  isCancelled?: () => boolean;
+  progress?: ((fraction: number) => void) | undefined;
+  isCancelled?: (() => boolean) | undefined;
 }
 
 export interface ExtractResult {
@@ -292,7 +292,10 @@ export interface ZipWriteEntry {
 const STORED_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp", "heic", "mp4", "mov", "m4v", "mp3", "m4a", "aac", "zip", "pdf", "webm"]);
 
 /** ZIP schreiben (UTF-8-Namen; Medien gespeichert, Text komprimiert). `date` fest für reproduzierbare Archive. */
-export function writeZip(entries: ZipWriteEntry[], date: Date = new Date()): Uint8Array {
+export function writeZip(entries: ZipWriteEntry[], when: Date = new Date()): Uint8Array {
+  // DOS-Zeit kennt nur 1980…2099 (Swift ZipWriter begrenzt ebenso).
+  const min = Date.UTC(1980, 0, 1, 12), max = Date.UTC(2099, 11, 31);
+  const date = new Date(Math.min(max, Math.max(min, when.getTime())));
   const z: Zippable = {};
   for (const e of entries) {
     const compress = e.compress ?? !STORED_EXT.has(extname(e.path).toLowerCase());

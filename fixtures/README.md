@@ -23,6 +23,10 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | conversion | `conversion/conversion.utc.json` | Property-Typwechsel jeder Aufgaben-Property in jeden Zieltyp (Schema, Werte, verlorene Zellen); neue IDs als `new:<Name>` / `group:<Name>` |
 | search | `search/search.json`, `search/fulltext.json` | Quick-Find-Index (SearchCorpus): Titel/Inhalt/Zeilen, Faltung (Groß/klein, Umlaute), Filter, alle Sortierungen, Limit. Gleichstand: pageID aufsteigend; Inhalts-Snippet als Kandidatenliste, Zeilen-Snippet über Werte nach Property-ID. `fulltext`: Volltext-Fälle aus SearchCorpusTests (Erwähnungen, Toggle, Zellen, Unterschrift, Transkript, Papierkorb, Vorlagen, Datenbanken) × Filter × Sortierung und inkrementelle Schritte (Remote-Records, danach suchen; der TS-Index folgt über `store.observe`) |
 | clipboard | `clipboard/clipboard.json`, `clipboard/export.utc.json` | Eingefügtes HTML (Notion, Google Docs, Listen, Farben, Links, Tabellen, Entities) → Blöcke; HTML-Export von Seiten und wieder einlesen |
+| import | `import/notion-html.utc.json`, `import/markdown.utc.json` | Notion-HTML-Export aus NotionHTMLImportTests (Ordner, einzelne Seite, ZIP mit Teil-Archiv, Reimport mit lokalen Änderungen) plus Sonderfälle, allgemeines HTML; Markdown-Parser, Inline-Markdown, CSV, Notion-Markdown/CSV-Export (kanonische IDs); ImportIDs. Ergebnis: Records ohne Stempel, Zeiten ab Laufbeginn = `now`, Asset-IDs = `ImportIDs.derived("asset", name, base64)` |
+| reimport | `import/reimport.json` | Reimport-Schutz (BSD-32) aus ReimportProtectionTests, Inhalts-Fingerabdrücke des Record-Korpus |
+| export | `export/export.utc.json` | Markdown-/CSV-/HTML-Export, Workspace-Export (eindeutige Namen, relative Links, Dateien in `assets/`) |
+| archive | `archive/archive.json` | Workspace-Archiv v1/v2 schreiben und lesen, Asset-Einträge, ZIP-Pfade, Import mit Herkunft `import` (BSD-26) |
 | undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
 
 Format: `{"module": "…", "cases": [{"name", "input", "output"}], …Metadaten}`. Fehler als `{"error": "…"}`,
@@ -33,7 +37,8 @@ die TS-Tests laufen dafür mit `TZ=UTC`.
 Echte Daten prüfen (BSD-148): `swift run based-fixtures --records-from <based.sqlite> /tmp/records.jsonl`, dann
 `BASED_RECORDS=/tmp/records.jsonl pnpm --filter @based/core test`.
 
-Noch nicht exportiert: Notion-HTML-Import (ganzer Export-Ordner mit Dateien; kommt mit dem Import-Eintrag in Phase 2).
+Import-Eingaben (`files`) liegen als `{path, text|base64}` im Fixture; der Port legt sie unter `in/` in einen
+`ImportFiles`-Baum (der Swift-Generator schreibt sie in einen temporären Ordner `…/in`).
 
 Hinweis Swift: Bei der Quick-Find-Suche hängt das Inhalts-Snippet und die Reihenfolge bei Gleichstand von der
 Dictionary-Reihenfolge ab (nicht stabil). Die Fixtures halten deshalb die Kandidaten fest; der TS-Port nimmt den

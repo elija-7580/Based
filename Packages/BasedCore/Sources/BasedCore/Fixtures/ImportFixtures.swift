@@ -466,6 +466,7 @@ public enum ImportFixtures {
         ("Bilder und Links", "![Alt](images/pic%201.png)\n![](https://example.com/a.png)\n[Sub page](Sub%20Page%20abc.md)\n[a](x) and [b](y)\n[link](https://example.com)"),
         ("Einrückung und Trenner", "para\n    indented child\n---\n***\n___\n  - indented list\n      - child"),
         ("Leer", ""),
+        ("Einrückung nach Code (Swift: Code-Block fällt weg)", "```\nx\n```\n    indented after code\nnext"),
     ]
 
     static let inlineSamples: [String] = [

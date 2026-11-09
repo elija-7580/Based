@@ -665,6 +665,35 @@
     },
     {
       "input" : {
+        "markdown" : "```\nx\n```\n    indented after code\nnext",
+        "op" : "parse"
+      },
+      "name" : "parse: Einrückung nach Code (Swift: Code-Block fällt weg)",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "indented after code",
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "next",
+            "type" : "text"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "```\nx\n```\n    indented after code\nnext",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
         "items" : [
           {
             "source" : "plain"

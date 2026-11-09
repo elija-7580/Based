@@ -135,9 +135,9 @@ const isHTMLFile = (p: string) => ["html", "htm"].includes(extname(p).toLowerCas
 
 export interface NotionHTMLOptions {
   /** Fortschritt 0…1 (nach gelesenen Seiten). */
-  progress?: (fraction: number) => void;
+  progress?: ((fraction: number) => void) | undefined;
   /** Abbruch zwischen zwei Seiten (wirft `ImportCancelled`). */
-  isCancelled?: () => boolean;
+  isCancelled?: (() => boolean) | undefined;
 }
 
 export class NotionHTMLImporter {

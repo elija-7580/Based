@@ -119,9 +119,9 @@ export function makeBlock(x: NewBlock, now: number): Block {
 interface Pending { name: string; mime: string | undefined; data: Uint8Array }
 
 export interface ImportBuilderOptions {
-  createdBy?: string | null;
+  createdBy?: string | null | undefined;
   /** Zeit für neue Blöcke (Swift-Datum); Standard: jetzt. */
-  now?: () => number;
+  now?: (() => number) | undefined;
 }
 
 export class ImportBuilder {
