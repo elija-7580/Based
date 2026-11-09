@@ -373,3 +373,10 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .shell-editor { margin-inline: calc(-1 * var(--space-8)); }
 .shell-database.full { height: calc(100vh - var(--space-8) * 4); min-height: calc(var(--page-measure) / 2); }
 .shell-database.inline { margin-block: var(--space-2); }
+
+/* BSD-164: Tauri-Hülle „Based Next“ (data-shell="desktop", siehe desktop.ts). Die macOS-Titelleiste liegt im
+   Overlay-Stil über der Seite: Platz für die Ampel-Knöpfe über der Seitenleiste, Zugflächen fürs Fenster. */
+[data-shell="desktop"] .sidebar { padding-top: var(--space-7); }
+.titlebar-drag { position: fixed; top: 0; left: 0; z-index: 30; -webkit-user-select: none; user-select: none; }
+.titlebar-drag-sidebar { width: var(--sidebar-width); height: var(--space-7); }
+.titlebar-drag-top { right: 0; height: var(--space-3); }
