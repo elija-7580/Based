@@ -50,6 +50,44 @@ extension OpenStringEnum {
     }
 }
 
+/// BSD-130: string enums nested anywhere in a record (colours in marks and arrays, calculations in dictionaries, …)
+/// keep a value from a newer version in `.unknown(raw)` and write it back as it was. Unlike `OpenStringEnum` the raw
+/// string travels with the value, so no owning record has to hold it in `extra`. `allCases` never contains
+/// `.unknown`; `init?(rawValue:)` only accepts known values (so `X(rawValue: s) ?? fallback` keeps working).
+public protocol OpenRawEnum: RawRepresentable, CaseIterable, Codable, Hashable where RawValue == String, AllCases == [Self] {
+    static func unknown(_ raw: String) -> Self
+}
+
+extension OpenRawEnum {
+    public init?(rawValue: String) {
+        guard let c = Self.allCases.first(where: { $0.rawValue == rawValue }) else { return nil }
+        self = c
+    }
+
+    public init(from decoder: Decoder) throws {
+        let s = try decoder.singleValueContainer().decode(String.self)
+        self = Self(rawValue: s) ?? .unknown(s)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(rawValue)
+    }
+
+    /// True for a value from a newer version (shown, not offered, written back unchanged).
+    public var isUnknown: Bool { !Self.allCases.contains(self) }
+}
+
+/// Decodes enums with associated values in the synthesized format (`{"case":{…}}`): an object whose single key
+/// isn't one of `known` is a case from a newer version and comes back raw; anything else returns nil.
+enum UnknownCase {
+    static func decode(from decoder: Decoder, known: Set<String>) throws -> JSONValue? {
+        guard let keyed = try? decoder.container(keyedBy: AnyCodingKey.self), keyed.allKeys.count == 1,
+              let key = keyed.allKeys.first, !known.contains(key.stringValue) else { return nil }
+        return try JSONValue(from: decoder)
+    }
+}
+
 extension BlockType: OpenStringEnum {
     public init(from decoder: Decoder) throws { self = try Self.decodeOpen(from: decoder) }
 }
@@ -421,4 +459,202 @@ extension PropertyValue {
 
     /// True for a value kind from a newer version (shown empty, not editable).
     public var isUnknown: Bool { if case .unknown = self { return true } else { return false } }
+}
+
+
+// MARK: Nested view configuration (BSD-130)
+
+extension CardCover {
+    /// Mirror of the known cases with the synthesized coding, so known values keep their stored form.
+    private enum Known: Codable {
+        case none, pageCover, pageContent, pageIcon
+        case property(String)
+    }
+    static let knownCaseNames: Set<String> = ["none", "pageCover", "pageContent", "pageIcon", "property"]
+
+    public init(from decoder: Decoder) throws {
+        if let raw = try UnknownCase.decode(from: decoder, known: Self.knownCaseNames) { self = .unknown(raw); return }
+        switch try Known(from: decoder) {
+        case .none: self = .none
+        case .pageCover: self = .pageCover
+        case .pageContent: self = .pageContent
+        case .pageIcon: self = .pageIcon
+        case .property(let p): self = .property(p)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        let known: Known
+        switch self {
+        case .unknown(let raw): try raw.encode(to: encoder); return
+        case .none: known = .none
+        case .pageCover: known = .pageCover
+        case .pageContent: known = .pageContent
+        case .pageIcon: known = .pageIcon
+        case .property(let p): known = .property(p)
+        }
+        try known.encode(to: encoder)
+    }
+}
+
+extension FilterItem {
+    private enum Known: Codable {
+        case condition(FilterCondition)
+        case group(FilterGroup)
+    }
+    static let knownCaseNames: Set<String> = ["condition", "group"]
+
+    public init(from decoder: Decoder) throws {
+        if let raw = try UnknownCase.decode(from: decoder, known: Self.knownCaseNames) { self = .unknown(raw); return }
+        switch try Known(from: decoder) {
+        case .condition(let c): self = .condition(c)
+        case .group(let g): self = .group(g)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .unknown(let raw): try raw.encode(to: encoder)
+        case .condition(let c): try Known.condition(c).encode(to: encoder)
+        case .group(let g): try Known.group(g).encode(to: encoder)
+        }
+    }
+}
+
+extension FilterGroup {
+    enum CodingKeys: String, CodingKey, CaseIterable { case combinator, items }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        combinator = try c.decode(Combinator.self, forKey: .combinator)
+        items = try c.decode([FilterItem].self, forKey: .items)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(combinator, forKey: .combinator)
+        try c.encode(items, forKey: .items)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
+}
+
+extension SortRule {
+    enum CodingKeys: String, CodingKey, CaseIterable { case propertyID, ascending }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        propertyID = try c.decode(String.self, forKey: .propertyID)
+        ascending = try c.decode(Bool.self, forKey: .ascending)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(propertyID, forKey: .propertyID)
+        try c.encode(ascending, forKey: .ascending)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
+}
+
+extension ChartConfig {
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case kind, xPropertyID, yPropertyID, aggregate, dateBucket, showLegend, showValues, sortByValue, limit, caption, colorTheme, height
+    }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try c.decode(Kind.self, forKey: .kind)
+        xPropertyID = try c.decodeIfPresent(String.self, forKey: .xPropertyID)
+        yPropertyID = try c.decodeIfPresent(String.self, forKey: .yPropertyID)
+        aggregate = try c.decode(Aggregate.self, forKey: .aggregate)
+        dateBucket = try c.decode(DateBucket.self, forKey: .dateBucket)
+        showLegend = try c.decode(Bool.self, forKey: .showLegend)
+        showValues = try c.decode(Bool.self, forKey: .showValues)
+        sortByValue = try c.decode(Bool.self, forKey: .sortByValue)
+        limit = try c.decodeIfPresent(Int.self, forKey: .limit)
+        caption = try c.decodeIfPresent(String.self, forKey: .caption)
+        colorTheme = try c.decodeIfPresent(String.self, forKey: .colorTheme)
+        height = try c.decodeIfPresent(String.self, forKey: .height)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(kind, forKey: .kind)
+        try c.encodeIfPresent(xPropertyID, forKey: .xPropertyID)
+        try c.encodeIfPresent(yPropertyID, forKey: .yPropertyID)
+        try c.encode(aggregate, forKey: .aggregate)
+        try c.encode(dateBucket, forKey: .dateBucket)
+        try c.encode(showLegend, forKey: .showLegend)
+        try c.encode(showValues, forKey: .showValues)
+        try c.encode(sortByValue, forKey: .sortByValue)
+        try c.encodeIfPresent(limit, forKey: .limit)
+        try c.encodeIfPresent(caption, forKey: .caption)
+        try c.encodeIfPresent(colorTheme, forKey: .colorTheme)
+        try c.encodeIfPresent(height, forKey: .height)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
+}
+
+extension DashboardConfig {
+    enum CodingKeys: String, CodingKey, CaseIterable { case rows }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rows = try c.decode([Row].self, forKey: .rows)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(rows, forKey: .rows)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
+}
+
+extension DashboardConfig.Row {
+    enum CodingKeys: String, CodingKey, CaseIterable { case id, widgets, height }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        widgets = try c.decode([DashboardConfig.Widget].self, forKey: .widgets)
+        height = try c.decodeIfPresent(Double.self, forKey: .height)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(widgets, forKey: .widgets)
+        try c.encodeIfPresent(height, forKey: .height)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
+}
+
+extension DashboardConfig.Widget {
+    enum CodingKeys: String, CodingKey, CaseIterable { case id, viewID, width }
+    static let knownKeys: Set<String> = Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        viewID = try c.decode(RecordID.self, forKey: .viewID)
+        width = try c.decode(Int.self, forKey: .width)
+        extra = try UnknownKeys.decode(from: decoder, known: Self.knownKeys)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(viewID, forKey: .viewID)
+        try c.encode(width, forKey: .width)
+        try UnknownKeys.encode(extra, to: encoder)
+    }
 }

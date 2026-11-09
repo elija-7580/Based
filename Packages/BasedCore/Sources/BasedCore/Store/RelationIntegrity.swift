@@ -222,6 +222,7 @@ public extension FilterGroup {
                 c.value = rest.isEmpty ? nil : .options(rest)
                 return .condition(c)
             case .group(let sub): return .group(sub.removingOption(optionID, of: propertyID))
+            case .unknown: return item
             }
         }
         return g

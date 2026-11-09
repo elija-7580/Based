@@ -234,6 +234,143 @@ import Testing
         #expect(again == decoded)
     }
 
+    // MARK: BSD-130: nested enums and view configuration
+
+    /// Replaces each `(old, new)` once in `text` and fails the test if `old` isn't there.
+    static func inject(_ text: String, _ pairs: [(String, String)]) -> String {
+        var t = text
+        for (old, new) in pairs {
+            #expect(t.contains(old), "missing \(old)")
+            if let r = t.range(of: old) { t.replaceSubrange(r, with: new) }
+        }
+        return t
+    }
+
+    @Test func unknownViewConfigurationSurvivesAnEdit() throws {
+        var view = DatabaseView(databaseID: "db", blockID: "blk", name: "V", type: .chart, sortKey: "a")
+        view.calculations = ["p": .median]
+        view.cardCover = .pageCover
+        view.openIn = .centerPeek
+        view.sorts = [SortRule(propertyID: "p", ascending: true)]
+        view.chart = ChartConfig(kind: .line, aggregate: .sum, dateBucket: .week)
+        view.dashboard = DashboardConfig(rows: [.init(id: "r1", widgets: [.init(id: "w1", viewID: "v2", width: 12)])])
+        view.filter = FilterGroup(combinator: .or, items: [
+            .condition(FilterCondition(id: "c1", propertyID: "d", op: .within, value: .relative(.pastWeek))),
+            .group(FilterGroup(combinator: .and, items: [.condition(FilterCondition(id: "c2", propertyID: "p", op: .isEmpty))])),
+        ])
+        let text = Self.inject(String(decoding: try Record.view(view).encoded(), as: UTF8.self), [
+            (#""p":"median""#, #""p":"geometricMean""#),
+            (#"{"pageCover":{}}"#, #"{"hologram":{"angle":30}}"#),
+            (#""centerPeek""#, #""splitView""#),
+            (#""ascending":true"#, #""ascending":true,"nulls":"last""#),
+            (#""kind":"line""#, #""kind":"radar""#),
+            (#""aggregate":"sum""#, #""aggregate":"p90""#),
+            (#""dateBucket":"week""#, #""dateBucket":"fortnight""#),
+            (#""showLegend":true"#, #""showLegend":true,"stacked":true"#),
+            (#""rows":["#, #""gap":4,"rows":["#),
+            (#""widgets":["#, #""rowStyle":"card","widgets":["#),
+            (#""width":12"#, #""width":12,"pinned":true"#),
+            (#""combinator":"or""#, #""combinator":"xor","futureGroupKey":1"#),
+            (#""pastWeek""#, #""pastFortnight""#),
+            (#""combinator":"and","items":["#, #""combinator":"and","items":[{"semantic":{"query":"q"}},"#),
+        ])
+        guard case .view(var v) = try Record.decode(kind: .view, data: Data(text.utf8)) else { Issue.record(); return }
+        #expect(v.calculations?["p"] == .unknown("geometricMean"))
+        #expect(v.cardCover == .unknown(["hologram": ["angle": 30]]))
+        #expect(v.openIn == .unknown("splitView"))
+        #expect(v.chart?.kind == .unknown("radar"))
+        #expect(v.chart?.aggregate.isUnknown == true)
+        #expect(v.chart?.dateBucket == .unknown("fortnight"))
+        #expect(v.filter?.combinator == .unknown("xor"))
+        guard case .group(let inner)? = v.filter?.items.last, case .unknown(let rawItem)? = inner.items.first,
+              case .condition(let c1)? = v.filter?.items.first else { Issue.record(); return }
+        #expect(rawItem == ["semantic": ["query": "q"]])
+        #expect(c1.value == .relative(.unknown("pastFortnight")))
+
+        // Unknown parts hide nothing and calculate nothing.
+        let s = WorkspaceStore()
+        let db = Database(blockID: "blk", title: "D", properties: [PropertySchema(id: "p", name: "P", type: .number),
+                                                                    PropertySchema(id: "d", name: "D", type: .date)])
+        var row = Block(type: .page, parent: .database(db.id), sortKey: "a")
+        row.values["d"] = .date(DateValue(start: Date(timeIntervalSince1970: 946_684_800)))   // 2000: outside every known range
+        let q = QueryEngine(store: s)
+        #expect(q.matches(row, v.filter!, db))
+        #expect(q.matches(row, c1, db))
+        #expect(q.matches(row, FilterGroup(combinator: .and, items: [.unknown(["x": 1])]), db))
+        #expect(QueryEngine.aggregate([.number(1)], .unknown("geometricMean"), nil) == .empty)
+
+        // Edit the view, re-encode: every raw value and unknown key is back.
+        v.name = "Renamed"
+        let out = String(decoding: try Record.view(v).encoded(), as: UTF8.self)
+        for token in [#""p":"geometricMean""#, #"{"hologram":{"angle":30}}"#, #""splitView""#, #""nulls":"last""#, #""kind":"radar""#,
+                      #""aggregate":"p90""#, #""dateBucket":"fortnight""#, #""stacked":true"#, #""gap":4"#, #""rowStyle":"card""#,
+                      #""pinned":true"#, #""combinator":"xor""#, #""futureGroupKey":1"#, #""pastFortnight""#,
+                      #"{"semantic":{"query":"q"}}"#, #""name":"Renamed""#] {
+            #expect(out.contains(token), "lost \(token)")
+        }
+        guard case .view(let again) = try Record.decode(kind: .view, data: Data(out.utf8)) else { Issue.record(); return }
+        #expect(again == v)
+    }
+
+    @Test func unknownColoursFormatsAndStepsSurviveAnEdit() throws {
+        // Database: number format and option colour from a newer version.
+        var db = Database(blockID: "blk", title: "D", properties: [
+            PropertySchema(id: "n", name: "N", type: .number),
+            PropertySchema(id: "s", name: "S", type: .select),
+        ])
+        db.properties[0].numberFormat = .euro
+        db.properties[1].options = [SelectOption(id: "o1", name: "A", color: .purple)]
+        let dbText = Self.inject(String(decoding: try Record.database(db).encoded(), as: UTF8.self), [
+            (#""euro""#, #""bitcoin""#), (#""purple""#, #""teal""#),
+        ])
+        guard case .database(var d2) = try Record.decode(kind: .database, data: Data(dbText.utf8)) else { Issue.record(); return }
+        #expect(d2.properties[0].numberFormat == .unknown("bitcoin"))
+        #expect(d2.properties[1].options?.first?.color == .unknown("teal"))
+        #expect(d2.properties[1].options?.first?.color.displayName == "Unknown colour (newer version)")
+        d2.title = RichText("Renamed")
+        let dbOut = String(decoding: try Record.database(d2).encoded(), as: UTF8.self)
+        #expect(dbOut.contains(#""bitcoin""#) && dbOut.contains(#""teal""#))
+
+        // Block: colours (also inside arrays and text marks), a button step and a meeting section from a newer version.
+        var b = Block(type: .button, parent: .workspace, sortKey: "a")
+        var marks = Marks(); marks.color = .orange
+        b.text = RichText("hi", marks: marks)
+        b.props.color = .green
+        b.props.tableColumnColors = [nil, .brown]
+        b.props.buttonActions = [ButtonAction(kind: .confirm, message: "Sure?"), ButtonAction(kind: .openPage, mode: .fullPage)]
+        b.props.meetingSection = .summary
+        let bText = Self.inject(String(decoding: try Record.block(b).encoded(), as: UTF8.self), [
+            (#""orange""#, #""neonOrange""#), (#""green""#, #""mint""#), (#""brown""#, #""sand""#),
+            (#""confirm""#, #""sendEmail""#), (#""fullPage""#, #""popover""#), (#""summary""#, #""actionItems""#),
+        ])
+        guard case .block(var b2) = try Record.decode(kind: .block, data: Data(bText.utf8)) else { Issue.record(); return }
+        #expect(b2.props.color == .unknown("mint"))
+        #expect(b2.props.tableColumnColors == [nil, .unknown("sand")])
+        #expect(b2.text.runs.first?.marks.color == .unknown("neonOrange"))
+        #expect(b2.props.buttonActions?.first?.kind == .unknown("sendEmail"))
+        #expect(b2.props.buttonActions?.last?.mode == .unknown("popover"))
+        #expect(b2.props.meetingSection == .unknown("actionItems"))
+        b2.props.isTemplate = true
+        let bOut = String(decoding: try Record.block(b2).encoded(), as: UTF8.self)
+        for token in [#""neonOrange""#, #""mint""#, #""sand""#, #""sendEmail""#, #""popover""#, #""actionItems""#] {
+            #expect(bOut.contains(token), "lost \(token)")
+        }
+    }
+
+    @Test func openEnumsOfferOnlyKnownValues() {
+        #expect(!TColor.allCases.contains { $0.isUnknown })
+        #expect(TColor.allCases.count == 19)
+        #expect(CalculationType.allCases.count == 22 && NumberFormat.allCases.count == 14)
+        #expect(TColor(rawValue: "teal") == nil)
+        #expect(TColor(rawValue: "blueBackground") == .blueBackground)
+        #expect(CalculationType(rawValue: "countUnique") == .countUnique)
+        #expect(TColor.unknown("tealBackground").isBackground == false)
+        #expect(TColor.unknown("teal").background == .unknown("teal"))
+        for k in ChartConfig.Kind.allCases { #expect(ChartConfig.Kind(rawValue: k.rawValue) == k) }
+        for k in ButtonAction.Kind.allCases { #expect(ButtonAction.Kind(rawValue: k.rawValue) == k) }
+        for k in RelativeDate.allCases { #expect(RelativeDate(rawValue: k.rawValue) == k) }
+    }
+
     @Test func everyStoredPropertyHasACodingKey() {
         func labels(_ v: Any) -> Set<String> { Set(Mirror(reflecting: v).children.compactMap(\.label)).subtracting(["extra"]) }
         #expect(labels(BlockProps()) == BlockProps.knownKeys)
@@ -241,6 +378,12 @@ import Testing
         #expect(labels(Database(blockID: "b", title: RichText(), properties: [])) == Database.knownKeys)
         #expect(labels(DatabaseView(databaseID: "d", blockID: "b", name: "v", type: .table, sortKey: "a")) == DatabaseView.knownKeys)
         #expect(labels(Workspace()) == Workspace.knownKeys)
+        #expect(labels(SortRule(propertyID: "p")) == SortRule.knownKeys)
+        #expect(labels(FilterGroup()) == FilterGroup.knownKeys)
+        #expect(labels(ChartConfig()) == ChartConfig.knownKeys)
+        #expect(labels(DashboardConfig()) == DashboardConfig.knownKeys)
+        #expect(labels(DashboardConfig.Row(widgets: [])) == DashboardConfig.Row.knownKeys)
+        #expect(labels(DashboardConfig.Widget(viewID: "v")) == DashboardConfig.Widget.knownKeys)
         let blockLabels = labels(Block(type: .text, parent: .workspace, sortKey: "a"))
             .subtracting(["_props", "sortKey"]).union(["props", "sk"])
         #expect(blockLabels == Block.knownKeys)

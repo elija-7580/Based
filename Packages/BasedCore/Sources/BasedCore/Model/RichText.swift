@@ -1,12 +1,44 @@
 import Foundation
 
 /// The ten-colour palette, as text colours and background colours.
-public enum TColor: String, Codable, CaseIterable, Sendable {
+public enum TColor: OpenRawEnum, Sendable {
     case `default`, gray, brown, orange, yellow, green, blue, purple, pink, red
     case grayBackground, brownBackground, orangeBackground, yellowBackground, greenBackground
     case blueBackground, purpleBackground, pinkBackground, redBackground
+    /// BSD-130: a colour from a newer Based; drawn like `.default`, written back unchanged.
+    case unknown(String)
 
-    public var isBackground: Bool { rawValue.hasSuffix("Background") }
+    public static var allCases: [TColor] { textColors + backgroundColors }
+
+    public var rawValue: String {
+        switch self {
+        case .default: return "default"
+        case .gray: return "gray"
+        case .brown: return "brown"
+        case .orange: return "orange"
+        case .yellow: return "yellow"
+        case .green: return "green"
+        case .blue: return "blue"
+        case .purple: return "purple"
+        case .pink: return "pink"
+        case .red: return "red"
+        case .grayBackground: return "grayBackground"
+        case .brownBackground: return "brownBackground"
+        case .orangeBackground: return "orangeBackground"
+        case .yellowBackground: return "yellowBackground"
+        case .greenBackground: return "greenBackground"
+        case .blueBackground: return "blueBackground"
+        case .purpleBackground: return "purpleBackground"
+        case .pinkBackground: return "pinkBackground"
+        case .redBackground: return "redBackground"
+        case .unknown(let raw): return raw
+        }
+    }
+
+    public var isBackground: Bool {
+        if case .unknown = self { return false }
+        return rawValue.hasSuffix("Background")
+    }
 
     /// The hue without the background variant.
     public var hue: TColor {
@@ -20,6 +52,7 @@ public enum TColor: String, Codable, CaseIterable, Sendable {
     }
 
     public var displayName: String {
+        if case .unknown = self { return "Unknown colour (newer version)" }
         let h = hue == .default ? "Default" : hue.rawValue.capitalized
         return isBackground ? "\(h) background" : h
     }

@@ -53,7 +53,7 @@ struct RowCard: View {
     @ViewBuilder
     private var cover: some View {
         switch ctx.view.cardCover ?? .pageContent {
-        case .none:
+        case .none, .unknown:
             EmptyView()
         case .pageCover:
             if let c = row.props.cover { CoverView(cover: c) } else { Color.primary.opacity(0.03) }

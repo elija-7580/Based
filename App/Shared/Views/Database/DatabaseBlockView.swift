@@ -494,6 +494,7 @@ struct ActiveRulesBar: View {
     private func filterLabel(_ item: FilterItem) -> String {
         switch item {
         case .group(let g): return "\(g.items.count) rules"
+        case .unknown: return "Filter from a newer version"
         case .condition(let c):
             let p = ctx.db.property(c.propertyID)
             let v = c.value.map { FilterValueText.describe($0, p, ctx.store) } ?? ""
@@ -530,6 +531,7 @@ extension RelativeDate {
         case .nextMonth: return "Next month"
         case .pastYear: return "Past year"
         case .nextYear: return "Next year"
+        case .unknown: return "Needs a newer version"
         }
     }
 }

@@ -46,6 +46,8 @@ extension WorkspaceStore {
         while i < steps.count {
             let a = steps[i]
             switch a.kind {
+            case .unknown:
+                break    // BSD-130: a step from a newer version is skipped
             case .confirm:
                 let msg = (a.message ?? "").trimmingCharacters(in: .whitespaces)
                 return (effects, ButtonPause(message: msg.isEmpty ? "Are you sure?" : msg, next: i + 1, added: added))
