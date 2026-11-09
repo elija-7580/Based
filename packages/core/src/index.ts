@@ -36,13 +36,13 @@ export { ImportFiles, basename, dirname, extname, joinPath, normalizePath, strip
 export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
 export { ImportBuilder, MemoryAssetSink, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
-export type { AssetRef, AssetSink, ImportBuilderOptions, ImportReport, NewBlock } from "./interop/builder.js";
+export type { AssetRef, AssetSink, ImportBuilderOptions, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
 export { cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns } from "./interop/notion-html.js";
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
 export { decodeCSV, decodeInlineMarkdown, encodeCSV, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
-export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, prepareImport } from "./interop/notion-import.js";
-export type { ImportSource, NotionImportOptions, PreparedImport } from "./interop/notion-import.js";
+export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
+export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
 export { toRichText, runsOf } from "./interop/runs.js";

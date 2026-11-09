@@ -2,6 +2,7 @@
 // Optionen, die wirken.
 import { useState } from "react";
 import type { Appearance } from "../appearance.js";
+import { ImportExportSettings } from "../components/ImportExport.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { syncConfig } from "../shell/storage.js";
 import type { StoreClient } from "../worker/client.js";
@@ -58,6 +59,7 @@ export function Settings({ value, onChange, client, status }: { value: Appearanc
         {toggle("calm", "Calm mode", "Agent marks turn grey — on with Focus")}
         {toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home")}
         <SyncSettings client={client} status={status} />
+        <ImportExportSettings client={client} />
       </div>
     </div>
   );

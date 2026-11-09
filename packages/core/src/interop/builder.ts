@@ -118,6 +118,20 @@ export function makeBlock(x: NewBlock, now: number): Block {
 
 interface Pending { name: string; mime: string | undefined; data: Uint8Array }
 
+/** `ImportBuilder` als reine Daten (`toWire`/`fromWire`). */
+export interface ImportBuilderWire {
+  blocks: Block[];
+  databases: Database[];
+  views: DatabaseView[];
+  roots: string[];
+  complete: string[];
+  warnings: string[];
+  notes: string[];
+  pendingAssets: [string, Pending][];
+  storedAssets: number;
+  createdBy: string | null;
+}
+
 export interface ImportBuilderOptions {
   createdBy?: string | null | undefined;
   /** Zeit für neue Blöcke (Swift-Datum); Standard: jetzt. */
@@ -301,6 +315,31 @@ export class ImportBuilder {
     this.assetByPath.clear();
     this.storedAssets += map.size;
     return map.size;
+  }
+
+  // MARK: Zwischen Workern
+
+  /** Strukturiert klonbarer Stand (z. B. Vorbereitung in einem Import-Worker, Schreiben im Store-Worker). */
+  toWire(): ImportBuilderWire {
+    return {
+      blocks: this.blocks, databases: this.databases, views: this.views, roots: this.roots, complete: [...this.complete],
+      warnings: this.warnings, notes: this.notes, pendingAssets: [...this.pendingAssets], storedAssets: this.storedAssets, createdBy: this.createdBy,
+    };
+  }
+
+  /** Gegenstück zu `toWire` (Reihenfolge, Wurzeln und Platzhalter-Dateien bleiben). */
+  static fromWire(w: ImportBuilderWire, opts: ImportBuilderOptions = {}): ImportBuilder {
+    const b = new ImportBuilder({ ...opts, createdBy: w.createdBy });
+    for (const x of w.blocks) { b.index.set(x.id, b.blocks.length); b.blocks.push(x); }
+    for (const d of w.databases) { b.dbIndex.set(d.id, b.databases.length); b.databases.push(d); }
+    for (const v of w.views) { b.viewIndex.set(v.id, b.views.length); b.views.push(v); }
+    b.roots.push(...w.roots);
+    for (const c of w.complete) b.complete.add(c);
+    b.warnings = [...w.warnings];
+    b.notes = [...w.notes];
+    for (const [id, p] of w.pendingAssets) b.pendingAssets.set(id, p);
+    b.storedAssets = w.storedAssets;
+    return b;
   }
 
   // MARK: Bericht

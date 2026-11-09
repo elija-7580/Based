@@ -1,4 +1,4 @@
-// Quick Find (⌘K): sucht im Store-Worker über SearchCorpus (Titel, Inhalt, Zeilen). Jede Eingabe bricht die vorige
+// Quick Find (⌘K): sucht im Store-Worker über den Volltextindex (Titel, Inhalt mit Snippet, Zeilen). Jede Eingabe bricht die vorige
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "../icons.js";
@@ -101,7 +101,7 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
               <span className="grow">
                 <strong>{h.title}</strong>
                 {h.path ? <span className="t-desc qf-path"> — {h.path}</span> : null}
-                {h.snippet ? <span className="t-desc qf-snippet">{h.snippet}</span> : null}
+                {h.snippet ? <span className="t-desc qf-snippet" data-testid="qf-snippet"><Highlight text={h.snippet} query={query} /></span> : null}
               </span>
             </li>
           ))}
@@ -110,4 +110,12 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
       </div>
     </div>
   );
+}
+
+/** Suchbegriffe im Snippet markieren (Groß/klein egal). */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const terms = query.trim().split(/\s+/).filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (terms.length === 0) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${terms.join("|")})`, "gi"));
+  return <>{parts.map((p, i) => (i % 2 === 1 ? <mark key={i}>{p}</mark> : p))}</>;
 }

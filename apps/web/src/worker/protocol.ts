@@ -2,6 +2,8 @@
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
 import type { DropZone, Outline, RecordKeyString, WireRecord } from "@based/core";
+import type { ImportPayload } from "./importer.js";
+import type { ExportFormat, WorkspaceExportFormat } from "./interop.js";
 
 export interface SyncConfig {
   url: string;
@@ -81,7 +83,12 @@ export type Request =
   /** Änderungen aus einer Seiten-Replik (Editor) übernehmen. */
   | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
   | { type: "setSync"; sync?: SyncConfig }
-  | { type: "syncNow" };
+  | { type: "syncNow" }
+  /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */
+  | { type: "commitImport"; payload: ImportPayload; parent?: string }
+  /** Exporte (Antwort: ExportFile). */
+  | { type: "exportPage"; pageID: string; format: ExportFormat }
+  | { type: "exportWorkspace"; format: WorkspaceExportFormat };
 
 export type RequestMessage = Request & { id: number };
 

@@ -8,7 +8,7 @@ import { canonicalStringify } from "../json.js";
 import { compareStamps, ZERO_STAMP, type Stamp } from "../hlc.js";
 import type { BlockProps, Workspace, WireRecord } from "../model/records.js";
 import { safeParseRecord } from "../model/records.js";
-import { recordKey, Tx, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
+import { recordKey, type RecordKeyString, type WorkspaceStore } from "../store/store.js";
 import { DEFAULT_ZIP_LIMITS, isZip, readZipEntries, writeZip, ZipError, zipEntryData, type ZipLimits, type ZipWriteEntry } from "./zip.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
@@ -220,12 +220,9 @@ const stampOf = (r: WireRecord): Stamp => (r.data.stamp as Stamp | undefined) ??
 /**
  * Records mit Herkunft „import“ einspielen (Last-Writer-Wins wie Sync, nichts wird gelöscht; Stempel bleiben, kein
  * Undo, an den Sync gemeldet). Swift `WorkspaceStore.applyImported`; gibt die Schlüssel zurück, die lokal neuer waren.
- *
- * Hinweis: `WorkspaceStore` hat (noch) keine öffentliche Methode dafür; die Transaktion läuft über seinen internen
- * `commit` mit Herkunft „import“. Gehört nach `store.ts` (siehe Abschlussbericht BSD-156).
  */
 export function applyImported(store: WorkspaceStore, records: WireRecord[]): RecordKeyString[] {
-  const tx = new Tx(store);
+  const puts: WireRecord[] = [];
   const stale: RecordKeyString[] = [];
   for (const r of records) {
     if (r.kind === "workspace" && r.data.id !== store.workspace.id) continue;
@@ -239,11 +236,12 @@ export function applyImported(store: WorkspaceStore, records: WireRecord[]): Rec
       const ts = store.persistence?.tombstone(key);
       if (ts && compareStamps(ts, stampOf(r)) >= 0) continue; // hier gelöscht, nachdem diese Version entstand
     }
-    tx.put(r);
+    puts.push(r);
   }
-  const commit = (store as unknown as { commit?: (tx: Tx, name: string, coalesce: undefined, origin: "import", undoable: boolean) => boolean }).commit;
-  if (typeof commit !== "function") throw new Error("WorkspaceStore.commit fehlt");
-  if (!commit.call(store, tx, "Import", undefined, "import", false)) throw new Error(store.writeFailure?.message ?? "write failed");
+  // Öffentlicher Weg: `keepStamps` speichert mit Herkunft „import“ (kein Neustempeln, kein Undo, wird gesynct).
+  const rejected = store.writeFailure?.rejected ?? 0;
+  store.transact("Import", (t) => { for (const r of puts) t.put(r); }, { keepStamps: true });
+  if (store.writeFailure && store.writeFailure.rejected !== rejected) throw new Error(store.writeFailure.message || "write failed");
   return stale;
 }
 

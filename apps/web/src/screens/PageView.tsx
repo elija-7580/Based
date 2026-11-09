@@ -4,6 +4,7 @@
 import { rowsOf, type WorkspaceStore } from "@based/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
+import { ExportDialog } from "../components/ImportExport.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
@@ -29,6 +30,7 @@ function useRevision(store: WorkspaceStore | undefined) {
 export function PageView({ client, state, pageID, history, onOpenPage, onNavigate }: Props) {
   const [replica, setReplica] = useState<PageReplica | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
+  const [exporting, setExporting] = useState(false);
   useEffect(() => {
     let alive = true;
     let opened: PageReplica | undefined;
@@ -106,6 +108,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
               <Icon name="star" size={18} filled={favorite} />
             </button>
+            <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
             <button type="button" className="icon-btn ghost" aria-label="Move to Trash" title="Move to Trash" onClick={() => {
               void client.command({ op: "trash", ids: [pageID] });
               onNavigate({ name: "home" });
@@ -142,6 +145,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           <div className="page-body" data-testid="page-content">{body}</div>
         </div>
       </article>
+      {exporting ? <ExportDialog client={client} pageID={pageID} onClose={() => setExporting(false)} /> : null}
     </>
   );
 }

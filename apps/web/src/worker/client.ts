@@ -10,6 +10,8 @@ import {
   type RecordKeyString,
   type WireRecord,
 } from "@based/core";
+import type { ImportPayload } from "./importer.js";
+import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "./interop.js";
 import type { Command, Endpoint, Event, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
 
 export interface ShellState {
@@ -155,6 +157,19 @@ export class StoreClient {
 
   syncNow(): Promise<boolean> {
     return this.request<boolean>({ type: "syncNow" });
+  }
+
+  /** Vorbereiteten Import (Import-Worker) im Store schreiben. */
+  commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
+    return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
+  }
+
+  exportPage(pageID: string, format: ExportFormat): Promise<ExportFile> {
+    return this.request<ExportFile>({ type: "exportPage", pageID, format });
+  }
+
+  exportWorkspace(format: WorkspaceExportFormat): Promise<ExportFile> {
+    return this.request<ExportFile>({ type: "exportWorkspace", format });
   }
 
   /** Replik einer Seite öffnen; mehrfaches Öffnen teilt dieselbe Replik (Referenzzählung). */
