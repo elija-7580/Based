@@ -1,2 +1,21 @@
-// @based/editor – BlockNote + Yjs (Phase 2). Nur BlockNote-Kern (MPL-2.0), keine @blocknote/xl-* (ADR 0011).
-export const EDITOR_PLACEHOLDER = "editor";
+// @based/editor – Seiten-Editor auf BlockNote-Kern (MPL-2.0) + Yjs (BSD-154). Keine @blocknote/xl-* (ADR 0011).
+export { PageEditor, copyAndSync, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
+export type { PageEditorProps } from "./ui/PageEditor.js";
+export type { DatabaseRenderProps, EquationRenderProps, Person } from "./ui/env.js";
+
+// Reine Abbildung Records ⇄ BlockNote
+export { ASSET_URL_PREFIX, CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "./mapping/bn.js";
+export type { BNBlock, BNInline } from "./mapping/bn.js";
+export { BOUNDARY_TYPES, docBlockIDs, extractOwned, projectBlock, projectDoc } from "./mapping/blocks.js";
+export type { BlockSource, Owned } from "./mapping/blocks.js";
+export { applyDocChanges, isEmptyChange, isTrashable, materializeDoc } from "./mapping/materialize.js";
+export type { DocChanges, MaterializeOptions, RecordSource } from "./mapping/materialize.js";
+export { canonicalRichText, colorFromBN, colorToBN, inlineToRichText, richTextToInline } from "./mapping/richtext.js";
+export { assignSortKeys } from "./mapping/sortkeys.js";
+
+// Yjs
+export { DocSession, FRAGMENT, LOAD_ORIGIN, MemoryYDocStore, STORE_ORIGIN, acquireSession, releaseSession } from "./yjs/session.js";
+export type { BlockConverter, DocSessionOptions, YDocStore } from "./yjs/session.js";
+export { syncChildren } from "./yjs/xmldiff.js";
+export { basedSchema, createConverter, sharedConverter } from "./schema/schema.js";
+export type { BasedEditor, BasedSchema } from "./schema/schema.js";
