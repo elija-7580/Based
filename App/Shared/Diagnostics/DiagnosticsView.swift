@@ -266,10 +266,12 @@ struct DiagnosticsView: View {
             }
             Section("Agents") {
                 LabeledContent("Local MCP endpoint", value: model.brain.happier.mcpBaseURL ?? "not running")
-                LabeledContent("Shell environment", value: ShellEnvironment.note.isEmpty ? "loading…" : ShellEnvironment.note)
-                LabeledContent("claude", value: ShellEnvironment.which("claude") ?? "not found")
-                LabeledContent("node", value: ShellEnvironment.which("node") ?? "not found")
+                // BSD-37: never ask the login shell from the view body; show "resolving…" until the warm-up is done.
+                LabeledContent("Shell environment", value: ShellEnvironment.isReady ? ShellEnvironment.note : "resolving…")
+                LabeledContent("claude", value: ShellEnvironment.whichIfReady("claude").map { $0 ?? "not found" } ?? "resolving…")
+                LabeledContent("node", value: ShellEnvironment.whichIfReady("node").map { $0 ?? "not found" } ?? "resolving…")
             }
+            .task { ShellEnvironment.warmUp() }
             Section("Recent breadcrumbs") {
                 Text(Log.shared.breadcrumbs.suffix(20).joined(separator: "\n")).font(.caption.monospaced()).textSelection(.enabled)
             }

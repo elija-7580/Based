@@ -11,7 +11,7 @@ extension BrainModel {
 
     /// Detects what is installed and signed in (off the main thread: resolves the login shell's PATH).
     func detectSetup() async -> SetupState {
-        let probe = SetupProbe.live(secrets: setupSecrets, serverURL: serverURL, serverToken: Secrets.get("server.token") != nil,
+        let probe = await SetupProbe.live(secrets: setupSecrets, serverURL: serverURL, serverToken: Secrets.get("server.token") != nil,
                                     localModel: AppleIntelligenceProvider.isAvailable || !ollamaURL.isEmpty)
         return await Task.detached(priority: .userInitiated) { SetupPlan.detect(probe) }.value
     }

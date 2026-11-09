@@ -69,9 +69,10 @@ public struct SetupProbe: Sendable {
         self.localModel = localModel
     }
 
-    /// This machine (blocking: resolves the login shell's PATH; call off the main thread).
-    public static func live(secrets: Set<String>, serverURL: String, serverToken: Bool, localModel: Bool) -> SetupProbe {
-        let env = ShellEnvironment.environment()
+    /// This machine. BSD-37: waits for the login shell's PATH without blocking the caller's thread (was called on
+    /// the main actor at launch and could hang it for up to 12 s).
+    public static func live(secrets: Set<String>, serverURL: String, serverToken: Bool, localModel: Bool) async -> SetupProbe {
+        let env = await ShellEnvironment.load()
         return SetupProbe(environment: env, home: env["HOME"] ?? NSHomeDirectory(),
                           fileExists: { FileManager.default.fileExists(atPath: $0) },
                           readFile: { FileManager.default.contents(atPath: $0).flatMap { String(data: $0, encoding: .utf8) } },

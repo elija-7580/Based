@@ -1364,7 +1364,7 @@ struct AgentDoctorView: View {
 
     private func probe() async {
         probing = true
-        ShellEnvironment.refresh()
+        await ShellEnvironment.reload()   // BSD-37: re-asks the login shell off the main thread
         let defs = happier.agents.filter(\.enabled)
         let (t, s) = await Task.detached(priority: .userInitiated) {
             let tools = AgentDoctor.probeTools()

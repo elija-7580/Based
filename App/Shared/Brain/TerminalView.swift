@@ -16,7 +16,9 @@ final class TerminalRegistry {
         if let v = views[key] { return v }
         let v = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 480))
         v.font = NSFont.monospacedSystemFont(ofSize: 12.5, weight: .regular)
-        var env = ShellEnvironment.environment()
+        // BSD-37: main actor – the captured environment if ready, else the quick fallback (never waits for the shell).
+        var env = ShellEnvironment.cachedEnvironment ?? ShellEnvironment.quickEnvironment()
+        ShellEnvironment.warmUp()
         env["TERM"] = "xterm-256color"
         env["COLORTERM"] = "truecolor"
         env["LANG"] = env["LANG"] ?? "en_US.UTF-8"

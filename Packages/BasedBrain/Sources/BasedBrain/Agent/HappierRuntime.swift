@@ -163,16 +163,16 @@ public final class HappierRuntime: @unchecked Sendable {
         try await attach(session: sid, def: def, cwd: s.cwd, resume: s.acpSessionID)
     }
 
-    private func useNative(_ def: AgentDefinition) -> String? {
+    private func useNative(_ def: AgentDefinition) async -> String? {
         // BSD-53: in a container sandbox every agent goes through ACP (`docker exec -i … <agent>`).
         guard preferNativeClaude, def.id == "claude", !usesContainerSandbox else { return nil }
-        return ShellEnvironment.which("claude")
+        return await ShellEnvironment.locate("claude")   // BSD-37: no thread blocked on the login shell
     }
 
     private func attach(session sid: RecordID, def: AgentDefinition, cwd: String, resume: String?) async throws {
         let conns = await mainQueue.run { self.brain.connections() }
         var servers = connections.map { $0.mcpServers(for: conns) } ?? []
-        if let exe = useNative(def) {
+        if let exe = await useNative(def) {
             // Native Claude Code: our session ids are stored as "claude:<uuid>".
             let resumeID = resume.flatMap { $0.hasPrefix("claude:") ? String($0.dropFirst(7)) : nil }
             var mcp: [String: JSONValue] = [:]
