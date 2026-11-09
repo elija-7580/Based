@@ -373,3 +373,26 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .shell-editor { margin-inline: calc(-1 * var(--space-8)); }
 .shell-database.full { height: calc(100vh - var(--space-8) * 4); min-height: calc(var(--page-measure) / 2); }
 .shell-database.inline { margin-block: var(--space-2); }
+
+/* Tabs der Shell (components/TabBar.tsx): ab dem zweiten Tab über der Seite, wie die Navigation auf canvas. */
+.main { flex-direction: column; gap: var(--space-2); }
+.tabbar { display: flex; align-items: center; gap: var(--space-1); min-width: 0; overflow-x: auto; scrollbar-width: none; flex: none; }
+.tab {
+  display: flex; align-items: center; gap: var(--space-2); min-width: calc(var(--space-8) * 2); max-width: calc(var(--sidebar-width) - var(--space-6));
+  height: var(--space-6); padding: 0 var(--space-1) 0 var(--space-3); border-radius: var(--radius-md); color: var(--muted); cursor: default;
+  font-size: var(--type-ui-size); font-weight: var(--type-meta-weight); user-select: none; flex: 0 1 auto;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.tab:hover { background: var(--selected); color: var(--ink-2); }
+.tab.active { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-panel); font-weight: var(--weight-heading); }
+.tab:focus-visible { outline: var(--marker-width) solid var(--marker-strong); outline-offset: calc(-1 * var(--marker-width)); }
+.tab.drop-before { box-shadow: inset var(--marker-width) 0 0 var(--marker-strong); }
+.tab.drop-after { box-shadow: inset calc(-1 * var(--marker-width)) 0 0 var(--marker-strong); }
+.tab-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-close {
+  flex: none; width: var(--icon-md); height: var(--icon-md); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; opacity: 0;
+}
+.tab:hover .tab-close, .tab.active .tab-close, .tab-close:focus-visible { opacity: 1; }
+.tab-close:hover { background: var(--selected); color: var(--ink); }
+.tab-new { flex: none; }

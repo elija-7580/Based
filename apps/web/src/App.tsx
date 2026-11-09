@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { applyAppearance, loadAppearance, saveAppearance, type Appearance } from "./appearance.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
+import { TabBar } from "./components/TabBar.js";
 import { Graph } from "./screens/Graph.js";
 import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
 import { Settings } from "./screens/Settings.js";
 import { Trash } from "./screens/Trash.js";
+import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -43,8 +45,10 @@ export function App({ client, history }: { client: StoreClient; history: History
     if (route.name === "page") recentPages.touch(route.id);
   }, [route]);
 
-  const navigate = useCallback((r: Route) => history.navigate(r), [history]);
-  const openPage = useCallback((id: string) => history.navigate({ name: "page", id }), [history]);
+  // ⌘-Klick / Mittelklick: in einem neuen Tab im Hintergrund (shell/newTabIntent.ts)
+  const navigate = useCallback((r: Route) => (wantsNewTab() ? void history.openTab(r, { background: true }) : history.navigate(r)), [history]);
+  const openPage = useCallback((id: string) => navigate({ name: "page", id }), [navigate]);
+  useEffect(() => installNewTabIntent(), []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -55,6 +59,17 @@ export function App({ client, history }: { client: StoreClient; history: History
       } else if (mod && e.key === ",") {
         e.preventDefault();
         history.navigate({ name: "settings" });
+      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "t") {
+        // ⌘T/⌘W: im normalen Browser-Tab behält der Browser sie meist für sich; in der App (Tauri, PWA) und in Tests
+        // kommen sie an. Sonst: + in der Tab-Leiste, ⌘-Klick, Mittelklick.
+        e.preventDefault();
+        history.openTab();
+      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "w" && history.tabs.length > 1) {
+        e.preventDefault();
+        history.close();
+      } else if (mod && e.shiftKey && (e.code === "BracketLeft" || e.code === "BracketRight")) {
+        e.preventDefault();
+        history.cycle(e.code === "BracketRight" ? 1 : -1);
       } else if (mod && e.key === "[") {
         e.preventDefault();
         history.back();
@@ -102,6 +117,7 @@ export function App({ client, history }: { client: StoreClient; history: History
     <div className="shell" data-testid="based-root" data-ready={state.ready ? "" : undefined}>
       <Sidebar client={client} state={state} route={route} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} />
       <main className="main">
+        <TabBar history={history} titles={state.titles} />
         <div className="panel">{screen}</div>
       </main>
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}

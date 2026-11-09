@@ -1,7 +1,8 @@
 // BSD-153: was die Web-Shell im Browser behält (nicht im Workspace): Gerätekennung, Sync-Server, zuletzt geöffnete
 // Seiten, aufgeklappte Seiten in der Seitenleiste. Alles über localStorage; scheitert das (privater Modus), gilt es
-// nur für diese Sitzung.
+// nur für diese Sitzung. Ausnahme: Sync-Server und Token liegen verschlüsselt in IndexedDB (secrets.ts).
 import type { SyncConfig } from "../worker/protocol.js";
+import { indexedDBKV, memoryKV, SecretStore } from "./secrets.js";
 
 function storage(): Storage | undefined {
   try {
@@ -35,12 +36,41 @@ export const deviceNode = {
   set: (node: string) => write("based.device", node),
 };
 
+let secrets: SecretStore | undefined;
+const secretStore = () => (secrets ??= new SecretStore(typeof indexedDB === "undefined" ? memoryKV() : indexedDBKV()));
+let syncCache: SyncConfig | undefined;
+let syncWrite: Promise<void> = Promise.resolve();
+
+/**
+ * Sync-Server und Token. Gespeichert verschlüsselt in IndexedDB (asynchron); `get`/`set` arbeiten auf einer Kopie im
+ * Speicher, die `load()` beim Start füllt (und dabei den alten Klartext-Eintrag aus localStorage übernimmt).
+ */
 export const syncConfig = {
-  get: (): SyncConfig | undefined => {
-    const v = read<Partial<SyncConfig> | undefined>("based.sync", undefined);
-    return v?.url ? { url: v.url, token: v.token ?? "" } : undefined;
+  get: (): SyncConfig | undefined => syncCache,
+  set: (c: SyncConfig | undefined) => {
+    const value = c?.url ? { url: c.url, token: c.token } : undefined;
+    syncCache = value;
+    syncWrite = syncWrite.then(() => secretStore().setSync(value)).catch(() => undefined);
   },
-  set: (c: SyncConfig | undefined) => write("based.sync", c),
+  /** Aus IndexedDB lesen (beim Start und wenn dieser Tab den Store übernimmt – ein anderer Tab kann ihn geändert haben). */
+  async load(): Promise<SyncConfig | undefined> {
+    try {
+      await syncWrite;
+      const s = secretStore();
+      await s.migrate(storage());
+      syncCache = await s.getSync();
+    } catch {
+      // IndexedDB nicht nutzbar (manche privaten Fenster): alter Eintrag gilt für diese Sitzung
+      const v = read<Partial<SyncConfig> | undefined>("based.sync", undefined);
+      syncCache = v?.url ? { url: v.url, token: v.token ?? "" } : syncCache;
+    }
+    return syncCache;
+  },
+  /** Für Tests: anderen Speicher verwenden. */
+  _use(store: SecretStore) {
+    secrets = store;
+    syncCache = undefined;
+  },
 };
 
 export interface RecentEntry {

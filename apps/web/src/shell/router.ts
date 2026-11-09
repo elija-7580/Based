@@ -31,55 +31,230 @@ export function routeFromHash(hash: string): Route {
 
 export const sameRoute = (a: Route, b: Route) => routeToHash(a) === routeToHash(b);
 
+/** Ein Tab der Shell: eigener Verlauf. */
+export interface TabInfo {
+  id: string;
+  route: Route;
+  canBack: boolean;
+  canForward: boolean;
+}
+
+interface TabState {
+  id: string;
+  entries: Route[];
+  index: number;
+}
+
+/** Gespeicherte Tabs (Routen als Hash-Namen). */
+export interface SavedTabs {
+  v: 1;
+  tabs: { id: string; entries: string[]; index: number }[];
+  active: string;
+}
+
+export interface TabsStorage {
+  load(): SavedTabs | undefined;
+  save(s: SavedTabs): void;
+}
+
+const MAX_ENTRIES = 50;
+const TABS_KEY = "based.tabs";
+
 /**
- * Verlauf für Vor/Zurück. Der Browser-Verlauf trägt den Index im `history.state`, damit Zurück/Vor im Browser und
- * die Knöpfe der Shell dasselbe tun.
+ * Tabs im Browser: sessionStorage gehört zu genau diesem Browser-Tab (überlebt Neuladen, mehrere Browser-Tabs kommen
+ * sich nicht in die Quere); localStorage hält den letzten Stand für ein neues Fenster.
+ */
+export function browserTabsStorage(): TabsStorage {
+  const get = (s: () => Storage | undefined) => {
+    try {
+      const raw = s()?.getItem(TABS_KEY);
+      return raw ? (JSON.parse(raw) as SavedTabs) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const put = (s: () => Storage | undefined, v: SavedTabs) => {
+    try {
+      s()?.setItem(TABS_KEY, JSON.stringify(v));
+    } catch {
+      // nur für diese Sitzung
+    }
+  };
+  const session = () => globalThis.sessionStorage;
+  const local = () => globalThis.localStorage;
+  return {
+    load: () => get(session) ?? get(local),
+    save(v) {
+      put(session, v);
+      put(local, v);
+    },
+  };
+}
+
+const newTabID = () => Math.random().toString(36).slice(2, 10);
+
+function validSaved(s: SavedTabs | undefined): s is SavedTabs {
+  return !!s && s.v === 1 && Array.isArray(s.tabs) && s.tabs.length > 0 && s.tabs.every((t) => typeof t?.id === "string" && Array.isArray(t.entries) && t.entries.length > 0);
+}
+
+/**
+ * Tabs mit je eigenem Verlauf (wie Notion/Browser). `route`, `navigate`, `back`, `forward` betreffen den aktiven Tab.
+ *
+ * Browser-Verlauf: Jede Navigation legt einen Eintrag an (`history.state.b` = Position), damit Zurück/Vor des
+ * Browsers funktionieren – sie gehen im aktiven Tab zurück bzw. vor. Die Knöpfe der Shell ändern nur den Tab-Verlauf
+ * und ersetzen den aktuellen Browser-Eintrag (der Browser-Verlauf ist über mehrere Tabs hinweg ohnehin nur ein Faden).
+ * Die Adresse zeigt immer die Route des aktiven Tabs.
  */
 export class History {
-  private index = 0;
-  private length = 1;
+  private list: TabState[];
+  private activeIndex = 0;
+  private pos = 0;
   private listeners = new Set<() => void>();
-  route: Route;
+  private snapshot: readonly TabInfo[] = [];
 
-  constructor(private readonly win: Pick<Window, "location" | "history" | "addEventListener"> = window) {
-    this.route = routeFromHash(win.location.hash);
-    const st = win.history.state as { i?: number; n?: number } | null;
-    if (typeof st?.i === "number") {
-      this.index = st.i;
-      this.length = Math.max(st.n ?? st.i + 1, st.i + 1);
-    } else win.history.replaceState({ i: 0, n: 1 }, "", "#" + routeToHash(this.route));
+  constructor(
+    private readonly win: Pick<Window, "location" | "history" | "addEventListener"> = window,
+    private readonly storage: TabsStorage | undefined = browserTabsStorage(),
+  ) {
+    const fromHash = routeFromHash(win.location.hash);
+    const saved = storage?.load();
+    if (validSaved(saved)) {
+      this.list = saved.tabs.map((t) => ({ id: t.id, entries: t.entries.map((h) => routeFromHash("#" + h)), index: Math.min(Math.max(0, t.index | 0), t.entries.length - 1) }));
+      this.activeIndex = Math.max(0, this.list.findIndex((t) => t.id === saved.active));
+    } else {
+      this.list = [{ id: newTabID(), entries: [fromHash], index: 0 }];
+    }
+    const st = win.history.state as { b?: number } | null;
+    if (typeof st?.b === "number") this.pos = st.b;
+    // Ausdrücklicher Hash (Link, Lesezeichen), der nicht zum gespeicherten Tab passt: dort hin
+    if (win.location.hash.replace(/^#\/?/, "") && !sameRoute(fromHash, this.route)) this.push(this.active, fromHash);
+    this.syncURL();
+    this.refresh();
     win.addEventListener("popstate", () => {
-      const s = win.history.state as { i?: number } | null;
-      this.index = typeof s?.i === "number" ? s.i : this.index;
-      this.route = routeFromHash(win.location.hash);
-      this.emit();
+      const s = win.history.state as { b?: number } | null;
+      const tab = this.active;
+      if (typeof s?.b !== "number") {
+        // Hash von Hand geändert: der Browser hat einen neuen Eintrag angelegt
+        this.pos += 1;
+        this.push(tab, routeFromHash(win.location.hash));
+      } else {
+        if (s.b < this.pos && tab.index > 0) tab.index -= 1;
+        else if (s.b > this.pos && tab.index < tab.entries.length - 1) tab.index += 1;
+        this.pos = s.b;
+      }
+      this.syncURL();
+      this.changed();
     });
   }
 
+  // MARK: aktiver Tab
+
+  private get active(): TabState {
+    return this.list[this.activeIndex]!;
+  }
+
+  get route(): Route {
+    const t = this.active;
+    return t.entries[t.index]!;
+  }
+
   get canBack() {
-    return this.index > 0;
+    return this.active.index > 0;
   }
   get canForward() {
-    return this.index < this.length - 1;
+    const t = this.active;
+    return t.index < t.entries.length - 1;
   }
 
   navigate(r: Route, opts: { replace?: boolean } = {}) {
     if (sameRoute(r, this.route) && !opts.replace) return;
-    this.route = r;
-    if (opts.replace) this.win.history.replaceState({ i: this.index, n: this.length }, "", "#" + routeToHash(r));
-    else {
-      this.index += 1;
-      this.length = this.index + 1;
-      this.win.history.pushState({ i: this.index, n: this.length }, "", "#" + routeToHash(r));
+    const tab = this.active;
+    if (opts.replace) {
+      tab.entries[tab.index] = r;
+      this.syncURL();
+    } else {
+      this.push(tab, r);
+      this.pos += 1;
+      this.win.history.pushState({ b: this.pos }, "", "#" + routeToHash(r));
     }
-    this.emit();
+    this.changed();
   }
 
   back() {
-    if (this.canBack) this.win.history.back();
+    if (!this.canBack) return;
+    this.active.index -= 1;
+    this.syncURL();
+    this.changed();
   }
   forward() {
-    if (this.canForward) this.win.history.forward();
+    if (!this.canForward) return;
+    this.active.index += 1;
+    this.syncURL();
+    this.changed();
+  }
+
+  // MARK: Tabs
+
+  /** Alle Tabs (neues Array bei jeder Änderung, für useSyncExternalStore). */
+  get tabs(): readonly TabInfo[] {
+    return this.snapshot;
+  }
+
+  get activeID(): string {
+    return this.active.id;
+  }
+
+  /** Neuer Tab rechts vom aktiven; `background`: der aktive bleibt (⌘-Klick). */
+  openTab(r: Route = { name: "home" }, opts: { background?: boolean } = {}): string {
+    const tab: TabState = { id: newTabID(), entries: [r], index: 0 };
+    this.list.splice(this.activeIndex + 1, 0, tab);
+    if (!opts.background) {
+      this.activeIndex += 1;
+      this.syncURL();
+    }
+    this.changed();
+    return tab.id;
+  }
+
+  activate(id: string) {
+    const i = this.list.findIndex((t) => t.id === id);
+    if (i < 0 || i === this.activeIndex) return;
+    this.activeIndex = i;
+    this.syncURL();
+    this.changed();
+  }
+
+  /** Tab schließen; der letzte wird zu einem leeren Tab (Home). */
+  close(id: string = this.activeID) {
+    const i = this.list.findIndex((t) => t.id === id);
+    if (i < 0) return;
+    const wasActive = i === this.activeIndex;
+    this.list.splice(i, 1);
+    if (this.list.length === 0) this.list.push({ id: newTabID(), entries: [{ name: "home" }], index: 0 });
+    if (i < this.activeIndex || (wasActive && this.activeIndex >= this.list.length)) this.activeIndex -= 1;
+    this.activeIndex = Math.max(0, Math.min(this.activeIndex, this.list.length - 1));
+    this.syncURL();
+    this.changed();
+  }
+
+  /** Tab an Position `to` verschieben (Ziehen). */
+  move(id: string, to: number) {
+    const from = this.list.findIndex((t) => t.id === id);
+    if (from < 0) return;
+    const target = Math.max(0, Math.min(to, this.list.length - 1));
+    if (target === from) return;
+    const activeID = this.activeID;
+    const [tab] = this.list.splice(from, 1);
+    this.list.splice(target, 0, tab!);
+    this.activeIndex = this.list.findIndex((t) => t.id === activeID);
+    this.changed();
+  }
+
+  /** Nächster/vorheriger Tab (ringsum). */
+  cycle(delta: number) {
+    const n = this.list.length;
+    if (n < 2) return;
+    this.activate(this.list[(((this.activeIndex + delta) % n) + n) % n]!.id);
   }
 
   subscribe = (fn: () => void) => {
@@ -87,7 +262,29 @@ export class History {
     return () => this.listeners.delete(fn);
   };
 
-  private emit() {
+  // MARK: intern
+
+  private push(tab: TabState, r: Route) {
+    tab.entries.splice(tab.index + 1);
+    tab.entries.push(r);
+    tab.index = tab.entries.length - 1;
+    if (tab.entries.length > MAX_ENTRIES) {
+      tab.entries.shift();
+      tab.index -= 1;
+    }
+  }
+
+  private syncURL() {
+    this.win.history.replaceState({ b: this.pos }, "", "#" + routeToHash(this.route));
+  }
+
+  private refresh() {
+    this.snapshot = this.list.map((t) => ({ id: t.id, route: t.entries[t.index]!, canBack: t.index > 0, canForward: t.index < t.entries.length - 1 }));
+  }
+
+  private changed() {
+    this.refresh();
+    this.storage?.save({ v: 1, tabs: this.list.map((t) => ({ id: t.id, entries: t.entries.map(routeToHash), index: t.index })), active: this.activeID });
     for (const fn of this.listeners) fn();
   }
 }

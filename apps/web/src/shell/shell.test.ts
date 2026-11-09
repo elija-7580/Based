@@ -1,6 +1,6 @@
 import { buildOutline, createPage, createTeamspace, MemoryPersistence, setFavorite, WorkspaceStore } from "@based/core";
 import { describe, expect, it } from "vitest";
-import { History, routeFromHash, routeToHash, type Route } from "./router.js";
+import { History, routeFromHash, routeToHash, type Route, type SavedTabs, type TabsStorage } from "./router.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, rowIndexOf } from "./sidebarModel.js";
 
 function outline() {
@@ -73,4 +73,99 @@ describe("Routen und Verlauf", () => {
     h.navigate({ name: "graph" });
     expect(h.canForward).toBe(false);
   });
+
+  it("Tabs: eigener Verlauf je Tab, öffnen im Hintergrund, schließen, verschieben, gespeichert", () => {
+    const { win, entries } = fakeWindow();
+    let saved: SavedTabs | undefined;
+    const storage: TabsStorage = { load: () => saved && structuredClone(saved), save: (s) => (saved = structuredClone(s)) };
+    const h = new History(win, storage);
+    const page = (id: string): Route => ({ name: "page", id });
+    h.navigate(page("a"));
+    h.navigate(page("b"));
+    const first = h.activeID;
+
+    // ⌘-Klick: neuer Tab im Hintergrund, aktiver bleibt
+    const t2 = h.openTab(page("c"), { background: true });
+    expect(h.activeID).toBe(first);
+    expect(h.tabs.map((t) => t.route)).toEqual([page("b"), page("c")]);
+
+    // neuer Tab vorne: eigener Verlauf
+    h.activate(t2);
+    expect(h.route).toEqual(page("c"));
+    expect(entries.at(-1)!.hash).toBe("#page-c");
+    expect(h.canBack).toBe(false);
+    h.navigate(page("d"));
+    h.back();
+    expect(h.route).toEqual(page("c"));
+    h.activate(first);
+    expect(h.route).toEqual(page("b"));
+    h.back();
+    expect(h.route).toEqual(page("a"));
+
+    // ⌘T, verschieben, ⌘W
+    const t3 = h.openTab();
+    expect(h.route).toEqual({ name: "home" });
+    expect(h.tabs.map((t) => t.id)).toEqual([first, t3, t2]);
+    h.move(t2, 0);
+    expect(h.tabs.map((t) => t.id)).toEqual([t2, first, t3]);
+    expect(h.activeID).toBe(t3);
+    h.close();
+    expect(h.tabs.map((t) => t.id)).toEqual([t2, first]);
+    expect(h.activeID).toBe(first);
+
+    // gespeichert: neues Fenster stellt Tabs, aktiven Tab und Verläufe wieder her
+    const again = new History(fakeWindow().win, storage);
+    expect(again.tabs.map((t) => t.id)).toEqual([t2, first]);
+    expect(again.route).toEqual(page("a"));
+    expect(again.canForward).toBe(true);
+    again.forward();
+    expect(again.route).toEqual(page("b"));
+    again.activate(t2);
+    expect(again.canForward).toBe(true);
+
+    // ausdrücklicher Hash (Link) öffnet im aktiven Tab
+    const linked = fakeWindow("#page-z");
+    const third = new History(linked.win, storage);
+    expect(third.route).toEqual(page("z"));
+    expect(third.canBack).toBe(true);
+
+    // letzten Tab schließen: ein leerer bleibt
+    third.close(third.tabs[0]!.id);
+    third.close();
+    expect(third.tabs).toHaveLength(1);
+    expect(third.route).toEqual({ name: "home" });
+  });
+
+  it("Browser-Zurück geht im aktiven Tab zurück", () => {
+    const { win, popTo } = fakeWindow();
+    const h = new History(win, undefined);
+    h.navigate({ name: "page", id: "a" });
+    h.navigate({ name: "page", id: "b" });
+    popTo(1);
+    expect(h.route).toEqual({ name: "page", id: "a" });
+    popTo(2);
+    expect(h.route).toEqual({ name: "page", id: "b" });
+  });
 });
+
+function fakeWindow(hash = "") {
+  const entries: { state: unknown; hash: string }[] = [{ state: null, hash }];
+  let i = 0;
+  const listeners: (() => void)[] = [];
+  const win = {
+    location: { get hash() { return entries[i]!.hash; } },
+    history: {
+      get state() { return entries[i]!.state; },
+      replaceState: (s: unknown, _: string, h: string) => { entries[i] = { state: s, hash: h }; },
+      pushState: (s: unknown, _: string, h: string) => { entries.splice(i + 1); entries.push({ state: s, hash: h }); i++; },
+      back: () => { i--; listeners.forEach((f) => f()); },
+      forward: () => { i++; listeners.forEach((f) => f()); },
+    },
+    addEventListener: (_: string, f: () => void) => listeners.push(f),
+  } as unknown as Window;
+  const popTo = (n: number) => {
+    i = n;
+    listeners.forEach((f) => f());
+  };
+  return { win, entries, popTo };
+}
