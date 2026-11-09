@@ -14,5 +14,6 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0007](0007-main-agent-and-runs.md) | One main agent delegates; every run is a record in "Runs"; projects organise runs (Paperclip-style). |
 | [0008](0008-collaboration-ready.md) | Prepare for multi-user: properties become records, text CRDT chosen by spike, LWW until then. |
 | [0009](0009-design-tokens.md) | Colours, spacing, fonts, radii and motion come only from `DS`/`Theme`. |
+| [0010](0010-text-crdt.md) | *Vorgeschlagen:* Automerge als Text-CRDT pro Block (Record-Art `textState`), Loro als Alternative; LWW bis zur Integration. |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".

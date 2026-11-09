@@ -1,0 +1,12 @@
+{
+  "name": "based-crdt-spike",
+  "private": true,
+  "description": "BSD-29: Wegwerf-Benchmark Text-CRDTs (nicht Teil des Builds)",
+  "type": "module",
+  "scripts": { "bench": "node bench.mjs" },
+  "dependencies": {
+    "@automerge/automerge": "3.5.0",
+    "loro-crdt": "1.17.1",
+    "yjs": "13.6.33"
+  }
+}
