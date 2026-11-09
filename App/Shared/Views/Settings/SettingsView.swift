@@ -124,7 +124,11 @@ struct SettingsView: View {
             case .sync: SyncSettings()
             case .billing: BillingSettings()
             case .updates: UpdatesSettings()
-            case .diagnostics: DiagnosticsSettings()
+            case .diagnostics:
+                DiagnosticsSettings()
+                #if os(macOS)
+                CommandLineSettingsSection()
+                #endif
             case .about: AboutSettings()
             }
         }
@@ -630,6 +634,77 @@ struct DiagnosticsSettings: View {
         }
     }
 }
+
+#if os(macOS)
+/// BSD-118: Settings → Diagnostics → Developer: links the `based` binary the app ships (Contents/Helpers) into a
+/// bin folder. Reads the file system only when the section appears or after a click — never in a body.
+struct CommandLineSettingsSection: View {
+    @Environment(AppModel.self) private var model
+    @State private var state: CLIInstall.State = .notInstalled
+    @State private var message: String?
+
+    private var helper: String { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/based").path }
+    private var plan: CLIInstall.Plan {
+        CLIInstall.plan(helper: helper, home: FileManager.default.homeDirectoryForCurrentUser.path,
+                        isWritable: { FileManager.default.isWritableFile(atPath: $0) })
+    }
+
+    var body: some View {
+        Section("Developer · Command line") {
+            Text("`based` talks to your Based server from Terminal: `based runs --running`, `based ask --wait \"…\"`, `based page new`. The token never goes on the command line — run `based login --url <server>` once.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            LabeledContent("Status") {
+                switch state {
+                case .notInstalled: Text("Not installed")
+                case .installed(let p): Text("Installed at \(p)").textSelection(.enabled)
+                case .other(let p): Text("Another `based` at \(p)").foregroundStyle(.orange).textSelection(.enabled)
+                }
+            }
+            let server = model.brain.serverURL.trimmingCharacters(in: .whitespaces)
+            LabeledContent("Server", value: server.isEmpty ? "Not set (Settings → Sync)" : server)
+            LabeledContent("Token", value: "BASED_TOKEN, --token-file or `based login` (never shown here)")
+            if AppDiagnostics.isSandboxed {
+                Text("This build is sandboxed and can't write outside its container. Paste this into Terminal:")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+                HStack {
+                    Text(plan.shellCommand).font(.caption.monospaced()).textSelection(.enabled).lineLimit(3)
+                    Spacer()
+                    Button("Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(plan.shellCommand, forType: .string)
+                        message = "Copied."
+                    }
+                }
+            } else {
+                Button("Install command line") { install() }
+                    .accessibilityIdentifier("settings.installCLI")
+            }
+            if let hint = plan.pathHint { Text(hint).font(.caption).foregroundStyle(Theme.secondary).textSelection(.enabled) }
+            if let message { Text(message).font(.caption).foregroundStyle(Theme.secondary) }
+        }
+        .onAppear(perform: refresh)
+    }
+
+    private func refresh() {
+        let fm = FileManager.default
+        state = CLIInstall.state(linkPath: plan.linkPath, helper: helper,
+                                 destination: { try? fm.destinationOfSymbolicLink(atPath: $0) },
+                                 exists: { fm.fileExists(atPath: $0) })
+    }
+
+    private func install() {
+        do {
+            try CLIInstall.install(plan, helper: helper)
+            message = "Linked \(plan.linkPath) → \(helper). Open a new Terminal window and run `based --help`."
+            Log.notice("cli installed at \(plan.linkPath)", category: "app")
+        } catch {
+            message = "\(error)"
+            Log.warning("cli install failed: \(error)", category: "app")
+        }
+        refresh()
+    }
+}
+#endif
 
 struct AboutSettings: View {
     @Environment(AppModel.self) private var model

@@ -15,6 +15,8 @@ public enum CLICommand: Equatable, Sendable {
     case version
     /// Hands a task to the main agent (MCP `ask_main_agent`).
     case ask(task: String, kind: String?, project: String?)
+    /// BSD-118: `based ask --wait` — hands the task over, then follows the run until it ends (nil timeout = 30 min).
+    case askWait(task: String, kind: String?, project: String?, timeout: Int?)
     case runs(status: String?, limit: Int?)
     case run(id: String)
     case pageGet(ref: String)
@@ -47,7 +49,7 @@ public enum CLIArguments {
     based — Based from the terminal
 
     Usage:
-      based ask "<task>" [--kind code|research|write|organize] [--project <name|id>]
+      based ask "<task>" [--kind code|research|write|organize] [--project <name|id>] [--wait [--timeout <seconds>]]
       based runs [--running | --status <Status>] [--limit N]
       based run <run-id>
       based page get <page-id | title>
@@ -75,8 +77,8 @@ public enum CLIArguments {
         var rest: [String] = []
         var flags: [String: String] = [:]
         var bools: Set<String> = []
-        let valueFlags: Set<String> = ["--url", "--token-file", "--kind", "--project", "--status", "--limit", "--title", "--parent"]
-        let boolFlags: Set<String> = ["--json", "--running", "--help", "-h", "--version"]
+        let valueFlags: Set<String> = ["--url", "--token-file", "--kind", "--project", "--status", "--limit", "--title", "--parent", "--timeout"]
+        let boolFlags: Set<String> = ["--json", "--running", "--help", "-h", "--version", "--wait"]
         var i = 0
         while i < argv.count {
             let a = argv[i]
@@ -125,12 +127,21 @@ public enum CLIArguments {
 
         switch cmd {
         case "ask":
-            try only(["--kind", "--project"])
+            try only(["--kind", "--project", "--timeout"])
             let task = args.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             guard !task.isEmpty else { throw CLIError("`based ask` needs a task, e.g. based ask \"Summarise today's runs\"") }
             if let k = flags["--kind"], !["code", "research", "write", "organize"].contains(k) {
                 throw CLIError("--kind must be code, research, write or organize")
             }
+            if bools.contains("--wait") {
+                var timeout: Int?
+                if let t = flags["--timeout"] {
+                    guard let n = Int(t), n > 0 else { throw CLIError("--timeout must be a positive number of seconds") }
+                    timeout = n
+                }
+                return (.askWait(task: task, kind: flags["--kind"], project: flags["--project"], timeout: timeout), opts)
+            }
+            if flags["--timeout"] != nil { throw CLIError("--timeout only applies with --wait") }
             return (.ask(task: task, kind: flags["--kind"], project: flags["--project"]), opts)
         case "runs":
             try only(["--status", "--limit"])
@@ -244,6 +255,9 @@ public typealias CLITransport = @Sendable (_ body: Data) async throws -> (status
 public struct BasedCLI: Sendable {
     public var transport: CLITransport
     public var json = false
+    /// BSD-118: how `--wait` waits between `get_run` calls (tests pass a no-op).
+    public var sleep: @Sendable (TimeInterval) async throws -> Void = { try await Task.sleep(nanoseconds: UInt64($0 * 1_000_000_000)) }
+    public var pollInterval: TimeInterval = 2
     public init(transport: @escaping CLITransport, json: Bool = false) { self.transport = transport; self.json = json }
 
     /// Calls an MCP tool; returns its text, throws with the tool's error text.
@@ -289,6 +303,68 @@ public struct BasedCLI: Sendable {
         throw CLIError("Run \(runID) has no sandbox")
     }
 
+    static func askArguments(_ task: String, _ kind: String?, _ project: String?) -> [String: JSONValue] {
+        var a: [String: JSONValue] = ["task": .string(task)]
+        if let kind { a["kind"] = .string(kind) }
+        if let project { a["project"] = .string(project) }
+        return a
+    }
+
+    /// BSD-118: what `get_run` says about a run — its status (first line "- [Status] …") and the "Result:" section.
+    public struct RunSnapshot: Equatable, Sendable {
+        public var status: AgentRun.Status?
+        public var result: String
+    }
+
+    public static func snapshot(ofGetRun text: String) -> RunSnapshot {
+        var status: AgentRun.Status?
+        if let first = text.split(whereSeparator: \.isNewline).first, first.hasPrefix("- ["),
+           let close = first.firstIndex(of: "]") {
+            let raw = first[first.index(first.startIndex, offsetBy: 3)..<close]
+            status = AgentRun.Status(rawValue: String(raw))
+        }
+        var result = ""
+        if let r = text.range(of: "\n\nResult:\n") {
+            let rest = text[r.upperBound...]
+            let end = [rest.range(of: "\n\nProtocol:\n"), rest.range(of: "\n\nSub-runs:\n")].compactMap { $0?.lowerBound }.min() ?? rest.endIndex
+            result = String(rest[..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return RunSnapshot(status: status, result: result)
+    }
+
+    /// Polls `get_run` until the run is terminal: prints status changes and the latest progress line, then the
+    /// result. A failed or cancelled run (or the timeout) throws, so the executable exits non-zero.
+    public func follow(runID: String, timeout: TimeInterval, out: (String) -> Void) async throws {
+        var waited: TimeInterval = 0
+        var lastStatus: AgentRun.Status?
+        var lastProgress = ""
+        while true {
+            let snap = Self.snapshot(ofGetRun: try await call("get_run", ["run_id": .string(runID)]))
+            let status = snap.status
+            if let status, status.isTerminal {
+                if !snap.result.isEmpty { out(snap.result) }
+                switch status {
+                case .done: return
+                case .failed: throw CLIError("Run \(runID) failed" + (snap.result.isEmpty ? "" : " (see above)"))
+                default: throw CLIError("Run \(runID) was cancelled")
+                }
+            }
+            if let status, status != lastStatus {
+                out("· \(status.rawValue)")
+                if status == .needsYou { out("  The run waits for you — answer it in Based (Inbox).") }
+                lastStatus = status
+            }
+            let progress = snap.result.split(whereSeparator: \.isNewline).last.map(String.init) ?? ""
+            if !progress.isEmpty, progress != lastProgress { out("  " + progress); lastProgress = progress }
+            guard waited < timeout else {
+                throw CLIError("Still \(status?.rawValue ?? "running") after \(Int(timeout)) s — follow it with `based run \(runID)`")
+            }
+            let step = min(pollInterval, max(0.1, timeout - waited))
+            try await sleep(step)
+            waited += step
+        }
+    }
+
     /// Project name or id → id (through get_project, whose first id is the project's).
     func projectID(_ ref: String) async throws -> String {
         if Self.isID(ref) { return ref }
@@ -304,10 +380,12 @@ public struct BasedCLI: Sendable {
         case .version: out("based 0.1.0")
         case .login, .config: throw CLIError("handled by the executable")
         case .ask(let task, let kind, let project):
-            var a: [String: JSONValue] = ["task": .string(task)]
-            if let kind { a["kind"] = .string(kind) }
-            if let project { a["project"] = .string(project) }
-            out(try await call("ask_main_agent", a))
+            out(try await call("ask_main_agent", Self.askArguments(task, kind, project)))
+        case .askWait(let task, let kind, let project, let timeout):
+            let handed = try await call("ask_main_agent", Self.askArguments(task, kind, project))
+            guard let runID = Self.ids(in: handed).first else { out(handed); throw CLIError("The main agent returned no run id to follow") }
+            out("Run \(runID) started — waiting for the result (Ctrl-C stops waiting, the run keeps going).")
+            try await follow(runID: runID, timeout: TimeInterval(timeout ?? 1800), out: out)
         case .runs(let status, let limit):
             var a: [String: JSONValue] = [:]
             if let status { a["status"] = .string(status) }
