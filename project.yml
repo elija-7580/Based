@@ -138,6 +138,55 @@ targets:
         PRODUCT_NAME: BasedComplication
         PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).watchkitapp.complication
         TARGETED_DEVICE_FAMILY: "4"
+  # BSD-11: Share extension and widgets (iOS). Not embedded in Based-iOS yet: they need the App Group
+  # group.$(BASED_BUNDLE_ID) on the app too (see the backlog entry for the steps). Both link BasedBrain.
+  Based-iOS-Share:
+    type: app-extension
+    platform: iOS
+    sources:
+      - App/ShareExtension
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+    info:
+      path: App/ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        BasedAppGroup: group.$(BASED_BUNDLE_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_NAME: BasedShare
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).share
+        CODE_SIGN_ENTITLEMENTS: App/ShareExtension/BasedShare.entitlements
+  Based-iOS-Widgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - App/Widgets
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+    info:
+      path: App/Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        BasedAppGroup: group.$(BASED_BUNDLE_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_NAME: BasedWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).widgets
+        CODE_SIGN_ENTITLEMENTS: App/Widgets/BasedWidgets.entitlements
 schemes:
   Based-macOS:
     build:

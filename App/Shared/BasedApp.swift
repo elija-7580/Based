@@ -49,6 +49,9 @@ struct BasedApp: App {
             .onAppear { QuickCapturePanel.shared.install(model: model) }
             .onChange(of: ObjectIdentifier(model)) { _, _ in QuickCapturePanel.shared.install(model: model) }
             #endif
+            // BSD-11: Share extension inbox and widget snapshot (App Group).
+            .onAppear { AppGroupBridge.shared.start(model: model) }
+            .onChange(of: ObjectIdentifier(model)) { _, _ in AppGroupBridge.shared.start(model: model) }
             #if os(iOS)
             // BSD-66: voice notes from the Apple Watch app.
             .onAppear { WatchReceiver.shared.start(model: model) }
