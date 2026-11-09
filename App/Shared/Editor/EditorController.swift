@@ -737,8 +737,8 @@ final class EditorController {
     /// Rich clipboard content (Notion, web pages) as blocks. Returns false when the HTML is just inline text,
     /// so the caller falls back to the plain-text paste.
     func pasteHTML(_ html: String, into id: RecordID, selection: NSRange) -> Bool {
-        guard let b = store.blocks[id], b.type != .code, b.type != .page, ClipboardHTMLImporter.isStructured(html) else { return false }
         let store = self.store
+        guard let b = store.blocks[id], b.type != .code, b.type != .page, ClipboardHTMLImporter.isStructured(html) else { return false }
         let items = ClipboardHTMLImporter(resolvePage: ClipboardHTMLImporter.pageResolver { store.blocks[$0] != nil }).parse(html)
         return paste(blocks: items, into: id, selection: selection)
     }
@@ -803,10 +803,10 @@ final class EditorController {
     /// ⌘C on selected blocks: Markdown as text (Notion, Obsidian, any editor), HTML (Notion pastes it as blocks with
     /// colours, toggles, callouts, tables) and Based's own block ids (pasting in Based copies them losslessly).
     func copySelectedBlocks() {
+        let store = self.store
         let ids = store.documentOrder(Array(selectedBlocks))
         let blocks = ids.compactMap { store.blocks[$0] }
         guard !blocks.isEmpty else { return }
-        let store = self.store
         var exporter = HTMLExporter(store: store, pageLink: { id in (store.title(of: id), PageLink.url(id)) })
         exporter.headingOffset = 0
         let html = exporter.blocks(blocks)
