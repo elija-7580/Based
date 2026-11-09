@@ -1,5 +1,18 @@
-  4:24  error  'asNumber' is defined but never used  @typescript-eslint/no-unused-vars
-✖ 1 problem (1 error, 0 warnings)
+packages/core test:   clipboard  nicht portiert (13 Fälle)
+packages/core test:   conversion nicht portiert (117 Fälle)
+packages/core test:   formulas   143/143 grün
+packages/core test:   hlc        74/74 grün
+packages/core test:   merge      13/13 grün
+packages/core test:   queries    88/88 grün
+packages/core test:   records    66/66 grün
+packages/core test:   search     nicht portiert (33 Fälle)
+packages/core test:   sortkeys   343/343 grün
+packages/core test:   undo-remote 7/7 grün
+packages/core test:   values     46/46 grün
+packages/core test: [2m      Tests [22m [1m[32m854 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (859)[39m
+packages/editor test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+packages/sync test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
 --- e2e
 
 > @based/web@0.0.0 e2e /home/runner/work/Based/Based/apps/web
@@ -20,7 +33,7 @@
 
 Running 2 tests using 2 workers
 
-  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (204ms)
-  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (4.4s)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (170ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (751ms)
 
-  2 passed (9.1s)
+  2 passed (3.7s)
