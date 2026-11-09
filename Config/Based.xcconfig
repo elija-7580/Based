@@ -21,5 +21,5 @@ BASED_DISTRIBUTION = source
 BASED_UPDATE_FEED = https:/$()/github.com/$(BASED_UPDATE_REPO)/releases/latest/download/appcast.xml
 // Public half of the update signing key (written by scripts/setup-release-key.sh); the private half is the
 // SPARKLE_PRIVATE_KEY secret on GitHub.
-BASED_SPARKLE_PUBLIC_KEY =
+BASED_SPARKLE_PUBLIC_KEY = Wwb0H9pKkDyk9Cym5dkHtb6PtDCr07PhuOTb+7zEMVw=
 #include? "Local.xcconfig"
