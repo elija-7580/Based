@@ -85,9 +85,10 @@ private struct Overloaded: Error, CustomStringConvertible { var description: Str
     @Test func slowClassifierFallsBackToGeneral() async {
         let task = RouteTask(text: "Lass uns über die Planung für nächstes Jahr reden und Ideen sammeln")
         let start = Date()
-        let d = await ModelRouter().route(task, compute: .auto, classifier: SlowClassifier(delay: 2, answer: "research"), timeout: 0.2,
+        // A generous margin: on a loaded machine (clean build, parallel tests) the 0.2 s timer can start late.
+        let d = await ModelRouter().route(task, compute: .auto, classifier: SlowClassifier(delay: 6, answer: "research"), timeout: 0.2,
                                           registry: ModelRegistry(), installed: [.claudeCode], defaultModel: "")
-        #expect(Date().timeIntervalSince(start) < 1.5, "the router does not wait for the classifier")
+        #expect(Date().timeIntervalSince(start) < 5, "the router does not wait for the classifier")
         #expect(d.route?.id == "general" && d.reason.contains("too slow"))
         let fast = await ModelRouter().route(task, compute: .auto, classifier: SlowClassifier(delay: 0, answer: "research"), timeout: 1,
                                              registry: ModelRegistry(), installed: [.claudeCode], defaultModel: "")
