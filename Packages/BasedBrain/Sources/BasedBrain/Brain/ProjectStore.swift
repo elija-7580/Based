@@ -20,6 +20,8 @@ public struct AgentProject: Sendable, Identifiable, Equatable {
     /// Responsible agent (row of the Agents database).
     public var agentID: RecordID?
     public var updatedAt: Date
+    /// BSD-98: the project's permission layer (column "Permissions"), "" = none.
+    public var permissions: String = ""
 }
 
 @MainActor
@@ -49,6 +51,9 @@ extension BrainStore {
         ensureColumn(db, ProjectCol.folder, .text)
         ensureColumn(db, ProjectCol.pages, .text)
         ensureRelation(db, ProjectCol.agent, to: agentsDB)
+        // BSD-98: permission layers per project and per agent.
+        ensureColumn(db, PermissionCol.name, .text)
+        ensureColumn(agentsDB, PermissionCol.name, .text)
         ensureRelation(sessionsDB, ProjectCol.sessionLink, to: db)
         if let runs = existingRunsDB { ensureRelation(runs, RunCol.project, to: db) }
         if created { migrateSessionProjects(db) }
@@ -154,7 +159,8 @@ extension BrainStore {
         let pages = text(row, db, ProjectCol.pages).split(whereSeparator: { $0 == " " || $0 == "," || $0 == "\n" }).map(String.init)
         return AgentProject(id: row.id, name: row.title, status: status, goal: text(row, db, ProjectCol.goal),
                             folder: text(row, db, ProjectCol.folder), pageIDs: pages,
-                            agentID: relationValue(row.id, db, ProjectCol.agent), updatedAt: row.updatedAt)
+                            agentID: relationValue(row.id, db, ProjectCol.agent), updatedAt: row.updatedAt,
+                            permissions: text(row, db, PermissionCol.name))
     }
 
     // MARK: Writing

@@ -31,6 +31,10 @@ public final class MCPServer: @unchecked Sendable {
     /// (the app's local MCP host). Used when `mainAgent` is nil.
     public var mainAgentProvider: (@MainActor () -> MainAgent?)?
 
+    /// BSD-98: permission rules for `tools/call` (nil = no checks). Only "deny" (a deny rule, Plan mode) blocks here —
+    /// the MCP client (Claude Code, Cursor …) asks its user itself; ask/allow pass.
+    public var permissions: (@MainActor () -> AgentPermissions?)?
+
     var offersMainAgent: Bool { mainAgent != nil || mainAgentProvider != nil }
 
     func resolveMainAgent() async -> MainAgent? {
@@ -122,6 +126,13 @@ public final class MCPServer: @unchecked Sendable {
                 if case .object(var o) = a, o["kind"] == nil { o["kind"] = "organize"; a = .object(o) }
                 let r = await mainAgent.delegate(a, thread: thread)
                 return ["content": [["type": "text", "text": .string(r.text)]], "isError": .bool(r.isError)]
+            }
+            if let provider = permissions, let p = await MainActor.run(body: { provider() }) {
+                let call = await MainActor.run { tools.permissionCall(name, args) }
+                let v = p.decide(call)
+                if v.effect == .deny {
+                    return ["content": [["type": "text", "text": .string("Not permitted: \(call.tool) is blocked in Based (\(v.reason)). Don't retry it; tell the user.")]], "isError": true]
+                }
             }
             var callArgs = args
             // Session-scoped calls (`/mcp/session/<id>`): host tools learn who is calling (sub-agent parent).

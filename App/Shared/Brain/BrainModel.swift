@@ -111,6 +111,10 @@ final class BrainModel {
         runtime = AgentRuntime(registry: registry, tools: tools)
         // BSD-58: coding agents / MCP clients on the local endpoint can hand work to the main agent too.
         happier.mainAgentProvider = { [weak self] in self?.mainAgent }
+        // BSD-98: MCP clients (Claude Code, Cursor …) ask their user themselves; Based enforces deny rules and Plan mode.
+        happier.mcpPermissionsProvider = { [weak self] in
+            self.map { $0.brain.permissions(mode: $0.permissionMode == .plan ? .plan : .bypass) }
+        }
         brainMergeToken = brain.mergeDuplicatesAfterRemoteChanges()
         #if os(macOS)
         // BSD-111: catch up on voice notes that arrived without text (also when the server runs "Sort captures").
@@ -338,9 +342,12 @@ final class BrainModel {
         let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
         switch engine {
         case .model(let ref) where mainRef != nil:
-            backend = MainAgentChatBackend(agent: mainAgent, modelRef: ref)
+            backend = MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid))
         case .model(let ref):
-            backend = ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode))
+            // BSD-98: global → project of this chat; "ask" shows an approval card in the chat (Inbox item of the session).
+            let project = brain.sessions().first { $0.id == sid }?.projectID
+            backend = ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode, project: project),
+                                       approve: brain.inboxApprover(session: sid))
         case .cli(var spec):
             // Auto picked a CLI: it runs with the composer's permission mode (an explicit CLI choice has its own).
             if engineSpec.kind == .auto, spec.permission.isEmpty { spec.permission = permissionMode.cliPermission(for: spec.kind) }
@@ -412,7 +419,7 @@ final class BrainModel {
 
     func runAgent(_ a: Agent) {
         schedulerLog.append("Running \(a.name)…")
-        Task { if let o = await runtime.run(agent: a) { schedulerLog.append("\(a.name): \(o.usage.total) tokens") } else { schedulerLog.append("\(a.name) failed") } }
+        Task { if let o = await runtime.run(agent: a, permissions: brain.permissions(mode: .ask)) { schedulerLog.append("\(a.name): \(o.usage.total) tokens") } else { schedulerLog.append("\(a.name) failed") } }
     }
 
     func configureScheduler() {

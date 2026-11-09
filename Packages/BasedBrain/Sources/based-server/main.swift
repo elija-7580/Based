@@ -117,6 +117,8 @@ _ = store
 let share = await MainActor.run { ShareService(store: store) }
 // BSD-58: MCP clients can hand work to the main agent (`ask_main_agent`).
 mcp.mainAgent = MainAgent(runtime: runtime)
+// BSD-98: deny rules of Agent Brain → Permissions also hold for MCP clients (they ask their user themselves).
+mcp.permissions = { [tools] in tools.brain.permissions(mode: .bypass) }
 
 if opts.stdio {
     await StdioTransport(server: mcp).run()

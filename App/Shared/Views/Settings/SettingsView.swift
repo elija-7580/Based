@@ -115,6 +115,7 @@ struct SettingsView: View {
             case .security: SecuritySettings()
             case .agents:
                 AgentSetupSection().environment(model.brain.happier)
+                PermissionsSettingsSection()
                 AgentsSettingsView().environment(model.brain.happier)
                 AISettingsView()
             case .connections: ConnectionsSettingsView().environment(model.brain.happier)
@@ -488,6 +489,50 @@ struct BillingSettings: View {
 }
 
 /// Settings → Agents & AI: the setup / diagnosis entry point.
+/// BSD-98: Settings → Agents & AI → Permissions: default mode, the rules page and lines that can't be read
+/// (Permissions page, Agents and Projects column "Permissions"). Logic in BasedBrain (`BrainStore.permissionProblems`).
+struct PermissionsSettingsSection: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        @Bindable var brain: BrainModel = model.brain
+        let problems = brain.brain.permissionProblems()
+        Section("Permissions") {
+            Picker("Default mode", selection: $brain.permissionMode) {
+                ForEach(PermissionMode.allCases, id: \.self) { m in Text(m.title).tag(m) }
+            }
+            .accessibilityIdentifier("settings.permissionMode")
+            Text(brain.permissionMode.detail + ". Also the mode of coding agents picked by Auto; the chat's mode menu changes it too.")
+                .font(.caption).foregroundStyle(Theme.secondary)
+            HStack {
+                Text("Rules: Agent Brain → Permissions (allow / ask / deny per tool, path or command). Agents and projects can add their own in their “Permissions” column, e.g. “mode plan” or “deny Bash(*)”.")
+                    .font(.caption).foregroundStyle(Theme.secondary)
+                Spacer()
+                Button("Edit rules…") {
+                    let id = brain.brain.ensurePermissionsPage()
+                    brain.brain.ensurePermissionColumns()
+                    dismiss()
+                    model.open(id)
+                }
+                .accessibilityIdentifier("settings.editPermissionRules")
+            }
+            if problems.isEmpty {
+                Label("All rules can be read", systemImage: "checkmark.circle").font(.caption).foregroundStyle(Theme.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("\(problems.count) line\(problems.count == 1 ? "" : "s") can't be read and are ignored:", systemImage: "exclamationmark.triangle")
+                        .font(.caption).foregroundStyle(.orange)
+                    ForEach(problems, id: \.self) { p in
+                        Text(p).font(.caption.monospaced()).foregroundStyle(Theme.secondary).textSelection(.enabled)
+                    }
+                }
+                .accessibilityIdentifier("settings.permissionProblems")
+            }
+        }
+    }
+}
+
 struct AgentSetupSection: View {
     @Environment(AppModel.self) private var model
     @State private var showDoctor = false

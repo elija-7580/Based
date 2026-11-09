@@ -39,6 +39,8 @@ public struct Agent: Sendable, Identifiable, Equatable {
     public var createdAt: Date? = nil
     /// BSD-52: the main agent (Kind = main in the Agents database): its scheduled run is the heartbeat.
     public var isMain: Bool = false
+    /// BSD-98: this agent's permission layer (column "Permissions": `mode …` plus rules), "" = none.
+    public var permissions: String = ""
 }
 
 /// The "Agent Brain" lives inside the workspace as a page with three databases, so it syncs like
@@ -291,7 +293,8 @@ public final class BrainStore {
                          schedule: sched.isEmpty ? nil : sched, model: model.isEmpty ? nil : model,
                          enabled: bool(row, agentsDB, "Enabled", default: true), lastRun: last, dailyTokenBudget: budget,
                          monthlyBudget: monthly, runningSince: since, runningNode: node.isEmpty ? nil : node, createdAt: row.createdAt,
-                         isMain: text(row, agentsDB, AgentCol.kind) == AgentCol.mainKind)
+                         isMain: text(row, agentsDB, AgentCol.kind) == AgentCol.mainKind,
+                         permissions: text(row, agentsDB, PermissionCol.name))
         }
     }
 

@@ -335,7 +335,11 @@ public final class MainAgent: @unchecked Sendable {
 public struct MainAgentChatBackend: ChatBackend {
     public let agent: MainAgent
     public let modelRef: String
-    public init(agent: MainAgent, modelRef: String) { self.agent = agent; self.modelRef = modelRef }
+    /// BSD-98: approval card in the main thread (as `ModelChatBackend.approve`).
+    public var approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)?
+    public init(agent: MainAgent, modelRef: String, approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil) {
+        self.agent = agent; self.modelRef = modelRef; self.approve = approve
+    }
     public var resumeKind: String? { nil }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
         let brain = agent.runtime.tools.brain
@@ -344,7 +348,7 @@ public struct MainAgentChatBackend: ChatBackend {
             return MainAgent.systemPrompt(instructions: main.instructions, projects: brain.projectBriefs())
         }
         let o = try await agent.runtime.run(prompt: request.prompt, modelRef: modelRef, systemExtra: system, history: request.history,
-                                            callerSession: session, permissions: agent.permissions,
+                                            callerSession: session, permissions: agent.permissions, approve: approve,
                                             extraTools: agent.toolSet(thread: session), events: emit)
         try Task.checkCancellation()
         return ChatReply(text: o.text)

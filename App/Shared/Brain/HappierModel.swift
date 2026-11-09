@@ -42,6 +42,10 @@ final class HappierModel {
     @ObservationIgnored var mainAgentProvider: (@MainActor () -> MainAgent?)? {
         didSet { mcpHost?.setMainAgent(mainAgentProvider) }
     }
+    /// BSD-98: permission rules for the local MCP endpoint (deny rules and Plan mode block `tools/call`).
+    @ObservationIgnored var mcpPermissionsProvider: (@MainActor () -> AgentPermissions?)? {
+        didSet { mcpHost?.setPermissions(mcpPermissionsProvider) }
+    }
     /// BSD-36: stops agent processes when Based quits.
     @ObservationIgnored private var quitObserver: NSObjectProtocol?
     var mcpBaseURL: String?
@@ -176,6 +180,7 @@ final class HappierModel {
         guard mcpHost == nil else { return }
         let host = LocalMCPHost(tools: tools, runtime: runtime)
         host.setMainAgent(mainAgentProvider)
+        host.setPermissions(mcpPermissionsProvider)
         do {
             mcpBaseURL = try host.start(runtime: runtime)
             mcpHost = host

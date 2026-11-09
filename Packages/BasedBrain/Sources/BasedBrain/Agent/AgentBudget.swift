@@ -160,6 +160,7 @@ extension BrainStore {
         ensureColumn(db, AgentCol.spent, .number) { s in s.numberFormat = .euro }
         ensureColumn(db, AgentCol.runningSince, .date)
         ensureColumn(db, AgentCol.node, .text)
+        ensureColumn(db, PermissionCol.name, .text)
     }
 
     /// Sets an agent's monthly budget in euros (nil = unlimited).

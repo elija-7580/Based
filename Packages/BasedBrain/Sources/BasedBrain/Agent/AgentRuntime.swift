@@ -39,6 +39,7 @@ public final class AgentRuntime: @unchecked Sendable {
     /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
                     callerSession: String? = nil, permissions: AgentPermissions? = nil,
+                    approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil,
                     extraTools: AgentToolSet? = nil,
                     events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
         let onEvent = events
@@ -128,7 +129,7 @@ public final class AgentRuntime: @unchecked Sendable {
                 // BSD-50: mode and rules decide before the tool runs.
                 // BSD-52: tools of this run only (the main agent's delegate / check_runs / report).
                 if let extra = extraTools, extra.handles(call.name) { res = await extra.call(call.name, call.arguments) }
-                else if let blocked = await tools.authorize(call.name, call.arguments, permissions: permissions) { res = blocked }
+                else if let blocked = await tools.authorize(call.name, call.arguments, permissions: permissions, approve: approve) { res = blocked }
                 else if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
                 else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }),
                         let r = await host(call.name, Self.withCaller(call.arguments, callerSession)) { res = r }
@@ -184,8 +185,19 @@ public final class AgentRuntime: @unchecked Sendable {
 
     /// Run a stored agent (instructions page) once, logging the run to its page.
     @discardableResult
-    public func run(agent: Agent, trigger: String = "manual") async -> Outcome? {
+    /// BSD-98: `permissions` is the global layer (nil = the Permissions page with mode Ask); the agent's own column
+    /// (and its responsible project's) is layered on top. There is no one to ask during a scheduled run: rule-"ask"
+    /// and the always-ask list are refused with an explanation, Plan mode refuses every change.
+    public func run(agent: Agent, trigger: String = "manual", permissions: AgentPermissions? = nil) async -> Outcome? {
         let brain = tools.brain
+        let effective = await MainActor.run { () -> AgentPermissions in
+            let project = brain.projects().first { $0.agentID == agent.id }?.id
+            let base = permissions ?? brain.permissions(mode: .ask)
+            var p = base
+            if let project, let pr = brain.project(project), !pr.permissions.isEmpty { p = p.layered(text: pr.permissions) }
+            if !agent.permissions.isEmpty { p = p.layered(text: agent.permissions) }
+            return p
+        }
         // BSD-43: every agent run is a row in Runs (kind Schedule), with the trigger in its protocol.
         let runID = await MainActor.run {
             let id = brain.startRun(title: agent.name, kind: .schedule, agentID: agent.id, engine: "based", model: agent.model ?? "")
@@ -195,7 +207,7 @@ public final class AgentRuntime: @unchecked Sendable {
         do {
             let resolvedModel = registry.resolve(agent.model ?? "").map { "\($0.0.id)/\($0.1)" } ?? (agent.model ?? "")
             let o = try await run(prompt: "Trigger: \(trigger). Carry out your instructions now and report briefly what you did.",
-                                  modelRef: agent.model, systemExtra: agent.instructions)
+                                  modelRef: agent.model, systemExtra: agent.instructions, permissions: effective)
             await MainActor.run {
                 brain.markRun(agent.id); brain.logRun(agent.id, summary: o.text, usage: o.usage)
                 // BSD-51: budgets need a cost; estimate it from the model when the provider reports none.

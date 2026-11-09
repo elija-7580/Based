@@ -79,6 +79,9 @@ public final class LocalMCPHost: @unchecked Sendable {
     /// asked on every call, so the app's current model and permission settings apply.
     public func setMainAgent(_ provider: (@MainActor () -> MainAgent?)?) { mcp.mainAgentProvider = provider }
 
+    /// BSD-98: deny rules / Plan mode for every `tools/call` on this endpoint (asked per call).
+    public func setPermissions(_ provider: (@MainActor () -> AgentPermissions?)?) { mcp.permissions = provider }
+
     /// The master token opens every route; a session token only its own `/mcp/session/<sid>`.
     static func authorized(bearer: String, path: String, master: String, sessions: MCPSessionTokens) -> Bool {
         if !master.isEmpty, SecureToken.equal(bearer, master) { return true }
