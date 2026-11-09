@@ -1,0 +1,37 @@
+{
+  "name": "@based/database-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BSD-155: Datenbank-Ansichten (Tabelle, Board, Liste, Galerie, Diagramm, Dashboard) für Based – React, virtualisiert",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p .",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@based/core": "workspace:*",
+    "@based/design-tokens": "workspace:*",
+    "@tanstack/react-virtual": "^3.14.26"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.4.6"
+  }
+}
