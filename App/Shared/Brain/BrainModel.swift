@@ -47,6 +47,8 @@ final class BrainModel {
     let store: WorkspaceStore
     /// Where imported files go (set by the app model).
     @ObservationIgnored weak var assets: FileAssetStore?
+    /// BSD-102: merges Runs/Projects/Captures that another device created before syncing.
+    @ObservationIgnored private var brainMergeToken: ObservationToken?
     let brain: BrainStore
     let tools: AgentTools
     let happier: HappierModel
@@ -109,6 +111,7 @@ final class BrainModel {
         runtime = AgentRuntime(registry: registry, tools: tools)
         // BSD-58: coding agents / MCP clients on the local endpoint can hand work to the main agent too.
         happier.mainAgentProvider = { [weak self] in self?.mainAgent }
+        brainMergeToken = brain.mergeDuplicatesAfterRemoteChanges()
         reloadProviders()
         configureScheduler()
         startServerSyncIfConfigured()

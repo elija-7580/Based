@@ -54,10 +54,27 @@ public final class BrainStore {
 
     static let metaKey = "brain.ids"
 
+    private var mergeScheduled = false
+
     public init(store: WorkspaceStore) {
         self.store = store
         if !load() { bootstrap() }
         repair()
+    }
+
+    /// Merges duplicate Brain databases/projects whenever remote changes arrive (BSD-102), coalesced to one pass
+    /// per main-actor turn. The caller keeps the token: a long-lived owner on the main actor (the app's BrainModel)
+    /// — the store's tokens must be released on the main actor, so BrainStore itself doesn't hold one.
+    public func mergeDuplicatesAfterRemoteChanges() -> ObservationToken {
+        store.observe { [weak self] changes in
+            guard changes.origin == .remote || changes.origin == .import, let self, !self.mergeScheduled else { return }
+            self.mergeScheduled = true
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.mergeScheduled = false
+                self.mergeDuplicateBrainDatabases()
+            }
+        }
     }
 
     /// Ids of the records that make up the brain (page, About, database hosts and databases).
@@ -96,6 +113,8 @@ public final class BrainStore {
         if !trashed.isEmpty { store.restorePages(trashed); fixed = true }
         // Still hidden because a page it was moved into is in the Trash → back to the top level.
         if store.isTrashed(rootID) { store.movePages([rootID], to: .privateTop); fixed = true }
+        // Two devices made Runs/Projects/Captures before syncing → one of each again (BSD-102).
+        if !mergeDuplicateBrainDatabases().isEmpty { fixed = true }
         return fixed
     }
 

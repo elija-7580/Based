@@ -101,18 +101,20 @@ extension BrainStore {
 
     private struct OneID: Codable { var id: RecordID }
 
-    /// A Brain database by its stored id, else one titled `title` directly inside the Agent Brain page — also when
-    /// its block sits in the Trash, so repair can find and restore it; the oldest wins if sync brought two.
+    /// The Brain database `title`: the oldest database of that title directly inside the Agent Brain page — also
+    /// when its block sits in the Trash, so repair can find and restore it. Creation time and id are synced, so
+    /// every device picks the same one (BSD-102; a device-local remembered id used to win and kept two devices
+    /// writing into two databases). The remembered id only counts when no database has the title (renamed).
     func existingBrainDatabase(title: String, metaKey: String) -> RecordID? {
+        if let oldest = brainDatabaseCandidates(title: title).first { return oldest.id }
         if let d = store.persistence?.meta(metaKey), let ids = try? JSONDecoder().decode(OneID.self, from: d),
            store.databases[ids.id] != nil { return ids.id }
-        return store.databases.values.filter { d in
-            d.title.plainText == title && store.blocks[d.blockID].map { $0.parent == .block(rootID) } == true
-        }.min { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }?.id
+        return nil
     }
 
     /// Finds or creates a Brain database, remembers its id and protects its host block (restoring it from the
-    /// Trash when needed). `created` is true when it was made just now.
+    /// Trash when needed); duplicates of the same title (another device made one before syncing) are merged into
+    /// it. `created` is true when it was made just now.
     func ensureBrainDatabase(title: String, metaKey: String) -> (id: RecordID, created: Bool) {
         var created = false
         let id: RecordID
@@ -120,6 +122,7 @@ extension BrainStore {
             id = store.createDatabase(title: RichText(title), in: .block(rootID), inline: true, sampleRows: 0).databaseID
             created = true
         }
+        if brainDatabaseCandidates(title: title).count > 1 { _ = mergeDuplicates(title: title, into: id) }
         store.persistence?.setMeta(metaKey, try? JSONEncoder().encode(OneID(id: id)))
         if let host = store.databases[id]?.blockID {
             store.protectedIDs.insert(host)

@@ -52,6 +52,7 @@ extension BrainStore {
         ensureRelation(sessionsDB, ProjectCol.sessionLink, to: db)
         if let runs = existingRunsDB { ensureRelation(runs, RunCol.project, to: db) }
         if created { migrateSessionProjects(db) }
+        _ = mergeDuplicateProjects(db)
         return db
     }
 
