@@ -23,10 +23,12 @@ public struct BriefInput: Sendable, Equatable {
     public var plannedToday: [Line]
     /// "Project: latest update" of active projects.
     public var projectUpdates: [String]
+    /// BSD-119: date mentions and reminders of today (page title — time · line).
+    public var dueToday: [Line] = []
 
     /// Nothing worth a model call.
     public var isEmpty: Bool {
-        finished.isEmpty && failed.isEmpty && needsYou.isEmpty && plannedToday.isEmpty && projectUpdates.isEmpty
+        finished.isEmpty && failed.isEmpty && needsYou.isEmpty && plannedToday.isEmpty && projectUpdates.isEmpty && dueToday.isEmpty
     }
 
     /// Run kinds that count as work in the brief (chat turns and heartbeats are conversation, not work).
@@ -36,7 +38,7 @@ public struct BriefInput: Sendable, Equatable {
     ///   - since: start of the window (the brief's previous run); nil = start of yesterday.
     ///   - briefAgentID: the brief agent itself (its own runs and next run are left out).
     public static func make(overview: RunOverview, now: Date, since: Date? = nil, briefAgentID: RecordID? = nil,
-                            projectUpdates: [String] = [], calendar: Calendar = .current) -> BriefInput {
+                            projectUpdates: [String] = [], due: [DueItem] = [], calendar: Calendar = .current) -> BriefInput {
         let today = calendar.startOfDay(for: now)
         let start = since ?? calendar.date(byAdding: .day, value: -1, to: today)!
         func short(_ s: String) -> String {
@@ -66,8 +68,19 @@ public struct BriefInput: Sendable, Equatable {
                 f.timeZone = calendar.timeZone; f.dateFormat = "HH:mm"
                 return Line(title: u.agent.name, detail: f.string(from: u.at), runID: nil)
             }
+        let dueLines = due.map { d -> Line in
+            var detail: [String] = []
+            if d.date.includeTime {
+                let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.calendar = calendar
+                f.timeZone = calendar.timeZone; f.dateFormat = "HH:mm"
+                detail.append(f.string(from: d.date.start))
+            }
+            if d.isReminder { detail.append("reminder") }
+            if !d.text.isEmpty { detail.append(short(d.text)) }
+            return Line(title: d.pageTitle, detail: detail.joined(separator: " · "), runID: nil)
+        }
         return BriefInput(day: today, since: start, finished: finished, failed: failed, needsYou: needs,
-                          plannedToday: planned, projectUpdates: projectUpdates)
+                          plannedToday: planned, projectUpdates: projectUpdates, dueToday: dueLines)
     }
 
     /// The sentence used when nothing happened (no model call).
@@ -81,11 +94,12 @@ public struct BriefInput: Sendable, Equatable {
         if !failed.isEmpty { parts.append("\(failed.count) failed") }
         if !needsYou.isEmpty { parts.append(needsYou.count == 1 ? "1 needs you" : "\(needsYou.count) need you") }
         if !plannedToday.isEmpty { parts.append("\(plannedToday.count) planned today") }
+        if !dueToday.isEmpty { parts.append("\(dueToday.count) due today") }
         if parts.isEmpty { parts.append("\(projectUpdates.count) project update\(projectUpdates.count == 1 ? "" : "s")") }
         return parts.joined(separator: ", ") + "."
     }
 
-    /// The brief without a model: most important first (needs you, failed, finished, planned, projects).
+    /// The brief without a model: most important first (needs you, today, failed, finished, planned, projects).
     public var markdown: String {
         guard !isEmpty else { return Self.quietDay }
         var out: [String] = []
@@ -95,6 +109,7 @@ public struct BriefInput: Sendable, Equatable {
             out.append(lines.map { "- \($0.title)" + ($0.detail.isEmpty ? "" : " — \($0.detail)") }.joined(separator: "\n"))
         }
         section("Needs you", needsYou)
+        section("Today", dueToday)
         section("Failed", failed)
         section("Finished", finished)
         section("Planned today", plannedToday)
@@ -187,8 +202,10 @@ extension BrainStore {
         let overview = RunOverview(runs: runs(), inbox: inbox(pendingOnly: true), agents: agents())
         let updates = projects().filter { $0.status == .active }
             .compactMap { p in latestUpdates(ofProject: p.id, limit: 1).first.map { "\(p.name): \($0)" } }
+        // BSD-119: date mentions and reminders of today (the Brain's own databases carry no reminders).
+        let due = store.dueItems(on: now, calendar: calendar, limit: 30)
         return BriefInput.make(overview: overview, now: now, since: agent.lastRun, briefAgentID: agent.id,
-                               projectUpdates: updates, calendar: calendar)
+                               projectUpdates: updates, due: due, calendar: calendar)
     }
 }
 
