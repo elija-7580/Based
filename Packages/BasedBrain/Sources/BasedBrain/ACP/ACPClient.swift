@@ -42,12 +42,25 @@ public struct MCPServerConfig: Codable, Hashable, Sendable, Identifiable {
     public var command: String
     public var args: [String]
     public var env: [String: String]
+    /// BSD-127: an HTTP MCP server (ACP `type: "http"`) instead of a command; nil = stdio.
+    public var url: String?
+    /// HTTP headers for `url` (e.g. the session's bearer token).
+    public var headers: [String: String]?
     public init(id: String = UUID().uuidString, name: String, command: String, args: [String] = [], env: [String: String] = [:]) {
         self.id = id; self.name = name; self.command = command; self.args = args; self.env = env
     }
+    /// An HTTP MCP server.
+    public init(id: String = UUID().uuidString, name: String, url: String, headers: [String: String] = [:]) {
+        self.id = id; self.name = name; self.command = ""; self.args = []; self.env = [:]
+        self.url = url; self.headers = headers
+    }
     public var json: JSONValue {
-        ["name": .string(name), "command": .string(command), "args": .array(args.map(JSONValue.string)),
-         "env": .array(env.map { ["name": .string($0.key), "value": .string($0.value)] })]
+        if let url {
+            return ["type": "http", "name": .string(name), "url": .string(url),
+                    "headers": .array((headers ?? [:]).keys.sorted().map { ["name": .string($0), "value": .string(headers?[$0] ?? "")] })]
+        }
+        return ["name": .string(name), "command": .string(command), "args": .array(args.map(JSONValue.string)),
+                "env": .array(env.map { ["name": .string($0.key), "value": .string($0.value)] })]
     }
 }
 

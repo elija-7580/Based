@@ -23,6 +23,8 @@ public struct SandboxSpec: Sendable, Equatable {
     public var readOnlyMounts: [(host: String, container: String)]
     /// Run that owns the sandbox (label only; one container per run).
     public var runID: String?
+    /// BSD-127: `host.docker.internal` points at the host (`host-gateway`), so the agent reaches Based's MCP endpoint.
+    public var hostGateway: Bool = false
 
     public init(project: String, hostWorkspace: String, image: String = SandboxSpec.defaultImage, cpus: Double = 2, memoryMB: Int = 4096,
                 network: Bool = true, readOnlyMounts: [(host: String, container: String)] = [], runID: String? = nil) {
@@ -34,7 +36,7 @@ public struct SandboxSpec: Sendable, Equatable {
 
     public static func == (a: SandboxSpec, b: SandboxSpec) -> Bool {
         a.project == b.project && a.hostWorkspace == b.hostWorkspace && a.image == b.image && a.cpus == b.cpus && a.memoryMB == b.memoryMB
-            && a.network == b.network && a.runID == b.runID
+            && a.network == b.network && a.runID == b.runID && a.hostGateway == b.hostGateway
             && a.readOnlyMounts.map { "\($0.host)\u{0}\($0.container)" } == b.readOnlyMounts.map { "\($0.host)\u{0}\($0.container)" }
     }
 }
@@ -210,6 +212,7 @@ public struct DockerSandboxProvider: SandboxProvider {
         a += ["--cpus", String(format: "%g", spec.cpus), "--memory", "\(spec.memoryMB)m", "--pids-limit", "1024",
               "--security-opt", "no-new-privileges"]
         if !spec.network { a += ["--network", "none"] }
+        if spec.network && spec.hostGateway { a += ["--add-host", "\(SandboxMCP.hostName):host-gateway"] }
         let wd = Self.workdir(spec.project)
         a += ["-v", "\(spec.hostWorkspace):\(wd)"]
         for m in spec.readOnlyMounts { a += ["-v", "\(m.host):\(m.container):ro"] }
