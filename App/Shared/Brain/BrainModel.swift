@@ -88,6 +88,11 @@ final class BrainModel {
         get { UserDefaults.standard.string(forKey: "ai.model") ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "ai.model") }
     }
+    /// BSD-59: after each chat turn, propose memories in the Inbox (default on; never saves without confirmation).
+    var suggestMemories: Bool {
+        get { UserDefaults.standard.object(forKey: "memory.suggest") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "memory.suggest") }
+    }
     var serverURL: String {
         get { UserDefaults.standard.string(forKey: "server.url") ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: "server.url") }
@@ -411,6 +416,12 @@ final class BrainModel {
                 turns[i].meta = meta.joined(separator: " · ")
                 turns[i].why = routeWhy
                 if !failed, let a = ChatArtifact.extract(r.text).last { newArtifact = a }
+                // BSD-59: propose memories from this exchange (Inbox, kind Memory); nothing is saved without the user.
+                if !failed, suggestMemories {
+                    let rt = runtime
+                    let ref: String? = { if case .model(let m) = engine { return m } else { return defaultModel.isEmpty ? nil : defaultModel } }()
+                    Task { if !(await rt.suggestMemories(session: sid, modelRef: ref)).isEmpty { happier.refresh() } }
+                }
             }
         }
         return turn

@@ -140,7 +140,7 @@ struct InboxRow: View {
                     } else {
                         ForEach(options, id: \.id) { o in
                             Button(o.label) { happier.resolve(item, decision: o.id) }
-                                .buttonStyle(o.id.hasPrefix("allow") ? AnyPrimitiveButtonStyle(.borderedProminent) : AnyPrimitiveButtonStyle(.bordered))
+                                .buttonStyle(o.id.hasPrefix("allow") || o.id == BrainStore.memorySaveOption ? AnyPrimitiveButtonStyle(.borderedProminent) : AnyPrimitiveButtonStyle(.bordered))
                                 .tint(o.id.hasPrefix("reject") ? Color.red : nil)
                         }
                     }
@@ -159,6 +159,7 @@ struct InboxRow: View {
         case .question: return "questionmark.bubble"
         case .notice: return "bell"
         case .review: return "eye"
+        case .memory: return "brain"
         }
     }
 }

@@ -32,6 +32,8 @@ struct AISettingsView: View {
                 if !brain.modelChoices.isEmpty {
                     Picker("Default model", selection: $brain.defaultModel) { ForEach(brain.modelChoices, id: \.self) { Text($0).tag($0) } }
                 }
+                Toggle("Suggest memories from chats", isOn: $brain.suggestMemories)
+                    .help("After a chat turn a small model proposes up to three memories in the Inbox. Nothing is saved until you confirm.")
             }
             Section("Based server (VPS)") {
                 TextField("Server URL (https://based.example.com)", text: $brain.serverURL)

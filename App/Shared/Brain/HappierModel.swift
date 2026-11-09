@@ -398,6 +398,16 @@ final class HappierModel {
     // MARK: Inbox
 
     func resolve(_ item: InboxItem, decision: String) {
+        // BSD-59: memory suggestions — saving happens once, where the answer lands (server if connected, else here).
+        if item.kind == .memory {
+            if useServer {
+                Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision), "device": .string(machineName)]); refresh() }
+            } else {
+                brain.answerMemorySuggestion(item.id, save: decision == BrainStore.memorySaveOption, device: machineName)
+                refresh()
+            }
+            return
+        }
         let approved = decision.hasPrefix("allow") || decision == "approve"
         brain.resolveInbox(item.id, decision: decision, status: approved ? .approved : .rejected, device: machineName)
         if useServer { Task { _ = try? await serverCall("POST", "/inbox/\(item.id)/resolve", ["decision": .string(decision), "device": .string(machineName)]) } }

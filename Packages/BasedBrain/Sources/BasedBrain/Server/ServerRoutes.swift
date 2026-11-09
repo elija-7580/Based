@@ -242,6 +242,14 @@ public enum BasedServerRoutes {
             let decision = body["decision"]?.string ?? "reject_once"
             let approved = decision.hasPrefix("allow") || decision == "approve" || body["approved"]?.bool == true
             let device = body["device"]?.string ?? "server"
+            // BSD-59: a memory suggestion is saved here, on the user's answer from the app or web client.
+            let memory = await MainActor.run { () -> Bool? in
+                guard let item = tools.brain.inbox().first(where: { $0.id == iid }), item.kind == .memory else { return nil }
+                guard item.status == .pending else { return false }
+                let save = decision == BrainStore.memorySaveOption
+                return tools.brain.answerMemorySuggestion(iid, save: save, device: device) != nil || !save
+            }
+            if let memory { return memory ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409) }
             let first = await MainActor.run { tools.brain.resolveInbox(iid, decision: decision, status: approved ? .approved : .rejected, device: device) }
             // BSD-50: the first answer wins; a second device gets 409 instead of overwriting it.
             return first ? .json(["ok": true]) : .json(["ok": false, "error": "already answered"], status: 409)

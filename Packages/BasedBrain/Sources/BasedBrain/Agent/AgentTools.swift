@@ -330,6 +330,14 @@ public final class AgentTools {
             let iid = try req(a, "item_id")
             guard let item = brain.inbox().first(where: { $0.id == iid }) else { throw ToolError("No inbox item \(iid). Use inbox.") }
             guard item.status == .pending else { return "Already answered (\(item.status.rawValue): \(item.decision ?? "")) — nothing changed." }
+            // BSD-59: memory suggestions are confirmed by the user in the app; an agent may only dismiss one.
+            if item.kind == .memory {
+                guard a["option"]?.string == BrainStore.memoryDismissOption else {
+                    throw ToolError("Memory suggestions are saved only when the user confirms them in the Inbox. You can dismiss it (option: \(BrainStore.memoryDismissOption)).")
+                }
+                brain.answerMemorySuggestion(iid, save: false, device: "mcp")
+                return "Dismissed the memory suggestion \"\(item.title)\"."
+            }
             let (decision, status) = try Self.inboxDecision(item, option: a["option"]?.string, answer: a["answer"]?.stringValue)
             guard brain.resolveInbox(iid, decision: decision, status: status, device: "mcp") else {
                 return "Already answered on another device — nothing changed."

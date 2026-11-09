@@ -43,7 +43,9 @@ extension AgentSession {
 }
 
 public struct InboxItem: Sendable, Identifiable, Equatable {
-    public enum Kind: String, CaseIterable, Sendable { case permission = "Permission", question = "Question", notice = "Notice", review = "Review" }
+    public enum Kind: String, CaseIterable, Sendable { case permission = "Permission", question = "Question", notice = "Notice", review = "Review"
+        /// BSD-59: a memory proposed from a chat; saved only when the user confirms (`answerMemorySuggestion`).
+        case memory = "Memory" }
     public enum Status: String, CaseIterable, Sendable { case pending = "Pending", approved = "Approved", rejected = "Rejected", done = "Done" }
     public var id: RecordID
     public var title: String
