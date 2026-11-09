@@ -399,6 +399,54 @@ final class HappierModel {
     }
     func deleteSession(_ sid: RecordID) { stop(sid); store.trash([sid]); refresh() }
 
+    // MARK: Sandbox snapshots (BSD-106)
+
+    /// Snapshot names per session whose agent runs in a sandbox (nil = no sandbox known).
+    var sandboxSnapshots: [RecordID: [String]] = [:]
+
+    /// Reads the session's sandbox (server: `GET /sandboxes`; on this Mac: the runtime's provider, if any).
+    func loadSandbox(_ sid: RecordID) async {
+        if useServer {
+            guard let r = try? await serverCall("GET", "/sandboxes"),
+                  let entry = r["sandboxes"]?.array?.first(where: { $0["session"]?.string == sid }) else { sandboxSnapshots[sid] = nil; return }
+            sandboxSnapshots[sid] = entry["snapshots"]?.array?.compactMap { $0["name"]?.string } ?? []
+        } else {
+            guard runtime.sandbox != nil else { sandboxSnapshots[sid] = nil; return }
+            sandboxSnapshots[sid] = runtime.sandboxHandle(for: sid)?.snapshots.map(\.name) ?? []
+        }
+    }
+
+    /// A snapshot name from the current time ("snap-20261109-1042").
+    nonisolated static func snapshotName(_ date: Date = Date()) -> String {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyyMMdd-HHmmss"
+        return "snap-" + f.string(from: date)
+    }
+
+    func saveSnapshot(_ sid: RecordID, name: String = HappierModel.snapshotName()) {
+        Task {
+            do {
+                if useServer {
+                    let r = try await serverCall("POST", "/sandboxes/\(sid)/snapshot", ["name": .string(name)])
+                    if let e = r["error"]?.string { throw ServerError(e) }
+                } else { _ = try await runtime.snapshotSandbox(sid, name: name) }
+                await loadSandbox(sid)
+            } catch { lastError = "Snapshot failed: \(error)" }
+        }
+    }
+
+    func restoreSnapshot(_ sid: RecordID, name: String) {
+        Task {
+            do {
+                if useServer {
+                    let r = try await serverCall("POST", "/sandboxes/\(sid)/restore", ["snapshot": .string(name)])
+                    if let e = r["error"]?.string { throw ServerError(e) }
+                } else { _ = try await runtime.restoreSandbox(sid, snapshot: name) }
+                await loadSandbox(sid)
+                refresh()
+            } catch { lastError = "Restore failed: \(error)" }
+        }
+    }
+
     // MARK: Inbox
 
     func resolve(_ item: InboxItem, decision: String) {

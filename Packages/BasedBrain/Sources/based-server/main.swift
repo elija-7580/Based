@@ -41,6 +41,8 @@ struct Options {
     var sandboxMounts: [String] = (ProcessInfo.processInfo.environment["BASED_SANDBOX_MOUNTS"] ?? "").split(separator: ",").map(String.init)
     /// Extra environment variable names that may enter the sandbox (allowlist).
     var sandboxEnv: [String] = (ProcessInfo.processInfo.environment["BASED_SANDBOX_ENV"] ?? "").split(separator: ",").map(String.init)
+    /// BSD-106: Docker Engine socket for `--sandbox docker-api`.
+    var dockerSocket = ProcessInfo.processInfo.environment["BASED_DOCKER_SOCKET"] ?? "/var/run/docker.sock"
 
     init() {
         var it = CommandLine.arguments.dropFirst().makeIterator()
@@ -63,8 +65,9 @@ struct Options {
             case "--sandbox-mount": if let m = it.next() { sandboxMounts.append(m) }
             case "--sandbox-env": if let e = it.next() { sandboxEnv.append(e) }
             case "--sandbox-no-network": sandboxNetwork = false
+            case "--docker-socket": dockerSocket = it.next() ?? dockerSocket
             case "-h", "--help":
-                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network]")
+                print("usage: based-server [--db path] [--port 8787] [--token secret] [--anthropic-key K] [--openai-key K] [--ollama http://host:11434/v1] [--stdio] [--no-scheduler] [--cipher-key BASE64] [--machine name] [--no-acp] [--insecure-public] [--sandbox local|docker|docker-api] [--docker-socket path] [--sandbox-image img] [--sandbox-mount host:container] [--sandbox-env NAME] [--sandbox-no-network]")
                 exit(0)
             default: FileHandle.standardError.write(Data("unknown option \(a)\n".utf8)); exit(2)
             }
@@ -137,8 +140,11 @@ if !opts.noACP {
 @MainActor func configureSandbox(_ happier: HappierRuntime) {
     let snapshots = URL(fileURLWithPath: opts.db).deletingLastPathComponent().appendingPathComponent("sandbox-snapshots").path
     switch opts.sandbox {
-    case "docker":
-        happier.sandbox = DockerSandboxProvider(runner: ProcessCommandRunner(), snapshotDirectory: snapshots)
+    case "docker", "docker-api":
+        let cli = DockerSandboxProvider(runner: ProcessCommandRunner(), snapshotDirectory: snapshots)
+        // BSD-106: "docker-api" talks to the Engine socket (no docker CLI needed except for interactive agents).
+        happier.sandbox = opts.sandbox == "docker-api"
+            ? DockerEngineSandboxProvider(api: UnixSocketHTTPTransport(socketPath: opts.dockerSocket), cli: cli) : cli
         let mounts: [(host: String, container: String)] = opts.sandboxMounts.compactMap { m in
             let parts = m.split(separator: ":", maxSplits: 1).map(String.init)
             return parts.count == 2 ? (host: parts[0], container: parts[1]) : nil
@@ -146,12 +152,12 @@ if !opts.noACP {
         happier.sandboxTemplate = SandboxSpec(project: "", hostWorkspace: "", image: opts.sandboxImage, cpus: opts.sandboxCPUs,
                                               memoryMB: opts.sandboxMemoryMB, network: opts.sandboxNetwork, readOnlyMounts: mounts)
         happier.sandboxEnvironment.allow.formUnion(opts.sandboxEnv)
-        log("sandbox: docker (\(opts.sandboxImage), \(opts.sandboxCPUs) CPU, \(opts.sandboxMemoryMB) MB, network \(opts.sandboxNetwork ? "on" : "off"))")
+        log("sandbox: \(opts.sandbox) (\(opts.sandboxImage), \(opts.sandboxCPUs) CPU, \(opts.sandboxMemoryMB) MB, network \(opts.sandboxNetwork ? "on" : "off"))")
     case "local":
         happier.sandbox = LocalSandboxProvider(runner: ProcessCommandRunner(), snapshotDirectory: snapshots,
                                                baseEnvironment: DockerSandboxProvider.cliEnvironment())
     default:
-        FileHandle.standardError.write(Data("unknown sandbox \(opts.sandbox) (local|docker)\n".utf8)); exit(2)
+        FileHandle.standardError.write(Data("unknown sandbox \(opts.sandbox) (local|docker|docker-api)\n".utf8)); exit(2)
     }
 }
 

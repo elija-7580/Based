@@ -129,6 +129,10 @@ based-server --token "$BASED_TOKEN" --sandbox docker \
   container gets `-v /var/run/docker.sock:/var/run/docker.sock` plus the docker CLI. **Security:** access to the Docker
   socket is root-equivalent on the host. Only enable `--sandbox docker` on a machine dedicated to Based, with a token,
   behind TLS.
+- **Engine API (BSD-106):** `--sandbox docker-api` (optionally `--docker-socket /path` / `BASED_DOCKER_SOCKET`) does
+  create / exec / snapshot / restore / destroy over the Docker Engine socket (HTTP/JSON) instead of the docker CLI; only
+  long-running agents still start with `docker exec -i`. Snapshots and restores can be started in the app (session ⋯ →
+  Sandbox). Real-daemon test: `BASED_DOCKER_TESTS=1 swift test --filter DockerEngineTests`.
 - Not yet: stdio MCP servers (incl. `based`) inside the container – sandboxed agents currently get no MCP servers;
   Claude Code runs through its ACP adapter instead of the native driver in this mode.
 

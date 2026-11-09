@@ -473,6 +473,7 @@ struct SessionConsole: View {
             #endif
         }
         .task(id: happier.transcriptRevision[sessionID] ?? 0) { await reload() }
+        .task(id: sessionID) { await happier.loadSandbox(sessionID) }
         .onChange(of: busy) { _, b in if b { turnStart = Date() } }
         .onChange(of: sessionID) { _, _ in clearedBefore = 0; notes = []; input = "" }
         .onChange(of: input) { _, new in
@@ -552,6 +553,18 @@ struct SessionConsole: View {
                         Button("Show folder in Finder", systemImage: "folder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: s.cwd)]) }
                     }
                     #endif
+                    // BSD-106: save / restore the sandbox (container image + workspace) of this session.
+                    if let snaps = happier.sandboxSnapshots[sessionID] {
+                        Menu("Sandbox") {
+                            Button("Save snapshot", systemImage: "camera") { happier.saveSnapshot(sessionID) }
+                            if !snaps.isEmpty {
+                                Divider()
+                                ForEach(snaps.reversed(), id: \.self) { name in
+                                    Button("Restore “\(name)”", systemImage: "clock.arrow.circlepath") { happier.restoreSnapshot(sessionID, name: name) }
+                                }
+                            }
+                        }
+                    }
                     Button("Stop agent", systemImage: "power") { happier.stop(sessionID) }.disabled(!happier.isLive(sessionID))
                     Divider()
                     Button("Delete session", systemImage: "trash", role: .destructive) {
