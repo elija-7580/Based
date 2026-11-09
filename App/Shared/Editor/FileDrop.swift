@@ -108,7 +108,7 @@ struct FileDropModifier: ViewModifier {
             }
             .overlay {
                 if targeted {
-                    RoundedRectangle(cornerRadius: 8).stroke(Theme.accentBlue, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: DS.Radius.card).stroke(Theme.accentBlue, lineWidth: 2)
                         .background(Theme.accentBlue.opacity(0.06))
                         .allowsHitTesting(false)
                 }

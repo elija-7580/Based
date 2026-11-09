@@ -19,7 +19,7 @@ struct InlineAIBox: View {
             if case .result(let md) = phase {
                 ScrollView {
                     MarkdownMessageView(markdown: md, streaming: false)
-                        .padding(12)
+                        .padding(DS.Space.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(maxHeight: 320)
@@ -30,11 +30,11 @@ struct InlineAIBox: View {
                     .symbolEffectPulse(phase == .writing)
                 switch phase {
                 case .writing:
-                    ShimmerText(text: "Writing…").font(.system(size: 14))
+                    ShimmerText(text: "Writing…").font(DS.Text.ui())
                     Spacer()
                     Button("Stop") { close() }.buttonStyle(PillButtonStyle())
                 case .result:
-                    Text("Insert below?").font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                    Text("Insert below?").font(DS.Text.body()).foregroundStyle(Theme.secondary)
                     Spacer()
                     Button("Discard") { close() }.buttonStyle(PillButtonStyle()).keyboardShortcut(.cancelAction)
                     Button("Try again") { run() }.buttonStyle(PillButtonStyle())
@@ -46,14 +46,14 @@ struct InlineAIBox: View {
                 case .asking:
                     TextField("Ask AI to write…", text: $prompt)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 14))
+                        .font(DS.Text.ui())
                         .focused($focused)
                         .onSubmit(run)
                         .onKeyPress(.escape) { close(); return .handled }
-                    Text(model.brain.chatEngine).font(.system(size: 11)).foregroundStyle(Theme.secondary).lineLimit(1)
+                    Text(model.brain.chatEngine).font(DS.Text.caption()).foregroundStyle(Theme.secondary).lineLimit(1)
                 }
             }
-            .padding(.horizontal, 12).frame(minHeight: 40)
+            .padding(.horizontal, DS.Space.lg).frame(minHeight: 40)
         }
         .background(RoundedRectangle(cornerRadius: 10).fill(.background))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.dividerColor))

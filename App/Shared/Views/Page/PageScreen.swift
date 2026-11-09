@@ -102,7 +102,7 @@ struct PageScreen: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if page.isRow || page.props.isTemplate == true, let db = model.store.database(ofRow: pageID) {
                         RowPropertiesPanel(db: db, row: page, locked: editor.isLocked || db.locked == true)
-                            .padding(.bottom, 12)
+                            .padding(.bottom, DS.Space.lg)
                     }
                     if format?.hideBacklinks != true { BacklinksView(pageID: pageID) }
                     if page.type == .databasePage {
@@ -320,7 +320,7 @@ struct PageHeader: View {
                     .frame(height: 28)
                 }
                 title
-                    .padding(.bottom, 8)
+                    .padding(.bottom, DS.Space.md)
             }
             .padding(.horizontal, horizontalPadding)
         }
@@ -361,10 +361,10 @@ struct HeaderGhostButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 14))
+                .font(DS.Text.ui())
                 .foregroundStyle(Theme.secondary)
-                .padding(.horizontal, 6).padding(.vertical, 4)
-                .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Theme.hoverFill : .clear))
+                .padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.xs)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(hover ? Theme.hoverFill : .clear))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -394,9 +394,9 @@ struct PageCoverView: View {
                         Divider().frame(height: 14)
                         coverButton("Remove") { model.store.setPageCover(page.id, nil) }
                     }
-                    .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
-                    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Theme.dividerColor))
-                    .padding(.trailing, 16).padding(.bottom, 12)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(.regularMaterial))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).strokeBorder(Theme.dividerColor))
+                    .padding(.trailing, DS.Space.xl).padding(.bottom, DS.Space.lg)
                     .opacity(hover || picker ? 1 : 0)
                     .animation(.easeOut(duration: 0.12), value: hover)
                 }
@@ -411,9 +411,9 @@ struct PageCoverView: View {
     private func coverButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(DS.Text.small(.medium))
                 .foregroundStyle(.primary.opacity(0.75))
-                .padding(.horizontal, 8).padding(.vertical, 5)
+                .padding(.horizontal, DS.Space.md).padding(.vertical, 5)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -448,7 +448,7 @@ struct RowPropertiesPanel: View {
                             .help(p.description ?? p.type.displayName)
                         PropertyCell(db: live, row: row, property: p, value: v, locked: locked, wrap: true, placeholder: "Empty")
                     }
-                    .font(.system(size: 14))
+                    .font(DS.Text.ui())
                     .padding(.vertical, 3)
                 }
             }
@@ -460,10 +460,10 @@ struct RowPropertiesPanel: View {
                 Button(hideEmpty ? "Show all properties" : "Hide empty properties") { hideEmpty.toggle() }
             }
             .buttonStyle(.hoverFill)
-            .font(.system(size: 13))
+            .font(DS.Text.body())
             .foregroundStyle(Theme.secondary)
-            .padding(.top, 4)
-            Divider().padding(.top, 8)
+            .padding(.top, DS.Space.xs)
+            Divider().padding(.top, DS.Space.md)
         }
         // The page column is proposed a height (it is at least as tall as the window); without this the
         // stack squeezed long property rows (many relations) and they were drawn over the next ones.
@@ -533,7 +533,7 @@ struct BacklinksView: View {
                     }
                 }
             }
-            .font(.system(size: 13))
+            .font(DS.Text.body())
             .padding(.bottom, 10)
         }
     }
@@ -556,9 +556,9 @@ struct TrashBanner: View {
             }
         }
         .buttonStyle(.bordered)
-        .font(.system(size: 13, weight: .medium))
+        .font(DS.Text.body(.medium))
         .foregroundStyle(.white)
-        .padding(.horizontal, 14).padding(.vertical, 8)
+        .padding(.horizontal, 14).padding(.vertical, DS.Space.md)
         .background(Color.red.opacity(0.85))
     }
 }
@@ -580,8 +580,8 @@ struct TemplateBanner: View {
                 .disabled(db.defaultTemplateID == page.id)
             }
         }
-        .font(.system(size: 13))
-        .padding(.horizontal, 14).padding(.vertical, 8)
+        .font(DS.Text.body())
+        .padding(.horizontal, 14).padding(.vertical, DS.Space.md)
         .background(Theme.accentBlue.opacity(0.12))
     }
 }
@@ -598,7 +598,7 @@ struct FavoriteButton: View {
         // Notion: outline star, a warm yellow fill once the page is a favourite (the grey filled star looked heavy).
         Button { model.store.toggleFavorite(pageID) } label: {
             Image(systemName: fav ? "star.fill" : "star")
-                .font(.system(size: 14, weight: .regular))
+                .font(DS.Text.ui())
                 .foregroundStyle(fav ? Color(Theme.dynamic(light: 0xF5B83D, dark: 0xF2C14E)) : Theme.secondary)
         }
             .help(fav ? "Remove from Favorites" : "Add to Favorites")
@@ -697,7 +697,7 @@ struct PeekView: View {
             }
             .buttonStyle(.hoverFill)
             .foregroundStyle(Theme.secondary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, DS.Space.lg)
             .frame(height: 40)
             Divider()
             PageScreen(pageID: pageID, model: model, isPeek: true)

@@ -34,7 +34,7 @@ struct ChromeHoverButtonStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
                 .opacity(configuration.isPressed ? 0.7 : 1)
                 .contentShape(Rectangle())
                 .onHover { hover = $0 }
@@ -55,7 +55,7 @@ struct ChromeIconButton: View {
         Button(action: action) {
             SymbolImage(name: symbol, size: size)
                 .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hover && !disabled ? Chrome.hover : (active ? Chrome.selected : .clear)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover && !disabled ? Chrome.hover : (active ? Chrome.selected : .clear)))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -121,7 +121,7 @@ struct MacShell: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Chrome.border))
                         .shadow(color: .black.opacity(0.16), radius: 16, x: 4, y: 6)
-                        .padding(.top, 6).padding(.bottom, 12).padding(.leading, 6)
+                        .padding(.top, DS.Space.sm).padding(.bottom, DS.Space.lg).padding(.leading, DS.Space.sm)
                         .onHover { if !$0 { peekSidebar = false } }
                         .transition(.move(edge: .leading).combined(with: .opacity))
                         .accessibilityIdentifier("sidebar.peek")
@@ -147,10 +147,10 @@ struct MacTitleBar: View {
             .accessibilityIdentifier("toolbar.sidebar")
             HistoryButtons()
             TabStrip()
-                .padding(.leading, 6)
+                .padding(.leading, DS.Space.sm)
             Spacer(minLength: 40)
         }
-        .padding(.trailing, 8)
+        .padding(.trailing, DS.Space.md)
         .frame(height: Chrome.titleBarHeight)
         .frame(maxWidth: .infinity)
         .background(WindowDragArea())
@@ -375,7 +375,7 @@ struct NotionSidebar: View {
                     }
                 }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, DS.Space.md)
                 .padding(.bottom, 10)
             }
             .scrollIndicators(.never)
@@ -458,7 +458,7 @@ struct SidebarModeSwitcher: View {
                     .foregroundStyle(on ? Theme.primary : Chrome.sidebarText)
                     .background {
                         if on {
-                            RoundedRectangle(cornerRadius: 6).fill(Chrome.selected)
+                            RoundedRectangle(cornerRadius: DS.Radius.control).fill(Chrome.selected)
                                 .matchedGeometryEffect(id: "sidebar.mode", in: ns)
                         }
                     }
@@ -471,10 +471,10 @@ struct SidebarModeSwitcher: View {
         // Only the switcher animates (the sliding highlight); the sidebar and the screen change without an
         // animation transaction, so a click no longer drags the whole window through a spring.
         .animation(.easeOut(duration: 0.14), value: model.sidebarMode)
-        .padding(2)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.045)))
+        .padding(DS.Space.xxs)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(Color.primary.opacity(0.045)))
         .padding(.horizontal, 10)
-        .padding(.bottom, 6)
+        .padding(.bottom, DS.Space.sm)
     }
 
     /// The highlight and the sidebar flip right away (cheap); the screen behind follows on the next run-loop turn,
@@ -508,17 +508,17 @@ struct SidebarDeveloperRow: View {
         TimelineView(.periodic(from: .now, by: 5)) { _ in
             let errors = newErrors
             HStack(spacing: 8) {
-                Image(systemName: "hammer").font(.system(size: 13)).frame(width: 20, height: 20)
-                Text("Developer").font(.system(size: 14, weight: .medium)).lineLimit(1)
+                Image(systemName: "hammer").font(DS.Text.body()).frame(width: 20, height: 20)
+                Text("Developer").font(DS.Text.ui(.medium)).lineLimit(1)
                 Spacer(minLength: 4)
                 if errors > 0 { SidebarErrorBadge(count: errors) }
                 Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
                     .opacity(hoverRow || open ? 0.6 : 0)
             }
             .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, DS.Space.md)
             .frame(height: Chrome.rowHeight)
-            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hoverRow || open ? Chrome.hover : .clear)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(selected ? Chrome.selected : (hoverRow || open ? Chrome.hover : .clear)))
             .contentShape(Rectangle())
         }
         .onHover { hoverRow = $0; update() }
@@ -532,8 +532,8 @@ struct SidebarDeveloperRow: View {
 
     private var panel: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text("Developer").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary)
-                .padding(.horizontal, 8).padding(.top, 4).padding(.bottom, 3)
+            Text("Developer").font(DS.Text.caption(.semibold)).foregroundStyle(Theme.secondary)
+                .padding(.horizontal, DS.Space.md).padding(.top, DS.Space.xs).padding(.bottom, 3)
             ForEach(Self.tabs, id: \.tab) { t in
                 DeveloperPanelRow(title: t.title, symbol: t.symbol, badge: t.tab == .logs ? newErrors : 0,
                                   current: model.selection == .diagnostics && model.diagnosticsTab == t.tab) {
@@ -543,7 +543,7 @@ struct SidebarDeveloperRow: View {
                 .accessibilityIdentifier("sidebar.developer." + t.tab.rawValue.lowercased())
             }
         }
-        .padding(6)
+        .padding(DS.Space.sm)
         .frame(width: 200)
         .onHover { hoverPanel = $0; update() }
     }
@@ -569,8 +569,8 @@ struct SidebarDeveloperRow: View {
 private struct SidebarErrorBadge: View {
     let count: Int
     var body: some View {
-        Text("\(count)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-            .padding(.horizontal, 6).frame(height: 16)
+        Text("\(count)").font(DS.Text.caption(.semibold)).foregroundStyle(.white)
+            .padding(.horizontal, DS.Space.sm).frame(height: 16)
             .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
     }
 }
@@ -587,15 +587,15 @@ private struct DeveloperPanelRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                Image(systemName: symbol).font(.system(size: 12)).frame(width: 18)
+                Image(systemName: symbol).font(DS.Text.small()).frame(width: 18)
                 Text(title).font(.system(size: 13, weight: current ? .medium : .regular))
                 Spacer(minLength: 4)
                 if badge > 0 { SidebarErrorBadge(count: badge) }
             }
             .foregroundStyle(current ? Theme.primary : Theme.primary.opacity(0.85))
-            .padding(.vertical, 5).padding(.horizontal, 8)
+            .padding(.vertical, 5).padding(.horizontal, DS.Space.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
                 .fill(Theme.primary.opacity(hover ? 0.07 : (current ? 0.05 : 0))))
             .contentShape(Rectangle())
         }
@@ -615,8 +615,8 @@ struct SidebarFooter: View {
             SidebarDeveloperRow()
             SidebarNavRow(item: .settings, title: "Settings", symbol: "gearshape").accessibilityIdentifier("sidebar.settings")
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, DS.Space.md)
+        .padding(.vertical, DS.Space.sm)
         .background(alignment: .top) { Rectangle().fill(Chrome.border).frame(height: 1) }
         .accessibilityIdentifier("sidebar.footer")
     }
@@ -678,12 +678,12 @@ struct SidebarTeamspaceRow: View {
                 SidebarRenameField(initial: teamspace.name) { name in
                     if !name.isEmpty { model.store.renameTeamspace(teamspace.id, to: name) }
                 }
-                .padding(.leading, 8)
+                .padding(.leading, DS.Space.md)
             } else {
                 Text(teamspace.name.nonEmptyOr("Untitled teamspace"))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DS.Text.ui(.medium))
                     .lineLimit(1).truncationMode(.tail)
-                    .padding(.leading, 8)
+                    .padding(.leading, DS.Space.md)
             }
             Spacer(minLength: 4)
             if hover {
@@ -701,9 +701,9 @@ struct SidebarTeamspaceRow: View {
             }
         }
         .foregroundStyle(Chrome.sidebarText)
-        .padding(.leading, 8).padding(.trailing, 4)
+        .padding(.leading, DS.Space.md).padding(.trailing, DS.Space.xs)
         .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover : .clear)))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover : .clear)))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture(perform: toggle)
@@ -731,7 +731,7 @@ struct TeamspaceIcon: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 18, height: 18)
-                .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.dynamic(light: 0x9B9A97, dark: 0x5A5A5A))))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color(Theme.dynamic(light: 0x9B9A97, dark: 0x5A5A5A))))
         }
     }
 }
@@ -746,7 +746,7 @@ struct SidebarChevron: View {
                 .font(.system(size: 10, weight: .semibold))
                 .rotationEffect(.degrees(open ? 90 : 0))
                 .frame(width: 20, height: 20)
-                .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.selected))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Chrome.selected))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -761,9 +761,9 @@ struct SidebarHoverIcon: View {
     @State private var hover = false
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: 12, weight: .semibold))
+            .font(DS.Text.small(.semibold))
             .frame(width: 20, height: 20)
-            .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Chrome.selected : .clear))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(hover ? Chrome.selected : .clear))
             .contentShape(Rectangle())
             .onHover { hover = $0 }
     }
@@ -774,7 +774,7 @@ struct SidebarEmptyRow: View {
     let depth: Int
     var body: some View {
         Text("No pages inside")
-            .font(.system(size: 13))
+            .font(DS.Text.body())
             .foregroundStyle(Chrome.sectionText)
             .padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel + 28)
             .frame(height: 26)
@@ -794,12 +794,12 @@ struct SidebarRenameField: View {
     var body: some View {
         TextField("Untitled", text: $text)
             .textFieldStyle(.plain)
-            .font(.system(size: 14, weight: .medium))
+            .font(DS.Text.ui(.medium))
             .foregroundStyle(Theme.primary)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, DS.Space.xs)
             .frame(height: 22)
-            .background(RoundedRectangle(cornerRadius: 4).fill(Chrome.appBackground))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Chrome.accent.opacity(0.6)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Chrome.appBackground))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Chrome.accent.opacity(0.6)))
             .focused($focused)
             .onAppear { text = initial; focused = true }
             .onSubmit(finish)
@@ -837,7 +837,7 @@ struct SidebarWorkspaceRow: View {
             Button { showMenu.toggle() } label: {
                 HStack(spacing: 8) {
                     WorkspaceBadge(workspace: w, size: 22)
-                    Text(w.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.primary).lineLimit(1)
+                    Text(w.name).font(DS.Text.ui(.semibold)).foregroundStyle(Theme.primary).lineLimit(1)
                     Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold)).foregroundStyle(Chrome.sidebarText)
                 }
                 .contentShape(Rectangle())
@@ -896,17 +896,17 @@ struct WorkspaceMenu: View {
                     .onChange(of: name) { _, _ in commit() }
                     .accessibilityIdentifier("workspace.name")
             }
-            .padding(.bottom, 6)
-            Text("Sync: \(model.syncChannelStatus)").font(.caption).foregroundStyle(Theme.secondary).padding(.bottom, 4)
+            .padding(.bottom, DS.Space.sm)
+            Text("Sync: \(model.syncChannelStatus)").font(.caption).foregroundStyle(Theme.secondary).padding(.bottom, DS.Space.xs)
                 .accessibilityIdentifier("workspace.syncStatus")
-            Divider().padding(.vertical, 4)
+            Divider().padding(.vertical, DS.Space.xs)
             row("Settings", "gearshape") { model.openSettings() }
             row("Import from Notion…", "square.and.arrow.down.on.square") { model.showNotionImport = true }
             row("Import file…", "square.and.arrow.down") { model.showImport = true }
             row("Export workspace…", "square.and.arrow.up") { model.showExportAll = true }
             row("Sync now", "arrow.triangle.2.circlepath") { model.syncNow() }
         }
-        .padding(12)
+        .padding(DS.Space.lg)
         .frame(width: 280)
         .onAppear { name = w.name }
     }
@@ -919,7 +919,7 @@ struct WorkspaceMenu: View {
     private func row(_ title: String, _ symbol: String, _ action: @escaping () -> Void) -> some View {
         Button { close(); action() } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 6).padding(.vertical, 5).contentShape(Rectangle())
+                .padding(.horizontal, DS.Space.sm).padding(.vertical, 5).contentShape(Rectangle())
         }
         .buttonStyle(.hoverFill)
     }
@@ -933,14 +933,14 @@ struct SidebarSearchRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass").font(.system(size: 15)).frame(width: 20, height: 20)
-            Text("Search").font(.system(size: 14, weight: .medium))
+            Text("Search").font(DS.Text.ui(.medium))
             Spacer(minLength: 4)
-            if hover { Text("⌘K").font(.system(size: 12)).foregroundStyle(Chrome.sectionText) }
+            if hover { Text("⌘K").font(DS.Text.small()).foregroundStyle(Chrome.sectionText) }
         }
         .foregroundStyle(Chrome.sidebarText)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Space.md)
         .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture { model.showQuickFind = true }
@@ -966,19 +966,19 @@ struct SidebarNavRow: View {
         let selected = SidebarClick.isHighlighted(item, model: model)
         HStack(spacing: 8) {
             SymbolImage(name: symbol, size: 15).frame(width: 20, height: 20)
-            Text(title).font(.system(size: 14, weight: .medium)).lineLimit(1).truncationMode(.tail)
+            Text(title).font(DS.Text.ui(.medium)).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 4)
             if dot { Circle().fill(Color.green).frame(width: 7, height: 7).accessibilityLabel("Agent running") }
             if badge > 0 {
-                Text("\(badge)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 6).frame(height: 16)
+                Text("\(badge)").font(DS.Text.caption(.semibold)).foregroundStyle(.white)
+                    .padding(.horizontal, DS.Space.sm).frame(height: 16)
                     .background(Capsule().fill(Color(Theme.dynamic(light: 0xEB5757, dark: 0xDF5452))))
             }
         }
         .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Space.md)
         .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Chrome.selected : (hover ? Chrome.hover : .clear)))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(selected ? Chrome.selected : (hover ? Chrome.hover : .clear)))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture {
@@ -1014,14 +1014,14 @@ struct SidebarActionRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 12)).frame(width: 22, height: 22)
-            Text(title).font(.system(size: 14))
+            Image(systemName: symbol).font(DS.Text.small()).frame(width: 22, height: 22)
+            Text(title).font(DS.Text.ui())
             Spacer(minLength: 0)
         }
         .foregroundStyle(Chrome.sectionText)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Space.md)
         .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture(perform: action)
@@ -1041,15 +1041,15 @@ struct SidebarImportRow: View {
             Button("From file (Notion export, Markdown, CSV, HTML)…", systemImage: "doc.zipper") { model.showImport = true }
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "square.and.arrow.down").font(.system(size: 14)).frame(width: 22, height: 22)
-                Text("Import").font(.system(size: 14, weight: .medium))
+                Image(systemName: "square.and.arrow.down").font(DS.Text.ui()).frame(width: 22, height: 22)
+                Text("Import").font(DS.Text.ui(.medium))
                 Spacer(minLength: 0)
             }
             .foregroundStyle(Chrome.sidebarText)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, DS.Space.md)
             .frame(height: Chrome.rowHeight)
             .frame(maxWidth: .infinity)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
             .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
@@ -1099,7 +1099,7 @@ struct SidebarSectionHeader: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .medium))
+            Text(title).font(DS.Text.small(.medium))
             Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
                 .rotationEffect(.degrees(open ? 90 : 0))
                 .opacity(hover ? 1 : 0)
@@ -1112,14 +1112,14 @@ struct SidebarSectionHeader: View {
             }
         }
         .foregroundStyle(Chrome.sectionText)
-        .padding(.leading, 8).padding(.trailing, 4)
+        .padding(.leading, DS.Space.md).padding(.trailing, DS.Space.xs)
         .frame(height: 26)
-        .background(RoundedRectangle(cornerRadius: 6).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover.opacity(0.6) : .clear)))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(dropTargeted ? Chrome.accent.opacity(0.18) : (hover ? Chrome.hover.opacity(0.6) : .clear)))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .animation(.easeOut(duration: 0.12), value: hover)
         .onTapGesture { withAnimation(DS.Motion.fold) { open.toggle() } }
-        .padding(.top, 12)
+        .padding(.top, DS.Space.lg)
         .accessibilityIdentifier("sidebar.section." + title.lowercased())
     }
 }
@@ -1200,13 +1200,13 @@ struct SidebarPageRow: View {
             .frame(width: 20, height: 20)
             if renaming {
                 SidebarRenameField(initial: title) { store.renamePage(page.id, to: $0) }
-                    .padding(.leading, 6)
+                    .padding(.leading, DS.Space.sm)
             } else {
                 Text(title.nonEmptyOr("Untitled"))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DS.Text.ui(.medium))
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .padding(.leading, 8)
+                    .padding(.leading, DS.Space.md)
             }
             Spacer(minLength: 4)
             if hover && !renaming {
@@ -1226,9 +1226,9 @@ struct SidebarPageRow: View {
         }
         .foregroundStyle(selected ? Theme.primary : Chrome.sidebarText)
         .padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel)
-        .padding(.trailing, 4)
+        .padding(.trailing, DS.Space.xs)
         .frame(height: Chrome.rowHeight)
-        .background(RoundedRectangle(cornerRadius: 6).fill(zone == .inside ? Chrome.accent.opacity(0.18) : (selected ? Chrome.selected : (hover ? Chrome.hover : .clear))))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(zone == .inside ? Chrome.accent.opacity(0.18) : (selected ? Chrome.selected : (hover ? Chrome.hover : .clear))))
         .overlay(alignment: zone == .after ? .bottom : .top) {
             if zone == .before || zone == .after {
                 Rectangle().fill(Chrome.accent).frame(height: 2).padding(.leading, 8 + CGFloat(depth) * Chrome.indentPerLevel)
@@ -1331,7 +1331,7 @@ struct PageTopBar: View {
             Spacer(minLength: 8)
             ViewThatFits(in: .horizontal) {
                 Text("Edited \(page.updatedAt.formatted(.relative(presentation: .named)))")
-                    .font(.system(size: 13)).foregroundStyle(Chrome.sectionText).lineLimit(1).padding(.trailing, 6)
+                    .font(DS.Text.body()).foregroundStyle(Chrome.sectionText).lineLimit(1).padding(.trailing, DS.Space.sm)
                 Color.clear.frame(width: 0, height: 0)
             }
             Menu {
@@ -1339,8 +1339,8 @@ struct PageTopBar: View {
                 Button("Copy link", systemImage: "link") { Clipboard.copyLinks([page.id], store: model.store) }
                 Button("Export…", systemImage: "square.and.arrow.up") { model.exportRequest = AppModel.ExportRequest(pageID: page.id) }
             } label: {
-                Text("Share").font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.primary)
-                    .padding(.horizontal, 8).frame(height: 28)
+                Text("Share").font(DS.Text.ui(.medium)).foregroundStyle(Theme.primary)
+                    .padding(.horizontal, DS.Space.md).frame(height: 28)
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
@@ -1355,7 +1355,7 @@ struct PageTopBar: View {
                 .foregroundStyle(Chrome.sidebarText)
             PageOptionsButton(page: page, editor: editor)
         }
-        .padding(.leading, 12).padding(.trailing, 10)
+        .padding(.leading, DS.Space.lg).padding(.trailing, 10)
         .frame(height: Chrome.topBarHeight)
         .background(Chrome.appBackground)
         .accessibilityIdentifier("page.topbar")
@@ -1373,11 +1373,11 @@ struct PageBreadcrumb: View {
         let shown: [Block?] = chain.count > 4 ? [chain.first] + [nil] + chain.suffix(2).map { Optional($0) } : chain.map { Optional($0) }
         HStack(spacing: 0) {
             ForEach(Array(shown.enumerated()), id: \.offset) { i, b in
-                if i > 0 { Text("/").font(.system(size: 13)).foregroundStyle(Chrome.sectionText).padding(.horizontal, 2) }
+                if i > 0 { Text("/").font(DS.Text.body()).foregroundStyle(Chrome.sectionText).padding(.horizontal, DS.Space.xxs) }
                 if let b {
                     BreadcrumbItem(page: b, isLast: i == shown.count - 1)
                 } else {
-                    Text("…").font(.system(size: 14)).foregroundStyle(Chrome.sidebarText).padding(.horizontal, 4)
+                    Text("…").font(DS.Text.ui()).foregroundStyle(Chrome.sidebarText).padding(.horizontal, DS.Space.xs)
                 }
             }
         }
@@ -1396,12 +1396,12 @@ struct BreadcrumbItem: View {
         HStack(spacing: 6) {
             PageIconView(icon: page.props.icon, isDatabase: page.type == .databasePage, size: 16)
             Text(model.store.title(of: page.id).nonEmptyOr("Untitled"))
-                .font(.system(size: 14))
+                .font(DS.Text.ui())
                 .foregroundStyle(isLast ? Theme.primary : Chrome.sidebarText)
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, DS.Space.sm)
         .frame(height: 26)
         .frame(maxWidth: 220, alignment: .leading)
         .fixedSize(horizontal: true, vertical: false)
@@ -1419,8 +1419,8 @@ struct ScreenTopBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: item.symbol).font(.system(size: 13)).foregroundStyle(Chrome.sidebarText)
-            Text(item.title(in: model)).font(.system(size: 14)).foregroundStyle(Theme.primary).lineLimit(1)
+            Image(systemName: item.symbol).font(DS.Text.body()).foregroundStyle(Chrome.sidebarText)
+            Text(item.title(in: model)).font(DS.Text.ui()).foregroundStyle(Theme.primary).lineLimit(1)
             Spacer(minLength: 8)
             if case .chat = item {} else {
                 ChromeIconButton(symbol: SymbolImage.ai, size: 15, help: "Ask AI (⌘J)", active: model.showChatPanel) { model.toggleChatPanel() }

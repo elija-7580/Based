@@ -13,15 +13,15 @@ struct FormatToolbar: View {
     var body: some View {
         HStack(spacing: 0) {
             ToolbarButton(help: "Ask AI about the selection") {
-                HStack(spacing: 4) { AIGlyph(size: 13, vivid: true); Text("Ask AI").font(.system(size: 13, weight: .medium)) }
-                    .padding(.horizontal, 4)
+                HStack(spacing: 4) { AIGlyph(size: 13, vivid: true); Text("Ask AI").font(DS.Text.body(.medium)) }
+                    .padding(.horizontal, DS.Space.xs)
             } action: { askAI() }
             divider
             ToolbarButton(help: "Turn into") {
                 HStack(spacing: 2) {
-                    Text(model.store.blocks[blockID]?.type.displayName ?? "Text").font(.system(size: 13))
+                    Text(model.store.blocks[blockID]?.type.displayName ?? "Text").font(DS.Text.body())
                     Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
-                }.padding(.horizontal, 4)
+                }.padding(.horizontal, DS.Space.xs)
             } action: { turn.toggle() }
             .panelPopover(isPresented: $turn, arrowEdge: .bottom) {
                 VStack(alignment: .leading, spacing: 1) {
@@ -29,7 +29,7 @@ struct FormatToolbar: View {
                         PanelActionRow(title: t.displayName, symbol: t.symbol) { turn = false; editor.turnTargets(into: t) }
                     }
                 }
-                .padding(6).frame(width: 220)
+                .padding(DS.Space.sm).frame(width: 220)
             }
             divider
             mark(.bold, "bold", "Bold ⌘B")
@@ -38,25 +38,25 @@ struct FormatToolbar: View {
             mark(.strikethrough, "strikethrough", "Strikethrough ⌘⇧S")
             mark(.code, "chevron.left.forwardslash.chevron.right", "Inline code ⌘E")
             divider
-            ToolbarButton(help: "Link ⌘K") { Image(systemName: "link").font(.system(size: 13)) } action: { editor.beginLinkEditing() }
+            ToolbarButton(help: "Link ⌘K") { Image(systemName: "link").font(DS.Text.body()) } action: { editor.beginLinkEditing() }
             ToolbarButton(help: "Colour") {
-                Text("A").font(.system(size: 14, weight: .semibold)).underline()
+                Text("A").font(DS.Text.ui(.semibold)).underline()
             } action: { colors.toggle() }
             .panelPopover(isPresented: $colors, arrowEdge: .bottom) { colorMenu }
         }
         .padding(3)
         .frame(height: 36)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.background))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.dividerColor))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).stroke(Theme.dividerColor))
         .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
         .fixedSize()
         .accessibilityIdentifier("format.toolbar")
     }
 
-    private var divider: some View { Rectangle().fill(Theme.dividerColor).frame(width: 1, height: 20).padding(.horizontal, 2) }
+    private var divider: some View { Rectangle().fill(Theme.dividerColor).frame(width: 1, height: 20).padding(.horizontal, DS.Space.xxs) }
 
     private func mark(_ kind: MarkKind, _ symbol: String, _ help: String) -> some View {
-        ToolbarButton(help: help) { Image(systemName: symbol).font(.system(size: 13, weight: .medium)) } action: { editor.toggleMark(kind) }
+        ToolbarButton(help: help) { Image(systemName: symbol).font(DS.Text.body(.medium)) } action: { editor.toggleMark(kind) }
     }
 
     private var colorMenu: some View {
@@ -72,7 +72,7 @@ struct FormatToolbar: View {
                     PanelActionRow(title: c.displayName, symbol: "a.square.fill") { colors = false; editor.setTextColor(c) }
                 }
             }
-            .padding(6)
+            .padding(DS.Space.sm)
         }
         .frame(width: 220, height: 380)
     }

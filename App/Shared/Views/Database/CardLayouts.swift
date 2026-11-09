@@ -14,23 +14,23 @@ struct RowCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
                     if ctx.view.showIcons != false, !(showCover && ctx.view.cardCover == .pageIcon) { PageIconView(icon: row.props.icon, size: 18) }
-                    Text(row.title.isEmpty ? "Untitled" : row.title).font(.system(size: 14, weight: .medium)).lineLimit(ctx.view.wrapCells == true ? nil : 2)
+                    Text(row.title.isEmpty ? "Untitled" : row.title).font(DS.Text.ui(.medium)).lineLimit(ctx.view.wrapCells == true ? nil : 2)
                 }
                 ForEach(ctx.cardProperties) { p in
                     let v = ctx.value(row, p)
                     if !v.isEmpty {
                         PropertyValueView(property: p, value: v, row: row, wrap: ctx.view.wrapCells == true)
-                            .font(.system(size: 12))
+                            .font(DS.Text.small())
                     }
                 }
             }
             .padding(10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.background))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primary.opacity(hover ? 0.035 : 0)).allowsHitTesting(false))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.gridLine))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(.background))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(Theme.primary.opacity(hover ? 0.035 : 0)).allowsHitTesting(false))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).strokeBorder(Theme.gridLine))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
         .shadow(color: .black.opacity(hover ? 0.14 : 0.07), radius: hover ? 4 : 1.5, y: hover ? 2 : 1)
         .contentShape(Rectangle())
         .onHover { h in withAnimation(.easeOut(duration: 0.12)) { hover = h } }
@@ -114,7 +114,7 @@ struct BoardLayout: View {
                     ForEach(groups) { g in BoardColumn(ctx: ctx, group: g, allGroups: ctx.result.groups ?? []) }
                     if !ctx.hiddenGroups.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Hidden groups").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.secondary)
+                            Text("Hidden groups").font(DS.Text.body(.medium)).foregroundStyle(Theme.secondary)
                             ForEach(ctx.hiddenGroups) { g in
                                 Button { ctx.setGroupHidden(g.id, false) } label: {
                                     HStack { GroupTitle(group: g, property: ctx.groupProperty); Text("\(g.rows.count)").foregroundStyle(Theme.secondary) }
@@ -128,7 +128,7 @@ struct BoardLayout: View {
                         NewGroupButton(ctx: ctx, property: p)
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
@@ -175,7 +175,7 @@ struct BoardColumn: View {
                         .buttonStyle(.quiet)
                 }
             }
-            .font(.system(size: 13, weight: .medium))
+            .font(DS.Text.body(.medium))
             .foregroundStyle(Theme.secondary)
             ForEach(group.rows.prefix(shown), id: \.id) { r in RowCard(ctx: ctx, row: r) }
             if group.rows.count > shown {
@@ -186,13 +186,13 @@ struct BoardColumn: View {
                     Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary).frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.hoverFill)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
             }
         }
-        .padding(8)
+        .padding(DS.Space.md)
         .frame(width: 260, alignment: .topLeading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(group.color.map { Theme.optionBackground($0).opacity(0.35) } ?? Color.primary.opacity(0.03)))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(group.color.map { Theme.optionBackground($0).opacity(0.35) } ?? Color.primary.opacity(0.03)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
         .onDrop(of: [.text], isTargeted: $targeted) { _ in
             guard !ctx.locked else { return false }
             let ids = ctx.model.draggedBlocks
@@ -226,7 +226,7 @@ struct NewGroupButton: View {
             Button { adding = true } label: { Label("New group", systemImage: "plus").foregroundStyle(Theme.secondary) }
                 .buttonStyle(.hoverFill)
                 .frame(width: 200, alignment: .leading)
-                .padding(.top, 8)
+                .padding(.top, DS.Space.md)
         }
     }
 }
@@ -265,7 +265,7 @@ struct GalleryLayout: View {
                 Button { ctx.open(ctx.addRow(values: values)) } label: {
                     Label("New page", systemImage: "plus").foregroundStyle(Theme.secondary)
                         .frame(maxWidth: .infinity, minHeight: 80)
-                        .background(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider), style: StrokeStyle(lineWidth: 1, dash: [4])))
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.control).stroke(Color(Theme.divider), style: StrokeStyle(lineWidth: 1, dash: [4])))
                 }
                 .buttonStyle(.hoverFill)
             }
@@ -280,10 +280,10 @@ struct LoadMoreButton: View {
     var body: some View {
         Button(action: { withAnimation(.easeOut(duration: 0.2)) { action() } }) {
             Label("Load \(min(25, remaining)) more", systemImage: "arrow.down")
-                .font(.system(size: 13))
+                .font(DS.Text.body())
                 .foregroundStyle(Theme.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 4)
+                .padding(.vertical, DS.Space.xs)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.hoverFill)

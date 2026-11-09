@@ -175,7 +175,7 @@ struct RelatedPagesView: View {
         let hits = service.map { $0.hybrid().related(to: pageID, limit: 5) } ?? []
         if !hits.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Related pages").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+                Text("Related pages").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
                 ForEach(hits, id: \.pageID) { h in
                     Button { model.open(h.pageID) } label: {
                         HStack(spacing: 6) {
@@ -188,9 +188,9 @@ struct RelatedPagesView: View {
                     .help(h.snippet)
                 }
             }
-            .font(.system(size: 13))
-            .padding(.top, 24)
-            .padding(.bottom, 8)
+            .font(DS.Text.body())
+            .padding(.top, DS.Space.xxl)
+            .padding(.bottom, DS.Space.md)
         }
     }
 }

@@ -64,7 +64,7 @@ struct SearchOverlay: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary).font(.system(size: 16))
                 TextField("Search or ask a question in \(model.store.workspace.name)…", text: $query)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 17))
+                    .font(DS.Text.title(.regular))
                     .focused($focused)
                     .onSubmit { activate(newTab: false) }
                     .onKeyPress(.downArrow) { move(+1); return .handled }
@@ -89,7 +89,7 @@ struct SearchOverlay: View {
                         .buttonStyle(.quiet).foregroundStyle(Theme.secondary)
                 }
             }
-            .padding(.horizontal, 16).padding(.vertical, 14)
+            .padding(.horizontal, DS.Space.xl).padding(.vertical, 14)
             filters
             Divider()
             results
@@ -133,8 +133,8 @@ struct SearchOverlay: View {
             Spacer()
         }
         .controlSize(.small)
-        .font(.system(size: 12))
-        .padding(.horizontal, 16)
+        .font(DS.Text.small())
+        .padding(.horizontal, DS.Space.xl)
         .padding(.bottom, 10)
     }
 
@@ -144,12 +144,12 @@ struct SearchOverlay: View {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if rows.isEmpty {
                         Text(query.isEmpty ? (scope == .chats ? "No chats yet" : "No pages yet") : "No results")
-                            .foregroundStyle(Theme.secondary).padding(16)
+                            .foregroundStyle(Theme.secondary).padding(DS.Space.xl)
                     }
                     ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
                         if i == 0 || rows[i - 1].section != r.section, !r.section.isEmpty {
                             Text(r.section).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.secondary)
-                                .padding(.horizontal, 16).padding(.top, i == 0 ? 8 : 14).padding(.bottom, 4)
+                                .padding(.horizontal, DS.Space.xl).padding(.top, i == 0 ? 8 : 14).padding(.bottom, DS.Space.xs)
                         }
                         Button { highlighted = i; activate(newTab: false) } label: { rowView(r, highlighted: i == highlighted) }
                             .buttonStyle(.plain)
@@ -157,7 +157,7 @@ struct SearchOverlay: View {
                             .onHover { if $0 { highlighted = i } }
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, DS.Space.sm)
             }
             .onChange(of: highlighted) { _, i in if rows.indices.contains(i) { proxy.scrollTo(rows[i].id) } }
         }
@@ -172,9 +172,9 @@ struct SearchOverlay: View {
             Spacer()
             Text("⇥ Pages / Chats")
         }
-        .font(.system(size: 11))
+        .font(DS.Text.caption())
         .foregroundStyle(Theme.secondary)
-        .padding(.horizontal, 16).padding(.vertical, 8)
+        .padding(.horizontal, DS.Space.xl).padding(.vertical, DS.Space.md)
     }
 
     @ViewBuilder
@@ -184,7 +184,7 @@ struct SearchOverlay: View {
             switch r.kind {
             case .home:
                 Image(systemName: "house").font(.system(size: 15)).foregroundStyle(Theme.secondary).frame(width: 20)
-                Text("Home").font(.system(size: 14, weight: .medium))
+                Text("Home").font(DS.Text.ui(.medium))
                 Spacer(minLength: 8)
                 if !highlighted { Text("Start page").font(.caption).foregroundStyle(Theme.secondary) }
             case .ask(let q):
@@ -199,9 +199,9 @@ struct SearchOverlay: View {
                 PageIconView(icon: store.icon(of: id), isDatabase: store.blocks[id]?.type == .databasePage, size: 18).frame(width: 20)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(store.title(of: id).nonEmptyOr("Untitled")).font(.system(size: 14, weight: .medium)).lineLimit(1)
+                        Text(store.title(of: id).nonEmptyOr("Untitled")).font(DS.Text.ui(.medium)).lineLimit(1)
                         let path = pathText(id)
-                        if !path.isEmpty { Text("— " + path).font(.system(size: 12)).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.head) }
+                        if !path.isEmpty { Text("— " + path).font(DS.Text.small()).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.head) }
                     }
                     if let s = snippet, !s.isEmpty { Text(s).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
                 }
@@ -215,9 +215,9 @@ struct SearchOverlay: View {
             if case .page = r.kind {} else if case .home = r.kind {} else { Spacer(minLength: 0) }
             if let n = badge(for: r) { numberBadge(n, highlighted: highlighted) }
         }
-        .padding(.horizontal, 12).padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 6).fill(highlighted ? Color.primary.opacity(0.07) : Color.clear))
-        .padding(.horizontal, 4)
+        .padding(.horizontal, DS.Space.lg).padding(.vertical, 7)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(highlighted ? Color.primary.opacity(0.07) : Color.clear))
+        .padding(.horizontal, DS.Space.xs)
         .contentShape(Rectangle())
     }
 
@@ -397,7 +397,7 @@ struct CommandPalette: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 15))
                 .focused($focused)
-                .padding(.horizontal, 16).padding(.vertical, 12)
+                .padding(.horizontal, DS.Space.xl).padding(.vertical, DS.Space.lg)
                 .onSubmit { run(list, highlighted) }
                 .onKeyPress(.downArrow) { highlighted = min(list.count - 1, highlighted + 1); return .handled }
                 .onKeyPress(.upArrow) { highlighted = max(0, highlighted - 1); return .handled }
@@ -415,16 +415,16 @@ struct CommandPalette: View {
                         HStack(spacing: 12) {
                             Image(systemName: item.symbol).frame(width: 22).foregroundStyle(Theme.secondary)
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(item.title).font(.system(size: 14, weight: .medium))
+                                Text(item.title).font(DS.Text.ui(.medium))
                                 Text(item.detail).font(.system(size: 11.5)).foregroundStyle(Theme.secondary)
                             }
                             Spacer()
                             Text("\(item.id)").font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.secondary)
-                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
+                                .padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.xxs)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Color(Theme.divider)))
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(i == highlighted ? Color.primary.opacity(0.07) : .clear))
+                        .padding(.horizontal, DS.Space.lg).padding(.vertical, DS.Space.md)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(i == highlighted ? Color.primary.opacity(0.07) : .clear))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -432,7 +432,7 @@ struct CommandPalette: View {
                     .accessibilityIdentifier("palette.item\(item.id)")
                 }
             }
-            .padding(6)
+            .padding(DS.Space.sm)
         }
         .frame(width: 440)
         .onAppear { OverlayFocus.grab { focused = true } }

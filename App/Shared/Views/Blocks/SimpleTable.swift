@@ -46,7 +46,7 @@ struct SimpleTableView: View {
                     // evenly, so all rows got the same height and long cells were cut off.
                     .fixedSize(horizontal: false, vertical: true)
                     // Room for the row / column handles that sit just outside the grid.
-                    .padding(.top, 12).padding(.leading, 14).padding(.bottom, 1).padding(.trailing, 1)
+                    .padding(.top, DS.Space.lg).padding(.leading, 14).padding(.bottom, 1).padding(.trailing, 1)
                 }
                 .padding(.top, -12).padding(.leading, -14)
                 if !locked {
@@ -60,7 +60,7 @@ struct SimpleTableView: View {
                 addButton(vertical: false) { addRow(after: rows.last?.id) }
                     .opacity(hoverBottom ? 1 : 0.001)
                     .onHover { hoverBottom = $0 }
-                    .padding(.top, 2)
+                    .padding(.top, DS.Space.xxs)
                     .help("Add a row")
             }
         }
@@ -69,10 +69,10 @@ struct SimpleTableView: View {
 
     private func addButton(vertical: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: "plus").font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.secondary)
+            Image(systemName: "plus").font(DS.Text.caption(.medium)).foregroundStyle(Theme.secondary)
                 .frame(maxWidth: vertical ? 18 : .infinity, maxHeight: vertical ? .infinity : 18)
                 .frame(width: vertical ? 18 : nil, height: vertical ? nil : 18)
-                .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Theme.hoverFill))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small, style: .continuous).fill(Theme.hoverFill))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -129,8 +129,8 @@ struct SimpleTableView: View {
             .rotationEffect(.degrees(horizontal ? 0 : 90))
             .foregroundStyle(Theme.secondary)
             .frame(width: horizontal ? 22 : 12, height: horizontal ? 12 : 22)
-            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Chrome.appBackground))
-            .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Color(Theme.divider)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small, style: .continuous).fill(Chrome.appBackground))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.small, style: .continuous).stroke(Color(Theme.divider)))
             .contentShape(Rectangle())
     }
 
@@ -350,7 +350,7 @@ struct TableCellField: View {
             #endif
         }
         .font(.system(size: 14, weight: bold ? .semibold : .regular))
-        .padding(.horizontal, 8)
+        .padding(.horizontal, DS.Space.md)
         .padding(.vertical, 7)
         #if !os(macOS)
         .onAppear { draft = text.plainText }

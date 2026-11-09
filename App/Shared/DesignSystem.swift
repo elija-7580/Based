@@ -2,8 +2,24 @@ import SwiftUI
 
 /// Design tokens: one place for the spacing scale, type ramp, corner radii, control heights and interaction fills,
 /// so new UI picks a value from here instead of inventing another 12.5 pt / 0.055 opacity.
-/// Colour roles live in `Theme` (primary, secondary, accentBlue, gridLine, hoverFill …).
+/// Colour values live in `Theme` (light/dark pairs); `DS.Color` names their roles for new UI.
+/// BSD-68: `scripts/design-audit.py` counts hard-coded values outside these two files,
+/// `scripts/design-codemod.py` replaces the ones that equal a token (pixel-identical).
 enum DS {
+    /// Semantic colour roles (all light/dark aware). A future Based design changes the mapping here.
+    enum Color {
+        static var text: SwiftUI.Color { Theme.primary }
+        static var textMuted: SwiftUI.Color { Theme.secondary }
+        static var bg: SwiftUI.Color { SwiftUI.Color(Theme.pageBackgroundColor) }
+        static var line: SwiftUI.Color { Theme.dividerColor }
+        static var gridLine: SwiftUI.Color { Theme.gridLine }
+        static var hover: SwiftUI.Color { Theme.hoverFill }
+        static var accent: SwiftUI.Color { Theme.accentBlue }
+        static var success: SwiftUI.Color { Theme.color(.green) }
+        static var warning: SwiftUI.Color { Theme.color(.orange) }
+        static var danger: SwiftUI.Color { Theme.color(.red) }
+    }
+
     /// 4-pt based spacing scale.
     enum Space {
         static let xxs: CGFloat = 2

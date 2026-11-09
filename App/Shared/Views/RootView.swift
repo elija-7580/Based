@@ -271,11 +271,11 @@ struct ModalBackdrop<Content: View>: View {
                 .scaleEffect(shown ? 1 : 0.97, anchor: .top)
                 .opacity(shown ? 1 : 0)
                 .offset(y: shown ? 0 : -6)
-                .background(RoundedRectangle(cornerRadius: 12).fill(.background).shadow(color: .black.opacity(0.22), radius: 24, y: 10))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.panel).fill(.background).shadow(color: .black.opacity(0.22), radius: 24, y: 10))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.panel))
+                .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel).stroke(Color(Theme.divider)))
                 .padding(.top, 70)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DS.Space.xxl)
             Button("", action: dismiss).keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
         }
         .transition(.opacity.animation(.easeOut(duration: 0.12)))
@@ -291,7 +291,7 @@ struct ImportProgressCard: View {
             Text(progress < 0.65 ? "Unpacking export…" : "Importing pages…").font(.callout).foregroundStyle(Theme.secondary)
         }
         .padding(20)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.regularMaterial))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.panel).fill(.regularMaterial))
         .accessibilityIdentifier("import.progress")
     }
 }
@@ -318,7 +318,7 @@ struct DetailShell: View {
                     DetailContent()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .overlay(alignment: .topTrailing) {
-                            if model.showFind { FindBar().padding(.top, 8).padding(.trailing, 16) }
+                            if model.showFind { FindBar().padding(.top, DS.Space.md).padding(.trailing, DS.Space.xl) }
                         }
                 }
                 .frame(minWidth: docked ? 380 : 0, maxWidth: .infinity)
@@ -361,7 +361,7 @@ struct DetailShell: View {
                     }
                 }
         }
-        .overlay(alignment: .top) { if model.showFind { FindBar().padding(.top, 8) } }
+        .overlay(alignment: .top) { if model.showFind { FindBar().padding(.top, DS.Space.md) } }
         .sheet(item: peekBinding) { p in
             PeekView(pageID: p.id, mode: .centerPeek).environment(model)
         }
@@ -642,8 +642,8 @@ struct HomeOverview: View {
                             VStack { Image(systemName: "plus"); Text("New page") }
                                 .foregroundStyle(Theme.secondary)
                                 .frame(width: 150, height: 130)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.04)))
-                                .hoverHighlight(cornerRadius: 12, opacity: 0.05)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.panel).fill(Color.primary.opacity(0.04)))
+                                .hoverHighlight(cornerRadius: DS.Radius.panel, opacity: 0.05)
                                 .clickableCursor()
                         }
                         .buttonStyle(.plain)
@@ -658,7 +658,7 @@ struct HomeOverview: View {
                             ForEach(favs, id: \.id) { p in
                                 Button { model.open(p.id) } label: {
                                     HStack(spacing: 6) { PageIconView(icon: p.props.icon, size: 14); Text(store.title(of: p.id)).lineLimit(1) }
-                                        .padding(.horizontal, 10).padding(.vertical, 6)
+                                        .padding(.horizontal, 10).padding(.vertical, DS.Space.sm)
                                         .background(Capsule().fill(Color.primary.opacity(0.05)))
                                 }
                                 .buttonStyle(.hoverFill)
@@ -708,23 +708,23 @@ struct HomeCard: View {
             ZStack(alignment: .bottomLeading) {
                 if let c = page.props.cover { CoverView(cover: c) } else { Color.primary.opacity(0.05) }
                 PageIconView(icon: page.props.icon, isDatabase: page.type == .databasePage, size: 26)
-                    .padding(.leading, 12).offset(y: 12)
+                    .padding(.leading, DS.Space.lg).offset(y: 12)
             }
             .frame(height: 50)
             .clipped()
             VStack(alignment: .leading, spacing: 4) {
-                Text(model.store.title(of: page.id)).font(.system(size: 14, weight: .semibold)).lineLimit(2)
+                Text(model.store.title(of: page.id)).font(DS.Text.ui(.semibold)).lineLimit(2)
                 Spacer(minLength: 0)
                 Text(page.updatedAt.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(Theme.secondary)
             }
-            .padding(12)
-            .padding(.top, 8)
+            .padding(DS.Space.lg)
+            .padding(.top, DS.Space.md)
         }
         .frame(width: 150, height: 130)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.background))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(Theme.divider)))
-        .overlay(RoundedRectangle(cornerRadius: 12).fill(Theme.primary.opacity(hover ? 0.04 : 0)).allowsHitTesting(false))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.panel).fill(.background))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.panel))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel).stroke(Color(Theme.divider)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel).fill(Theme.primary.opacity(hover ? 0.04 : 0)).allowsHitTesting(false))
         .shadow(color: .black.opacity(hover ? 0.12 : 0), radius: hover ? 4 : 0, y: hover ? 2 : 0)
         .clickableCursor()
         .onHover { hover = $0 }

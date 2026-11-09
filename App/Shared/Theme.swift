@@ -303,3 +303,14 @@ extension BlockType {
         }
     }
 }
+
+extension Theme {
+    /// Palette for categories without an option colour (Notion‑like soft tones). Chart views (BSD-68: moved here).
+    static let chartPalette: [Color] = [
+        Color(red: 0.35, green: 0.56, blue: 0.95), Color(red: 0.98, green: 0.62, blue: 0.27), Color(red: 0.36, green: 0.73, blue: 0.47),
+        Color(red: 0.86, green: 0.38, blue: 0.47), Color(red: 0.60, green: 0.47, blue: 0.86), Color(red: 0.95, green: 0.78, blue: 0.27),
+        Color(red: 0.37, green: 0.72, blue: 0.78), Color(red: 0.62, green: 0.53, blue: 0.45),
+    ]
+    /// The AI glyph's vivid gradient (violet → rose).
+    static let aiGradient: [Color] = [Color(red: 0.55, green: 0.42, blue: 0.98), Color(red: 0.95, green: 0.45, blue: 0.55)]
+}

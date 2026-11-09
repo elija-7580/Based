@@ -197,7 +197,7 @@ struct CoverPicker: View {
 
     private func swatch<V: View>(@ViewBuilder _ v: () -> V, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            v().frame(height: 56).clipShape(RoundedRectangle(cornerRadius: 4))
+            v().frame(height: 56).clipShape(RoundedRectangle(cornerRadius: DS.Radius.small))
         }
         .buttonStyle(.hoverFill)
     }

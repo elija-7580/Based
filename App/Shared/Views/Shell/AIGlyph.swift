@@ -22,7 +22,7 @@ struct AIGlyph: View {
                 .offset(x: size * 0.31, y: -size * 0.31)
         }
         .frame(width: size, height: size)
-        .foregroundStyle(vivid ? AnyShapeStyle(LinearGradient(colors: [Color(red: 0.55, green: 0.42, blue: 0.98), Color(red: 0.95, green: 0.45, blue: 0.55)],
+        .foregroundStyle(vivid ? AnyShapeStyle(LinearGradient(colors: Theme.aiGradient,
                                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
                                : AnyShapeStyle(.foreground))
         .accessibilityHidden(true)

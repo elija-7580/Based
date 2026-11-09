@@ -55,7 +55,7 @@ struct SharePanel: View {
             }
             if let error { Label(error, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.orange) }
         }
-        .padding(16)
+        .padding(DS.Space.xl)
         .frame(width: 420)
         .disabled(busy)
         .task { await reload() }
@@ -64,7 +64,7 @@ struct SharePanel: View {
     private func row<Controls: View>(title: String, detail: String, @ViewBuilder controls: () -> Controls) -> some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 13, weight: .medium))
+                Text(title).font(DS.Text.body(.medium))
                 Text(detail).font(.caption).foregroundStyle(Theme.secondary)
             }
             Spacer()
@@ -80,14 +80,14 @@ struct SharePanel: View {
                 Spacer()
                 Button("Copy") { copy(s) }
             }
-            .padding(6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
+            .padding(DS.Space.sm)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.hoverFill))
         }
     }
 
     @ViewBuilder
     private var accessList: some View {
-        Text("Who has access").font(.system(size: 13, weight: .medium))
+        Text("Who has access").font(DS.Text.body(.medium))
         if let access {
             if access.people.isEmpty && access.links.isEmpty {
                 Text("Only you.").font(.caption).foregroundStyle(Theme.secondary)
@@ -106,7 +106,7 @@ struct SharePanel: View {
                     .menuStyle(.borderlessButton).fixedSize()
                     .disabled(p.pageID != pageID)
                 }
-                .font(.system(size: 13))
+                .font(DS.Text.body())
             }
             ForEach(access.links.filter(\.active)) { l in
                 HStack {
@@ -116,7 +116,7 @@ struct SharePanel: View {
                     Spacer()
                     Button("Revoke") { revoke(l.id) }
                 }
-                .font(.system(size: 13))
+                .font(DS.Text.body())
             }
         } else {
             ProgressView().controlSize(.small)

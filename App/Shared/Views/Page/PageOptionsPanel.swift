@@ -14,7 +14,7 @@ struct PageOptionsButton: View {
             Image(systemName: "ellipsis")
                 .font(.system(size: 15, weight: .semibold))
                 .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hover || open ? Chrome.hover : .clear))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover || open ? Chrome.hover : .clear))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -58,14 +58,14 @@ struct PageOptionsPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             // Search actions
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Image(systemName: "magnifyingglass").font(DS.Text.small()).foregroundStyle(Theme.secondary)
                 TextField("Search actions…", text: $query)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(DS.Text.body())
                     .focused($searchFocused)
             }
-            .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
+            .padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.sm)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.hoverFill))
             .padding(10)
 
             if query.isEmpty {
@@ -75,7 +75,7 @@ struct PageOptionsPanel: View {
                     FontTile(title: "Serif", font: .serif, current: f.font ?? .default) { set { $0.font = .serif } }
                     FontTile(title: "Mono", font: .mono, current: f.font ?? .default) { set { $0.font = .mono } }
                 }
-                .padding(.horizontal, 10).padding(.bottom, 8)
+                .padding(.horizontal, 10).padding(.bottom, DS.Space.md)
                 Divider()
                 VStack(spacing: 1) {
                     ToggleRow(title: "Small text", symbol: "textformat.size.smaller", on: f.smallText == true) { v in set { $0.smallText = v ? true : nil } }
@@ -84,7 +84,7 @@ struct PageOptionsPanel: View {
                     ToggleRow(title: "Backlinks", symbol: "arrow.uturn.left", on: f.hideBacklinks != true) { v in set { $0.hideBacklinks = v ? nil : true } }
                     ToggleRow(title: "Lock page", symbol: "lock", on: f.locked == true) { v in set { $0.locked = v ? true : nil } }
                 }
-                .padding(6)
+                .padding(DS.Space.sm)
                 Divider()
             }
             ScrollView {
@@ -96,7 +96,7 @@ struct PageOptionsPanel: View {
                         }
                     }
                 }
-                .padding(6)
+                .padding(DS.Space.sm)
             }
             .frame(maxHeight: query.isEmpty ? 260 : 380)
             Divider()
@@ -173,12 +173,12 @@ private struct FontTile: View {
                 Text("Ag")
                     .font(sample)
                     .foregroundStyle(selected ? Theme.accentBlue : Theme.primary)
-                Text(title).font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                Text(title).font(DS.Text.caption()).foregroundStyle(Theme.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Theme.hoverFill : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(selected ? Theme.accentBlue.opacity(0.6) : .clear, lineWidth: 1.5))
+            .padding(.vertical, DS.Space.md)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Theme.hoverFill : .clear))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).stroke(selected ? Theme.accentBlue.opacity(0.6) : .clear, lineWidth: 1.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -206,12 +206,12 @@ private struct ToggleRow: View {
     var body: some View {
         Button { set(!on) } label: {
             HStack(spacing: 8) {
-                Image(systemName: symbol).font(.system(size: 12)).frame(width: 18).foregroundStyle(Theme.secondary)
+                Image(systemName: symbol).font(DS.Text.small()).frame(width: 18).foregroundStyle(Theme.secondary)
                 Text(title).font(.system(size: 13.5)).foregroundStyle(Theme.primary)
                 Spacer()
                 MiniSwitch(on: on)
             }
-            .padding(.horizontal, 8).frame(height: 30)
+            .padding(.horizontal, DS.Space.md).frame(height: 30)
             .background(RoundedRectangle(cornerRadius: 5).fill(hover ? Theme.hoverFill : .clear))
             .contentShape(Rectangle())
         }
@@ -228,7 +228,7 @@ struct MiniSwitch: View {
             .fill(on ? Theme.accentBlue : Theme.secondary.opacity(0.3))
             .frame(width: 26, height: 15)
             .overlay(alignment: on ? .trailing : .leading) {
-                Circle().fill(.white).frame(width: 11, height: 11).padding(2)
+                Circle().fill(.white).frame(width: 11, height: 11).padding(DS.Space.xxs)
                     .shadow(color: .black.opacity(0.15), radius: 1, y: 0.5)
             }
             .animation(.spring(response: 0.25, dampingFraction: 0.75), value: on)
@@ -247,13 +247,13 @@ struct PanelActionRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                Image(systemName: symbol).font(.system(size: 12)).frame(width: 18)
+                Image(systemName: symbol).font(DS.Text.small()).frame(width: 18)
                     .foregroundStyle(destructive && hover ? Color.red : Theme.secondary)
                 Text(title).font(.system(size: 13.5)).foregroundStyle(destructive && hover ? Color.red : Theme.primary)
                 Spacer()
                 if !shortcut.isEmpty { Text(shortcut).font(.system(size: 11.5)).foregroundStyle(Theme.secondary.opacity(0.8)) }
             }
-            .padding(.horizontal, 8).frame(height: 30)
+            .padding(.horizontal, DS.Space.md).frame(height: 30)
             .background(RoundedRectangle(cornerRadius: 5).fill(hover ? (destructive ? Color.red.opacity(0.1) : Theme.hoverFill) : .clear))
             .contentShape(Rectangle())
         }

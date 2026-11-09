@@ -69,10 +69,10 @@ struct ChartLayout: View {
             } else {
                 chart(pts)
                     .frame(height: compact ? min(CGFloat(config.heightPoints), 300) : CGFloat(config.heightPoints))
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, DS.Space.md)
                     .accessibilityIdentifier("chart.canvas")
                 if let c = config.caption {
-                    Text(c).font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, 8)
+                    Text(c).font(.caption).foregroundStyle(Theme.secondary).padding(.horizontal, DS.Space.md)
                 }
                 if !compact { HStack {
                     Text("\(xTitle) · \(yTitle)").font(.caption).foregroundStyle(Theme.secondary)
@@ -81,10 +81,10 @@ struct ChartLayout: View {
                         Text("\(p.label): \(format(p.value))").font(.caption.monospacedDigit())
                     }
                 }
-                .padding(.horizontal, 8) }
+                .padding(.horizontal, DS.Space.md) }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, DS.Space.sm)
     }
 
     @ViewBuilder
@@ -194,13 +194,4 @@ struct ChartLayout: View {
         if let y = config.yPropertyID, let p = ctx.db.property(y), let f = p.numberFormat { return CellFormatter.number(v, f) }
         return v == v.rounded() ? String(Int(v)) : String(format: "%.2f", v)
     }
-}
-
-extension Theme {
-    /// Palette for categories without an option colour (Notion‑like soft tones).
-    static let chartPalette: [Color] = [
-        Color(red: 0.35, green: 0.56, blue: 0.95), Color(red: 0.98, green: 0.62, blue: 0.27), Color(red: 0.36, green: 0.73, blue: 0.47),
-        Color(red: 0.86, green: 0.38, blue: 0.47), Color(red: 0.60, green: 0.47, blue: 0.86), Color(red: 0.95, green: 0.78, blue: 0.27),
-        Color(red: 0.37, green: 0.72, blue: 0.78), Color(red: 0.62, green: 0.53, blue: 0.45),
-    ]
 }

@@ -17,7 +17,7 @@ struct BlockSkeleton: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(0..<bars, id: \.self) { i in
                     let w = Self.widths[i % Self.widths.count]
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    RoundedRectangle(cornerRadius: DS.Radius.small, style: .continuous)
                         .fill(Theme.primary.opacity(w == 0 ? 0 : 0.06))
                         .frame(width: max(0, g.size.width * w), height: 12)
                         .frame(height: Self.step, alignment: .center)

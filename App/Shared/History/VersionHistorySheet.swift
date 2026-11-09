@@ -41,7 +41,7 @@ struct VersionHistorySheet: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Button(action: done) { Image(systemName: "xmark").font(.system(size: 12, weight: .semibold)) }
+            Button(action: done) { Image(systemName: "xmark").font(DS.Text.small(.semibold)) }
                 .buttonStyle(.quiet)
                 .keyboardShortcut(.cancelAction)
                 .help("Close (Esc)")
@@ -140,12 +140,12 @@ struct VersionHistorySheet: View {
                         } header: {
                             Text(day).font(DS.Text.caption(.semibold)).foregroundStyle(Theme.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 4)
+                                .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, DS.Space.xs)
                                 .background(Color(Theme.pageBackgroundColor))
                         }
                     }
                 }
-                .padding(.horizontal, 6).padding(.bottom, 8)
+                .padding(.horizontal, DS.Space.sm).padding(.bottom, DS.Space.md)
             }
             Divider()
             HStack {
@@ -160,7 +160,7 @@ struct VersionHistorySheet: View {
                     .disabled(selected == nil || selected?.id == versions.first?.id && changedCount == 0)
                     .accessibilityIdentifier("versionHistory.restore")
             }
-            .padding(12)
+            .padding(DS.Space.lg)
         }
         .background(Color(Theme.pageBackgroundColor))
     }
@@ -234,11 +234,11 @@ private struct VersionBlockView: View {
             line
                 .padding(.horizontal, block.props.color?.isBackground == true ? 6 : 0)
                 .padding(.vertical, block.props.color?.isBackground == true ? 2 : 0)
-                .background(RoundedRectangle(cornerRadius: 4).fill(background))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(background))
                 .overlay(alignment: .leading) {
                     if changed.contains(block.id) {
                         Capsule().fill(VersionHistorySheet.changeColor)
-                            .frame(width: 3).padding(.vertical, 2).offset(x: -14 - CGFloat(depth) * 24)
+                            .frame(width: 3).padding(.vertical, DS.Space.xxs).offset(x: -14 - CGFloat(depth) * 24)
                             .help("Different from the current page")
                     }
                 }
@@ -246,7 +246,7 @@ private struct VersionBlockView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(kids, id: \.id) { VersionBlockView(block: $0, tree: tree, depth: depth + 1, changed: changed) }
                 }
-                .padding(.leading, 24)
+                .padding(.leading, DS.Space.xxl)
             }
         }
     }
@@ -267,8 +267,8 @@ private struct VersionBlockView: View {
     private var line: some View {
         switch block.type {
         case .heading1: Text(text).font(.system(size: 26, weight: .semibold)).foregroundStyle(foreground).padding(.top, 10)
-        case .heading2: Text(text).font(.system(size: 21, weight: .semibold)).foregroundStyle(foreground).padding(.top, 6)
-        case .heading3, .heading4: Text(text).font(.system(size: 18, weight: .semibold)).foregroundStyle(foreground).padding(.top, 4)
+        case .heading2: Text(text).font(.system(size: 21, weight: .semibold)).foregroundStyle(foreground).padding(.top, DS.Space.sm)
+        case .heading3, .heading4: Text(text).font(.system(size: 18, weight: .semibold)).foregroundStyle(foreground).padding(.top, DS.Space.xs)
         case .bulletedList: marker("•") { body(text) }
         case .numberedList: marker("–") { body(text) }
         case .todo:
@@ -283,14 +283,14 @@ private struct VersionBlockView: View {
                 PageIconView(icon: block.props.icon, size: 18)
                 body(text)
             }
-            .padding(12)
+            .padding(DS.Space.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.color(block.props.color.map { $0.isBackground ? $0 : $0.background } ?? .grayBackground)))
-        case .divider: Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.color(block.props.color.map { $0.isBackground ? $0 : $0.background } ?? .grayBackground)))
+        case .divider: Rectangle().fill(Color(Theme.divider)).frame(height: 1).padding(.vertical, DS.Space.sm)
         case .code:
             Text(text).font(.system(size: 13, design: .monospaced)).foregroundStyle(Theme.primary)
-                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color(Theme.codeBackground)))
+                .padding(DS.Space.lg).frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Color(Theme.codeBackground)))
         case .page, .databasePage:
             HStack(spacing: 6) {
                 PageIconView(icon: block.props.icon, isDatabase: block.type == .databasePage, size: 16)
@@ -322,6 +322,6 @@ private struct VersionBlockView: View {
             .font(DS.Text.body())
             .foregroundStyle(Theme.secondary)
             .padding(.horizontal, 10).frame(height: 32)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.primary.opacity(DS.Fill.rest)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.primary.opacity(DS.Fill.rest)))
     }
 }

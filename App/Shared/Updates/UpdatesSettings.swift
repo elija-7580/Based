@@ -191,7 +191,7 @@ struct UpdatesSettings: View {
                     }
                     .foregroundStyle(Theme.secondary)
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, DS.Space.xxs)
             }
             if u.newCommits.count > 50 {
                 Text("…and \(u.newCommits.count - 50) more").font(.caption).foregroundStyle(Theme.secondary)
@@ -212,16 +212,16 @@ struct SidebarUpdateRow: View {
             HStack(spacing: 8) {
                 Group {
                     if u.phase.isRunning { ProgressView().controlSize(.mini) }
-                    else { Image(systemName: "arrow.down.circle.fill").font(.system(size: 13)).foregroundStyle(Color.accentColor) }
+                    else { Image(systemName: "arrow.down.circle.fill").font(DS.Text.body()).foregroundStyle(Color.accentColor) }
                 }
                 .frame(width: 20, height: 20)
-                Text(u.phase.isRunning ? "Updating…" : "Update available").font(.system(size: 14, weight: .medium)).lineLimit(1)
+                Text(u.phase.isRunning ? "Updating…" : "Update available").font(DS.Text.ui(.medium)).lineLimit(1)
                 Spacer(minLength: 4)
             }
             .foregroundStyle(Chrome.sidebarText)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, DS.Space.md)
             .frame(height: Chrome.rowHeight)
-            .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
             .contentShape(Rectangle())
             .onHover { hover = $0 }
             .onTapGesture {

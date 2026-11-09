@@ -92,7 +92,7 @@ struct PageOutline: View {
             }
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 6)
+        .padding(.horizontal, DS.Space.sm)
     }
 
     private func panel(_ items: [Entry]) -> some View {
@@ -102,17 +102,17 @@ struct PageOutline: View {
                     OutlineRow(id: e.id, level: e.level) { jump(e.id) }
                 }
             }
-            .padding(6)
+            .padding(DS.Space.sm)
         }
         .frame(width: 248)
         .frame(maxHeight: 460)
         .fixedSize(horizontal: false, vertical: true)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous)
                 .fill(.regularMaterial)
                 .shadow(color: .black.opacity(0.14), radius: 18, y: 6)
         )
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.primary.opacity(0.07)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).strokeBorder(Theme.primary.opacity(0.07)))
     }
 }
 
@@ -131,10 +131,10 @@ private struct OutlineRow: View {
                 .font(.system(size: 13, weight: level == 1 ? .medium : .regular))
                 .lineLimit(1)
                 .foregroundStyle(level == 1 ? Theme.primary : Theme.secondary)
-                .padding(.vertical, 5).padding(.horizontal, 8)
+                .padding(.vertical, 5).padding(.horizontal, DS.Space.md)
                 .padding(.leading, CGFloat(level - 1) * 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.primary.opacity(hover ? 0.07 : 0)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.primary.opacity(hover ? 0.07 : 0)))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

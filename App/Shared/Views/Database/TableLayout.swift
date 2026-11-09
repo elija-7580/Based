@@ -51,7 +51,7 @@ struct RowTitleCell: View {
         HStack(spacing: 2) {
             if !ctx.locked {
                 Button { draft = row.title; editing = true; focused = true } label: {
-                    Image(systemName: "pencil").font(.system(size: 11))
+                    Image(systemName: "pencil").font(DS.Text.caption())
                         .frame(width: 24, height: 22)
                         .contentShape(Rectangle())
                 }
@@ -62,9 +62,9 @@ struct RowTitleCell: View {
             Button { ctx.open(row.id) } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 10))
-                    Text("Open").font(.system(size: 12, weight: .medium)).fixedSize()
+                    Text("Open").font(DS.Text.small(.medium)).fixedSize()
                 }
-                .padding(.horizontal, 6)
+                .padding(.horizontal, DS.Space.sm)
                 .frame(height: 22)
                 .contentShape(Rectangle())
             }
@@ -76,7 +76,7 @@ struct RowTitleCell: View {
         .foregroundStyle(Theme.secondary)
         .padding(1)
         .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
+            RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
                 .fill(Color(Theme.pageBackgroundColor))
                 .shadow(color: .black.opacity(0.18), radius: 1.5, y: 0.5)
         )
@@ -90,7 +90,7 @@ struct RowTitleCell: View {
             if !ctx.locked && (editing || row.title.isEmpty) {
                 TextField("Untitled", text: $draft)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DS.Text.ui(.medium))
                     .focused($focused)
                     .onSubmit { editing = false }
                     .onChange(of: draft) { _, v in if v != row.title { ctx.store.setText(row.id, RichText(v)) } }
@@ -98,7 +98,7 @@ struct RowTitleCell: View {
                     .onAppear { if editing { focused = true } }
             } else {
                 Text(row.title.isEmpty ? "Untitled" : row.title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DS.Text.ui(.medium))
                     .foregroundStyle(row.title.isEmpty ? Theme.secondary : Theme.primary)
                     .lineLimit(ctx.view.wrapCells == true ? nil : 1)
                     .underline(hover, color: Theme.secondary.opacity(0.35))
@@ -114,7 +114,7 @@ struct RowTitleCell: View {
         .overlay(alignment: .trailing) {
             if hover && !editing {
                 rowActions
-                    .padding(.trailing, 2)
+                    .padding(.trailing, DS.Space.xxs)
                     .transition(.opacity)
             }
         }
@@ -188,7 +188,7 @@ struct TableLayout: View {
                                 Button("Load all (\(ctx.result.rows.count))") { limitBoost = ctx.result.rows.count }
                                 Text("\(limit) of \(ctx.result.rows.count)").foregroundStyle(.tertiary)
                             }
-                            .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary).font(.callout).padding(6)
+                            .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary).font(.callout).padding(DS.Space.sm)
                             .padding(.leading, Self.gutter)
                             .accessibilityIdentifier("table.loadMore")
                         }
@@ -196,7 +196,7 @@ struct TableLayout: View {
                         CalculationRow(ctx: ctx, properties: props, rows: ctx.result.rows, columns: columns).padding(.leading, Self.gutter)
                     }
                 }
-                .padding(.bottom, 4)
+                .padding(.bottom, DS.Space.xs)
                 .coordinateSpace(.named(rowSpace))
                 // Notion: press in the checkbox column and drag over rows to select several at once.
                 .simultaneousGesture(
@@ -278,7 +278,7 @@ struct TableLayout: View {
 
     private func bulkBar(_ ordered: [RecordID]) -> some View {
         HStack(spacing: 12) {
-            Text("\(selection.count) selected").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.accentBlue)
+            Text("\(selection.count) selected").font(DS.Text.body(.medium)).foregroundStyle(Theme.accentBlue)
             Divider().frame(height: 14)
             Menu { bulkMenu(ordered) } label: { Label("Actions", systemImage: "ellipsis.circle") }
                 .menuStyle(.borderlessButton).fixedSize()
@@ -291,11 +291,11 @@ struct TableLayout: View {
             Button { selection = [] } label: { Image(systemName: "xmark") }.help("Clear selection (Esc)")
         }
         .buttonStyle(.quiet)
-        .font(.system(size: 13))
+        .font(DS.Text.body())
         .foregroundStyle(Theme.secondary)
-        .padding(.horizontal, 8).padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Theme.accentBlue.opacity(0.08)))
-        .padding(.bottom, 4)
+        .padding(.horizontal, DS.Space.md).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.accentBlue.opacity(0.08)))
+        .padding(.bottom, DS.Space.xs)
         .accessibilityIdentifier("table.bulkBar")
     }
 
@@ -331,11 +331,11 @@ struct TableLayout: View {
         if !ctx.locked {
             Button { ctx.addRow(values: values) } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "plus").font(.system(size: 12))
-                    Text("New page").font(.system(size: 14))
+                    Image(systemName: "plus").font(DS.Text.small())
+                    Text("New page").font(DS.Text.ui())
                 }
                 .foregroundStyle(Theme.secondary)
-                .padding(.horizontal, 8)
+                .padding(.horizontal, DS.Space.md)
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
                 .contentShape(Rectangle())
             }
@@ -358,7 +358,7 @@ private struct SelectAllBox: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: all ? "checkmark.square.fill" : (any ? "minus.square.fill" : "square"))
-                .font(.system(size: 13, weight: .light))
+                .font(DS.Text.body(.light))
                 .foregroundStyle(any ? Theme.accentBlue : Theme.secondary)
                 .frame(width: TableLayout.gutter, height: 32)
                 .contentShape(Rectangle())
@@ -411,7 +411,7 @@ struct TableRowView: View {
                                          locked: ctx.locked, wrap: ctx.view.wrapCells == true)
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, DS.Space.md)
                     .padding(.vertical, wrap ? 6 : 0)
                     // Notion: without "Wrap cells" every row is one line high (33 pt) and cells clip.
                     .frame(width: columns.width(ctx, p), height: wrap ? nil : TableLayout.rowHeight, alignment: .leading)
@@ -453,12 +453,12 @@ struct TableHeader: View {
             if !ctx.locked {
                 Button { adding = true } label: { ToolbarIcon("plus", size: 12) }
                     .buttonStyle(.quiet(padding: 4, minSize: 28))
-                    .padding(.leading, 2)
+                    .padding(.leading, DS.Space.xxs)
                     .help("Add a property")
                     .panelPopover(isPresented: $adding) { AddPropertyMenu(ctx: ctx) { adding = false } }
             }
         }
-        .font(.system(size: 14))
+        .font(DS.Text.ui())
         .foregroundStyle(Theme.secondary)
         .overlay(alignment: .bottom) { Rectangle().fill(Theme.gridLine).frame(height: 1) }
     }
@@ -481,7 +481,7 @@ struct HeaderCell: View {
         Button { editing = true } label: {
             HStack(spacing: 6) {
                 Image(systemName: property.type.symbol)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(DS.Text.small())
                     .frame(width: 16)
                 Text(property.name).lineLimit(1)
                 if (property.type == .formula || property.type == .rollup), model.queryCache.hasErrors(prop: property.id) {
@@ -491,7 +491,7 @@ struct HeaderCell: View {
                         .help(model.queryCache.queryEngine.errors[property.id] ?? "Some cells have errors")
                 }
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, DS.Space.md)
             .frame(width: w, height: 33, alignment: .leading)
             .background(Theme.primary.opacity(hover || editing ? 0.045 : 0))
             .contentShape(Rectangle())
@@ -529,7 +529,7 @@ struct GroupHeader: View {
     var body: some View {
         HStack(spacing: 6) {
             Button(action: toggle) {
-                Image(systemName: collapsed ? "chevron.right" : "chevron.down").font(.system(size: 11))
+                Image(systemName: collapsed ? "chevron.right" : "chevron.down").font(DS.Text.caption())
             }
             .buttonStyle(.hoverFill)
             GroupTitle(group: group, property: ctx.groupProperty)
@@ -541,9 +541,9 @@ struct GroupHeader: View {
             .menuStyle(.borderlessButton)
             .fixedSize()
         }
-        .font(.system(size: 14, weight: .medium))
-        .padding(.vertical, 8)
-        .padding(.top, 8)
+        .font(DS.Text.ui(.medium))
+        .padding(.vertical, DS.Space.md)
+        .padding(.top, DS.Space.md)
     }
 }
 
@@ -575,7 +575,7 @@ struct HiddenGroupsFooter: View {
             .menuStyle(.borderlessButton)
             .fixedSize()
             .foregroundStyle(Theme.secondary)
-            .padding(.vertical, 6)
+            .padding(.vertical, DS.Space.sm)
         }
     }
 }
@@ -608,12 +608,12 @@ struct CalculationRow: View {
                         Spacer()
                         if fn != .none, let s = ctx.engine.calculation(fn, p, rows: rows, db: ctx.db) {
                             Text(fn.displayName.uppercased()).font(.system(size: 10)).foregroundStyle(Theme.secondary)
-                            Text(s).font(.system(size: 13))
+                            Text(s).font(DS.Text.body())
                         } else {
-                            Text("Calculate").font(.system(size: 12)).foregroundStyle(Theme.secondary.opacity(0.6))
+                            Text("Calculate").font(DS.Text.small()).foregroundStyle(Theme.secondary.opacity(0.6))
                         }
                     }
-                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .padding(.horizontal, DS.Space.md).padding(.vertical, 5)
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
@@ -646,11 +646,11 @@ struct ListLayout: View {
             if !ctx.locked {
                 Button { ctx.open(ctx.addRow()) } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus").font(.system(size: 12)).frame(width: 18)
-                        Text("New page").font(.system(size: 14))
+                        Image(systemName: "plus").font(DS.Text.small()).frame(width: 18)
+                        Text("New page").font(DS.Text.ui())
                     }
                     .foregroundStyle(Theme.secondary)
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, DS.Space.sm)
                     .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
                     .contentShape(Rectangle())
                 }
@@ -669,19 +669,19 @@ struct ListRow: View {
         HStack(spacing: 8) {
             PageIconView(icon: row.props.icon, size: 18)
             Text(row.title.isEmpty ? "Untitled" : row.title)
-                .font(.system(size: 14, weight: .medium))
+                .font(DS.Text.ui(.medium))
                 .foregroundStyle(row.title.isEmpty ? Theme.secondary : Theme.primary)
                 .lineLimit(1)
             Spacer(minLength: 12)
             ForEach(ctx.cardProperties) { p in
                 let v = ctx.value(row, p)
                 if !v.isEmpty || p.type == .checkbox {
-                    PropertyValueView(property: p, value: v, row: row).font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                    PropertyValueView(property: p, value: v, row: row).font(DS.Text.body()).foregroundStyle(Theme.secondary)
                 }
             }
         }
         .padding(.vertical, 5)
-        .padding(.horizontal, 6)
+        .padding(.horizontal, DS.Space.sm)
         .frame(minHeight: 32)
         .contentShape(Rectangle())
         .hoverHighlight()

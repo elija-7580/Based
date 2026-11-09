@@ -64,7 +64,7 @@ struct DiagnosticsView: View {
                 }
                 #endif
             }
-            .padding(12)
+            .padding(DS.Space.lg)
             Divider()
             switch tab {
             case .logs: logs
@@ -138,14 +138,14 @@ struct DiagnosticsView: View {
                 Spacer()
                 Text("\(entries.count) entries").font(.caption).foregroundStyle(Theme.secondary)
             }
-            .font(.system(size: 12))
-            .padding(.horizontal, 12).padding(.vertical, 8)
+            .font(DS.Text.small())
+            .padding(.horizontal, DS.Space.lg).padding(.vertical, DS.Space.md)
             Divider()
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 1) {
                     ForEach(entries.reversed()) { e in LogRow(entry: e) }
                 }
-                .padding(8)
+                .padding(DS.Space.md)
             }
             .accessibilityIdentifier("diagnostics.log")
         }
@@ -188,7 +188,7 @@ struct DiagnosticsView: View {
                             .font(.caption)
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, DS.Space.xxs)
                 }
             }
         }
@@ -218,7 +218,7 @@ struct DiagnosticsView: View {
                         .font(.caption).foregroundStyle(Theme.secondary)
                 }
             }
-            .padding(12)
+            .padding(DS.Space.lg)
             Divider()
             if issues.isEmpty {
                 ContentUnavailableView("No layout issues", systemImage: "rectangle.on.rectangle",
@@ -227,10 +227,10 @@ struct DiagnosticsView: View {
                 List(issues) { i in
                     HStack(alignment: .top) {
                         Text(i.kind.rawValue).font(.caption.bold()).foregroundStyle(.white)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.xxs)
                             .background(Capsule().fill(i.kind == .overlap ? Color.orange : i.kind == .tiny ? Color.gray : Color.red))
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(i.element + (i.other.map { " ↔ " + $0 } ?? "")).font(.system(size: 13, weight: .medium))
+                            Text(i.element + (i.other.map { " ↔ " + $0 } ?? "")).font(DS.Text.body(.medium))
                             Text(i.detail).font(.caption).foregroundStyle(Theme.secondary)
                         }
                         Spacer()

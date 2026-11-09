@@ -13,7 +13,7 @@ struct HTMLPreview: View {
     var body: some View {
         WebContentView(html: document, onHeight: { h in if h > 8, abs((reportedHeight ?? 0) - h) > 2 { reportedHeight = min(h, 2400) } })
             .frame(height: reportedHeight ?? height)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
             .accessibilityIdentifier("html.preview")
     }
 

@@ -14,7 +14,7 @@ struct PopoverPanel<Content: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(DS.Text.small(.semibold))
                     .foregroundStyle(Theme.accentBlue)
                     .frame(width: 24, height: 24)
                     .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.accentBlue.opacity(0.12)))
@@ -42,7 +42,7 @@ struct ChipMenuLabel: View {
     var body: some View {
         HStack(spacing: 5) {
             if let symbol {
-                Image(systemName: symbol).font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                Image(systemName: symbol).font(DS.Text.caption()).foregroundStyle(Theme.secondary)
             }
             Text(text)
                 .font(DS.Text.body(emphasized ? .medium : .regular))

@@ -19,7 +19,7 @@ struct StorageErrorView: View {
             Text("Based can't open your workspace")
                 .font(.system(size: 20, weight: .semibold))
             Text("Nothing was changed or deleted. Check that the folder exists and that you have permission to write to it, then try again.")
-                .font(.system(size: 13))
+                .font(DS.Text.body())
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 440)
@@ -57,11 +57,11 @@ struct StorageWriteBanner: View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
             Text("Based can't save. Changes are paused.")
-                .font(.system(size: 13, weight: .semibold))
+                .font(DS.Text.body(.semibold))
             // BSD-121: with the background writer, edits made before the failure may still be waiting.
             let unsaved = model.store.unsavedChangeCount
             Text(unsaved > 0 ? "Some changes aren't saved yet (\(unsaved)). \(failure.message)" : failure.message)
-                .font(.system(size: 12))
+                .font(DS.Text.small())
                 .lineLimit(1)
                 .opacity(0.85)
             Spacer(minLength: 8)
@@ -71,8 +71,8 @@ struct StorageWriteBanner: View {
         .foregroundStyle(.white)
         .padding(.horizontal, 14)
         .frame(height: 34)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.red.opacity(0.92)))
-        .padding(.horizontal, 16)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(Color.red.opacity(0.92)))
+        .padding(.horizontal, DS.Space.xl)
         .padding(.top, 44)
         .help("\(failure.rejected) change(s) were not saved since \(failure.since.formatted(date: .omitted, time: .shortened))")
         .accessibilityElement(children: .contain)

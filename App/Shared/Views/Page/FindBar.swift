@@ -44,8 +44,8 @@ struct FindBar: View {
         }
         .buttonStyle(.hoverFill)
         .foregroundStyle(Theme.secondary)
-        .font(.system(size: 13))
-        .padding(.horizontal, 12).padding(.vertical, 7)
+        .font(DS.Text.body())
+        .padding(.horizontal, DS.Space.lg).padding(.vertical, 7)
         .background(RoundedRectangle(cornerRadius: 9).fill(.regularMaterial).shadow(color: .black.opacity(0.15), radius: 8, y: 3))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color(Theme.divider)))
         .accessibilityIdentifier("find.bar")

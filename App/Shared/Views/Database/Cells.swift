@@ -71,7 +71,7 @@ struct PropertyValueView: View {
             if value.isEmpty, let e = model.queryCache.error(row: row.id, prop: property.id) {
                 // BSD-17: a failing formula / rollup shows an empty cell with a warning, not "inf" or a crash.
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 11))
+                    .font(DS.Text.caption())
                     .foregroundStyle(.orange)
                     .help(e.message)
                     .accessibilityLabel("Formula error: \(e.message)")
@@ -79,8 +79,8 @@ struct PropertyValueView: View {
                 computed
             }
         case .button:
-            Text(property.name).padding(.horizontal, 6).padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
+            Text(property.name).padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.xxs)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Color(Theme.divider)))
         default:
             Text(Self.displayText(CellFormatter.text(value, store: store))).lineLimit(wrap ? nil : 1)
         }
@@ -140,7 +140,7 @@ struct StatusPill: View {
             Circle().fill(Theme.color(option.color.hue == .default ? .gray : option.color.hue)).frame(width: 7, height: 7)
             Text(option.name)
         }
-        .font(.system(size: 13))
+        .font(DS.Text.body())
         .padding(.horizontal, 7).padding(.vertical, 1)
         .background(Capsule().fill(Theme.optionBackground(option.color.hue)))
     }
@@ -255,7 +255,7 @@ struct PropertyCell: View {
                 }
             }
         }
-        .font(.system(size: 14))
+        .font(DS.Text.ui())
     }
 }
 
@@ -287,11 +287,11 @@ struct InlineScalarField: View {
                 .onChange(of: focused) { _, f in if !f { commit() } }
                 .accessibilityIdentifier("prop.inline.\(property.name)")
             if property.type == .url, hover, let url = linkURL {
-                Link(destination: url) { Image(systemName: "arrow.up.right").font(.system(size: 11, weight: .medium)) }
+                Link(destination: url) { Image(systemName: "arrow.up.right").font(DS.Text.caption(.medium)) }
                     .help("Open link")
             }
         }
-        .padding(.horizontal, 4).padding(.vertical, 2)
+        .padding(.horizontal, DS.Space.xs).padding(.vertical, DS.Space.xxs)
         .background(RoundedRectangle(cornerRadius: 5).fill(focused ? Theme.hoverFill.opacity(0.6) : hover ? Theme.hoverFill : .clear))
         .padding(.horizontal, -4)
         .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
@@ -377,10 +377,10 @@ struct ScalarEditor: View {
     var body: some View {
         TextField(property.name, text: $draft, axis: .vertical)
             .textFieldStyle(.plain)
-            .font(.system(size: 14))
+            .font(DS.Text.ui())
             .lineLimit(1...16)
-            .padding(6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill.opacity(0.5)))
+            .padding(DS.Space.sm)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.hoverFill.opacity(0.5)))
             .frame(width: 380)
             .onSubmit { commit(); done() }
             .onChange(of: draft) { _, _ in if property.type != .number { commit() } }
@@ -458,7 +458,7 @@ struct OptionsEditor: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if s.type == .status, let groups = s.statusGroups {
                         ForEach(groups) { g in
-                            Text(g.name).font(.caption).foregroundStyle(Theme.secondary).padding(.top, 6)
+                            Text(g.name).font(.caption).foregroundStyle(Theme.secondary).padding(.top, DS.Space.sm)
                             ForEach(options.filter { g.optionIDs.contains($0.id) }) { o in optionRow(o) }
                         }
                     } else {
@@ -601,7 +601,7 @@ struct RelationEditor: View {
                         Spacer()
                         Button { remove(id) } label: { Image(systemName: "minus.circle") }.buttonStyle(.quiet)
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, DS.Space.xxs)
                 }
                 Divider()
             }

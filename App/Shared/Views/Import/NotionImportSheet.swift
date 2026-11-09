@@ -148,12 +148,12 @@ struct NotionImportSheet: View {
                             TextEditor(text: $links)
                                 .font(.caption.monospaced())
                                 .frame(minHeight: 64, maxHeight: 120)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider)))
+                                .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).stroke(Color(Theme.divider)))
                                 .overlay(alignment: .topLeading) {
                                     if links.isEmpty {
                                         Text("Paste page or database links (Share → Copy link), one per line")
                                             .font(.caption).foregroundStyle(Theme.secondary)
-                                            .padding(.horizontal, 6).padding(.vertical, 8)
+                                            .padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.md)
                                             .allowsHitTesting(false)
                                     }
                                 }

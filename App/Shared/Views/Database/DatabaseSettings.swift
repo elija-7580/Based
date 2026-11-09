@@ -12,7 +12,7 @@ struct FilterEditor: View {
             VStack(alignment: .leading, spacing: 10) {
                 if group.items.isEmpty {
                     Text("No filters applied to this view. Add a rule to narrow down the rows that are shown.")
-                        .font(.system(size: 12))
+                        .font(DS.Text.small())
                         .foregroundStyle(Theme.secondary)
                 }
                 FilterGroupEditor(ctx: ctx, group: group, depth: 0) { save($0) }
@@ -21,7 +21,7 @@ struct FilterEditor: View {
                     PopoverActionRow(title: "Delete all filters", symbol: "trash", destructive: true) { save(FilterGroup()) }
                 }
             }
-            .padding(12)
+            .padding(DS.Space.lg)
         }
     }
 
@@ -46,13 +46,13 @@ struct FilterGroupEditor: View {
                         FilterConditionRow(ctx: ctx, condition: c) { replace(i, $0.map(FilterItem.condition)) }
                     case .group(let g):
                         FilterGroupEditor(ctx: ctx, group: g, depth: depth + 1) { ng in replace(i, ng.isEmpty ? nil : .group(ng)) }
-                            .padding(8)
-                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primary.opacity(0.04)))
-                            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.gridLine, lineWidth: 1))
+                            .padding(DS.Space.md)
+                            .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(Theme.primary.opacity(0.04)))
+                            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).stroke(Theme.gridLine, lineWidth: 1))
                     case .unknown:
                         // BSD-130: shown, not editable, written back unchanged.
                         Text("Filter from a newer version of Based (kept as it is)")
-                            .font(.system(size: 12)).foregroundStyle(Theme.secondary).padding(.top, 5)
+                            .font(DS.Text.small()).foregroundStyle(Theme.secondary).padding(.top, 5)
                     }
                 }
             }
@@ -68,14 +68,14 @@ struct FilterGroupEditor: View {
                         append(.group(FilterGroup(combinator: .and, items: [.condition(FilterCondition(propertyID: first.id, op: .contains))])))
                     } label: {
                         Label("Add filter group", systemImage: "square.stack.3d.up")
-                            .font(.system(size: 13))
+                            .font(DS.Text.body())
                             .foregroundStyle(Theme.secondary)
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, DS.Space.md)
                             .frame(height: 26)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .hoverHighlight(cornerRadius: 6, opacity: 0.06)
+                    .hoverHighlight(cornerRadius: DS.Radius.control, opacity: 0.06)
                 }
             }
         }
@@ -84,7 +84,7 @@ struct FilterGroupEditor: View {
     @ViewBuilder
     private func combinatorLabel(_ i: Int) -> some View {
         if i == 0 {
-            Text("Where").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+            Text("Where").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
         } else if i == 1 {
             Picker("", selection: Binding(get: { group.combinator }, set: { c in var g = group; g.combinator = c; onChange(g) })) {
                 Text("And").tag(Combinator.and)
@@ -92,7 +92,7 @@ struct FilterGroupEditor: View {
             }
             .labelsHidden()
         } else {
-            Text(group.combinator == .and ? "And" : "Or").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+            Text(group.combinator == .and ? "And" : "Or").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
         }
     }
 
@@ -139,12 +139,12 @@ struct FilterConditionRow: View {
                 FilterValueField(ctx: ctx, property: p, value: condition.value) { v in var c = condition; c.value = v; onChange(c) }
             }
             Spacer(minLength: 0)
-            Button { onChange(nil) } label: { Image(systemName: "xmark").font(.system(size: 11)) }
+            Button { onChange(nil) } label: { Image(systemName: "xmark").font(DS.Text.caption()) }
                 .buttonStyle(.quiet(padding: 4, minSize: 26))
                 .foregroundStyle(Theme.secondary)
                 .help("Remove this rule")
         }
-        .font(.system(size: 13))
+        .font(DS.Text.body())
     }
 }
 
@@ -249,13 +249,13 @@ struct SortEditor: View {
             VStack(alignment: .leading, spacing: 10) {
                 if sorts.isEmpty {
                     Text("No sorts applied to this view. Rows follow their manual order.")
-                        .font(.system(size: 12))
+                        .font(DS.Text.small())
                         .foregroundStyle(Theme.secondary)
                 }
                 ForEach(Array(sorts.enumerated()), id: \.offset) { i, s in
                     HStack(spacing: 6) {
                         Text(i == 0 ? "Sort by" : "Then by")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(DS.Text.small(.semibold))
                             .foregroundStyle(Theme.secondary)
                             .frame(width: 56, alignment: .leading)
                         Menu {
@@ -275,12 +275,12 @@ struct SortEditor: View {
                         .fixedSize()
                         Spacer(minLength: 0)
                         if i > 0 {
-                            Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up").font(.system(size: 11)) }
+                            Button { var l = sorts; l.swapAt(i, i - 1); save(l) } label: { Image(systemName: "arrow.up").font(DS.Text.caption()) }
                                 .buttonStyle(.quiet(padding: 4, minSize: 26))
                                 .foregroundStyle(Theme.secondary)
                                 .help("Move up")
                         }
-                        Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark").font(.system(size: 11)) }
+                        Button { var l = sorts; l.remove(at: i); save(l) } label: { Image(systemName: "xmark").font(DS.Text.caption()) }
                             .buttonStyle(.quiet(padding: 4, minSize: 26))
                             .foregroundStyle(Theme.secondary)
                             .help("Remove this sort")
@@ -299,7 +299,7 @@ struct SortEditor: View {
                     PopoverActionRow(title: "Delete sort", symbol: "trash", destructive: true) { save([]) }
                 }
             }
-            .padding(12)
+            .padding(DS.Space.lg)
         }
     }
 
@@ -404,7 +404,7 @@ struct ViewSettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            .font(.system(size: 13))
+            .font(DS.Text.body())
         }
         .frame(height: 560)
         .onAppear { name = v.name }
@@ -459,7 +459,7 @@ struct ViewSettingsView: View {
             c()
         } header: {
             Label(title, systemImage: sectionSymbol(title))
-                .font(.system(size: 12, weight: .semibold))
+                .font(DS.Text.small(.semibold))
                 .foregroundStyle(Theme.secondary)
         }
     }
@@ -489,7 +489,7 @@ struct ViewSettingsView: View {
                     .foregroundStyle(visible.contains(p.id) ? Theme.primary : Theme.secondary)
                 Spacer()
                 if visible.contains(p.id), i > 0 {
-                    Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up").font(.system(size: 11)) }
+                    Button { store.movePropertyInView(v.id, p.id, to: i - 1) } label: { Image(systemName: "arrow.up").font(DS.Text.caption()) }
                         .buttonStyle(.quiet(padding: 3, minSize: 24))
                         .foregroundStyle(Theme.secondary)
                         .help("Move up")
@@ -497,7 +497,7 @@ struct ViewSettingsView: View {
                 if p.type != .title {
                     Button { store.setPropertyVisible(v.id, p.id, !visible.contains(p.id)) } label: {
                         Image(systemName: visible.contains(p.id) ? "eye" : "eye.slash")
-                            .font(.system(size: 12))
+                            .font(DS.Text.small())
                             .foregroundStyle(visible.contains(p.id) ? Theme.accentBlue : Theme.secondary)
                     }
                     .buttonStyle(.quiet(padding: 3, minSize: 24))
@@ -677,7 +677,7 @@ struct PropertyHeaderMenu: View {
                     row("Insert right", "arrow.right.to.line") { insert(left: false) }
                     if [.text, .select, .status, .multiSelect, .checkbox].contains(property.type) {
                         AutofillButton(databaseID: ctx.db.id, propertyID: property.id, rows: store.rows(of: ctx.db.id).map(\.id))
-                            .buttonStyle(.hoverFill).padding(.horizontal, 8).padding(.vertical, 4)
+                            .buttonStyle(.hoverFill).padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.xs)
                     }
                     if property.type != .title {
                         row("Duplicate property", "plus.square.on.square") { _ = store.duplicateProperty(ctx.db.id, property.id); done() }
@@ -748,10 +748,10 @@ struct AddPropertyMenu: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Type")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(DS.Text.caption(.semibold))
                             .foregroundStyle(Theme.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.bottom, 4)
+                            .padding(.horizontal, DS.Space.sm)
+                            .padding(.bottom, DS.Space.xs)
                         ForEach(PropertyType.creatable, id: \.self) { t in
                             Button {
                                 created = ctx.store.addProperty(to: ctx.db.id, name: t.displayName, type: t, showIn: ctx.view.id)
@@ -762,7 +762,7 @@ struct AddPropertyMenu: View {
                             .buttonStyle(MenuRowStyle())
                         }
                     }
-                    .padding(8)
+                    .padding(DS.Space.md)
                 }
                 .frame(maxHeight: 380)
             }
@@ -808,7 +808,7 @@ struct PropertyConfigEditor: View {
                 }))
                 .textFieldStyle(.roundedBorder)
             }
-            .font(.system(size: 13))
+            .font(DS.Text.body())
             .modifier(PropertyChangeConfirmation(store: store, databaseID: db.id, propertyID: p.id, request: $pendingChange))
             .onAppear { name = p.name; formula = p.formula ?? ""; prefix = p.idPrefix ?? "" }
         }
@@ -911,7 +911,7 @@ struct PropertyConfigEditor: View {
             TextEditor(text: $formula)
                 .font(.system(size: 13, design: .monospaced))
                 .frame(minHeight: 70)
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
+                .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Color(Theme.divider)))
             if let error { Text(error).font(.caption).foregroundStyle(.red) }
             else if let preview, let row = sample { Text("\(store.title(of: row.id)) → \(preview)").font(.caption).foregroundStyle(Theme.secondary) }
             HStack {

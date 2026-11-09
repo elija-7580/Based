@@ -119,7 +119,7 @@ struct MapLayout: View {
             }
             if let sel = selection, let row = ctx.store.blocks[sel], let pin = all.first(where: { $0.id == sel }) {
                 MapRowCard(ctx: ctx, row: row, place: pin.place, close: { selection = nil })
-                    .padding(12)
+                    .padding(DS.Space.lg)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -131,9 +131,9 @@ struct MapLayout: View {
                     .buttonStyle(.quiet).help("Show all pins")
             }
             .font(.system(size: 11.5))
-            .padding(.horizontal, 8).padding(.vertical, 4)
+            .padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.xs)
             .background(Capsule().fill(.regularMaterial))
-            .padding(8)
+            .padding(DS.Space.md)
         }
         .animation(.easeOut(duration: 0.15), value: selection)
         #else
@@ -165,9 +165,9 @@ struct MapLayout: View {
                         .onTapGesture { ctx.open(row.id) }
                     }
                 }
-                .padding(.top, 4)
+                .padding(.top, DS.Space.xs)
             } label: {
-                Text("\(rows.count) without a location").font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                Text("\(rows.count) without a location").font(DS.Text.body()).foregroundStyle(Theme.secondary)
             }
         }
     }
@@ -225,13 +225,13 @@ struct MapRowCard: View {
                 let v = ctx.value(row, p)
                 if !v.isEmpty {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(p.name).font(.system(size: 12)).foregroundStyle(Theme.secondary).frame(width: 90, alignment: .leading).lineLimit(1)
+                        Text(p.name).font(DS.Text.small()).foregroundStyle(Theme.secondary).frame(width: 90, alignment: .leading).lineLimit(1)
                         PropertyValueView(property: p, value: v, row: row).font(.system(size: 12.5))
                     }
                 }
             }
         }
-        .padding(12)
+        .padding(DS.Space.lg)
         .frame(maxWidth: 380, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 10).fill(Chrome.appBackground).shadow(color: .black.opacity(0.18), radius: 10, y: 3))
         .contentShape(Rectangle())

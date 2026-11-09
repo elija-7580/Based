@@ -27,7 +27,7 @@ struct SidebarView: View {
                     Spacer()
                     if happier.pendingCount > 0 {
                         Text("\(happier.pendingCount)").font(.caption2.bold()).foregroundStyle(.white)
-                            .padding(.horizontal, 6).padding(.vertical, 1).background(Capsule().fill(Color.orange))
+                            .padding(.horizontal, DS.Space.sm).padding(.vertical, 1).background(Capsule().fill(Color.orange))
                     }
                 }
                 .tag(SidebarItem.inbox)
@@ -217,11 +217,11 @@ struct SearchFieldButton: View {
                 Image(systemName: "magnifyingglass")
                 Text("Search or ask")
                 Spacer(minLength: 4)
-                Text("⌘K").font(.system(size: 11)).padding(.horizontal, 5).padding(.vertical, 1)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(0.08)))
+                Text("⌘K").font(DS.Text.caption()).padding(.horizontal, 5).padding(.vertical, 1)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color.primary.opacity(0.08)))
             }
             .foregroundStyle(Theme.secondary)
-            .padding(.horizontal, 8).padding(.vertical, 5)
+            .padding(.horizontal, DS.Space.md).padding(.vertical, 5)
             .background(RoundedRectangle(cornerRadius: 7).fill(Color.primary.opacity(0.05)))
             .contentShape(Rectangle())
         }
@@ -237,10 +237,10 @@ struct WorkspaceHeader: View {
         let w = model.store.workspace
         HStack(spacing: 8) {
             Text(String(w.name.prefix(1)).uppercased())
-                .font(.system(size: 12, weight: .semibold))
+                .font(DS.Text.small(.semibold))
                 .frame(width: 22, height: 22)
                 .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.1)))
-            Text(w.name).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+            Text(w.name).font(DS.Text.ui(.semibold)).lineLimit(1)
             Spacer(minLength: 4)
             Text(model.syncChannels.label).font(.caption2).foregroundStyle(Theme.secondary).lineLimit(1)
                 .help(model.syncChannelStatus)
@@ -300,7 +300,7 @@ struct PageTreeRow: View {
         .contentShape(Rectangle())
         .tag(SidebarItem.page(page.id))
         .onHover { hover = $0 }
-        .background(RoundedRectangle(cornerRadius: 4).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Theme.accentBlue, lineWidth: targeted ? 2 : 0))
         .onDrag {
             let selected = model.selectedPageIDs
             model.draggedBlocks = selected.contains(page.id) ? selected : [page.id]

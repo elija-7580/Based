@@ -173,7 +173,7 @@ struct BlockRow: View {
             // A coloured background gets a little inset so text and the toggle arrow don't touch its edge.
             .padding(.horizontal, hasFill(b) && !fillsChildren ? 8 : 0)
             .padding(.vertical, hasFill(b) && !b.type.isHeading && !fillsChildren ? 2 : 0)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(fillsChildren ? Color.clear : background(b)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(fillsChildren ? Color.clear : background(b)))
             .padding(.top, b.type == .heading1 && !fillsChildren ? 10 : 0)
             // Only the row with the open slash / mention menu writes the anchor; a preference on every row made
             // SwiftUI merge hundreds of nil values on each layout pass.
@@ -196,13 +196,13 @@ struct BlockRow: View {
         .padding(.horizontal, fillsChildren ? 8 : 0)
         .padding(.vertical, fillsChildren ? 4 : 0)
         .background {
-            if fillsChildren { RoundedRectangle(cornerRadius: 6, style: .continuous).fill(background(b)) }
+            if fillsChildren { RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(background(b)) }
         }
         .padding(.top, b.type == .heading1 && fillsChildren ? 10 : 0)
         // Selection tints the whole block — its own background (code, callout) and nested children included — like
         // Notion's translucent blue wash, instead of replacing the background (which hid code blocks).
         .overlay {
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: DS.Radius.small)
                 .fill(Theme.dropIndicator.opacity(selected ? 0.16 : 0))
                 .padding(.horizontal, -3)
                 .allowsHitTesting(false)
@@ -403,7 +403,7 @@ struct BlockMarker: View {
                 .rotationEffect(.degrees(open ? 90 : 0))
                 .foregroundStyle(empty ? Theme.secondary.opacity(0.5) : Theme.secondary)
                 .frame(width: 22, height: line)
-                .background(RoundedRectangle(cornerRadius: 4).fill(Color.clear))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color.clear))
                 .contentShape(Rectangle())
         }
         .buttonStyle(ChromeHoverButtonStyleSmall())
@@ -450,7 +450,7 @@ struct BlockContent: View {
                 }
                 .padding(.leading, 14)
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, DS.Space.xxs)
         case .callout:
             CalloutView(block: block, editor: editor)
         case .code:
@@ -579,8 +579,8 @@ struct CalloutView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 4).fill(Theme.color(bg)))
+        .padding(.vertical, DS.Space.lg)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Theme.color(bg)))
     }
 }
 
@@ -610,20 +610,20 @@ struct CodeBlockView: View {
             HTMLPreview(source: block.text.plainText, language: block.props.language ?? "html",
                         height: previewHeight(from: block.props.caption) ?? 160)
             if let cap = block.props.caption, !cap.isEmpty, !cap.plainText.hasPrefix("height=") {
-                Text(cap.plainText).font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                Text(cap.plainText).font(DS.Text.body()).foregroundStyle(Theme.secondary)
             }
         }
         .overlay(alignment: .topTrailing) {
             HStack(spacing: 2) {
                 CodePreviewToggle(block: block)
-                Button { Clipboard.copy(block.text.plainText) } label: { Image(systemName: "doc.on.doc").font(.system(size: 11)) }
+                Button { Clipboard.copy(block.text.plainText) } label: { Image(systemName: "doc.on.doc").font(DS.Text.caption()) }
                     .buttonStyle(.quiet).help("Copy code")
             }
             .padding(3)
             .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.regularMaterial))
             .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
             .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
-            .padding(6)
+            .padding(DS.Space.sm)
             .opacity(hovering ? 1 : 0)
             .animation(.easeOut(duration: 0.12), value: hovering)
         }
@@ -640,7 +640,7 @@ struct CodeBlockView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
-                .font(.system(size: 12))
+                .font(DS.Text.small())
                 if CodePreviewToggle.supports(block.props.language) { CodePreviewToggle(block: block) }
                 Spacer()
                 if hovering {
@@ -648,10 +648,10 @@ struct CodeBlockView: View {
                         model.store.updateBlock(block.id, name: "Wrap code") { $0.props.wrap = !($0.props.wrap ?? true) }
                     }
                     .buttonStyle(.plain)
-                    .font(.system(size: 12))
+                    .font(DS.Text.small())
                     Button("Copy") { Clipboard.copy(block.text.plainText) }
                         .buttonStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(DS.Text.small())
                 }
             }
             .foregroundStyle(Theme.secondary)
@@ -661,12 +661,12 @@ struct CodeBlockView: View {
                 BlockText(block: block, editor: editor)
             }
             if let cap = block.props.caption, !cap.isEmpty, !cap.plainText.hasPrefix("height=") {
-                Text(cap.plainText).font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                Text(cap.plainText).font(DS.Text.body()).foregroundStyle(Theme.secondary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.codeBackground)))
+        .padding(.horizontal, DS.Space.xl)
+        .padding(.vertical, DS.Space.lg)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color(Theme.codeBackground)))
         .onHover { hovering = $0 }
     }
 }
@@ -830,8 +830,8 @@ struct PageLinkView: View {
                 Spacer(minLength: 0)
             }
             .padding(.vertical, 3)
-            .padding(.horizontal, 2)
-            .background(RoundedRectangle(cornerRadius: 4).fill(hovering ? Color(Theme.codeBackground) : Color.clear))
+            .padding(.horizontal, DS.Space.xxs)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(hovering ? Color(Theme.codeBackground) : Color.clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -852,9 +852,9 @@ struct SyncedBlockView: View {
         VStack(alignment: .leading, spacing: 4) {
             if hovering {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 11))
+                    Image(systemName: "arrow.triangle.2.circlepath").font(DS.Text.caption())
                     Text(isCopy ? "Editing in \(model.store.containingPage(of: source).map { model.store.title(of: $0) } ?? "another page")" : "Original synced block")
-                        .font(.system(size: 12))
+                        .font(DS.Text.small())
                     Spacer()
                     Button(isCopy ? "Unsync" : "Copy and sync") {
                         if isCopy { model.store.unsyncCopy(block.id) } else {
@@ -863,7 +863,7 @@ struct SyncedBlockView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .font(.system(size: 12))
+                    .font(DS.Text.small())
                 }
                 .foregroundStyle(Color.orange)
             }
@@ -881,8 +881,8 @@ struct SyncedBlockView: View {
                     .environment(\.syncedPath, isCopy ? syncedPath + "/" + block.id : syncedPath)
             }
         }
-        .padding(6)
-        .overlay(RoundedRectangle(cornerRadius: 4).stroke(hovering ? Color.orange.opacity(0.8) : Color.clear, lineWidth: 2))
+        .padding(DS.Space.sm)
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(hovering ? Color.orange.opacity(0.8) : Color.clear, lineWidth: 2))
         .onHover { hovering = $0 }
     }
 }
@@ -906,16 +906,16 @@ struct ButtonBlockView: View {
             HStack(spacing: 4) {
                 Button { run() } label: {
                     Label(block.props.buttonLabel ?? "New button", systemImage: symbol)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(DS.Text.ui(.medium))
                         .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider), lineWidth: 0.5))
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.hoverFill))
+                        .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).stroke(Color(Theme.divider), lineWidth: 0.5))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(helpText)
                 Button { editing.toggle(); label = block.props.buttonLabel ?? "" } label: {
-                    Image(systemName: "gearshape").font(.system(size: 12))
+                    Image(systemName: "gearshape").font(DS.Text.small())
                         .frame(width: 24, height: 24)
                         .contentShape(Rectangle())
                 }
@@ -932,7 +932,7 @@ struct ButtonBlockView: View {
             // "Insert blocks" keeps its template blocks editable right under the button while the panel is open.
             if editing, steps.contains(where: { $0.kind == .insertBlocks }) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Blocks this button inserts").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    Text("Blocks this button inserts").font(DS.Text.small()).foregroundStyle(Theme.secondary)
                     if model.registry.block(block.id).children.isEmpty {
                         Button("Add a block") { editor.focus(FocusTarget(model.store.insertBlock(.todo, in: .block(block.id)), 0)) }
                             .buttonStyle(.hoverFill).foregroundStyle(Theme.secondary)
@@ -940,7 +940,7 @@ struct ButtonBlockView: View {
                     BlockList(parentID: block.id, editor: editor)
                 }
                 .padding(10)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color(Theme.divider)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).stroke(Color(Theme.divider)))
             }
         }
         .confirmationDialog(pause?.message ?? "", isPresented: Binding(get: { pause != nil }, set: { if !$0 { pause = nil } })) {
@@ -1028,7 +1028,7 @@ struct ButtonEditor: View {
                     }
                     .animation(DS.Motion.reorder, value: steps.count)
                 }
-                .padding(.horizontal, 14).padding(.bottom, 12)
+                .padding(.horizontal, 14).padding(.bottom, DS.Space.lg)
             }
             .frame(maxHeight: 520)
             Button(action: done) {
@@ -1041,18 +1041,18 @@ struct ButtonEditor: View {
             .keyboardShortcut(.defaultAction)
             .padding(14)
         }
-        .font(.system(size: 13))
+        .font(DS.Text.body())
         .frame(width: 400)
     }
 
     private func section(_ t: String) -> some View {
-        Text(t).font(DS.Text.small(.medium)).foregroundStyle(Theme.secondary).padding(.top, 12).padding(.bottom, 6)
+        Text(t).font(DS.Text.small(.medium)).foregroundStyle(Theme.secondary).padding(.top, DS.Space.lg).padding(.bottom, DS.Space.sm)
     }
 
     private func card<C: View>(@ViewBuilder _ c: () -> C) -> some View {
         c()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12).padding(.vertical, 10)
+            .padding(.horizontal, DS.Space.lg).padding(.vertical, 10)
             .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).fill(Theme.primary.opacity(DS.Fill.rest)))
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
     }
@@ -1067,7 +1067,7 @@ struct ButtonEditor: View {
                 .font(DS.Text.ui())
                 .foregroundStyle(Theme.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12).frame(height: 40)
+                .padding(.horizontal, DS.Space.lg).frame(height: 40)
                 .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
                 .contentShape(Rectangle())
         }
@@ -1116,7 +1116,7 @@ private struct ButtonStepCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: action.kind.symbol)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(DS.Text.caption(.semibold))
                     .foregroundStyle(Theme.accentBlue)
                     .frame(width: 22, height: 22)
                     .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.accentBlue.opacity(0.12)))
@@ -1134,7 +1134,7 @@ private struct ButtonStepCard: View {
             }
             detail
         }
-        .padding(.horizontal, 12).padding(.vertical, 10)
+        .padding(.horizontal, DS.Space.lg).padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).fill(Theme.primary.opacity(DS.Fill.rest)))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.panel, style: .continuous).stroke(Color(Theme.divider), lineWidth: 0.5))
@@ -1160,7 +1160,7 @@ private struct ButtonStepCard: View {
                     PageIconView(icon: model.store.icon(of: t), size: 13)
                     Text(model.store.title(of: t).nonEmptyOr("Untitled")).lineLimit(1)
                 }
-                .padding(.horizontal, 6).frame(height: 22)
+                .padding(.horizontal, DS.Space.sm).frame(height: 22)
                 .background(RoundedRectangle(cornerRadius: 5).fill(Theme.primary.opacity(DS.Fill.hover)))
             }
             Text("in")
@@ -1189,7 +1189,7 @@ private struct ButtonStepCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 TextField("Search pages…", text: $pageQuery)
                     .textFieldStyle(.plain)
-                    .padding(.horizontal, 8).frame(height: 28)
+                    .padding(.horizontal, DS.Space.md).frame(height: 28)
                     .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.hoverFill))
                 if !pageQuery.isEmpty {
                     let q = pageQuery.lowercased()
@@ -1265,7 +1265,7 @@ private struct ButtonStepCard: View {
         HStack(spacing: 8) {
             Text(title).foregroundStyle(Theme.secondary).frame(width: 90, alignment: .leading)
             content()
-                .padding(.horizontal, 8).frame(height: 28)
+                .padding(.horizontal, DS.Space.md).frame(height: 28)
                 .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.hoverFill))
         }
     }
@@ -1305,12 +1305,12 @@ struct TableOfContentsView: View {
         let headings = model.store.visibleOrder(in: pageID).compactMap { model.store.blocks[$0] }.filter { $0.type.isHeading }
         VStack(alignment: .leading, spacing: 2) {
             if headings.isEmpty {
-                Text("Add headings to create a table of contents.").foregroundStyle(Theme.secondary).font(.system(size: 14))
+                Text("Add headings to create a table of contents.").foregroundStyle(Theme.secondary).font(DS.Text.ui())
             }
             ForEach(headings) { h in
                 Button { editor.focus(FocusTarget(h.id, 0)) } label: {
                     Text(h.text.plainText.isEmpty ? "Untitled" : h.text.plainText)
-                        .font(.system(size: 14))
+                        .font(DS.Text.ui())
                         .underline(true, color: Color(Theme.divider))
                         .foregroundStyle(Theme.secondary)
                         .padding(.leading, CGFloat(indent(h.type)) * 16)
@@ -1318,7 +1318,7 @@ struct TableOfContentsView: View {
                 .buttonStyle(.hoverFill)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DS.Space.xs)
     }
 
     private func indent(_ t: BlockType) -> Int {
@@ -1348,7 +1348,7 @@ struct BreadcrumbView: View {
                 .buttonStyle(.hoverFill)
             }
         }
-        .font(.system(size: 13))
+        .font(DS.Text.body())
         .foregroundStyle(Theme.secondary)
     }
 }
@@ -1425,7 +1425,7 @@ struct ChromeHoverButtonStyleSmall: ButtonStyle {
         @State private var hover = false
         var body: some View {
             configuration.label
-                .background(RoundedRectangle(cornerRadius: 4).fill(hover ? Theme.hoverFill : .clear).padding(2))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(hover ? Theme.hoverFill : .clear).padding(DS.Space.xxs))
                 .opacity(configuration.isPressed ? 0.7 : 1)
                 .onHover { hover = $0 }
         }

@@ -244,7 +244,7 @@ struct PrimarySplitButton<MenuContent: View>: View {
         HStack(spacing: 0) {
             Button(action: action) {
                 Text(title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DS.Text.body(.medium))
                     .padding(.leading, 9).padding(.trailing, 7)
                     .frame(height: 26)
                     .background(Color.white.opacity(hoverMain ? 0.12 : 0))
@@ -268,7 +268,7 @@ struct PrimarySplitButton<MenuContent: View>: View {
         .foregroundStyle(.white)
         .tint(.white)
         .background(Theme.accentBlue)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous))
         .animation(.easeOut(duration: 0.1), value: hoverMain)
         .animation(.easeOut(duration: 0.1), value: hoverMenu)
         .fixedSize()

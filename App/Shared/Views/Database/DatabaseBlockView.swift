@@ -137,7 +137,7 @@ struct DatabaseBlockView: View {
     }
 
     private func missing(_ text: String) -> some View {
-        Text(text).foregroundStyle(Theme.secondary).padding(.vertical, 8)
+        Text(text).foregroundStyle(Theme.secondary).padding(.vertical, DS.Space.md)
     }
 
     @ViewBuilder
@@ -169,7 +169,7 @@ struct DatabaseBlockView: View {
                 DeferredContent(id: blockID) { layout(ctx) }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DS.Space.xs)
         .onChange(of: model.dbSearchRequest) { _, _ in
             // ⌘F on a full-page database searches its rows (Notion behaviour).
             guard fullPage else { return }
@@ -217,7 +217,7 @@ struct DatabaseBlockView: View {
                 }
             }
         }
-        .font(.system(size: 14))
+        .font(DS.Text.ui())
     }
 
     private func viewTabs(_ ctx: DBContext, views: [DatabaseView]) -> some View {
@@ -275,10 +275,10 @@ struct DatabaseBlockView: View {
             // Notion: views are pills — the active one filled, the others quiet until hovered.
             Button { withAnimation(.easeOut(duration: 0.12)) { activeViewID = v.id } } label: {
                 HStack(spacing: 5) {
-                    Image(systemName: v.type.symbol).font(.system(size: 12, weight: .regular))
+                    Image(systemName: v.type.symbol).font(DS.Text.small())
                     Text(v.name).font(.system(size: 14, weight: active ? .medium : .regular)).lineLimit(1)
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, DS.Space.xs)
                 .foregroundStyle(active ? Theme.primary : Theme.secondary)
             }
             .buttonStyle(.quiet(padding: 4, cornerRadius: 14, minSize: 26, selected: active))
@@ -331,7 +331,7 @@ struct DatabaseBlockView: View {
                     ToolbarIcon("magnifyingglass", size: 12)
                     TextField("Type to search…", text: $search)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13))
+                        .font(DS.Text.body())
                         .frame(width: 150)
                         .focused($searchFocused)
                         .onAppear { searchFocused = true }
@@ -340,9 +340,9 @@ struct DatabaseBlockView: View {
                     Button { searching = false; search = "" } label: { ToolbarIcon("xmark", size: 10) }
                         .buttonStyle(.quiet(padding: 2, minSize: 18))
                 }
-                .padding(.leading, 6).padding(.trailing, 2)
+                .padding(.leading, DS.Space.sm).padding(.trailing, DS.Space.xxs)
                 .frame(height: 26)
-                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.primary.opacity(0.055)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous).fill(Theme.primary.opacity(0.055)))
                 .transition(.opacity.combined(with: .move(edge: .trailing)))
             } else {
                 Button { withAnimation(.easeOut(duration: 0.15)) { searching = true } } label: { ToolbarIcon("magnifyingglass") }
@@ -360,7 +360,7 @@ struct DatabaseBlockView: View {
                 .help("View settings")
                 .panelPopover(isPresented: $showSettings) { ViewSettingsView(ctx: ctx) }
             if !ctx.locked {
-                NewRowButton(ctx: ctx).padding(.leading, 6)
+                NewRowButton(ctx: ctx).padding(.leading, DS.Space.sm)
             }
         }
     }
@@ -469,7 +469,7 @@ struct ActiveRulesBar: View {
             }
             Spacer()
         }
-        .font(.system(size: 12))
+        .font(DS.Text.small())
     }
 
     private func chip(_ text: String, symbol: String, action: @escaping () -> Void) -> some View {
@@ -477,12 +477,12 @@ struct ActiveRulesBar: View {
             Label(text, systemImage: symbol)
                 .lineLimit(1)
                 .frame(maxWidth: 260, alignment: .leading)
-                .padding(.horizontal, 8).padding(.vertical, 3)
+                .padding(.horizontal, DS.Space.md).padding(.vertical, 3)
                 .background(Capsule().fill(Theme.accentBlue.opacity(0.12)))
                 .foregroundStyle(Theme.accentBlue)
         }
         .buttonStyle(.plain)
-        .hoverHighlight(cornerRadius: 12, opacity: 0.06)
+        .hoverHighlight(cornerRadius: DS.Radius.panel, opacity: 0.06)
         .help(text)
     }
 

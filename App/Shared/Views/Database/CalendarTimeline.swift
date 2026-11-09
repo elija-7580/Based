@@ -38,7 +38,7 @@ struct CalendarLayout: View {
 
     var body: some View {
         if ctx.dateProperty == nil {
-            Text("Add a date property to use the calendar layout.").foregroundStyle(Theme.secondary).padding(.vertical, 8)
+            Text("Add a date property to use the calendar layout.").foregroundStyle(Theme.secondary).padding(.vertical, DS.Space.md)
         } else {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -73,7 +73,7 @@ struct CalendarLayout: View {
                     DisclosureGroup("No date (\(undated.count))") {
                         ForEach(undated, id: \.id) { r in ListRow(ctx: ctx, row: r) }
                     }
-                    .font(.system(size: 13))
+                    .font(DS.Text.body())
                     .foregroundStyle(Theme.secondary)
                 }
             }
@@ -149,11 +149,11 @@ struct CalendarDayCell: View {
             }
             ForEach(rows.prefix(4), id: \.id) { r in
                 Text(r.title.isEmpty ? "Untitled" : r.title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DS.Text.small(.medium))
                     .lineLimit(1)
-                    .padding(.horizontal, 5).padding(.vertical, 2)
+                    .padding(.horizontal, 5).padding(.vertical, DS.Space.xxs)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(.background).shadow(color: .black.opacity(0.15), radius: 1))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(.background).shadow(color: .black.opacity(0.15), radius: 1))
                     .onTapGesture { ctx.open(r.id) }
                     .contextMenu { RowMenuItems(ctx: ctx, row: r) }
                     .onDrag {
@@ -164,7 +164,7 @@ struct CalendarDayCell: View {
             if rows.count > 4 { Text("\(rows.count - 4) more").font(.caption2).foregroundStyle(Theme.secondary) }
             Spacer(minLength: 0)
         }
-        .padding(4)
+        .padding(DS.Space.xs)
         .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
         .background(inMonth ? Color.clear : Color.primary.opacity(0.03))
         .background(targeted ? Theme.accentBlue.opacity(0.1) : Color.clear)
@@ -194,7 +194,7 @@ struct TimelineLayout: View {
 
     var body: some View {
         if ctx.dateProperty == nil {
-            Text("Add a date property to use the timeline layout.").foregroundStyle(Theme.secondary).padding(.vertical, 8)
+            Text("Add a date property to use the timeline layout.").foregroundStyle(Theme.secondary).padding(.vertical, DS.Space.md)
         } else {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -210,13 +210,13 @@ struct TimelineLayout: View {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("").frame(height: 28)
                         ForEach(rows, id: \.id) { r in
-                            Text(r.title.isEmpty ? "Untitled" : r.title).font(.system(size: 13)).lineLimit(1)
+                            Text(r.title.isEmpty ? "Untitled" : r.title).font(DS.Text.body()).lineLimit(1)
                                 .frame(width: 180, height: 30, alignment: .leading)
                                 .contentShape(Rectangle())
                                 .onTapGesture { ctx.open(r.id) }
                         }
                     }
-                    .padding(.trailing, 6)
+                    .padding(.trailing, DS.Space.sm)
                     ScrollView(.horizontal, showsIndicators: true) {
                         VStack(alignment: .leading, spacing: 0) {
                             axis
@@ -277,9 +277,9 @@ struct TimelineLayout: View {
             let from = cal.dateComponents([.day], from: start, to: cal.startOfDay(for: s)).day ?? 0
             let len = max(1, (cal.dateComponents([.day], from: cal.startOfDay(for: s), to: cal.startOfDay(for: e)).day ?? 0) + 1)
             Text(r.title.isEmpty ? "Untitled" : r.title)
-                .font(.system(size: 12, weight: .medium))
+                .font(DS.Text.small(.medium))
                 .lineLimit(1)
-                .padding(.horizontal, 6)
+                .padding(.horizontal, DS.Space.sm)
                 .frame(width: max(dayWidth, CGFloat(len) * dayWidth - 2), height: 24, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 5).fill(.background).shadow(color: .black.opacity(0.18), radius: 1.5))
                 .offset(x: CGFloat(from) * dayWidth)

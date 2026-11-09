@@ -46,7 +46,7 @@ struct TrashView: View {
                     }
                 }
                 Text("\(all.count) item\(all.count == 1 ? "" : "s") in Trash · deleted permanently after 30 days")
-                    .font(.system(size: 12)).foregroundStyle(Chrome.sectionText)
+                    .font(DS.Text.small()).foregroundStyle(Chrome.sectionText)
             }
         }
         .padding(sheet ? 16 : 28)
@@ -93,25 +93,25 @@ struct TrashRow: View {
             PageIconView(icon: block.props.icon, isDatabase: isDB, size: 18).frame(width: 22)
             VStack(alignment: .leading, spacing: 1) {
                 Text(store.title(of: block.id).nonEmptyOr("Untitled"))
-                    .font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.primary).lineLimit(1)
-                Text(subtitle(inside: inside)).font(.system(size: 12)).foregroundStyle(Chrome.sectionText).lineLimit(1)
+                    .font(DS.Text.ui(.medium)).foregroundStyle(Theme.primary).lineLimit(1)
+                Text(subtitle(inside: inside)).font(DS.Text.small()).foregroundStyle(Chrome.sectionText).lineLimit(1)
             }
             Spacer(minLength: 8)
             Button(action: onRestore) {
-                Label("Restore", systemImage: "arrow.uturn.backward").font(.system(size: 13))
+                Label("Restore", systemImage: "arrow.uturn.backward").font(DS.Text.body())
             }
             .buttonStyle(.borderless)
             .help("Restore (with \(inside) page\(inside == 1 ? "" : "s") inside)")
             .accessibilityIdentifier("trash.restore")
             Button(role: .destructive, action: onDelete) {
-                Label("Delete permanently", systemImage: "trash").font(.system(size: 13))
+                Label("Delete permanently", systemImage: "trash").font(DS.Text.body())
             }
             .buttonStyle(.borderless)
             .accessibilityIdentifier("trash.deleteForever")
         }
         .padding(.horizontal, 10)
         .frame(height: 44)
-        .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture(count: 2, perform: onOpen)
@@ -149,12 +149,12 @@ struct ToastHost: View {
         ZStack {
             if let t = model.toast {
                 HStack(spacing: 12) {
-                    Text(t.message).font(.system(size: 13, weight: .medium)).foregroundStyle(.white).lineLimit(1)
+                    Text(t.message).font(DS.Text.body(.medium)).foregroundStyle(.white).lineLimit(1)
                         .accessibilityIdentifier("toast.message")
                     if let action = t.actionTitle {
                         Button(action) { model.performToastAction() }
                             .buttonStyle(.hoverFill)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(DS.Text.body(.semibold))
                             .foregroundStyle(Color(Theme.dynamic(light: 0x9ECBFF, dark: 0x9ECBFF)))
                             .keyboardShortcut("z", modifiers: .command)
                             .accessibilityIdentifier("toast.action")
@@ -168,7 +168,7 @@ struct ToastHost: View {
                 .frame(height: 36)
                 .background(Capsule().fill(Color(Theme.dynamic(light: 0x2F2F2F, dark: 0x3A3A3A))))
                 .shadow(color: .black.opacity(0.2), radius: 10, y: 4)
-                .padding(.bottom, 24)
+                .padding(.bottom, DS.Space.xxl)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("toast")

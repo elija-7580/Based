@@ -87,7 +87,7 @@ struct MeetingBlockView: View {
                 get: { block.text.plainText },
                 set: { v in store.updateBlock(block.id, name: "Rename meeting", coalesce: "meeting-title-\(block.id)") { $0.text = RichText(v) } }))
                 .textFieldStyle(.plain)
-                .font(.system(size: 17, weight: .semibold))
+                .font(DS.Text.title())
                 .disabled(editor.isLocked)
             Spacer()
             menu
@@ -195,7 +195,7 @@ struct MeetingBlockView: View {
                 Label(e, systemImage: "exclamationmark.triangle").foregroundStyle(.orange).lineLimit(2)
             }
         }
-        .font(.system(size: 12))
+        .font(DS.Text.small())
     }
 
     private var speakerCount: Int {
@@ -213,7 +213,7 @@ struct MeetingBlockView: View {
                     Button { store.removeMeetingContext(block.id, item: item.id) } label: { Image(systemName: "xmark").font(.system(size: 9)) }
                         .buttonStyle(.plain)
                 }
-                .font(.system(size: 12))
+                .font(DS.Text.small())
                 .padding(.horizontal, 7).padding(.vertical, 3)
                 .background(Capsule().fill(Theme.hoverFill))
                 .onTapGesture { if let p = item.pageID { model.open(p) } }
@@ -222,7 +222,7 @@ struct MeetingBlockView: View {
                 Button("Link a page…", systemImage: "doc") { pageQuery = ""; pickingPage = true }
                 Button("Add a note…", systemImage: "text.alignleft") { addingNote = true }
             } label: {
-                Label((info.context ?? []).isEmpty ? "Add context" : "Add", systemImage: "plus").font(.system(size: 12))
+                Label((info.context ?? []).isEmpty ? "Add context" : "Add", systemImage: "plus").font(DS.Text.small())
             }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             .help("Slides, agenda, people: improves names in the transcript and the summary")
@@ -280,7 +280,7 @@ struct MeetingBlockView: View {
                 Button { tab = t } label: {
                     Text(t.rawValue).font(.system(size: 13, weight: currentTab == t ? .semibold : .regular))
                         .foregroundStyle(currentTab == t ? Theme.primary : Theme.secondary)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.xs)
                 }
                 .buttonStyle(.quiet(selected: currentTab == t))
             }
@@ -317,7 +317,7 @@ struct MeetingBlockView: View {
             }
         } else if info.summary == .unavailable || !model.brain.hasEngine {
             Text("Connect an AI under Settings → AI (an API key, a local model or Claude Code / Codex) to get summaries and action items. Transcription works without it, on this device.")
-                .font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                .font(DS.Text.body()).foregroundStyle(Theme.secondary)
         } else if service.summarizing.contains(block.id) {
             ProgressView("Writing summary…").controlSize(.small)
         } else {
@@ -368,11 +368,11 @@ struct MeetingBlockView: View {
                     ForEach(stamped, id: \.id) { b in
                         HStack(spacing: 6) {
                             timeButton(b.props.meetingTime ?? 0)
-                            Text(b.text.plainText).font(.system(size: 12)).lineLimit(1).foregroundStyle(Theme.secondary)
+                            Text(b.text.plainText).font(DS.Text.small()).lineLimit(1).foregroundStyle(Theme.secondary)
                         }
                     }
                 }
-                .padding(.top, 6)
+                .padding(.top, DS.Space.sm)
             }
     }
 
@@ -388,7 +388,7 @@ struct MeetingBlockView: View {
         if segments.isEmpty {
             Text(recording ? "Listening… text appears after the first sentence."
                  : "No transcript yet. Start transcribing, or upload a recording from the ••• menu.")
-                .font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                .font(DS.Text.body()).foregroundStyle(Theme.secondary)
         } else {
             speakerLegend
             LazyVStack(alignment: .leading, spacing: 10) {
@@ -409,9 +409,9 @@ struct MeetingBlockView: View {
                         }
                     }
                 } label: {
-                    Text(s.name).font(.system(size: 12, weight: .medium))
+                    Text(s.name).font(DS.Text.small(.medium))
                         .foregroundStyle(color(s))
-                        .padding(.horizontal, 7).padding(.vertical, 2)
+                        .padding(.horizontal, 7).padding(.vertical, DS.Space.xxs)
                         .background(Capsule().fill(color(s).opacity(0.12)))
                 }
                 .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
@@ -425,12 +425,12 @@ struct MeetingBlockView: View {
         let partial = p.segments.contains(where: \.isPartial)
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
-                Text(info.speakerName(p.speaker)).font(.system(size: 12, weight: .semibold))
+                Text(info.speakerName(p.speaker)).font(DS.Text.small(.semibold))
                     .foregroundStyle(speaker.map(color) ?? Theme.secondary)
                 timeButton(p.start)
             }
             Text(p.text)
-                .font(.system(size: 14))
+                .font(DS.Text.ui())
                 .foregroundStyle(partial ? Theme.secondary : Theme.primary)
                 .italic(partial)
                 .textSelection(.enabled)

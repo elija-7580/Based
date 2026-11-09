@@ -22,14 +22,14 @@ struct DashboardLayout: View {
             if !ctx.locked {
                 AddWidgetMenu(ctx: ctx, rowIndex: nil) {
                     Label("Add widget", systemImage: "plus")
-                        .font(.system(size: 14))
+                        .font(DS.Text.ui())
                         .foregroundStyle(Theme.secondary)
-                        .padding(.horizontal, 8).padding(.vertical, 5)
+                        .padding(.horizontal, DS.Space.md).padding(.vertical, 5)
                 }
                 .accessibilityIdentifier("dashboard.addWidget")
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DS.Space.md)
         .accessibilityIdentifier("dashboard")
     }
 }
@@ -59,7 +59,7 @@ struct DashboardRowView: View {
         .overlay(alignment: .trailing) {
             if hover, !ctx.locked, row.widgets.count < DashboardConfig.maxWidgetsPerRow {
                 AddWidgetMenu(ctx: ctx, rowIndex: rowIndex) {
-                    Image(systemName: "plus").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+                    Image(systemName: "plus").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
                         .frame(width: 22, height: 22)
                         .background(Circle().fill(.background).shadow(color: .black.opacity(0.15), radius: 2))
                 }
@@ -110,7 +110,7 @@ struct DashboardWidgetCard: View {
                 ScrollView([.vertical]) {
                     widgetBody(wctx)
                         .padding(.horizontal, 10)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, DS.Space.md)
                 }
                 .scrollIndicators(.automatic)
             } else {
@@ -119,7 +119,7 @@ struct DashboardWidgetCard: View {
                     Spacer()
                     if !ctx.locked { Button("Remove") { store.removeDashboardWidget(ctx.view.id, widget: widget.viewID) } }
                 }
-                .padding(12)
+                .padding(DS.Space.lg)
                 Spacer(minLength: 0)
             }
         }
@@ -148,27 +148,27 @@ struct DashboardWidgetCard: View {
         let store = model.store
         let otherDB = db.id != ctx.db.id
         return HStack(spacing: 6) {
-            Image(systemName: view.type.symbol).font(.system(size: 12)).foregroundStyle(Theme.secondary)
+            Image(systemName: view.type.symbol).font(DS.Text.small()).foregroundStyle(Theme.secondary)
             if renaming {
                 TextField("Widget name", text: $name)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(DS.Text.ui(.medium))
                     .onSubmit {
                         let n = name.trimmingCharacters(in: .whitespaces)
                         if !n.isEmpty { store.updateView(view.id, name: "Rename widget") { $0.name = n } }
                         renaming = false
                     }
             } else {
-                Text(view.name).font(.system(size: 14, weight: .medium)).lineLimit(1)
+                Text(view.name).font(DS.Text.ui(.medium)).lineLimit(1)
                     .onTapGesture(count: 2) { if !ctx.locked { name = view.name; renaming = true } }
             }
             if otherDB {
-                Text(db.title.plainText.nonEmptyOr("Untitled")).font(.system(size: 12)).foregroundStyle(Theme.secondary).lineLimit(1)
+                Text(db.title.plainText.nonEmptyOr("Untitled")).font(DS.Text.small()).foregroundStyle(Theme.secondary).lineLimit(1)
             }
             Spacer(minLength: 4)
             if hover && !ctx.locked { menu(view) }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, DS.Space.lg)
         .frame(height: 36)
     }
 
@@ -227,7 +227,7 @@ struct DashboardWidgetCard: View {
             Divider()
             Button("Remove widget", systemImage: "trash", role: .destructive) { store.removeDashboardWidget(dash, widget: view.id) }
         } label: {
-            Image(systemName: "ellipsis").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary).frame(width: 22, height: 22)
+            Image(systemName: "ellipsis").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary).frame(width: 22, height: 22)
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)

@@ -91,6 +91,10 @@ jobs:
           else
             echo "iOS type-check not available yet (ci/typecheck/run.sh has no --ios)" | tee typecheck-ios.log
           fi
+      - name: Design-token audit (warning only, BSD-68)
+        if: always()
+        continue-on-error: true
+        run: python3 scripts/design-audit.py --fail-above 700
       - name: Publish log
         if: always() && github.event_name == 'push'
         run: |

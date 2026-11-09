@@ -338,9 +338,9 @@ struct BlockGutterOverlay: View {
             }
             if g.isDragging, let p = g.dragPoint {
                 Text(g.ghostTitle)
-                    .font(.system(size: 13))
+                    .font(DS.Text.body())
                     .lineLimit(1)
-                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.xs)
                     .frame(maxWidth: 320, alignment: .leading)
                     .background(RoundedRectangle(cornerRadius: 5).fill(.regularMaterial))
                     .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.08)))
@@ -373,9 +373,9 @@ private struct GutterHandle: View {
                 editor.addFromGutter(block.id, above: NSEvent.modifierFlags.contains(.option))
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .regular))
+                    .font(DS.Text.ui())
                     .frame(width: 22, height: 24)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(hoverPlus ? 0.08 : 0)))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color.primary.opacity(hoverPlus ? 0.08 : 0)))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -385,7 +385,7 @@ private struct GutterHandle: View {
 
             GripDots()
                 .frame(width: 18, height: 24)
-                .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(hoverGrip ? 0.08 : 0)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color.primary.opacity(hoverGrip ? 0.08 : 0)))
                 .contentShape(Rectangle())
                 .onHover { hoverGrip = $0 }
                 .gesture(

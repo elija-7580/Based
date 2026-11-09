@@ -26,10 +26,10 @@ struct MediaBlockView: View {
                         if hovering && !editor.isLocked && block.type != .bookmark {
                             Button { showSource = true } label: {
                                 Image(systemName: "arrow.triangle.2.circlepath").padding(5)
-                                    .background(RoundedRectangle(cornerRadius: 4).fill(.regularMaterial))
+                                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(.regularMaterial))
                             }
                             .buttonStyle(.plain)
-                            .padding(6)
+                            .padding(DS.Space.sm)
                             .help("Replace")
                         }
                     }
@@ -50,9 +50,9 @@ struct MediaBlockView: View {
                 Text(Self.prompt(block.type))
                 Spacer()
             }
-            .padding(12)
+            .padding(DS.Space.lg)
             .foregroundStyle(Theme.secondary)
-            .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.codeBackground)))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color(Theme.codeBackground)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.hoverFill)
@@ -95,17 +95,17 @@ struct MediaBlockView: View {
         case .video:
             if let u = sourceURL {
                 if let host = u.host, ["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com"].contains(host) {
-                    WebEmbedView(url: Self.embedURL(u)).frame(height: 380).clipShape(RoundedRectangle(cornerRadius: 4))
+                    WebEmbedView(url: Self.embedURL(u)).frame(height: 380).clipShape(RoundedRectangle(cornerRadius: DS.Radius.small))
                 } else {
-                    VideoPlayer(player: AVPlayer(url: u)).frame(height: 380).clipShape(RoundedRectangle(cornerRadius: 4))
+                    VideoPlayer(player: AVPlayer(url: u)).frame(height: 380).clipShape(RoundedRectangle(cornerRadius: DS.Radius.small))
                 }
             }
         case .audio:
-            if let u = sourceURL { VideoPlayer(player: AVPlayer(url: u)).frame(height: 54).clipShape(RoundedRectangle(cornerRadius: 6)) }
+            if let u = sourceURL { VideoPlayer(player: AVPlayer(url: u)).frame(height: 54).clipShape(RoundedRectangle(cornerRadius: DS.Radius.control)) }
         case .pdf:
-            if let u = sourceURL { PDFBlockView(url: u).frame(height: 560).clipShape(RoundedRectangle(cornerRadius: 4)) }
+            if let u = sourceURL { PDFBlockView(url: u).frame(height: 560).clipShape(RoundedRectangle(cornerRadius: DS.Radius.small)) }
         case .embed:
-            if let u = sourceURL { WebEmbedView(url: Self.embedURL(u)).frame(height: 420).clipShape(RoundedRectangle(cornerRadius: 4)) }
+            if let u = sourceURL { WebEmbedView(url: Self.embedURL(u)).frame(height: 420).clipShape(RoundedRectangle(cornerRadius: DS.Radius.small)) }
         case .bookmark:
             BookmarkCard(block: block)
         default:
@@ -138,7 +138,7 @@ struct CaptionField: View {
     var body: some View {
         TextField("Add a caption…", text: $text, axis: .vertical)
             .textFieldStyle(.plain)
-            .font(.system(size: 13))
+            .font(DS.Text.body())
             .foregroundStyle(Theme.secondary)
             .focused($focused)
             .disabled(editor.isLocked)
@@ -168,7 +168,7 @@ struct ImageBlockView: View {
         HStack {
             image
                 .frame(width: width)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.small))
                 .overlay(alignment: .trailing) { resizeHandle(width) }
             Spacer(minLength: 0)
         }
@@ -193,7 +193,7 @@ struct ImageBlockView: View {
         Capsule()
             .fill(Color.black.opacity(0.45))
             .frame(width: 6, height: 44)
-            .padding(.trailing, 6)
+            .padding(.trailing, DS.Space.sm)
             .opacity(editor.isLocked ? 0 : 0.8)
             .gesture(
                 DragGesture(minimumDistance: 1)
@@ -220,7 +220,7 @@ struct FileRow: View {
                 .lineLimit(1)
             if let size = block.props.asset?.size {
                 Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
-                    .font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    .font(DS.Text.small()).foregroundStyle(Theme.secondary)
             }
             Spacer()
             if let url {
@@ -232,7 +232,7 @@ struct FileRow: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 4).fill(Color(Theme.codeBackground)))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color(Theme.codeBackground)))
     }
 }
 
@@ -247,13 +247,13 @@ struct BookmarkCard: View {
         Button { if let u = URL(string: url) { openURL(u) } } label: {
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(meta?.title ?? url).font(.system(size: 14, weight: .medium)).lineLimit(1).foregroundStyle(Theme.primary)
+                    Text(meta?.title ?? url).font(DS.Text.ui(.medium)).lineLimit(1).foregroundStyle(Theme.primary)
                     if let s = meta?.summary, !s.isEmpty {
-                        Text(s).font(.system(size: 12)).lineLimit(2).foregroundStyle(Theme.secondary)
+                        Text(s).font(DS.Text.small()).lineLimit(2).foregroundStyle(Theme.secondary)
                     }
-                    Text(url).font(.system(size: 12)).lineLimit(1).foregroundStyle(Theme.primary)
+                    Text(url).font(DS.Text.small()).lineLimit(1).foregroundStyle(Theme.primary)
                 }
-                .padding(12)
+                .padding(DS.Space.lg)
                 Spacer(minLength: 0)
                 if let img = meta?.imageURL, let u = URL(string: img) {
                     AsyncImage(url: u) { i in i.resizable().scaledToFill() } placeholder: { Color.clear }
@@ -262,7 +262,7 @@ struct BookmarkCard: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color(Theme.divider)))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Color(Theme.divider)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.hoverFill)
@@ -341,7 +341,7 @@ struct MediaSourcePicker: View {
                     Label("Upload file", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                Text("or embed a link").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Text("or embed a link").font(DS.Text.small()).foregroundStyle(Theme.secondary)
             }
             TextField("Paste a link…", text: $link)
                 .textFieldStyle(.roundedBorder)
@@ -349,7 +349,7 @@ struct MediaSourcePicker: View {
             Button(block.type == .bookmark ? "Create bookmark" : "Embed link", action: apply)
                 .disabled(URL(string: link.trimmingCharacters(in: .whitespaces))?.scheme == nil && !link.contains("."))
         }
-        .padding(16)
+        .padding(DS.Space.xl)
         .fileImporter(isPresented: $importing, allowedContentTypes: types) { result in
             if case .success(let url) = result, let ref = AssetImport.importFile(url, into: model.assets) {
                 model.store.updateBlock(block.id, name: "Upload") { b in
@@ -411,7 +411,7 @@ struct EquationBlockView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 4).fill(expr.isEmpty ? Color(Theme.codeBackground) : Color.clear))
+            .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(expr.isEmpty ? Color(Theme.codeBackground) : Color.clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.hoverFill)
@@ -429,7 +429,7 @@ struct EquationBlockView: View {
                 }
                 .keyboardShortcut(.return, modifiers: .command)
             }
-            .padding(12)
+            .padding(DS.Space.lg)
         }
     }
 }

@@ -37,7 +37,7 @@ struct TabStrip: View {
                     .gesture(reorderGesture(tab.id))
             }
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, DS.Space.xxs)
         .coordinateSpace(.named("tabs"))
         .animation(.spring(duration: 0.22), value: model.tabs.map(\.id))
     }
@@ -98,16 +98,16 @@ struct TabButton: View {
             }
         }
         .foregroundStyle(active ? Theme.primary : Chrome.sidebarText)
-        .padding(.leading, 10).padding(.trailing, 6)
+        .padding(.leading, 10).padding(.trailing, DS.Space.sm)
         .frame(minWidth: 90, idealWidth: 180, maxWidth: 220, minHeight: 28, maxHeight: 28)
         .fixedSize(horizontal: true, vertical: false)
         .background {
             // Active tab: white "card" like Notion's desktop tabs; others highlight on hover.
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: DS.Radius.card)
                 .fill(active ? Chrome.appBackground : (hover ? Chrome.hover : .clear))
                 .shadow(color: .black.opacity(active ? 0.08 : 0), radius: 1.5, y: 0.5)
         }
-        .overlay { if active { RoundedRectangle(cornerRadius: 8).stroke(Chrome.border, lineWidth: 0.5) } }
+        .overlay { if active { RoundedRectangle(cornerRadius: DS.Radius.card).stroke(Chrome.border, lineWidth: 0.5) } }
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture { model.selectTab(tab.id) }

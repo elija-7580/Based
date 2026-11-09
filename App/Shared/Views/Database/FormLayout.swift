@@ -40,7 +40,7 @@ struct FormLayout: View {
                 Text("\(ctx.result.rows.count) responses").font(.caption).foregroundStyle(Theme.secondary)
             }
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, DS.Space.xl)
         .frame(maxWidth: 640, alignment: .leading)
         .accessibilityIdentifier("form")
     }
@@ -49,7 +49,7 @@ struct FormLayout: View {
     private func question(_ p: PropertySchema) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: p.type.symbol).font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Image(systemName: p.type.symbol).font(DS.Text.small()).foregroundStyle(Theme.secondary)
                 Text(p.name).font(.system(size: 15, weight: .semibold))
                 if p.type == .title { Text("*").foregroundStyle(.red) }
             }

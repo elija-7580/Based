@@ -128,20 +128,20 @@ struct BlockMenuView: View {
         let a = BlockActions(ids: ids, editor: editor, model: model)
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Image(systemName: "magnifyingglass").font(DS.Text.small()).foregroundStyle(Theme.secondary)
                 TextField("Search actions…", text: $query)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(DS.Text.body())
                     .onSubmit { runFirst(a) }
             }
-            .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 6).fill(Theme.hoverFill))
-            .padding(.horizontal, 8).padding(.top, 8).padding(.bottom, 4)
+            .padding(.horizontal, DS.Space.md).padding(.vertical, DS.Space.sm)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Theme.hoverFill))
+            .padding(.horizontal, DS.Space.md).padding(.top, DS.Space.md).padding(.bottom, DS.Space.xs)
             if sub == .main, query.isEmpty, let label = typeLabel(a) {
                 Text(label)
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundStyle(Theme.secondary)
-                    .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 2)
+                    .padding(.horizontal, 14).padding(.top, DS.Space.xs).padding(.bottom, DS.Space.xxs)
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: 1) {
@@ -151,7 +151,7 @@ struct BlockMenuView: View {
                     case .color: backRow; rows(colorActions(a))
                     }
                 }
-                .padding(.horizontal, 6).padding(.bottom, 6)
+                .padding(.horizontal, DS.Space.sm).padding(.bottom, DS.Space.sm)
                 .id(sub)
                 .transition(.asymmetric(insertion: .move(edge: sub == .main ? .leading : .trailing).combined(with: .opacity),
                                         removal: .opacity))
@@ -162,7 +162,7 @@ struct BlockMenuView: View {
                 Divider()
                 Text("Last edited \(b.updatedAt.formatted(.relative(presentation: .named)))")
                     .font(.system(size: 11.5)).foregroundStyle(Theme.secondary)
-                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .padding(.horizontal, 14).padding(.vertical, DS.Space.md)
             }
         }
         .frame(width: 265)
@@ -190,7 +190,7 @@ struct BlockMenuView: View {
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
         let filtered = q.isEmpty ? list : list.filter { $0.title.lowercased().contains(q) }
         return ForEach(filtered) { item in
-            if item.dividerBefore && q.isEmpty { Divider().padding(.vertical, 4).padding(.horizontal, 6) }
+            if item.dividerBefore && q.isEmpty { Divider().padding(.vertical, DS.Space.xs).padding(.horizontal, DS.Space.sm) }
             if let swatch = item.swatch {
                 ColorRow(title: item.title, color: swatch, selected: item.selected) { item.run(); done() }
             } else {
@@ -263,16 +263,16 @@ private struct ColorRow: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text("A")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DS.Text.body(.medium))
                     .foregroundStyle(color.isBackground ? Theme.primary : Theme.color(color))
                     .frame(width: 20, height: 20)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(color.isBackground ? Theme.color(color) : Color.clear))
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.dividerColor))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(color.isBackground ? Theme.color(color) : Color.clear))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Theme.dividerColor))
                 Text(title).font(.system(size: 13.5)).foregroundStyle(Theme.primary)
                 Spacer()
-                if selected { Image(systemName: "checkmark").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.secondary) }
+                if selected { Image(systemName: "checkmark").font(DS.Text.caption(.semibold)).foregroundStyle(Theme.secondary) }
             }
-            .padding(.horizontal, 8).frame(height: 30)
+            .padding(.horizontal, DS.Space.md).frame(height: 30)
             .background(RoundedRectangle(cornerRadius: 5).fill(hover ? Theme.hoverFill : .clear))
             .contentShape(Rectangle())
         }
@@ -294,10 +294,10 @@ struct MenuRowStyle: ButtonStyle {
         @State private var hover = false
         var body: some View {
             configuration.label
-                .font(.system(size: 14))
-                .padding(.horizontal, 6)
+                .font(DS.Text.ui())
+                .padding(.horizontal, DS.Space.sm)
                 .padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 4).fill(Color.primary.opacity(highlighted || hover || configuration.isPressed ? 0.08 : 0)))
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(Color.primary.opacity(highlighted || hover || configuration.isPressed ? 0.08 : 0)))
                 .contentShape(Rectangle())
                 .onHover { hover = $0 }
         }
@@ -374,14 +374,14 @@ struct InlineMenuView: View {
                             ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
                                 if let header = sectionHeader(items, i) {
                                     Text(header).font(.caption).foregroundStyle(Theme.secondary)
-                                        .padding(.horizontal, 8).padding(.top, i == 0 ? 6 : 10).padding(.bottom, 2)
+                                        .padding(.horizontal, DS.Space.md).padding(.top, i == 0 ? 6 : 10).padding(.bottom, DS.Space.xxs)
                                 }
                                 Button { editor.choose(item) } label: { row(item) }
                                     .buttonStyle(MenuRowStyle(highlighted: i == highlighted))
                                     .id(item.id)
                             }
                         }
-                        .padding(4)
+                        .padding(DS.Space.xs)
                     }
                     .onChange(of: highlighted) { _, h in
                         if h < items.count { proxy.scrollTo(items[h].id) }
@@ -425,7 +425,7 @@ struct InlineMenuView: View {
             case .command(let c):
                 Image(systemName: c.symbol)
                     .frame(width: 34, height: 34)
-                    .background(RoundedRectangle(cornerRadius: 6).stroke(Color(Theme.divider)))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control).stroke(Color(Theme.divider)))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(c.title)
                     Text(c.subtitle).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1)

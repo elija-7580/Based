@@ -54,7 +54,7 @@ struct LibraryView: View {
                                 .contextMenu { rowMenu(item, rows: rows, selected: selected) }
                         }
                     }
-                    .padding(.bottom, 24)
+                    .padding(.bottom, DS.Space.xxl)
                 }
             }
         }
@@ -88,13 +88,13 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 10) {
             Button { withAnimation(.easeOut(duration: 0.15)) { overviewOpen.toggle() } } label: {
                 Label("Overview", systemImage: overviewOpen ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.secondary)
+                    .font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
             }
             .buttonStyle(.hoverFill)
             .accessibilityIdentifier("library.overviewToggle")
             if overviewOpen { HomeOverview() }
         }
-        .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, overviewOpen ? 16 : 6)
+        .padding(.horizontal, DS.Space.xxl).padding(.top, DS.Space.xl).padding(.bottom, overviewOpen ? 16 : 6)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -142,11 +142,11 @@ struct LibraryView: View {
         HStack(spacing: 10) {
             Text("Library").font(.system(size: 26, weight: .bold)).foregroundStyle(Theme.primary)
             Text(shown == total ? "\(total) items" : "\(shown) of \(total)")
-                .font(.system(size: 13)).foregroundStyle(Chrome.sectionText)
+                .font(DS.Text.body()).foregroundStyle(Chrome.sectionText)
             Spacer(minLength: 12)
             LibrarySearchField(text: $query.text)
         }
-        .padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 10)
+        .padding(.horizontal, DS.Space.xxl).padding(.top, 18).padding(.bottom, 10)
     }
 
     private var filterBar: some View {
@@ -174,8 +174,8 @@ struct LibraryView: View {
             }
             Button { query.onlyDuplicateTitles.toggle() } label: {
                 Label("Same title", systemImage: "square.on.square")
-                    .font(.system(size: 12, weight: .medium))
-                    .padding(.horizontal, 8).frame(height: 24)
+                    .font(DS.Text.small(.medium))
+                    .padding(.horizontal, DS.Space.md).frame(height: 24)
                     .background(Capsule().fill(query.onlyDuplicateTitles ? Chrome.accent.opacity(0.14) : Chrome.hover))
                     .foregroundStyle(query.onlyDuplicateTitles ? Chrome.accent : Chrome.sidebarText)
             }
@@ -183,11 +183,11 @@ struct LibraryView: View {
             .help("Show only items whose title appears more than once")
             if isFiltered {
                 Button("Clear filters") { let t = query.text; query = LibraryQuery(); query.text = t }
-                    .buttonStyle(.plain).font(.system(size: 12)).foregroundStyle(Chrome.sectionText)
+                    .buttonStyle(.plain).font(DS.Text.small()).foregroundStyle(Chrome.sectionText)
             }
             Spacer()
         }
-        .padding(.horizontal, 24).padding(.bottom, 10)
+        .padding(.horizontal, DS.Space.xxl).padding(.bottom, 10)
     }
 
     private var isFiltered: Bool {
@@ -223,7 +223,7 @@ struct LibraryView: View {
                         Text(col.rawValue)
                         if query.sort == col { Image(systemName: query.ascending ? "arrow.up" : "arrow.down").font(.system(size: 9, weight: .semibold)) }
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DS.Text.small(.medium))
                     .foregroundStyle(query.sort == col ? Theme.primary : Chrome.sectionText)
                     .frame(maxWidth: width == nil ? .infinity : width, alignment: .leading)
                     .frame(width: width)
@@ -232,7 +232,7 @@ struct LibraryView: View {
                 .buttonStyle(.hoverFill)
             }
         }
-        .padding(.horizontal, 16).frame(height: 32)
+        .padding(.horizontal, DS.Space.xl).frame(height: 32)
         .overlay(alignment: .bottom) { Rectangle().fill(Chrome.border).frame(height: 1) }
     }
 
@@ -278,8 +278,8 @@ struct LibraryActionBar: View {
         let allFav = ids.allSatisfy { model.store.isFavorite($0) }
         HStack(spacing: 4) {
             Text("\(ids.count) selected")
-                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Chrome.accent)
-                .padding(.trailing, 8)
+                .font(DS.Text.body(.semibold)).foregroundStyle(Chrome.accent)
+                .padding(.trailing, DS.Space.md)
                 .accessibilityIdentifier("library.selectionCount")
             bar("Move to…", "arrow.turn.up.right") { model.moveRequest = AppModel.MoveRequest(ids: ids) }
             bar("Duplicate", "plus.square.on.square") { model.duplicate(ids) }
@@ -290,10 +290,10 @@ struct LibraryActionBar: View {
             bar("Delete", "trash", destructive: true, action: delete)
                 .accessibilityIdentifier("library.delete")
             Spacer()
-            Button(action: clear) { Image(systemName: "xmark").font(.system(size: 11, weight: .semibold)).frame(width: 24, height: 24) }
+            Button(action: clear) { Image(systemName: "xmark").font(DS.Text.caption(.semibold)).frame(width: 24, height: 24) }
                 .buttonStyle(.hoverFill).foregroundStyle(Chrome.sidebarText).help("Clear selection (Esc)")
         }
-        .padding(.horizontal, 16).frame(height: 40)
+        .padding(.horizontal, DS.Space.xl).frame(height: 40)
         .background(Chrome.accent.opacity(0.07))
         .overlay(alignment: .bottom) { Rectangle().fill(Chrome.border).frame(height: 1) }
         .accessibilityIdentifier("library.actionBar")
@@ -314,9 +314,9 @@ struct LibraryBarButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 13, weight: .medium))
-                .padding(.horizontal, 8).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 6).fill(hover ? Chrome.hover : .clear))
+                .font(DS.Text.body(.medium))
+                .padding(.horizontal, DS.Space.md).frame(height: 28)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hover ? Chrome.hover : .clear))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -344,40 +344,40 @@ struct LibraryRow: View {
             HStack(spacing: 8) {
                 icon(block)
                 Text(item.title.isEmpty ? "Untitled" : item.title)
-                    .font(.system(size: 14)).foregroundStyle(Theme.primary).lineLimit(1).truncationMode(.tail)
+                    .font(DS.Text.ui()).foregroundStyle(Theme.primary).lineLimit(1).truncationMode(.tail)
                 if item.isFavorite { Image(systemName: "star.fill").font(.system(size: 9)).foregroundStyle(Chrome.sectionText) }
                 Spacer(minLength: 6)
                 if hover {
                     Button(action: open) {
-                        Text("Open").font(.system(size: 11, weight: .medium)).padding(.horizontal, 6).frame(height: 20)
-                            .background(RoundedRectangle(cornerRadius: 4).stroke(Chrome.border))
+                        Text("Open").font(DS.Text.caption(.medium)).padding(.horizontal, DS.Space.sm).frame(height: 20)
+                            .background(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Chrome.border))
                     }
                     .buttonStyle(.plain).foregroundStyle(Chrome.sidebarText)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(item.kind.rawValue)
-                .font(.system(size: 12)).foregroundStyle(Chrome.sidebarText)
-                .padding(.horizontal, 6).frame(height: 20)
-                .background(RoundedRectangle(cornerRadius: 4).fill(kindColor.opacity(0.16)))
+                .font(DS.Text.small()).foregroundStyle(Chrome.sidebarText)
+                .padding(.horizontal, DS.Space.sm).frame(height: 20)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.small).fill(kindColor.opacity(0.16)))
                 .frame(width: 96, alignment: .leading)
             VStack(alignment: .leading, spacing: 0) {
-                Text(item.location).font(.system(size: 13)).foregroundStyle(Chrome.sidebarText).lineLimit(1)
+                Text(item.location).font(DS.Text.body()).foregroundStyle(Chrome.sidebarText).lineLimit(1)
                 if let note {
-                    Text(note).font(.system(size: 11)).foregroundStyle(Color(Theme.dynamic(light: 0xD9730D, dark: 0xFFA344))).lineLimit(1)
+                    Text(note).font(DS.Text.caption()).foregroundStyle(Color(Theme.dynamic(light: 0xD9730D, dark: 0xFFA344))).lineLimit(1)
                 }
             }
             .help(note ?? item.location)
             .frame(width: 180, alignment: .leading)
-            Text(Self.date(item.edited)).font(.system(size: 13)).foregroundStyle(Chrome.sidebarText).lineLimit(1)
+            Text(Self.date(item.edited)).font(DS.Text.body()).foregroundStyle(Chrome.sidebarText).lineLimit(1)
                 .frame(width: 128, alignment: .leading)
-            Text(Self.date(item.created)).font(.system(size: 13)).foregroundStyle(Chrome.sidebarText).lineLimit(1)
+            Text(Self.date(item.created)).font(DS.Text.body()).foregroundStyle(Chrome.sidebarText).lineLimit(1)
                 .frame(width: 128, alignment: .leading)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, DS.Space.xl)
         .frame(height: 34)
         .background(selected ? Chrome.accent.opacity(0.10) : (hover ? Chrome.hover.opacity(0.7) : .clear))
-        .overlay(alignment: .bottom) { Rectangle().fill(Chrome.border.opacity(0.6)).frame(height: 1).padding(.leading, 16) }
+        .overlay(alignment: .bottom) { Rectangle().fill(Chrome.border.opacity(0.6)).frame(height: 1).padding(.leading, DS.Space.xl) }
         .contentShape(Rectangle())
         .onHover { hover = $0 }
         .onTapGesture(count: 2, perform: open)
@@ -390,9 +390,9 @@ struct LibraryRow: View {
     @ViewBuilder
     private func icon(_ b: Block?) -> some View {
         switch item.kind {
-        case .file: Image(systemName: "paperclip").font(.system(size: 13)).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
-        case .memory: Image(systemName: "brain").font(.system(size: 13)).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
-        case .skill: Image(systemName: "wand.and.stars").font(.system(size: 13)).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
+        case .file: Image(systemName: "paperclip").font(DS.Text.body()).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
+        case .memory: Image(systemName: "brain").font(DS.Text.body()).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
+        case .skill: Image(systemName: "wand.and.stars").font(DS.Text.body()).frame(width: 18, height: 18).foregroundStyle(Chrome.sidebarText)
         default: PageIconView(icon: b?.props.icon, isDatabase: item.kind == .database, size: 16).frame(width: 18, height: 18)
         }
     }
@@ -455,8 +455,8 @@ struct LibraryFilterChip<Items: View>: View {
                 Text(label).lineLimit(1)
                 Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold))
             }
-            .font(.system(size: 12, weight: .medium))
-            .padding(.horizontal, 8).frame(height: 24)
+            .font(DS.Text.small(.medium))
+            .padding(.horizontal, DS.Space.md).frame(height: 24)
             .background(Capsule().fill(active ? Chrome.accent.opacity(0.14) : Chrome.hover))
             .foregroundStyle(active ? Chrome.accent : Chrome.sidebarText)
         }
@@ -476,17 +476,17 @@ private struct LibrarySearchField: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundStyle(Chrome.sectionText)
+            Image(systemName: "magnifyingglass").font(DS.Text.small()).foregroundStyle(Chrome.sectionText)
             TextField("Search titles and locations", text: $draft)
-                .textFieldStyle(.plain).font(.system(size: 13))
+                .textFieldStyle(.plain).font(DS.Text.body())
                 .accessibilityIdentifier("library.search")
             if !draft.isEmpty {
-                Button { draft = ""; commit(immediately: true) } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 11)) }
+                Button { draft = ""; commit(immediately: true) } label: { Image(systemName: "xmark.circle.fill").font(DS.Text.caption()) }
                     .buttonStyle(.quiet).foregroundStyle(Chrome.sectionText)
             }
         }
-        .padding(.horizontal, 8).frame(width: 260, height: 28)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Chrome.hover))
+        .padding(.horizontal, DS.Space.md).frame(width: 260, height: 28)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(Chrome.hover))
         .onAppear { draft = text }
         .onChange(of: draft) { _, _ in commit(immediately: false) }
         .onChange(of: text) { _, new in if new != draft { draft = new } }
