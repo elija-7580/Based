@@ -1,4 +1,4 @@
-packages/design-tokens test: [2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
 packages/core test:   formulas   143/143 grün
@@ -34,7 +34,7 @@ apps/server test: [2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39
 
 Running 2 tests using 2 workers
 
-  ✓  1 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (127ms)
-  ✓  2 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (3.8s)
+  ✓  2 [chromium] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (180ms)
+  ✓  1 [webkit] › e2e/smoke.spec.ts:3:1 › leere Web-App lädt (1.8s)
 
-  2 passed (6.6s)
+  2 passed (4.9s)
