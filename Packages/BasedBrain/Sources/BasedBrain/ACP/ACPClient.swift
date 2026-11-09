@@ -104,7 +104,8 @@ public final class ACPClient: @unchecked Sendable {
 
     /// Launch the agent process and perform the ACP handshake.
     public func start(cwd: String) throws {
-        let t = try ProcessTransport(command: definition.command, arguments: definition.arguments, environment: definition.environment, cwd: cwd)
+        let t = try ProcessTransport(command: definition.command, arguments: definition.arguments, environment: definition.environment, cwd: cwd,
+                                     passthrough: ShellEnvironment.passthrough(for: definition.id))
         t.stderrLog = { [weak self] in self?.onLog?($0) }
         transport = t
         t.peer.onNotification = { [weak self] method, params in self?.handleNotification(method, params) }

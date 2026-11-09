@@ -208,7 +208,9 @@ public enum ClaudeStream {
 
 /// Drives the real `claude` CLI without an ACP adapter:
 /// `claude -p --input-format stream-json --output-format stream-json --verbose [--resume id]
-///   --permission-mode … --mcp-config <json> --permission-prompt-tool mcp__based__approval`.
+///   --permission-mode … --mcp-config <file> --permission-prompt-tool mcp__based__approval`.
+/// BSD-33: the MCP config (with its bearer token) is written to a private file, never passed on the command line,
+/// and the child gets only the allowlisted environment (`ShellEnvironment.childEnvironment`).
 /// One long-lived process per session; each prompt is a JSON line on stdin, a `result` line ends the turn.
 public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
     public struct Options: Sendable {
@@ -222,6 +224,8 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
         public var appendSystemPrompt: String?
         public var extraArgs: [String] = []
         public var environment: [String: String] = [:]
+        /// Agent id for user-approved environment variables (`ShellEnvironment.passthrough(for:)`).
+        public var agentID: String = "claude"
         public init(executable: String, cwd: String, resume: String? = nil, permissionMode: String = "default", model: String? = nil,
                     mcpConfig: JSONValue? = nil, permissionPromptTool: String? = nil, appendSystemPrompt: String? = nil) {
             self.executable = executable; self.cwd = cwd; self.resume = resume; self.permissionMode = permissionMode; self.model = model
@@ -249,6 +253,8 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
     private var process: Process?
     private var stdinPipe: Pipe?
     #endif
+    /// The private `--mcp-config` file of the running process (removed when it stops).
+    private let configFile = Locked<MCPConfigFile?>(nil)
 
     public init(options: Options) {
         self.options = options
@@ -258,12 +264,13 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
     public var sessionID: String? { state.sync { $0.sessionID } }
     public var isRunning: Bool { state.sync { $0.running } }
 
-    public func arguments() -> [String] {
+    /// Command line; `mcpConfigPath` is the private file holding `options.mcpConfig` (never the JSON itself).
+    public func arguments(mcpConfigPath: String? = nil) -> [String] {
         var a = ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
                  "--permission-mode", options.permissionMode]
         if let r = options.resume { a += ["--resume", r] }
         if let m = options.model, !m.isEmpty { a += ["--model", m] }
-        if let c = options.mcpConfig, let d = try? c.encoded(), let s = String(data: d, encoding: .utf8) { a += ["--mcp-config", s] }
+        if let path = mcpConfigPath { a += ["--mcp-config", path] }
         if let t = options.permissionPromptTool { a += ["--permission-prompt-tool", t] }
         if let s = options.appendSystemPrompt, !s.isEmpty { a += ["--append-system-prompt", s] }
         return a + options.extraArgs
@@ -273,11 +280,12 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
         #if os(macOS) || os(Linux)
         let p = Process()
         p.executableURL = URL(fileURLWithPath: options.executable)
-        p.arguments = arguments()
-        var env = ShellEnvironment.environment()
-        for (k, v) in options.environment { env[k] = v }
-        env["CLAUDE_CODE_ENTRYPOINT"] = env["CLAUDE_CODE_ENTRYPOINT"] ?? "sdk-based"
-        p.environment = env
+        var file: MCPConfigFile?
+        if let c = options.mcpConfig { file = try MCPConfigFile.write(c) }
+        p.arguments = arguments(mcpConfigPath: file?.path)
+        var extra = options.environment
+        extra["CLAUDE_CODE_ENTRYPOINT"] = extra["CLAUDE_CODE_ENTRYPOINT"] ?? "sdk-based"
+        p.environment = ShellEnvironment.childEnvironment(agent: options.agentID, extra: extra)
         p.currentDirectoryURL = URL(fileURLWithPath: options.cwd)
         let input = Pipe(), output = Pipe(), errors = Pipe()
         p.standardInput = input; p.standardOutput = output; p.standardError = errors
@@ -290,7 +298,8 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
             if d.isEmpty { h.readabilityHandler = nil } else { self?.onLog?(String(decoding: d, as: UTF8.self)) }
         }
         p.terminationHandler = { [weak self] proc in self?.terminated(status: proc.terminationStatus) }
-        try p.run()
+        do { try p.run() } catch { file?.remove(); throw error }
+        configFile.sync { $0?.remove(); $0 = file }
         process = p; stdinPipe = input
         state.sync { $0.running = true }
         Log.info("Claude Code started (pid \(p.processIdentifier)) in \(options.cwd)", category: "agents")
@@ -332,6 +341,7 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
     }
 
     private func terminated(status: Int32) {
+        configFile.sync { $0?.remove(); $0 = nil }
         let w = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in
             s.running = false
             let w = s.waiter; s.waiter = nil
@@ -385,6 +395,7 @@ public final class ClaudeCodeDriver: AgentConnection, @unchecked Sendable {
         if let p = process, p.isRunning { p.terminate() }
         process = nil; stdinPipe = nil
         #endif
+        configFile.sync { $0?.remove(); $0 = nil }
         let w = state.sync { s -> CheckedContinuation<ACPStopReason, Error>? in s.running = false; let w = s.waiter; s.waiter = nil; return w }
         w?.resume(returning: .cancelled)
     }
@@ -403,12 +414,13 @@ public enum ClaudePrint {
         }
     }
 
-    public static func arguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
+    /// `mcpConfigPath`: the private file with the MCP config (`MCPConfigFile`) — BSD-33: never the JSON with its token.
+    public static func arguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfigPath: String? = nil,
                                  allowedTools: [String] = [], model: String? = nil, maxTurns: Int? = nil) -> [String] {
         var a = ["-p", prompt, "--output-format", "json"]
         if let r = resume, !r.isEmpty { a += ["--resume", r] }
         if let m = model, !m.isEmpty { a += ["--model", m] }
-        if let c = mcpConfig, let d = try? c.encoded(), let s = String(data: d, encoding: .utf8) { a += ["--mcp-config", s] }
+        if let path = mcpConfigPath { a += ["--mcp-config", path] }
         if !allowedTools.isEmpty { a += ["--allowedTools", allowedTools.joined(separator: ",")] }
         if let s = appendSystemPrompt, !s.isEmpty { a += ["--append-system-prompt", s] }
         if let t = maxTurns { a += ["--max-turns", String(t)] }
@@ -440,11 +452,15 @@ public enum ClaudePrint {
         guard let exe = executable ?? ShellEnvironment.which("claude") else {
             return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
         }
-        let args = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+        let file: MCPConfigFile?
+        do { file = try mcpConfig.map { try MCPConfigFile.write($0) } } catch { return .failure(error) }
+        let args = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfigPath: file?.path,
                              allowedTools: allowedTools, model: model)
         return await Task.detached(priority: .userInitiated) { () -> Result<Reply, Error> in
+            defer { file?.remove() }
             let started = Date()
-            guard let d = ShellEnvironment.run(exe, args, timeout: timeout, environment: ShellEnvironment.environment(), cwd: cwd, stderrToStdout: false) else {
+            guard let d = ShellEnvironment.run(exe, args, timeout: timeout, environment: ShellEnvironment.childEnvironment(agent: "claude"),
+                                               cwd: cwd, stderrToStdout: false) else {
                 return .failure(Failure(description: "claude did not answer within \(Int(timeout)) s"))
             }
             Log.info("claude -p finished in \(String(format: "%.1f", Date().timeIntervalSince(started))) s", category: "agents")
@@ -461,10 +477,10 @@ public enum ClaudePrint {
 
 public extension ClaudePrint {
     /// Arguments for a streamed run: thinking, text deltas, tool calls and results arrive line by line.
-    static func streamArguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfig: JSONValue? = nil,
+    static func streamArguments(prompt: String, resume: String? = nil, appendSystemPrompt: String? = nil, mcpConfigPath: String? = nil,
                                 allowedTools: [String] = [], model: String? = nil, effort: String? = nil,
                                 permissionMode: String? = nil, permissionPromptTool: String? = nil) -> [String] {
-        var a = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+        var a = arguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfigPath: mcpConfigPath,
                           allowedTools: allowedTools, model: model)
         if let i = a.firstIndex(of: "json") { a[i] = "stream-json" }
         if let e = effort, !e.isEmpty { a += ["--effort", e] }
@@ -501,12 +517,15 @@ public extension ClaudePrint {
         guard let exe = executable ?? ShellEnvironment.which("claude") else {
             return .failure(Failure(description: "Claude Code is not installed (npm install -g @anthropic-ai/claude-code)."))
         }
+        let file: MCPConfigFile?
+        do { file = try mcpConfig.map { try MCPConfigFile.write($0) } } catch { return .failure(error) }
+        defer { file?.remove() }
         let p = Process()
         p.executableURL = URL(fileURLWithPath: exe)
-        p.arguments = streamArguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfig: mcpConfig,
+        p.arguments = streamArguments(prompt: prompt, resume: resume, appendSystemPrompt: appendSystemPrompt, mcpConfigPath: file?.path,
                                       allowedTools: allowedTools, model: model, effort: effort, permissionMode: permissionMode,
                                       permissionPromptTool: permissionPromptTool)
-        p.environment = ShellEnvironment.environment()
+        p.environment = ShellEnvironment.childEnvironment(agent: "claude")
         p.currentDirectoryURL = URL(fileURLWithPath: cwd)
         let out = Pipe(), err = Pipe()
         p.standardOutput = out

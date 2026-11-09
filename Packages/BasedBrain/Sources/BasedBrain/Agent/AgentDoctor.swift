@@ -47,7 +47,7 @@ public enum AgentDoctor {
 
     public static func version(of path: String, timeout: TimeInterval = 8) -> String? {
         #if os(macOS) || os(Linux)
-        guard let d = ShellEnvironment.run(path, ["--version"], timeout: timeout, environment: ShellEnvironment.environment(), stderrToStdout: true),
+        guard let d = ShellEnvironment.run(path, ["--version"], timeout: timeout, environment: ShellEnvironment.childEnvironment(), stderrToStdout: true),
               let s = String(data: d, encoding: .utf8) else { return nil }
         let line = s.split(separator: "\n").first.map(String.init)?.trimmingCharacters(in: .whitespaces) ?? ""
         return line.isEmpty ? nil : String(line.prefix(60))
@@ -89,7 +89,8 @@ public enum AgentDoctor {
 
     /// Claude Code stores its login in the keychain (macOS) or ~/.claude/.credentials.json; an API key also works.
     public static func claudeLoggedIn() -> Bool {
-        let env = ShellEnvironment.environment()
+        // BSD-33: key variables only count when the user let them through to Claude Code (`based.agentEnv.claude`).
+        let env = ShellEnvironment.childEnvironment(agent: "claude")
         if env["ANTHROPIC_API_KEY"]?.isEmpty == false || env["CLAUDE_CODE_OAUTH_TOKEN"]?.isEmpty == false { return true }
         let home = env["HOME"] ?? NSHomeDirectory()
         let fm = FileManager.default
@@ -127,7 +128,7 @@ public enum AgentDoctor {
         #if os(macOS) || os(Linux)
         guard let exe = ShellEnvironment.which("claude") else { return .failure(JSONRPCPeer.RPCError(code: -1, message: "claude not found")) }
         guard let d = ShellEnvironment.run(exe, ["-p", "Reply with exactly: OK", "--output-format", "json", "--max-turns", "1"], timeout: timeout,
-                                           environment: ShellEnvironment.environment(), cwd: NSHomeDirectory(), stderrToStdout: true),
+                                           environment: ShellEnvironment.childEnvironment(agent: "claude"), cwd: NSHomeDirectory(), stderrToStdout: true),
               let s = String(data: d, encoding: .utf8) else {
             return .failure(JSONRPCPeer.RPCError(code: -1, message: "claude did not answer within \(Int(timeout)) s"))
         }

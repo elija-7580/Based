@@ -312,7 +312,8 @@ public struct CLIChatBackend: ChatBackend {
         guard let exe, FileManager.default.isExecutableFile(atPath: exe) else {
             throw ClaudePrint.Failure(description: "\(spec.kind.title) is not installed.")
         }
-        var env = ShellEnvironment.environment()
+        // BSD-33: allowlisted environment; Codex gets the session's MCP token as its only Based variable.
+        var env = ShellEnvironment.childEnvironment(agent: cmd)
         let args: [String]
         let parse: @Sendable (String) -> [ChatEvent]
         switch spec.kind {

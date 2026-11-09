@@ -10,6 +10,8 @@ import BasedCore
 /// sub-agents — without any manual MCP setup.
 public final class LocalMCPHost: @unchecked Sendable {
     public let token: String
+    /// BSD-33: agents get a per-session token (valid only for their `/mcp/session/<sid>`), never `token`.
+    public let sessionTokens = MCPSessionTokens()
     public let mcp: MCPServer
     public private(set) var server: HTTPServer?
     public private(set) var requestCount = 0
@@ -40,10 +42,13 @@ public final class LocalMCPHost: @unchecked Sendable {
         if let b = baseURL { return b }
         let token = self.token
         let mcp = self.mcp
+        let sessionTokens = self.sessionTokens
         let s = HTTPServer(port: port, loopbackOnly: true) { [weak self] req in
             self?.countRequest()
-            guard req.bearerToken == token else { return .json(["error": "unauthorized"], status: 401) }
             let path = req.path
+            guard Self.authorized(bearer: req.bearerToken ?? "", path: path, master: token, sessions: sessionTokens) else {
+                return .json(["error": "unauthorized"], status: 401)
+            }
             switch (req.method, path) {
             case ("GET", "/health"):
                 return .json(["ok": true, "server": "based-app"])
@@ -63,11 +68,20 @@ public final class LocalMCPHost: @unchecked Sendable {
         server = s
         let base = "http://127.0.0.1:\(s.boundPort)"
         runtime?.mcpEndpoint = (base, token)
+        runtime?.mcpSessionTokens = sessionTokens
         Log.notice("Local MCP endpoint listening on \(base)", category: "mcp")
         return base
     }
 
     public func stop() { server?.stop(); server = nil }
+
+    /// The master token opens every route; a session token only its own `/mcp/session/<sid>`.
+    static func authorized(bearer: String, path: String, master: String, sessions: MCPSessionTokens) -> Bool {
+        if !master.isEmpty, SecureToken.equal(bearer, master) { return true }
+        guard path.hasPrefix("/mcp/session/") else { return false }
+        let sid = String(path.dropFirst("/mcp/session/".count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return !sid.isEmpty && sessions.isValid(bearer, session: sid)
+    }
 
     private func countRequest() { lock.lock(); requestCount += 1; lock.unlock() }
 
@@ -75,6 +89,6 @@ public final class LocalMCPHost: @unchecked Sendable {
     public func claudeConfig(session: String) -> JSONValue? {
         guard let b = baseURL else { return nil }
         return ["mcpServers": ["based": ["type": "http", "url": .string("\(b)/mcp/session/\(session)"),
-                                         "headers": ["Authorization": .string("Bearer \(token)")]]]]
+                                         "headers": ["Authorization": .string("Bearer \(sessionTokens.token(for: session))")]]]]
     }
 }

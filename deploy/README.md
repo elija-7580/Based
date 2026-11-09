@@ -121,3 +121,17 @@ based-server --token "$BASED_TOKEN" --sandbox docker \
   behind TLS.
 - Not yet: stdio MCP servers (incl. `based`) inside the container – sandboxed agents currently get no MCP servers;
   Claude Code runs through its ACP adapter instead of the native driver in this mode.
+
+## Secrets and coding agents (BSD-33)
+
+Agents started by Based (Claude Code, Codex, Gemini, ACP adapters, MCP servers over stdio) never inherit the
+server's environment wholesale. They get an allowlist (`PATH`, `HOME`, `USER`, `LANG`, `LC_*`, `XDG_*`, `TERM`,
+`TMPDIR`, proxies/CA bundles, toolchain paths, `DOCKER_*` for the sandbox CLI) plus agent config folders
+(`CLAUDE_CONFIG_DIR`, `CODEX_HOME`). Everything named `BASED_*` or looking like a secret (`*_TOKEN`, `*_KEY`,
+`*SECRET*`, `*PASSWORD*` …) is dropped – `BASED_TOKEN`, `BASED_CIPHER_KEY` and `ANTHROPIC_API_KEY` stay with the
+server. To let a key through to one agent on purpose, list it in the defaults key `based.agentEnv.<agent-id>`
+(comma-separated, e.g. `defaults write <app-domain> based.agentEnv.claude ANTHROPIC_API_KEY` on the Mac).
+
+The MCP config for Claude Code is written to a private file (`$TMPDIR/based-mcp-<uid>/…json`, mode 0600, deleted
+when the session ends) instead of the command line, and it carries a per-session token (`bds_…`) that only opens
+`/mcp/session/<that session>` – not `/mcp`, not `/sync/*` – and is revoked when the session stops.

@@ -96,6 +96,13 @@ public final class HappierRuntime: @unchecked Sendable {
     /// HTTP MCP endpoint of this process (app: 127.0.0.1 random port; server: its public port). Enables the
     /// `approval` tool Claude Code uses for permission prompts, scoped per session: `<base>/mcp/session/<id>`.
     public var mcpEndpoint: (base: String, token: String)?
+    /// BSD-33: per-session MCP tokens handed to agents instead of `mcpEndpoint.token` (the master token).
+    public var mcpSessionTokens: MCPSessionTokens?
+    /// The bearer token an agent of session `sid` gets for `<base>/mcp/session/<sid>` (nil without an endpoint).
+    public func mcpToken(for sid: String) -> String? {
+        guard let ep = mcpEndpoint else { return nil }
+        return mcpSessionTokens?.token(for: sid) ?? ep.token
+    }
     /// Prefer the real `claude` CLI (stream-json) over the ACP adapter for the "claude" agent.
     public var preferNativeClaude = true
     /// Claude Code permission mode per session ("default", "acceptEdits", "plan", "bypassPermissions").
@@ -171,7 +178,8 @@ public final class HappierRuntime: @unchecked Sendable {
             var mcp: [String: JSONValue] = [:]
             var promptTool: String?
             if let ep = mcpEndpoint {
-                mcp["based"] = ["type": "http", "url": .string("\(ep.base)/mcp/session/\(sid)"), "headers": ["Authorization": .string("Bearer \(ep.token)")]]
+                mcp["based"] = ["type": "http", "url": .string("\(ep.base)/mcp/session/\(sid)"),
+                                "headers": ["Authorization": .string("Bearer \(mcpToken(for: sid) ?? ep.token)")]]
                 promptTool = "mcp__based__approval"
             } else if let b = basedMCPServer {
                 mcp["based"] = ["command": .string(b.command), "args": .array(b.args.map(JSONValue.string))]
@@ -355,6 +363,7 @@ public final class HappierRuntime: @unchecked Sendable {
         turnGate(sid).cancelWaiting()
         let c = liveBox.sync { $0.removeValue(forKey: sid) }
         c?.stop()
+        mcpSessionTokens?.revoke(sid)
         mainQueue.send { self.brain.updateSession(sid, status: .idle) }
     }
 

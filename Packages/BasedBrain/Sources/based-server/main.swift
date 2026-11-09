@@ -95,6 +95,7 @@ func log(_ s: String, category: String = "server") { Log.info(s, category: categ
     happier.onLog = { Log.debug($0, category: "acp") }
     let publicURL = ProcessInfo.processInfo.environment["BASED_PUBLIC_URL"] ?? "http://127.0.0.1:\(opts.port)"
     happier.mcpEndpoint = (publicURL, opts.token)
+    happier.mcpSessionTokens = MCPSessionTokens()   // BSD-33: agents get per-session tokens, never the master token
     tools.hostSpecs = HappierRuntime.subAgentSpecs
     configureSandbox(happier)
     tools.hostCall = { [happier] name, args in await happier.hostTool(name, args) }
@@ -188,8 +189,11 @@ let server = HTTPServer(port: opts.port) { req in
     case ("GET", "/mcp"):
         return .text("SSE streaming is not supported; use POST /mcp (Streamable HTTP, JSON responses).", status: 405)
     case ("POST", _) where match(req.path, "/mcp/session/*") != nil:
-        guard authorized() else { return .json(["error": "unauthorized"], status: 401) }
         let sid = match(req.path, "/mcp/session/*")![0]
+        // BSD-33: the owner token, or this session's own token (only valid here, not for /mcp or /sync).
+        guard authorized() || happier.mcpSessionTokens?.isValid(req.bearerToken ?? "", session: sid) == true else {
+            return .json(["error": "unauthorized"], status: 401)
+        }
         guard let out = await mcp.handle(req.body, session: sid) else { return HTTPServer.Response(status: 202) }
         return HTTPServer.Response(status: 200, headers: ["Content-Type": "application/json"], body: out)
     case ("GET", "/logs"):

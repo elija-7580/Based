@@ -110,15 +110,16 @@ public final class ProcessTransport: @unchecked Sendable {
     public private(set) var isRunning = false
     public var stderrLog: (@Sendable (String) -> Void)?
 
-    public init(command: String, arguments: [String] = [], environment: [String: String] = [:], cwd: String? = nil) throws {
+    /// BSD-33: the child gets the allowlisted login environment (`ShellEnvironment.childEnvironment`) plus
+    /// `passthrough` names plus `environment` (values set on purpose, e.g. an MCP server's configured secret).
+    public init(command: String, arguments: [String] = [], environment: [String: String] = [:], cwd: String? = nil,
+                passthrough: Set<String> = []) throws {
         #if os(macOS) || os(Linux)
         let stdinHandle = stdin.fileHandleForWriting
         peer = JSONRPCPeer { data in stdinHandle.write(data) }
         process.executableURL = URL(fileURLWithPath: Self.resolve(command))
         process.arguments = arguments
-        var env = ShellEnvironment.environment()
-        for (k, v) in environment { env[k] = v }
-        process.environment = env
+        process.environment = ShellEnvironment.childEnvironment(extra: environment, passthrough: passthrough)
         if let cwd { process.currentDirectoryURL = URL(fileURLWithPath: cwd) }
         process.standardInput = stdin; process.standardOutput = stdout; process.standardError = stderr
         let p = peer

@@ -335,7 +335,8 @@ final class BrainModel {
             if spec.kind == .claudeCode {
                 backend = ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
             } else {
-                backend = CLIChatBackend(spec: spec, mcp: happier.runtime.mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", $0.1) })
+                // BSD-33: the chat's own short-lived MCP token, not the endpoint's master token.
+                backend = CLIChatBackend(spec: spec, mcp: happier.runtime.mcpEndpoint.map { ("\($0.0)/mcp/session/\(sid)", happier.runtime.mcpToken(for: sid) ?? $0.1) })
             }
         case .none:
             backend = UnavailableChatBackend(ChatError.noEngine.description)
