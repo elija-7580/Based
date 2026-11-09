@@ -1,2 +1,1 @@
-** BUILD FAILED **
-Packages/BasedBrain/Sources/BasedBrain/Agent/ProcessSupervisor.swift:30:42: error: cannot find type 'Process' in scope
+xcodebuild: error: Could not resolve package dependencies:
