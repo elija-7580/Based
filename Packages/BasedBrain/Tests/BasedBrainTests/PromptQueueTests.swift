@@ -115,7 +115,8 @@ struct PromptQueueTests {
         #!/bin/bash
         n=0
         while IFS= read -r line; do
-          n=$((n+1)); sleep 0.3
+          n=$((n+1))
+          while [ ! -f "\(dir.path)/go" ]; do sleep 0.02; done
           echo "{\\"type\\":\\"assistant\\",\\"message\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"answer $n\\"}]}}"
           echo "{\\"type\\":\\"result\\",\\"subtype\\":\\"success\\",\\"is_error\\":false,\\"result\\":\\"answer $n\\",\\"session_id\\":\\"s\\"}"
         done
@@ -135,8 +136,11 @@ struct PromptQueueTests {
             let r = try await driver.prompt("second")
             return (r, texts.current)
         }
-        for _ in 0..<100 where driver.queuedPrompts < 1 { try await Task.sleep(nanoseconds: 5_000_000) }
+        // The fake answers only once the file "go" exists, so the first turn stays in flight however slowly the
+        // (2-CPU, parallel) test machine schedules the second task — no timing assumption left.
+        for _ in 0..<1000 where driver.queuedPrompts < 1 { try await Task.sleep(nanoseconds: 10_000_000) }
         #expect(driver.queuedPrompts == 1, "the follow-up waits")
+        FileManager.default.createFile(atPath: dir.appendingPathComponent("go").path, contents: Data())
         let (r1, seen1) = try await first.value
         let (r2, seen2) = try await second.value
         #expect(r1 == .end_turn, "before BSD-48 the first prompt came back .cancelled")
