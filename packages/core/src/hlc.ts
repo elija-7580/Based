@@ -5,6 +5,8 @@ export interface Stamp {
   millis: number;
   counter: number;
   node: string;
+  /** Unbekannte Felder einer neueren Version bleiben erhalten (ADR 0002). */
+  [key: string]: unknown;
 }
 
 export const ZERO_STAMP: Readonly<Stamp> = Object.freeze({ millis: 0, counter: 0, node: "" });
