@@ -380,6 +380,12 @@ final class AppModel {
         }
         if storageError == nil {
             store.purgeTrash()
+            // BSD-100: blocks hidden under code / equation / divider blocks (older versions, other devices) become
+            // visible again, right below their block. One pass over the blocks; nothing is deleted.
+            if !store.isReadOnly {
+                let lifted = store.liftHiddenChildren()
+                if !lifted.isEmpty { Log.info("Showed hidden nested blocks of \(lifted.count) block(s)", category: "store") }
+            }
             startSyncIfConfigured()
         }
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
