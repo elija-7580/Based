@@ -369,7 +369,16 @@ final class AppModel {
         brain.assets = assets
         semantic = SemanticService(store: store, directory: inMemory ? nil : dir,
                                    excludedRoots: [brain.brain.rootID]) { [weak brain] ctx in brain?.tools.semantic = ctx }
-        if let first = store.topLevelPages().first(where: { $0.id != brain.brain.rootID }) { selection = .page(first.id) }
+        // BSD-71: Settings → Open on start (last visited page by default, Home, or a fixed page).
+        let firstPage = store.topLevelPages().first(where: { $0.id != brain.brain.rootID })?.id
+        let start = UserPreferences.startTarget(pref: Prefs.defaults.string(forKey: Prefs.startPage),
+                                                lastPage: Prefs.defaults.string(forKey: Prefs.lastPage), fallback: firstPage) { [store] id in
+            store.blocks[id]?.type.isPageLike == true && !store.isTrashed(id)
+        }
+        switch start {
+        case .home: selection = .home
+        case .page(let id): selection = .page(id)
+        }
         tabs = [BrowserTab(id: activeTabID, selection: selection)]
         lastSnapshot = NavSnapshot(selection: selection, path: [])
         backHistory = []
@@ -591,7 +600,7 @@ final class AppModel {
 
     @discardableResult
     func newPage(in parent: ParentRef = .workspace, open: Bool = true) -> RecordID {
-        let id = store.createPage(in: parent)
+        let id = store.createPage(in: parent, format: Prefs.newPageFormat)   // BSD-71: default style
         if case .block(let p) = parent { expanded.insert(p) }
         if open {
             if case .workspace = parent { openRoot(id) } else { self.open(id) }
@@ -602,7 +611,7 @@ final class AppModel {
     /// "+" on a sidebar section header / teamspace row: new top-level page in that section.
     @discardableResult
     func newTopLevelPage(in section: SidebarSectionID) -> RecordID {
-        let id = store.createTopLevelPage(in: section)
+        let id = store.createTopLevelPage(in: section, format: Prefs.newPageFormat)
         if case .teamspace(let t) = section { expanded.remove("teamspace.closed:" + t) }
         openRoot(id)
         return id
@@ -770,6 +779,7 @@ final class AppModel {
     }
 
     private func noteNavigation() {
+        rememberLastPage()
         guard !restoringHistory else { return }
         let cur = NavSnapshot(selection: selection, path: path)
         guard cur != lastSnapshot else { return }
@@ -778,6 +788,12 @@ final class AppModel {
         if backHistory.count > 100 { backHistory.removeFirst() }
         forwardHistory.removeAll()
         lastSnapshot = cur
+    }
+
+    /// BSD-71: the page on screen, for "Open on start: Last visited page". Written only when it changes.
+    private func rememberLastPage() {
+        guard let id = path.last ?? { if case .page(let p) = selection { return p } else { return nil } }() else { return }
+        if Prefs.defaults.string(forKey: Prefs.lastPage) != id { Prefs.defaults.set(id, forKey: Prefs.lastPage) }
     }
 
     private func restore(_ s: NavSnapshot) {

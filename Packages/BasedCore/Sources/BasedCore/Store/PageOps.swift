@@ -8,10 +8,12 @@ public extension WorkspaceStore {
     /// New page. `parent` is the workspace (top level), a page/block, or a database (row).
     @discardableResult
     func createPage(title: RichText = RichText(), in parent: ParentRef = .workspace, at position: InsertPosition = .end,
-                    icon: PageIcon? = nil, values: [String: PropertyValue] = [:], name: String = "New page") -> RecordID {
+                    icon: PageIcon? = nil, values: [String: PropertyValue] = [:], format: PageFormat? = nil,
+                    name: String = "New page") -> RecordID {
         transact(name) { tx in
             var props = BlockProps()
             props.icon = icon
+            props.format = format   // BSD-71: default style for new pages (Settings → My settings)
             var b = Block(type: .page, parent: parent, sortKey: tx.sortKey(in: parent, position),
                           text: title, props: props, values: values, createdBy: userID)
             if case .database(let dbID) = parent, let db = tx.database(dbID) {

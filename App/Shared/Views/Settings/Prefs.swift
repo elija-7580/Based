@@ -29,6 +29,15 @@ enum Prefs {
 
     static var defaults: UserDefaults { .standard }
 
+    /// BSD-71: the page shown last (for "Open on start: Last visited page"). Written by AppModel on navigation.
+    static let lastPage = "pref.lastPage"
+    static var spellCheckEnabled: Bool { defaults.object(forKey: spellCheck) as? Bool ?? true }
+    /// Style for pages the user creates (font / small text / full width defaults).
+    static var newPageFormat: PageFormat? {
+        UserPreferences.newPageFormat(font: defaults.string(forKey: fontFamily), smallText: defaults.bool(forKey: smallText),
+                                      fullWidth: defaults.bool(forKey: fullWidth))
+    }
+
     static var calendar: Calendar {
         var c = Calendar.current
         if defaults.bool(forKey: weekStartMonday) { c.firstWeekday = 2 }

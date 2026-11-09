@@ -68,9 +68,10 @@ public extension WorkspaceStore {
 
     /// New empty top-level page at the end of a sidebar section (one undo step).
     @discardableResult
-    func createTopLevelPage(in section: SidebarSectionID, title: String = "") -> RecordID {
+    func createTopLevelPage(in section: SidebarSectionID, title: String = "", format: PageFormat? = nil) -> RecordID {
         transact("New page") { tx in
             var props = BlockProps()
+            props.format = format
             if case .teamspace(let t) = section { props.teamspace = t }
             let b = Block(type: .page, parent: .workspace, sortKey: tx.sortKey(in: .workspace, .end),
                           text: RichText(title), props: props, values: [:], createdBy: userID)

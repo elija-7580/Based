@@ -603,7 +603,7 @@ struct RichTextView: NSViewRepresentable {
         tv.isAutomaticLinkDetectionEnabled = false
         tv.isAutomaticSpellingCorrectionEnabled = false
         tv.smartInsertDeleteEnabled = false
-        tv.isContinuousSpellCheckingEnabled = true
+        tv.isContinuousSpellCheckingEnabled = Prefs.spellCheckEnabled   // BSD-71
         tv.usesFontPanel = false
         tv.insertionPointColor = Theme.textPrimary
         tv.linkTextAttributes = [.cursor: NSCursor.pointingHand]
@@ -836,6 +836,7 @@ struct RichTextView: UIViewRepresentable {
         tv.textContainerInset = UIEdgeInsets(top: 3, left: 0, bottom: 3, right: 0)
         tv.textContainer.lineFragmentPadding = 0
         tv.autocorrectionType = .default
+        tv.spellCheckingType = Prefs.spellCheckEnabled ? .default : .no   // BSD-71
         tv.smartQuotesType = .no
         tv.smartDashesType = .no
         tv.tintColor = .label
