@@ -89,7 +89,8 @@ enum SidebarMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String { self == .notes ? "Notes" : "AI" }
     var symbol: String { self == .notes ? "doc.text" : SymbolImage.ai }
-    var home: SidebarItem { self == .notes ? .home : .chat(nil) }
+    /// BSD-128: the AI world opens on its home screen (sun, orbits, main agent) when nothing was visited yet.
+    var home: SidebarItem { self == .notes ? .home : .agentHome }
 }
 
 /// One browser-style tab (⌘T). The active tab's state lives in `AppModel.selection/path/history`;
