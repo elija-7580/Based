@@ -604,6 +604,7 @@ public final class AgentTools {
     private func describe(_ item: FilterItem, _ db: Database) -> String {
         switch item {
         case .group(let g): return "(" + g.items.map { describe($0, db) }.joined(separator: " \(g.combinator.rawValue) ") + ")"
+        case .unknown: return "(filter from a newer version)"
         case .condition(let c):
             let p = db.property(c.propertyID)
             let v: String

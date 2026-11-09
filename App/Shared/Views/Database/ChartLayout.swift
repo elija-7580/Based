@@ -90,7 +90,7 @@ struct ChartLayout: View {
     @ViewBuilder
     private func chart(_ pts: [ChartPoint]) -> some View {
         switch config.kind {
-        case .bar:
+        case .bar, .unknown:   // BSD-130: a chart type from a newer version draws as bars
             Chart(pts) { p in
                 BarMark(x: .value(xTitle, p.label), y: .value(yTitle, p.value))
                     .foregroundStyle(color(p))

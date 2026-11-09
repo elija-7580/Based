@@ -255,7 +255,7 @@ public struct BookmarkMeta: Codable, Hashable, Sendable {
 
 /// One step of a Notion button ("When button is clicked → Do: …"). A button runs its steps in order.
 public struct ButtonAction: Codable, Hashable, Sendable {
-    public enum Kind: String, Codable, CaseIterable, Sendable {
+    public enum Kind: OpenRawEnum, Sendable {
         /// Insert the button's child blocks below it.
         case insertBlocks
         /// Add a page to a database (`targetID`), with a name (`title`) and property values (`values`).
@@ -268,9 +268,26 @@ public struct ButtonAction: Codable, Hashable, Sendable {
         case openURL
         /// Ask before going on (`message`); Cancel stops the remaining steps.
         case confirm
+        /// BSD-130: a step from a newer Based; skipped, written back unchanged.
+        case unknown(String)
+
+        public static let allCases: [Kind] = [.insertBlocks, .addPage, .openPage, .openAdded, .openURL, .confirm]
+
+        public var rawValue: String {
+            switch self {
+            case .insertBlocks: return "insertBlocks"
+            case .addPage: return "addPage"
+            case .openPage: return "openPage"
+            case .openAdded: return "openAdded"
+            case .openURL: return "openURL"
+            case .confirm: return "confirm"
+            case .unknown(let raw): return raw
+            }
+        }
 
         public var displayName: String {
             switch self {
+            case .unknown: return "Needs a newer version"
             case .insertBlocks: return "Insert blocks"
             case .addPage: return "Add page to"
             case .openPage: return "Open page"
@@ -286,6 +303,7 @@ public struct ButtonAction: Codable, Hashable, Sendable {
             case .openPage, .openAdded: return "arrow.up.right"
             case .openURL: return "link"
             case .confirm: return "checkmark.circle"
+            case .unknown: return "questionmark.circle"
             }
         }
     }

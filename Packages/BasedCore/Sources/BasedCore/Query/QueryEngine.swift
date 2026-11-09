@@ -232,7 +232,7 @@ public final class QueryEngine {
         let dates = flat.compactMap { v -> Date? in if case .date(let d) = v { return d.start } else { return nil } }
         let bools = values.map { v -> Bool in if case .bool(let b) = v { return b } else { return false } }
         switch fn {
-        case .none: return .empty
+        case .none, .unknown: return .empty
         case .showOriginal: return .list(flat.filter { !$0.isEmpty })
         case .countAll: return .number(total)
         case .countValues: return .number(Double(flat.filter { !$0.isEmpty }.count))
@@ -319,9 +319,14 @@ public final class QueryEngine {
             switch item {
             case .condition(let c): return self.matches(row, c, db)
             case .group(let sub): return self.matches(row, sub, db)
+            case .unknown: return true    // BSD-130: a filter kind from a newer version hides nothing
             }
         }
-        return g.combinator == .and ? results.allSatisfy { $0 } : results.contains(true)
+        switch g.combinator {
+        case .and: return results.allSatisfy { $0 }
+        case .or: return results.contains(true)
+        case .unknown: return true        // BSD-130: unknown combinator hides nothing
+        }
     }
 
     public func matches(_ row: Block, _ c: FilterCondition, _ db: Database) -> Bool {
@@ -463,6 +468,7 @@ public final class QueryEngine {
             case .nextMonth: return (today, cal.date(byAdding: .month, value: 1, to: day(1))!)
             case .pastYear: return (cal.date(byAdding: .year, value: -1, to: today)!, day(1))
             case .nextYear: return (today, cal.date(byAdding: .year, value: 1, to: day(1))!)
+            case .unknown: return nil     // BSD-130: hides nothing
             }
         case .text(let t):
             guard let d = DateParsing.parse(t) else { return nil }

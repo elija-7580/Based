@@ -46,7 +46,7 @@ enum Theme {
     /// Notion-like palette (text colours and highlight backgrounds), light/dark.
     static func platformColor(_ c: TColor) -> PlatformColor {
         switch c {
-        case .default: return textPrimary
+        case .default, .unknown: return textPrimary   // BSD-130: a colour from a newer version draws as default
         case .gray: return dynamic(light: 0x787774, dark: 0x9B9B9B)
         case .brown: return dynamic(light: 0x9F6B53, dark: 0xBA856F)
         case .orange: return dynamic(light: 0xD9730D, dark: 0xC77D48)

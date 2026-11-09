@@ -2,10 +2,26 @@ import Foundation
 
 /// Configuration of a chart view (Notion "Chart" layout).
 public struct ChartConfig: Codable, Hashable, Sendable {
-    public enum Kind: String, Codable, CaseIterable, Sendable {
+    public enum Kind: OpenRawEnum, Sendable {
         case bar, horizontalBar, line, area, pie, donut, number
+        /// BSD-130: a chart type from a newer Based; drawn as a bar chart, written back unchanged.
+        case unknown(String)
+        public static let allCases: [Kind] = [.bar, .horizontalBar, .line, .area, .pie, .donut, .number]
+        public var rawValue: String {
+            switch self {
+            case .bar: return "bar"
+            case .horizontalBar: return "horizontalBar"
+            case .line: return "line"
+            case .area: return "area"
+            case .pie: return "pie"
+            case .donut: return "donut"
+            case .number: return "number"
+            case .unknown(let raw): return raw
+            }
+        }
         public var displayName: String {
             switch self {
+            case .unknown: return "Needs a newer version"
             case .number: return "Number"
             case .bar: return "Vertical bar"
             case .horizontalBar: return "Horizontal bar"
@@ -16,13 +32,40 @@ public struct ChartConfig: Codable, Hashable, Sendable {
             }
         }
     }
-    public enum Aggregate: String, Codable, CaseIterable, Sendable {
+    public enum Aggregate: OpenRawEnum, Sendable {
         case count, sum, average, min, max, median
-        public var displayName: String { rawValue.capitalized }
+        /// BSD-130: an aggregation from a newer Based; counts rows, written back unchanged.
+        case unknown(String)
+        public static let allCases: [Aggregate] = [.count, .sum, .average, .min, .max, .median]
+        public var rawValue: String {
+            switch self {
+            case .count: return "count"
+            case .sum: return "sum"
+            case .average: return "average"
+            case .min: return "min"
+            case .max: return "max"
+            case .median: return "median"
+            case .unknown(let raw): return raw
+            }
+        }
+        public var displayName: String { isUnknown ? "Needs a newer version" : rawValue.capitalized }
     }
-    public enum DateBucket: String, Codable, CaseIterable, Sendable {
+    public enum DateBucket: OpenRawEnum, Sendable {
         case day, week, month, quarter, year
-        public var displayName: String { rawValue.capitalized }
+        /// BSD-130: a bucket from a newer Based; groups by month, written back unchanged.
+        case unknown(String)
+        public static let allCases: [DateBucket] = [.day, .week, .month, .quarter, .year]
+        public var rawValue: String {
+            switch self {
+            case .day: return "day"
+            case .week: return "week"
+            case .month: return "month"
+            case .quarter: return "quarter"
+            case .year: return "year"
+            case .unknown(let raw): return raw
+            }
+        }
+        public var displayName: String { isUnknown ? "Needs a newer version" : rawValue.capitalized }
     }
     public var kind: Kind
     /// Property used for the x axis / slices. `nil` groups everything into one bucket.
@@ -41,6 +84,8 @@ public struct ChartConfig: Codable, Hashable, Sendable {
     public var colorTheme: String?
     /// small / medium / large / extra_large.
     public var height: String?
+    /// BSD-130: keys this version doesn't know; written back unchanged.
+    var extra: [String: JSONValue] = [:]
 
     /// Chart height in points for Notion's height presets.
     public var heightPoints: Double {
@@ -167,7 +212,7 @@ public struct ChartData {
             let s = cal.startOfDay(for: d); f.dateStyle = .medium; f.timeStyle = .none; return (s, f.string(from: s))
         case .week:
             let s = cal.dateInterval(of: .weekOfYear, for: d)?.start ?? d; f.dateFormat = "d MMM"; return (s, "Wk " + f.string(from: s))
-        case .month:
+        case .month, .unknown:
             let s = cal.dateInterval(of: .month, for: d)?.start ?? d; f.dateFormat = "MMM yyyy"; return (s, f.string(from: s))
         case .quarter:
             let s = cal.dateInterval(of: .quarter, for: d)?.start ?? d; let q = (cal.component(.month, from: s) - 1) / 3 + 1
@@ -178,10 +223,10 @@ public struct ChartData {
     }
 
     private func reduce(_ xs: [Double], _ a: ChartConfig.Aggregate, countRows: Bool) -> Double {
-        if countRows || a == .count { return Double(xs.count) }
+        if countRows || a == .count || a.isUnknown { return Double(xs.count) }
         guard !xs.isEmpty else { return 0 }
         switch a {
-        case .count: return Double(xs.count)
+        case .count, .unknown: return Double(xs.count)
         case .sum: return xs.reduce(0, +)
         case .average: return xs.reduce(0, +) / Double(xs.count)
         case .min: return xs.min() ?? 0
@@ -200,6 +245,8 @@ public struct DashboardConfig: Codable, Hashable, Sendable {
         public var viewID: RecordID
         /// Columns out of 12.
         public var width: Int
+        /// BSD-130: keys this version doesn't know; written back unchanged.
+        var extra: [String: JSONValue] = [:]
         public init(id: String = RecordIDs.make(), viewID: RecordID, width: Int = 12) {
             self.id = id; self.viewID = viewID; self.width = width
         }
@@ -209,6 +256,8 @@ public struct DashboardConfig: Codable, Hashable, Sendable {
         public var widgets: [Widget]
         /// Fixed row height in points (nil = automatic).
         public var height: Double?
+        /// BSD-130: keys this version doesn't know; written back unchanged.
+        var extra: [String: JSONValue] = [:]
         public init(id: String = RecordIDs.make(), widgets: [Widget], height: Double? = nil) {
             self.id = id; self.widgets = widgets; self.height = height
         }
@@ -217,6 +266,8 @@ public struct DashboardConfig: Codable, Hashable, Sendable {
     public static let maxWidgetsPerRow = 4
 
     public var rows: [Row]
+    /// BSD-130: keys this version doesn't know; written back unchanged.
+    var extra: [String: JSONValue] = [:]
     public init(rows: [Row] = []) { self.rows = rows }
 
     public var widgetViewIDs: [RecordID] { rows.flatMap { $0.widgets.map(\.viewID) } }

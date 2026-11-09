@@ -1207,6 +1207,9 @@ private struct ButtonStepCard: View {
             if !steps.contains(where: { $0.kind == .addPage }) {
                 Text("Add an “Add page to” step first.").font(DS.Text.small()).foregroundStyle(Theme.secondary)
             }
+        case .unknown:
+            Text("This step needs a newer version of Based. It is skipped and kept as it is.")
+                .font(DS.Text.small()).foregroundStyle(Theme.secondary)
         }
     }
 

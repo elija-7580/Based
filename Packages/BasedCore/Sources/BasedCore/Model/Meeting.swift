@@ -141,8 +141,20 @@ public struct MeetingInfo: Codable, Hashable, Sendable {
     }
 }
 
-public enum MeetingSectionKind: String, Codable, Sendable, CaseIterable {
+public enum MeetingSectionKind: OpenRawEnum, Sendable {
     case notes, summary
+    /// BSD-130: a section from a newer Based; shown like notes, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [MeetingSectionKind] = [.notes, .summary]
+
+    public var rawValue: String {
+        switch self {
+        case .notes: return "notes"
+        case .summary: return "summary"
+        case .unknown(let raw): return raw
+        }
+    }
 }
 
 /// One recognised utterance. Times are seconds from the meeting start.

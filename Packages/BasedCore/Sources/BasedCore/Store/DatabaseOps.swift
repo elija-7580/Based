@@ -780,6 +780,7 @@ public extension FilterGroup {
             case .group(let sub):
                 let s = sub.removing(propertyID: propertyID)
                 return s.items.isEmpty ? nil : .group(s)
+            case .unknown: return item
             }
         }
         return g
