@@ -83,3 +83,8 @@ export {
 export type { LaneLayout, LanePlacement, RowSpan, TimelineScale, TimelineTick } from "./query/calendar.js";
 export { addRowOnDay, canWriteSpan, databaseIDOfRow, moveRowSpan, resizeRowSpan, setRowSpan, storedDate, storedSpanDays } from "./store/calendar-ops.js";
 export type { SpanProperties } from "./store/calendar-ops.js";
+// BSD-73: Versionsverlauf pro Seite (git-artig, dedupliziert; Format wie Swift VersionHistory.swift)
+export { MemoryHistoryStorage, VersionHistory, compressObject, decompressObject, encodeVersionBlock, versionHash as historyHash, wordCount as versionWordCount } from "./history/version-history.js";
+export type { HistoryStats, HistoryStorage, HistoryVersion, VersionContent, VersionHistoryOptions } from "./history/version-history.js";
+export { restoreVersion, versionBlocks } from "./history/restore.js";
+export type { RestoreOptions, RestoreResult } from "./history/restore.js";

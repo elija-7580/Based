@@ -1,7 +1,7 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { DropZone, Outline, RecordKeyString, WireRecord } from "@based/core";
+import type { Block, DropZone, HistoryStats, HistoryVersion, Outline, RecordKeyString, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFormat, WorkspaceExportFormat } from "./interop.js";
 
@@ -88,7 +88,36 @@ export type Request =
   | { type: "commitImport"; payload: ImportPayload; parent?: string }
   /** Exporte (Antwort: ExportFile). */
   | { type: "exportPage"; pageID: string; format: ExportFormat }
-  | { type: "exportWorkspace"; format: WorkspaceExportFormat };
+  | { type: "exportWorkspace"; format: WorkspaceExportFormat }
+  /** Versionsverlauf einer Seite (BSD-73). */
+  | { type: "history"; action: HistoryAction };
+
+export type HistoryAction =
+  | { op: "list"; pageID: string }
+  | { op: "content"; pageID: string; versionID: number }
+  | { op: "restore"; pageID: string; versionID: number };
+
+export interface HistoryList {
+  /** Neueste zuerst; `at` in Unix-Sekunden. */
+  versions: HistoryVersion[];
+  stats?: HistoryStats;
+  /** Speichern einer Version ist gescheitert (sichtbar statt verschluckt). */
+  error?: string;
+}
+
+export interface HistoryContent {
+  blocks: Block[];
+  /** Fehlende Objekte: die Version ist unvollständig. */
+  missing: string[];
+}
+
+export interface HistoryRestoreResult {
+  restored: number;
+  removed: number;
+  /** Blöcke, die inzwischen auf einer anderen Seite stehen und hier als Kopie zurückkamen. */
+  copied: number;
+  trashed: number;
+}
 
 export type RequestMessage = Request & { id: number };
 

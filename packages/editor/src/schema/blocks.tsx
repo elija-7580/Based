@@ -36,7 +36,7 @@ function Atom(props: { kind: string; children: ReactNode; className?: string }) 
 }
 
 /** Kleines Eingabefeld in einem Block (Tasten gehen nicht an den Editor). */
-function InlineField(props: { value: string; placeholder: string; multiline?: boolean; onDone: (v: string) => void; onCancel?: () => void }) {
+function InlineField(props: { value: string; placeholder: string; multiline?: boolean; onDone: (v: string) => void; onCancel?: () => void; onInput?: (v: string) => void }) {
   const [v, setV] = useState(props.value);
   const key = (e: KeyboardEvent) => {
     e.stopPropagation();
@@ -51,7 +51,10 @@ function InlineField(props: { value: string; placeholder: string; multiline?: bo
     value: v,
     placeholder: props.placeholder,
     autoFocus: true,
-    onChange: (e: { target: { value: string } }) => setV(e.target.value),
+    onChange: (e: { target: { value: string } }) => {
+      setV(e.target.value);
+      props.onInput?.(e.target.value);
+    },
     onKeyDown: key,
     onBlur: () => props.onDone(v),
   };
@@ -84,21 +87,35 @@ export const calloutBlock = createReactBlockSpec(
 function EquationView(props: { expression: string; editor: AnyEditor; block: { id: string } }) {
   const env = useEnv();
   const [editing, setEditing] = useState(props.expression === "");
+  const [draft, setDraft] = useState(props.expression);
   if (editing && props.editor.isEditable) {
+    // Eingabefeld mit Live-Vorschau (KaTeX über env.renderEquation; Fehler zeigt der Renderer an).
     return (
       <Atom kind="equation" className="bx-equation is-editing">
-        <InlineField value={props.expression} placeholder="E = mc^2" multiline
+        <InlineField value={props.expression} placeholder="E = mc^2" multiline onInput={setDraft}
           onDone={(v) => {
             setEditing(false);
             if (v !== props.expression) props.editor.updateBlock(props.block.id, { props: { expression: v } });
           }}
           onCancel={() => setEditing(false)} />
+        {draft.trim() !== "" && env.renderEquation
+          ? <div className="bx-equation-preview" aria-label="Preview">{env.renderEquation({ expression: draft, displayMode: true })}</div>
+          : null}
       </Atom>
     );
   }
   return (
     <Atom kind="equation" className="bx-equation">
-      <div className="bx-equation-view" role="button" tabIndex={0} onClick={() => setEditing(true)}>
+      <div className="bx-equation-view" role="button" tabIndex={0} aria-label="Edit equation" onClick={() => {
+        setDraft(props.expression);
+        setEditing(true);
+      }} onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          setDraft(props.expression);
+          setEditing(true);
+        }
+      }}>
         {props.expression === ""
           ? <span className="bx-muted">Add a TeX equation</span>
           : env.renderEquation?.({ expression: props.expression, displayMode: true }) ?? <code className="bx-tex">{props.expression}</code>}

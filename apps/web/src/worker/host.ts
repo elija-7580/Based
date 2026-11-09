@@ -25,8 +25,12 @@ import {
   structureSignature,
   titleOf,
   trashPages,
+  trashedPages,
   createDatabase,
+  MemoryHistoryStorage,
+  VersionHistory,
   type Block,
+  type HistoryStorage,
   type RecordKeyString,
   type StoreChange,
   type WireRecord,
@@ -34,7 +38,8 @@ import {
 } from "@based/core";
 import { SyncClient, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
 import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
-import type { Command, Event, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
+import { PageHistory } from "./history.js";
+import type { Command, Event, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -43,6 +48,8 @@ export interface OpenedWorkspace {
   persistent: boolean;
   /** Warum nicht dauerhaft (für den Status). */
   note?: string;
+  /** Ablage des Versionsverlaufs (history.sqlite); ohne: im Speicher. */
+  history?: HistoryStorage;
 }
 
 export interface HostOptions {
@@ -77,6 +84,9 @@ export class StoreHost {
   private indexDirty = new Set<RecordKeyString>();
   private pendingSearch: { id: number; query: string; limit: number } | undefined;
   private lastStatus = "";
+  /** Versionsverlauf (BSD-73). */
+  history: PageHistory | undefined;
+  private historyTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(private readonly opts: HostOptions) {}
 
@@ -95,13 +105,14 @@ export class StoreHost {
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30); break;
         case "warmSearch": this.searchIndex(); reply(true); break;
         case "openPage": reply(this.openPage(msg.pageID)); break;
-        case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); reply(true); break;
+        case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); this.history?.pageClosed(msg.pageID); reply(true); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(commitImportPayload(this.store, msg.payload, msg.parent)); break;
         case "exportPage": reply(exportPage(this.store, msg.pageID, msg.format)); break;
         case "exportWorkspace": reply(exportWorkspace(this.store, msg.format)); break;
+        case "history": reply(this.historyAction(msg.action)); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -128,6 +139,7 @@ export class StoreHost {
     const created = store.blocks.size === 0 && !sync?.url && !store.isReadOnly;
     if (created) homePageID = this.createWelcome();
     store.observe((c) => this.onChange(c));
+    this.startHistory();
     store.onWriteFailureChanged = () => this.postStatus();
     this.rebuildTracking();
     this.opts.post({ type: "outline", outline: buildOutline(store) });
@@ -185,8 +197,8 @@ export class StoreHost {
       case "rename": return renamePage(store, c.id, c.title);
       case "trash": return trashPages(store, c.ids);
       case "restore": return restorePages(store, c.ids);
-      case "deleteForever": return deleteForever(store, c.ids);
-      case "emptyTrash": return emptyTrash(store);
+      case "deleteForever": this.history?.forget(c.ids); return deleteForever(store, c.ids);
+      case "emptyTrash": this.history?.forget(trashedPages(store).map((b) => b.id)); return emptyTrash(store);
       case "drop": return dropPages(store, c.ids, c.target, c.zone);
       case "moveToSection":
         return movePages(store, c.ids, { kind: "top", section: c.section === PRIVATE_SECTION ? { kind: "private" } : { kind: "teamspace", id: c.section } });
@@ -194,6 +206,28 @@ export class StoreHost {
       case "undo": return store.undo().name;
       case "redo": return store.redo().name;
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
+    }
+  }
+
+  // MARK: Versionsverlauf (BSD-73)
+
+  private startHistory() {
+    const ws = this.ws!;
+    const history = new PageHistory(ws.store, new VersionHistory(ws.history ?? new MemoryHistoryStorage()));
+    this.history = history;
+    ws.store.observe((c) => history.onChange(c));
+    this.historyTimer = setInterval(() => history.tick(), 20_000);
+    // Alte Versionen ausdünnen, nicht beim Start selbst.
+    setTimeout(() => history.maintain(), 30_000);
+  }
+
+  historyAction(a: HistoryAction): unknown {
+    const h = this.history;
+    if (!h) throw new Error("not initialised");
+    switch (a.op) {
+      case "list": return h.list(a.pageID);
+      case "content": return h.content(a.pageID, a.versionID);
+      case "restore": return h.restore(a.pageID, a.versionID);
     }
   }
 
@@ -347,6 +381,7 @@ export class StoreHost {
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
     this.openPages.set(pageID, keys);
+    this.history?.pageOpened(pageID);
     return { pageID, node: store.clock.node, records };
   }
 
@@ -456,6 +491,7 @@ export class StoreHost {
 
   stop() {
     this.sync?.stop();
+    if (this.historyTimer) clearInterval(this.historyTimer);
   }
 
   private onSyncStatus(s: string) {

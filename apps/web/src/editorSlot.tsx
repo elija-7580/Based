@@ -1,7 +1,9 @@
 // Phase 2: @based/editor in den PageEditor-Steckplatz der Shell. Theme folgt dem Wurzel-Attribut data-theme;
-// Inline-Datenbanken rendert der DatabaseView-Steckplatz (sobald @based/database-ui eingesteckt ist).
+// Inline-Datenbanken rendert der DatabaseView-Steckplatz (sobald @based/database-ui eingesteckt ist), Gleichungen
+// KaTeX offline (BSD-10, src/equation.tsx).
 import { useEffect, useState } from "react";
-import { PageEditor, type DatabaseRenderProps } from "@based/editor";
+import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { Equation } from "./equation.js";
 import { slots, type PageEditorProps } from "./slots.js";
 
 function useRootTheme(): "light" | "dark" {
@@ -21,9 +23,10 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
     const View = slots.DatabaseView;
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
   };
+  const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
   return (
     <div className="shell-editor">
-      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} />
+      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} />
     </div>
   );
 }

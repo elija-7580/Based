@@ -1,5 +1,5 @@
 // @based/editor – Seiten-Editor auf BlockNote-Kern (MPL-2.0) + Yjs (BSD-154). Keine @blocknote/xl-* (ADR 0011).
-export { PageEditor, copyAndSync, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
+export { PageEditor, copyAndSync, insertInlineEquation, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
 export type { PageEditorProps } from "./ui/PageEditor.js";
 export type { DatabaseRenderProps, EquationRenderProps, Person } from "./ui/env.js";
 

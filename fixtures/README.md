@@ -28,6 +28,7 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | export | `export/export.utc.json` | Markdown-/CSV-/HTML-Export, Workspace-Export (eindeutige Namen, relative Links, Dateien in `assets/`) |
 | archive | `archive/archive.json` | Workspace-Archiv v1/v2 schreiben und lesen, Asset-Einträge, ZIP-Pfade, Import mit Herkunft `import` (BSD-26) |
 | undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
+| history | `history/history.json` | Versionsverlauf (BSD-73): Block-Kodierung (`/` maskiert) und 128-Bit-Hash byte-genau, Manifeste/Dedup beim Aufzeichnen, `versionBlocks`, Ausdünnen und Aufräumen, Wiederherstellen samt Undo (nur Fälle, in denen TS bewusst wie Swift bleibt; TS verschiebt zusätzlich statt zu löschen) |
 
 Format: `{"module": "…", "cases": [{"name", "input", "output"}], …Metadaten}`. Fehler als `{"error": "…"}`,
 berechnete Werte als `{"t": "<typ>", "v": …}`, Datum wie in Swift (Sekunden seit 2001-01-01).

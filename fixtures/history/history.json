@@ -1,0 +1,6076 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "blocks" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "subc",
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "in der Unterseite",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tr",
+            "parent" : "b:page",
+            "sk" : "a4",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Papierkorb",
+            "trashedAt" : 784000000,
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000.25,
+            "createdBy" : "user-1",
+            "id" : "x",
+            "parent" : "b:page",
+            "sk" : "a9",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Tab\tNeu\nZeile \u0001 Steuer / Schräg \"Zitat\" \\ Ä 🚀  ",
+            "type" : "text",
+            "updatedAt" : 784000000,
+            "updatedBy" : "user-1"
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "leer",
+            "parent" : "b:page",
+            "sk" : "b0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 0,
+              "node" : ""
+            },
+            "type" : "text",
+            "updatedAt" : 784000000
+          }
+        ],
+        "op" : "encode"
+      },
+      "name" : "Blöcke kodieren und hashen",
+      "output" : [
+        {
+          "hash" : "99b4f2c5a2bcf2526e538d37a8e7a078",
+          "json" : "{\"createdAt\":784000000,\"id\":\"page\",\"parent\":\"w\",\"props\":{\"icon\":\"📓\"},\"sk\":\"a0\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Notizen\",\"type\":\"page\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "9bc57878e8edec4d420109661590e66d",
+          "json" : "{\"createdAt\":784000000,\"id\":\"h\",\"parent\":\"b:page\",\"sk\":\"a0\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Überschrift\",\"type\":\"heading1\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "7e8f81ace1dd4e5b0e4f2d95a38b5a74",
+          "json" : "{\"createdAt\":784000000,\"id\":\"p1\",\"parent\":\"b:page\",\"sk\":\"a1\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":[{\"t\":\"Erster Absatz mit \"},{\"m\":{\"link\":\"https:\\/\\/example.com\\/a\\/b\"},\"t\":\"Link\"}],\"type\":\"text\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "161074af97cd7a98e50e70eb62735928",
+          "json" : "{\"createdAt\":784000000,\"id\":\"tg\",\"parent\":\"b:page\",\"sk\":\"a2\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Mehr\",\"type\":\"toggle\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "59895a8430789dd8f50c0d397612142c",
+          "json" : "{\"createdAt\":784000000,\"id\":\"tg1\",\"parent\":\"b:tg\",\"sk\":\"a0\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"im Toggle\",\"type\":\"text\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "c4e73f057b9fb5633d97a8be94f44619",
+          "json" : "{\"createdAt\":784000000,\"id\":\"sub\",\"parent\":\"b:tg\",\"sk\":\"a1\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Unterseite\",\"type\":\"page\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "f8a963193c3ed59abaafddf8e9ef0412",
+          "json" : "{\"createdAt\":784000000,\"id\":\"subc\",\"parent\":\"b:sub\",\"sk\":\"a0\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"in der Unterseite\",\"type\":\"text\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "15a6e94e52b79db35aba3c6cd62dab6f",
+          "json" : "{\"createdAt\":784000000,\"id\":\"td\",\"parent\":\"b:page\",\"props\":{\"checked\":true},\"sk\":\"a3\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Aufgabe  mit   Leerraum\",\"type\":\"todo\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "9761d4c954f5387e980aa9d054808747",
+          "json" : "{\"createdAt\":784000000,\"id\":\"tr\",\"parent\":\"b:page\",\"sk\":\"a4\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"im Papierkorb\",\"trashedAt\":784000000,\"type\":\"text\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "b8713dac3fd84e6d5eeaea551e6648e6",
+          "json" : "{\"createdAt\":784000000,\"id\":\"eq\",\"parent\":\"b:page\",\"props\":{\"expression\":\"\\\\frac{a}{b}\"},\"sk\":\"a5\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"type\":\"equation\",\"updatedAt\":784000000}"
+        },
+        {
+          "hash" : "28dbc22ebb7c749b55db101b3676baee",
+          "json" : "{\"createdAt\":784000000.25,\"createdBy\":\"user-1\",\"id\":\"x\",\"parent\":\"b:page\",\"sk\":\"a9\",\"stamp\":{\"counter\":0,\"millis\":1000,\"node\":\"fx\"},\"text\":\"Tab\\tNeu\\nZeile \\u0001 Steuer \\/ Schräg \\\"Zitat\\\" \\\\ Ä 🚀  \",\"type\":\"text\",\"updatedAt\":784000000,\"updatedBy\":\"user-1\"}"
+        },
+        {
+          "hash" : "e5c3e4145af1b5ee151512571f448962",
+          "json" : "{\"createdAt\":784000000,\"id\":\"leer\",\"parent\":\"b:page\",\"sk\":\"b0\",\"stamp\":{\"counter\":0,\"millis\":0,\"node\":\"\"},\"type\":\"text\",\"updatedAt\":784000000}"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "op" : "hash",
+        "texts" : [
+          "",
+          "a",
+          "page\tabc",
+          "Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based Based ",
+          "ÄÖÜ🚀"
+        ]
+      },
+      "name" : "Hash von Bytes",
+      "output" : [
+        "f52a15e9a9b5e89b8dfda0d242ae1209",
+        "02c0bdbf481420f8fa09c248f9d621ec",
+        "a798cdf1faa4b43db508c6c9e38a922e",
+        "dad7a9d2412e3a68da9f91d2953c2ac7",
+        "ab7fed88cf5cbdf1e255ce54ce06d640"
+      ]
+    },
+    {
+      "input" : {
+        "op" : "versionBlocks",
+        "pageID" : "page"
+      },
+      "name" : "versionBlocks page",
+      "output" : [
+        "page",
+        "h",
+        "p1",
+        "tg",
+        "tg1",
+        "sub",
+        "td",
+        "eq"
+      ]
+    },
+    {
+      "input" : {
+        "op" : "versionBlocks",
+        "pageID" : "sub"
+      },
+      "name" : "versionBlocks sub",
+      "output" : [
+        "sub",
+        "subc"
+      ]
+    },
+    {
+      "input" : {
+        "op" : "versionBlocks",
+        "pageID" : "fehlt"
+      },
+      "name" : "versionBlocks fehlt",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "op" : "record",
+        "steps" : [
+          {
+            "at" : 1800000000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "opened",
+            "title" : "Notizen"
+          },
+          {
+            "at" : 1800000060,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "edit",
+            "title" : "Notizen"
+          },
+          {
+            "at" : 1800000120,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Erster Absatz, geändert",
+                "type" : "text",
+                "updatedAt" : 784000060
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "edit",
+            "title" : "Notizen"
+          },
+          {
+            "at" : 1800000180,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Erster Absatz, geändert",
+                "type" : "text",
+                "updatedAt" : 784000060
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "neu",
+                "parent" : "b:page",
+                "sk" : "a6",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "neuer Punkt eins zwei",
+                "type" : "bulletedList",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "edit",
+            "title" : "Notizen"
+          },
+          {
+            "at" : 1800000240,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "edit",
+            "title" : "Notizen"
+          },
+          {
+            "at" : 1800000300,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "reason" : "edit",
+            "title" : "Notizen"
+          }
+        ]
+      },
+      "name" : "Aufzeichnen mit Dedup",
+      "output" : {
+        "steps" : [
+          {
+            "read" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "stats" : {
+              "bytes" : 1767,
+              "objects" : 9,
+              "versions" : 1
+            },
+            "version" : {
+              "at" : 1800000000,
+              "blockCount" : 7,
+              "id" : 1,
+              "manifest" : "0b5472cc6a5bdaa3c9c6391d3007bd00",
+              "reason" : "opened",
+              "title" : "Notizen",
+              "wordCount" : 12
+            }
+          },
+          {
+            "stats" : {
+              "bytes" : 1767,
+              "objects" : 9,
+              "versions" : 1
+            },
+            "version" : null
+          },
+          {
+            "read" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Erster Absatz, geändert",
+                "type" : "text",
+                "updatedAt" : 784000060
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "stats" : {
+              "bytes" : 2238,
+              "objects" : 11,
+              "versions" : 2
+            },
+            "version" : {
+              "at" : 1800000120,
+              "blockCount" : 7,
+              "id" : 2,
+              "manifest" : "e2ba3149cf2b7dc658890bb2f0f25b47",
+              "reason" : "edit",
+              "title" : "Notizen",
+              "wordCount" : 11
+            }
+          },
+          {
+            "read" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Erster Absatz, geändert",
+                "type" : "text",
+                "updatedAt" : 784000060
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "neu",
+                "parent" : "b:page",
+                "sk" : "a6",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "neuer Punkt eins zwei",
+                "type" : "bulletedList",
+                "updatedAt" : 784000000
+              }
+            ],
+            "stats" : {
+              "bytes" : 2752,
+              "objects" : 13,
+              "versions" : 3
+            },
+            "version" : {
+              "at" : 1800000180,
+              "blockCount" : 8,
+              "id" : 3,
+              "manifest" : "4a2f748e108801b22ebdbf50aadfd3d1",
+              "reason" : "edit",
+              "title" : "Notizen",
+              "wordCount" : 15
+            }
+          },
+          {
+            "read" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "page",
+                "parent" : "w",
+                "props" : {
+                  "icon" : "📓"
+                },
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Notizen",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "h",
+                "parent" : "b:page",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Überschrift",
+                "type" : "heading1",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "p1",
+                "parent" : "b:page",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : [
+                  {
+                    "t" : "Erster Absatz mit "
+                  },
+                  {
+                    "m" : {
+                      "link" : "https://example.com/a/b"
+                    },
+                    "t" : "Link"
+                  }
+                ],
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg",
+                "parent" : "b:page",
+                "sk" : "a2",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Mehr",
+                "type" : "toggle",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "tg1",
+                "parent" : "b:tg",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "im Toggle",
+                "type" : "text",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "sub",
+                "parent" : "b:tg",
+                "sk" : "a1",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Unterseite",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "td",
+                "parent" : "b:page",
+                "props" : {
+                  "checked" : true
+                },
+                "sk" : "a3",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Aufgabe  mit   Leerraum",
+                "type" : "todo",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "eq",
+                "parent" : "b:page",
+                "props" : {
+                  "expression" : "\\frac{a}{b}"
+                },
+                "sk" : "a5",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "type" : "equation",
+                "updatedAt" : 784000000
+              }
+            ],
+            "stats" : {
+              "bytes" : 2752,
+              "objects" : 13,
+              "versions" : 4
+            },
+            "version" : {
+              "at" : 1800000240,
+              "blockCount" : 7,
+              "id" : 4,
+              "manifest" : "0b5472cc6a5bdaa3c9c6391d3007bd00",
+              "reason" : "edit",
+              "title" : "Notizen",
+              "wordCount" : 12
+            }
+          },
+          {
+            "stats" : {
+              "bytes" : 2752,
+              "objects" : 13,
+              "versions" : 4
+            },
+            "version" : null
+          }
+        ],
+        "versions" : [
+          {
+            "at" : 1800000240,
+            "blockCount" : 7,
+            "id" : 4,
+            "manifest" : "0b5472cc6a5bdaa3c9c6391d3007bd00",
+            "reason" : "edit",
+            "title" : "Notizen",
+            "wordCount" : 12
+          },
+          {
+            "at" : 1800000180,
+            "blockCount" : 8,
+            "id" : 3,
+            "manifest" : "4a2f748e108801b22ebdbf50aadfd3d1",
+            "reason" : "edit",
+            "title" : "Notizen",
+            "wordCount" : 15
+          },
+          {
+            "at" : 1800000120,
+            "blockCount" : 7,
+            "id" : 2,
+            "manifest" : "e2ba3149cf2b7dc658890bb2f0f25b47",
+            "reason" : "edit",
+            "title" : "Notizen",
+            "wordCount" : 11
+          },
+          {
+            "at" : 1800000000,
+            "blockCount" : 7,
+            "id" : 1,
+            "manifest" : "0b5472cc6a5bdaa3c9c6391d3007bd00",
+            "reason" : "opened",
+            "title" : "Notizen",
+            "wordCount" : 12
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "now" : 1800000000,
+        "op" : "prune",
+        "steps" : [
+          {
+            "at" : 1799998200,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 0",
+                "type" : "text",
+                "updatedAt" : 784000000
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799992800,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 1",
+                "type" : "text",
+                "updatedAt" : 784000001
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799910000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 2",
+                "type" : "text",
+                "updatedAt" : 784000002
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799908200,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 3",
+                "type" : "text",
+                "updatedAt" : 784000003
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799892000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 4",
+                "type" : "text",
+                "updatedAt" : 784000004
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799740800,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 5",
+                "type" : "text",
+                "updatedAt" : 784000005
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799737200,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 6",
+                "type" : "text",
+                "updatedAt" : 784000006
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799308800,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 7",
+                "type" : "text",
+                "updatedAt" : 784000007
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799301600,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 8",
+                "type" : "text",
+                "updatedAt" : 784000008
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1798272000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 0",
+                "type" : "text",
+                "updatedAt" : 784000009
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1791360000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 1",
+                "type" : "text",
+                "updatedAt" : 784000010
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1791273600,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 2",
+                "type" : "text",
+                "updatedAt" : 784000011
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1789632000,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "A",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "A-t",
+                "parent" : "b:A",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 3",
+                "type" : "text",
+                "updatedAt" : 784000012
+              }
+            ],
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799906400,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "B",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "B",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "B-t",
+                "parent" : "b:B",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 4",
+                "type" : "text",
+                "updatedAt" : 784000013
+              }
+            ],
+            "pageID" : "B"
+          },
+          {
+            "at" : 1799905680,
+            "blocks" : [
+              {
+                "createdAt" : 784000000,
+                "id" : "B",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "B",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              {
+                "createdAt" : 784000000,
+                "id" : "B-t",
+                "parent" : "b:B",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 1000,
+                  "node" : "fx"
+                },
+                "text" : "Fassung 5",
+                "type" : "text",
+                "updatedAt" : 784000014
+              }
+            ],
+            "pageID" : "B"
+          }
+        ]
+      },
+      "name" : "Ausdünnen und Aufräumen",
+      "output" : {
+        "garbage" : 4,
+        "remaining" : [
+          {
+            "at" : 1799998200,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799992800,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799910000,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799908200,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799892000,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799740800,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799737200,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799308800,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1798272000,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1791360000,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1789632000,
+            "pageID" : "A"
+          },
+          {
+            "at" : 1799906400,
+            "pageID" : "B"
+          },
+          {
+            "at" : 1799905680,
+            "pageID" : "B"
+          }
+        ],
+        "removed" : 2,
+        "stats" : {
+          "bytes" : 3357,
+          "objects" : 28,
+          "versions" : 13
+        }
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "geändert",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : false
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:tg",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Text und Häkchen geändert",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "geändert",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : false,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Blöcke gelöscht",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "neu",
+              "parent" : "b:page",
+              "sk" : "a9",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "neu",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "neu1",
+              "parent" : "b:neu",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "darin",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:tg",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Blöcke hinzugefügt",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "neu" : {
+            "parent" : "b:page",
+            "sk" : "a9",
+            "text" : "neu",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "neu1" : {
+            "parent" : "b:neu",
+            "sk" : "a0",
+            "text" : "darin",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:tg",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:page",
+              "sk" : "a6",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: innerhalb der Seite verschoben",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:tg",
+            "sk" : "a5",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:page",
+            "sk" : "a6",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "np",
+              "parent" : "b:nt",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "neue Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "nt",
+              "parent" : "b:page",
+              "sk" : "a8",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "neuer Toggle",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:page",
+              "sk" : "a7",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:tg",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Unterseite in neuem Block rückt nach oben",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "np" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "neue Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:page",
+            "sk" : "a7",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "np" : {
+            "parent" : "b:nt",
+            "sk" : "a0",
+            "text" : "neue Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "nt" : {
+            "parent" : "b:page",
+            "sk" : "a8",
+            "text" : "neuer Toggle",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:page",
+            "sk" : "a7",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "props" : {
+                "icon" : "📓"
+              },
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Notizen",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "trashedAt" : 784000000,
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:tg",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Block im Papierkorb kommt zurück",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : true,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    },
+    {
+      "input" : {
+        "op" : "restore",
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "favorites" : [
+
+              ],
+              "id" : "workspace",
+              "name" : "My Workspace",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1,
+                "node" : "fx"
+              },
+              "updatedAt" : 784000000
+            },
+            "kind" : "workspace"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "eq",
+              "parent" : "b:page",
+              "props" : {
+                "expression" : "\\frac{a}{b}"
+              },
+              "sk" : "a5",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "type" : "equation",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "h",
+              "parent" : "b:page",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Überschrift",
+              "type" : "heading1",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "p1",
+              "parent" : "b:page",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : [
+                {
+                  "t" : "Erster Absatz mit "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com/a/b"
+                  },
+                  "t" : "Link"
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "page",
+              "parent" : "w",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Neuer Titel",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "sub",
+              "parent" : "b:tg",
+              "sk" : "a1",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Unterseite",
+              "type" : "page",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "subc",
+              "parent" : "b:sub",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "in der Unterseite",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "td",
+              "parent" : "b:page",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a3",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Aufgabe  mit   Leerraum",
+              "type" : "todo",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg",
+              "parent" : "b:page",
+              "sk" : "a2",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "Mehr",
+              "type" : "toggle",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tg1",
+              "parent" : "b:tg",
+              "sk" : "a0",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Toggle",
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : 784000000,
+              "id" : "tr",
+              "parent" : "b:page",
+              "sk" : "a4",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 1000,
+                "node" : "fx"
+              },
+              "text" : "im Papierkorb",
+              "trashedAt" : 784000000,
+              "type" : "text",
+              "updatedAt" : 784000000
+            },
+            "kind" : "block"
+          }
+        ],
+        "version" : [
+          {
+            "createdAt" : 784000000,
+            "id" : "page",
+            "parent" : "w",
+            "props" : {
+              "icon" : "📓"
+            },
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Notizen",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "h",
+            "parent" : "b:page",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Überschrift",
+            "type" : "heading1",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "p1",
+            "parent" : "b:page",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : [
+              {
+                "t" : "Erster Absatz mit "
+              },
+              {
+                "m" : {
+                  "link" : "https://example.com/a/b"
+                },
+                "t" : "Link"
+              }
+            ],
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg",
+            "parent" : "b:page",
+            "sk" : "a2",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Mehr",
+            "type" : "toggle",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "tg1",
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "im Toggle",
+            "type" : "text",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "sub",
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Unterseite",
+            "type" : "page",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "td",
+            "parent" : "b:page",
+            "props" : {
+              "checked" : true
+            },
+            "sk" : "a3",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "text" : "Aufgabe  mit   Leerraum",
+            "type" : "todo",
+            "updatedAt" : 784000000
+          },
+          {
+            "createdAt" : 784000000,
+            "id" : "eq",
+            "parent" : "b:page",
+            "props" : {
+              "expression" : "\\frac{a}{b}"
+            },
+            "sk" : "a5",
+            "stamp" : {
+              "counter" : 0,
+              "millis" : 1000,
+              "node" : "fx"
+            },
+            "type" : "equation",
+            "updatedAt" : 784000000
+          }
+        ]
+      },
+      "name" : "Wiederherstellen: Seitentitel und Icon",
+      "output" : {
+        "after" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Notizen",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undo" : {
+          "eq" : {
+            "parent" : "b:page",
+            "sk" : "a5",
+            "text" : "",
+            "trashed" : false,
+            "type" : "equation"
+          },
+          "h" : {
+            "parent" : "b:page",
+            "sk" : "a0",
+            "text" : "Überschrift",
+            "trashed" : false,
+            "type" : "heading1"
+          },
+          "p1" : {
+            "parent" : "b:page",
+            "sk" : "a1",
+            "text" : "Erster Absatz mit Link",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "page" : {
+            "parent" : "w",
+            "sk" : "a0",
+            "text" : "Neuer Titel",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "sub" : {
+            "parent" : "b:tg",
+            "sk" : "a1",
+            "text" : "Unterseite",
+            "trashed" : false,
+            "type" : "page"
+          },
+          "subc" : {
+            "parent" : "b:sub",
+            "sk" : "a0",
+            "text" : "in der Unterseite",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "td" : {
+            "checked" : true,
+            "parent" : "b:page",
+            "sk" : "a3",
+            "text" : "Aufgabe  mit   Leerraum",
+            "trashed" : false,
+            "type" : "todo"
+          },
+          "tg" : {
+            "parent" : "b:page",
+            "sk" : "a2",
+            "text" : "Mehr",
+            "trashed" : false,
+            "type" : "toggle"
+          },
+          "tg1" : {
+            "parent" : "b:tg",
+            "sk" : "a0",
+            "text" : "im Toggle",
+            "trashed" : false,
+            "type" : "text"
+          },
+          "tr" : {
+            "parent" : "b:page",
+            "sk" : "a4",
+            "text" : "im Papierkorb",
+            "trashed" : true,
+            "type" : "text"
+          }
+        },
+        "undoName" : "Restore version"
+      }
+    }
+  ],
+  "module" : "history",
+  "note" : "Zeiten der Versionen in Unix-Sekunden (Spalte `at`); Objekte roh gespeichert (Linux), daher `bytes` = 1 + Länge.",
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "page",
+        "parent" : "w",
+        "props" : {
+          "icon" : "📓"
+        },
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Notizen",
+        "type" : "page",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "h",
+        "parent" : "b:page",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Überschrift",
+        "type" : "heading1",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "p1",
+        "parent" : "b:page",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : [
+          {
+            "t" : "Erster Absatz mit "
+          },
+          {
+            "m" : {
+              "link" : "https://example.com/a/b"
+            },
+            "t" : "Link"
+          }
+        ],
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "tg",
+        "parent" : "b:page",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Mehr",
+        "type" : "toggle",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "tg1",
+        "parent" : "b:tg",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "im Toggle",
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "sub",
+        "parent" : "b:tg",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Unterseite",
+        "type" : "page",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "subc",
+        "parent" : "b:sub",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "in der Unterseite",
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "td",
+        "parent" : "b:page",
+        "props" : {
+          "checked" : true
+        },
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "Aufgabe  mit   Leerraum",
+        "type" : "todo",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "tr",
+        "parent" : "b:page",
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "text" : "im Papierkorb",
+        "trashedAt" : 784000000,
+        "type" : "text",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "id" : "eq",
+        "parent" : "b:page",
+        "props" : {
+          "expression" : "\\frac{a}{b}"
+        },
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1000,
+          "node" : "fx"
+        },
+        "type" : "equation",
+        "updatedAt" : 784000000
+      },
+      "kind" : "block"
+    }
+  ]
+}
