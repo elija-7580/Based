@@ -1,0 +1,6543 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"plan\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"plan\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"plan\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"plan\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"PLAN\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"PLAN\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"PLAN\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"PLAN\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"PLAN\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"PLAN\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"PLAN\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"PLAN\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "PLAN",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"PLAN\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"cafe\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"cafe\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"cafe\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"cafe\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"cafe\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"cafe\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"cafe\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"cafe\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "cafe",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"cafe\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"café\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"café\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"café\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"café\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"café\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"café\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "child",
+          "score" : 28.333333333333336,
+          "snippetBlocks" : [
+            "child-a"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"café\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 67,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"café\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 89.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "café",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"café\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"resume\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"resume\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"resume\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"resume\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"resume\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"resume\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"resume\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"resume\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-resume"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "resume",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"resume\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zurich\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"zurich\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"zurich\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"zurich\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"zurich\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zurich\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zurich\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zurich\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zurich",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zurich\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"budget\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"budget\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"budget\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"budget\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"budget\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"budget\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"budget\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"budget\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-cells",
+            "n-transcript"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "budget",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"budget\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"roadmap\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"roadmap\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"roadmap\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"roadmap\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        },
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"roadmap\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"roadmap\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"roadmap\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "roadmap",
+          "score" : 87,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"roadmap\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-mention"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "roadmap",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"roadmap\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"example.com\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"example.com\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"example.com\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"example.com\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"example.com\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"example.com\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"example.com\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"example.com\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "example.com",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"example.com\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"extra\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"extra\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"extra\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"extra\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"extra\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"extra\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"extra\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"extra\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "extra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"extra\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ship\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"ship\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"ship\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"ship\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"ship\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ship\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ship\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ship\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 89,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ship",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ship\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan child\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"plan child\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"plan child\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"plan child\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"plan child\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan child\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan child\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 108.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan child\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan child",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan child\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"notes plan\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"notes plan\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"notes plan\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"notes plan\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"notes plan\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"notes plan\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"notes plan\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"notes plan\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "notes plan",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"notes plan\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"nothing here\" · ohne Filter · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"nothing here\" · ohne Filter · lastEditedNewest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"nothing here\" · ohne Filter · lastEditedOldest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"nothing here\" · ohne Filter · createdNewest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"nothing here\" · ohne Filter · createdOldest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"nothing here\" · in Notes · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"nothing here\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"nothing here\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "nothing here",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"nothing here\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"tracker\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"tracker\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"tracker\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"tracker\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"tracker\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"tracker\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"tracker\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 66.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"tracker\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "tracker",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"tracker\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"  plan  \" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"  plan  \" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"  plan  \" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"  plan  \" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"  plan  \" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"  plan  \" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        },
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"  plan  \" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "child",
+          "score" : 88.33333333333333,
+          "snippet" : null
+        },
+        {
+          "pageID" : "archive-block",
+          "score" : 88,
+          "snippet" : null
+        },
+        {
+          "pageID" : "tracker-block",
+          "score" : 86.66666666666667,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"  plan  \" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image",
+            "n-mention",
+            "n-plan"
+          ]
+        },
+        {
+          "pageID" : "row-ship",
+          "score" : 15,
+          "snippet" : "https://example.com/plan Ëxtra notes"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "  plan  ",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"  plan  \" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"diagram\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"diagram\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"diagram\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"diagram\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"diagram\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"diagram\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"diagram\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"diagram\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "notes",
+          "score" : 29.666666666666664,
+          "snippetBlocks" : [
+            "n-image"
+          ]
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "diagram",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"diagram\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zebra\" · ohne Filter · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"zebra\" · ohne Filter · lastEditedNewest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"zebra\" · ohne Filter · lastEditedOldest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"zebra\" · ohne Filter · createdNewest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"zebra\" · ohne Filter · createdOldest",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zebra\" · in Notes · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zebra\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zebra\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "zebra",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"zebra\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"wien\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"wien\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"wien\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"wien\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"wien\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"wien\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"wien\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"wien\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "wien",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"wien\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "…g nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ledger\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"ledger\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"ledger\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"ledger\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"ledger\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ledger\" · in Notes · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ledger\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ledger\" · bearbeitet nach · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-row",
+          "score" : 69.33333333333333,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "ledger",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"ledger\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"archive\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"archive\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"archive\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"archive\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"archive\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"archive\" · in Notes · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"archive\" · nur Titel · bestMatch",
+      "output" : [
+        {
+          "pageID" : "archive-block",
+          "score" : 68,
+          "snippet" : null
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"archive\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "archive",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"archive\" · von user-2 · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan@example\" · ohne Filter · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "lastEditedNewest"
+      },
+      "name" : "\"plan@example\" · ohne Filter · lastEditedNewest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "lastEditedOldest"
+      },
+      "name" : "\"plan@example\" · ohne Filter · lastEditedOldest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "createdNewest"
+      },
+      "name" : "\"plan@example\" · ohne Filter · createdNewest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "createdOldest"
+      },
+      "name" : "\"plan@example\" · ohne Filter · createdOldest",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "inPage" : "notes",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan@example\" · in Notes · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "titleOnly" : true
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan@example\" · nur Titel · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "editedAfter" : 721433600,
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan@example\" · bearbeitet nach · bestMatch",
+      "output" : [
+
+      ]
+    },
+    {
+      "input" : {
+        "filters" : {
+          "createdBy" : "user-2",
+          "titleOnly" : false
+        },
+        "limit" : 60,
+        "query" : "plan@example",
+        "sort" : "bestMatch"
+      },
+      "name" : "\"plan@example\" · von user-2 · bestMatch",
+      "output" : [
+        {
+          "pageID" : "row-second",
+          "score" : 15,
+          "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "masterplan",
+          "roadmap",
+          "cafe"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Erwähntes Ziel umbenannt",
+      "output" : [
+        [
+          {
+            "pageID" : "roadmap",
+            "score" : 107,
+            "snippet" : null
+          },
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-mention"
+            ]
+          }
+        ],
+        [
+
+        ],
+        [
+          {
+            "pageID" : "archive-row",
+            "score" : 89.33333333333333,
+            "snippet" : null
+          },
+          {
+            "pageID" : "child",
+            "score" : 28.333333333333336,
+            "snippetBlocks" : [
+              "child-a"
+            ]
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "cafe",
+          "plan child",
+          "child"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Unterseite in den Papierkorb",
+      "output" : [
+        [
+          {
+            "pageID" : "archive-row",
+            "score" : 89.33333333333333,
+            "snippet" : null
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ],
+        [
+
+        ],
+        [
+
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "resume",
+          "details"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Block verschoben",
+      "output" : [
+        [
+          {
+            "pageID" : "roadmap",
+            "score" : 27,
+            "snippetBlocks" : [
+              "n-resume"
+            ]
+          }
+        ],
+        [
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-toggle"
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "example.com",
+          "extra",
+          "ship",
+          "plan"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "row-ship"
+            ],
+            "name" : "Zeile gelöscht",
+            "records" : [
+
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Zeile gelöscht",
+      "output" : [
+        [
+
+        ],
+        [
+
+        ],
+        [
+
+        ],
+        [
+          {
+            "pageID" : "archive-block",
+            "score" : 88,
+            "snippet" : null
+          },
+          {
+            "pageID" : "tracker-block",
+            "score" : 86.66666666666667,
+            "snippet" : null
+          },
+          {
+            "pageID" : "roadmap",
+            "score" : 52,
+            "snippet" : null
+          },
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-image",
+              "n-mention",
+              "n-plan"
+            ]
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "zebra",
+          "tracker",
+          "plan tracker"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "row-ship"
+            ],
+            "name" : "Zeile gelöscht",
+            "records" : [
+
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Datenbank umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "blockID" : "tracker-block",
+                  "createdAt" : 720828800,
+                  "id" : "tracker",
+                  "properties" : [
+                    {
+                      "id" : "title",
+                      "name" : "Name",
+                      "type" : "title"
+                    },
+                    {
+                      "id" : "link",
+                      "name" : "Link",
+                      "type" : "url"
+                    },
+                    {
+                      "id" : "note",
+                      "name" : "Note",
+                      "type" : "text"
+                    },
+                    {
+                      "id" : "where",
+                      "name" : "Where",
+                      "type" : "place"
+                    },
+                    {
+                      "id" : "mail",
+                      "name" : "Mail",
+                      "type" : "email"
+                    },
+                    {
+                      "id" : "done",
+                      "name" : "Done",
+                      "type" : "checkbox"
+                    }
+                  ],
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1040,
+                    "node" : "remote"
+                  },
+                  "title" : "Zebra tracker",
+                  "updatedAt" : 720828800
+                },
+                "kind" : "database"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Datenbank umbenannt",
+      "output" : [
+        [
+          {
+            "pageID" : "tracker-block",
+            "score" : 86.66666666666667,
+            "snippet" : null
+          }
+        ],
+        [
+          {
+            "pageID" : "tracker-block",
+            "score" : 66.66666666666667,
+            "snippet" : null
+          }
+        ],
+        [
+
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "zebra",
+          "brand new",
+          "cafe",
+          "plan"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "row-ship"
+            ],
+            "name" : "Zeile gelöscht",
+            "records" : [
+
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Datenbank umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "blockID" : "tracker-block",
+                  "createdAt" : 720828800,
+                  "id" : "tracker",
+                  "properties" : [
+                    {
+                      "id" : "title",
+                      "name" : "Name",
+                      "type" : "title"
+                    },
+                    {
+                      "id" : "link",
+                      "name" : "Link",
+                      "type" : "url"
+                    },
+                    {
+                      "id" : "note",
+                      "name" : "Note",
+                      "type" : "text"
+                    },
+                    {
+                      "id" : "where",
+                      "name" : "Where",
+                      "type" : "place"
+                    },
+                    {
+                      "id" : "mail",
+                      "name" : "Mail",
+                      "type" : "email"
+                    },
+                    {
+                      "id" : "done",
+                      "name" : "Done",
+                      "type" : "checkbox"
+                    }
+                  ],
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1040,
+                    "node" : "remote"
+                  },
+                  "title" : "Zebra tracker",
+                  "updatedAt" : 720828800
+                },
+                "kind" : "database"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Neue Seite und Wiederherstellen",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720864800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh",
+                  "parent" : "b:notes",
+                  "sk" : "a9",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1050,
+                    "node" : "remote"
+                  },
+                  "text" : "Fresh zebra notes",
+                  "type" : "page",
+                  "updatedAt" : 721692800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh-a",
+                  "parent" : "b:fresh",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1060,
+                    "node" : "remote"
+                  },
+                  "text" : "brand new plan content",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1070,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Neue Seite und Wiederherstellen",
+      "output" : [
+        [
+          {
+            "pageID" : "tracker-block",
+            "score" : 86.66666666666667,
+            "snippet" : null
+          },
+          {
+            "pageID" : "fresh",
+            "score" : 70,
+            "snippet" : null
+          }
+        ],
+        [
+          {
+            "pageID" : "fresh",
+            "score" : 30,
+            "snippetBlocks" : [
+              "fresh-a"
+            ]
+          }
+        ],
+        [
+          {
+            "pageID" : "archive-row",
+            "score" : 89.33333333333333,
+            "snippet" : null
+          },
+          {
+            "pageID" : "child",
+            "score" : 28.333333333333336,
+            "snippetBlocks" : [
+              "child-a"
+            ]
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ],
+        [
+          {
+            "pageID" : "child",
+            "score" : 88.33333333333333,
+            "snippet" : null
+          },
+          {
+            "pageID" : "archive-block",
+            "score" : 88,
+            "snippet" : null
+          },
+          {
+            "pageID" : "roadmap",
+            "score" : 52,
+            "snippet" : null
+          },
+          {
+            "pageID" : "fresh",
+            "score" : 30,
+            "snippetBlocks" : [
+              "fresh-a"
+            ]
+          },
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-image",
+              "n-mention",
+              "n-plan"
+            ]
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "plan",
+          "masterplan",
+          "another"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "row-ship"
+            ],
+            "name" : "Zeile gelöscht",
+            "records" : [
+
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Datenbank umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "blockID" : "tracker-block",
+                  "createdAt" : 720828800,
+                  "id" : "tracker",
+                  "properties" : [
+                    {
+                      "id" : "title",
+                      "name" : "Name",
+                      "type" : "title"
+                    },
+                    {
+                      "id" : "link",
+                      "name" : "Link",
+                      "type" : "url"
+                    },
+                    {
+                      "id" : "note",
+                      "name" : "Note",
+                      "type" : "text"
+                    },
+                    {
+                      "id" : "where",
+                      "name" : "Where",
+                      "type" : "place"
+                    },
+                    {
+                      "id" : "mail",
+                      "name" : "Mail",
+                      "type" : "email"
+                    },
+                    {
+                      "id" : "done",
+                      "name" : "Done",
+                      "type" : "checkbox"
+                    }
+                  ],
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1040,
+                    "node" : "remote"
+                  },
+                  "title" : "Zebra tracker",
+                  "updatedAt" : 720828800
+                },
+                "kind" : "database"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Neue Seite und Wiederherstellen",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720864800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh",
+                  "parent" : "b:notes",
+                  "sk" : "a9",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1050,
+                    "node" : "remote"
+                  },
+                  "text" : "Fresh zebra notes",
+                  "type" : "page",
+                  "updatedAt" : 721692800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh-a",
+                  "parent" : "b:fresh",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1060,
+                    "node" : "remote"
+                  },
+                  "text" : "brand new plan content",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1070,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Text geändert",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-plan",
+                  "parent" : "b:notes",
+                  "sk" : "a1",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1080,
+                    "node" : "remote"
+                  },
+                  "text" : "Another line without the word",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-mention",
+                  "parent" : "b:notes",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1090,
+                    "node" : "remote"
+                  },
+                  "text" : "Plain text now",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Text geändert",
+      "output" : [
+        [
+          {
+            "pageID" : "child",
+            "score" : 88.33333333333333,
+            "snippet" : null
+          },
+          {
+            "pageID" : "archive-block",
+            "score" : 88,
+            "snippet" : null
+          },
+          {
+            "pageID" : "roadmap",
+            "score" : 52,
+            "snippet" : null
+          },
+          {
+            "pageID" : "fresh",
+            "score" : 30,
+            "snippetBlocks" : [
+              "fresh-a"
+            ]
+          },
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-image"
+            ]
+          },
+          {
+            "pageID" : "row-second",
+            "score" : 15,
+            "snippet" : "plan@example.org nothing Café Central, Herrengasse 14, Wien"
+          }
+        ],
+        [
+          {
+            "pageID" : "roadmap",
+            "score" : 107,
+            "snippet" : null
+          }
+        ],
+        [
+          {
+            "pageID" : "notes",
+            "score" : 29.666666666666664,
+            "snippetBlocks" : [
+              "n-plan"
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "input" : {
+        "queries" : [
+          "plan",
+          "cafe",
+          "budget",
+          "zebra",
+          "second"
+        ],
+        "steps" : [
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Erwähntes Ziel umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720832400,
+                  "createdBy" : "user-1",
+                  "id" : "roadmap",
+                  "parent" : "w",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1010,
+                    "node" : "remote"
+                  },
+                  "text" : "Masterplan",
+                  "type" : "page",
+                  "updatedAt" : 720915200,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Unterseite in den Papierkorb",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1020,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "trashedAt" : 720828800,
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Block verschoben",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-resume",
+                  "parent" : "b:roadmap",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1030,
+                    "node" : "remote"
+                  },
+                  "text" : "Résumé deep inside the toggle",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "row-ship"
+            ],
+            "name" : "Zeile gelöscht",
+            "records" : [
+
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Datenbank umbenannt",
+            "records" : [
+              {
+                "data" : {
+                  "blockID" : "tracker-block",
+                  "createdAt" : 720828800,
+                  "id" : "tracker",
+                  "properties" : [
+                    {
+                      "id" : "title",
+                      "name" : "Name",
+                      "type" : "title"
+                    },
+                    {
+                      "id" : "link",
+                      "name" : "Link",
+                      "type" : "url"
+                    },
+                    {
+                      "id" : "note",
+                      "name" : "Note",
+                      "type" : "text"
+                    },
+                    {
+                      "id" : "where",
+                      "name" : "Where",
+                      "type" : "place"
+                    },
+                    {
+                      "id" : "mail",
+                      "name" : "Mail",
+                      "type" : "email"
+                    },
+                    {
+                      "id" : "done",
+                      "name" : "Done",
+                      "type" : "checkbox"
+                    }
+                  ],
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1040,
+                    "node" : "remote"
+                  },
+                  "title" : "Zebra tracker",
+                  "updatedAt" : 720828800
+                },
+                "kind" : "database"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Neue Seite und Wiederherstellen",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720864800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh",
+                  "parent" : "b:notes",
+                  "sk" : "a9",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1050,
+                    "node" : "remote"
+                  },
+                  "text" : "Fresh zebra notes",
+                  "type" : "page",
+                  "updatedAt" : 721692800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "fresh-a",
+                  "parent" : "b:fresh",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1060,
+                    "node" : "remote"
+                  },
+                  "text" : "brand new plan content",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720846800,
+                  "createdBy" : "user-1",
+                  "id" : "child",
+                  "parent" : "b:notes",
+                  "sk" : "a7",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1070,
+                    "node" : "remote"
+                  },
+                  "text" : "Plan child",
+                  "type" : "page",
+                  "updatedAt" : 721260800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+
+            ],
+            "name" : "Text geändert",
+            "records" : [
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-plan",
+                  "parent" : "b:notes",
+                  "sk" : "a1",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1080,
+                    "node" : "remote"
+                  },
+                  "text" : "Another line without the word",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              },
+              {
+                "data" : {
+                  "createdAt" : 720828800,
+                  "createdBy" : "user-1",
+                  "id" : "n-mention",
+                  "parent" : "b:notes",
+                  "sk" : "a0",
+                  "stamp" : {
+                    "counter" : 0,
+                    "millis" : 1090,
+                    "node" : "remote"
+                  },
+                  "text" : "Plain text now",
+                  "type" : "text",
+                  "updatedAt" : 720828800,
+                  "updatedBy" : "user-1"
+                },
+                "kind" : "block"
+              }
+            ]
+          },
+          {
+            "deletions" : [
+              "notes"
+            ],
+            "name" : "Elternseite gelöscht (Waisen)",
+            "records" : [
+
+            ]
+          }
+        ]
+      },
+      "name" : "inkrementell: Elternseite gelöscht (Waisen)",
+      "output" : [
+        [
+          {
+            "pageID" : "archive-block",
+            "score" : 88,
+            "snippet" : null
+          },
+          {
+            "pageID" : "roadmap",
+            "score" : 52,
+            "snippet" : null
+          }
+        ],
+        [
+          {
+            "pageID" : "archive-row",
+            "score" : 89.33333333333333,
+            "snippet" : null
+          }
+        ],
+        [
+
+        ],
+        [
+
+        ],
+        [
+
+        ]
+      ]
+    }
+  ],
+  "module" : "search",
+  "note" : "Volltext (BSD-157) über den Datenstand aus SearchCorpusTests. Index: SearchCorpus.build über alle Blöcke und Datenbanken (Papierkorb ausgenommen). Inhaltstreffer: snippetBlocks = alle Blöcke der Seite, die passen; Swift wählt einen davon (Dictionary-Reihenfolge), der Port soll den ersten in Dokumentreihenfolge nehmen. Zeilen-Treffer: snippet über die Werte nach Property-ID sortiert. Reihenfolge: Swift-Kriterium (bestMatch: Score absteigend, dann Titel), bei Gleichstand pageID aufsteigend; limit erst danach. Inkrementell: die Schritte werden nacheinander als Remote-Records eingespielt (applyRemote; deletions = Block-IDs); danach Suche ohne Filter, bestMatch, limit 60 – je Anfrage eine Trefferliste.",
+  "now" : 1700000000000,
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 720828800
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 720832400,
+        "createdBy" : "user-1",
+        "id" : "roadmap",
+        "parent" : "w",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Roadmap Café",
+        "type" : "page",
+        "updatedAt" : 720915200,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720861200,
+        "createdBy" : "user-1",
+        "id" : "notes",
+        "parent" : "w",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Notes",
+        "type" : "page",
+        "updatedAt" : 721606400,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-mention",
+        "parent" : "b:notes",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : [
+          {
+            "t" : "See "
+          },
+          {
+            "mention" : {
+              "page" : {
+                "_0" : "roadmap"
+              }
+            },
+            "t" : "Roadmap"
+          },
+          {
+            "t" : " for the plan"
+          }
+        ],
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-plan",
+        "parent" : "b:notes",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Another PLAN line in notes",
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-toggle",
+        "parent" : "b:notes",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Details",
+        "type" : "toggle",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-resume",
+        "parent" : "b:n-toggle",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Résumé deep inside the toggle",
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-cells",
+        "parent" : "b:notes",
+        "props" : {
+          "cells" : [
+            "Budget",
+            "Zürich"
+          ]
+        },
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-image",
+        "parent" : "b:notes",
+        "props" : {
+          "caption" : "Plan diagram",
+          "url" : "https://example.com/d.png"
+        },
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "type" : "image",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-transcript",
+        "parent" : "b:notes",
+        "props" : {
+          "segments" : [
+            {
+              "e" : 2,
+              "id" : "s1",
+              "s" : 0,
+              "t" : "we discussed the budget"
+            },
+            {
+              "e" : 3,
+              "id" : "s2",
+              "p" : true,
+              "s" : 2,
+              "t" : "pending zebra words"
+            }
+          ]
+        },
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "type" : "transcript",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "n-gone",
+        "parent" : "b:notes",
+        "sk" : "a6",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "plan in a deleted block",
+        "trashedAt" : 720828800,
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720846800,
+        "createdBy" : "user-1",
+        "id" : "child",
+        "parent" : "b:notes",
+        "sk" : "a7",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Plan child",
+        "type" : "page",
+        "updatedAt" : 721260800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "child-a",
+        "parent" : "b:child",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "child content about the café",
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720836000,
+        "createdBy" : "user-1",
+        "id" : "old",
+        "parent" : "w",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Old plan",
+        "trashedAt" : 720828800,
+        "type" : "page",
+        "updatedAt" : 721001600,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "old-a",
+        "parent" : "b:old",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "plan in the trash",
+        "type" : "text",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720839600,
+        "createdBy" : "user-1",
+        "id" : "template",
+        "parent" : "w",
+        "props" : {
+          "isTemplate" : true
+        },
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Plan template",
+        "type" : "page",
+        "updatedAt" : 721088000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720828800,
+        "createdBy" : "user-1",
+        "id" : "tracker-block",
+        "parent" : "b:notes",
+        "props" : {
+          "databaseID" : "tracker"
+        },
+        "sk" : "a8",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "type" : "databaseInline",
+        "updatedAt" : 720828800,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "tracker-block",
+        "createdAt" : 720828800,
+        "id" : "tracker",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "link",
+            "name" : "Link",
+            "type" : "url"
+          },
+          {
+            "id" : "note",
+            "name" : "Note",
+            "type" : "text"
+          },
+          {
+            "id" : "where",
+            "name" : "Where",
+            "type" : "place"
+          },
+          {
+            "id" : "mail",
+            "name" : "Mail",
+            "type" : "email"
+          },
+          {
+            "id" : "done",
+            "name" : "Done",
+            "type" : "checkbox"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "title" : "Plan tracker",
+        "updatedAt" : 720828800
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 720854000,
+        "createdBy" : "user-1",
+        "id" : "row-ship",
+        "parent" : "d:tracker",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Ship it",
+        "type" : "page",
+        "updatedAt" : 721433600,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "link" : {
+            "url" : {
+              "_0" : "https://example.com/plan"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "Ëxtra notes"
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720850400,
+        "createdBy" : "user-2",
+        "id" : "row-second",
+        "parent" : "d:tracker",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Second row",
+        "type" : "page",
+        "updatedAt" : 721347200,
+        "updatedBy" : "user-2",
+        "values" : {
+          "mail" : {
+            "email" : {
+              "_0" : "plan@example.org"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "nothing"
+            }
+          },
+          "where" : {
+            "place" : {
+              "_0" : "{\"name\":\"Café Central\",\"address\":\"Herrengasse 14, Wien\",\"lat\":48.21,\"lon\":16.36}"
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 720843200,
+        "createdBy" : "user-1",
+        "id" : "archive-block",
+        "parent" : "w",
+        "props" : {
+          "databaseID" : "archive"
+        },
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "type" : "databasePage",
+        "updatedAt" : 721174400,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "archive-block",
+        "createdAt" : 720828800,
+        "id" : "archive",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "title" : "Plan archive",
+        "updatedAt" : 720828800
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 720857600,
+        "createdBy" : "user-1",
+        "id" : "archive-row",
+        "parent" : "d:archive",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 10,
+          "node" : "fx"
+        },
+        "text" : "Café ledger",
+        "type" : "page",
+        "updatedAt" : 721520000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    }
+  ]
+}

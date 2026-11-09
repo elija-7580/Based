@@ -18,8 +18,8 @@ export { QueryEngine, TITLE_PROPERTY_ID, filterOps, cellText, databaseOfRow, dur
 export type { QueryEngineOptions, QueryResult, RowGroup } from "./query/engine.js";
 export { conversionLoss, formatDateValue, plainString, propertyConversion } from "./store/conversion.js";
 export type { ConversionPlan } from "./store/conversion.js";
-export { SearchCorpus, contentText, fold, rowText, snippet } from "./search/search.js";
-export type { SearchFilters, SearchHit, SearchSort } from "./search/search.js";
+export { SearchCorpus, SearchIndex, attachSearchIndex, contentText, fold, handleSearchMessage, observeSearchDeltas, rowText, searchDeltaFrom, searchSnapshot, searchTitle, snippet } from "./search/search.js";
+export type { SearchDelta, SearchFilters, SearchHit, SearchOptions, SearchRequest, SearchResponse, SearchSort, SearchSource } from "./search/search.js";
 export { HTMLNode, decodeEntities, parseHTML, pageIDFromLink, sanitizeURL, urlScheme } from "./interop/html.js";
 export { ClipboardHTMLImporter, importedJSON, notionColor } from "./interop/clipboard.js";
 export type { ImportedBlock } from "./interop/clipboard.js";
@@ -30,3 +30,25 @@ export { PRIVATE, createPage, createTeamspace, deleteForever, dropPages, emptyTr
 export type { CreatePageOptions, DropZone, InsertPosition, PageDestination, SectionID } from "./store/pages.js";
 export { PRIVATE_SECTION, buildOutline, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
+// BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
+export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
+export { ImportFiles, basename, dirname, extname, joinPath, normalizePath, stripExtension } from "./interop/files.js";
+export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData } from "./interop/zip.js";
+export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
+export { ImportBuilder, MemoryAssetSink, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
+export type { AssetRef, AssetSink, ImportBuilderOptions, ImportReport, NewBlock } from "./interop/builder.js";
+export { cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns } from "./interop/notion-html.js";
+export type { NotionHTMLOptions } from "./interop/notion-html.js";
+export { decodeCSV, decodeInlineMarkdown, encodeCSV, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
+export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
+export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, prepareImport } from "./interop/notion-import.js";
+export type { ImportSource, NotionImportOptions, PreparedImport } from "./interop/notion-import.js";
+export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs } from "./interop/markdown-export.js";
+export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
+export { toRichText, runsOf } from "./interop/runs.js";
+export { EXPORT_CSS, exportHTMLPage } from "./interop/html-document.js";
+export { ASSETS_FOLDER, defaultHTMLPageLink, encodeExportPath, exportSummary, planWorkspaceExport, relativeExportPath, subpages, topLevelPages, uniqueExportName, writeExportZip } from "./interop/workspace-export.js";
+export type { ExportFormat, ExportPlan, ExportReport } from "./interop/workspace-export.js";
+export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, archiveAssetRefs, archiveEntryPath,
+  assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
+export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";

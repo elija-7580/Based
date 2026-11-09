@@ -3,11 +3,13 @@
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
 import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
-import { conversionLoss, fold, SearchCorpus, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
+import { attachSearchIndex, conversionLoss, fold, SearchCorpus, SearchIndex, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
 import type { DatabaseView, SearchFilters, SearchSort } from "../../src/index.js";
 import { ClipboardHTMLImporter, HTMLExporter, importedJSON, titleOf } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
+import { expect } from "vitest";
+import { archivePort, exportPort, importPort, reimport } from "./import-ports.js";
 
 export type Port = (input: FixtureCase["input"], meta: Record<string, unknown>) => unknown;
 
@@ -182,17 +184,38 @@ const conversion: Port = (raw, meta) => {
   };
 };
 
-const search: Port = (raw, meta) => {
-  const { store } = queryStore(meta);
-  const input = raw as { query: string; filters: SearchFilters; sort: SearchSort; limit: number };
-  const corpus = new SearchCorpus(store);
+type SearchInput = { query: string; filters: SearchFilters; sort: SearchSort; limit: number };
+type SearchSteps = { steps: { records: unknown[]; deletions: string[] }[]; queries: string[] };
+
+/** Treffer im Fixture-Format; Inhaltstreffer: der gewählte Block muss unter den passenden sein. */
+function searchHits(index: SearchIndex, input: SearchInput, now: number) {
   const terms = fold(input.query.trim()).split(" ").filter(Boolean);
-  return corpus.search(input.query, input.filters, input.sort, input.limit, (meta.now as number) / 1000 - 978_307_200).map((h) => {
+  return index.search(input.query, input.filters, input.sort, input.limit, now).map((h) => {
     if (h.blockID === undefined) return { pageID: h.pageID, score: h.score, snippet: h.snippet ?? null };
-    const candidates = corpus.contents.filter((e) => e.page === h.pageID && terms.every((t) => e.folded.includes(t))).map((e) => e.blockID).sort();
+    const candidates = index.contents.filter((e) => e.page === h.pageID && terms.every((t) => e.folded.includes(t))).map((e) => e.blockID).sort();
     if (!candidates.includes(h.blockID)) throw new Error(`Snippet-Block ${h.blockID} passt nicht`);
     return { pageID: h.pageID, score: h.score, snippetBlocks: candidates };
   });
+}
+
+const search: Port = (raw, meta) => {
+  const now = (meta.now as number) / 1000 - 978_307_200;
+  const { store } = queryStore(meta);
+  if ("steps" in (raw as object)) {
+    // BSD-157: der Index folgt dem Store inkrementell (store.observe), Swift baut nach jedem Schritt neu.
+    const input = raw as SearchSteps;
+    const { index, dispose } = attachSearchIndex(store);
+    for (const step of input.steps) store.applyRemote(step.records.map(parseRecord), step.deletions.map((id) => keyOf("block", id)));
+    dispose();
+    const fresh = new SearchCorpus(store);
+    return input.queries.map((query) => {
+      const q: SearchInput = { query, filters: {}, sort: "bestMatch", limit: 60 };
+      const hits = searchHits(index, q, now);
+      expect(hits, "inkrementell = neu gebaut").toEqual(searchHits(fresh, q, now));
+      return hits;
+    });
+  }
+  return searchHits(new SearchCorpus(store), raw as SearchInput, now);
 };
 
 const clipboard: Port = (raw, meta) => {
@@ -208,4 +231,4 @@ const clipboard: Port = (raw, meta) => {
   return { html, reparsed: new ClipboardHTMLImporter().parse(html).map(importedJSON) };
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard };
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard, reimport, import: importPort, export: exportPort, archive: archivePort };

@@ -1,0 +1,2622 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "markdown" : "# H1\n## H2\n### H3\n#### H4\nText with **bold**, *it*, ~~del~~, `code`, <u>under</u>\n\nSecond paragraph<br>line two",
+        "op" : "parse"
+      },
+      "name" : "parse: Absätze und Überschriften",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "H1",
+            "type" : "heading1"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "H2",
+            "type" : "heading2"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "H3",
+            "type" : "heading3"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "H4",
+            "type" : "heading4"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : [
+              {
+                "t" : "Text with "
+              },
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "bold"
+              },
+              {
+                "t" : ", "
+              },
+              {
+                "m" : {
+                  "i" : true
+                },
+                "t" : "it"
+              },
+              {
+                "t" : ", "
+              },
+              {
+                "m" : {
+                  "s" : true
+                },
+                "t" : "del"
+              },
+              {
+                "t" : ", "
+              },
+              {
+                "m" : {
+                  "c" : true
+                },
+                "t" : "code"
+              },
+              {
+                "t" : ", "
+              },
+              {
+                "m" : {
+                  "u" : true
+                },
+                "t" : "under"
+              }
+            ],
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "Second paragraph\nline two",
+            "type" : "text"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "## H2\n### H3\n#### H4\nText with **bold**, *it*, ~~del~~, `code`, <u>under</u>\n\nSecond paragraph<br>line two",
+          "title" : "H1"
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "- a\n- b\n    - nested\n        - deeper\n* star\n+ plus\n• dot\n1. one\n2) two\n- [ ] open\n- [x] done\n* [X] DONE\n- [ ]\n-\n10. ten",
+        "op" : "parse"
+      },
+      "name" : "parse: Listen",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "a",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+                  {
+                    "children" : [
+
+                    ],
+                    "text" : "deeper",
+                    "type" : "bulletedList"
+                  }
+                ],
+                "text" : "nested",
+                "type" : "bulletedList"
+              }
+            ],
+            "text" : "b",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "star",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "plus",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "dot",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "one",
+            "type" : "numberedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "two",
+            "type" : "numberedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "checked" : false
+            },
+            "text" : "open",
+            "type" : "todo"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "checked" : true
+            },
+            "text" : "done",
+            "type" : "todo"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "[X] DONE",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "checked" : false
+            },
+            "text" : "",
+            "type" : "todo"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "",
+            "type" : "bulletedList"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "ten",
+            "type" : "numberedList"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "- a\n- b\n    - nested\n        - deeper\n* star\n+ plus\n• dot\n1. one\n2) two\n- [ ] open\n- [x] done\n* [X] DONE\n- [ ]\n-\n10. ten",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "```Swift\nlet x = 1\n  indented\n```\n```\nplain\n```\n$$\nE=mc^2\n$$\n$$a+b$$",
+        "op" : "parse"
+      },
+      "name" : "parse: Code und Gleichung",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "language" : "swift"
+            },
+            "text" : "let x = 1\n  indented",
+            "type" : "code"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "language" : "plain text"
+            },
+            "text" : "plain",
+            "type" : "code"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "expression" : "E=mc^2"
+            },
+            "text" : "",
+            "type" : "equation"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "expression" : "a+b"
+            },
+            "text" : "",
+            "type" : "equation"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "```Swift\nlet x = 1\n  indented\n```\n```\nplain\n```\n$$\nE=mc^2\n$$\n$$a+b$$",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "<details>\n<summary>Toggle **title**</summary>\n\nInside\n\n<details><summary>Inner</summary>\ndeep\n</details>\n</details>\n<aside>\n💡 Callout text\nmore\n</aside>\n<aside>No icon</aside>",
+        "op" : "parse"
+      },
+      "name" : "parse: Toggle und Callout (Notion)",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "Inside",
+                "type" : "text"
+              },
+              {
+                "children" : [
+                  {
+                    "children" : [
+
+                    ],
+                    "text" : "deep",
+                    "type" : "text"
+                  }
+                ],
+                "text" : "Inner",
+                "type" : "toggle"
+              }
+            ],
+            "text" : [
+              {
+                "t" : "Toggle "
+              },
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : "title"
+              }
+            ],
+            "type" : "toggle"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "more",
+                "type" : "text"
+              }
+            ],
+            "props" : {
+              "icon" : "💡"
+            },
+            "text" : "Callout text",
+            "type" : "callout"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "icon" : "💡"
+            },
+            "text" : "No icon",
+            "type" : "callout"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "<details>\n<summary>Toggle **title**</summary>\n\nInside\n\n<details><summary>Inner</summary>\ndeep\n</details>\n</details>\n<aside>\n💡 Callout text\nmore\n</aside>\n<aside>No icon</aside>",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "| A | B |\n| --- | :-: |\n| 1 | **2** |\n| x \\| y | |\n| only |",
+        "op" : "parse"
+      },
+      "name" : "parse: Tabelle",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "A",
+                    "B"
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              },
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "1",
+                    [
+                      {
+                        "m" : {
+                          "b" : true
+                        },
+                        "t" : "2"
+                      }
+                    ]
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              },
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "x | y",
+                    ""
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              },
+              {
+                "children" : [
+
+                ],
+                "props" : {
+                  "cells" : [
+                    "only",
+                    ""
+                  ]
+                },
+                "text" : "",
+                "type" : "tableRow"
+              }
+            ],
+            "props" : {
+              "tableColumns" : 2,
+              "tableHeaderRow" : true
+            },
+            "text" : "",
+            "type" : "table"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "| A | B |\n| --- | :-: |\n| 1 | **2** |\n| x \\| y | |\n| only |",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "> quoted\n> lines\n\n> [!NOTE] Note text\n> more\n\n> [!warning]\n> careful\n\n> [!unknown] x",
+        "op" : "parse"
+      },
+      "name" : "parse: Zitat und Hinweise",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "quoted\nlines",
+            "type" : "quote"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "color" : "blueBackground",
+              "icon" : "ℹ️"
+            },
+            "text" : "Note text\nmore",
+            "type" : "callout"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "color" : "yellowBackground",
+              "icon" : "⚠️"
+            },
+            "text" : "careful",
+            "type" : "callout"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "[!unknown] x",
+            "type" : "quote"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "> quoted\n> lines\n\n> [!NOTE] Note text\n> more\n\n> [!warning]\n> careful\n\n> [!unknown] x",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "![Alt](images/pic%201.png)\n![](https://example.com/a.png)\n[Sub page](Sub%20Page%20abc.md)\n[a](x) and [b](y)\n[link](https://example.com)",
+        "op" : "parse"
+      },
+      "name" : "parse: Bilder und Links",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "asset" : {
+                "id" : "asset-1",
+                "name" : "pic 1.png"
+              },
+              "caption" : "Alt"
+            },
+            "text" : "",
+            "type" : "image"
+          },
+          {
+            "children" : [
+
+            ],
+            "props" : {
+              "url" : "https://example.com/a.png"
+            },
+            "text" : "",
+            "type" : "image"
+          },
+          {
+            "children" : [
+
+            ],
+            "linkTarget" : "Sub%20Page%20abc.md",
+            "text" : [
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "page-1"
+                  }
+                },
+                "t" : "Sub page"
+              }
+            ],
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "linkTarget" : "x) and [b](y",
+            "text" : [
+              {
+                "m" : {
+                  "link" : "x"
+                },
+                "t" : "a"
+              },
+              {
+                "t" : " and "
+              },
+              {
+                "m" : {
+                  "link" : "y"
+                },
+                "t" : "b"
+              }
+            ],
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "linkTarget" : "https://example.com",
+            "text" : [
+              {
+                "m" : {
+                  "link" : "https://example.com"
+                },
+                "t" : "link"
+              }
+            ],
+            "type" : "text"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "![Alt](images/pic%201.png)\n![](https://example.com/a.png)\n[Sub page](Sub%20Page%20abc.md)\n[a](x) and [b](y)\n[link](https://example.com)",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "para\n    indented child\n---\n***\n___\n  - indented list\n      - child",
+        "op" : "parse"
+      },
+      "name" : "parse: Einrückung und Trenner",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "indented child",
+                "type" : "text"
+              }
+            ],
+            "text" : "para",
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "",
+            "type" : "divider"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "",
+            "type" : "divider"
+          },
+          {
+            "children" : [
+              {
+                "children" : [
+
+                ],
+                "text" : "child",
+                "type" : "bulletedList"
+              }
+            ],
+            "text" : "indented list",
+            "type" : "bulletedList"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "para\n    indented child\n---\n***\n___\n  - indented list\n      - child",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "",
+        "op" : "parse"
+      },
+      "name" : "parse: Leer",
+      "output" : {
+        "blocks" : [
+
+        ],
+        "splitTitle" : {
+          "body" : "",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "markdown" : "```\nx\n```\n    indented after code\nnext",
+        "op" : "parse"
+      },
+      "name" : "parse: Einrückung nach Code (Swift: Code-Block fällt weg)",
+      "output" : {
+        "blocks" : [
+          {
+            "children" : [
+
+            ],
+            "text" : "indented after code",
+            "type" : "text"
+          },
+          {
+            "children" : [
+
+            ],
+            "text" : "next",
+            "type" : "text"
+          }
+        ],
+        "splitTitle" : {
+          "body" : "```\nx\n```\n    indented after code\nnext",
+          "title" : null
+        }
+      }
+    },
+    {
+      "input" : {
+        "items" : [
+          {
+            "source" : "plain"
+          },
+          {
+            "source" : "**bold** and *it* and _it2_ and __b2__"
+          },
+          {
+            "source" : "snake_case_name"
+          },
+          {
+            "source" : "a * b * c"
+          },
+          {
+            "source" : "`code with *stars*`"
+          },
+          {
+            "source" : "~~strike~~ ~one~"
+          },
+          {
+            "source" : "<u>under</u> <b>b</b> <i>i</i>"
+          },
+          {
+            "source" : "$x^2$ and $ not math$"
+          },
+          {
+            "source" : "\\*escaped\\* \\[x\\]"
+          },
+          {
+            "source" : "[label **bold**](https://e.com) [page](Page.md)"
+          },
+          {
+            "source" : "line<br>break<br/>end"
+          },
+          {
+            "source" : "**unclosed"
+          },
+          {
+            "source" : "[broken]("
+          },
+          {
+            "source" : "nested **bold *and it***"
+          },
+          {
+            "source" : "emoji 🚀 **ü**"
+          },
+          {
+            "rich" : [
+              {
+                "t" : "plain "
+              },
+              {
+                "m" : {
+                  "b" : true
+                },
+                "t" : " bold "
+              },
+              {
+                "m" : {
+                  "b" : true,
+                  "c" : true,
+                  "i" : true,
+                  "link" : "https://x.y",
+                  "s" : true,
+                  "u" : true
+                },
+                "t" : "all"
+              },
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "page-1"
+                  }
+                },
+                "t" : "Page"
+              },
+              {
+                "mention" : {
+                  "page" : {
+                    "_0" : "page-2"
+                  }
+                },
+                "t" : "Gone"
+              },
+              {
+                "mention" : {
+                  "user" : {
+                    "_0" : "ada"
+                  }
+                },
+                "t" : "@ada"
+              },
+              {
+                "eq" : "x^2",
+                "t" : "x"
+              },
+              {
+                "mention" : {
+                  "link" : {
+                    "_0" : "https://l.ink"
+                  }
+                },
+                "t" : "lnk"
+              },
+              {
+                "t" : "   *_`~[]\\$"
+              }
+            ]
+          }
+        ],
+        "op" : "inline"
+      },
+      "name" : "Inline-Markdown",
+      "output" : [
+        {
+          "decoded" : "plain",
+          "reencoded" : "plain"
+        },
+        {
+          "decoded" : [
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "bold"
+            },
+            {
+              "t" : " and "
+            },
+            {
+              "m" : {
+                "i" : true
+              },
+              "t" : "it"
+            },
+            {
+              "t" : " and "
+            },
+            {
+              "m" : {
+                "i" : true
+              },
+              "t" : "it2"
+            },
+            {
+              "t" : " and "
+            },
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "b2"
+            }
+          ],
+          "reencoded" : "**bold** and *it* and *it2* and **b2**"
+        },
+        {
+          "decoded" : "snake_case_name",
+          "reencoded" : "snake\\_case\\_name"
+        },
+        {
+          "decoded" : "a * b * c",
+          "reencoded" : "a \\* b \\* c"
+        },
+        {
+          "decoded" : [
+            {
+              "m" : {
+                "c" : true
+              },
+              "t" : "code with *stars*"
+            }
+          ],
+          "reencoded" : "`code with *stars*`"
+        },
+        {
+          "decoded" : [
+            {
+              "m" : {
+                "s" : true
+              },
+              "t" : "strike"
+            },
+            {
+              "t" : " "
+            },
+            {
+              "m" : {
+                "s" : true
+              },
+              "t" : "one"
+            }
+          ],
+          "reencoded" : "~~strike~~ ~~one~~"
+        },
+        {
+          "decoded" : [
+            {
+              "m" : {
+                "u" : true
+              },
+              "t" : "under"
+            },
+            {
+              "t" : " "
+            },
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "b"
+            },
+            {
+              "t" : " "
+            },
+            {
+              "m" : {
+                "i" : true
+              },
+              "t" : "i"
+            }
+          ],
+          "reencoded" : "<u>under</u> **b** *i*"
+        },
+        {
+          "decoded" : [
+            {
+              "eq" : "x^2",
+              "t" : "x^2"
+            },
+            {
+              "t" : " and $ not math$"
+            }
+          ],
+          "reencoded" : "$x^2$ and \\$ not math\\$"
+        },
+        {
+          "decoded" : "*escaped* [x]",
+          "reencoded" : "\\*escaped\\* \\[x\\]"
+        },
+        {
+          "decoded" : [
+            {
+              "m" : {
+                "link" : "https://e.com"
+              },
+              "t" : "label "
+            },
+            {
+              "m" : {
+                "b" : true,
+                "link" : "https://e.com"
+              },
+              "t" : "bold"
+            },
+            {
+              "t" : " "
+            },
+            {
+              "mention" : {
+                "page" : {
+                  "_0" : "page-1"
+                }
+              },
+              "t" : "page"
+            }
+          ],
+          "reencoded" : "[label](https://e.com) [**bold**](https://e.com) [Page](Page.md)"
+        },
+        {
+          "decoded" : "line\nbreak\nend",
+          "reencoded" : "line\nbreak\nend"
+        },
+        {
+          "decoded" : "**unclosed",
+          "reencoded" : "\\*\\*unclosed"
+        },
+        {
+          "decoded" : "[broken](",
+          "reencoded" : "\\[broken\\]("
+        },
+        {
+          "decoded" : [
+            {
+              "t" : "nested "
+            },
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "bold "
+            },
+            {
+              "m" : {
+                "b" : true,
+                "i" : true
+              },
+              "t" : "and it"
+            }
+          ],
+          "reencoded" : "nested **bold** ***and it***"
+        },
+        {
+          "decoded" : [
+            {
+              "t" : "emoji 🚀 "
+            },
+            {
+              "m" : {
+                "b" : true
+              },
+              "t" : "ü"
+            }
+          ],
+          "reencoded" : "emoji 🚀 **ü**"
+        },
+        {
+          "reencoded" : "plain  **bold** [<u>~~***`all`***~~</u>](https://x.y)[Page](Page.md)Gone@ada$x^2$[lnk](https://l.ink)   \\*\\_\\`\\~\\[\\]\\\\\\$"
+        }
+      ]
+    },
+    {
+      "input" : {
+        "items" : [
+          {
+            "op" : "decode",
+            "text" : "a,b,c\n1,2,3\n"
+          },
+          {
+            "op" : "decode",
+            "text" : "﻿\"x, y\",\"say \"\"hi\"\"\"\r\nz,\"multi\nline\"\n\n"
+          },
+          {
+            "op" : "decode",
+            "text" : "single"
+          },
+          {
+            "op" : "decode",
+            "text" : "a,,b\n,\n"
+          },
+          {
+            "op" : "decode",
+            "text" : "trailing,\"open"
+          },
+          {
+            "op" : "encode",
+            "rows" : [
+              [
+                "a",
+                "b,c",
+                "d\"e"
+              ],
+              [
+                "line\nbreak",
+                ""
+              ]
+            ]
+          },
+          {
+            "column" : [
+              "x"
+            ],
+            "name" : "Status",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "Yes",
+              "No",
+              ""
+            ],
+            "name" : "Done",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "1,000",
+              "2.5"
+            ],
+            "name" : "Points",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "May 1, 2024",
+              "2024-05-02"
+            ],
+            "name" : "Due",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "https://a",
+              "http://b"
+            ],
+            "name" : "Site",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "a@b.c",
+              "d@e.f"
+            ],
+            "name" : "Mail",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "a, b",
+              "a"
+            ],
+            "name" : "Tags",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "x",
+              "x",
+              "y",
+              "x"
+            ],
+            "name" : "Kind",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "long text one",
+              "long text two"
+            ],
+            "name" : "Notes",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "solo"
+            ],
+            "name" : "Tag list",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "[A](A.md)",
+              "b"
+            ],
+            "name" : "Link",
+            "op" : "inferType"
+          },
+          {
+            "column" : [
+              "",
+              " "
+            ],
+            "name" : "Empty",
+            "op" : "inferType"
+          }
+        ],
+        "op" : "helpers"
+      },
+      "name" : "CSV",
+      "output" : [
+        [
+          [
+            "a",
+            "b",
+            "c"
+          ],
+          [
+            "1",
+            "2",
+            "3"
+          ]
+        ],
+        [
+          [
+            "x, y",
+            "say \"hi\""
+          ],
+          [
+            "z",
+            "multi\nline"
+          ]
+        ],
+        [
+          [
+            "single"
+          ]
+        ],
+        [
+          [
+            "a",
+            "",
+            "b"
+          ],
+          [
+            "",
+            ""
+          ]
+        ],
+        [
+          [
+            "trailing",
+            "open"
+          ]
+        ],
+        "a,\"b,c\",\"d\"\"e\"\n\"line\nbreak\",\n",
+        "status",
+        "checkbox",
+        "number",
+        "date",
+        "url",
+        "email",
+        "multiSelect",
+        "select",
+        "text",
+        "multiSelect",
+        "text",
+        "text"
+      ]
+    },
+    {
+      "input" : {
+        "canonical" : true,
+        "files" : [
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Projects\n\nIntro with **bold** and a [link](https://example.com).\n\n[Sub Page](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Sub%20Page%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md)\n\n[Tasks](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks%20aaaabbbbccccddddeeeeffff00001111.csv)\n\n![image.png](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/image.png)\n\n- [x] done item\n- open item\n\n<aside>\n🚀 Ship it\n</aside>\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Sub Page 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Sub Page\n\nSub content linking back to [Projects](../Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md).\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111.csv",
+            "text" : "Name,Status,Points,Done,Due,Tags,Site\nWrite docs,Doing,3,Yes,\"May 1, 2024\",\"docs, urgent\",https://a.example\nPlan,Done,\"1,000\",No,,docs,https://b.example\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111_all.csv",
+            "text" : "Name,Status,Points,Done,Due,Tags,Site\nWrite docs,Doing,3,Yes,\"May 1, 2024\",\"docs, urgent\",https://a.example\nPlan,Done,\"1,000\",No,,docs,https://b.example\nExtra,Doing,2,No,,urgent,https://c.example\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111/Write docs 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Write docs\n\nStatus: Doing\nPoints: 3\n\nRow body with details.\n"
+          },
+          {
+            "base64" : "iVBORwkJ",
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/image.png"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Orphan 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# 📌 Orphan\n\nNot linked from anywhere.\n"
+          },
+          {
+            "path" : "Readme.txt",
+            "text" : "Just text\n\n## Heading"
+          },
+          {
+            "path" : "data.json",
+            "text" : "{}"
+          },
+          {
+            "path" : "photo.jpg",
+            "text" : "\u0001\u0002\u0003"
+          }
+        ],
+        "items" : [
+          ""
+        ]
+      },
+      "name" : "Notion-Markdown-Export (Ordner)",
+      "output" : {
+        "assets" : [
+          "2fddd7c8-5c74-576e-82ae-0b0e3cf56ddf"
+        ],
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b1",
+              "parent" : "w",
+              "sk" : "a0",
+              "text" : "Projects",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b10",
+              "parent" : "b:b1",
+              "props" : {
+                "asset" : {
+                  "id" : "2fddd7c8-5c74-576e-82ae-0b0e3cf56ddf",
+                  "mime" : "image/png",
+                  "name" : "image.png",
+                  "size" : 6
+                },
+                "caption" : "image.png"
+              },
+              "sk" : "a3",
+              "type" : "image",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b11",
+              "parent" : "b:b1",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a4",
+              "text" : "done item",
+              "type" : "todo",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b12",
+              "parent" : "b:b1",
+              "sk" : "a5",
+              "text" : "open item",
+              "type" : "bulletedList",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b13",
+              "parent" : "b:b1",
+              "props" : {
+                "icon" : "🚀"
+              },
+              "sk" : "a6",
+              "text" : "Ship it",
+              "type" : "callout",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b14",
+              "parent" : "b:b1",
+              "props" : {
+                "icon" : "📌"
+              },
+              "sk" : "a7",
+              "text" : "Orphan",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b15",
+              "parent" : "b:b14",
+              "sk" : "a0",
+              "text" : "Not linked from anywhere.",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b2",
+              "parent" : "b:b1",
+              "sk" : "a0",
+              "text" : [
+                {
+                  "t" : "Intro with "
+                },
+                {
+                  "m" : {
+                    "b" : true
+                  },
+                  "t" : "bold"
+                },
+                {
+                  "t" : " and a "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com"
+                  },
+                  "t" : "link"
+                },
+                {
+                  "t" : "."
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b3",
+              "parent" : "b:b1",
+              "sk" : "a1",
+              "text" : "Sub Page",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b4",
+              "parent" : "b:b3",
+              "sk" : "a0",
+              "text" : [
+                {
+                  "t" : "Sub content linking back to "
+                },
+                {
+                  "mention" : {
+                    "page" : {
+                      "_0" : "b1"
+                    }
+                  },
+                  "t" : "Projects"
+                },
+                {
+                  "t" : "."
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b5",
+              "parent" : "b:b1",
+              "props" : {
+                "databaseID" : "db1",
+                "viewIDs" : [
+                  "v1"
+                ]
+              },
+              "sk" : "a2",
+              "type" : "databaseInline",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b6",
+              "parent" : "d:db1",
+              "sk" : "a0",
+              "text" : "Write docs",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o1"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 3
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : true
+                  }
+                },
+                "p4" : {
+                  "date" : {
+                    "_0" : {
+                      "includeTime" : false,
+                      "start" : 736214400
+                    }
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3",
+                      "o4"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://a.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b7",
+              "parent" : "b:b6",
+              "sk" : "a0",
+              "text" : "Row body with details.",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b8",
+              "parent" : "d:db1",
+              "sk" : "a1",
+              "text" : "Plan",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o2"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 1000
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://b.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b9",
+              "parent" : "d:db1",
+              "sk" : "a2",
+              "text" : "Extra",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o1"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 2
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o4"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://c.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "blockID" : "b5",
+              "createdAt" : "now",
+              "id" : "db1",
+              "properties" : [
+                {
+                  "id" : "title",
+                  "name" : "Name",
+                  "type" : "title"
+                },
+                {
+                  "id" : "p1",
+                  "name" : "Status",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o1",
+                      "name" : "Doing"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o2",
+                      "name" : "Done"
+                    }
+                  ],
+                  "statusGroups" : [
+                    {
+                      "color" : "gray",
+                      "id" : "g1",
+                      "name" : "To-do",
+                      "optionIDs" : [
+                        "o1",
+                        "o2"
+                      ]
+                    }
+                  ],
+                  "type" : "status"
+                },
+                {
+                  "id" : "p2",
+                  "name" : "Points",
+                  "type" : "number"
+                },
+                {
+                  "id" : "p3",
+                  "name" : "Done",
+                  "type" : "checkbox"
+                },
+                {
+                  "id" : "p4",
+                  "name" : "Due",
+                  "type" : "date"
+                },
+                {
+                  "id" : "p5",
+                  "name" : "Tags",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o3",
+                      "name" : "docs"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o4",
+                      "name" : "urgent"
+                    }
+                  ],
+                  "type" : "multiSelect"
+                },
+                {
+                  "id" : "p6",
+                  "name" : "Site",
+                  "type" : "url"
+                }
+              ],
+              "title" : "Tasks",
+              "updatedAt" : "now"
+            },
+            "kind" : "database"
+          },
+          {
+            "data" : {
+              "blockID" : "b5",
+              "createdAt" : "now",
+              "databaseID" : "db1",
+              "id" : "v1",
+              "name" : "Table",
+              "sortKey" : "a0",
+              "type" : "table",
+              "updatedAt" : "now"
+            },
+            "kind" : "view"
+          }
+        ],
+        "report" : {
+          "assets" : 1,
+          "databases" : 1,
+          "keptLocalAdditions" : 0,
+          "keptLocalChanges" : 0,
+          "pages" : 4,
+          "rootIDs" : 1,
+          "rows" : 3,
+          "warnings" : [
+
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "canonical" : true,
+        "files" : [
+          {
+            "base64" : "UEsDBBQAAAgAAKqxblf7waHSigsAAIoLAAAUAAAARXhwb3J0LW1kLVBhcnQtMS56aXBQSwMEFAAACAAAqrFuV2RPmTKRAQAAkQEAACwAAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC5tZCMgUHJvamVjdHMKCkludHJvIHdpdGggKipib2xkKiogYW5kIGEgW2xpbmtdKGh0dHBzOi8vZXhhbXBsZS5jb20pLgoKW1N1YiBQYWdlXShQcm9qZWN0cyUyMDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkL1N1YiUyMFBhZ2UlMjAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC5tZCkKCltUYXNrc10oUHJvamVjdHMlMjAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9UYXNrcyUyMGFhYWFiYmJiY2NjY2RkZGRlZWVlZmZmZjAwMDAxMTExLmNzdikKCiFbaW1hZ2UucG5nXShQcm9qZWN0cyUyMDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkL2ltYWdlLnBuZykKCi0gW3hdIGRvbmUgaXRlbQotIG9wZW4gaXRlbQoKPGFzaWRlPgrwn5qAIFNoaXAgaXQKPC9hc2lkZT4KUEsDBBQAAAgAAKqxbleg5JsaZwAAAGcAAABWAAAAUHJvamVjdHMgMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQvU3ViIFBhZ2UgMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQubWQjIFN1YiBQYWdlCgpTdWIgY29udGVudCBsaW5raW5nIGJhY2sgdG8gW1Byb2plY3RzXSguLi9Qcm9qZWN0cyUyMDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkLm1kKS4KUEsDBBQAAAgAAKqxblfxNGy6mQAAAJkAAABUAAAAUHJvamVjdHMgMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQvVGFza3MgYWFhYWJiYmJjY2NjZGRkZGVlZWVmZmZmMDAwMDExMTEuY3N2TmFtZSxTdGF0dXMsUG9pbnRzLERvbmUsRHVlLFRhZ3MsU2l0ZQpXcml0ZSBkb2NzLERvaW5nLDMsWWVzLCJNYXkgMSwgMjAyNCIsImRvY3MsIHVyZ2VudCIsaHR0cHM6Ly9hLmV4YW1wbGUKUGxhbixEb25lLCIxLDAwMCIsTm8sLGRvY3MsaHR0cHM6Ly9iLmV4YW1wbGUKUEsDBBQAAAgAAKqxbldJ16F/xAAAAMQAAABYAAAAUHJvamVjdHMgMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQvVGFza3MgYWFhYWJiYmJjY2NjZGRkZGVlZWVmZmZmMDAwMDExMTFfYWxsLmNzdk5hbWUsU3RhdHVzLFBvaW50cyxEb25lLER1ZSxUYWdzLFNpdGUKV3JpdGUgZG9jcyxEb2luZywzLFllcywiTWF5IDEsIDIwMjQiLCJkb2NzLCB1cmdlbnQiLGh0dHBzOi8vYS5leGFtcGxlClBsYW4sRG9uZSwiMSwwMDAiLE5vLCxkb2NzLGh0dHBzOi8vYi5leGFtcGxlCkV4dHJhLERvaW5nLDIsTm8sLHVyZ2VudCxodHRwczovL2MuZXhhbXBsZQpQSwMEFAAACAAAqrFuVyHD2Y0+AAAAPgAAAH8AAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9UYXNrcyBhYWFhYmJiYmNjY2NkZGRkZWVlZWZmZmYwMDAwMTExMS9Xcml0ZSBkb2NzIDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkLm1kIyBXcml0ZSBkb2NzCgpTdGF0dXM6IERvaW5nClBvaW50czogMwoKUm93IGJvZHkgd2l0aCBkZXRhaWxzLgpQSwMEFAAACAAAqrFuV96cbhYGAAAABgAAADMAAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9pbWFnZS5wbmeJUE5HCQlQSwMEFAAACAAAqrFuV/7AAzgpAAAAKQAAAFQAAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9PcnBoYW4gMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQubWQjIPCfk4wgT3JwaGFuCgpOb3QgbGlua2VkIGZyb20gYW55d2hlcmUuClBLAwQUAAAIAACqsW5Xz+9owBUAAAAVAAAACgAAAFJlYWRtZS50eHRKdXN0IHRleHQKCiMjIEhlYWRpbmdQSwMEFAAACAAAqrFuV0O/pqMCAAAAAgAAAAkAAABkYXRhLmpzb257fVBLAwQUAAAIAACqsW5XHYC8VQMAAAADAAAACQAAAHBob3RvLmpwZwECA1BLAQIUABQAAAgAAKqxbldkT5kykQEAAJEBAAAsAAAAAAAAAAAAAAAAAAAAAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC5tZFBLAQIUABQAAAgAAKqxbleg5JsaZwAAAGcAAABWAAAAAAAAAAAAAAAAANsBAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9TdWIgUGFnZSAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC5tZFBLAQIUABQAAAgAAKqxblfxNGy6mQAAAJkAAABUAAAAAAAAAAAAAAAAALYCAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9UYXNrcyBhYWFhYmJiYmNjY2NkZGRkZWVlZWZmZmYwMDAwMTExMS5jc3ZQSwECFAAUAAAIAACqsW5XSdehf8QAAADEAAAAWAAAAAAAAAAAAAAAAADBAwAAUHJvamVjdHMgMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQvVGFza3MgYWFhYWJiYmJjY2NjZGRkZGVlZWVmZmZmMDAwMDExMTFfYWxsLmNzdlBLAQIUABQAAAgAAKqxblchw9mNPgAAAD4AAAB/AAAAAAAAAAAAAAAAAPsEAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9UYXNrcyBhYWFhYmJiYmNjY2NkZGRkZWVlZWZmZmYwMDAwMTExMS9Xcml0ZSBkb2NzIDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkLm1kUEsBAhQAFAAACAAAqrFuV96cbhYGAAAABgAAADMAAAAAAAAAAAAAAAAA1gUAAFByb2plY3RzIDFhMmIzYzRkNWU2ZjdhOGI5YzBkMWUyZjNhNGI1YzZkL2ltYWdlLnBuZ1BLAQIUABQAAAgAAKqxblf+wAM4KQAAACkAAABUAAAAAAAAAAAAAAAAAC0GAABQcm9qZWN0cyAxYTJiM2M0ZDVlNmY3YThiOWMwZDFlMmYzYTRiNWM2ZC9PcnBoYW4gMWEyYjNjNGQ1ZTZmN2E4YjljMGQxZTJmM2E0YjVjNmQubWRQSwECFAAUAAAIAACqsW5Xz+9owBUAAAAVAAAACgAAAAAAAAAAAAAAAADIBgAAUmVhZG1lLnR4dFBLAQIUABQAAAgAAKqxbldDv6ajAgAAAAIAAAAJAAAAAAAAAAAAAAAAAAUHAABkYXRhLmpzb25QSwECFAAUAAAIAACqsW5XHYC8VQMAAAADAAAACQAAAAAAAAAAAAAAAAAuBwAAcGhvdG8uanBnUEsFBgAAAAAKAAoAHAQAAFgHAAAAAFBLAQIUABQAAAgAAKqxblf7waHSigsAAIoLAAAUAAAAAAAAAAAAAAAAAAAAAABFeHBvcnQtbWQtUGFydC0xLnppcFBLBQYAAAAAAQABAEIAAAC8CwAAAAA=",
+            "path" : "Export-md.zip"
+          }
+        ],
+        "items" : [
+          "Export-md.zip"
+        ]
+      },
+      "name" : "Notion-Markdown-Export (ZIP mit Teil-Archiv)",
+      "output" : {
+        "assets" : [
+          "2fddd7c8-5c74-576e-82ae-0b0e3cf56ddf"
+        ],
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b1",
+              "parent" : "w",
+              "sk" : "a0",
+              "text" : "Projects",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b10",
+              "parent" : "b:b1",
+              "props" : {
+                "asset" : {
+                  "id" : "2fddd7c8-5c74-576e-82ae-0b0e3cf56ddf",
+                  "mime" : "image/png",
+                  "name" : "image.png",
+                  "size" : 6
+                },
+                "caption" : "image.png"
+              },
+              "sk" : "a3",
+              "type" : "image",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b11",
+              "parent" : "b:b1",
+              "props" : {
+                "checked" : true
+              },
+              "sk" : "a4",
+              "text" : "done item",
+              "type" : "todo",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b12",
+              "parent" : "b:b1",
+              "sk" : "a5",
+              "text" : "open item",
+              "type" : "bulletedList",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b13",
+              "parent" : "b:b1",
+              "props" : {
+                "icon" : "🚀"
+              },
+              "sk" : "a6",
+              "text" : "Ship it",
+              "type" : "callout",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b14",
+              "parent" : "b:b1",
+              "props" : {
+                "icon" : "📌"
+              },
+              "sk" : "a7",
+              "text" : "Orphan",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b15",
+              "parent" : "b:b14",
+              "sk" : "a0",
+              "text" : "Not linked from anywhere.",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b2",
+              "parent" : "b:b1",
+              "sk" : "a0",
+              "text" : [
+                {
+                  "t" : "Intro with "
+                },
+                {
+                  "m" : {
+                    "b" : true
+                  },
+                  "t" : "bold"
+                },
+                {
+                  "t" : " and a "
+                },
+                {
+                  "m" : {
+                    "link" : "https://example.com"
+                  },
+                  "t" : "link"
+                },
+                {
+                  "t" : "."
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b3",
+              "parent" : "b:b1",
+              "sk" : "a1",
+              "text" : "Sub Page",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b4",
+              "parent" : "b:b3",
+              "sk" : "a0",
+              "text" : [
+                {
+                  "t" : "Sub content linking back to "
+                },
+                {
+                  "mention" : {
+                    "page" : {
+                      "_0" : "b1"
+                    }
+                  },
+                  "t" : "Projects"
+                },
+                {
+                  "t" : "."
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b5",
+              "parent" : "b:b1",
+              "props" : {
+                "databaseID" : "db1",
+                "viewIDs" : [
+                  "v1"
+                ]
+              },
+              "sk" : "a2",
+              "type" : "databaseInline",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b6",
+              "parent" : "d:db1",
+              "sk" : "a0",
+              "text" : "Write docs",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o1"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 3
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : true
+                  }
+                },
+                "p4" : {
+                  "date" : {
+                    "_0" : {
+                      "includeTime" : false,
+                      "start" : 736214400
+                    }
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3",
+                      "o4"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://a.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b7",
+              "parent" : "b:b6",
+              "sk" : "a0",
+              "text" : "Row body with details.",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b8",
+              "parent" : "d:db1",
+              "sk" : "a1",
+              "text" : "Plan",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o2"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 1000
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://b.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b9",
+              "parent" : "d:db1",
+              "sk" : "a2",
+              "text" : "Extra",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o1"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 2
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o4"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://c.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "blockID" : "b5",
+              "createdAt" : "now",
+              "id" : "db1",
+              "properties" : [
+                {
+                  "id" : "title",
+                  "name" : "Name",
+                  "type" : "title"
+                },
+                {
+                  "id" : "p1",
+                  "name" : "Status",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o1",
+                      "name" : "Doing"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o2",
+                      "name" : "Done"
+                    }
+                  ],
+                  "statusGroups" : [
+                    {
+                      "color" : "gray",
+                      "id" : "g1",
+                      "name" : "To-do",
+                      "optionIDs" : [
+                        "o1",
+                        "o2"
+                      ]
+                    }
+                  ],
+                  "type" : "status"
+                },
+                {
+                  "id" : "p2",
+                  "name" : "Points",
+                  "type" : "number"
+                },
+                {
+                  "id" : "p3",
+                  "name" : "Done",
+                  "type" : "checkbox"
+                },
+                {
+                  "id" : "p4",
+                  "name" : "Due",
+                  "type" : "date"
+                },
+                {
+                  "id" : "p5",
+                  "name" : "Tags",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o3",
+                      "name" : "docs"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o4",
+                      "name" : "urgent"
+                    }
+                  ],
+                  "type" : "multiSelect"
+                },
+                {
+                  "id" : "p6",
+                  "name" : "Site",
+                  "type" : "url"
+                }
+              ],
+              "title" : "Tasks",
+              "updatedAt" : "now"
+            },
+            "kind" : "database"
+          },
+          {
+            "data" : {
+              "blockID" : "b5",
+              "createdAt" : "now",
+              "databaseID" : "db1",
+              "id" : "v1",
+              "name" : "Table",
+              "sortKey" : "a0",
+              "type" : "table",
+              "updatedAt" : "now"
+            },
+            "kind" : "view"
+          }
+        ],
+        "report" : {
+          "assets" : 1,
+          "databases" : 1,
+          "keptLocalAdditions" : 0,
+          "keptLocalChanges" : 0,
+          "pages" : 4,
+          "rootIDs" : 1,
+          "rows" : 3,
+          "warnings" : [
+            "Unpacked Export-md.zip: 11 files"
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "canonical" : true,
+        "files" : [
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Projects\n\nIntro with **bold** and a [link](https://example.com).\n\n[Sub Page](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Sub%20Page%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md)\n\n[Tasks](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks%20aaaabbbbccccddddeeeeffff00001111.csv)\n\n![image.png](Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/image.png)\n\n- [x] done item\n- open item\n\n<aside>\n🚀 Ship it\n</aside>\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Sub Page 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Sub Page\n\nSub content linking back to [Projects](../Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md).\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111.csv",
+            "text" : "Name,Status,Points,Done,Due,Tags,Site\nWrite docs,Doing,3,Yes,\"May 1, 2024\",\"docs, urgent\",https://a.example\nPlan,Done,\"1,000\",No,,docs,https://b.example\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111_all.csv",
+            "text" : "Name,Status,Points,Done,Due,Tags,Site\nWrite docs,Doing,3,Yes,\"May 1, 2024\",\"docs, urgent\",https://a.example\nPlan,Done,\"1,000\",No,,docs,https://b.example\nExtra,Doing,2,No,,urgent,https://c.example\n"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111/Write docs 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# Write docs\n\nStatus: Doing\nPoints: 3\n\nRow body with details.\n"
+          },
+          {
+            "base64" : "iVBORwkJ",
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/image.png"
+          },
+          {
+            "path" : "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Orphan 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+            "text" : "# 📌 Orphan\n\nNot linked from anywhere.\n"
+          },
+          {
+            "path" : "Readme.txt",
+            "text" : "Just text\n\n## Heading"
+          },
+          {
+            "path" : "data.json",
+            "text" : "{}"
+          },
+          {
+            "path" : "photo.jpg",
+            "text" : "\u0001\u0002\u0003"
+          }
+        ],
+        "items" : [
+          "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Sub Page 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md",
+          "Readme.txt",
+          "data.json",
+          "Projects 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d/Tasks aaaabbbbccccddddeeeeffff00001111.csv"
+        ]
+      },
+      "name" : "Einzelne Markdown- und CSV-Dateien",
+      "output" : {
+        "assets" : [
+
+        ],
+        "records" : [
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b1",
+              "parent" : "w",
+              "sk" : "a0",
+              "text" : "Sub Page",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b2",
+              "parent" : "b:b1",
+              "sk" : "a0",
+              "text" : [
+                {
+                  "t" : "Sub content linking back to "
+                },
+                {
+                  "m" : {
+                    "link" : "../Projects%201a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md"
+                  },
+                  "t" : "Projects"
+                },
+                {
+                  "t" : "."
+                }
+              ],
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b3",
+              "parent" : "w",
+              "sk" : "a1",
+              "text" : "Readme.txt",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b4",
+              "parent" : "b:b3",
+              "sk" : "a0",
+              "text" : "Just text",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b5",
+              "parent" : "b:b3",
+              "sk" : "a1",
+              "text" : "Heading",
+              "type" : "heading2",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b6",
+              "parent" : "w",
+              "props" : {
+                "databaseID" : "db1",
+                "viewIDs" : [
+                  "v1"
+                ]
+              },
+              "sk" : "a3",
+              "type" : "databasePage",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b7",
+              "parent" : "d:db1",
+              "sk" : "a0",
+              "text" : "Write docs",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o1"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 3
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : true
+                  }
+                },
+                "p4" : {
+                  "date" : {
+                    "_0" : {
+                      "includeTime" : false,
+                      "start" : 736214400
+                    }
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3",
+                      "o4"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://a.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b8",
+              "parent" : "b:b7",
+              "sk" : "a0",
+              "text" : "Row body with details.",
+              "type" : "text",
+              "updatedAt" : "now",
+              "updatedBy" : "me"
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "createdAt" : "now",
+              "createdBy" : "me",
+              "id" : "b9",
+              "parent" : "d:db1",
+              "sk" : "a1",
+              "text" : "Plan",
+              "type" : "page",
+              "updatedAt" : "now",
+              "updatedBy" : "me",
+              "values" : {
+                "p1" : {
+                  "status" : {
+                    "_0" : "o2"
+                  }
+                },
+                "p2" : {
+                  "number" : {
+                    "_0" : 1000
+                  }
+                },
+                "p3" : {
+                  "checkbox" : {
+                    "_0" : false
+                  }
+                },
+                "p5" : {
+                  "multiSelect" : {
+                    "_0" : [
+                      "o3"
+                    ]
+                  }
+                },
+                "p6" : {
+                  "url" : {
+                    "_0" : "https://b.example"
+                  }
+                }
+              }
+            },
+            "kind" : "block"
+          },
+          {
+            "data" : {
+              "blockID" : "b6",
+              "createdAt" : "now",
+              "id" : "db1",
+              "properties" : [
+                {
+                  "id" : "title",
+                  "name" : "Name",
+                  "type" : "title"
+                },
+                {
+                  "id" : "p1",
+                  "name" : "Status",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o1",
+                      "name" : "Doing"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o2",
+                      "name" : "Done"
+                    }
+                  ],
+                  "statusGroups" : [
+                    {
+                      "color" : "gray",
+                      "id" : "g1",
+                      "name" : "To-do",
+                      "optionIDs" : [
+                        "o1",
+                        "o2"
+                      ]
+                    }
+                  ],
+                  "type" : "status"
+                },
+                {
+                  "id" : "p2",
+                  "name" : "Points",
+                  "type" : "number"
+                },
+                {
+                  "id" : "p3",
+                  "name" : "Done",
+                  "type" : "checkbox"
+                },
+                {
+                  "id" : "p4",
+                  "name" : "Due",
+                  "type" : "date"
+                },
+                {
+                  "id" : "p5",
+                  "name" : "Tags",
+                  "options" : [
+                    {
+                      "color" : "gray",
+                      "id" : "o3",
+                      "name" : "docs"
+                    },
+                    {
+                      "color" : "brown",
+                      "id" : "o4",
+                      "name" : "urgent"
+                    }
+                  ],
+                  "type" : "multiSelect"
+                },
+                {
+                  "id" : "p6",
+                  "name" : "Site",
+                  "type" : "url"
+                }
+              ],
+              "title" : "Tasks",
+              "updatedAt" : "now"
+            },
+            "kind" : "database"
+          },
+          {
+            "data" : {
+              "blockID" : "b6",
+              "createdAt" : "now",
+              "databaseID" : "db1",
+              "id" : "v1",
+              "name" : "Table",
+              "sortKey" : "a0",
+              "type" : "table",
+              "updatedAt" : "now"
+            },
+            "kind" : "view"
+          }
+        ],
+        "report" : {
+          "assets" : 0,
+          "databases" : 1,
+          "keptLocalAdditions" : 0,
+          "keptLocalChanges" : 0,
+          "pages" : 3,
+          "rootIDs" : 3,
+          "rows" : 2,
+          "warnings" : [
+            "Skipped data.json (not a Markdown, CSV, HTML or ZIP file)"
+          ]
+        }
+      }
+    }
+  ],
+  "module" : "import",
+  "note" : "parse: MarkdownImporter (Links Page.md und Sub%20Page%20abc.md → page-1, Bilder unter images/ → Asset asset-1); ImportedBlock ohne id. Notion-Markdown: NotionImporter.importItems, kanonische IDs."
+}
