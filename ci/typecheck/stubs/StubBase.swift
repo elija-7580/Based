@@ -146,3 +146,8 @@ extension String {
     public func draw(in r: NSRect, withAttributes a: [NSAttributedString.Key: Any]?) {}
 }
 
+
+// BSD-11: App Group container (Darwin Foundation only).
+extension FileManager {
+    public func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL? { nil }
+}
