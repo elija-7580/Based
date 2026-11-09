@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Tauri-2-Hülle um apps/web. Gebaut wird ab Phase 4 (braucht Rust + Apple Developer Team für Signatur).",
+  "description": "BSD-164: Tauri-2-Hülle „Based Next“ um apps/web (macOS-DMG mit Auto-Update, siehe docs/desktop.md).",
   "scripts": {
     "typecheck": "node -e \"JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json','utf8'))\"",
     "test": "node --test test/config.test.mjs",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4"
   }
 }

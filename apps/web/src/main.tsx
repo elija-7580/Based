@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { applyAppearance, loadAppearance } from "./appearance.js";
+import { startDesktop } from "./desktop.js";
 import { History } from "./shell/router.js";
 import { deviceNode, recentPages, syncConfig } from "./shell/storage.js";
 import { StoreClient } from "./worker/client.js";
@@ -17,6 +18,8 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(loadAppearance());
+// BSD-164: in der Tauri-Hülle Titelleiste und Updates (im Browser ohne Wirkung).
+void startDesktop().catch(() => undefined);
 
 const worker = new Worker(new URL("./worker/store.worker.ts", import.meta.url), { type: "module", name: "based-store" });
 const client = new StoreClient(worker as unknown as Endpoint<Event, RequestMessage>);
