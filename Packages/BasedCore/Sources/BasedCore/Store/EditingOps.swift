@@ -343,8 +343,40 @@ public extension WorkspaceStore {
                     if type.isHeading { blk.props.toggleable = toggleable } else { blk.props.toggleable = nil }
                     if type == .divider { blk.text = RichText() }
                 }
+                // BSD-100: a type without nested blocks (code, equation, divider, …) would hide the children;
+                // like Notion they stay visible, as siblings right below the block.
+                if Self.hidesChildren(type) { liftChildren(of: id, tx: tx) }
             }
         }
+    }
+
+    /// Types that can't show nested blocks and don't keep children for another purpose (a button's template blocks,
+    /// database containers, table rows, transcripts, pages and blocks from a newer version are left alone).
+    nonisolated static func hidesChildren(_ t: BlockType) -> Bool {
+        !t.supportsChildren && !t.isPageLike
+            && ![.button, .databaseInline, .databasePage, .tableRow, .transcript, .unknown].contains(t)
+    }
+
+    /// Moves the children of `id` (in order) right after it, into its parent.
+    func liftChildren(of id: RecordID, tx: Tx) {
+        guard let b = tx.block(id) else { return }
+        let kids = children(of: .block(id))
+        guard !kids.isEmpty else { return }
+        let keys = tx.sortKeys(kids.count, in: b.parent, .after(id))
+        for (k, key) in zip(kids, keys) { tx.update(k) { $0.parent = b.parent; $0.sortKey = key } }
+    }
+
+    /// BSD-100 repair: blocks whose type can't show children but has some (written before the fix above, or by
+    /// another device) get their children moved up behind them. One non-undoable change; nothing is deleted.
+    /// Returns the blocks whose children were moved.
+    @discardableResult
+    func liftHiddenChildren() -> [RecordID] {
+        let hosts = blocks.values.filter { Self.hidesChildren($0.type) && !children(of: .block($0.id)).isEmpty }.map(\.id).sorted()
+        guard !hosts.isEmpty else { return [] }
+        transact("Show hidden blocks", undoable: false) { tx in
+            for id in hosts { liftChildren(of: id, tx: tx) }
+        }
+        return hosts
     }
 
     /// Move blocks (keeping their relative order) to a new location.
@@ -480,13 +512,46 @@ public extension WorkspaceStore {
             ndb.id = RecordIDs.make()
             ndb.blockID = copy.id
             // The copy's relations are one-way: the mirrors on other databases belong to the original (BSD-31).
-            for i in ndb.properties.indices { ndb.properties[i].relation?.syncedPropertyID = nil }
+            // Relations of the database to itself point at the copy instead, with their values moved to the copied
+            // rows (BSD-112); a two-way self-relation stays two-way between the copy's own properties.
+            let selfRelations = Set(db.properties.filter { $0.relation?.databaseID == dbID }.map(\.id))
+            for i in ndb.properties.indices {
+                guard ndb.properties[i].relation != nil else { continue }
+                if selfRelations.contains(ndb.properties[i].id) {
+                    ndb.properties[i].relation?.databaseID = ndb.id
+                    if let partner = ndb.properties[i].relation?.syncedPropertyID, !selfRelations.contains(partner) {
+                        ndb.properties[i].relation?.syncedPropertyID = nil
+                    }
+                } else {
+                    ndb.properties[i].relation?.syncedPropertyID = nil
+                }
+            }
             tx.put(ndb)
             copy.props.databaseID = ndb.id
             copy.props.viewIDs = copyViews(of: src.id, to: copy.id, databaseID: ndb.id, tx: tx)
             tx.put(copy)
+            var rowMap: [RecordID: RecordID] = [:]
             for r in childBlocks(of: .database(dbID)) where r.trashedAt == nil {
-                copySubtree(r, parent: .database(ndb.id), sortKey: r.sortKey, tx: tx)
+                rowMap[r.id] = copySubtree(r, parent: .database(ndb.id), sortKey: r.sortKey, tx: tx)
+            }
+            if !selfRelations.isEmpty {
+                for newRow in rowMap.values {
+                    tx.update(newRow) { b in
+                        for pid in selfRelations {
+                            guard case .relation(let ids)? = b.values[pid] else { continue }
+                            // Links to rows that weren't copied (in the Trash) have no counterpart and go.
+                            let mapped = ids.compactMap { rowMap[$0] }
+                            b.values[pid] = mapped.isEmpty ? nil : .relation(mapped)
+                        }
+                    }
+                }
+            }
+            // Templates of the copy are the copied template rows.
+            if ndb.templateIDs != nil || ndb.defaultTemplateID != nil {
+                tx.updateDatabase(ndb.id) { d in
+                    d.templateIDs = d.templateIDs?.compactMap { rowMap[$0] }
+                    d.defaultTemplateID = d.defaultTemplateID.flatMap { rowMap[$0] }
+                }
             }
         } else {
             if src.type == .databaseInline || src.type == .databasePage {

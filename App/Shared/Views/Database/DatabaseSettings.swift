@@ -49,6 +49,10 @@ struct FilterGroupEditor: View {
                             .padding(8)
                             .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.primary.opacity(0.04)))
                             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.gridLine, lineWidth: 1))
+                    case .unknown:
+                        // BSD-130: shown, not editable, written back unchanged.
+                        Text("Filter from a newer version of Based (kept as it is)")
+                            .font(.system(size: 12)).foregroundStyle(Theme.secondary).padding(.top, 5)
                     }
                 }
             }
@@ -536,6 +540,7 @@ struct ViewSettingsView: View {
         case .pageContent: return "content"
         case .pageIcon: return "icon"
         case .property(let p): return "p:" + p
+        case .unknown: return "unknown"
         }
     }
 
@@ -545,6 +550,7 @@ struct ViewSettingsView: View {
         case "cover": return .pageCover
         case "content": return .pageContent
         case "icon": return .pageIcon
+        case "unknown": return ctx.view.cardCover ?? .pageContent
         default: return .property(String(k.dropFirst(2)))
         }
     }

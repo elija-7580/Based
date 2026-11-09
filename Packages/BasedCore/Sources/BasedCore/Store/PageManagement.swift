@@ -122,8 +122,15 @@ public extension WorkspaceStore {
                     if let owner = databases[did]?.blockID { orphaned = blocks[owner] == nil || isTrashed(owner) } else { orphaned = true }
                 }
                 let key = orphaned ? tx.sortKey(in: .workspace, .end) : b.sortKey
+                // A row restored into its database: drop values the schema no longer allows (BSD-122).
+                var fitted: [String: PropertyValue]?
+                if !orphaned, case .database(let did) = b.parent, let db = tx.database(did) {
+                    let v = Self.valuesMatchingSchema(b.values, db)
+                    if v != b.values { fitted = v }
+                }
                 tx.update(id) { blk in
                     blk.trashedAt = nil
+                    if let fitted { blk.values = fitted }
                     if orphaned {
                         blk.parent = .workspace
                         blk.sortKey = key

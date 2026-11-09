@@ -556,7 +556,7 @@ final class AppModel {
         #endif
         let m = mode ?? .fullPage
         switch m {
-        case .sidePeek: peek = .side(id)
+        case .sidePeek, .unknown: peek = .side(id)   // BSD-130: a mode from a newer version opens as side peek
         case .centerPeek: peek = .center(id)
         case .fullPage:
             peek = nil

@@ -68,11 +68,36 @@ public struct StatusGroup: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
-public enum NumberFormat: String, Codable, CaseIterable, Sendable {
+public enum NumberFormat: OpenRawEnum, Sendable {
     case number, numberWithCommas, percent, dollar, euro, pound, yen, franc, rupee, won, yuan, real, ruble, lira
+    /// BSD-130: a format from a newer Based; shown as a plain number, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [NumberFormat] = [.number, .numberWithCommas, .percent, .dollar, .euro, .pound, .yen, .franc, .rupee, .won, .yuan, .real, .ruble, .lira]
+
+    public var rawValue: String {
+        switch self {
+        case .number: return "number"
+        case .numberWithCommas: return "numberWithCommas"
+        case .percent: return "percent"
+        case .dollar: return "dollar"
+        case .euro: return "euro"
+        case .pound: return "pound"
+        case .yen: return "yen"
+        case .franc: return "franc"
+        case .rupee: return "rupee"
+        case .won: return "won"
+        case .yuan: return "yuan"
+        case .real: return "real"
+        case .ruble: return "ruble"
+        case .lira: return "lira"
+        case .unknown(let raw): return raw
+        }
+    }
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Needs a newer version"
         case .number: return "Number"
         case .numberWithCommas: return "Number with commas"
         case .percent: return "Percent"
@@ -101,14 +126,47 @@ public struct RelationConfig: Codable, Hashable, Sendable {
     }
 }
 
-public enum CalculationType: String, Codable, CaseIterable, Sendable {
+public enum CalculationType: OpenRawEnum, Sendable {
     case none, countAll, countValues, countUnique, countEmpty, countNotEmpty, percentEmpty, percentNotEmpty
     case sum, average, median, min, max, range, earliest, latest, dateRange
     case checked, unchecked, percentChecked, percentUnchecked
     case showOriginal
+    /// BSD-130: a calculation from a newer Based; shows no result, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [CalculationType] = [.none, .countAll, .countValues, .countUnique, .countEmpty, .countNotEmpty, .percentEmpty, .percentNotEmpty, .sum, .average, .median, .min, .max, .range, .earliest, .latest, .dateRange, .checked, .unchecked, .percentChecked, .percentUnchecked, .showOriginal]
+
+    public var rawValue: String {
+        switch self {
+        case .none: return "none"
+        case .countAll: return "countAll"
+        case .countValues: return "countValues"
+        case .countUnique: return "countUnique"
+        case .countEmpty: return "countEmpty"
+        case .countNotEmpty: return "countNotEmpty"
+        case .percentEmpty: return "percentEmpty"
+        case .percentNotEmpty: return "percentNotEmpty"
+        case .sum: return "sum"
+        case .average: return "average"
+        case .median: return "median"
+        case .min: return "min"
+        case .max: return "max"
+        case .range: return "range"
+        case .earliest: return "earliest"
+        case .latest: return "latest"
+        case .dateRange: return "dateRange"
+        case .checked: return "checked"
+        case .unchecked: return "unchecked"
+        case .percentChecked: return "percentChecked"
+        case .percentUnchecked: return "percentUnchecked"
+        case .showOriginal: return "showOriginal"
+        case .unknown(let raw): return raw
+        }
+    }
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Needs a newer version"
         case .none: return "None"
         case .countAll: return "Count all"
         case .countValues: return "Count values"
@@ -266,7 +324,21 @@ public enum ViewType: String, Codable, CaseIterable, Sendable {
     public static let widgetTypes: [ViewType] = [.chart, .table, .board, .list, .gallery, .calendar, .timeline, .map]
 }
 
-public enum Combinator: String, Codable, Sendable { case and, or }
+public enum Combinator: OpenRawEnum, Sendable {
+    case and, or
+    /// BSD-130: a combinator from a newer Based; the group hides nothing, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [Combinator] = [.and, .or]
+
+    public var rawValue: String {
+        switch self {
+        case .and: return "and"
+        case .or: return "or"
+        case .unknown(let raw): return raw
+        }
+    }
+}
 
 public enum FilterOp: String, Codable, CaseIterable, Sendable {
     case equals, notEquals, contains, notContains, startsWith, endsWith, isEmpty, isNotEmpty
@@ -327,8 +399,27 @@ public enum FilterOp: String, Codable, CaseIterable, Sendable {
     }
 }
 
-public enum RelativeDate: String, Codable, CaseIterable, Sendable {
+public enum RelativeDate: OpenRawEnum, Sendable {
     case today, tomorrow, yesterday, pastWeek, nextWeek, pastMonth, nextMonth, pastYear, nextYear
+    /// BSD-130: a relative date from a newer Based; the condition hides nothing, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [RelativeDate] = [.today, .tomorrow, .yesterday, .pastWeek, .nextWeek, .pastMonth, .nextMonth, .pastYear, .nextYear]
+
+    public var rawValue: String {
+        switch self {
+        case .today: return "today"
+        case .tomorrow: return "tomorrow"
+        case .yesterday: return "yesterday"
+        case .pastWeek: return "pastWeek"
+        case .nextWeek: return "nextWeek"
+        case .pastMonth: return "pastMonth"
+        case .nextMonth: return "nextMonth"
+        case .pastYear: return "pastYear"
+        case .nextYear: return "nextYear"
+        case .unknown(let raw): return raw
+        }
+    }
 }
 
 public enum FilterValue: Codable, Hashable, Sendable {
@@ -387,11 +478,15 @@ public struct FilterCondition: Codable, Hashable, Sendable, Identifiable {
 public indirect enum FilterItem: Codable, Hashable, Sendable {
     case condition(FilterCondition)
     case group(FilterGroup)
+    /// BSD-130: a filter kind from a newer Based (raw synthesized form); matches every row, written back unchanged.
+    case unknown(JSONValue)
 }
 
 public struct FilterGroup: Codable, Hashable, Sendable {
     public var combinator: Combinator
     public var items: [FilterItem]
+    /// BSD-130: keys this version doesn't know; written back unchanged.
+    var extra: [String: JSONValue] = [:]
 
     public init(combinator: Combinator = .and, items: [FilterItem] = []) {
         self.combinator = combinator; self.items = items
@@ -404,6 +499,8 @@ public struct SortRule: Codable, Hashable, Sendable, Identifiable {
     public var id: String { propertyID }
     public var propertyID: String
     public var ascending: Bool
+    /// BSD-130: keys this version doesn't know; written back unchanged.
+    var extra: [String: JSONValue] = [:]
 
     public init(propertyID: String, ascending: Bool = true) {
         self.propertyID = propertyID; self.ascending = ascending
@@ -437,15 +534,31 @@ public enum CardCover: Codable, Hashable, Sendable {
     /// The page icon, large and centred (no image).
     case pageIcon
     case property(String)
+    /// BSD-130: a cover kind from a newer Based (raw synthesized form); shown without cover, written back unchanged.
+    case unknown(JSONValue)
 }
 
 public enum CardSize: String, Codable, CaseIterable, Sendable { case small, medium, large }
 
-public enum OpenMode: String, Codable, CaseIterable, Sendable {
+public enum OpenMode: OpenRawEnum, Sendable {
     case sidePeek, centerPeek, fullPage
+    /// BSD-130: a mode from a newer Based; opens like side peek, written back unchanged.
+    case unknown(String)
+
+    public static let allCases: [OpenMode] = [.sidePeek, .centerPeek, .fullPage]
+
+    public var rawValue: String {
+        switch self {
+        case .sidePeek: return "sidePeek"
+        case .centerPeek: return "centerPeek"
+        case .fullPage: return "fullPage"
+        case .unknown(let raw): return raw
+        }
+    }
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Needs a newer version"
         case .sidePeek: return "Side peek"
         case .centerPeek: return "Center peek"
         case .fullPage: return "Full page"
