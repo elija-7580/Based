@@ -310,8 +310,29 @@ public final class WorkspaceStore {
             }
         }
         if !loadedWorkspace {
-            transact("Create workspace", undoable: false) { tx in tx.put(Workspace()) }
+            createFreshWorkspace()
         }
+    }
+
+    /// No readable workspace record: create a new one. If the stored one exists but can't be decoded (written by
+    /// a newer version, damaged), copy it to `quarantine` first — the fresh record replaces that row (BSD-23).
+    private func createFreshWorkspace() {
+        let key = RecordKey(.workspace, Workspace.mainID)
+        if frozenKeys.contains(key), let sqlite = persistence as? SQLitePersistence {
+            do {
+                try sqlite.preserveInQuarantine(key, reason: "undecodable workspace record replaced by a new one")
+                frozenKeys.remove(key)
+            } catch {
+                Log.error("Could not preserve the undecodable workspace record: \(error) — keeping it, workspace stays in memory",
+                          category: "store")
+                _setWorkspace(Workspace())
+                return
+            }
+        } else if frozenKeys.contains(key) {
+            _setWorkspace(Workspace())
+            return
+        }
+        transact("Create workspace", undoable: false) { tx in tx.put(Workspace()) }
     }
 
     private func noteUndecodable(_ undecodable: [RecordKey: String]) {
@@ -523,7 +544,7 @@ public final class WorkspaceStore {
                 lastError = nil
                 writeFailure = nil
                 if !bulkLoad(records) {
-                    transact("Create workspace", undoable: false) { tx in tx.put(Workspace()) }
+                    createFreshWorkspace()
                 }
                 revision &+= 1
                 // A full reload: observers see every parent as changed.
@@ -625,6 +646,12 @@ public final class WorkspaceStore {
         var stale: [RecordKey] = []
         var unfrozen: [RecordKey] = []
         for r in records {
+            if case .workspace(let w) = r, w.id != workspace.id {
+                // One workspace per store (BSD-23): a record with another ID would replace it in memory and leave
+                // a second row on disk. Ignore it.
+                Log.warning("Ignoring a workspace record with a foreign ID (\(w.id))", category: "sync")
+                continue
+            }
             if frozenKeys.contains(r.key) { unfrozen.append(r.key) }
             clock.observe(r.stamp)
             if let local = record(r.key) {
@@ -714,6 +741,12 @@ public final class WorkspaceStore {
         }
     }
 
+    static func preferWorkspace(_ a: Workspace, over b: Workspace) -> Bool {
+        if a.stamp != b.stamp { return a.stamp > b.stamp }
+        if (a.id == Workspace.mainID) != (b.id == Workspace.mainID) { return a.id == Workspace.mainID }
+        return a.id < b.id
+    }
+
     /// Startup path: fills the maps in one go and sorts every child list once, instead of inserting each block
     /// into its parent's sorted list (binary search + dictionary lookups per block). Same result as `_setBlock`.
     /// Returns whether a workspace record was among them.
@@ -731,7 +764,11 @@ public final class WorkspaceStore {
                 groups[b.parent.key, default: []].append((b.sortKey, b.id))
             case .database(let d): _setDatabase(d)
             case .view(let v): _setView(v, &ignored)
-            case .workspace(let w): _setWorkspace(w); loadedWorkspace = true
+            case .workspace(let w):
+                // Exactly one workspace is used. If a file still holds several (migration v2 normally prevents
+                // that), take the newest stamp, then the main ID — never "whichever row came last".
+                if !loadedWorkspace || Self.preferWorkspace(w, over: workspace) { _setWorkspace(w) }
+                loadedWorkspace = true
             }
         }
         for (parent, var list) in groups {

@@ -94,19 +94,44 @@ public enum WorkspaceArchive {
 
     /// Imports an archive into `store` (last writer wins per record, like sync; nothing is deleted).
     /// Into an empty workspace (restore), the archive's workspace settings — name, teamspaces, favorites,
-    /// home — replace the fresh ones.
+    /// home — replace the fresh ones. Into a workspace with content, the archive's workspace record is merged
+    /// into the existing one (never a second workspace record, BSD-23): name and icon only if empty locally,
+    /// home page only if none is set, favorites and teamspaces are added.
     @MainActor @discardableResult
     public static func importArchive(_ data: Data, into store: WorkspaceStore) throws -> ImportResult {
         let r = try read(data)
         var records = r.records
         var restoredWorkspace = 0
-        if store.blocks.isEmpty, let i = records.firstIndex(where: { $0.key.kind == .workspace }),
-           case .workspace(var w) = records.remove(at: i) {
-            w.id = store.workspace.id
-            store.transact("Restore workspace", undoable: false) { tx in tx.put(w) }
-            restoredWorkspace = 1
+        if let i = records.firstIndex(where: { $0.key.kind == .workspace }), case .workspace(var w) = records[i] {
+            records.removeAll { $0.key.kind == .workspace }
+            if store.blocks.isEmpty {
+                w.id = store.workspace.id
+                store.transact("Restore workspace", undoable: false) { tx in tx.put(w) }
+                restoredWorkspace = 1
+            } else {
+                let merged = mergeWorkspace(store.workspace, with: w)
+                if merged != store.workspace {
+                    store.transact("Import workspace settings", undoable: false) { tx in tx.put(merged) }
+                    restoredWorkspace = 1
+                }
+            }
         }
         let stale = store.applyRemote(records)
         return ImportResult(imported: records.count - stale.count + restoredWorkspace, keptNewer: stale.count, skipped: r.skipped)
+    }
+
+    /// `local` with the archive's settings added where they don't overwrite anything (ID stays `local.id`).
+    static func mergeWorkspace(_ local: Workspace, with incoming: Workspace) -> Workspace {
+        var w = local
+        if w.name.trimmingCharacters(in: .whitespaces).isEmpty { w.name = incoming.name }
+        if w.icon == nil { w.icon = incoming.icon }
+        if w.homePageID == nil { w.homePageID = incoming.homePageID }
+        for f in incoming.favorites where !w.favorites.contains(f) { w.favorites.append(f) }
+        if let extra = incoming.teamspaces, !extra.isEmpty {
+            var spaces = w.teamspaces ?? []
+            for t in extra where !spaces.contains(where: { $0.id == t.id }) { spaces.append(t) }
+            w.teamspaces = spaces
+        }
+        return w
     }
 }

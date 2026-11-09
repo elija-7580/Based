@@ -7,10 +7,18 @@ import CSQLite
 
 public enum PersistenceError: Error, CustomStringConvertible {
     case sqlite(String)
-    public var description: String { if case .sqlite(let m) = self { return "SQLite: \(m)" }; return "" }
+    /// The file was written by a newer Based (schema `found`, this app knows up to `supported`); it's left untouched.
+    case newerFormat(found: Int, supported: Int)
+    public var description: String {
+        switch self {
+        case .sqlite(let m): return "SQLite: \(m)"
+        case .newerFormat(let f, let s):
+            return "This workspace was saved by a newer version of Based (format \(f), this app reads up to \(s)). Update Based to open it."
+        }
+    }
 }
 
-private let SQLITE_TRANSIENT_PTR = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+let SQLITE_TRANSIENT_PTR = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
 /// Local database: one row per record (JSON payload) plus a key/value meta table.
 public final class SQLitePersistence: ChangeLogging {
@@ -25,32 +33,14 @@ public final class SQLitePersistence: ChangeLogging {
         guard sqlite3_open_v2(path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK else {
             throw PersistenceError.sqlite("cannot open \(path)")
         }
+        // Refuse a newer file before anything (even the journal mode) is written to it.
+        let found = schemaVersion
+        if found > Self.currentSchemaVersion {
+            throw PersistenceError.newerFormat(found: found, supported: Self.currentSchemaVersion)
+        }
         try exec("PRAGMA journal_mode=WAL;")
         try exec("PRAGMA synchronous=NORMAL;")
-        try exec("""
-        CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, data BLOB NOT NULL, PRIMARY KEY(kind, id));
-        CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value BLOB);
-        """)
-        try migrateChangeLog()
-    }
-
-    /// Sync v2 change log. Created once; existing records are entered as local changes so a first v2 push
-    /// uploads them and a server can serve them from sequence 0.
-    private func migrateChangeLog() throws {
-        let exists: Bool = {
-            guard let st = try? prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='changes'") else { return false }
-            defer { sqlite3_finalize(st) }
-            return sqlite3_step(st) == SQLITE_ROW
-        }()
-        guard !exists else { return }
-        try exec("""
-        BEGIN IMMEDIATE;
-        CREATE TABLE changes (seq INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, id TEXT NOT NULL,
-                              deleted INTEGER NOT NULL DEFAULT 0, local INTEGER NOT NULL DEFAULT 1);
-        CREATE UNIQUE INDEX changes_key ON changes(kind, id);
-        INSERT INTO changes(kind, id, deleted, local) SELECT kind, id, 0, 1 FROM records ORDER BY kind, id;
-        COMMIT;
-        """)
+        try migrate()
     }
 
     deinit { sqlite3_close(db) }
@@ -71,7 +61,7 @@ public final class SQLitePersistence: ChangeLogging {
         }
     }
 
-    private func exec(_ sql: String) throws {
+    func exec(_ sql: String) throws {
         var err: UnsafeMutablePointer<CChar>?
         if sqlite3_exec(db, sql, nil, nil, &err) != SQLITE_OK {
             let msg = err.map { String(cString: $0) } ?? "unknown"
@@ -80,13 +70,13 @@ public final class SQLitePersistence: ChangeLogging {
         }
     }
 
-    private func prepare(_ sql: String) throws -> OpaquePointer? {
+    func prepare(_ sql: String) throws -> OpaquePointer? {
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { throw PersistenceError.sqlite(lastMessage) }
         return stmt
     }
 
-    private var lastMessage: String { db.map { String(cString: sqlite3_errmsg($0)) } ?? "closed" }
+    var lastMessage: String { db.map { String(cString: sqlite3_errmsg($0)) } ?? "closed" }
 
     public func loadAll() throws -> [Record] { try loadAllReporting().records }
 

@@ -12,10 +12,12 @@ public enum WorkspaceOpener {
         case cannotOpen(path: String, reason: String)
         /// The file opened, but can't be written.
         case readOnly(path: String, reason: String)
+        /// The file was saved by a newer Based (schema version `found` > `supported`); it isn't touched (BSD-23).
+        case newerFormat(path: String, found: Int, supported: Int)
 
         public var path: String {
             switch self {
-            case .cannotCreateDirectory(let p, _), .cannotOpen(let p, _), .readOnly(let p, _): return p
+            case .cannotCreateDirectory(let p, _), .cannotOpen(let p, _), .readOnly(let p, _), .newerFormat(let p, _, _): return p
             }
         }
 
@@ -24,6 +26,8 @@ public enum WorkspaceOpener {
             case .cannotCreateDirectory(let p, let r): return "The folder \(p) can't be created: \(r)"
             case .cannotOpen(let p, let r): return "The workspace file \(p) can't be opened: \(r)"
             case .readOnly(let p, let r): return "The workspace file \(p) can't be written: \(r)"
+            case .newerFormat(let p, let f, let s):
+                return "The workspace file \(p) was saved by a newer version of Based (format \(f), this app reads up to \(s)). Update Based to open it; the file was not changed."
             }
         }
     }
@@ -44,6 +48,9 @@ public enum WorkspaceOpener {
         let url = directory.appendingPathComponent(fileName)
         let p: SQLitePersistence
         do { p = try SQLitePersistence(url: url) }
+        catch PersistenceError.newerFormat(let found, let supported) {
+            return .failure(.newerFormat(path: url.path, found: found, supported: supported))
+        }
         catch { return .failure(.cannotOpen(path: url.path, reason: "\(error)")) }
         do { try p.checkWritable() }
         catch { return .failure(.readOnly(path: url.path, reason: "\(error)")) }

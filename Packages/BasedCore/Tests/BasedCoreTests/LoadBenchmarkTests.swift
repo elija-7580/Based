@@ -64,7 +64,7 @@ struct ChangeLogTests {
         do {
             var db: OpaquePointer?
             #expect(sqlite3_open(url.path, &db) == SQLITE_OK)
-            sqlite3_exec(db, "DROP TABLE changes", nil, nil, nil)
+            sqlite3_exec(db, "DROP TABLE changes; PRAGMA user_version = 0;", nil, nil, nil)
             sqlite3_close(db)
         }
         let p = try SQLitePersistence(url: url)
