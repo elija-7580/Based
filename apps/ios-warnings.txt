@@ -3,6 +3,8 @@ App/Shared/Brain/EnginePicker.swift:112:144: warning: left side of nil coalescin
 App/Shared/Brain/EnginePicker.swift:112:98: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
 App/Shared/Brain/HappierModel.swift:129:70: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
 App/Shared/Brain/HappierModel.swift:132:27: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+App/Shared/Meeting/MeetingAudio.swift:106:76: warning: 'allowBluetooth' was deprecated in iOS 8.0: renamed to 'AVAudioSession.CategoryOptions.allowBluetoothHFP'
+App/Shared/Meeting/MeetingService.swift:73:94: warning: will never be executed
 Packages/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:234:58: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
 Packages/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:248:106: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
 Packages/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:59:14: warning: instance method 'lock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
