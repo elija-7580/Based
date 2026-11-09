@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
+import { Collab, YStateStore } from "./collab.js";
 import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
@@ -17,11 +18,16 @@ export interface AppOptions extends SyncServiceOptions {
   log?: Logger;
   /** Tombstone-GC beim Start und dann stündlich (Standard an). */
   compactEvery?: number | false;
+  /** Y-Zustände für /collab (Standard: `<db>` mit Endung `.collab.sqlite`, bei In-Memory im Speicher). */
+  collabDb?: string | SqlDatabase;
+  /** Hocuspocus speichert nach so vielen ms Ruhe. */
+  collabDebounce?: number;
 }
 
 export interface App {
   sync: SyncService;
   pages: Pages;
+  collab: Collab;
   router: Router;
   server: Server;
   log: Logger;
@@ -53,6 +59,9 @@ export function createApp(opts: AppOptions): App {
   const sync = new SyncService(db, opts);
   const pages = new Pages(sync.store);
   const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log });
+  const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
+  const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
+  const collab = new Collab({ store: sync.store, states: new YStateStore(collabDb), token: opts.token, log, ...(opts.collabDebounce !== undefined ? { debounce: opts.collabDebounce } : {}) });
 
   // 400 statt 500 für kaputte Anfragen; Meldungen ohne Inhalte.
   const handle = <T>(f: () => T) => {
@@ -138,6 +147,7 @@ export function createApp(opts: AppOptions): App {
   const server = createServer({ requestTimeout: 120_000, headersTimeout: 30_000, keepAliveTimeout: 5_000 }, (req, res) => void router.handle(req, res));
   // Long-Polls dauern bis 55 s; alles andere bricht nach requestTimeout ab.
   server.timeout = 0;
+  collab.attach(server);
 
   let gc: NodeJS.Timeout | undefined;
   const compact = () => {
@@ -157,6 +167,7 @@ export function createApp(opts: AppOptions): App {
   return {
     sync,
     pages,
+    collab,
     router,
     server,
     log,
@@ -174,11 +185,13 @@ export function createApp(opts: AppOptions): App {
       if (gc) clearInterval(gc);
       sync.close(); // offene Long-Polls antworten sofort
       pages.dispose();
+      await collab.close();
       await new Promise<void>((resolve) => {
         server.close(() => resolve());
         server.closeAllConnections();
       });
       db.close();
+      collabDb.close();
     },
   };
 }
