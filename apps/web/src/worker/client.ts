@@ -175,6 +175,21 @@ export class StoreClient {
     return r;
   }
 
+  /**
+   * Nach einem Wechsel des Store-Tabs (tabs.ts): der neue Host kennt die offenen Seiten nicht. Jede Replik holt sich
+   * ihre Seite neu; offene Anfragen schickt die Verbindung selbst noch einmal.
+   */
+  async resync(): Promise<void> {
+    await Promise.all([...this.replicas.values()].map(async (r) => {
+      try {
+        const data = await this.request<PageRecords>({ type: "openPage", pageID: r.pageID });
+        if (this.replicas.get(r.pageID) === r) r.reset(data.records);
+      } catch {
+        // Seite weg oder Store nicht bereit: die Replik behält ihren Stand
+      }
+    }));
+  }
+
   /** @internal */
   _release(r: PageReplica) {
     if (this.replicas.get(r.pageID) !== r) return;
@@ -254,6 +269,17 @@ export class PageReplica {
     });
     const del = deletions.filter((k) => !this.inflight.has(k));
     if (take.length || del.length) this.store.applyRemote(take, del);
+  }
+
+  /** Vollständiger Stand der Seite (nach einem Wechsel des Store-Tabs): übernehmen, Fehlendes entfernen. */
+  reset(records: WireRecord[]) {
+    const have = new Set(records.map(recordKey));
+    const gone: RecordKeyString[] = [];
+    const s = this.store;
+    for (const b of s.blocks.values()) gone.push(recordKey({ kind: "block", data: b }));
+    for (const d of s.databases.values()) gone.push(recordKey({ kind: "database", data: d }));
+    for (const v of s.views.values()) gone.push(recordKey({ kind: "view", data: v }));
+    this.receive(records, gone.filter((k) => !have.has(k)));
   }
 
   close() {

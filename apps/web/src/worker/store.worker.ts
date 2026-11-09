@@ -14,7 +14,8 @@ const host = new StoreHost({
   async open({ device, opfs }) {
     if (opfs) {
       try {
-        const db = await openWasmDatabase({ opfs });
+        // Übernahme von einem geschlossenen Tab (tabs.ts): dessen Worker gibt die Datei erst kurz nach dem Lock frei.
+        const db = await openWasmDatabase({ opfs, waitMs: 5000 });
         return { ...openWorkspace(db, { device }), persistent: true };
       } catch (e) {
         const note = `Not saved on this device: ${e instanceof Error ? e.message : String(e)}`;

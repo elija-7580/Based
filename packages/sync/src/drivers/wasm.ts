@@ -7,6 +7,20 @@ import type { SqlDatabase, SqlRow } from "../sql.js";
 export interface WasmOptions {
   /** Dateiname im OPFS-Pool, z. B. "based.sqlite". Ohne Angabe: In-Memory. */
   opfs?: string;
+  /**
+   * So lange (ms) erneut versuchen, wenn die Pool-Dateien noch von einem anderen Kontext gehalten werden – z. B. vom
+   * Worker eines gerade geschlossenen Tabs, dessen Zugriffe der Browser erst kurz nach dem Web Lock freigibt.
+   * Standard 0 (ein Versuch, wie bisher).
+   */
+  waitMs?: number;
+}
+
+function busy(e: unknown): boolean {
+  const parts: string[] = [];
+  for (let x: unknown = e, i = 0; x && i < 4; x = (x as { cause?: unknown }).cause, i++) {
+    parts.push(String((x as { name?: unknown }).name ?? ""), String((x as { message?: unknown }).message ?? x));
+  }
+  return /NoModificationAllowed|InvalidState|invalid state|Access Handle/i.test(parts.join(" "));
 }
 
 export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatabase> {
@@ -15,8 +29,22 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
   let pool: Awaited<ReturnType<typeof sqlite3.installOpfsSAHPoolVfs>> | undefined;
   const file = opts.opfs ? "/" + opts.opfs.replace(/^\/+/, "") : undefined;
   if (file) {
-    pool = await sqlite3.installOpfsSAHPoolVfs({ name: "based-sahpool" });
-    db = new pool.OpfsSAHPoolDb(file);
+    const deadline = Date.now() + (opts.waitMs ?? 0);
+    for (let delay = 50; ; delay = Math.min(delay * 2, 400)) {
+      try {
+        // preserve…: bei einem Fehlschlag gibt der Pool seine schon geholten Dateien wieder frei (ohne sie zu löschen);
+        // forceReinit…: ein gescheiterter Versuch bleibt sonst im Modul zwischengespeichert und jeder weitere scheitert.
+        const options = { name: "based-sahpool", preserveOnInitFailure: true, forceReinitIfPreviouslyFailed: true };
+        pool = await sqlite3.installOpfsSAHPoolVfs(options as Parameters<typeof sqlite3.installOpfsSAHPoolVfs>[0]);
+        break;
+      } catch (e) {
+        // Warten hilft nur, wenn die Datei belegt ist (Chromium: NoModificationAllowedError, WebKit: InvalidStateError);
+        // ohne OPFS oder in WebKits flüchtigen Profilen („unknown transient reason“) nicht
+        if (Date.now() + delay > deadline || !busy(e)) throw e;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+    db = new pool!.OpfsSAHPoolDb(file);
   } else {
     db = new sqlite3.oo1.DB(":memory:", "c");
   }
