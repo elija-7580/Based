@@ -116,6 +116,7 @@ struct SettingsView: View {
             case .agents:
                 AgentSetupSection().environment(model.brain.happier)
                 PermissionsSettingsSection()
+                MainAgentSettingsSection()
                 AgentsSettingsView().environment(model.brain.happier)
                 AISettingsView()
             case .connections: ConnectionsSettingsView().environment(model.brain.happier)
@@ -539,6 +540,27 @@ struct PermissionsSettingsSection: View {
                 }
                 .accessibilityIdentifier("settings.permissionProblems")
             }
+        }
+    }
+}
+
+/// BSD-116: Settings → Agents & AI → Main agent: how often it checks in (the Schedule of the row "Main agent").
+struct MainAgentSettingsSection: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let brain = model.brain.brain
+        let current = brain.mainAgentHeartbeat
+        Section("Main agent") {
+            Picker("Checks in", selection: Binding(
+                get: { MainAgentHeartbeat(schedule: current)?.rawValue ?? current },
+                set: { brain.setMainAgentHeartbeat($0) })) {
+                ForEach(MainAgentHeartbeat.allCases) { h in Text(h.title).tag(h.rawValue) }
+                if MainAgentHeartbeat(schedule: current) == nil { Text("Custom: \(current)").tag(current) }
+            }
+            .accessibilityIdentifier("settings.mainAgentHeartbeat")
+            Text("On each check-in the main agent looks at finished sub-agent runs and posts updates to their projects. Same as the Schedule column of “Main agent” in Agent Brain → Agents.")
+                .font(.caption).foregroundStyle(Theme.secondary)
         }
     }
 }
