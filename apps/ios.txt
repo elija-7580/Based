@@ -1,1 +1,3 @@
-xcodebuild: error: Could not resolve package dependencies:
+** BUILD FAILED **
+App/Shared/BasedApp.swift:244:9: error: extra argument in call
+App/Shared/Brain/AgentDetailViews.swift:182:138: error: 'link' is unavailable in iOS

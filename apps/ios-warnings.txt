@@ -1,0 +1,19 @@
+App/Shared/Brain/BrainModel.swift:504:44: warning: main actor-isolated class property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
+App/Shared/Brain/EnginePicker.swift:112:144: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+App/Shared/Brain/EnginePicker.swift:112:98: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+App/Shared/Brain/HappierModel.swift:129:70: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+App/Shared/Brain/HappierModel.swift:132:27: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:234:58: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:248:106: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:59:14: warning: instance method 'lock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:60:34: warning: instance method 'unlock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:61:14: warning: instance method 'unlock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Brain/SkillCodec.swift:353:9: warning: code after 'throw' will never be executed
+Packages/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:254:33: warning: result of call to 'run(resultType:body:)' is unused
+Packages/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:265:33: warning: result of call to 'run(resultType:body:)' is unused
+Packages/BasedBrain/Sources/BasedBrain/Server/ServerRoutes.swift:201:81: warning: main actor-isolated static property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
+Packages/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:158:1: warning: extension declares a conformance of imported type 'Record' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'BasedCore' introduce this conformance in the future
+Packages/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:292:72: warning: main actor-isolated static property 'tombstoneRetentionDays' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+Packages/BasedCore/Sources/BasedCore/Diagnostics/StackSampler.swift:201:25: warning: will never be executed
+Packages/BasedCore/Sources/BasedCore/Store/PageOps.swift:290:5: warning: 'public' modifier is redundant for instance method declared in a public extension
+Packages/BasedCore/Sources/BasedCore/Store/PageOps.swift:317:5: warning: 'public' modifier is redundant for property declared in a public extension
