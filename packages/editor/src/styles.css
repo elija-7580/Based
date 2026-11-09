@@ -73,6 +73,11 @@
 .bx-equation-view { display: flex; justify-content: center; padding: var(--space-2); border-radius: var(--radius-sm); cursor: pointer; }
 .bx-equation-view:hover { background: var(--surface-raised); }
 .bx-inline-eq { padding-inline: var(--space-1); }
+.bx-inline-eq[role="button"] { cursor: pointer; border-radius: var(--radius-sm); }
+.bx-inline-eq[role="button"]:hover { background: var(--surface-raised); }
+.bx-inline-eq.is-editing { display: inline-flex; align-items: baseline; gap: var(--space-2); }
+.bx-inline-eq-field { width: auto; min-width: 12ch; font-family: var(--font-mono); }
+.bx-equation-preview { display: flex; justify-content: center; padding: var(--space-2); border-top: 1px solid var(--line); margin-top: var(--space-2); }
 
 /* Seiten und Erwähnungen */
 .bx-pagelink { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--ink); border-radius: var(--radius-xs); }

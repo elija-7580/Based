@@ -1,0 +1,6 @@
+/* BSD-10: Gleichungen (KaTeX); Fehler sichtbar statt Absturz. Nur Tokens. */
+.eq.is-block { display: block; overflow-x: auto; max-width: 100%; }
+.eq .katex { font-size: 1.1em; }
+.eq-error { display: inline-flex; flex-direction: column; gap: var(--space-1); color: var(--danger); }
+.eq-error.is-block { align-items: center; }
+.eq-error-text { font-size: var(--type-description-size); }

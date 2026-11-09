@@ -152,6 +152,7 @@ function slashItems(editor: BasedEditor, store: WorkspaceStore): DefaultReactSug
     { title: "Synced block", subtext: "Sync content across pages.", aliases: ["sync"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.syncedBlock } as never) },
     { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insert({ type: CUSTOM.database } as never) },
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
+    { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
     { title: "Breadcrumb", subtext: "Show where this page sits.", aliases: ["path"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.breadcrumb } as never) },
     { title: "2 columns", subtext: "Two columns side by side.", aliases: ["columns", "layout"], group: "Advanced blocks", onItemClick: () => insert(columns(2) as never) },
@@ -163,6 +164,11 @@ function slashItems(editor: BasedEditor, store: WorkspaceStore): DefaultReactSug
   void store;
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
   return [...defaults, ...custom];
+}
+
+/** Gleichung im Text an der Schreibmarke einfügen (leer: öffnet ihr Eingabefeld). */
+export function insertInlineEquation(editor: BasedEditor, expression = "") {
+  editor.insertInlineContent([{ type: INLINE.equation, props: { expression, text: "" } } as never]);
 }
 
 // MARK: @-Erwähnungen
