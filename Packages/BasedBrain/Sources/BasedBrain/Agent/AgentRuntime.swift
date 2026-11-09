@@ -57,6 +57,8 @@ public final class AgentRuntime: @unchecked Sendable {
 
         \(BasedGuide.instructions)
 
+        \(Citations.instruction)
+
         \(context)
         """
         if let systemExtra { system += "\n\n# Agent instructions\n" + systemExtra }

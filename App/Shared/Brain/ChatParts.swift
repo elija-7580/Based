@@ -451,7 +451,8 @@ struct MarkdownMessageView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let blocks = MarkdownImporter().parse(markdown)
+        // BSD-61: [[block:<id>]] markers → numbered links and a Sources list (logic in BasedBrain `Citations`).
+        let blocks = MarkdownImporter().parse(Citations.render(markdown, store: model.store, streaming: streaming).markdown)
         VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
                 MarkdownBlockView(block: b, index: i, siblings: blocks)
@@ -462,6 +463,12 @@ struct MarkdownMessageView: View {
         // Page links in answers: click opens the page here, ⌘-click in a new tab (⌘⇧: and switch to it).
         .environment(\.openURL, OpenURLAction { url in
             guard let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil else { return .systemAction }
+            if let cited = Citations.target(of: url), let block = cited.block {
+                // A source: open the page and scroll to the cited block (same mechanism as ⌘F).
+                model.open(cited.page)
+                DispatchQueue.main.async { model.findTarget = block }
+                return .handled
+            }
             #if os(macOS)
             let flags = NSEvent.modifierFlags
             if flags.contains(.command) { model.openInNewTab(id, activate: flags.contains(.shift)); return .handled }

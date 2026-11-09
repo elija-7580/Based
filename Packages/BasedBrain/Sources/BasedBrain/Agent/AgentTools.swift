@@ -15,8 +15,8 @@ public final class AgentTools {
                      inputSchema: .schema(["topic": .str("overview | markdown | databases | agents | safety")], required: ["topic"])),
             ToolSpec(name: "search", description: "Search pages and database rows by title and full text. Returns ids, titles and snippets.",
                      inputSchema: .schema(["query": .str("Search text"), "limit": .num("Max results (default 20)")], required: ["query"])),
-            ToolSpec(name: "read_page", description: "Read a page as Markdown, including its properties when it is a database row.",
-                     inputSchema: .schema(["page_id": .str("Page id")], required: ["page_id"])),
+            ToolSpec(name: "read_page", description: "Read a page as Markdown, including its properties when it is a database row. block_ids: true puts [block:<id>] before each top-level block (for citing).",
+                     inputSchema: .schema(["page_id": .str("Page id"), "block_ids": .boolean("Prefix each top-level block with its id (default false)")], required: ["page_id"])),
             ToolSpec(name: "list_pages", description: "List top-level pages, or the subpages of a page.",
                      inputSchema: .schema(["parent_id": .str("Optional parent page id")])),
             ToolSpec(name: "create_page", description: "Create a page with Markdown content under a parent page (or at workspace root).",
@@ -236,7 +236,9 @@ public final class AgentTools {
             return BasedGuide.doc(t) ?? "Unknown topic. Topics: " + BasedGuide.topics.map(\.name).joined(separator: ", ")
         case "search":
             let hits = SearchEngine(store: store).search(try req(a, "query"), limit: a["limit"]?.int ?? 20)
-            return hits.map { h in "- \(store.title(of: h.pageID)) [id: \(h.pageID), link: \(PageLink.url(h.pageID))]" + (h.snippet.map { " — \($0)" } ?? "") }.joined(separator: "\n").nonEmpty ?? "No results."
+            // BSD-61: the matching block's id, so answers can cite it ([[block:<id>]]).
+            return hits.map { h in "- \(store.title(of: h.pageID)) [id: \(h.pageID), link: \(PageLink.url(h.pageID))]" + (h.snippet.map { " — \($0)" } ?? "")
+                + (h.blockID.map { $0 == h.pageID ? "" : " [block: \($0)]" } ?? "") }.joined(separator: "\n").nonEmpty ?? "No results."
         case "read_page":
             let id = try req(a, "page_id")
             guard let b = store.blocks[id] else { throw ToolError("No page \(id)") }
@@ -244,6 +246,7 @@ public final class AgentTools {
             if let db = store.database(ofRow: id) {
                 out += "Properties:\n" + db.properties.filter { $0.type != .title }.map { "- \($0.name): \(propertyText(b, $0, db))" }.joined(separator: "\n") + "\n\n"
             }
+            if a["block_ids"]?.bool == true { return out + Citations.pageWithBlockIDs(id, store: store) }
             return out + MarkdownExporter(store: store).export(page: id, includeTitle: false)
         case "list_pages":
             let pages = a["parent_id"]?.stringValue.map { store.subpages(of: $0) } ?? store.topLevelPages()
