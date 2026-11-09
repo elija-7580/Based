@@ -27,6 +27,8 @@ public enum ProcessSupervisor {
     /// that spawns it, and Swift-concurrency/Dispatch worker threads block almost every signal – so agents started
     /// from async code silently ignored SIGTERM (`terminateTree` always had to wait for SIGKILL). The calling
     /// thread's mask is cleared only for the spawn and restored right after.
+    /// `Process` gibt es nur auf macOS und Linux; auf iOS fehlt die Funktion (Aufrufer sind dort ebenfalls ausgeklammert).
+    #if os(macOS) || os(Linux)
     public static func launch(_ process: Process) throws {
         #if os(Linux)
         var empty = sigset_t(), saved = sigset_t()
@@ -36,6 +38,7 @@ public enum ProcessSupervisor {
         #endif
         try process.run()
     }
+    #endif
 
     /// `pid` → parent pid of every process (from `/proc` on Linux, `ps` elsewhere).
     public static func processTable() -> [Int32: Int32] {
