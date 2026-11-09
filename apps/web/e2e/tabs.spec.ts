@@ -1,4 +1,4 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page, type PlaywrightWorkerArgs } from "@playwright/test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -22,7 +22,7 @@ async function newTopLevelPage(page: Page, title: string) {
   await expect(page.getByRole("treeitem", { name: title })).toBeVisible();
 }
 
-async function persistent(playwright: Parameters<Parameters<typeof test>[1]>[0]["playwright"], browserName: string, baseURL: string) {
+async function persistent(playwright: PlaywrightWorkerArgs["playwright"], browserName: string, baseURL: string) {
   // WebKit hat OPFS nur in einem dauerhaften Profil (wie im Shell-Test)
   const dir = mkdtempSync(join(tmpdir(), "based-tabs-"));
   const ctx: BrowserContext = await playwright[browserName as "chromium" | "webkit"].launchPersistentContext(dir, { baseURL });

@@ -56,6 +56,9 @@ trägt Bedeutung nie allein: Tag, Tooltip und Screenreader-Label sagen es in Wor
 
 - Desktop: Seitenleiste auf `canvas`, die Seite als Panel (`bg`, `shadow-panel`, Radius 16). Aktiver Nav-Eintrag
   = weiße Pille mit gefülltem Icon; Zähler als Badge.
+- Tabs (Web/Desktop): ab dem zweiten Tab eine Leiste über dem Panel auf `canvas`; aktiver Tab wie der aktive
+  Nav-Eintrag (`bg` + `shadow-panel`), Radius 10, Schließen-× erst beim Überfahren. Ziehen zeigt die Einfügestelle als
+  `marker-strong`-Strich. ⌘-Klick/Mittelklick öffnet im Hintergrund, ⌘T/⌘W wo der Browser sie durchlässt.
 - Gruppen sind Flächen: Listen in `surface-raised` mit Radius 18, Zeilen mit 40-px-Icon-Kachel.
 - Composer: graue Fassung, weißes Feld, darin Pillen **Agent · Compute · Permission** (Icon-Kreis + Label +
   Pfeil). Menüs: Popover mit Icon-Kacheln, Beschreibung, Häkchen; Compute = Auto/Fast/Deep/„Specific model…“,
