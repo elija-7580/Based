@@ -1,11 +1,11 @@
 // BSD-149/151: Welche Module im TS-Kern schon portiert sind. Ein Port bekommt die Eingabe eines Falls und die
 // Datei-Metadaten (z. B. Records, `now`) und liefert die Ausgabe im Fixture-Format. Nicht eingetragene Module
 // werden übersprungen und im Bericht als „nicht portiert“ geführt.
-// Offen: clipboard.
 import { compareStamps, isValidKey, keyBetween, keysBetween, keyOf, MemoryPersistence, parseRecord, parseStamp, plainText, StampClock, stampToString, WorkspaceStore } from "../../src/index.js";
 import type { RecordKeyString, Value, WireRecord } from "../../src/index.js";
 import { conversionLoss, fold, SearchCorpus, Formula, FormulaError, propertyConversion, QueryEngine, rowsOf, schema } from "../../src/index.js";
 import type { DatabaseView, SearchFilters, SearchSort } from "../../src/index.js";
+import { ClipboardHTMLImporter, HTMLExporter, importedJSON, titleOf } from "../../src/index.js";
 import type { Stamp } from "../../src/hlc.js";
 import type { FixtureCase } from "./load.js";
 
@@ -193,4 +193,17 @@ const search: Port = (raw, meta) => {
   });
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search };
+const clipboard: Port = (raw, meta) => {
+  const input = raw as { op: "parse"; html: string } | { op: "export"; page: string };
+  if (input.op === "parse") {
+    const known = new Set(meta.resolvePage as string[]);
+    const importer = new ClipboardHTMLImporter(ClipboardHTMLImporter.pageResolver((id) => known.has(id)));
+    return { isStructured: ClipboardHTMLImporter.isStructured(input.html), blocks: importer.parse(input.html).map(importedJSON) };
+  }
+  const { store } = queryStore(meta);
+  const exporter = new HTMLExporter(store, { headingOffset: 0, pageLink: (id) => ({ title: titleOf(store, id), url: `based://page/${id}` }) });
+  const html = exporter.blocks(exporter.contentBlocks(input.page));
+  return { html, reparsed: new ClipboardHTMLImporter().parse(html).map(importedJSON) };
+};
+
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard };

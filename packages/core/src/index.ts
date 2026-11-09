@@ -20,3 +20,8 @@ export { conversionLoss, formatDateValue, plainString, propertyConversion } from
 export type { ConversionPlan } from "./store/conversion.js";
 export { SearchCorpus, contentText, fold, rowText, snippet } from "./search/search.js";
 export type { SearchFilters, SearchHit, SearchSort } from "./search/search.js";
+export { HTMLNode, decodeEntities, parseHTML, pageIDFromLink, sanitizeURL, urlScheme } from "./interop/html.js";
+export { ClipboardHTMLImporter, importedJSON, notionColor } from "./interop/clipboard.js";
+export type { ImportedBlock } from "./interop/clipboard.js";
+export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
+export type { HTMLExporterOptions } from "./interop/export.js";
