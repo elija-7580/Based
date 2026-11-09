@@ -281,54 +281,9 @@ public struct ChatTurnBuilder: Sendable, Equatable {
 public enum ClaudeChatStream {
     /// One NDJSON line of `claude -p --output-format stream-json --verbose --include-partial-messages` → events.
     /// Sub-agent output (`parent_tool_use_id` set) is skipped; its parent tool card shows the result.
+    /// BSD-94: parsing lives in `ClaudeStream.parse` (one parser for sessions and chat); this only maps.
     public static func events(fromLine line: String) -> [ChatEvent] {
-        let t = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard t.hasPrefix("{"), let v = try? JSONValue.parse(t) else { return [] }
-        if let parent = v["parent_tool_use_id"], !parent.isNull { return [] }
-        switch v["type"]?.string {
-        case "system":
-            guard v["subtype"]?.string == "init" else { return [] }
-            return [.started(model: v["model"]?.string, sessionID: v["session_id"]?.string)]
-        case "stream_event":
-            guard let ev = v["event"], ev["type"]?.string == "content_block_delta", let d = ev["delta"] else { return [] }
-            switch d["type"]?.string {
-            case "text_delta": return d["text"]?.string.map { [.textDelta($0)] } ?? []
-            case "thinking_delta": return d["thinking"]?.string.map { [.thinkingDelta($0)] } ?? []
-            default: return []
-            }
-        case "assistant":
-            return (v["message"]?["content"]?.array ?? []).compactMap { b -> ChatEvent? in
-                switch b["type"]?.string {
-                case "thinking": return b["thinking"]?.string.map { .thinking($0) }
-                case "text": return b["text"]?.string.map { .text($0) }
-                case "tool_use": return .toolUse(id: b["id"]?.string ?? "", name: b["name"]?.string ?? "tool", input: b["input"] ?? .object([:]))
-                default: return nil
-                }
-            }
-        case "user":
-            var out: [ChatEvent] = []
-            for b in v["message"]?["content"]?.array ?? [] where b["type"]?.string == "tool_result" {
-                let id = b["tool_use_id"]?.string ?? ""
-                out.append(.toolResult(id: id, output: Self.text(of: b["content"]), isError: b["is_error"]?.bool ?? false))
-                for img in b["content"]?.array ?? [] where img["type"]?.string == "image" {
-                    guard let src = img["source"], src["type"]?.string == "base64", let b64 = src["data"]?.string,
-                          let data = Data(base64Encoded: b64) else { continue }
-                    out.append(.toolImage(id: id, data: data, mediaType: src["media_type"]?.string ?? "image/png"))
-                }
-            }
-            return out
-        case "result":
-            return [.result(text: v["result"]?.string ?? "", sessionID: v["session_id"]?.string,
-                            costUSD: v["total_cost_usd"]?.number ?? v["cost_usd"]?.number, isError: v["is_error"]?.bool ?? false)]
-        default:
-            return []
-        }
-    }
-
-    static func text(of content: JSONValue?) -> String {
-        guard let content else { return "" }
-        if let s = content.string { return s }
-        return (content.array ?? []).compactMap { $0["text"]?.string }.joined(separator: "\n")
+        ClaudeStream.parse(line: line, includeSubagents: false).compactMap(ClaudeStream.chatEvent)
     }
 
     /// Splits a growing byte buffer into complete lines (keeps the unfinished tail).

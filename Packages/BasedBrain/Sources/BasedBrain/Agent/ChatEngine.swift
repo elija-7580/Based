@@ -207,17 +207,17 @@ final class ChatTurnSaver {
     }
 }
 
-/// Delivers events on the main actor in exactly the order they were sent, from any thread. Each send schedules
-/// a drain, and every drain takes all pending events in order — so it doesn't matter in which order the
+/// Delivers values on the main actor in exactly the order they were sent, from any thread. Each send schedules
+/// a drain, and every drain takes all pending values in order — so it doesn't matter in which order the
 /// scheduled tasks run (one `Task { @MainActor in … }` per event could swap deltas).
-public final class MainActorRelay: @unchecked Sendable {
+public final class OrderedMainActorRelay<Element: Sendable>: @unchecked Sendable {
     private let lock = NSLock()
-    private var pending: [ChatEvent] = []
-    private let handler: @MainActor (ChatEvent) -> Void
+    private var pending: [Element] = []
+    private let handler: @MainActor (Element) -> Void
 
-    public init(_ handler: @escaping @MainActor (ChatEvent) -> Void) { self.handler = handler }
+    public init(_ handler: @escaping @MainActor (Element) -> Void) { self.handler = handler }
 
-    @Sendable public func send(_ e: ChatEvent) {
+    @Sendable public func send(_ e: Element) {
         lock.lock(); pending.append(e); lock.unlock()
         Task { @MainActor in self.drain() }
     }
@@ -226,6 +226,30 @@ public final class MainActorRelay: @unchecked Sendable {
         lock.lock(); let batch = pending; pending = []; lock.unlock()
         for e in batch { handler(e) }
     }
+}
+
+/// The chat's relay (BSD-45).
+public typealias MainActorRelay = OrderedMainActorRelay<ChatEvent>
+
+/// Main-actor work from any thread, run strictly in submission order (BSD-94: session transcripts and status
+/// updates of `HappierRuntime`, which used one `Task` per update and could store lines out of order).
+public final class MainActorQueue: Sendable {
+    public typealias Job = @MainActor @Sendable () -> Void
+    private let relay = OrderedMainActorRelay<Job> { job in job() }
+    public init() {}
+
+    /// Queues `job` behind everything sent before.
+    @Sendable public func send(_ job: @escaping Job) { relay.send(job) }
+
+    /// Runs `body` after everything queued before it and returns its result.
+    public func run<R: Sendable>(_ body: @escaping @MainActor @Sendable () -> R) async -> R {
+        await withCheckedContinuation { (c: CheckedContinuation<R, Never>) in
+            relay.send { c.resume(returning: body()) }
+        }
+    }
+
+    /// Waits until everything queued so far has run.
+    public func drained() async { await run { () } }
 }
 
 // MARK: - Backends

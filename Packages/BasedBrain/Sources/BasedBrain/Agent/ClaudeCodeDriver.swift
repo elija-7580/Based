@@ -12,22 +12,31 @@ public protocol AgentConnection: AnyObject, Sendable {
 
 extension ACPClient: AgentConnection {}
 
-/// One parsed line of `claude --output-format stream-json --verbose`.
+/// One parsed line of `claude --output-format stream-json --verbose [--include-partial-messages]`.
+/// BSD-94: the only parser for Claude Code's stream-json — sessions (`ClaudeCodeDriver`) use these events,
+/// the chat (`ClaudeChatStream`) maps them to `ChatEvent`.
 public enum ClaudeStreamEvent: Sendable, Equatable {
     case initialized(sessionID: String, model: String?, cwd: String?, permissionMode: String?, tools: [String])
     case text(String)
     case thinking(String)
+    /// Partial output (`stream_event` / `content_block_delta`, only with `--include-partial-messages`).
+    case textDelta(String)
+    case thinkingDelta(String)
     case toolUse(id: String, name: String, input: JSONValue)
     case toolResult(id: String, output: String, isError: Bool)
+    /// An image inside a tool result (screenshots of browser / computer use).
+    case toolImage(id: String, data: Data, mediaType: String)
     case result(sessionID: String?, isError: Bool, text: String?, inputTokens: Int, outputTokens: Int, costUSD: Double?, turns: Int?)
     case other(String)
 }
 
 public enum ClaudeStream {
-    /// Parses one JSON line into zero or more events.
-    public static func parse(line: String) -> [ClaudeStreamEvent] {
+    /// Parses one JSON line into zero or more events. Lines of sub-agents (`parent_tool_use_id` set) are
+    /// included unless `includeSubagents` is false (the chat shows them through the parent's tool card).
+    public static func parse(line: String, includeSubagents: Bool = true) -> [ClaudeStreamEvent] {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let v = try? JSONValue.parse(trimmed) else { return [] }
+        guard trimmed.hasPrefix("{"), let v = try? JSONValue.parse(trimmed) else { return [] }
+        if !includeSubagents, let parent = v["parent_tool_use_id"], !parent.isNull { return [] }
         switch v["type"]?.string ?? "" {
         case "system":
             if v["subtype"]?.string == "init" {
@@ -35,14 +44,21 @@ public enum ClaudeStream {
                                      permissionMode: v["permissionMode"]?.string, tools: v["tools"]?.stringArray ?? [])]
             }
             return [.other(v["subtype"]?.string ?? "system")]
+        case "stream_event":
+            guard let ev = v["event"], ev["type"]?.string == "content_block_delta", let d = ev["delta"] else { return [] }
+            switch d["type"]?.string {
+            case "text_delta": return d["text"]?.string.map { [.textDelta($0)] } ?? []
+            case "thinking_delta": return d["thinking"]?.string.map { [.thinkingDelta($0)] } ?? []
+            default: return []
+            }
         case "assistant":
             var out: [ClaudeStreamEvent] = []
             for item in v["message"]?["content"]?.array ?? [] {
                 switch item["type"]?.string ?? "" {
-                case "text": if let t = item["text"]?.string, !t.isEmpty { out.append(.text(t)) }
-                case "thinking": if let t = item["thinking"]?.string, !t.isEmpty { out.append(.thinking(t)) }
+                case "text": if let t = item["text"]?.string { out.append(.text(t)) }
+                case "thinking": if let t = item["thinking"]?.string { out.append(.thinking(t)) }
                 case "tool_use":
-                    out.append(.toolUse(id: item["id"]?.string ?? UUID().uuidString, name: item["name"]?.string ?? "tool", input: item["input"] ?? .object([:])))
+                    out.append(.toolUse(id: item["id"]?.string ?? "", name: item["name"]?.string ?? "tool", input: item["input"] ?? .object([:])))
                 default: break
                 }
             }
@@ -50,7 +66,13 @@ public enum ClaudeStream {
         case "user":
             var out: [ClaudeStreamEvent] = []
             for item in v["message"]?["content"]?.array ?? [] where item["type"]?.string == "tool_result" {
-                out.append(.toolResult(id: item["tool_use_id"]?.string ?? "", output: resultText(item["content"]), isError: item["is_error"]?.bool ?? false))
+                let id = item["tool_use_id"]?.string ?? ""
+                out.append(.toolResult(id: id, output: resultText(item["content"]), isError: item["is_error"]?.bool ?? false))
+                for img in item["content"]?.array ?? [] where img["type"]?.string == "image" {
+                    guard let src = img["source"], src["type"]?.string == "base64", let b64 = src["data"]?.string,
+                          let data = Data(base64Encoded: b64) else { continue }
+                    out.append(.toolImage(id: id, data: data, mediaType: src["media_type"]?.string ?? "image/png"))
+                }
             }
             return out
         case "result":
@@ -58,19 +80,36 @@ public enum ClaudeStream {
             func int(_ k: String) -> Int { Int(usage?[k]?.number ?? 0) }
             return [.result(sessionID: v["session_id"]?.string, isError: v["is_error"]?.bool ?? (v["subtype"]?.string != "success"),
                             text: v["result"]?.string, inputTokens: int("input_tokens") + int("cache_read_input_tokens") + int("cache_creation_input_tokens"),
-                            outputTokens: int("output_tokens"), costUSD: v["total_cost_usd"]?.number, turns: v["num_turns"]?.number.map { Int($0) })]
+                            outputTokens: int("output_tokens"), costUSD: v["total_cost_usd"]?.number ?? v["cost_usd"]?.number,
+                            turns: v["num_turns"]?.number.map { Int($0) })]
         default:
             return [.other(v["type"]?.string ?? "?")]
         }
     }
 
+    /// Text of a tool result: a string, or the text items of a content array (images come as `.toolImage`).
     static func resultText(_ v: JSONValue?) -> String {
         guard let v else { return "" }
         if let s = v.string { return s }
-        if let a = v.array {
-            return a.compactMap { $0["type"]?.string == "text" ? $0["text"]?.string : ($0["type"]?.string == "image" ? "[image]" : nil) }.joined(separator: "\n")
-        }
+        if let a = v.array { return a.compactMap { $0["type"]?.string == "text" ? $0["text"]?.string : nil }.joined(separator: "\n") }
+        if v.isNull { return "" }
         return (try? String(data: v.encoded(), encoding: .utf8)) ?? ""
+    }
+
+    /// Stream event → chat event (`nil` for lines the chat does not show).
+    public static func chatEvent(_ e: ClaudeStreamEvent) -> ChatEvent? {
+        switch e {
+        case .initialized(let sid, let model, _, _, _): return .started(model: model, sessionID: sid.isEmpty ? nil : sid)
+        case .text(let t): return .text(t)
+        case .thinking(let t): return .thinking(t)
+        case .textDelta(let t): return .textDelta(t)
+        case .thinkingDelta(let t): return .thinkingDelta(t)
+        case .toolUse(let id, let name, let input): return .toolUse(id: id, name: name, input: input)
+        case .toolResult(let id, let output, let isError): return .toolResult(id: id, output: output, isError: isError)
+        case .toolImage(let id, let data, let type): return .toolImage(id: id, data: data, mediaType: type)
+        case .result(let sid, let isError, let text, _, _, let cost, _): return .result(text: text ?? "", sessionID: sid, costUSD: cost, isError: isError)
+        case .other: return nil
+        }
     }
 
     /// Claude Code tool → ACP tool kind (drives icons and the "allow reads" policy).
@@ -153,11 +192,12 @@ public enum ClaudeStream {
             if let model { out.append(.notice("Model: \(model)")) }
             if let mode { out.append(.modeChanged(mode)) }
             return out
-        case .text(let t): return [.agentText(t)]
-        case .thinking(let t): return [.agentThought(t)]
+        case .text(let t): return t.isEmpty ? [] : [.agentText(t)]
+        case .thinking(let t): return t.isEmpty ? [] : [.agentThought(t)]
+        case .textDelta, .thinkingDelta, .toolImage: return []
         case .toolUse(let id, let name, let input):
             if name == "TodoWrite" { return [.plan(todos(input))] }
-            return [.toolCall(id: id, title: title(of: name, input: input), kind: kind(of: name), status: "in_progress")] + diffs(name, input)
+            return [.toolCall(id: id.isEmpty ? UUID().uuidString : id, title: title(of: name, input: input), kind: kind(of: name), status: "in_progress")] + diffs(name, input)
         case .toolResult(let id, let output, let isError):
             return [.toolCallUpdate(id: id, status: isError ? "failed" : "completed", output: output)]
         case .result(_, _, _, let i, let o, _, _): return [.usage(input: i, output: o)]

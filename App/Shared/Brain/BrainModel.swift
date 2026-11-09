@@ -140,35 +140,15 @@ final class BrainModel {
         }
     }
 
-    enum Engine: Equatable { case model(String), cli(ChatEngineSpec), none }
+    typealias Engine = ChatEngineChoice
 
-    /// Auto: an API / server model (tools, big context) → Claude Code (the user's subscription, tools via MCP)
-    /// → Codex → Apple Intelligence on device (no tools, small window — last resort).
+    /// Auto: API model → Claude Code → Codex → on device (BSD-94: decided in BasedBrain, `ChatRouting.resolve`).
     var resolvedEngine: Engine {
-        switch engineSpec.kind {
-        case .api where registry.resolve(engineSpec.model) != nil: return .model(engineSpec.model)
-        case .claudeCode, .codex, .gemini, .opencode:
-            if installedCLIs.contains(engineSpec.kind) { return .cli(engineSpec) }
-        default: break
-        }
-        if let p = registry.byChatPreference.first(where: { !$0.isOnDevice }) {
-            let ref = defaultModel.isEmpty || registry.resolve(defaultModel)?.0.isOnDevice == true ? "\(p.id)/\(p.models.first ?? "")" : defaultModel
-            return .model(ref)
-        }
-        if installedCLIs.contains(.claudeCode) { return .cli(ChatEngineSpec(kind: .claudeCode)) }
-        if installedCLIs.contains(.codex) { return .cli(ChatEngineSpec(kind: .codex)) }
-        if let p = registry.all.first(where: \.isOnDevice) { return .model("\(p.id)/\(p.models.first ?? "")") }
-        return .none
+        ChatRouting.resolve(engineSpec, registry: registry, installed: installedCLIs, defaultModel: defaultModel)
     }
 
     /// Label for meta lines ("Claude Code · Opus 5.5").
-    var chatEngine: String {
-        switch resolvedEngine {
-        case .model(let ref): return ref.hasPrefix("apple/") ? "Apple Intelligence (on device)" : ref
-        case .cli(let s): return s.model.isEmpty ? s.kind.title : s.kind.title + " · " + CLICatalog.label(ChatEngineSpec(kind: s.kind, model: s.model))
-        case .none: return "No AI configured"
-        }
-    }
+    var chatEngine: String { ChatRouting.label(resolvedEngine) }
 
     /// API models grouped by provider for the picker.
     var apiModelGroups: [(provider: String, onDevice: Bool, models: [String])] {
@@ -246,25 +226,14 @@ final class BrainModel {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !attachments.isEmpty, !isRunning else { return }
         let engine = resolvedEngine
-        let onDevice: Bool = { if case .model(let r) = engine { return r.hasPrefix("apple/") }; return false }()
-        var p = trimmed
-        for a in attachments { p += "\n\n" + a.promptText() }
-        if let pageContext, store.blocks[pageContext] != nil, !store.isTrashed(pageContext) {
-            let title = store.title(of: pageContext).nonEmptyOr("Untitled")
-            if onDevice {
-                // No tools on device: hand over the page text itself (short).
-                let body = MarkdownExporter(store: store).export(page: pageContext, includeTitle: false)
-                p += "\n\n---\nOpen page “\(title)”:\n" + String(body.prefix(1500))
-            } else {
-                p += "\n\n---\nContext: the user has the page “\(title)” open (page id \(pageContext)). Read it with the tools only if the question is about it."
-            }
-        }
+        let page = ChatRouting.page(pageContext, in: store, onDevice: engine.isOnDevice)
+        let p = ChatRouting.prompt(trimmed, attachments: attachments.map { $0.promptText() }, page: page, onDevice: engine.isOnDevice)
         let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
         // Persist: the first message creates the chat.
         let sid: RecordID
         if let c = chatID, store.blocks[c] != nil { sid = c } else {
             sid = brain.createSession(title: String(shown.prefix(60)), agentID: "based", machine: happier.machineName,
-                                      cwd: cliSpecForSession(engine) ? chatFolder : "", encrypted: false)
+                                      cwd: engine.isCLI ? chatFolder : "", encrypted: false)
             chatID = sid
         }
         let attachNote = attachments.isEmpty ? "" : "\n\n" + attachments.map { "📎 \($0.name)" }.joined(separator: "  ")
@@ -281,13 +250,11 @@ final class BrainModel {
         runtime.onProgress = nil
         // BSD-45: the turn runs in BasedBrain's ChatEngine; this view model only picks the backend and renders events.
         let backend: ChatBackend
-        var system = ""
+        let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
         switch engine {
         case .model(let ref):
             backend = ModelChatBackend(runtime: runtime, modelRef: ref)
         case .cli(let spec):
-            let context = brain.systemContext(query: trimmed)
-            system = "You are the assistant inside Based, a Notion-like notes app. Use the `based` MCP tools to search, read and edit the user's pages and databases. Answer in the user's language, concisely, in Markdown. \(Self.artifactHint)\n\n" + BasedGuide.instructions + "\n\n" + String(context.prefix(6000))
             if spec.kind == .claudeCode {
                 backend = ClaudeCodeChatBackend(spec: spec, mcpConfig: happier.mcpConfig(session: sid))
             } else {
@@ -342,16 +309,10 @@ final class BrainModel {
         return try await complete(system: system, prompt: prompt, maxTokens: 4096)
     }
 
-    private func cliSpecForSession(_ e: Engine) -> Bool { if case .cli = e { return true }; return false }
-
-    /// Tells the model how to produce artifacts the chat can show in its panel.
-    static let artifactHint = "For visual or interactive results (a web page, chart, small app, diagram, illustration) reply with ONE complete fenced block — ```html (self-contained, inline CSS/JS, CDNs allowed), ```svg, ```mermaid or ```jsx (a React component with `export default`, Tailwind classes work) — and keep the text around it short; the app shows it as a live artifact. For a longer standalone document the user may keep (a plan, report, letter, summary, notes) put it in ONE ```markdown block starting with a # title; the app shows it as a document they can read and save as a page. When you create or edit workspace pages with tools, the app shows them as cards, so do not repeat their content."
 
     enum ChatError: Error, CustomStringConvertible {
         case noEngine
-        var description: String {
-            "No AI is configured. Add an API key (Settings → Agent Brain) or install Claude Code (`npm install -g @anthropic-ai/claude-code`, then `claude` once to log in)."
-        }
+        var description: String { ChatRouting.noEngineMessage }
     }
 
     func clearChat() { newChat() }

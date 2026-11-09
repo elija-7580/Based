@@ -103,6 +103,10 @@ public final class HappierRuntime: @unchecked Sendable {
     public var onTurn: (@Sendable (RecordID, Bool) -> Void)?
     public var onLog: (@Sendable (String) -> Void)?
 
+    /// BSD-94: every main-actor write (transcript lines, status, tokens) goes through one ordered queue, so
+    /// 1000 fast updates of a session land in the transcript in the order the agent sent them.
+    public let mainQueue = MainActorQueue()
+
     private let liveBox = Locked<[RecordID: AgentConnection]>([:])
     private let pendingBox = Locked<[RecordID: String]>([:])
     private let lastTextBox = Locked<[RecordID: String]>([:])
@@ -124,17 +128,17 @@ public final class HappierRuntime: @unchecked Sendable {
         guard let def = agents.first(where: { $0.id == agentID }) else { throw JSONRPCPeer.RPCError.internalError("Unknown agent \(agentID)") }
         let name = title ?? "\(def.name) · \(URL(fileURLWithPath: cwd).lastPathComponent)"
         let proj = project ?? URL(fileURLWithPath: cwd).lastPathComponent
-        let sid = await MainActor.run {
-            brain.createSession(title: name, agentID: agentID, machine: machineName, cwd: cwd, encrypted: cipher != nil, project: proj,
+        let sid = await mainQueue.run {
+            self.brain.createSession(title: name, agentID: agentID, machine: self.machineName, cwd: cwd, encrypted: self.cipher != nil, project: proj,
                                 parentID: parentID, task: task)
         }
         Log.info("Session \(sid) started: \(def.name) in \(cwd)", category: "agents")
         do {
             try await attach(session: sid, def: def, cwd: cwd, resume: nil)
         } catch {
-            await MainActor.run {
-                brain.updateSession(sid, status: .failed)
-                brain.appendTranscript(sid, role: "Error", markdown: "Could not start \(def.name): \(error)", cipher: cipher)
+            await mainQueue.run {
+                self.brain.updateSession(sid, status: .failed)
+                self.brain.appendTranscript(sid, role: "Error", markdown: "Could not start \(def.name): \(error)", cipher: self.cipher)
             }
             Log.error("Could not start \(def.name): \(error)", category: "agents")
             throw error
@@ -144,7 +148,7 @@ public final class HappierRuntime: @unchecked Sendable {
 
     /// Re-attach a persisted session (e.g. after a restart): relaunches the agent and resumes its conversation when known.
     public func attach(_ sid: RecordID) async throws {
-        guard let s = await MainActor.run(body: { brain.sessions().first { $0.id == sid } }) else { throw JSONRPCPeer.RPCError.internalError("Unknown session \(sid)") }
+        guard let s = await mainQueue.run({ self.brain.sessions().first { $0.id == sid } }) else { throw JSONRPCPeer.RPCError.internalError("Unknown session \(sid)") }
         guard let def = agents.first(where: { $0.id == s.agentID }) else { throw JSONRPCPeer.RPCError.internalError("Unknown agent \(s.agentID)") }
         try await attach(session: sid, def: def, cwd: s.cwd, resume: s.acpSessionID)
     }
@@ -155,7 +159,7 @@ public final class HappierRuntime: @unchecked Sendable {
     }
 
     private func attach(session sid: RecordID, def: AgentDefinition, cwd: String, resume: String?) async throws {
-        let conns = await MainActor.run { brain.connections() }
+        let conns = await mainQueue.run { self.brain.connections() }
         var servers = connections.map { $0.mcpServers(for: conns) } ?? []
         if let exe = useNative(def) {
             // Native Claude Code: our session ids are stored as "claude:<uuid>".
@@ -175,7 +179,7 @@ public final class HappierRuntime: @unchecked Sendable {
             var mode = claudeModes.sync { $0[sid] } ?? "default"
             if permissionPolicy == .allowAll && mode == "default" { mode = "bypassPermissions" }
             if promptTool == nil && mode == "default" { mode = "acceptEdits" }
-            let context = await MainActor.run { self.brain.systemContext(query: "") }
+            let context = await mainQueue.run { self.brain.systemContext(query: "") }
             var system = mcp["based"] != nil ? await orchestrationPrompt(for: sid) : ""
             if !context.isEmpty { system += "\n\nContext from the user's Based workspace (use the based MCP tools for more):\n" + String(context.prefix(6000)) }
             let driver = ClaudeCodeDriver(options: .init(executable: exe, cwd: cwd, resume: resumeID, permissionMode: mode,
@@ -183,15 +187,15 @@ public final class HappierRuntime: @unchecked Sendable {
                                                          appendSystemPrompt: system.isEmpty ? nil : system))
             driver.onUpdate = { [weak self] u in self?.handle(sid, u) }
             driver.onLog = { [weak self] line in self?.onLog?("[claude] \(line)") }
-            let brain = self.brain
+            let brain = self.brain, queue = self.mainQueue
             driver.onEvent = { e in
                 if case .initialized(let csid, _, _, _, _) = e, !csid.isEmpty {
-                    Task { await MainActor.run { brain.updateSession(sid, acpSessionID: "claude:" + csid) } }
+                    queue.send { brain.updateSession(sid, acpSessionID: "claude:" + csid) }
                 }
             }
             try driver.start()
             liveBox.sync { $0[sid] = driver }
-            await MainActor.run { brain.updateSession(sid, status: .idle, agentID: def.id) }
+            await mainQueue.run { brain.updateSession(sid, status: .idle, agentID: def.id) }
             return
         }
         let client = ACPClient(definition: def)
@@ -210,7 +214,7 @@ public final class HappierRuntime: @unchecked Sendable {
             acpID = try await client.newSession(cwd: cwd, mcpServers: servers)
         }
         liveBox.sync { $0[sid] = client }
-        await MainActor.run { brain.updateSession(sid, status: .idle, acpSessionID: acpID, agentID: def.id) }
+        await mainQueue.run { self.brain.updateSession(sid, status: .idle, acpSessionID: acpID, agentID: def.id) }
     }
 
     /// Send a user prompt to a session (starting the agent process again if needed).
@@ -224,28 +228,28 @@ public final class HappierRuntime: @unchecked Sendable {
         inFlight.sync { _ = $0.insert(sid) }
         onTurn?(sid, true)
         lastTextBox.sync { _ = $0.removeValue(forKey: sid) }
-        await MainActor.run {
+        await mainQueue.run {
             // The first prompt of a session doubles as its task (board / canvas cards).
-            let first = brain.sessions().first { $0.id == sid }?.task.isEmpty ?? false
-            brain.appendTranscript(sid, role: "You", markdown: text, cipher: cipher)
-            brain.updateSession(sid, status: .running, task: first ? text : nil)
+            let first = self.brain.sessions().first { $0.id == sid }?.task.isEmpty ?? false
+            self.brain.appendTranscript(sid, role: "You", markdown: text, cipher: self.cipher)
+            self.brain.updateSession(sid, status: .running, task: first ? text : nil)
         }
-        var context = conn is ClaudeCodeDriver ? "" : await MainActor.run { brain.systemContext(query: text) }
+        var context = conn is ClaudeCodeDriver ? "" : await mainQueue.run { self.brain.systemContext(query: text) }
         if !(conn is ClaudeCodeDriver), mcpEndpoint != nil || basedMCPServer != nil { context = await orchestrationPrompt(for: sid) + "\n\n" + context }
         do {
             let stop = try await conn.prompt(text, resources: context.isEmpty ? [] : [("based://brain", context)])
             flush(sid)
             let answer = lastTextBox.sync { $0[sid] }
-            await MainActor.run { brain.updateSession(sid, status: stop == .cancelled ? .idle : .done, result: answer) }
+            await mainQueue.run { self.brain.updateSession(sid, status: stop == .cancelled ? .idle : .done, result: answer) }
             inFlight.sync { _ = $0.remove(sid) }
             onTurn?(sid, false)
             await reportToParent(sid)
             return stop
         } catch {
             flush(sid)
-            await MainActor.run {
-                brain.updateSession(sid, status: .failed, result: "Error: \(error)")
-                brain.appendTranscript(sid, role: "Error", markdown: "\(error)", cipher: cipher)
+            await mainQueue.run {
+                self.brain.updateSession(sid, status: .failed, result: "Error: \(error)")
+                self.brain.appendTranscript(sid, role: "Error", markdown: "\(error)", cipher: self.cipher)
             }
             inFlight.sync { _ = $0.remove(sid) }
             onTurn?(sid, false)
@@ -260,7 +264,7 @@ public final class HappierRuntime: @unchecked Sendable {
     public func stop(_ sid: RecordID) {
         let c = liveBox.sync { $0.removeValue(forKey: sid) }
         c?.stop()
-        Task { await MainActor.run { brain.updateSession(sid, status: .idle) } }
+        mainQueue.send { self.brain.updateSession(sid, status: .idle) }
     }
 
     /// Changes Claude Code's permission mode (default / acceptEdits / plan / bypassPermissions); applies from the next turn.
@@ -275,12 +279,12 @@ public final class HappierRuntime: @unchecked Sendable {
     /// Switch a running session to another agent: the new agent receives the transcript so far as context.
     public func switchAgent(_ sid: RecordID, to agentID: String) async throws {
         guard let def = agents.first(where: { $0.id == agentID }) else { throw JSONRPCPeer.RPCError.internalError("Unknown agent \(agentID)") }
-        let s = await MainActor.run { brain.sessions().first { $0.id == sid } }
+        let s = await mainQueue.run { self.brain.sessions().first { $0.id == sid } }
         guard let s else { throw JSONRPCPeer.RPCError.internalError("Session not found") }
         stop(sid)
         try await attach(session: sid, def: def, cwd: s.cwd, resume: nil)
-        let history = await MainActor.run { brain.transcript(sid, cipher: cipher) }
-        await MainActor.run { brain.appendTranscript(sid, role: "System", markdown: "Switched to \(def.name).", cipher: cipher) }
+        let history = await mainQueue.run { self.brain.transcript(sid, cipher: self.cipher) }
+        await mainQueue.run { self.brain.appendTranscript(sid, role: "System", markdown: "Switched to \(def.name).", cipher: self.cipher) }
         if let c = connection(for: sid) {
             _ = try await c.prompt("You are taking over an ongoing session from another agent. Here is the transcript so far; acknowledge briefly and continue when the user speaks.",
                                    resources: [("based://session/\(sid)/transcript", String(history.suffix(60_000)))])
@@ -301,22 +305,22 @@ public final class HappierRuntime: @unchecked Sendable {
 
     /// When a child session finishes a turn, its final answer is stored on the child and posted to the parent session.
     private func reportToParent(_ sid: RecordID, failed: Bool = false) async {
-        let info = await MainActor.run { () -> (RecordID, String)? in
-            guard let s = brain.sessions().first(where: { $0.id == sid }), let parent = s.parentID else { return nil }
+        let info = await mainQueue.run { () -> (RecordID, String)? in
+            guard let s = self.brain.sessions().first(where: { $0.id == sid }), let parent = s.parentID else { return nil }
             return (parent, s.title)
         }
         guard let (parent, title) = info else { return }
         let last = lastTextBox.sync { $0[sid] } ?? "(no answer)"
-        await MainActor.run {
-            brain.appendTranscript(parent, role: "Notice",
-                                   markdown: "Sub-agent **\(title)** \(failed ? "failed" : "finished") (session \(sid)):\n\n\(String(last.suffix(3000)))", cipher: cipher)
+        await mainQueue.run {
+            self.brain.appendTranscript(parent, role: "Notice",
+                                   markdown: "Sub-agent **\(title)** \(failed ? "failed" : "finished") (session \(sid)):\n\n\(String(last.suffix(3000)))", cipher: self.cipher)
         }
         onLog?("sub-agent \(sid) reported to \(parent)")
     }
 
     /// Text added to a native Claude Code session's system prompt so it knows how to delegate.
     public func orchestrationPrompt(for sid: RecordID) async -> String {
-        let (depth, project) = await MainActor.run { (brain.depth(of: sid), brain.sessions().first { $0.id == sid }?.project ?? "") }
+        let (depth, project) = await mainQueue.run { (self.brain.depth(of: sid), self.brain.sessions().first { $0.id == sid }?.project ?? "") }
         guard depth < maxSubAgentDepth else {
             return "You are a sub-agent (Based session \(sid), level \(depth)). Finish your task yourself and answer with a concise report — it is sent back to the agent that started you."
         }
@@ -368,11 +372,11 @@ public final class HappierRuntime: @unchecked Sendable {
     public func spawn(agentID: String, prompt: String, title: String? = nil, cwd: String? = nil, project: String? = nil,
                       parentID: RecordID?) async throws -> RecordID {
         guard let def = agents.first(where: { $0.id == agentID }), def.enabled else { throw SpawnError.unknownAgent(agentID) }
-        let (parent, depth, activeKids) = await MainActor.run { () -> (AgentSession?, Int, Int) in
-            guard let p = parentID, let ps = brain.sessions().first(where: { $0.id == p }) else { return (nil, 0, 0) }
-            let working = inFlight.sync { $0 }
-            let kids = brain.children(of: p).filter { $0.isActive || working.contains($0.id) }.count
-            return (ps, brain.depth(of: p) + 1, kids)
+        let (parent, depth, activeKids) = await mainQueue.run { () -> (AgentSession?, Int, Int) in
+            guard let p = parentID, let ps = self.brain.sessions().first(where: { $0.id == p }) else { return (nil, 0, 0) }
+            let working = self.inFlight.sync { $0 }
+            let kids = self.brain.children(of: p).filter { $0.isActive || working.contains($0.id) }.count
+            return (ps, self.brain.depth(of: p) + 1, kids)
         }
         if parent != nil {
             guard depth <= maxSubAgentDepth else { throw SpawnError.tooDeep(maxSubAgentDepth) }
@@ -383,10 +387,10 @@ public final class HappierRuntime: @unchecked Sendable {
         let name = (title?.isEmpty == false ? title! : Self.titleFrom(prompt: prompt, agent: def.name))
         let sid = try await startSession(agentID: def.id, cwd: dir, title: name, project: proj, parentID: parent?.id, task: prompt)
         inFlight.sync { _ = $0.insert(sid) }
-        await MainActor.run { brain.updateSession(sid, status: .running) }
+        await mainQueue.run { self.brain.updateSession(sid, status: .running) }
         if let p = parent?.id {
-            await MainActor.run {
-                brain.appendTranscript(p, role: "Notice", markdown: "Started sub-agent **\(name)** (\(def.name), session \(sid)).", cipher: cipher)
+            await mainQueue.run {
+                self.brain.appendTranscript(p, role: "Notice", markdown: "Started sub-agent **\(name)** (\(def.name), session \(sid)).", cipher: self.cipher)
             }
         }
         Task { _ = try? await self.prompt(sid, prompt) }
@@ -408,7 +412,7 @@ public final class HappierRuntime: @unchecked Sendable {
             if busy.isEmpty || Date() >= deadline { break }
             try? await Task.sleep(nanoseconds: 400_000_000)
         }
-        let all = await MainActor.run { Dictionary(brain.sessions().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }) }
+        let all = await mainQueue.run { Dictionary(self.brain.sessions().map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a }) }
         return ids.map { id in (id, !isWorking(id), all[id]) }
     }
 
@@ -432,7 +436,7 @@ public final class HappierRuntime: @unchecked Sendable {
             var ids = (args["session_ids"]?.string ?? "").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
             if let arr = args["session_ids"]?.array { ids = arr.compactMap(\.string) }
             if ids.isEmpty, let caller {
-                let kids = await MainActor.run { brain.children(of: caller).map(\.id) }
+                let kids = await mainQueue.run { self.brain.children(of: caller).map(\.id) }
                 ids = kids.filter { isWorking($0) }
                 if ids.isEmpty { ids = Array(kids.prefix(8)) }
             }
@@ -440,7 +444,7 @@ public final class HappierRuntime: @unchecked Sendable {
             let timeout = min(max(args["timeout_seconds"]?.number ?? 300, 1), 1800)
             return .init(text: Self.report(await waitFor(ids, timeout: timeout)), isError: false)
         case "agent_sessions":
-            let list = await MainActor.run { brain.sessions() }
+            let list = await mainQueue.run { self.brain.sessions() }
             let scopeAll = args["scope"]?.string == "all" || caller == nil
             let all = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
             let shown = scopeAll ? list : list.filter { s in
@@ -458,7 +462,7 @@ public final class HappierRuntime: @unchecked Sendable {
         case "read_agent_session":
             guard let sid = args["session_id"]?.string else { return .init(text: "session_id required", isError: true) }
             let n = Int(args["max_chars"]?.number ?? 6000)
-            let md = await MainActor.run { brain.transcript(sid, cipher: cipher) }
+            let md = await mainQueue.run { self.brain.transcript(sid, cipher: self.cipher) }
             return .init(text: String(md.suffix(n)), isError: false)
         case "message_agent":
             guard let sid = args["session_id"]?.string, let p = args["prompt"]?.string else { return .init(text: "session_id and prompt required", isError: true) }
@@ -486,6 +490,11 @@ public final class HappierRuntime: @unchecked Sendable {
 
     // MARK: Updates & permissions
 
+    /// Feeds an update as if the agent had sent it (tests, bridges).
+    func ingest(_ sid: RecordID, _ u: ACPUpdate) { handle(sid, u) }
+    /// Writes buffered agent text (tests).
+    func flushPending(_ sid: RecordID) { flush(sid) }
+
     private func handle(_ sid: RecordID, _ u: ACPUpdate) {
         onUpdate?(sid, u)
         switch u {
@@ -503,7 +512,7 @@ public final class HappierRuntime: @unchecked Sendable {
             // Edits arrive before they are applied: the old snippet's position gives real file line numbers.
             let start = LineDiff.firstLine(of: old, inFile: path) ?? LineDiff.firstLine(of: new, inFile: path) ?? 1
             append(sid, role: "Diff", "`\(path)`\n```diff\n\(LineDiff.unified(old: old, new: new, context: 3, firstLine: start).prefix(12_000))\n```")
-        case .usage(let i, let o): Task { await MainActor.run { brain.updateSession(sid, addTokens: i + o) } }
+        case .usage(let i, let o): mainQueue.send { self.brain.updateSession(sid, addTokens: i + o) }
         case .notice(let n): append(sid, role: "Notice", n)
         default: break
         }
@@ -519,7 +528,7 @@ public final class HappierRuntime: @unchecked Sendable {
 
     private func append(_ sid: RecordID, role: String, _ md: String) {
         let cipher = self.cipher
-        Task { await MainActor.run { brain.appendTranscript(sid, role: role, markdown: md, cipher: cipher) } }
+        mainQueue.send { self.brain.appendTranscript(sid, role: role, markdown: md, cipher: cipher) }
     }
 
     /// Routes a permission request to the Inbox and waits for a decision from any device.
@@ -527,22 +536,22 @@ public final class HappierRuntime: @unchecked Sendable {
     public func requestApproval(_ sid: RecordID, title: String, kind: String, detail: String,
                                 options: [(id: String, label: String)]) async -> (approved: Bool, option: String?) {
         flush(sid)
-        let item = await MainActor.run {
-            brain.updateSession(sid, status: .waiting)
-            return brain.addInbox(title: title, kind: .permission, sessionID: sid,
+        let item = await mainQueue.run {
+            self.brain.updateSession(sid, status: .waiting)
+            return self.brain.addInbox(title: title, kind: .permission, sessionID: sid,
                                   detail: "Agent wants to run **\(kind)**: \(title)\n\n```\n\(detail.prefix(6000))\n```", options: options)
         }
         Log.info("Permission requested in \(sid): \(title)", category: "agents")
         let deadline = Date().addingTimeInterval(inboxTimeout)
         while Date() < deadline {
             try? await Task.sleep(nanoseconds: 700_000_000)
-            let decided = await MainActor.run { brain.inbox().first { $0.id == item } }
+            let decided = await mainQueue.run { self.brain.inbox().first { $0.id == item } }
             if let d = decided, d.status != .pending {
-                await MainActor.run { brain.updateSession(sid, status: .running) }
+                await mainQueue.run { self.brain.updateSession(sid, status: .running) }
                 return (d.status == .approved, d.decision)
             }
         }
-        await MainActor.run { brain.resolveInbox(item, decision: "timeout", status: .rejected); brain.updateSession(sid, status: .running) }
+        await mainQueue.run { self.brain.resolveInbox(item, decision: "timeout", status: .rejected); self.brain.updateSession(sid, status: .running) }
         return (false, nil)
     }
 

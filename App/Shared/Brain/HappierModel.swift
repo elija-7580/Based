@@ -105,9 +105,12 @@ final class HappierModel {
         runtime.permissionPolicy = permissionPolicy
         ensureSessionKey()
         runtime.cipher = SessionCipher(base64: cipherKey)
-        runtime.onUpdate = { [weak self] sid, update in Task { @MainActor in self?.handle(sid, update) } }
+        // BSD-94: one ordered queue instead of a Task per update (fast updates could arrive swapped).
+        // Turn start/end goes through the same queue, so a turn's first text is not wiped by a late "started".
+        let queue = MainActorQueue()
+        runtime.onUpdate = { [weak self] sid, update in queue.send { self?.handle(sid, update) } }
         runtime.onTurn = { [weak self] sid, started in
-            Task { @MainActor in
+            queue.send {
                 guard let self else { return }
                 if started { self.working.insert(sid); if !self.busy.contains(sid) { self.liveText[sid] = ""; self.thoughts[sid] = nil } }
                 else { self.working.remove(sid); if !self.busy.contains(sid) { self.liveText[sid] = nil } }
