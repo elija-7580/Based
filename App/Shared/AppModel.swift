@@ -240,6 +240,10 @@ final class AppModel {
     var renamingID: RecordID?
     /// Bottom toast ("Moved to Trash · Undo"); replaced by the next one, dismissed after a few seconds.
     var toast: Toast?
+    /// BSD-65: capture sheet / main-agent request from an App Intent or a based://capture|ask link.
+    var captureRoute: CaptureRoute?
+    /// The running app's model, for App Intents (they run in the app process, outside the view tree).
+    static weak var current: AppModel?
     var errorMessage: String?
     var syncStatus = "Off"
     var lastSyncDate: Date?
@@ -377,6 +381,7 @@ final class AppModel {
             self.showToast("Based was updated to build \(self.updater.build) (\(self.updater.shortCommit))")
         }
         updater.start()
+        if !inMemory { Self.current = self }   // BSD-65: App Intents reach the model through this
         Log.info("Workspace opened: \(store.blocks.count) blocks, \(store.databases.count) databases in \(Int(Date().timeIntervalSince(openStart) * 1000)) ms (store \(storeMS) ms, agent brain \(brainMS) ms)", category: "app")
     }
 

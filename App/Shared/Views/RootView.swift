@@ -54,6 +54,7 @@ struct RootView: View {
         .background(WindowAccessor { model.mainWindow = $0; WindowChrome.configure($0) })
         .onAppear { NavigationInput.install(model: model) }
         #endif
+        .modifier(CaptureRoutePresenter())
         .sheet(isPresented: $model.showTrash) { TrashView(sheet: true).environment(model) }
         .modifier(SetupAssistantPresenter())   // BSD-56: first start in AI mode
         .modifier(SkillMirrorStarter())        // BSD-60: mirror skills to ~/.claude/skills when turned on
@@ -116,6 +117,8 @@ struct RootView: View {
             #if DEBUG && os(macOS)
             if DebugDriver.handle(url, model: model) { return }
             #endif
+            // BSD-65: based://capture, based://capture/record, based://ask?text=…
+            if let route = CaptureRoute(url: url) { model.captureRoute = route; return }
             // based://page/<id> (also based://<id> and Notion-style ids) — the same link agents and other apps use.
             if let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil { model.open(id) }
         }
