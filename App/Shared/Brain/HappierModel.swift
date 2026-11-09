@@ -220,14 +220,42 @@ final class HappierModel {
             default: break
             }
         }
-        if relevant { refresh() }
+        // BSD-135: never inside the commit that is being observed (a write there re-entered this observer
+        // synchronously, without end); coalesced to one refresh per turn of the main run loop.
+        if relevant { scheduleRefresh() }
+    }
+
+    @ObservationIgnored private var refreshScheduled = false
+    @ObservationIgnored private var refreshing = false
+    /// Set once the Brain databases were ensured (created / columns added); refresh only reads after that.
+    @ObservationIgnored private var ensuredProjectsDB: RecordID?
+
+    private func scheduleRefresh() {
+        guard !refreshScheduled else { return }
+        refreshScheduled = true
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.refreshScheduled = false
+            self.refresh()
+        }
     }
 
     func refresh() {
+        guard !refreshing else { return }
+        refreshing = true
+        defer { refreshing = false }
         Log.measure("HappierModel.refresh", warnAfter: 0.05) {
             let ids = brain.ensureHappier()
-            let projectsDB = brain.ensureProjects()
-            brain.ensureRouting()   // BSD-97: routes of Auto-Routing, editable in the Agent Brain
+            // Writing ensure* only when needed (first refresh, or the database is gone): the observer used to
+            // run them on every relevant change, and any non-idempotent one fed back into itself (BSD-135).
+            let projectsDB: RecordID
+            if let known = ensuredProjectsDB, store.databases[known] != nil, brain.existingProjectsDB == known {
+                projectsDB = known
+            } else {
+                projectsDB = brain.ensureProjects()
+                brain.ensureRouting()   // BSD-97: routes of Auto-Routing, editable in the Agent Brain
+                ensuredProjectsDB = projectsDB
+            }
             happierIDs = [ids.sessions, ids.inbox, ids.connections, projectsDB]
             let s = brain.sessions().sorted { $0.updatedAt > $1.updatedAt }
             if s != sessions { sessions = s; sessionIDSet = Set(s.map(\.id)) }

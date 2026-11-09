@@ -62,7 +62,7 @@ extension BrainStore {
     }
 
     /// The Projects database when it exists (never creates it — safe to call from views).
-    var existingProjectsDB: RecordID? { existingBrainDatabase(title: "Projects", metaKey: Self.projectsMetaKey) }
+    public var existingProjectsDB: RecordID? { existingBrainDatabase(title: "Projects", metaKey: Self.projectsMetaKey) }
 
     public var projectsDB: RecordID { ensureProjects() }
 

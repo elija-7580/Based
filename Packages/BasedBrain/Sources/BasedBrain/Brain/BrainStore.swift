@@ -191,7 +191,12 @@ public final class BrainStore {
 
     // MARK: Helpers
 
-    func propID(_ db: RecordID, _ name: String) -> String? { store.databases[db]?.properties.first { $0.name == name }?.id }
+    /// Column id by name: exact match first, then ignoring case like `Database.property(named:)` (BSD-135: a
+    /// renamed "goal" vs "Goal" made `ensureColumn` add "Goal 2", "Goal 3" … on every refresh, without end).
+    func propID(_ db: RecordID, _ name: String) -> String? {
+        guard let d = store.databases[db] else { return nil }
+        return (d.properties.first { $0.name == name } ?? d.property(named: name))?.id
+    }
     func text(_ row: Block, _ db: RecordID, _ name: String) -> String {
         guard let pid = propID(db, name), case .text(let t)? = row.values[pid] else { return "" }
         return t.plainText
