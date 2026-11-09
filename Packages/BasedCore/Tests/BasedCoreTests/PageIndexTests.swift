@@ -83,6 +83,24 @@ import Testing
         #expect(s.subpages(of: page).map { $0.text.plainText } == ["Child renamed"], "cached ids, current blocks")
     }
 
+    /// BSD-117: the app's registry bumps `structureRevision` only when `hierarchyRevision` moves, so page titles
+    /// and icons must not move it, while everything that changes the sidebar tree (incl. the teamspace) must.
+    @Test func pageMetadataIsNotStructuralButTheSidebarSectionIs() {
+        let s = store()
+        let team = s.createTeamspace(name: "Team")
+        let page = s.createPage(title: "Top")
+        let rev = s.hierarchyRevision
+        for i in 0..<20 { s.renamePage(page, to: "Top \(i)") }
+        s.setPageIcon(page, .emoji("🚀"))
+        #expect(s.hierarchyRevision == rev, "title and icon edits are page metadata")
+        s.transact("teamspace only") { tx in tx.update(page) { $0.props.teamspace = team } }
+        #expect(s.hierarchyRevision != rev, "a top-level page changing sidebar section is structural")
+        #expect(s.topLevelPages(in: .teamspace(team)).map(\.id) == [page])
+        let afterMove = s.hierarchyRevision
+        s.trash([page])
+        #expect(s.hierarchyRevision != afterMove, "trashing is structural")
+    }
+
     @Test func backlinksOfALargeWorkspaceDoNotScanOnTheMainActor() async {
         let s = store()
         let target = s.createPage(title: "Target")

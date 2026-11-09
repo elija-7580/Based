@@ -958,6 +958,7 @@ public final class WorkspaceStore {
             return old.parent != new.parent || old.sortKey != new.sortKey || old.type != new.type
                 || (old.trashedAt == nil) != (new.trashedAt == nil)
                 || old.props.databaseID != new.props.databaseID || old.props.syncSource != new.props.syncSource
+                || old.props.teamspace != new.props.teamspace   // BSD-117: the sidebar section of a top-level page
         }()
         if structural { hierarchyRevision &+= 1 }
         if recentSorted != nil, new?.type.isPageLike == true || old?.type.isPageLike == true {

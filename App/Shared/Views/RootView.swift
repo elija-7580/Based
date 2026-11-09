@@ -306,7 +306,6 @@ struct DetailShell: View {
     @AppStorage("rightPanelWidth") private var panelWidth: Double = 420
 
     var body: some View {
-        let _ = model.registry.workspace.structureRevision   // window title / breadcrumb follow renames
         #if os(macOS)
         GeometryReader { geo in
             // Docked panel next to the content when there's room (content keeps ≥ 380 pt); in narrow windows it
@@ -348,7 +347,7 @@ struct DetailShell: View {
             }
             .animation(DS.Motion.peek, value: panelKey)
         }
-        .navigationTitle(model.currentTitle)
+        .modifier(CurrentWindowTitle(model: model))
         #else
         @Bindable var model = model
         NavigationStack(path: $model.path) {
@@ -413,6 +412,17 @@ struct DetailShell: View {
         Binding(get: { model.peek }, set: { v in if v == nil { model.peek = nil } })
     }
     #endif
+}
+
+/// BSD-117: the window title observes only the current page's node, so typing a title re-renders this
+/// modifier instead of the whole detail shell.
+private struct CurrentWindowTitle: ViewModifier {
+    let model: AppModel
+
+    func body(content: Content) -> some View {
+        model.registry.observeTitle(of: model.path.last.map { SidebarItem.page($0) } ?? model.selection)
+        return content.navigationTitle(model.currentTitle)
+    }
 }
 
 /// The current item's screen. On macOS everything (including sub-pages) renders here; on iOS sub-pages are
@@ -565,6 +575,7 @@ struct HomeChooser: View {
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision
+        let _ = model.registry.workspace.pageMetaRevision   // BSD-117: lists titles (and filters by them)
         let store = model.store
         let recent = store.recentPages(limit: 8)
         let top = store.topLevelPages()
@@ -617,6 +628,7 @@ struct HomeOverview: View {
 
     var body: some View {
         let _ = model.registry.workspace.structureRevision
+        let _ = model.registry.workspace.pageMetaRevision   // BSD-117: recents / favorites show titles
         let store = model.store
         VStack(alignment: .leading, spacing: 18) {
             Text(greeting).font(.system(size: 22, weight: .bold))
