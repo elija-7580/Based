@@ -316,9 +316,24 @@ public final class WorkspaceStore {
     var linkIndexBuilt = false
     /// Non-nil while the index is built in the background: blocks changed meanwhile (re-indexed on install).
     var linkIndexPending: Set<RecordID>?
+    var linkIndexReadyHandlers: [@MainActor () -> Void] = []
     /// Revision-keyed caches for whole-workspace page lists (Home "Recents", Quick Find, link pickers).
     var recentPagesCache: (revision: Int, limit: Int, pages: [Block])?
     var allPagesCache: (revision: Int, pages: [Block])?
+    /// BSD-38: maintained on every block write, so page lists never scan all blocks.
+    /// Page-like blocks (pages, rows, database pages), trashed or not.
+    var pageIDs = Set<RecordID>()
+    /// Blocks with `trashedAt` set.
+    var trashedIDs = Set<RecordID>()
+    /// Bumped only when the page *structure* changes (a block appears/disappears, moves, changes type or trash
+    /// state, a database changes its container) – not when text is typed. Cache key for `subpages(of:)`.
+    public private(set) var hierarchyRevision: Int = 0
+    var subpageCache: (revision: Int, map: [RecordID: [RecordID]])?
+    /// All untrashed pages by last edit (newest first) and each entry's date, patched with `recentDirty` instead
+    /// of re-sorting every page after each keystroke. Nil until `recentPages` is first used.
+    var recentSorted: [(date: Date, id: RecordID)]?
+    var recentDates: [RecordID: Date] = [:]
+    var recentDirty = Set<RecordID>()
     /// Transactions slower than this are logged as warnings (perf diagnostics).
     public var slowTransactionThreshold: TimeInterval = 0.05
     private var undoStack: [UndoEntry] = []
@@ -844,9 +859,31 @@ public final class WorkspaceStore {
 
     // MARK: Raw mutation (used by Tx only)
 
+    /// BSD-38: keeps `pageIDs`/`trashedIDs`/`hierarchyRevision` in step with one block write.
+    func noteBlockChange(old: Block?, new: Block?) {
+        if let new {
+            if new.type.isPageLike { pageIDs.insert(new.id) } else if old?.type.isPageLike == true { pageIDs.remove(new.id) }
+            if new.trashedAt != nil { trashedIDs.insert(new.id) } else if old?.trashedAt != nil { trashedIDs.remove(new.id) }
+        } else if let old {
+            pageIDs.remove(old.id)
+            trashedIDs.remove(old.id)
+        }
+        let structural: Bool = {
+            guard let old, let new else { return true }
+            return old.parent != new.parent || old.sortKey != new.sortKey || old.type != new.type
+                || (old.trashedAt == nil) != (new.trashedAt == nil)
+                || old.props.databaseID != new.props.databaseID || old.props.syncSource != new.props.syncSource
+        }()
+        if structural { hierarchyRevision &+= 1 }
+        if recentSorted != nil, new?.type.isPageLike == true || old?.type.isPageLike == true {
+            recentDirty.insert(new?.id ?? old!.id)
+        }
+    }
+
     func _setBlock(_ b: Block, _ parents: inout Set<String>) {
         let old = blocks[b.id]
         blocks[b.id] = b
+        noteBlockChange(old: old, new: b)
         if let old {
             if old.parent != b.parent || old.sortKey != b.sortKey {
                 removeFromIndex(old.id, parentKey: old.parent.key)
@@ -862,7 +899,10 @@ public final class WorkspaceStore {
         }
     }
 
-    func _setDatabase(_ d: Database) { databases[d.id] = d }
+    func _setDatabase(_ d: Database) {
+        if databases[d.id]?.blockID != d.blockID { hierarchyRevision &+= 1 }
+        databases[d.id] = d
+    }
 
     func _setView(_ v: DatabaseView, _ parents: inout Set<String>) {
         let old = views[v.id]
@@ -890,11 +930,12 @@ public final class WorkspaceStore {
         switch key.kind {
         case .block:
             if let old = blocks.removeValue(forKey: key.id) {
+                noteBlockChange(old: old, new: nil)
                 removeFromIndex(old.id, parentKey: old.parent.key)
                 parents.insert(old.parent.key)
             }
         case .database:
-            databases.removeValue(forKey: key.id)
+            if databases.removeValue(forKey: key.id) != nil { hierarchyRevision &+= 1 }
         case .view:
             if let old = views.removeValue(forKey: key.id) {
                 viewIndex[old.blockID]?.removeAll { $0 == old.id }
@@ -925,6 +966,8 @@ public final class WorkspaceStore {
             case .block(let b):
                 if blocks[b.id] != nil { _setBlock(b, &ignored); continue }   // duplicate row: keep normal semantics
                 blocks[b.id] = b
+                if b.type.isPageLike { pageIDs.insert(b.id) }
+                if b.trashedAt != nil { trashedIDs.insert(b.id) }
                 groups[b.parent.key, default: []].append((b.sortKey, b.id))
             case .database(let d): _setDatabase(d)
             case .view(let v): _setView(v, &ignored)
@@ -935,6 +978,8 @@ public final class WorkspaceStore {
                 loadedWorkspace = true
             }
         }
+        hierarchyRevision &+= 1
+        recentSorted = nil
         for (parent, var list) in groups {
             list.sort { ($0.sortKey, $0.id) < ($1.sortKey, $1.id) }
             if var existing = childIndex[parent], !existing.isEmpty {

@@ -454,7 +454,7 @@ public final class AgentTools {
             return store.trashedPages().map { "- \($0.title.nonEmpty ?? "Untitled") [id: \($0.id)]" }.joined(separator: "\n").nonEmpty ?? "Trash is empty."
         case "backlinks":
             let id = try page(a)
-            return store.backlinks(to: id).map { "- \(store.title(of: $0)) [id: \($0)]" }.joined(separator: "\n").nonEmpty ?? "No backlinks."
+            return store.backlinks(to: id, waitForIndex: true).map { "- \(store.title(of: $0)) [id: \($0)]" }.joined(separator: "\n").nonEmpty ?? "No backlinks."
         case "set_favorite":
             let id = try page(a); store.setFavorite([id], a["favorite"]?.bool ?? true); return "Updated favorite for \(id)."
         case "create_database":

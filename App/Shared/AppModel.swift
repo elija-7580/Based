@@ -375,7 +375,8 @@ final class AppModel {
             startSyncIfConfigured()
         }
         brain.happier.onSessionStarted = { [weak self] sid in self?.openSession(sid) }
-        store.prepareLinkIndexInBackground()
+        // BSD-38: backlinks answer empty until the index is ready; re-render them once it is.
+        store.prepareLinkIndexInBackground { [weak self] in self?.registry.workspace.revision += 1 }
         updater.onJustUpdated = { [weak self] in
             guard let self else { return }
             self.showToast("Based was updated to build \(self.updater.build) (\(self.updater.shortCommit))")
