@@ -53,15 +53,22 @@ import Testing
         #expect(s.blocks[empty] != nil)
     }
 
-    @Test func refusedOnTheSamePageAndInsideItself() throws {
+    /// BSD-120: the same synced block may show several times on one page; only "right next to itself" and
+    /// "inside itself" are refused.
+    @Test func samePageIsAllowedButNotNextToItselfOrInsideItself() throws {
         let (s, original, line, page, anchor) = setup()
         #expect(throws: SyncedPasteProblem.insideItself) { try s.pasteSyncedCopy(of: original, at: line) }
         let origPage = s.containingPage(of: original)!
         let next = s.insertBlock(.text, text: "y", in: .block(origPage))
-        #expect(throws: SyncedPasteProblem.alreadyOnPage) { try s.pasteSyncedCopy(of: original, at: next) }
-        _ = try s.pasteSyncedCopy(of: original, at: anchor)
+        let sameAsOriginal = try s.pasteSyncedCopy(of: original, at: next)
+        #expect(s.containingPage(of: sameAsOriginal) == origPage, "a copy on the original's own page")
+        let copy = try s.pasteSyncedCopy(of: original, at: anchor)
         let more = s.insertBlock(.text, text: "z", in: .block(page))
-        #expect(throws: SyncedPasteProblem.alreadyOnPage) { try s.pasteSyncedCopy(of: original, at: more) }
+        let second = try s.pasteSyncedCopy(of: copy, at: more)
+        #expect(s.blocks[second]?.props.syncSource == original, "second copy on the same page points at the original")
+        #expect(s.contentBlocks(of: page).filter { $0.props.syncSource == original }.count == 2)
+        #expect(throws: SyncedPasteProblem.alreadyOnPage) { try s.pasteSyncedCopy(of: original, at: copy) }
+        #expect(throws: SyncedPasteProblem.alreadyOnPage) { try s.pasteSyncedCopy(of: copy, at: second) }
         #expect(throws: SyncedPasteProblem.noSource) { try s.pasteSyncedCopy(of: "missing", at: more) }
         #expect(throws: SyncedPasteProblem.noSource) { try s.pasteSyncedCopy(of: anchor, at: more) }   // not a synced block
     }

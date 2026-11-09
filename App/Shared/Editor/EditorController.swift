@@ -9,6 +9,9 @@ import AppKit
 @MainActor
 protocol TextHost: AnyObject {
     var hostBlockID: RecordID { get }
+    /// BSD-120: the synced copies the text view is rendered inside ("" on the page itself, "/<copyID>" inside a
+    /// synced copy, nested copies append). The same block can show up once per path on one page.
+    var hostPath: String { get }
     func focus(at offset: Int?)
     func selectedRange() -> NSRange
     func reload(selection: NSRange?)
@@ -106,8 +109,12 @@ final class EditorController {
     var isLocked: Bool { format?.locked == true }
     /// + / ⋮⋮ gutter and block dragging (see `BlockGutter.swift`).
     let gutter = BlockGutterState()
-    @ObservationIgnored private var hosts: [RecordID: WeakHost] = [:]
+    /// Text views by block ID; BSD-120: one per synced path, so a synced block shown twice on a page has two.
+    @ObservationIgnored private var hosts: [RecordID: [WeakHost]] = [:]
     @ObservationIgnored var pendingFocus: FocusTarget?
+    /// BSD-120: the synced path of the text view that last began editing. Focus moves (Enter, arrows, merge)
+    /// go to the view with this path, so typing in the second copy of a synced block stays in that copy.
+    @ObservationIgnored private(set) var activePath = ""
 
     init(pageID: RecordID, model: AppModel) {
         self.pageID = pageID
@@ -119,29 +126,52 @@ final class EditorController {
     // MARK: Hosts & focus
 
     func register(_ host: any TextHost) {
-        hosts[host.hostBlockID] = WeakHost(host)
-        if let f = pendingFocus, f.id == host.hostBlockID {
+        let id = host.hostBlockID
+        var list = (hosts[id] ?? []).filter { $0.host != nil && $0.host !== host }
+        list.append(WeakHost(host))
+        hosts[id] = list
+        guard let f = pendingFocus, f.id == id else { return }
+        if host.hostPath == activePath {
             pendingFocus = nil
             DispatchQueue.main.async { host.focus(at: f.offset) }
+        } else {
+            // Another copy of this block may still register with the active path; if none does, take this one.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let f = self.pendingFocus, f.id == id, let h = self.host(id) else { return }
+                self.pendingFocus = nil
+                h.focus(at: f.offset)
+            }
         }
     }
 
     func unregister(_ host: any TextHost) {
-        if hosts[host.hostBlockID]?.host === host { hosts[host.hostBlockID] = nil }
+        let id = host.hostBlockID
+        let list = (hosts[id] ?? []).filter { $0.host != nil && $0.host !== host }
+        hosts[id] = list.isEmpty ? nil : list
     }
 
-    func host(_ id: RecordID) -> (any TextHost)? { hosts[id]?.host }
+    /// The text view of `id`; with several (synced block twice on the page) the one on the active path.
+    func host(_ id: RecordID) -> (any TextHost)? {
+        Self.preferredHost(hosts[id]?.compactMap(\.host) ?? [], activePath: activePath)
+    }
+
+    /// BSD-120: the host on `activePath`, else the most recently registered one.
+    static func preferredHost(_ list: [any TextHost], activePath: String) -> (any TextHost)? {
+        list.last { $0.hostPath == activePath } ?? list.last
+    }
 
     #if os(macOS)
     /// Drag-selection across paragraphs (see `BasedNSTextView.mouseDown`): selects every block between
     /// `from` and the paragraph nearest to the pointer, in page order.
     func selectBlockRange(from: RecordID, toWindowPoint p: CGPoint, in window: NSWindow) {
         var best: (id: RecordID, distance: CGFloat)?
-        for (id, weak) in hosts {
+        for (id, list) in hosts {
+            for weak in list {
             guard let c = weak.host as? TextCoordinator, let v = c.view, v.window === window else { continue }
             let f = v.convert(v.bounds, to: nil)
             let d = p.y < f.minY ? f.minY - p.y : p.y > f.maxY ? p.y - f.maxY : 0
             if best == nil || d < best!.distance { best = (id, d) }
+            }
         }
         guard let target = best?.id else { return }
         let order = store.visibleOrder(in: pageID)
@@ -190,7 +220,8 @@ final class EditorController {
         focus(FocusTarget(id, store.blocks[id]?.text.length ?? 0))
     }
 
-    func didBeginEditing(_ id: RecordID) {
+    func didBeginEditing(_ id: RecordID, path: String = "") {
+        activePath = path
         focusedID = id
         selectedBlocks = []
         if let m = menu, m.blockID != id { menu = nil }
@@ -694,7 +725,7 @@ final class EditorController {
             let copy = try store.pasteSyncedCopy(of: source, at: id)
             selectedBlocks = [copy]
         } catch SyncedPasteProblem.alreadyOnPage {
-            model.showToast("This synced block is already on this page.")
+            model.showToast("Paste the synced block somewhere other than right next to itself.")
         } catch SyncedPasteProblem.insideItself {
             model.showToast("A synced block can't be pasted into itself.")
         } catch {

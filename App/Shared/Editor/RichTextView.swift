@@ -35,6 +35,8 @@ final class TextCoordinator: NSObject, TextHost {
     }
 
     var hostBlockID: RecordID { id }
+    /// BSD-120: synced path from the environment (see `TextHost.hostPath`).
+    var hostPath = ""
     var store: WorkspaceStore { controller.store }
 
     // MARK: Loading
@@ -190,7 +192,7 @@ final class TextCoordinator: NSObject, TextHost {
 
     func didBegin() {
         persistDisplayedMentions()
-        controller.didBeginEditing(id)
+        controller.didBeginEditing(id, path: hostPath)
         #if os(macOS)
         view?.needsDisplay = true
         #else
@@ -613,12 +615,14 @@ struct RichTextView: NSViewRepresentable {
         c.view = tv
         c.applyConfig()
         c.load(config.plain ? RichText(text.plainText) : text, selection: nil)
+        c.hostPath = context.environment.syncedPath
         controller.register(c)
         return tv
     }
 
     func updateNSView(_ tv: BasedNSTextView, context: Context) {
         context.coordinator.update(text: config.plain ? RichText(text.plainText) : text, config: config, controller: controller)
+        context.coordinator.hostPath = context.environment.syncedPath
         controller.register(context.coordinator)
     }
 
@@ -847,12 +851,14 @@ struct RichTextView: UIViewRepresentable {
         tv.inputAccessoryView = bar
         c.applyConfig()
         c.load(config.plain ? RichText(text.plainText) : text, selection: nil)
+        c.hostPath = context.environment.syncedPath
         controller.register(c)
         return tv
     }
 
     func updateUIView(_ tv: BasedUITextView, context: Context) {
         context.coordinator.update(text: config.plain ? RichText(text.plainText) : text, config: config, controller: controller)
+        context.coordinator.hostPath = context.environment.syncedPath
         controller.register(context.coordinator)
     }
 
