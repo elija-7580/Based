@@ -1,0 +1,4 @@
+/* Testseite: nur Tokens. */
+@import "@based/design-tokens/tokens.css";
+body { margin: 0; background: var(--canvas); }
+.page { max-width: var(--page-measure); margin: var(--space-8) auto; background: var(--bg); border-radius: var(--radius-lg); padding-block: var(--space-6); box-shadow: var(--shadow-panel); }

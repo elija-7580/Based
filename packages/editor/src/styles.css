@@ -1,0 +1,133 @@
+/* BSD-154: Editor in „Based Default“ (ADR 0012). Nur Tokens aus @based/design-tokens (ADR 0009), keine Farb-,
+   Abstands-, Schrift- oder Radius-Literale; Ausnahmen: 0, 1px-Haarlinien, Prozent-/flex-Layout.
+   Die Textfarben-Palette (rot, blau …) kommt vorerst aus BlockNote, dafür gibt es noch keine Tokens. */
+@import "@based/design-tokens/tokens.css";
+
+.bx-editor .bn-root,
+.bx-editor .bn-container {
+  --bn-font-family: var(--font-body);
+  --bn-colors-editor-text: var(--ink-2);
+  --bn-colors-editor-background: var(--bg);
+  --bn-colors-menu-text: var(--ink);
+  --bn-colors-menu-background: var(--bg);
+  --bn-colors-tooltip-text: var(--ink);
+  --bn-colors-tooltip-background: var(--surface-raised);
+  --bn-colors-hovered-text: var(--ink);
+  --bn-colors-hovered-background: var(--surface-raised);
+  --bn-colors-selected-text: var(--ink);
+  --bn-colors-selected-background: var(--selected);
+  --bn-colors-disabled-text: var(--muted);
+  --bn-colors-disabled-background: var(--surface-soft);
+  --bn-colors-shadow: var(--line);
+  --bn-colors-border: var(--line);
+  --bn-colors-side-menu: var(--muted);
+  --bn-border-radius: var(--radius-md);
+  --bn-border-radius-small: var(--radius-sm);
+  --bn-border-radius-medium: var(--radius-md);
+}
+
+.bx-editor {
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
+}
+.bx-editor .bn-editor {
+  background: var(--bg);
+  padding-inline: var(--space-8);
+}
+.bx-editor [data-content-type="heading"] { font-family: var(--font-head); font-weight: var(--weight-heading); color: var(--ink); }
+.bx-editor code, .bx-editor .bn-inline-content code, .bx-tex { font-family: var(--font-mono); font-size: var(--type-code-size); }
+.bx-editor [data-content-type="codeBlock"] { border-radius: var(--radius-sm); background: var(--surface-raised); }
+.bx-editor .bn-menu, .bx-editor .bn-suggestion-menu { box-shadow: var(--shadow-menu); border-radius: var(--radius-lg); }
+
+.bx-muted { color: var(--muted); font-size: var(--type-description-size); }
+
+/* Atome (Blöcke ohne eigenen Text) */
+.bx-atom { width: 100%; padding-block: var(--space-1); }
+.bx-field {
+  width: 100%;
+  font: inherit;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Callout */
+.bx-callout {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.bx-callout-icon { background: none; border: 0; padding: 0; font-size: var(--icon-md); line-height: var(--type-body-leading); cursor: pointer; }
+.bx-callout-text { flex: 1; min-width: 0; }
+
+/* Gleichung */
+.bx-equation-view { display: flex; justify-content: center; padding: var(--space-2); border-radius: var(--radius-sm); cursor: pointer; }
+.bx-equation-view:hover { background: var(--surface-raised); }
+.bx-inline-eq { padding-inline: var(--space-1); }
+
+/* Seiten und Erwähnungen */
+.bx-pagelink { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--ink); border-radius: var(--radius-xs); }
+.bx-pagelink:hover { background: var(--surface-raised); }
+.bx-pagelink-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); font-weight: var(--type-ui-weight); }
+.bx-linkarrow { color: var(--muted); margin-right: var(--space-1); }
+.bx-mention { color: var(--ink); border-radius: var(--radius-xs); padding-inline: var(--space-1); background: var(--surface-soft); cursor: pointer; }
+.bx-mention[data-kind="date"], .bx-mention[data-kind="user"] { color: var(--muted); }
+.bx-picker { display: grid; gap: var(--space-2); }
+.bx-picker-list { list-style: none; margin: 0; padding: 0; }
+.bx-picker-list button { width: 100%; text-align: left; background: none; border: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font: inherit; color: var(--ink); }
+.bx-picker-list button:hover { background: var(--surface-raised); }
+
+/* Synced Block: Rahmen in der Synced-Farbe */
+.bx-synced { width: 100%; border: 1px solid var(--synced); border-radius: var(--radius-md); padding: var(--space-1) 0; position: relative; }
+.bx-synced-label { position: absolute; top: calc(-1 * var(--space-3)); right: var(--space-3); background: var(--bg); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); padding-inline: var(--space-1); }
+.bx-synced-editor .bn-editor { padding-inline: var(--space-4); }
+
+/* Datenbank, Einbettungen, Button */
+.bx-database-placeholder, .bx-embed-card {
+  display: flex; flex-direction: column; gap: var(--space-1);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink);
+}
+.bx-database-placeholder { flex-direction: row; align-items: center; gap: var(--space-2); }
+.bx-embed-kind { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); text-transform: uppercase; letter-spacing: var(--type-meta-tracking); }
+.bx-embed-title { font-weight: var(--type-ui-weight); word-break: break-all; }
+.bx-button { display: inline-block; padding: var(--space-1) var(--space-4); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink); font-family: var(--font-ui); }
+
+/* Inhaltsverzeichnis, Breadcrumb */
+.bx-toc { list-style: none; margin: 0; padding: 0; }
+.bx-toc a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
+.bx-toc li[data-level="2"] { padding-left: var(--space-4); }
+.bx-toc li[data-level="3"] { padding-left: var(--space-6); }
+.bx-toc li[data-level="4"] { padding-left: var(--space-8); }
+.bx-breadcrumb { color: var(--muted); }
+
+/* Unbekannte Blöcke */
+.bx-opaque { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-soft); }
+.bx-opaque-type { font-family: var(--font-mono); font-size: var(--type-data-size); color: var(--muted); }
+
+/* Spalten: die Kinder einer Spaltenliste liegen nebeneinander, die Griffe selbst sind unsichtbar */
+.bx-editor .bn-block-content[data-content-type="columnList"],
+.bx-editor .bn-block-content[data-content-type="column"] { padding: 0; min-height: var(--space-1); }
+.bx-columns-handle, .bx-column-handle { height: var(--space-1); width: 100%; }
+.bx-editor .bn-block-content[data-content-type="columnList"] + .bn-block-group {
+  display: flex; gap: var(--space-6); margin-left: 0; padding-left: 0; border-left: 0;
+}
+.bx-editor .bn-block-content[data-content-type="columnList"] + .bn-block-group > .bn-block-outer { flex: 1 1 0; min-width: 0; }
+.bx-editor .bn-block-content[data-content-type="column"] + .bn-block-group { margin-left: 0; padding-left: 0; border-left: 0; }
+
+/* Ariakit-Akzent (Blau) durch Based-Flächen ersetzen: eine Aktion = Tinte, Auswahl = `selected`. Menüs und
+   Popover hängen BlockNote außerhalb von .bx-editor an (Portale), daher global unter den bn-Klassen. */
+.bn-root .bn-ak-menu-item[data-active-item],
+.bn-root .bn-ak-select-item[data-active-item],
+.bn-root .bn-suggestion-menu-item[aria-selected="true"],
+.bn-root .bn-ak-tab[aria-selected="true"] { color: var(--ink); background-color: var(--selected); }
+.bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
+.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--muted); }
+.bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
