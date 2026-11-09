@@ -1,0 +1,25 @@
+// Shared build settings. Put personal values in Config/Local.xcconfig (git-ignored), e.g.:
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   BASED_BUNDLE_ID = com.example.based
+//   BASED_CLOUDKIT_CONTAINER = iCloud.com.example.based
+//   BASED_CLOUD_SYNC = YES
+//   BASED_ENTITLEMENTS_SUFFIX = -iCloud
+//   BASED_AGENTS_SUFFIX = -Agents      (macOS: build without App Sandbox so local coding agents can run)
+DEVELOPMENT_TEAM =
+BASED_BUNDLE_ID = com.friedrich-ulrich.based
+BASED_CLOUDKIT_CONTAINER = iCloud.$(BASED_BUNDLE_ID)
+BASED_CLOUD_SYNC = NO
+BASED_ENTITLEMENTS_SUFFIX =
+BASED_AGENTS_SUFFIX =
+// Updates: install-mac.sh passes the commit it builds; Based compares it with main on BASED_UPDATE_REPO.
+BASED_GIT_COMMIT =
+BASED_GIT_DATE =
+BASED_UPDATE_REPO = elija-7580/Based
+// Downloadable builds (scripts/release-mac.sh, BASED_DISTRIBUTION = release) update themselves with Sparkle from
+// the latest GitHub release. "https:/$()/" because // starts a comment in xcconfig files.
+BASED_DISTRIBUTION = source
+BASED_UPDATE_FEED = https:/$()/github.com/$(BASED_UPDATE_REPO)/releases/latest/download/appcast.xml
+// Public half of the update signing key (written by scripts/setup-release-key.sh); the private half is the
+// SPARKLE_PRIVATE_KEY secret on GitHub.
+BASED_SPARKLE_PUBLIC_KEY =
+#include? "Local.xcconfig"

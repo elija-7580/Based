@@ -1,0 +1,791 @@
+import SwiftUI
+import BasedCore
+import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
+
+// Claude-style chat rendering in Based's look: user bubbles, assistant replies made of parts —
+// collapsible thinking, compact tool cards, a to-do card, and Markdown with real code blocks / tables.
+
+// MARK: - Turn
+
+struct ChatTurnView: View {
+    let turn: ChatTurn
+    var compact = false
+
+    var body: some View {
+        if turn.role == .user {
+            UserMessageView(turn: turn)
+        } else {
+            AssistantMessageView(turn: turn, compact: compact)
+        }
+    }
+}
+
+struct UserMessageView: View {
+    let turn: ChatTurn
+    @State private var hover = false
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 6) {
+            if !turn.attachments.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(turn.attachments, id: \.self) { AttachmentChip(name: $0) }
+                }
+            }
+            if !turn.text.isEmpty {
+                Text(turn.text)
+                    .font(.system(size: 14))
+                    .textSelection(.enabled)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.primary.opacity(0.06)))
+            }
+            CopyButton(text: turn.text).opacity(hover ? 1 : 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.leading, 48)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+    }
+}
+
+struct AssistantMessageView: View {
+    let turn: ChatTurn
+    var compact = false
+    @State private var hover = false
+
+    var body: some View {
+        let parts = turn.reply.parts
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(groups(parts)) { g in
+                Group {
+                    switch g.kind {
+                    case .thinking:
+                        // An empty, instant thinking block (Claude Code -p without summaries) is just noise.
+                        if g.parts[0].status == .running || !g.parts[0].text.isEmpty || (g.parts[0].duration ?? 0) >= 1 {
+                            ThinkingView(part: g.parts[0])
+                        }
+                    case .text: MarkdownMessageView(markdown: g.parts[0].text, streaming: g.parts[0].status == .running)
+                    case .todos: TodoCardView(todos: g.parts[0].todos)
+                    case .tool: ToolGroupView(parts: g.parts)
+                    }
+                }
+                .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 6)), removal: .opacity))
+            }
+            if turn.isRunning && !turn.reply.isThinking && parts.last?.status != .running {
+                ChatWorkingIndicator(label: parts.isEmpty ? "Thinking…" : "Working…")
+                    .transition(.opacity)
+            }
+            if !turn.isRunning {
+                TouchedPagesCard(parts: parts)
+                    .transition(.opacity.combined(with: .offset(y: 4)))
+            }
+            if !turn.isRunning, !changedFiles(parts).isEmpty {
+                ChangedFilesCard(files: changedFiles(parts))
+                    .transition(.opacity.combined(with: .offset(y: 4)))
+            }
+            if !turn.isRunning {
+                HStack(spacing: 10) {
+                    CopyButton(text: turn.reply.text)
+                    if let meta = turn.meta { Text(meta).font(.system(size: 11)).foregroundStyle(Theme.secondary).help(turn.why ?? "") }
+                }
+                .opacity(hover ? 1 : 0)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .animation(.spring(response: 0.35, dampingFraction: 0.9), value: parts.map(\.id))
+        .animation(.easeOut(duration: 0.2), value: turn.isRunning)
+        .animation(.easeOut(duration: 0.15), value: hover)
+    }
+
+    /// Files this reply edited, with summed +/− (Claude Code app's "N files changed").
+    private func changedFiles(_ parts: [ChatPart]) -> [ChangedFile] {
+        var order: [String] = []
+        var sums: [String: (Int, Int)] = [:]
+        for p in parts where p.kind == .tool && p.diff != nil && p.status != .failed {
+            let path = p.detail
+            if sums[path] == nil { order.append(path) }
+            let s = sums[path] ?? (0, 0)
+            sums[path] = (s.0 + p.added, s.1 + p.removed)
+        }
+        return order.map { ChangedFile(path: $0, added: sums[$0]!.0, removed: sums[$0]!.1) }
+    }
+
+    struct PartGroup: Identifiable { let id: String; let kind: ChatPart.Kind; var parts: [ChatPart] }
+
+    /// Consecutive tool calls share one card (like Claude: "Ran 3 tools").
+    private func groups(_ parts: [ChatPart]) -> [PartGroup] {
+        var out: [PartGroup] = []
+        for p in parts {
+            // File edits stand on their own with their diff (Claude Code app); other tools group up.
+            if p.kind == .tool, p.diff == nil, let last = out.last, last.kind == .tool, last.parts.allSatisfy({ $0.diff == nil }) {
+                out[out.count - 1].parts.append(p)
+            }
+            else { out.append(PartGroup(id: p.id, kind: p.kind, parts: [p])) }
+        }
+        return out
+    }
+}
+
+// MARK: - Thinking
+
+struct ThinkingView: View {
+    let part: ChatPart
+    @State private var open = false
+
+    var body: some View {
+        let running = part.status == .running
+        let hasText = !part.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        VStack(alignment: .leading, spacing: 6) {
+            Button { if hasText { withAnimation(DS.Motion.fold) { open.toggle() } } } label: {
+                HStack(spacing: 6) {
+                    AIGlyph(size: 13).foregroundStyle(running ? Theme.accentBlue : Theme.secondary)
+                        .symbolEffectPulse(running)
+                    if running { ShimmerText(text: "Thinking…") }
+                    else { Text(label).foregroundStyle(Theme.secondary).transition(.opacity) }
+                    if hasText {
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                            .rotationEffect(.degrees(open ? 90 : 0))
+                            .foregroundStyle(Theme.secondary)
+                    }
+                }
+                .font(.system(size: 13))
+                .contentShape(Rectangle())
+                .animation(.easeOut(duration: 0.2), value: running)
+            }
+            .buttonStyle(.hoverFill)
+            if hasText && (open || running) {
+                Text(running ? String(part.text.suffix(600)) : part.text)
+                    .font(.system(size: 12.5))
+                    .italic()
+                    .foregroundStyle(Theme.secondary)
+                    .lineSpacing(2)
+                    .lineLimit(open ? nil : 3)
+                    .textSelection(.enabled)
+                    .padding(.leading, 12)
+                    .overlay(alignment: .leading) { Rectangle().fill(Color(Theme.divider)).frame(width: 2) }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private var label: String {
+        guard let d = part.duration, d >= 1 else { return "Thought" }
+        return "Thought for \(Int(d.rounded())) s"
+    }
+}
+
+/// Text with a moving highlight while the model works.
+struct ShimmerText: View {
+    let text: String
+    @State private var phase: CGFloat = -1
+
+    var body: some View {
+        Text(text)
+            .foregroundStyle(Theme.secondary)
+            .overlay {
+                GeometryReader { g in
+                    LinearGradient(colors: [.clear, Color.primary.opacity(0.55), .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: g.size.width * 0.5)
+                        .offset(x: phase * g.size.width)
+                }
+                .mask { Text(text) }
+            }
+            .onAppear { withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) { phase = 1.5 } }
+    }
+}
+
+struct ChatWorkingIndicator: View {
+    let label: String
+    var body: some View {
+        HStack(spacing: 6) {
+            AIGlyph(size: 13).foregroundStyle(Theme.accentBlue)
+            ShimmerText(text: label).font(.system(size: 13))
+        }
+    }
+}
+
+// MARK: - Tools
+
+/// One card for consecutive tool calls: a header ("Read a.swift", "Ran 3 tools") and one row per call.
+struct ToolGroupView: View {
+    let parts: [ChatPart]
+    @State private var open = false
+
+    var body: some View {
+        let running = parts.contains { $0.status == .running }
+        VStack(alignment: .leading, spacing: 0) {
+            if parts.count == 1 {
+                ToolRowView(part: parts[0], standalone: true)
+            } else {
+                Button { withAnimation(.easeOut(duration: 0.15)) { open.toggle() } } label: {
+                    HStack(spacing: 8) {
+                        StatusIcon(status: running ? .running : (parts.contains { $0.status == .failed } ? .failed : .done))
+                        Text(running ? "Working · \(parts.count) steps" : "Used \(parts.count) tools").font(.system(size: 13, weight: .medium))
+                        Text(ToolStyle.names(parts)).font(.system(size: 12)).foregroundStyle(Theme.secondary).lineLimit(1)
+                        Spacer(minLength: 4)
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                            .rotationEffect(.degrees(open ? 90 : 0)).foregroundStyle(Theme.secondary)
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.hoverFill)
+                if open || running {
+                    Divider()
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(open ? parts : Array(parts.suffix(3))) { ToolRowView(part: $0, standalone: false) }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.025)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(Theme.divider)))
+    }
+}
+
+struct ToolRowView: View {
+    let part: ChatPart
+    var standalone: Bool
+    @State private var open = false
+    static func isPath(_ s: String) -> Bool {
+        (s.hasPrefix("/") || s.hasPrefix("~/")) && !s.contains(" ") && s.count > 2
+    }
+
+    /// Small edits are shown right away, like the Claude Code app's inline diffs.
+    private var autoOpen: Bool { standalone && part.diff != nil && part.added + part.removed <= 16 }
+
+    var body: some View {
+        let style = ToolStyle(name: part.toolName)
+        VStack(alignment: .leading, spacing: 6) {
+            Button { if part.output?.isEmpty == false || !part.images.isEmpty || part.diff != nil { withAnimation(DS.Motion.fold) { open.toggle() } } } label: {
+                HStack(spacing: 8) {
+                    Group {
+                        if style.symbol == SymbolImage.ai { AIGlyph(size: 13) } else { Image(systemName: style.symbol).font(.system(size: 12)) }
+                    }
+                    .frame(width: 16)
+                    .foregroundStyle(Theme.secondary)
+                    Text(style.verb(part.status)).font(.system(size: 13, weight: .medium))
+                    if Self.isPath(part.detail) {
+                        // Claude Code app: file name first, folder dimmed (and cut from the front).
+                        Text((part.detail as NSString).lastPathComponent)
+                            .font(.system(size: 12.5, weight: .medium, design: .monospaced))
+                            .lineLimit(1)
+                        Text((part.detail as NSString).deletingLastPathComponent)
+                            .font(.system(size: 11.5, design: .monospaced)).foregroundStyle(Theme.secondary.opacity(0.8))
+                            .lineLimit(1).truncationMode(.head)
+                    } else {
+                        Text(part.detail).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.secondary)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
+                    Spacer(minLength: 4)
+                    if part.diff != nil {
+                        HStack(spacing: 4) {
+                            Text("+\(part.added)").foregroundStyle(.green)
+                            Text("−\(part.removed)").foregroundStyle(.red.opacity(0.85))
+                        }
+                        .font(.system(size: 11.5, weight: .medium, design: .monospaced))
+                    }
+                    StatusIcon(status: part.status)
+                }
+                .padding(.horizontal, 10).padding(.vertical, standalone ? 8 : 5)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.hoverFill)
+            .help(part.toolName)
+            if open, let diff = part.diff {
+                ScrollView([.vertical, .horizontal]) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(LineDiff.parse(diff)) { DiffLineRow(line: $0) }
+                    }
+                    .font(.system(size: 11.5, design: .monospaced))
+                    .padding(.vertical, 6)
+                }
+                .frame(maxHeight: 320)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.03)))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, 10).padding(.bottom, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else if open, let out = part.output, !out.isEmpty {
+                ScrollView([.vertical, .horizontal]) {
+                    Text(String(out.prefix(20_000)))
+                        .font(.system(size: 11.5, design: .monospaced))
+                        .foregroundStyle(part.status == .failed ? Color.red : Theme.primary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                }
+                .frame(maxHeight: 260)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
+                .padding(.horizontal, 10).padding(.bottom, 8)
+            }
+            // Browser / computer use: the latest screenshot stays visible, like Claude's browser view.
+            if !part.images.isEmpty { ToolImageStrip(images: part.images) }
+        }
+        .onAppear { if autoOpen { open = true } }
+        .onChange(of: part.diff) { _, _ in if autoOpen { open = true } }
+    }
+}
+
+struct StatusIcon: View {
+    let status: ChatPart.Status
+    var body: some View {
+        switch status {
+        case .running: ProgressView().controlSize(.mini).frame(width: 14, height: 14)
+        case .done: Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.green.opacity(0.8))
+        case .failed: Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.red)
+        }
+    }
+}
+
+/// Icon and wording per tool: Claude Code tools, Based's own MCP tools, browser / computer use, sub-agents.
+struct ToolStyle {
+    let name: String
+    private var base: String {
+        if name.hasPrefix("mcp__") { return name.components(separatedBy: "__").last ?? name }
+        return name
+    }
+
+    var isBrowser: Bool {
+        let n = name.lowercased()
+        return n.contains("browser") || n.contains("navigate") || n.contains("computer") || n.contains("chrome") || n.contains("screenshot")
+    }
+
+    var symbol: String {
+        if isBrowser { return "safari" }
+        if name.hasPrefix("mcp__based") || name.hasPrefix("based__") { return SymbolImage.ai }
+        switch base {
+        case "Read", "read_page", "NotebookRead": return "doc.text"
+        case "Write", "create_page": return "doc.badge.plus"
+        case "Edit", "MultiEdit", "NotebookEdit", "replace_page", "append_to_page", "update_row": return "pencil"
+        case "Bash", "BashOutput", "KillShell": return "terminal"
+        case "Grep", "Glob", "search", "memory_search", "query_database": return "magnifyingglass"
+        case "WebFetch", "WebSearch": return "globe"
+        case "Task", "Agent", "spawn_agent": return "person.2"
+        case "memory_save": return "brain"
+        default: return "wrench.and.screwdriver"
+        }
+    }
+
+    func verb(_ status: ChatPart.Status) -> String {
+        let done = status != .running
+        if isBrowser { return done ? "Used the browser" : "Using the browser" }
+        switch base {
+        case "Read", "read_page": return done ? "Read" : "Reading"
+        case "Write": return done ? "Wrote" : "Writing"
+        case "create_page": return done ? "Created page" : "Creating page"
+        case "Edit", "MultiEdit", "replace_page", "append_to_page": return done ? "Edited" : "Editing"
+        case "Bash": return done ? "Ran" : "Running"
+        case "Grep", "Glob", "search": return done ? "Searched" : "Searching"
+        case "WebSearch": return done ? "Searched the web" : "Searching the web"
+        case "WebFetch": return done ? "Fetched" : "Fetching"
+        case "Task", "Agent", "spawn_agent": return done ? "Sub-agent" : "Sub-agent working"
+        case "memory_save": return done ? "Saved memory" : "Saving memory"
+        case "memory_search": return done ? "Checked memories" : "Checking memories"
+        case "query_database": return done ? "Queried database" : "Querying database"
+        default: return base.replacingOccurrences(of: "_", with: " ").capitalized
+        }
+    }
+
+    static func names(_ parts: [ChatPart]) -> String {
+        var seen: [String] = []
+        for p in parts { let v = ToolStyle(name: p.toolName).verb(.done); if !seen.contains(v) { seen.append(v) } }
+        return seen.joined(separator: ", ")
+    }
+}
+
+// MARK: - To-dos
+
+struct TodoCardView: View {
+    let todos: [TodoItem]
+
+    var body: some View {
+        let done = todos.filter { $0.status == .completed }.count
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "checklist").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Text("To-dos").font(.system(size: 13, weight: .medium))
+                Text("\(done)/\(todos.count)").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                Spacer()
+            }
+            ProgressView(value: Double(done), total: Double(max(1, todos.count)))
+                .progressViewStyle(.linear)
+                .tint(Theme.accentBlue)
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(todos) { t in
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Group {
+                            switch t.status {
+                            case .completed: Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accentBlue)
+                            case .inProgress: Image(systemName: "circle.dotted").foregroundStyle(Theme.accentBlue)
+                            case .pending: Image(systemName: "circle").foregroundStyle(Theme.secondary)
+                            }
+                        }
+                        .font(.system(size: 12))
+                        Text(t.status == .inProgress ? (t.activeForm ?? t.title) : t.title)
+                            .font(.system(size: 13, weight: t.status == .inProgress ? .medium : .regular))
+                            .strikethrough(t.status == .completed, color: Theme.secondary)
+                            .foregroundStyle(t.status == .completed ? Theme.secondary : Theme.primary)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.025)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(Theme.divider)))
+    }
+}
+
+// MARK: - Markdown
+
+/// Markdown answer as blocks (headings, paragraphs, lists, to-dos, quotes, code with copy, tables, dividers,
+/// equations) — parsed with Based's own Markdown importer, inline styles from its rich text.
+struct MarkdownMessageView: View {
+    let markdown: String
+    var streaming = false
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        // BSD-61: [[block:<id>]] markers → numbered links and a Sources list (logic in BasedBrain `Citations`).
+        let blocks = MarkdownImporter().parse(Citations.render(markdown, store: model.store, streaming: streaming).markdown)
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(blocks.enumerated()), id: \.offset) { i, b in
+                MarkdownBlockView(block: b, index: i, siblings: blocks)
+            }
+        }
+        .textSelection(.enabled)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Page links in answers: click opens the page here, ⌘-click in a new tab (⌘⇧: and switch to it).
+        .environment(\.openURL, OpenURLAction { url in
+            guard let id = PageLink.id(from: url.absoluteString), model.store.blocks[id] != nil else { return .systemAction }
+            if let cited = Citations.target(of: url), let block = cited.block {
+                // A source: open the page and scroll to the cited block (same mechanism as ⌘F).
+                model.open(cited.page)
+                DispatchQueue.main.async { model.findTarget = block }
+                return .handled
+            }
+            #if os(macOS)
+            let flags = NSEvent.modifierFlags
+            if flags.contains(.command) { model.openInNewTab(id, activate: flags.contains(.shift)); return .handled }
+            #endif
+            model.open(id)
+            return .handled
+        })
+    }
+}
+
+struct MarkdownBlockView: View {
+    let block: ImportedBlock
+    let index: Int
+    let siblings: [ImportedBlock]
+
+    var body: some View {
+        let t = MarkdownInline.attributed(block.text)
+        switch block.type {
+        case .heading1: Text(t).font(.system(size: 20, weight: .semibold)).padding(.top, 6)
+        case .heading2: Text(t).font(.system(size: 17, weight: .semibold)).padding(.top, 4)
+        case .heading3, .heading4: Text(t).font(.system(size: 15, weight: .semibold)).padding(.top, 2)
+        case .bulletedList, .numberedList, .todo:
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                marker.frame(minWidth: 14, alignment: .trailing)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(t).font(.system(size: 14)).lineSpacing(3)
+                    children
+                }
+            }
+        case .quote:
+            VStack(alignment: .leading, spacing: 4) { Text(t).font(.system(size: 14)).lineSpacing(3); children }
+                .padding(.leading, 12)
+                .overlay(alignment: .leading) { Rectangle().fill(Theme.secondary.opacity(0.5)).frame(width: 3) }
+        case .code:
+            if let a = ChatArtifact.from(language: block.props.language, code: block.text.plainText) {
+                ArtifactCardView(artifact: a)
+            } else {
+                ChatCodeBlockView(code: block.text.plainText, language: block.props.language)
+            }
+        case .divider:
+            Divider().padding(.vertical, 4)
+        case .equation:
+            Text(block.props.expression ?? block.text.plainText).font(.system(size: 14, design: .serif)).italic()
+                .frame(maxWidth: .infinity)
+        case .table:
+            MarkdownTableView(block: block)
+        case .callout:
+            Text(t).font(.system(size: 14)).padding(10)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.05)))
+        case .image:
+            if let u = block.props.url, let url = URL(string: u) {
+                AsyncImage(url: url) { $0.resizable().scaledToFit() } placeholder: { Color.primary.opacity(0.05) }
+                    .frame(maxHeight: 320).clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        default:
+            VStack(alignment: .leading, spacing: 4) {
+                Text(t).font(.system(size: 14)).lineSpacing(3.5)
+                children
+            }
+        }
+    }
+
+    @ViewBuilder private var marker: some View {
+        switch block.type {
+        case .numberedList:
+            let n = siblings[..<index].reversed().prefix { $0.type == .numberedList }.count + 1
+            Text("\(n).").font(.system(size: 14)).foregroundStyle(Theme.secondary)
+        case .todo:
+            TodoCheckbox(checked: block.props.checked == true).scaleEffect(0.85)
+        default:
+            Text("•").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.secondary)
+        }
+    }
+
+    @ViewBuilder private var children: some View {
+        if !block.children.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(block.children.enumerated()), id: \.offset) { i, c in
+                    MarkdownBlockView(block: c, index: i, siblings: block.children)
+                }
+            }
+        }
+    }
+}
+
+enum MarkdownInline {
+    /// Based rich text → AttributedString (bold, italic, strike, underline, inline code, links, page mentions).
+    static func attributed(_ rt: RichText) -> AttributedString {
+        var out = AttributedString()
+        for run in rt.runs {
+            var a = AttributedString(run.equation ?? run.text)
+            var font = Font.system(size: 14)
+            if run.marks.code { font = .system(size: 12.5, design: .monospaced); a.backgroundColor = Color.primary.opacity(0.07) }
+            if run.marks.bold { font = font.bold() }
+            if run.marks.italic { font = font.italic() }
+            a.font = font
+            if run.marks.strikethrough { a.strikethroughStyle = .single }
+            if run.marks.underline { a.underlineStyle = .single }
+            if let l = run.marks.link, let url = URL(string: l) { a.link = url; a.foregroundColor = Theme.accentBlue }
+            if case .page(let id)? = run.mention { a.link = URL(string: "based://page/" + id); a.foregroundColor = Theme.accentBlue }
+            if case .link(let l)? = run.mention, let url = URL(string: l) { a.link = url; a.foregroundColor = Theme.accentBlue }
+            out += a
+        }
+        return out
+    }
+}
+
+struct ChatCodeBlockView: View {
+    let code: String
+    let language: String?
+    @State private var copied = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text((language ?? "").isEmpty || language == "plain text" ? "code" : language!)
+                    .font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.secondary)
+                Spacer()
+                Button {
+                    Clipboard.copy(code)
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
+                } label: {
+                    Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11.5))
+                }
+                .buttonStyle(.hoverFill)
+                .foregroundStyle(Theme.secondary)
+            }
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(Color.primary.opacity(0.04))
+            ScrollView(.horizontal, showsIndicators: false) {
+                Text(code)
+                    .font(.system(size: 12.5, design: .monospaced))
+                    .lineSpacing(2)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .padding(12)
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.035)))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(Theme.divider)))
+    }
+}
+
+struct MarkdownTableView: View {
+    let block: ImportedBlock
+
+    var body: some View {
+        let rows = block.children.map { $0.props.cells ?? [] }
+        let cols = max(1, block.props.tableColumns ?? rows.map(\.count).max() ?? 1)
+        ScrollView(.horizontal, showsIndicators: false) {
+            Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { ri, row in
+                    GridRow {
+                        ForEach(0..<cols, id: \.self) { ci in
+                            Text(ci < row.count ? MarkdownInline.attributed(row[ci]) : AttributedString(""))
+                                .font(.system(size: 13, weight: ri == 0 ? .semibold : .regular))
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .frame(minWidth: 60, alignment: .leading)
+                                .background(ri == 0 ? Color.primary.opacity(0.04) : .clear)
+                                .overlay(Rectangle().stroke(Color(Theme.divider), lineWidth: 0.5))
+                        }
+                    }
+                }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+}
+
+// MARK: - Small pieces
+
+struct CopyButton: View {
+    let text: String
+    @State private var copied = false
+    var body: some View {
+        Button {
+            Clipboard.copy(text)
+            copied = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
+        } label: {
+            Image(systemName: copied ? "checkmark" : "doc.on.doc").font(.system(size: 11))
+        }
+        .buttonStyle(.hoverFill)
+        .foregroundStyle(Theme.secondary)
+        .help("Copy")
+    }
+}
+
+struct AttachmentChip: View {
+    let name: String
+    var onRemove: (() -> Void)?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: FileDrop.imageExt.contains((name as NSString).pathExtension.lowercased()) ? "photo" : "doc")
+                .font(.system(size: 11))
+            Text(name).font(.system(size: 12)).lineLimit(1).truncationMode(.middle)
+            if let onRemove {
+                Button(action: onRemove) { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
+                    .buttonStyle(.hoverFill)
+            }
+        }
+        .foregroundStyle(Theme.secondary)
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+        .frame(maxWidth: 220)
+    }
+}
+
+/// Mic button: macOS system dictation into the focused field (no extra permissions).
+struct DictationButton: View {
+    let focus: () -> Void
+    var body: some View {
+        #if os(macOS)
+        Button {
+            focus()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                NSApp.sendAction(Selector(("startDictation:")), to: nil, from: nil)
+            }
+        } label: { Image(systemName: "mic") }
+        .buttonStyle(.quiet)
+        .help("Dictate (or press the dictation key)")
+        .accessibilityIdentifier("ai.dictate")
+        #else
+        EmptyView()   // iOS: the keyboard's mic key
+        #endif
+    }
+}
+
+
+extension View {
+    /// A gentle pulse while something runs (SF Symbols effect on macOS 14+).
+    @ViewBuilder
+    func symbolEffectPulse(_ on: Bool) -> some View {
+        if on { self.opacity(1).modifier(PulseModifier()) } else { self }
+    }
+}
+
+private struct PulseModifier: ViewModifier {
+    @State private var up = false
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(up ? 1.08 : 0.94)
+            .opacity(up ? 1 : 0.7)
+            .onAppear { withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { up = true } }
+    }
+}
+
+
+struct ChangedFile: Identifiable, Hashable {
+    var id: String { path }
+    let path: String
+    let added: Int
+    let removed: Int
+}
+
+/// "2 files changed +14 −3" with one row per file; click reveals it in Finder.
+struct ChangedFilesCard: View {
+    let files: [ChangedFile]
+    @State private var open = true
+
+    var body: some View {
+        let added = files.reduce(0) { $0 + $1.added }, removed = files.reduce(0) { $0 + $1.removed }
+        VStack(alignment: .leading, spacing: 0) {
+            Button { withAnimation(DS.Motion.fold) { open.toggle() } } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.badge.ellipsis").font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    Text("\(files.count) file\(files.count == 1 ? "" : "s") changed").font(.system(size: 13, weight: .medium))
+                    Text("+\(added)").foregroundStyle(.green).font(.system(size: 12, design: .monospaced))
+                    Text("−\(removed)").foregroundStyle(.red.opacity(0.85)).font(.system(size: 12, design: .monospaced))
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
+                        .rotationEffect(.degrees(open ? 90 : 0)).foregroundStyle(Theme.secondary)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.hoverFill)
+            if open {
+                Divider()
+                ForEach(files) { f in ChangedFileRow(file: f) }
+                    .padding(.vertical, 2)
+            }
+        }
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.025)))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(Theme.divider)))
+    }
+}
+
+private struct ChangedFileRow: View {
+    let file: ChangedFile
+    @State private var hover = false
+
+    var body: some View {
+        Button {
+            #if os(macOS)
+            let url = URL(fileURLWithPath: (file.path as NSString).expandingTildeInPath)
+            if FileManager.default.fileExists(atPath: url.path) { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            #endif
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "doc.text").font(.system(size: 11)).foregroundStyle(Theme.secondary).frame(width: 16)
+                Text(URL(fileURLWithPath: file.path).lastPathComponent).font(.system(size: 12.5, weight: .medium))
+                Text(URL(fileURLWithPath: file.path).deletingLastPathComponent().path)
+                    .font(.system(size: 11.5)).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.head)
+                Spacer(minLength: 6)
+                Text("+\(file.added)").foregroundStyle(.green).font(.system(size: 11.5, design: .monospaced))
+                Text("−\(file.removed)").foregroundStyle(.red.opacity(0.85)).font(.system(size: 11.5, design: .monospaced))
+            }
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(hover ? Theme.hoverFill : .clear)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help("Show in Finder")
+    }
+}

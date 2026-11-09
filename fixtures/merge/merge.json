@@ -1,0 +1,1350 @@
+{
+  "cases" : [
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "neuer Record kommt an",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A1",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 11,
+                  "node" : "r"
+                },
+                "text" : "A2",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "neuer gewinnt (millis)",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 11,
+                "node" : "r"
+              },
+              "title" : "A2"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A1",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 9,
+                  "node" : "r"
+                },
+                "text" : "A0",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "älterer verliert und ist stale",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+            "block:a"
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 1,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A1",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 2,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A2",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A3",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "gleiche millis: counter entscheidet",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 1,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A2"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 2,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A2"
+            }
+          },
+          "stale" : [
+            "block:a"
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "m"
+                },
+                "text" : "A1",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "n"
+                },
+                "text" : "A2",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "l"
+                },
+                "text" : "A3",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "gleiche millis+counter: node entscheidet",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "m"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "n"
+              },
+              "title" : "A2"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "n"
+              },
+              "title" : "A2"
+            }
+          },
+          "stale" : [
+            "block:a"
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A1",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "anders",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "identischer Stempel: nichts passiert",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A1"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "anders"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "a",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 11,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+
+          ]
+        }
+      ],
+      "name" : "Löschung mit neuerem Stempel entfernt",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "a",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 9,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+
+          ]
+        }
+      ],
+      "name" : "Löschung mit älterem Stempel verliert",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+            "block:a"
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "a",
+              "kind" : "block",
+              "stamp" : null
+            }
+          ],
+          "records" : [
+
+          ]
+        }
+      ],
+      "name" : "Löschung ohne Stempel entfernt immer",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "a",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 20,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 15,
+                  "node" : "r"
+                },
+                "text" : "A alt",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "kein Wiederbeleben durch älteren Record",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+            "block:a" : {
+              "counter" : 0,
+              "millis" : 20,
+              "node" : "r"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "a",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 20,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 25,
+                  "node" : "r"
+                },
+                "text" : "A neu",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "neuerer Record nach Löschung gewinnt",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 25,
+                "node" : "r"
+              },
+              "title" : "A neu"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+            {
+              "id" : "x",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 5,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "x",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 4,
+                  "node" : "r"
+                },
+                "text" : "X",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "x",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 6,
+                  "node" : "r"
+                },
+                "text" : "X2",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "Löschung unbekannter Records",
+      "output" : [
+        {
+          "blocks" : {
+
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:x" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 4,
+                "node" : "r"
+              },
+              "title" : "X"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:x" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 6,
+                "node" : "r"
+              },
+              "title" : "X2"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    },
+    {
+      "input" : [
+        {
+          "deletions" : [
+
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "A",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "b",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "B",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "c",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 10,
+                  "node" : "r"
+                },
+                "text" : "C",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        },
+        {
+          "deletions" : [
+            {
+              "id" : "c",
+              "kind" : "block",
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 11,
+                "node" : "r"
+              }
+            }
+          ],
+          "records" : [
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "a",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 12,
+                  "node" : "r"
+                },
+                "text" : "A2",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            },
+            {
+              "data" : {
+                "createdAt" : 784000000,
+                "id" : "b",
+                "parent" : "w",
+                "sk" : "a0",
+                "stamp" : {
+                  "counter" : 0,
+                  "millis" : 8,
+                  "node" : "r"
+                },
+                "text" : "B0",
+                "type" : "page",
+                "updatedAt" : 784000000
+              },
+              "kind" : "block"
+            }
+          ]
+        }
+      ],
+      "name" : "Batch mit mehreren Records",
+      "output" : [
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "A"
+            },
+            "block:b" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "B"
+            },
+            "block:c" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "C"
+            }
+          },
+          "stale" : [
+
+          ],
+          "tombstoned" : {
+
+          }
+        },
+        {
+          "blocks" : {
+            "block:a" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 12,
+                "node" : "r"
+              },
+              "title" : "A2"
+            },
+            "block:b" : {
+              "stamp" : {
+                "counter" : 0,
+                "millis" : 10,
+                "node" : "r"
+              },
+              "title" : "B"
+            }
+          },
+          "stale" : [
+            "block:b"
+          ],
+          "tombstoned" : {
+
+          }
+        }
+      ]
+    }
+  ],
+  "module" : "merge",
+  "note" : "Store startet leer (Workspace wird lokal angelegt und ist nicht Teil von blocks)."
+}

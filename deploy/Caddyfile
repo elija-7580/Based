@@ -1,0 +1,4 @@
+{$BASED_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy based:8787
+}

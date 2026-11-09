@@ -1,0 +1,365 @@
+import Foundation
+#if canImport(SQLite3)
+import SQLite3
+#else
+import CSQLite
+#endif
+
+public enum PersistenceError: Error, CustomStringConvertible {
+    case sqlite(String)
+    /// The file was written by a newer Based (schema `found`, this app knows up to `supported`); it's left untouched.
+    case newerFormat(found: Int, supported: Int)
+    public var description: String {
+        switch self {
+        case .sqlite(let m): return "SQLite: \(m)"
+        case .newerFormat(let f, let s):
+            return "This workspace was saved by a newer version of Based (format \(f), this app reads up to \(s)). Update Based to open it."
+        }
+    }
+}
+
+let SQLITE_TRANSIENT_PTR = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
+/// Local database: one row per record (JSON payload) plus a key/value meta table.
+public final class SQLitePersistence: ChangeLogging {
+    private var db: OpaquePointer?
+    public let url: URL?
+
+    /// `url == nil` opens an in-memory database (tests, previews).
+    public init(url: URL?) throws {
+        self.url = url
+        let path = url?.path ?? ":memory:"
+        if let url { try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true) }
+        guard sqlite3_open_v2(path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK else {
+            throw PersistenceError.sqlite("cannot open \(path)")
+        }
+        // Refuse a newer file before anything (even the journal mode) is written to it.
+        let found = schemaVersion
+        if found > Self.currentSchemaVersion {
+            throw PersistenceError.newerFormat(found: found, supported: Self.currentSchemaVersion)
+        }
+        try exec("PRAGMA journal_mode=WAL;")
+        try exec("PRAGMA synchronous=NORMAL;")
+        try migrate()
+    }
+
+    deinit { sqlite3_close(db) }
+
+    /// SQLite opened the file read-only (e.g. no write permission): every write would fail.
+    public var isReadOnly: Bool { db.map { sqlite3_db_readonly($0, "main") == 1 } ?? true }
+
+    /// Writes a probe value into `meta` inside a transaction; throws if the database can't be written.
+    public func checkWritable() throws {
+        if isReadOnly { throw PersistenceError.sqlite("database is read-only: \(url?.path ?? ":memory:")") }
+        try exec("BEGIN IMMEDIATE")
+        do {
+            try exec("INSERT OR REPLACE INTO meta(key, value) VALUES('write.probe', CAST(strftime('%s','now') AS BLOB))")
+            try exec("COMMIT")
+        } catch {
+            try? exec("ROLLBACK")
+            throw error
+        }
+    }
+
+    func exec(_ sql: String) throws {
+        var err: UnsafeMutablePointer<CChar>?
+        if sqlite3_exec(db, sql, nil, nil, &err) != SQLITE_OK {
+            let msg = err.map { String(cString: $0) } ?? "unknown"
+            sqlite3_free(err)
+            throw PersistenceError.sqlite(msg)
+        }
+    }
+
+    func prepare(_ sql: String) throws -> OpaquePointer? {
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { throw PersistenceError.sqlite(lastMessage) }
+        return stmt
+    }
+
+    var lastMessage: String { db.map { String(cString: sqlite3_errmsg($0)) } ?? "closed" }
+
+    public func loadAll() throws -> [Record] { try loadAllReporting().records }
+
+    /// All decodable records, plus the keys of rows this version can't decode (BSD-16). Those rows stay
+    /// byte-for-byte in the database ("frozen"): they're never rewritten, deleted or synced as deletions.
+    public func loadAllReporting() throws -> LoadResult {
+        // Read the raw rows first (SQLite is single-threaded here), then decode the JSON on all cores:
+        // decoding is ~85 % of the load time for big workspaces and every record decodes independently.
+        let stmt = try prepare("SELECT kind, id, data FROM records")
+        defer { sqlite3_finalize(stmt) }
+        var raw: [(RecordKind, Data)] = []
+        var ids: [String] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let k = sqlite3_column_text(stmt, 0), let kind = RecordKind(rawValue: String(cString: k)) else { continue }
+            let id = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+            let n = Int(sqlite3_column_bytes(stmt, 2))
+            let p = sqlite3_column_blob(stmt, 2)
+            raw.append((kind, p.map { Data(bytes: $0, count: n) } ?? Data()))
+            ids.append(id)
+        }
+        let decoded = Self.decodeParallel(raw)
+        var result = LoadResult()
+        result.records.reserveCapacity(raw.count)
+        for (i, d) in decoded.enumerated() {
+            switch d {
+            case .success(let r): result.records.append(r)
+            case .failure(let e): result.undecodable[RecordKey(raw[i].0, ids[i])] = "\(e)"
+            }
+        }
+        return result
+    }
+
+    /// Decodes rows in parallel chunks, keeping their order (one result per row).
+    static func decodeParallel(_ raw: [(RecordKind, Data)]) -> [Result<Record, Error>] {
+        func decode(_ row: (RecordKind, Data)) -> Result<Record, Error> {
+            Result { try Record.decode(kind: row.0, data: row.1) }
+        }
+        let count = raw.count
+        guard count > 2_000 else { return raw.map(decode) }
+        let chunks = max(1, min(ProcessInfo.processInfo.activeProcessorCount * 2, count / 1_000))
+        let size = (count + chunks - 1) / chunks
+        let results = UnsafeMutableBufferPointer<[Result<Record, Error>]>.allocate(capacity: chunks)
+        results.initialize(repeating: [])
+        defer { results.deinitialize(); results.deallocate() }
+        let box = UnsafeSendableBuffer(results)
+        DispatchQueue.concurrentPerform(iterations: chunks) { c in
+            let lo = c * size, hi = min(count, lo + size)
+            guard lo < hi else { return }
+            var out: [Result<Record, Error>] = []
+            out.reserveCapacity(hi - lo)
+            for i in lo..<hi { out.append(decode(raw[i])) }
+            box.buffer[c] = out
+        }
+        return Array(results.joined())
+    }
+
+    public func write(upserts: [Record], deletions: [RecordKey]) throws {
+        try write(upserts: upserts, deletions: deletions, local: true)
+    }
+
+    public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
+        try write(upserts: upserts, deletions: deletions, tombstones: [:], local: local)
+    }
+
+    /// Writes records and deletions; each deletion's log row keeps its tombstone stamp (`deleted_stamp`, v3).
+    public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
+        try exec("BEGIN IMMEDIATE")
+        do {
+            let ins = try prepare("INSERT OR REPLACE INTO records(kind, id, data) VALUES(?, ?, ?)")
+            defer { sqlite3_finalize(ins) }
+            // A record keeps one log row: its newest change (delete + insert gives it a new, higher seq).
+            let unlog = try prepare("DELETE FROM changes WHERE kind = ? AND id = ?")
+            defer { sqlite3_finalize(unlog) }
+            let log = try prepare("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, ?, ?, ?)")
+            defer { sqlite3_finalize(log) }
+            func logChange(_ k: RecordKey, deleted: Bool) throws {
+                sqlite3_reset(unlog)
+                sqlite3_bind_text(unlog, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(unlog, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
+                guard sqlite3_step(unlog) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                sqlite3_reset(log)
+                sqlite3_bind_text(log, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(log, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_int(log, 3, deleted ? 1 : 0)
+                sqlite3_bind_int(log, 4, local ? 1 : 0)
+                if deleted, let stamp = tombstones[k] {
+                    sqlite3_bind_text(log, 5, Self.encodeStamp(stamp), -1, SQLITE_TRANSIENT_PTR)
+                } else {
+                    sqlite3_bind_null(log, 5)
+                }
+                guard sqlite3_step(log) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            }
+            for r in upserts {
+                let data = try r.encoded()
+                sqlite3_reset(ins)
+                sqlite3_bind_text(ins, 1, r.key.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(ins, 2, r.key.id, -1, SQLITE_TRANSIENT_PTR)
+                _ = data.withUnsafeBytes { sqlite3_bind_blob(ins, 3, $0.baseAddress, Int32($0.count), SQLITE_TRANSIENT_PTR) }
+                guard sqlite3_step(ins) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                try logChange(r.key, deleted: false)
+            }
+            let del = try prepare("DELETE FROM records WHERE kind = ? AND id = ?")
+            defer { sqlite3_finalize(del) }
+            for k in deletions {
+                sqlite3_reset(del)
+                sqlite3_bind_text(del, 1, k.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+                sqlite3_bind_text(del, 2, k.id, -1, SQLITE_TRANSIENT_PTR)
+                guard sqlite3_step(del) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+                try logChange(k, deleted: true)
+            }
+            try exec("COMMIT")
+        } catch {
+            try? exec("ROLLBACK")
+            throw error
+        }
+    }
+
+    /// Test hook: writes a raw `records` row (and a local change-log entry), bypassing encoding.
+    func writeRawRow(kind: RecordKind, id: String, data: Data) throws {
+        try exec("BEGIN IMMEDIATE")
+        do {
+            let ins = try prepare("INSERT OR REPLACE INTO records(kind, id, data) VALUES(?, ?, ?)")
+            defer { sqlite3_finalize(ins) }
+            sqlite3_bind_text(ins, 1, kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+            sqlite3_bind_text(ins, 2, id, -1, SQLITE_TRANSIENT_PTR)
+            _ = data.withUnsafeBytes { sqlite3_bind_blob(ins, 3, $0.baseAddress, Int32($0.count), SQLITE_TRANSIENT_PTR) }
+            guard sqlite3_step(ins) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            let log = try prepare("INSERT OR REPLACE INTO changes(kind, id, deleted, local) VALUES(?, ?, 0, 1)")
+            defer { sqlite3_finalize(log) }
+            sqlite3_bind_text(log, 1, kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+            sqlite3_bind_text(log, 2, id, -1, SQLITE_TRANSIENT_PTR)
+            guard sqlite3_step(log) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            try exec("COMMIT")
+        } catch { try? exec("ROLLBACK"); throw error }
+    }
+
+    /// The stored bytes of a record row (diagnostics, tests).
+    public func rawRow(_ key: RecordKey) -> Data? {
+        guard let st = try? prepare("SELECT data FROM records WHERE kind = ? AND id = ?") else { return nil }
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_text(st, 1, key.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+        sqlite3_bind_text(st, 2, key.id, -1, SQLITE_TRANSIENT_PTR)
+        guard sqlite3_step(st) == SQLITE_ROW else { return nil }
+        let n = Int(sqlite3_column_bytes(st, 0))
+        guard let p = sqlite3_column_blob(st, 0) else { return Data() }
+        return Data(bytes: p, count: n)
+    }
+
+    public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
+        let st = try prepare("SELECT seq, kind, id, deleted, local, deleted_stamp FROM changes WHERE seq > ? ORDER BY seq LIMIT ?")
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_int64(st, 1, after)
+        sqlite3_bind_int64(st, 2, Int64(limit))
+        var out: [ChangeEntry] = []
+        while sqlite3_step(st) == SQLITE_ROW {
+            guard let k = sqlite3_column_text(st, 1), let kind = RecordKind(rawValue: String(cString: k)),
+                  let i = sqlite3_column_text(st, 2) else { continue }
+            out.append(ChangeEntry(seq: sqlite3_column_int64(st, 0), key: RecordKey(kind, String(cString: i)),
+                                   deleted: sqlite3_column_int(st, 3) != 0, local: sqlite3_column_int(st, 4) != 0,
+                                   deletedStamp: sqlite3_column_text(st, 5).flatMap { Self.decodeStamp(String(cString: $0)) }))
+        }
+        return out
+    }
+
+    public func tombstone(_ key: RecordKey) -> Stamp? {
+        guard let st = try? prepare("SELECT deleted_stamp FROM changes WHERE kind = ? AND id = ? AND deleted = 1") else { return nil }
+        defer { sqlite3_finalize(st) }
+        sqlite3_bind_text(st, 1, key.kind.rawValue, -1, SQLITE_TRANSIENT_PTR)
+        sqlite3_bind_text(st, 2, key.id, -1, SQLITE_TRANSIENT_PTR)
+        guard sqlite3_step(st) == SQLITE_ROW, let t = sqlite3_column_text(st, 0) else { return nil }
+        return Self.decodeStamp(String(cString: t))
+    }
+
+    public func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64) {
+        // Stamps are JSON text: decode in Swift (no dependency on SQLite's JSON functions).
+        let st = try prepare("SELECT seq, deleted_stamp FROM changes WHERE deleted = 1 AND deleted_stamp IS NOT NULL")
+        var old: [Int64] = []
+        while sqlite3_step(st) == SQLITE_ROW {
+            guard let t = sqlite3_column_text(st, 1), let stamp = Self.decodeStamp(String(cString: t)) else { continue }
+            if Int64(stamp.millis) < cutoffMillis { old.append(sqlite3_column_int64(st, 0)) }
+        }
+        sqlite3_finalize(st)
+        guard !old.isEmpty else { return (0, 0) }
+        try exec("BEGIN IMMEDIATE")
+        do {
+            let del = try prepare("DELETE FROM changes WHERE seq = ? AND deleted = 1")
+            defer { sqlite3_finalize(del) }
+            for seq in old {
+                sqlite3_reset(del)
+                sqlite3_bind_int64(del, 1, seq)
+                guard sqlite3_step(del) == SQLITE_DONE else { throw PersistenceError.sqlite(lastMessage) }
+            }
+            try exec("COMMIT")
+        } catch { try? exec("ROLLBACK"); throw error }
+        return (old.count, old.max() ?? 0)
+    }
+
+    /// `deleted_stamp` column format: the stamp as JSON (`{"millis":…,"counter":…,"node":"…"}`).
+    static func encodeStamp(_ s: Stamp) -> String {
+        (try? JSONEncoder().encode(s)).map { String(decoding: $0, as: UTF8.self) } ?? ""
+    }
+    static func decodeStamp(_ text: String) -> Stamp? { try? JSONDecoder().decode(Stamp.self, from: Data(text.utf8)) }
+
+    public var lastChangeSeq: Int64 {
+        guard let st = try? prepare("SELECT COALESCE(MAX(seq), 0) FROM changes") else { return 0 }
+        defer { sqlite3_finalize(st) }
+        return sqlite3_step(st) == SQLITE_ROW ? sqlite3_column_int64(st, 0) : 0
+    }
+
+    public func meta(_ key: String) -> Data? {
+        guard let stmt = try? prepare("SELECT value FROM meta WHERE key = ?") else { return nil }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, key, -1, SQLITE_TRANSIENT_PTR)
+        guard sqlite3_step(stmt) == SQLITE_ROW, let p = sqlite3_column_blob(stmt, 0) else { return nil }
+        return Data(bytes: p, count: Int(sqlite3_column_bytes(stmt, 0)))
+    }
+
+    public func setMeta(_ key: String, _ value: Data?) {
+        if let value {
+            guard let stmt = try? prepare("INSERT OR REPLACE INTO meta(key, value) VALUES(?, ?)") else { return }
+            defer { sqlite3_finalize(stmt) }
+            sqlite3_bind_text(stmt, 1, key, -1, SQLITE_TRANSIENT_PTR)
+            _ = value.withUnsafeBytes { sqlite3_bind_blob(stmt, 2, $0.baseAddress, Int32($0.count), SQLITE_TRANSIENT_PTR) }
+            _ = sqlite3_step(stmt)
+        } else {
+            guard let stmt = try? prepare("DELETE FROM meta WHERE key = ?") else { return }
+            defer { sqlite3_finalize(stmt) }
+            sqlite3_bind_text(stmt, 1, key, -1, SQLITE_TRANSIENT_PTR)
+            _ = sqlite3_step(stmt)
+        }
+    }
+
+    /// Meta keys with a prefix (e.g. CloudKit system fields "ck:").
+    public func metaKeys(prefix: String) -> [String] {
+        guard let stmt = try? prepare("SELECT key FROM meta WHERE key LIKE ? ESCAPE '\\'") else { return [] }
+        defer { sqlite3_finalize(stmt) }
+        let escaped = prefix.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_") + "%"
+        sqlite3_bind_text(stmt, 1, escaped, -1, SQLITE_TRANSIENT_PTR)
+        var out: [String] = []
+        while sqlite3_step(stmt) == SQLITE_ROW { if let t = sqlite3_column_text(stmt, 0) { out.append(String(cString: t)) } }
+        return out
+    }
+}
+
+/// In-memory persistence for previews and tests.
+public final class MemoryPersistence: ChangeLogging {
+    public private(set) var records: [RecordKey: Record] = [:]
+    public private(set) var metaValues: [String: Data] = [:]
+    public private(set) var writes = 0
+    private var log: [RecordKey: ChangeEntry] = [:]
+    private var seq: Int64 = 0
+    public init(_ initial: [Record] = []) {
+        for r in initial { records[r.key] = r; seq += 1; log[r.key] = ChangeEntry(seq: seq, key: r.key, deleted: false, local: true) }
+    }
+    public func loadAll() throws -> [Record] { Array(records.values) }
+    public func write(upserts: [Record], deletions: [RecordKey]) throws { try write(upserts: upserts, deletions: deletions, local: true) }
+    public func write(upserts: [Record], deletions: [RecordKey], local: Bool) throws {
+        try write(upserts: upserts, deletions: deletions, tombstones: [:], local: local)
+    }
+    public func write(upserts: [Record], deletions: [RecordKey], tombstones: [RecordKey: Stamp], local: Bool) throws {
+        writes += 1
+        for r in upserts { records[r.key] = r; seq += 1; log[r.key] = ChangeEntry(seq: seq, key: r.key, deleted: false, local: local) }
+        for k in deletions {
+            records[k] = nil; seq += 1
+            log[k] = ChangeEntry(seq: seq, key: k, deleted: true, local: local, deletedStamp: tombstones[k])
+        }
+    }
+    public func tombstone(_ key: RecordKey) -> Stamp? { log[key].flatMap { $0.deleted ? $0.deletedStamp : nil } }
+    public func compactTombstones(olderThanMillis cutoffMillis: Int64) throws -> (removed: Int, maxSeq: Int64) {
+        let old = log.values.filter { e in e.deleted && e.deletedStamp.map { Int64($0.millis) < cutoffMillis } == true }
+        for e in old { log[e.key] = nil }
+        return (old.count, old.map(\.seq).max() ?? 0)
+    }
+    public func changes(after: Int64, limit: Int) throws -> [ChangeEntry] {
+        Array(log.values.filter { $0.seq > after }.sorted { $0.seq < $1.seq }.prefix(limit))
+    }
+    public var lastChangeSeq: Int64 { seq }
+    public func meta(_ key: String) -> Data? { metaValues[key] }
+    public func setMeta(_ key: String, _ value: Data?) { metaValues[key] = value }
+}
+/// Lets `concurrentPerform` workers write their own slot of a buffer (each index written by one worker).
+struct UnsafeSendableBuffer<T>: @unchecked Sendable {
+    let buffer: UnsafeMutableBufferPointer<T>
+    init(_ b: UnsafeMutableBufferPointer<T>) { buffer = b }
+}

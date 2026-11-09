@@ -1,0 +1,460 @@
+import SwiftUI
+import BasedCore
+import BasedBrain
+#if os(macOS)
+import AppKit
+#endif
+
+/// Moves keyboard focus into an overlay's text field reliably. The page's text view (AppKit) stays first
+/// responder when ⌘K opens the overlay, and a plain `focused = true` in `onAppear` sometimes lost against it —
+/// typing then went into the page. Resign the editor first, then focus on the next run-loop turns.
+enum OverlayFocus {
+    @MainActor static func grab(_ set: @escaping @MainActor () -> Void) {
+        #if os(macOS)
+        if let w = NSApp.keyWindow, let tv = w.firstResponder as? NSTextView, !tv.isFieldEditor { w.makeFirstResponder(nil) }
+        #endif
+        set()
+        for delay in [0.0, 0.05, 0.15] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { set() }
+        }
+    }
+
+    /// The page editor really has keyboard focus right now (not just a stale selection flag).
+    @MainActor static var editorIsFirstResponder: Bool {
+        #if os(macOS)
+        guard let tv = NSApp.keyWindow?.firstResponder as? NSTextView else { return false }
+        return !tv.isFieldEditor
+        #else
+        return true
+        #endif
+    }
+}
+
+// MARK: - ⌘K / ⌘P search
+
+/// Notion-style search: pages or chats, grouped by date, "Ask AI" row, ⌘↵ opens in a new tab, ⌘L copies a link.
+struct SearchOverlay: View {
+    enum Scope: String, CaseIterable, Identifiable { case pages = "Pages", chats = "Chats"; var id: String { rawValue } }
+
+    struct Row: Identifiable {
+        enum Kind { case home, page(RecordID, snippet: String?), chat(AgentSession), ask(String) }
+        let id: String
+        let kind: Kind
+        let section: String
+    }
+
+    @Environment(AppModel.self) private var model
+    @Environment(BrainModel.self) private var brain
+    @Environment(HappierModel.self) private var happier
+    @State private var query = ""
+    @State private var scope: Scope = .pages
+    @State private var titleOnly = false
+    @State private var sort: SearchSort = .bestMatch
+    @State private var highlighted = 0
+    @State private var rows: [Row] = []
+    /// BSD-62: the semantic half of a search arrives after the keyword hits (the query has to be embedded first).
+    /// BSD-137: the running keyword search (cancelled by the next keystroke).
+    @State private var keywordTask: Task<Void, Never>?
+    @State private var semanticTask: Task<Void, Never>?
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass").foregroundStyle(Theme.secondary).font(.system(size: 16))
+                TextField("Search or ask a question in \(model.store.workspace.name)…", text: $query)
+                    .textFieldStyle(.plain)
+                    .font(DS.Text.title(.regular))
+                    .focused($focused)
+                    .onSubmit { activate(newTab: false) }
+                    .onKeyPress(.downArrow) { move(+1); return .handled }
+                    .onKeyPress(.upArrow) { move(-1); return .handled }
+                    .onKeyPress(.tab) { scope = scope == .pages ? .chats : .pages; return .handled }
+                    .onKeyPress(.return, phases: .down) { press in
+                        guard press.modifiers.contains(.command) else { return .ignored }
+                        activate(newTab: true)
+                        return .handled
+                    }
+                    .onKeyPress(.escape) { close(); return .handled }
+                    .onKeyPress(characters: .decimalDigits) { press in
+                        // With an empty field the digits are shortcuts to the numbered rows (1 = Home).
+                        guard query.isEmpty, let n = Int(press.characters), (1...9).contains(n), rows.indices.contains(n - 1) else { return .ignored }
+                        highlighted = n - 1
+                        activate(newTab: false)
+                        return .handled
+                    }
+                    .accessibilityIdentifier("quickfind.field")
+                if !query.isEmpty {
+                    Button { query = "" } label: { Image(systemName: "xmark.circle.fill") }
+                        .buttonStyle(.quiet).foregroundStyle(Theme.secondary)
+                }
+            }
+            .padding(.horizontal, DS.Space.xl).padding(.vertical, 14)
+            filters
+            Divider()
+            results
+            Divider()
+            footer
+        }
+        .frame(width: 680)
+        .frame(minHeight: 300, maxHeight: 560)
+        .onAppear { OverlayFocus.grab { focused = true }; recompute() }
+        .onDisappear { model.quickFindForNewTab = false; keywordTask?.cancel(); semanticTask?.cancel() }
+        .onChange(of: query) { _, _ in highlighted = 0; recompute() }
+        .onChange(of: scope) { _, _ in highlighted = 0; recompute() }
+        .onChange(of: titleOnly) { _, _ in recompute() }
+        .onChange(of: sort) { _, _ in recompute() }
+        .background {
+            Button("") { copyLink() }.keyboardShortcut("l").opacity(0).frame(width: 0, height: 0)
+        }
+        .accessibilityIdentifier("quickfind")
+    }
+
+    private var filters: some View {
+        HStack(spacing: 8) {
+            Picker("", selection: $scope) {
+                ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+            .accessibilityIdentifier("quickfind.scope")
+            if scope == .pages {
+                Toggle("Title only", isOn: $titleOnly).toggleStyle(.button)
+                Picker("Sort", selection: $sort) {
+                    Text("Best match").tag(SearchSort.bestMatch)
+                    Text("Last edited: newest").tag(SearchSort.lastEditedNewest)
+                    Text("Last edited: oldest").tag(SearchSort.lastEditedOldest)
+                    Text("Created: newest").tag(SearchSort.createdNewest)
+                    Text("Created: oldest").tag(SearchSort.createdOldest)
+                }
+                .fixedSize()
+            }
+            Spacer()
+        }
+        .controlSize(.small)
+        .font(DS.Text.small())
+        .padding(.horizontal, DS.Space.xl)
+        .padding(.bottom, 10)
+    }
+
+    private var results: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if rows.isEmpty {
+                        Text(query.isEmpty ? (scope == .chats ? "No chats yet" : "No pages yet") : "No results")
+                            .foregroundStyle(Theme.secondary).padding(DS.Space.xl)
+                    }
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { i, r in
+                        if i == 0 || rows[i - 1].section != r.section, !r.section.isEmpty {
+                            Text(r.section).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.secondary)
+                                .padding(.horizontal, DS.Space.xl).padding(.top, i == 0 ? 8 : 14).padding(.bottom, DS.Space.xs)
+                        }
+                        Button { highlighted = i; activate(newTab: false) } label: { rowView(r, highlighted: i == highlighted) }
+                            .buttonStyle(.plain)
+                            .id(r.id)
+                            .onHover { if $0 { highlighted = i } }
+                    }
+                }
+                .padding(.vertical, DS.Space.sm)
+            }
+            .onChange(of: highlighted) { _, i in if rows.indices.contains(i) { proxy.scrollTo(rows[i].id) } }
+        }
+    }
+
+    private var footer: some View {
+        HStack(spacing: 14) {
+            Text("↑↓ Select")
+            Text("↵ Open")
+            Text("⌘↵ Open in new tab")
+            Text("⌘L Copy link")
+            Spacer()
+            Text("⇥ Pages / Chats")
+        }
+        .font(DS.Text.caption())
+        .foregroundStyle(Theme.secondary)
+        .padding(.horizontal, DS.Space.xl).padding(.vertical, DS.Space.md)
+    }
+
+    @ViewBuilder
+    private func rowView(_ r: Row, highlighted: Bool) -> some View {
+        let store = model.store
+        HStack(alignment: .center, spacing: 10) {
+            switch r.kind {
+            case .home:
+                Image(systemName: "house").font(.system(size: 15)).foregroundStyle(Theme.secondary).frame(width: 20)
+                Text("Home").font(DS.Text.ui(.medium))
+                Spacer(minLength: 8)
+                if !highlighted { Text("Start page").font(.caption).foregroundStyle(Theme.secondary) }
+            case .ask(let q):
+                AIGlyph(size: 17).foregroundStyle(Theme.accentBlue).frame(width: 20)
+                Text("Ask AI: ").foregroundStyle(Theme.secondary) + Text("“\(q)”").fontWeight(.medium)
+            case .chat(let c):
+                Image(systemName: "bubble.left").foregroundStyle(Theme.secondary).frame(width: 20)
+                Text(c.title.isEmpty ? "New chat" : c.title).lineLimit(1)
+                Spacer(minLength: 8)
+                Text(c.updatedAt.formatted(.relative(presentation: .named))).font(.caption).foregroundStyle(Theme.secondary)
+            case .page(let id, let snippet):
+                PageIconView(icon: store.icon(of: id), isDatabase: store.blocks[id]?.type == .databasePage, size: 18).frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(store.title(of: id).nonEmptyOr("Untitled")).font(DS.Text.ui(.medium)).lineLimit(1)
+                        let path = pathText(id)
+                        if !path.isEmpty { Text("— " + path).font(DS.Text.small()).foregroundStyle(Theme.secondary).lineLimit(1).truncationMode(.head) }
+                    }
+                    if let s = snippet, !s.isEmpty { Text(s).font(.caption).foregroundStyle(Theme.secondary).lineLimit(1) }
+                }
+                Spacer(minLength: 8)
+                if highlighted {
+                    Text("↵").font(.caption).foregroundStyle(Theme.secondary)
+                } else if let b = store.blocks[id] {
+                    Text(b.updatedAt.formatted(date: .abbreviated, time: .omitted)).font(.caption2).foregroundStyle(Theme.secondary)
+                }
+            }
+            if case .page = r.kind {} else if case .home = r.kind {} else { Spacer(minLength: 0) }
+            if let n = badge(for: r) { numberBadge(n, highlighted: highlighted) }
+        }
+        .padding(.horizontal, DS.Space.lg).padding(.vertical, 7)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(highlighted ? Color.primary.opacity(0.07) : Color.clear))
+        .padding(.horizontal, DS.Space.xs)
+        .contentShape(Rectangle())
+    }
+
+    /// 1…9 on the first nine rows while the field is empty (typing a digit then opens that row).
+    private func badge(for r: Row) -> Int? {
+        guard query.isEmpty, let i = rows.firstIndex(where: { $0.id == r.id }), i < 9 else { return nil }
+        return i + 1
+    }
+
+    private func numberBadge(_ n: Int, highlighted: Bool) -> some View {
+        Text("\(n)")
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundStyle(highlighted ? Theme.primary : Theme.secondary)
+            .frame(width: 20, height: 20)
+            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.primary.opacity(highlighted ? 0.1 : 0.05)))
+    }
+
+    private func pathText(_ id: RecordID) -> String {
+        let store = model.store
+        return store.ancestors(of: id).filter { $0.type.isPageLike }.reversed()
+            .map { store.title(of: $0.id).nonEmptyOr("Untitled") }.joined(separator: " / ")
+    }
+
+    // MARK: Results
+
+    private func recompute() {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        keywordTask?.cancel()
+        semanticTask?.cancel()
+        var out: [Row] = []
+        if !q.isEmpty { out.append(Row(id: "ask", kind: .ask(q), section: "")) }
+        switch scope {
+        case .pages:
+            if q.isEmpty {
+                out.append(Row(id: "home", kind: .home, section: "Pinned"))
+                for b in model.store.recentPages(limit: 40) where b.id != model.brain.brain.rootID {
+                    out.append(Row(id: b.id, kind: .page(b.id, snippet: nil), section: Self.bucket(b.updatedAt)))
+                }
+            } else {
+                // BSD-137: the scan runs off the main thread on a prebuilt index; a newer keystroke cancels it.
+                // Until it answers, the previous page hits stay so the list doesn't flash empty.
+                out += rows.filter { if case .page = $0.kind { return true } else { return false } }
+                var f = SearchFilters()
+                f.titleOnly = titleOnly
+                let sort = sort
+                let engine = SearchEngine(store: model.store)
+                keywordTask = Task { @MainActor in
+                    let start = Date()
+                    guard let hits = await engine.searchAsync(q, filters: f, sort: sort, limit: 60), !Task.isCancelled,
+                          scope == .pages, query.trimmingCharacters(in: .whitespacesAndNewlines) == q else { return }
+                    let ms = Int(Date().timeIntervalSince(start) * 1000)
+                    if ms > 300 { Log.info("search took \(ms) ms (off main)", category: "ui") }
+                    var out = rows.filter { if case .page = $0.kind { return false } else { return true } }
+                    for h in hits {
+                        let section = sort == .bestMatch ? "Best matches" : Self.bucket(model.store.blocks[h.pageID]?.updatedAt ?? .distantPast)
+                        out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: section))
+                    }
+                    rows = out
+                    highlighted = min(highlighted, max(0, out.count - 1))
+                    if out.count > 1, highlighted == 0 { highlighted = 1 }
+                    addSemanticHits(q, filters: f)
+                }
+            }
+        case .chats:
+            for c in happier.chats where q.isEmpty || c.title.localizedCaseInsensitiveContains(q) {
+                out.append(Row(id: c.id, kind: .chat(c), section: Self.bucket(c.updatedAt)))
+            }
+        }
+        rows = out
+        if !q.isEmpty, out.count > 1, highlighted == 0 { highlighted = 1 }   // first real hit, "Ask AI" stays one ↑ away
+    }
+
+    /// BSD-62: keyword and meaning merged (Reciprocal Rank Fusion) once the query is embedded; replaces the page rows
+    /// if the query is still the same. Pages found only by meaning show their best-matching section as snippet.
+    private func addSemanticHits(_ q: String, filters: SearchFilters) {
+        semanticTask?.cancel()
+        guard let service = model.semantic, service.context != nil, !titleOnly, sort == .bestMatch else { return }
+        let hybrid = service.hybrid()
+        semanticTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 150_000_000)   // typing: wait for a pause
+            guard !Task.isCancelled else { return }
+            let hits = await hybrid.search(q, filters: filters, limit: 60)
+            guard !Task.isCancelled, scope == .pages, query.trimmingCharacters(in: .whitespacesAndNewlines) == q else { return }
+            var out = rows.filter { if case .page = $0.kind { return false } else { return true } }
+            for h in hits { out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: "Best matches")) }
+            rows = out
+            if out.count > 1, highlighted == 0 { highlighted = 1 }
+        }
+    }
+
+    /// Notion's date groups.
+    static func bucket(_ d: Date, now: Date = Date()) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(d) { return "Today" }
+        if cal.isDateInYesterday(d) { return "Yesterday" }
+        let days = cal.dateComponents([.day], from: d, to: now).day ?? 0
+        if days < 7 { return "Past week" }
+        if days < 30 { return "Past 30 days" }
+        return "Older"
+    }
+
+    private func move(_ d: Int) {
+        guard !rows.isEmpty else { return }
+        highlighted = min(rows.count - 1, max(0, highlighted + d))
+    }
+
+    private func activate(newTab: Bool) {
+        guard rows.indices.contains(highlighted) else { return }
+        let r = rows[highlighted]
+        close()
+        switch r.kind {
+        case .home:
+            Log.breadcrumb("search → home")
+            model.goHome()
+        case .page(let id, _):
+            Log.breadcrumb("search → open \(id.prefix(6))\(newTab ? " (new tab)" : "")")
+            if newTab { model.openInNewTab(id) } else { model.open(id) }
+        case .chat(let c):
+            if newTab { model.newTab(.chat(c.id)) ; model.brain.openChat(c.id) } else { model.openChat(c.id, fullPage: true) }
+        case .ask(let q):
+            model.openChat(nil, fullPage: false)
+            brain.ask(q, pageContext: model.currentPageID)
+        }
+    }
+
+    private func copyLink() {
+        guard rows.indices.contains(highlighted) else { return }
+        switch rows[highlighted].kind {
+        case .page(let id, _): Clipboard.copyLinks([id], store: model.store)
+        case .chat(let c): Clipboard.copy("based://chat/" + c.id)
+        case .ask, .home: return
+        }
+    }
+
+    private func close() { model.showQuickFind = false; model.quickFindForNewTab = false }
+}
+
+// MARK: - ⌘N command palette
+
+/// "New…" palette: page, AI chat, meeting notes, database, agent session, import. Digits pick directly.
+struct CommandPalette: View {
+    struct Item: Identifiable {
+        let id: Int
+        let title: String
+        let detail: String
+        let symbol: String
+        let run: @MainActor (AppModel) -> Void
+    }
+
+    @Environment(AppModel.self) private var model
+    @State private var filter = ""
+    @State private var highlighted = 0
+    @FocusState private var focused: Bool
+
+    static let items: [Item] = [
+        Item(id: 1, title: "New page", detail: "Empty page in Private", symbol: "doc") { $0.newPage() },
+        Item(id: 2, title: "New AI chat", detail: "Ask about your workspace", symbol: "bubble.left.and.text.bubble.right") { $0.openChat(nil, fullPage: true) },
+        Item(id: 3, title: "New meeting notes", detail: "Attendees, agenda, notes, action items", symbol: "person.2.wave.2") { $0.newMeetingNotes() },
+        Item(id: 4, title: "New database", detail: "Full-page table", symbol: "tablecells") { m in
+            let c = m.store.createDatabase(in: .workspace, inline: false, viewType: .table)
+            m.openRoot(c.blockID)
+        },
+        Item(id: 5, title: "New agent session", detail: "Claude Code, Codex … in a folder", symbol: "terminal") { $0.showNewSession = true },
+        Item(id: 6, title: "Import from Notion…", detail: "1:1 via the Notion API: pages, databases, views", symbol: "square.and.arrow.down.on.square") { $0.showNotionImport = true },
+        Item(id: 7, title: "Import file…", detail: "Notion export (.zip, HTML recommended), Markdown, CSV", symbol: "square.and.arrow.down") { $0.showImport = true },
+    ]
+
+    private var visible: [Item] {
+        let q = filter.trimmingCharacters(in: .whitespaces)
+        return q.isEmpty ? Self.items : Self.items.filter { $0.title.localizedCaseInsensitiveContains(q) }
+    }
+
+    var body: some View {
+        let list = visible
+        VStack(alignment: .leading, spacing: 0) {
+            TextField("Create new…", text: $filter)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .focused($focused)
+                .padding(.horizontal, DS.Space.xl).padding(.vertical, DS.Space.lg)
+                .onSubmit { run(list, highlighted) }
+                .onKeyPress(.downArrow) { highlighted = min(list.count - 1, highlighted + 1); return .handled }
+                .onKeyPress(.upArrow) { highlighted = max(0, highlighted - 1); return .handled }
+                .onKeyPress(.escape) { model.showCommandPalette = false; return .handled }
+                .onKeyPress(characters: .decimalDigits) { press in
+                    guard filter.isEmpty, let n = Int(press.characters), let i = list.firstIndex(where: { $0.id == n }) else { return .ignored }
+                    run(list, i)
+                    return .handled
+                }
+                .accessibilityIdentifier("palette.field")
+            Divider()
+            VStack(spacing: 2) {
+                ForEach(Array(list.enumerated()), id: \.element.id) { i, item in
+                    Button { run(list, i) } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: item.symbol).frame(width: 22).foregroundStyle(Theme.secondary)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(item.title).font(DS.Text.ui(.medium))
+                                Text(item.detail).font(.system(size: 11.5)).foregroundStyle(Theme.secondary)
+                            }
+                            Spacer()
+                            Text("\(item.id)").font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.secondary)
+                                .padding(.horizontal, DS.Space.sm).padding(.vertical, DS.Space.xxs)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.small).stroke(Color(Theme.divider)))
+                        }
+                        .padding(.horizontal, DS.Space.lg).padding(.vertical, DS.Space.md)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(i == highlighted ? Color.primary.opacity(0.07) : .clear))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { if $0 { highlighted = i } }
+                    .accessibilityIdentifier("palette.item\(item.id)")
+                }
+            }
+            .padding(DS.Space.sm)
+        }
+        .frame(width: 440)
+        .onAppear { OverlayFocus.grab { focused = true } }
+        .onChange(of: filter) { _, _ in highlighted = 0 }
+        .accessibilityIdentifier("palette")
+    }
+
+    private func run(_ list: [Item], _ i: Int) {
+        guard list.indices.contains(i) else { return }
+        model.showCommandPalette = false
+        Log.breadcrumb("palette → \(list[i].title)")
+        list[i].run(model)
+    }
+}
+
+extension AppModel {
+    /// ⌘N → "New meeting notes": a dated page with a meeting block (record, transcript, notes, summary).
+    func newMeetingNotes() {
+        let now = Date()
+        let id = store.createPage(title: RichText("Meeting notes — " + now.formatted(date: .abbreviated, time: .omitted)),
+                                  icon: .emoji("🗓️"), name: "New meeting notes")
+        store.createMeeting(in: .block(id), title: "Meeting — " + now.formatted(date: .omitted, time: .shortened), now: now)
+        openRoot(id)
+    }
+}

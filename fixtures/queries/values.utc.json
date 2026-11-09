@@ -1,0 +1,6877 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-1"
+      },
+      "name" : "Werte tasks/task-1",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784000000
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 720224000
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Crash beim Start ()"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Crash beim Start"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-2"
+      },
+      "name" : "Werte tasks/task-2",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784003600
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Login ()"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "UI"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Login"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-3"
+      },
+      "name" : "Werte tasks/task-3",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784007200
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Typo (5)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "wichtig"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Leer"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Typo"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-4"
+      },
+      "name" : "Werte tasks/task-4",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784010800
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 723766400
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Bug"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Sync-Konflikt (5)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Sync-Konflikt"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-5"
+      },
+      "name" : "Werte tasks/task-5",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784014400
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Dark Mode ()"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Dark Mode"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-6"
+      },
+      "name" : "Werte tasks/task-6",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784018000
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 721779200
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Bug"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Export (3.5)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 3.5
+        },
+        "project" : {
+          "t" : "empty"
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "AI"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Export"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 6
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-7"
+      },
+      "name" : "Werte tasks/task-7",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784021600
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 720656000
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Import (6.5)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Leer"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 6.5
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Import"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-8"
+      },
+      "name" : "Werte tasks/task-8",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784025200
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : -3
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 721865600
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Suche (-1.5)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : -1.5
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Suche"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 8
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-2"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-9"
+      },
+      "name" : "Werte tasks/task-9",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784028800
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 723939200
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Bug"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Kalender ()"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "In Arbeit"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "AI"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Kalender"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 9
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-10"
+      },
+      "name" : "Werte tasks/task-10",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784032400
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 722902400
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Agent ()"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "wichtig"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "In Arbeit"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Agent"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-11"
+      },
+      "name" : "Werte tasks/task-11",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784036000
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 8
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 722297600
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Sidebar (4)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Sidebar"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 11
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-2"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-12"
+      },
+      "name" : "Werte tasks/task-12",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784039600
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 22
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Formeln (11)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 11
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Formeln"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-13"
+      },
+      "name" : "Werte tasks/task-13",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784043200
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 720051200
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Rollup (2.5)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "Notiz mit Text"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 2.5
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "AI"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Rollup"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-14"
+      },
+      "name" : "Werte tasks/task-14",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784046800
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Board ()"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "wichtig"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Board"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 14
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-15"
+      },
+      "name" : "Werte tasks/task-15",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784050400
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : " ()"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+
+          ]
+        },
+        "points" : {
+          "t" : "empty"
+        },
+        "project" : {
+          "t" : "empty"
+        },
+        "status" : {
+          "t" : "empty"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : ""
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 15
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-16"
+      },
+      "name" : "Werte tasks/task-16",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784054000
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 14
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "ÄÖÜ Umlaute (7)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Leer"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Erledigt"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "ÄÖÜ Umlaute"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 16
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-17"
+      },
+      "name" : "Werte tasks/task-17",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784057600
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 720310400
+          }
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Bug"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "emoji 🚀 (0)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Publit"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "emoji 🚀"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 17
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-18"
+      },
+      "name" : "Werte tasks/task-18",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784061200
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 721692800
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "zebra (0)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "zebra"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-19"
+      },
+      "name" : "Werte tasks/task-19",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784064800
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : false
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "due" : {
+          "t" : "empty"
+        },
+        "kind" : {
+          "t" : "string",
+          "v" : "Chore"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "Alpha (2)"
+        },
+        "note" : {
+          "t" : "empty"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Leer"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "Offen"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Alpha"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "who" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "values",
+        "row" : "task-20"
+      },
+      "name" : "Werte tasks/task-20",
+      "output" : {
+        "created" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 784068400
+          }
+        },
+        "done" : {
+          "t" : "bool",
+          "v" : true
+        },
+        "double" : {
+          "t" : "number",
+          "v" : 24
+        },
+        "due" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : true,
+            "start" : 723075200
+          }
+        },
+        "kind" : {
+          "t" : "empty"
+        },
+        "label" : {
+          "t" : "string",
+          "v" : "alpha (12)"
+        },
+        "note" : {
+          "t" : "string",
+          "v" : "später"
+        },
+        "pname" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "points" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "project" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "status" : {
+          "t" : "string",
+          "v" : "In Arbeit"
+        },
+        "tags" : {
+          "t" : "empty"
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "alpha"
+        },
+        "uid" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "who" : {
+          "t" : "empty"
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "title"
+      },
+      "name" : "Berechnungen tasks/title",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.05
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.95
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Crash beim Start"
+            },
+            {
+              "t" : "string",
+              "v" : "Login"
+            },
+            {
+              "t" : "string",
+              "v" : "Typo"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync-Konflikt"
+            },
+            {
+              "t" : "string",
+              "v" : "Dark Mode"
+            },
+            {
+              "t" : "string",
+              "v" : "Export"
+            },
+            {
+              "t" : "string",
+              "v" : "Import"
+            },
+            {
+              "t" : "string",
+              "v" : "Suche"
+            },
+            {
+              "t" : "string",
+              "v" : "Kalender"
+            },
+            {
+              "t" : "string",
+              "v" : "Agent"
+            },
+            {
+              "t" : "string",
+              "v" : "Sidebar"
+            },
+            {
+              "t" : "string",
+              "v" : "Formeln"
+            },
+            {
+              "t" : "string",
+              "v" : "Rollup"
+            },
+            {
+              "t" : "string",
+              "v" : "Board"
+            },
+            {
+              "t" : "string",
+              "v" : "ÄÖÜ Umlaute"
+            },
+            {
+              "t" : "string",
+              "v" : "emoji 🚀"
+            },
+            {
+              "t" : "string",
+              "v" : "zebra"
+            },
+            {
+              "t" : "string",
+              "v" : "Alpha"
+            },
+            {
+              "t" : "string",
+              "v" : "alpha"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "points"
+      },
+      "name" : "Berechnungen tasks/points",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 4.384615384615385
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 11
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "min" : {
+          "t" : "number",
+          "v" : -1.5
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.35
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.65
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 13.5
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 5
+            },
+            {
+              "t" : "number",
+              "v" : 5
+            },
+            {
+              "t" : "number",
+              "v" : 3.5
+            },
+            {
+              "t" : "number",
+              "v" : 6.5
+            },
+            {
+              "t" : "number",
+              "v" : -1.5
+            },
+            {
+              "t" : "number",
+              "v" : 4
+            },
+            {
+              "t" : "number",
+              "v" : 11
+            },
+            {
+              "t" : "number",
+              "v" : 2.5
+            },
+            {
+              "t" : "number",
+              "v" : 7
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 2
+            },
+            {
+              "t" : "number",
+              "v" : 12
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 57
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "kind"
+      },
+      "name" : "Berechnungen tasks/kind",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Chore"
+            },
+            {
+              "t" : "string",
+              "v" : "Bug"
+            },
+            {
+              "t" : "string",
+              "v" : "Chore"
+            },
+            {
+              "t" : "string",
+              "v" : "Bug"
+            },
+            {
+              "t" : "string",
+              "v" : "Bug"
+            },
+            {
+              "t" : "string",
+              "v" : "Chore"
+            },
+            {
+              "t" : "string",
+              "v" : "Chore"
+            },
+            {
+              "t" : "string",
+              "v" : "Chore"
+            },
+            {
+              "t" : "string",
+              "v" : "Bug"
+            },
+            {
+              "t" : "string",
+              "v" : "Chore"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "tags"
+      },
+      "name" : "Berechnungen tasks/tags",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "UI"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync"
+            },
+            {
+              "t" : "string",
+              "v" : "AI"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "status"
+      },
+      "name" : "Berechnungen tasks/status",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.05
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.95
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "In Arbeit"
+            },
+            {
+              "t" : "string",
+              "v" : "In Arbeit"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Erledigt"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "Offen"
+            },
+            {
+              "t" : "string",
+              "v" : "In Arbeit"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "done"
+      },
+      "name" : "Berechnungen tasks/done",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0.35
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 0.65
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : false
+            },
+            {
+              "t" : "bool",
+              "v" : true
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 13
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "due"
+      },
+      "name" : "Berechnungen tasks/due",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 8
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "dateRange" : {
+          "t" : "string",
+          "v" : "1 month"
+        },
+        "earliest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 720051200
+          }
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 723939200
+          }
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.4
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.6
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 720224000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 723766400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 721779200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 720656000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 721865600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 723939200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 722902400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 722297600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 720051200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 720310400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 721692800
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 723075200
+              }
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "note"
+      },
+      "name" : "Berechnungen tasks/note",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 10
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.5
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "wichtig"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            },
+            {
+              "t" : "string",
+              "v" : "wichtig"
+            },
+            {
+              "t" : "string",
+              "v" : "Notiz mit Text"
+            },
+            {
+              "t" : "string",
+              "v" : "wichtig"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            },
+            {
+              "t" : "string",
+              "v" : "später"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "who"
+      },
+      "name" : "Berechnungen tasks/who",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 13
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 9
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.65
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.35
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-2"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-2"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            },
+            {
+              "t" : "person",
+              "v" : "user-1"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "double"
+      },
+      "name" : "Berechnungen tasks/double",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 5.7
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 11
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 24
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "min" : {
+          "t" : "number",
+          "v" : -3
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 27
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 10
+            },
+            {
+              "t" : "number",
+              "v" : 10
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 7
+            },
+            {
+              "t" : "number",
+              "v" : 13
+            },
+            {
+              "t" : "number",
+              "v" : -3
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 8
+            },
+            {
+              "t" : "number",
+              "v" : 22
+            },
+            {
+              "t" : "number",
+              "v" : 5
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 14
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 0
+            },
+            {
+              "t" : "number",
+              "v" : 4
+            },
+            {
+              "t" : "number",
+              "v" : 24
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 114
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "label"
+      },
+      "name" : "Berechnungen tasks/label",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Crash beim Start ()"
+            },
+            {
+              "t" : "string",
+              "v" : "Login ()"
+            },
+            {
+              "t" : "string",
+              "v" : "Typo (5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Sync-Konflikt (5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Dark Mode ()"
+            },
+            {
+              "t" : "string",
+              "v" : "Export (3.5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Import (6.5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Suche (-1.5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Kalender ()"
+            },
+            {
+              "t" : "string",
+              "v" : "Agent ()"
+            },
+            {
+              "t" : "string",
+              "v" : "Sidebar (4)"
+            },
+            {
+              "t" : "string",
+              "v" : "Formeln (11)"
+            },
+            {
+              "t" : "string",
+              "v" : "Rollup (2.5)"
+            },
+            {
+              "t" : "string",
+              "v" : "Board ()"
+            },
+            {
+              "t" : "string",
+              "v" : " ()"
+            },
+            {
+              "t" : "string",
+              "v" : "ÄÖÜ Umlaute (7)"
+            },
+            {
+              "t" : "string",
+              "v" : "emoji 🚀 (0)"
+            },
+            {
+              "t" : "string",
+              "v" : "zebra (0)"
+            },
+            {
+              "t" : "string",
+              "v" : "Alpha (2)"
+            },
+            {
+              "t" : "string",
+              "v" : "alpha (12)"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "project"
+      },
+      "name" : "Berechnungen tasks/project",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.1
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.9
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-2"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-3"
+            },
+            {
+              "t" : "page",
+              "v" : "pr-1"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "pname"
+      },
+      "name" : "Berechnungen tasks/pname",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0.1
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 0.9
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Leer"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Leer"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Leer"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Leer"
+            },
+            {
+              "t" : "string",
+              "v" : "Based"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "uid"
+      },
+      "name" : "Berechnungen tasks/uid",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 10.5
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 10.5
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 1
+            },
+            {
+              "t" : "number",
+              "v" : 2
+            },
+            {
+              "t" : "number",
+              "v" : 3
+            },
+            {
+              "t" : "number",
+              "v" : 4
+            },
+            {
+              "t" : "number",
+              "v" : 5
+            },
+            {
+              "t" : "number",
+              "v" : 6
+            },
+            {
+              "t" : "number",
+              "v" : 7
+            },
+            {
+              "t" : "number",
+              "v" : 8
+            },
+            {
+              "t" : "number",
+              "v" : 9
+            },
+            {
+              "t" : "number",
+              "v" : 10
+            },
+            {
+              "t" : "number",
+              "v" : 11
+            },
+            {
+              "t" : "number",
+              "v" : 12
+            },
+            {
+              "t" : "number",
+              "v" : 13
+            },
+            {
+              "t" : "number",
+              "v" : 14
+            },
+            {
+              "t" : "number",
+              "v" : 15
+            },
+            {
+              "t" : "number",
+              "v" : 16
+            },
+            {
+              "t" : "number",
+              "v" : 17
+            },
+            {
+              "t" : "number",
+              "v" : 18
+            },
+            {
+              "t" : "number",
+              "v" : 19
+            },
+            {
+              "t" : "number",
+              "v" : 20
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 210
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "tasks",
+        "op" : "aggregate",
+        "property" : "created"
+      },
+      "name" : "Berechnungen tasks/created",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 20
+        },
+        "dateRange" : {
+          "t" : "string",
+          "v" : "0 days"
+        },
+        "earliest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 784000000
+          }
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 784068400
+          }
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784000000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784003600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784007200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784010800
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784014400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784018000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784021600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784025200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784028800
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784032400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784036000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784039600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784043200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784046800
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784050400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784054000
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784057600
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784061200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784064800
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : true,
+                "start" : 784068400
+              }
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 20
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "values",
+        "row" : "pr-1"
+      },
+      "name" : "Werte projects/pr-1",
+      "output" : {
+        "avg" : {
+          "t" : "number",
+          "v" : 6.375
+        },
+        "count" : {
+          "t" : "number",
+          "v" : 8
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 723939200
+          }
+        },
+        "open" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "pct" : {
+          "t" : "number",
+          "v" : 0.375
+        },
+        "ptasks" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "task-1"
+            },
+            {
+              "t" : "page",
+              "v" : "task-5"
+            },
+            {
+              "t" : "page",
+              "v" : "task-9"
+            },
+            {
+              "t" : "page",
+              "v" : "task-10"
+            },
+            {
+              "t" : "page",
+              "v" : "task-12"
+            },
+            {
+              "t" : "page",
+              "v" : "task-13"
+            },
+            {
+              "t" : "page",
+              "v" : "task-18"
+            },
+            {
+              "t" : "page",
+              "v" : "task-20"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Based"
+        },
+        "total" : {
+          "t" : "number",
+          "v" : 25.5
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "values",
+        "row" : "pr-2"
+      },
+      "name" : "Werte projects/pr-2",
+      "output" : {
+        "avg" : {
+          "t" : "number",
+          "v" : 1.875
+        },
+        "count" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 723766400
+          }
+        },
+        "open" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "pct" : {
+          "t" : "number",
+          "v" : 0.42857142857142855
+        },
+        "ptasks" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "task-2"
+            },
+            {
+              "t" : "page",
+              "v" : "task-4"
+            },
+            {
+              "t" : "page",
+              "v" : "task-8"
+            },
+            {
+              "t" : "page",
+              "v" : "task-11"
+            },
+            {
+              "t" : "page",
+              "v" : "task-14"
+            },
+            {
+              "t" : "page",
+              "v" : "task-15"
+            },
+            {
+              "t" : "page",
+              "v" : "task-17"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Publit"
+        },
+        "total" : {
+          "t" : "number",
+          "v" : 7.5
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "values",
+        "row" : "pr-3"
+      },
+      "name" : "Werte projects/pr-3",
+      "output" : {
+        "avg" : {
+          "t" : "number",
+          "v" : 5.125
+        },
+        "count" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 720656000
+          }
+        },
+        "open" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "pct" : {
+          "t" : "number",
+          "v" : 0.25
+        },
+        "ptasks" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "task-3"
+            },
+            {
+              "t" : "page",
+              "v" : "task-7"
+            },
+            {
+              "t" : "page",
+              "v" : "task-16"
+            },
+            {
+              "t" : "page",
+              "v" : "task-19"
+            }
+          ]
+        },
+        "title" : {
+          "t" : "string",
+          "v" : "Leer"
+        },
+        "total" : {
+          "t" : "number",
+          "v" : 20.5
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "title"
+      },
+      "name" : "Berechnungen projects/title",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "string",
+              "v" : "Based"
+            },
+            {
+              "t" : "string",
+              "v" : "Publit"
+            },
+            {
+              "t" : "string",
+              "v" : "Leer"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "ptasks"
+      },
+      "name" : "Berechnungen projects/ptasks",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "page",
+              "v" : "task-1"
+            },
+            {
+              "t" : "page",
+              "v" : "task-5"
+            },
+            {
+              "t" : "page",
+              "v" : "task-9"
+            },
+            {
+              "t" : "page",
+              "v" : "task-10"
+            },
+            {
+              "t" : "page",
+              "v" : "task-12"
+            },
+            {
+              "t" : "page",
+              "v" : "task-13"
+            },
+            {
+              "t" : "page",
+              "v" : "task-18"
+            },
+            {
+              "t" : "page",
+              "v" : "task-20"
+            },
+            {
+              "t" : "page",
+              "v" : "task-2"
+            },
+            {
+              "t" : "page",
+              "v" : "task-4"
+            },
+            {
+              "t" : "page",
+              "v" : "task-8"
+            },
+            {
+              "t" : "page",
+              "v" : "task-11"
+            },
+            {
+              "t" : "page",
+              "v" : "task-14"
+            },
+            {
+              "t" : "page",
+              "v" : "task-15"
+            },
+            {
+              "t" : "page",
+              "v" : "task-17"
+            },
+            {
+              "t" : "page",
+              "v" : "task-3"
+            },
+            {
+              "t" : "page",
+              "v" : "task-7"
+            },
+            {
+              "t" : "page",
+              "v" : "task-16"
+            },
+            {
+              "t" : "page",
+              "v" : "task-19"
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "total"
+      },
+      "name" : "Berechnungen projects/total",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 17.833333333333332
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 25.5
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 20.5
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 7.5
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 18
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 25.5
+            },
+            {
+              "t" : "number",
+              "v" : 7.5
+            },
+            {
+              "t" : "number",
+              "v" : 20.5
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 53.5
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "avg"
+      },
+      "name" : "Berechnungen projects/avg",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 4.458333333333333
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 6.375
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 5.125
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 1.875
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 4.5
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 6.375
+            },
+            {
+              "t" : "number",
+              "v" : 1.875
+            },
+            {
+              "t" : "number",
+              "v" : 5.125
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 13.375
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "count"
+      },
+      "name" : "Berechnungen projects/count",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 6.333333333333333
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 8
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 7
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 8
+            },
+            {
+              "t" : "number",
+              "v" : 7
+            },
+            {
+              "t" : "number",
+              "v" : 4
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 19
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "pct"
+      },
+      "name" : "Berechnungen projects/pct",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 0.3511904761904762
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 0.42857142857142855
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 0.375
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 0.25
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 0.17857142857142855
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 0.375
+            },
+            {
+              "t" : "number",
+              "v" : 0.42857142857142855
+            },
+            {
+              "t" : "number",
+              "v" : 0.25
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 1.0535714285714286
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "latest"
+      },
+      "name" : "Berechnungen projects/latest",
+      "output" : {
+        "average" : {
+          "t" : "empty"
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "string",
+          "v" : "1 month"
+        },
+        "earliest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 720656000
+          }
+        },
+        "latest" : {
+          "t" : "date",
+          "v" : {
+            "includeTime" : false,
+            "start" : 723939200
+          }
+        },
+        "max" : {
+          "t" : "empty"
+        },
+        "median" : {
+          "t" : "empty"
+        },
+        "min" : {
+          "t" : "empty"
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "empty"
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 723939200
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 723766400
+              }
+            },
+            {
+              "t" : "date",
+              "v" : {
+                "includeTime" : false,
+                "start" : 720656000
+              }
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    },
+    {
+      "input" : {
+        "database" : "projects",
+        "op" : "aggregate",
+        "property" : "open"
+      },
+      "name" : "Berechnungen projects/open",
+      "output" : {
+        "average" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "checked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countAll" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "countNotEmpty" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countUnique" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "countValues" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "dateRange" : {
+          "t" : "empty"
+        },
+        "earliest" : {
+          "t" : "empty"
+        },
+        "latest" : {
+          "t" : "empty"
+        },
+        "max" : {
+          "t" : "number",
+          "v" : 5
+        },
+        "median" : {
+          "t" : "number",
+          "v" : 4
+        },
+        "min" : {
+          "t" : "number",
+          "v" : 3
+        },
+        "percentChecked" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentEmpty" : {
+          "t" : "number",
+          "v" : 0
+        },
+        "percentNotEmpty" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "percentUnchecked" : {
+          "t" : "number",
+          "v" : 1
+        },
+        "range" : {
+          "t" : "number",
+          "v" : 2
+        },
+        "showOriginal" : {
+          "t" : "list",
+          "v" : [
+            {
+              "t" : "number",
+              "v" : 5
+            },
+            {
+              "t" : "number",
+              "v" : 4
+            },
+            {
+              "t" : "number",
+              "v" : 3
+            }
+          ]
+        },
+        "sum" : {
+          "t" : "number",
+          "v" : 12
+        },
+        "unchecked" : {
+          "t" : "number",
+          "v" : 3
+        }
+      }
+    }
+  ],
+  "module" : "values",
+  "now" : 1700000000000,
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "home",
+        "parent" : "w",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Home",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "tasks-block",
+        "parent" : "b:home",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Aufgaben",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "projects-block",
+        "parent" : "b:home",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Projekte",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "tasks-block",
+        "createdAt" : 784000000,
+        "id" : "tasks",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "points",
+            "name" : "Points",
+            "numberFormat" : "number",
+            "type" : "number"
+          },
+          {
+            "id" : "kind",
+            "name" : "Kind",
+            "options" : [
+              {
+                "color" : "red",
+                "id" : "k-bug",
+                "name" : "Bug"
+              },
+              {
+                "color" : "blue",
+                "id" : "k-feat",
+                "name" : "Feature"
+              },
+              {
+                "color" : "gray",
+                "id" : "k-chore",
+                "name" : "Chore"
+              }
+            ],
+            "type" : "select"
+          },
+          {
+            "id" : "tags",
+            "name" : "Tags",
+            "options" : [
+              {
+                "color" : "purple",
+                "id" : "t-ui",
+                "name" : "UI"
+              },
+              {
+                "color" : "green",
+                "id" : "t-sync",
+                "name" : "Sync"
+              },
+              {
+                "color" : "orange",
+                "id" : "t-ai",
+                "name" : "AI"
+              }
+            ],
+            "type" : "multiSelect"
+          },
+          {
+            "id" : "status",
+            "name" : "Status",
+            "options" : [
+              {
+                "color" : "default",
+                "id" : "s-open",
+                "name" : "Offen"
+              },
+              {
+                "color" : "blue",
+                "id" : "s-doing",
+                "name" : "In Arbeit"
+              },
+              {
+                "color" : "green",
+                "id" : "s-done",
+                "name" : "Erledigt"
+              }
+            ],
+            "statusGroups" : [
+              {
+                "color" : "gray",
+                "id" : "g-todo",
+                "name" : "To-do",
+                "optionIDs" : [
+                  "s-open"
+                ]
+              },
+              {
+                "color" : "blue",
+                "id" : "g-prog",
+                "name" : "In progress",
+                "optionIDs" : [
+                  "s-doing"
+                ]
+              },
+              {
+                "color" : "green",
+                "id" : "g-done",
+                "name" : "Complete",
+                "optionIDs" : [
+                  "s-done"
+                ]
+              }
+            ],
+            "type" : "status"
+          },
+          {
+            "id" : "done",
+            "name" : "Done",
+            "type" : "checkbox"
+          },
+          {
+            "id" : "due",
+            "name" : "Due",
+            "type" : "date"
+          },
+          {
+            "id" : "note",
+            "name" : "Note",
+            "type" : "text"
+          },
+          {
+            "id" : "who",
+            "name" : "Who",
+            "type" : "person"
+          },
+          {
+            "formula" : "prop(\"Points\") * 2",
+            "id" : "double",
+            "name" : "Double",
+            "type" : "formula"
+          },
+          {
+            "formula" : "prop(\"Name\") + \" (\" + format(prop(\"Points\")) + \")\"",
+            "id" : "label",
+            "name" : "Label",
+            "type" : "formula"
+          },
+          {
+            "id" : "project",
+            "name" : "Project",
+            "relation" : {
+              "databaseID" : "projects",
+              "syncedPropertyID" : "ptasks"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "pname",
+            "name" : "Project name",
+            "rollup" : {
+              "function" : "showOriginal",
+              "relationPropertyID" : "project",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "uid",
+            "idPrefix" : "T",
+            "name" : "ID",
+            "type" : "uniqueID"
+          },
+          {
+            "id" : "created",
+            "name" : "Created",
+            "type" : "createdTime"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Aufgaben",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "blockID" : "projects-block",
+        "createdAt" : 784000000,
+        "id" : "projects",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "ptasks",
+            "name" : "Tasks",
+            "relation" : {
+              "databaseID" : "tasks",
+              "syncedPropertyID" : "project"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "total",
+            "name" : "Total",
+            "rollup" : {
+              "function" : "sum",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "avg",
+            "name" : "Average",
+            "rollup" : {
+              "function" : "average",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "count",
+            "name" : "Count",
+            "rollup" : {
+              "function" : "countAll",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "pct",
+            "name" : "Done %",
+            "rollup" : {
+              "function" : "percentChecked",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "done"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "latest",
+            "name" : "Latest due",
+            "rollup" : {
+              "function" : "latest",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "due"
+            },
+            "type" : "rollup"
+          },
+          {
+            "formula" : "prop(\"Tasks\").filter(current.prop(\"Done\") == false).length()",
+            "id" : "open",
+            "name" : "Open tasks",
+            "type" : "formula"
+          }
+        ],
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Projekte",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "task-1",
+        "parent" : "d:tasks",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Crash beim Start",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 720224000
+              }
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 1
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784003600,
+        "createdBy" : "user-1",
+        "id" : "task-2",
+        "parent" : "d:tasks",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Login",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ui"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 2
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784007200,
+        "createdBy" : "user-1",
+        "id" : "task-3",
+        "parent" : "d:tasks",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Typo",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 3
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784010800,
+        "createdBy" : "user-1",
+        "id" : "task-4",
+        "parent" : "d:tasks",
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sync-Konflikt",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723766400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 4
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784014400,
+        "createdBy" : "user-1",
+        "id" : "task-5",
+        "parent" : "d:tasks",
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Dark Mode",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 5
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784018000,
+        "createdBy" : "user-1",
+        "id" : "task-6",
+        "parent" : "d:tasks",
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Export",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721779200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 3.5
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 6
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784021600,
+        "createdBy" : "user-1",
+        "id" : "task-7",
+        "parent" : "d:tasks",
+        "sk" : "a6",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Import",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720656000
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 6.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 7
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784025200,
+        "createdBy" : "user-1",
+        "id" : "task-8",
+        "parent" : "d:tasks",
+        "sk" : "a7",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Suche",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 721865600
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : -1.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 8
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784028800,
+        "createdBy" : "user-1",
+        "id" : "task-9",
+        "parent" : "d:tasks",
+        "sk" : "a8",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Kalender",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 723939200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 9
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784032400,
+        "createdBy" : "user-1",
+        "id" : "task-10",
+        "parent" : "d:tasks",
+        "sk" : "a9",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Agent",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722902400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 10
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784036000,
+        "createdBy" : "user-1",
+        "id" : "task-11",
+        "parent" : "d:tasks",
+        "sk" : "aA",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sidebar",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722297600
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 4
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 11
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784039600,
+        "createdBy" : "user-1",
+        "id" : "task-12",
+        "parent" : "d:tasks",
+        "sk" : "aB",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Formeln",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "points" : {
+            "number" : {
+              "_0" : 11
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 12
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784043200,
+        "createdBy" : "user-1",
+        "id" : "task-13",
+        "parent" : "d:tasks",
+        "sk" : "aC",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Rollup",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720051200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "Notiz mit Text"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 13
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784046800,
+        "createdBy" : "user-1",
+        "id" : "task-14",
+        "parent" : "d:tasks",
+        "sk" : "aD",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Board",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 14
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784050400,
+        "createdBy" : "user-1",
+        "id" : "task-15",
+        "parent" : "d:tasks",
+        "sk" : "aE",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 15
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784054000,
+        "createdBy" : "user-1",
+        "id" : "task-16",
+        "parent" : "d:tasks",
+        "sk" : "aF",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "ÄÖÜ Umlaute",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 7
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 16
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784057600,
+        "createdBy" : "user-1",
+        "id" : "task-17",
+        "parent" : "d:tasks",
+        "sk" : "aG",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "emoji 🚀",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720310400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 17
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784061200,
+        "createdBy" : "user-1",
+        "id" : "task-18",
+        "parent" : "d:tasks",
+        "sk" : "aH",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "zebra",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721692800
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 18
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784064800,
+        "createdBy" : "user-1",
+        "id" : "task-19",
+        "parent" : "d:tasks",
+        "sk" : "aI",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 19
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784068400,
+        "createdBy" : "user-1",
+        "id" : "task-20",
+        "parent" : "d:tasks",
+        "sk" : "aJ",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723075200
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 12
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 20
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-1",
+        "parent" : "d:projects",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Based",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-1",
+                "task-5",
+                "task-9",
+                "task-10",
+                "task-12",
+                "task-13",
+                "task-18",
+                "task-20"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-2",
+        "parent" : "d:projects",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Publit",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-2",
+                "task-4",
+                "task-8",
+                "task-11",
+                "task-14",
+                "task-15",
+                "task-17"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-3",
+        "parent" : "d:projects",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Leer",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-3",
+                "task-7",
+                "task-16",
+                "task-19"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    }
+  ],
+  "rowOrder" : "store.rows(of:)"
+}

@@ -1,0 +1,301 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "source" : "dateAdd(parseDate(\"2024-01-31\"), 1, \"months\")"
+      },
+      "name" : "dateAdd(parseDate(\"2024-01-31\"), 1, \"months\")",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : false,
+          "start" : 730857600
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateBetween(parseDate(\"2024-03-10\"), parseDate(\"2024-03-01\"), \"days\")"
+      },
+      "name" : "dateBetween(parseDate(\"2024-03-10\"), parseDate(\"2024-03-01\"), \"days\")",
+      "output" : {
+        "t" : "number",
+        "v" : 9
+      }
+    },
+    {
+      "input" : {
+        "source" : "formatDate(parseDate(\"2024-03-05\"), \"YYYY/MM/DD\")"
+      },
+      "name" : "formatDate(parseDate(\"2024-03-05\"), \"YYYY/MM/DD\")",
+      "output" : {
+        "t" : "string",
+        "v" : "2024/03/05"
+      }
+    },
+    {
+      "input" : {
+        "source" : "year(parseDate(\"2024-03-05\"))"
+      },
+      "name" : "year(parseDate(\"2024-03-05\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 2024
+      }
+    },
+    {
+      "input" : {
+        "source" : "month(parseDate(\"2024-03-05\"))"
+      },
+      "name" : "month(parseDate(\"2024-03-05\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 3
+      }
+    },
+    {
+      "input" : {
+        "source" : "date(parseDate(\"2024-03-05\"))"
+      },
+      "name" : "date(parseDate(\"2024-03-05\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 5
+      }
+    },
+    {
+      "input" : {
+        "source" : "day(parseDate(\"2024-03-05\"))"
+      },
+      "name" : "day(parseDate(\"2024-03-05\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 2
+      }
+    },
+    {
+      "input" : {
+        "source" : "week(parseDate(\"2024-03-05\"))"
+      },
+      "name" : "week(parseDate(\"2024-03-05\"))",
+      "output" : {
+        "t" : "number",
+        "v" : 10
+      }
+    },
+    {
+      "input" : {
+        "source" : "hour(fromTimestamp(1700000000000))"
+      },
+      "name" : "hour(fromTimestamp(1700000000000))",
+      "output" : {
+        "t" : "number",
+        "v" : 22
+      }
+    },
+    {
+      "input" : {
+        "source" : "minute(fromTimestamp(1700000000000))"
+      },
+      "name" : "minute(fromTimestamp(1700000000000))",
+      "output" : {
+        "t" : "number",
+        "v" : 13
+      }
+    },
+    {
+      "input" : {
+        "source" : "formatDate(now(), \"MMMM D, YYYY\")"
+      },
+      "name" : "formatDate(now(), \"MMMM D, YYYY\")",
+      "output" : {
+        "t" : "string",
+        "v" : "November 14, 2023"
+      }
+    },
+    {
+      "input" : {
+        "source" : "formatDate(prop(\"Due\"), \"YYYY-MM-DD HH:mm\")"
+      },
+      "name" : "formatDate(prop(\"Due\"), \"YYYY-MM-DD HH:mm\")",
+      "output" : {
+        "t" : "string",
+        "v" : "2023-11-21 20:53"
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateStart(prop(\"Due\"))"
+      },
+      "name" : "dateStart(prop(\"Due\"))",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : true,
+          "start" : 722292800
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateSubtract(fromTimestamp(1700000000000), 2, \"weeks\")"
+      },
+      "name" : "dateSubtract(fromTimestamp(1700000000000), 2, \"weeks\")",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : true,
+          "start" : 720483200
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateRange(parseDate(\"2024-01-01\"), parseDate(\"2024-01-31\"))"
+      },
+      "name" : "dateRange(parseDate(\"2024-01-01\"), parseDate(\"2024-01-31\"))",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "end" : 728352000,
+          "includeTime" : false,
+          "start" : 725760000
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "today()"
+      },
+      "name" : "today()",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : false,
+          "start" : 721612800
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "parseDate(\"2024-02-30\")"
+      },
+      "name" : "parseDate(\"2024-02-30\")",
+      "output" : {
+        "error" : "parseDate() could not read “2024-02-30”"
+      }
+    },
+    {
+      "input" : {
+        "source" : "parseDate(\"2024-02-29T13:45\")"
+      },
+      "name" : "parseDate(\"2024-02-29T13:45\")",
+      "output" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : true,
+          "start" : 730907100
+        }
+      }
+    },
+    {
+      "input" : {
+        "source" : "dateBetween(today(), prop(\"Day\"), \"days\")"
+      },
+      "name" : "dateBetween(today(), prop(\"Day\"), \"days\")",
+      "output" : {
+        "t" : "number",
+        "v" : 0
+      }
+    },
+    {
+      "input" : {
+        "source" : "formatDate(prop(\"Day\"), \"dddd\")"
+      },
+      "name" : "formatDate(prop(\"Day\"), \"dddd\")",
+      "output" : {
+        "t" : "string",
+        "v" : "Tuesday"
+      }
+    }
+  ],
+  "env" : {
+    "currentPage" : "p0",
+    "now" : 1700000000000,
+    "pageTitle" : "Titel <id>",
+    "personEmail" : "<id>@example.com",
+    "personName" : "Name <id>",
+    "props" : {
+      "Day" : {
+        "t" : "date",
+        "v" : {
+          "includeTime" : false,
+          "start" : 721612800
+        }
+      },
+      "Done" : {
+        "t" : "bool",
+        "v" : true
+      },
+      "Due" : {
+        "t" : "date",
+        "v" : {
+          "end" : 722592800,
+          "includeTime" : true,
+          "start" : 722292800
+        }
+      },
+      "Empty" : {
+        "t" : "empty"
+      },
+      "Linked" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "page",
+            "v" : "p1"
+          },
+          {
+            "t" : "page",
+            "v" : "p2"
+          }
+        ]
+      },
+      "Name" : {
+        "t" : "string",
+        "v" : "Based App"
+      },
+      "Owner" : {
+        "t" : "person",
+        "v" : "user-1"
+      },
+      "Price" : {
+        "t" : "number",
+        "v" : 2.5
+      },
+      "Qty" : {
+        "t" : "number",
+        "v" : 4
+      },
+      "Tags" : {
+        "t" : "list",
+        "v" : [
+          {
+            "t" : "string",
+            "v" : "b"
+          },
+          {
+            "t" : "string",
+            "v" : "a"
+          },
+          {
+            "t" : "string",
+            "v" : "c"
+          }
+        ]
+      }
+    }
+  },
+  "module" : "formulas",
+  "timeZone" : "UTC"
+}

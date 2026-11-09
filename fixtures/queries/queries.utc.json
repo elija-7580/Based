@@ -1,0 +1,7083 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v0",
+          "name" : "v0",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "alles, Standardreihenfolge",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-title-true",
+          "name" : "v-s-title-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "title"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach title auf",
+      "output" : {
+        "rows" : [
+          "task-10",
+          "task-20",
+          "task-19",
+          "task-16",
+          "task-14",
+          "task-1",
+          "task-5",
+          "task-17",
+          "task-6",
+          "task-12",
+          "task-7",
+          "task-9",
+          "task-2",
+          "task-13",
+          "task-11",
+          "task-8",
+          "task-4",
+          "task-3",
+          "task-18",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-title-false",
+          "name" : "v-s-title-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "title"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach title ab",
+      "output" : {
+        "rows" : [
+          "task-18",
+          "task-3",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-13",
+          "task-2",
+          "task-9",
+          "task-7",
+          "task-12",
+          "task-6",
+          "task-17",
+          "task-5",
+          "task-1",
+          "task-14",
+          "task-16",
+          "task-19",
+          "task-20",
+          "task-10",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-points-true",
+          "name" : "v-s-points-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "points"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach points auf",
+      "output" : {
+        "rows" : [
+          "task-8",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-13",
+          "task-6",
+          "task-11",
+          "task-3",
+          "task-4",
+          "task-7",
+          "task-16",
+          "task-12",
+          "task-20",
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-points-false",
+          "name" : "v-s-points-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "points"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach points ab",
+      "output" : {
+        "rows" : [
+          "task-20",
+          "task-12",
+          "task-16",
+          "task-7",
+          "task-3",
+          "task-4",
+          "task-11",
+          "task-6",
+          "task-13",
+          "task-19",
+          "task-17",
+          "task-18",
+          "task-8",
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-kind-true",
+          "name" : "v-s-kind-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "kind"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach kind auf",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-6",
+          "task-9",
+          "task-17",
+          "task-3",
+          "task-5",
+          "task-10",
+          "task-13",
+          "task-14",
+          "task-19",
+          "task-1",
+          "task-2",
+          "task-7",
+          "task-8",
+          "task-11",
+          "task-12",
+          "task-15",
+          "task-16",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-kind-false",
+          "name" : "v-s-kind-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "kind"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach kind ab",
+      "output" : {
+        "rows" : [
+          "task-3",
+          "task-5",
+          "task-10",
+          "task-13",
+          "task-14",
+          "task-19",
+          "task-4",
+          "task-6",
+          "task-9",
+          "task-17",
+          "task-1",
+          "task-2",
+          "task-7",
+          "task-8",
+          "task-11",
+          "task-12",
+          "task-15",
+          "task-16",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-tags-true",
+          "name" : "v-s-tags-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "tags"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach tags auf",
+      "output" : {
+        "rows" : [
+          "task-2",
+          "task-10",
+          "task-11",
+          "task-14",
+          "task-16",
+          "task-5",
+          "task-17",
+          "task-9",
+          "task-13",
+          "task-6",
+          "task-1",
+          "task-3",
+          "task-4",
+          "task-7",
+          "task-8",
+          "task-12",
+          "task-15",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-tags-false",
+          "name" : "v-s-tags-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "tags"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach tags ab",
+      "output" : {
+        "rows" : [
+          "task-6",
+          "task-9",
+          "task-13",
+          "task-17",
+          "task-5",
+          "task-10",
+          "task-11",
+          "task-14",
+          "task-16",
+          "task-2",
+          "task-1",
+          "task-3",
+          "task-4",
+          "task-7",
+          "task-8",
+          "task-12",
+          "task-15",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-status-true",
+          "name" : "v-s-status-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "status"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach status auf",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-13",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-9",
+          "task-10",
+          "task-20",
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-12",
+          "task-14",
+          "task-16",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-status-false",
+          "name" : "v-s-status-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "status"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach status ab",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-12",
+          "task-14",
+          "task-16",
+          "task-9",
+          "task-10",
+          "task-20",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-13",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-done-true",
+          "name" : "v-s-done-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "done"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach done auf",
+      "output" : {
+        "rows" : [
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-18",
+          "task-19",
+          "task-1",
+          "task-2",
+          "task-8",
+          "task-13",
+          "task-16",
+          "task-17",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-done-false",
+          "name" : "v-s-done-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "done"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach done ab",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-8",
+          "task-13",
+          "task-16",
+          "task-17",
+          "task-20",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-18",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-due-true",
+          "name" : "v-s-due-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "due"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach due auf",
+      "output" : {
+        "rows" : [
+          "task-13",
+          "task-1",
+          "task-17",
+          "task-7",
+          "task-18",
+          "task-6",
+          "task-8",
+          "task-11",
+          "task-10",
+          "task-20",
+          "task-4",
+          "task-9",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-due-false",
+          "name" : "v-s-due-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "due"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach due ab",
+      "output" : {
+        "rows" : [
+          "task-9",
+          "task-4",
+          "task-20",
+          "task-10",
+          "task-11",
+          "task-8",
+          "task-6",
+          "task-18",
+          "task-7",
+          "task-17",
+          "task-1",
+          "task-13",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-note-true",
+          "name" : "v-s-note-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "note"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach note auf",
+      "output" : {
+        "rows" : [
+          "task-13",
+          "task-4",
+          "task-5",
+          "task-8",
+          "task-16",
+          "task-18",
+          "task-20",
+          "task-3",
+          "task-10",
+          "task-14",
+          "task-1",
+          "task-2",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-11",
+          "task-12",
+          "task-15",
+          "task-17",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-note-false",
+          "name" : "v-s-note-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "note"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach note ab",
+      "output" : {
+        "rows" : [
+          "task-3",
+          "task-10",
+          "task-14",
+          "task-4",
+          "task-5",
+          "task-8",
+          "task-16",
+          "task-18",
+          "task-20",
+          "task-13",
+          "task-1",
+          "task-2",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-11",
+          "task-12",
+          "task-15",
+          "task-17",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-who-true",
+          "name" : "v-s-who-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "who"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach who auf",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-3",
+          "task-5",
+          "task-18",
+          "task-19",
+          "task-8",
+          "task-11",
+          "task-2",
+          "task-4",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-who-false",
+          "name" : "v-s-who-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "who"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach who ab",
+      "output" : {
+        "rows" : [
+          "task-8",
+          "task-11",
+          "task-1",
+          "task-3",
+          "task-5",
+          "task-18",
+          "task-19",
+          "task-2",
+          "task-4",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-double-true",
+          "name" : "v-s-double-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "double"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach double auf",
+      "output" : {
+        "rows" : [
+          "task-8",
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-13",
+          "task-6",
+          "task-11",
+          "task-3",
+          "task-4",
+          "task-7",
+          "task-16",
+          "task-12",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-double-false",
+          "name" : "v-s-double-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "double"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach double ab",
+      "output" : {
+        "rows" : [
+          "task-20",
+          "task-12",
+          "task-16",
+          "task-7",
+          "task-3",
+          "task-4",
+          "task-11",
+          "task-6",
+          "task-13",
+          "task-19",
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15",
+          "task-17",
+          "task-18",
+          "task-8"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-label-true",
+          "name" : "v-s-label-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "label"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach label auf",
+      "output" : {
+        "rows" : [
+          "task-15",
+          "task-10",
+          "task-19",
+          "task-20",
+          "task-16",
+          "task-14",
+          "task-1",
+          "task-5",
+          "task-17",
+          "task-6",
+          "task-12",
+          "task-7",
+          "task-9",
+          "task-2",
+          "task-13",
+          "task-11",
+          "task-8",
+          "task-4",
+          "task-3",
+          "task-18"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-label-false",
+          "name" : "v-s-label-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "label"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach label ab",
+      "output" : {
+        "rows" : [
+          "task-18",
+          "task-3",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-13",
+          "task-2",
+          "task-9",
+          "task-7",
+          "task-12",
+          "task-6",
+          "task-17",
+          "task-5",
+          "task-1",
+          "task-14",
+          "task-16",
+          "task-20",
+          "task-19",
+          "task-10",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-project-true",
+          "name" : "v-s-project-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "project"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach project auf",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20",
+          "task-3",
+          "task-7",
+          "task-16",
+          "task-19",
+          "task-2",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-14",
+          "task-17",
+          "task-6",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-project-false",
+          "name" : "v-s-project-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "project"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach project ab",
+      "output" : {
+        "rows" : [
+          "task-2",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-14",
+          "task-17",
+          "task-3",
+          "task-7",
+          "task-16",
+          "task-19",
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20",
+          "task-6",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-pname-true",
+          "name" : "v-s-pname-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "pname"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach pname auf",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20",
+          "task-3",
+          "task-7",
+          "task-16",
+          "task-19",
+          "task-2",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-14",
+          "task-17",
+          "task-6",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-pname-false",
+          "name" : "v-s-pname-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "pname"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach pname ab",
+      "output" : {
+        "rows" : [
+          "task-2",
+          "task-4",
+          "task-8",
+          "task-11",
+          "task-14",
+          "task-17",
+          "task-3",
+          "task-7",
+          "task-16",
+          "task-19",
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20",
+          "task-6",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-uid-true",
+          "name" : "v-s-uid-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach uid auf",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-uid-false",
+          "name" : "v-s-uid-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach uid ab",
+      "output" : {
+        "rows" : [
+          "task-20",
+          "task-19",
+          "task-18",
+          "task-17",
+          "task-16",
+          "task-15",
+          "task-14",
+          "task-13",
+          "task-12",
+          "task-11",
+          "task-10",
+          "task-9",
+          "task-8",
+          "task-7",
+          "task-6",
+          "task-5",
+          "task-4",
+          "task-3",
+          "task-2",
+          "task-1"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-created-true",
+          "name" : "v-s-created-true",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "created"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach created auf",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s-created-false",
+          "name" : "v-s-created-false",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "created"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "sortiert nach created ab",
+      "output" : {
+        "rows" : [
+          "task-20",
+          "task-19",
+          "task-18",
+          "task-17",
+          "task-16",
+          "task-15",
+          "task-14",
+          "task-13",
+          "task-12",
+          "task-11",
+          "task-10",
+          "task-9",
+          "task-8",
+          "task-7",
+          "task-6",
+          "task-5",
+          "task-4",
+          "task-3",
+          "task-2",
+          "task-1"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-s2",
+          "name" : "v-s2",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "kind"
+            },
+            {
+              "ascending" : false,
+              "propertyID" : "points"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "zwei Sortierungen",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-6",
+          "task-17",
+          "task-9",
+          "task-3",
+          "task-13",
+          "task-19",
+          "task-5",
+          "task-10",
+          "task-14",
+          "task-20",
+          "task-12",
+          "task-16",
+          "task-7",
+          "task-11",
+          "task-18",
+          "task-8",
+          "task-1",
+          "task-2",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-contains",
+                    "op" : "contains",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "a"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text enthält",
+          "name" : "v-f-Text enthält",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text enthält",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-14",
+          "task-16",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-startsWith",
+                    "op" : "startsWith",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "s"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text beginnt",
+          "name" : "v-f-Text beginnt",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text beginnt",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-8",
+          "task-11"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-endsWith",
+                    "op" : "endsWith",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "t"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text endet",
+          "name" : "v-f-Text endet",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text endet",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-4",
+          "task-6",
+          "task-7",
+          "task-10"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-equals",
+                    "op" : "equals",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "Login"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text gleich",
+          "name" : "v-f-Text gleich",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text gleich",
+      "output" : {
+        "rows" : [
+          "task-2"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-notEquals",
+                    "op" : "notEquals",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "Login"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text ungleich",
+          "name" : "v-f-Text ungleich",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text ungleich",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-notContains",
+                    "op" : "notContains",
+                    "propertyID" : "title",
+                    "value" : {
+                      "text" : {
+                        "_0" : "e"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Text enthält nicht",
+          "name" : "v-f-Text enthält nicht",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Text enthält nicht",
+      "output" : {
+        "rows" : [
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-7",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-title-isEmpty",
+                    "op" : "isEmpty",
+                    "propertyID" : "title"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Titel leer",
+          "name" : "v-f-Titel leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Titel leer",
+      "output" : {
+        "rows" : [
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-note-isNotEmpty",
+                    "op" : "isNotEmpty",
+                    "propertyID" : "note"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Notiz nicht leer",
+          "name" : "v-f-Notiz nicht leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Notiz nicht leer",
+      "output" : {
+        "rows" : [
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-8",
+          "task-10",
+          "task-13",
+          "task-14",
+          "task-16",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-points-greater",
+                    "op" : "greater",
+                    "propertyID" : "points",
+                    "value" : {
+                      "number" : {
+                        "_0" : 5
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Zahl >",
+          "name" : "v-f-Zahl >",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Zahl >",
+      "output" : {
+        "rows" : [
+          "task-7",
+          "task-12",
+          "task-16",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-points-lessOrEqual",
+                    "op" : "lessOrEqual",
+                    "propertyID" : "points",
+                    "value" : {
+                      "number" : {
+                        "_0" : 3
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Zahl <=",
+          "name" : "v-f-Zahl <=",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Zahl <=",
+      "output" : {
+        "rows" : [
+          "task-8",
+          "task-13",
+          "task-17",
+          "task-18",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-points-equals",
+                    "op" : "equals",
+                    "propertyID" : "points",
+                    "value" : {
+                      "number" : {
+                        "_0" : 0
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Zahl =",
+          "name" : "v-f-Zahl =",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Zahl =",
+      "output" : {
+        "rows" : [
+          "task-17",
+          "task-18"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-points-isEmpty",
+                    "op" : "isEmpty",
+                    "propertyID" : "points"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Zahl leer",
+          "name" : "v-f-Zahl leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Zahl leer",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-kind-equals",
+                    "op" : "equals",
+                    "propertyID" : "kind",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "k-bug"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Select =",
+          "name" : "v-f-Select =",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Select =",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-6",
+          "task-9",
+          "task-17"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-kind-notEquals",
+                    "op" : "notEquals",
+                    "propertyID" : "kind",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "k-bug"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Select ≠",
+          "name" : "v-f-Select ≠",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Select ≠",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-7",
+          "task-8",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-kind-isEmpty",
+                    "op" : "isEmpty",
+                    "propertyID" : "kind"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Select leer",
+          "name" : "v-f-Select leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Select leer",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-7",
+          "task-8",
+          "task-11",
+          "task-12",
+          "task-15",
+          "task-16",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-tags-contains",
+                    "op" : "contains",
+                    "propertyID" : "tags",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "t-ui"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Multi enthält",
+          "name" : "v-f-Multi enthält",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Multi enthält",
+      "output" : {
+        "rows" : [
+          "task-2"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-tags-notContains",
+                    "op" : "notContains",
+                    "propertyID" : "tags",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "t-ui"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Multi enthält nicht",
+          "name" : "v-f-Multi enthält nicht",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Multi enthält nicht",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-status-equals",
+                    "op" : "equals",
+                    "propertyID" : "status",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "s-done"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Status =",
+          "name" : "v-f-Status =",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Status =",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-12",
+          "task-14",
+          "task-16"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-done-equals",
+                    "op" : "equals",
+                    "propertyID" : "done",
+                    "value" : {
+                      "bool" : {
+                        "_0" : true
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Checkbox ja",
+          "name" : "v-f-Checkbox ja",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Checkbox ja",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-8",
+          "task-13",
+          "task-16",
+          "task-17",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-done-equals",
+                    "op" : "equals",
+                    "propertyID" : "done",
+                    "value" : {
+                      "bool" : {
+                        "_0" : false
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Checkbox nein",
+          "name" : "v-f-Checkbox nein",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Checkbox nein",
+      "output" : {
+        "rows" : [
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-18",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-due-before",
+                    "op" : "before",
+                    "propertyID" : "due",
+                    "value" : {
+                      "date" : {
+                        "_0" : 721692800
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Datum vor",
+          "name" : "v-f-Datum vor",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Datum vor",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-7",
+          "task-13",
+          "task-17"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-due-onOrAfter",
+                    "op" : "onOrAfter",
+                    "propertyID" : "due",
+                    "value" : {
+                      "date" : {
+                        "_0" : 721692800
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Datum ab",
+          "name" : "v-f-Datum ab",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Datum ab",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-6",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-due-within",
+                    "op" : "within",
+                    "propertyID" : "due",
+                    "value" : {
+                      "relative" : {
+                        "_0" : "nextWeek"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Datum nächste Woche",
+          "name" : "v-f-Datum nächste Woche",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Datum nächste Woche",
+      "output" : {
+        "rows" : [
+          "task-6",
+          "task-8",
+          "task-11",
+          "task-18"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-due-within",
+                    "op" : "within",
+                    "propertyID" : "due",
+                    "value" : {
+                      "relative" : {
+                        "_0" : "pastMonth"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Datum letzter Monat",
+          "name" : "v-f-Datum letzter Monat",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Datum letzter Monat",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-7",
+          "task-13",
+          "task-17",
+          "task-18"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-due-isEmpty",
+                    "op" : "isEmpty",
+                    "propertyID" : "due"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Datum leer",
+          "name" : "v-f-Datum leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Datum leer",
+      "output" : {
+        "rows" : [
+          "task-2",
+          "task-3",
+          "task-5",
+          "task-12",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-19"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-who-contains",
+                    "op" : "contains",
+                    "propertyID" : "who",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "user-2"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Person enthält",
+          "name" : "v-f-Person enthält",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Person enthält",
+      "output" : {
+        "rows" : [
+          "task-8",
+          "task-11"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-double-greater",
+                    "op" : "greater",
+                    "propertyID" : "double",
+                    "value" : {
+                      "number" : {
+                        "_0" : 10
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Formel > ",
+          "name" : "v-f-Formel > ",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Formel > ",
+      "output" : {
+        "rows" : [
+          "task-7",
+          "task-12",
+          "task-16",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-project-contains",
+                    "op" : "contains",
+                    "propertyID" : "project",
+                    "value" : {
+                      "options" : {
+                        "_0" : [
+                          "pr-1"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Relation enthält",
+          "name" : "v-f-Relation enthält",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Relation enthält",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-project-isEmpty",
+                    "op" : "isEmpty",
+                    "propertyID" : "project"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Relation leer",
+          "name" : "v-f-Relation leer",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Relation leer",
+      "output" : {
+        "rows" : [
+          "task-6",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-pname-contains",
+                    "op" : "contains",
+                    "propertyID" : "pname",
+                    "value" : {
+                      "text" : {
+                        "_0" : "Based"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-Rollup enthält",
+          "name" : "v-f-Rollup enthält",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: Rollup enthält",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-12",
+          "task-13",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-u",
+                    "op" : "__unknown",
+                    "propertyID" : "title"
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-unbekannter Operator",
+          "name" : "v-f-unbekannter Operator",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: unbekannter Operator",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "and",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-gibts-nicht-equals",
+                    "op" : "equals",
+                    "propertyID" : "gibts-nicht",
+                    "value" : {
+                      "text" : {
+                        "_0" : "x"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-fehlende Property",
+          "name" : "v-f-fehlende Property",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : true,
+              "propertyID" : "uid"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: fehlende Property",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "or",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-points-greater",
+                    "op" : "greater",
+                    "propertyID" : "points",
+                    "value" : {
+                      "number" : {
+                        "_0" : 8
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "group" : {
+                  "_0" : {
+                    "combinator" : "and",
+                    "items" : [
+                      {
+                        "condition" : {
+                          "_0" : {
+                            "id" : "c-kind-equals",
+                            "op" : "equals",
+                            "propertyID" : "kind",
+                            "value" : {
+                              "options" : {
+                                "_0" : [
+                                  "k-bug"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "condition" : {
+                          "_0" : {
+                            "id" : "c-done-equals",
+                            "op" : "equals",
+                            "propertyID" : "done",
+                            "value" : {
+                              "bool" : {
+                                "_0" : true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-nest",
+          "name" : "v-f-nest",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: und/oder verschachtelt",
+      "output" : {
+        "rows" : [
+          "task-12",
+          "task-17",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "filter" : {
+            "combinator" : "xor",
+            "items" : [
+              {
+                "condition" : {
+                  "_0" : {
+                    "id" : "c-done-equals",
+                    "op" : "equals",
+                    "propertyID" : "done",
+                    "value" : {
+                      "bool" : {
+                        "_0" : true
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "id" : "v-f-xor",
+          "name" : "v-f-xor",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Filter: unbekannte Verknüpfung",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "kind"
+          },
+          "id" : "v-g-kind",
+          "name" : "v-g-kind",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach kind",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-1",
+              "task-2",
+              "task-7",
+              "task-8",
+              "task-11",
+              "task-12",
+              "task-15",
+              "task-16",
+              "task-18",
+              "task-20"
+            ],
+            "title" : "No Kind"
+          },
+          {
+            "color" : "red",
+            "id" : "k-bug",
+            "rows" : [
+              "task-4",
+              "task-6",
+              "task-9",
+              "task-17"
+            ],
+            "title" : "Bug"
+          },
+          {
+            "color" : "blue",
+            "id" : "k-feat",
+            "rows" : [
+
+            ],
+            "title" : "Feature"
+          },
+          {
+            "color" : "gray",
+            "id" : "k-chore",
+            "rows" : [
+              "task-3",
+              "task-5",
+              "task-10",
+              "task-13",
+              "task-14",
+              "task-19"
+            ],
+            "title" : "Chore"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "tags"
+          },
+          "id" : "v-g-tags",
+          "name" : "v-g-tags",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach tags",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-1",
+              "task-3",
+              "task-4",
+              "task-7",
+              "task-8",
+              "task-12",
+              "task-15",
+              "task-18",
+              "task-19",
+              "task-20"
+            ],
+            "title" : "No Tags"
+          },
+          {
+            "color" : "purple",
+            "id" : "t-ui",
+            "rows" : [
+              "task-2"
+            ],
+            "title" : "UI"
+          },
+          {
+            "color" : "green",
+            "id" : "t-sync",
+            "rows" : [
+              "task-5",
+              "task-5",
+              "task-10",
+              "task-11",
+              "task-14",
+              "task-16",
+              "task-17"
+            ],
+            "title" : "Sync"
+          },
+          {
+            "color" : "orange",
+            "id" : "t-ai",
+            "rows" : [
+              "task-6",
+              "task-6",
+              "task-9",
+              "task-13",
+              "task-17"
+            ],
+            "title" : "AI"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "status"
+          },
+          "id" : "v-g-status",
+          "name" : "v-g-status",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach status",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-15"
+            ],
+            "title" : "No Status"
+          },
+          {
+            "color" : "default",
+            "id" : "s-open",
+            "rows" : [
+              "task-4",
+              "task-8",
+              "task-11",
+              "task-13",
+              "task-17",
+              "task-18",
+              "task-19"
+            ],
+            "title" : "Offen"
+          },
+          {
+            "color" : "blue",
+            "id" : "s-doing",
+            "rows" : [
+              "task-9",
+              "task-10",
+              "task-20"
+            ],
+            "title" : "In Arbeit"
+          },
+          {
+            "color" : "green",
+            "id" : "s-done",
+            "rows" : [
+              "task-1",
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-6",
+              "task-7",
+              "task-12",
+              "task-14",
+              "task-16"
+            ],
+            "title" : "Erledigt"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "done"
+          },
+          "id" : "v-g-done",
+          "name" : "v-g-done",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach done",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "true",
+            "rows" : [
+              "task-1",
+              "task-2",
+              "task-8",
+              "task-13",
+              "task-16",
+              "task-17",
+              "task-20"
+            ],
+            "title" : "Checked"
+          },
+          {
+            "color" : null,
+            "id" : "false",
+            "rows" : [
+              "task-3",
+              "task-4",
+              "task-5",
+              "task-6",
+              "task-7",
+              "task-9",
+              "task-10",
+              "task-11",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-18",
+              "task-19"
+            ],
+            "title" : "Unchecked"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "who"
+          },
+          "id" : "v-g-who",
+          "name" : "v-g-who",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach who",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-4",
+              "task-6",
+              "task-7",
+              "task-9",
+              "task-10",
+              "task-12",
+              "task-13",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-17",
+              "task-20"
+            ],
+            "title" : "No Who"
+          },
+          {
+            "color" : null,
+            "id" : "user-1",
+            "rows" : [
+              "task-1",
+              "task-3",
+              "task-5",
+              "task-8",
+              "task-11",
+              "task-18",
+              "task-19"
+            ],
+            "title" : "user-1"
+          },
+          {
+            "color" : null,
+            "id" : "user-2",
+            "rows" : [
+              "task-8",
+              "task-11"
+            ],
+            "title" : "user-2"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "project"
+          },
+          "id" : "v-g-project",
+          "name" : "v-g-project",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach project",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-6",
+              "task-15"
+            ],
+            "title" : "No Project"
+          },
+          {
+            "color" : null,
+            "id" : "Based",
+            "rows" : [
+              "task-1",
+              "task-5",
+              "task-9",
+              "task-10",
+              "task-12",
+              "task-13",
+              "task-18",
+              "task-20"
+            ],
+            "title" : "Based"
+          },
+          {
+            "color" : null,
+            "id" : "Leer",
+            "rows" : [
+              "task-3",
+              "task-7",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "Leer"
+          },
+          {
+            "color" : null,
+            "id" : "Publit",
+            "rows" : [
+              "task-2",
+              "task-4",
+              "task-8",
+              "task-11",
+              "task-14",
+              "task-17"
+            ],
+            "title" : "Publit"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "points"
+          },
+          "id" : "v-g-points",
+          "name" : "v-g-points",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach points",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-1",
+              "task-2",
+              "task-5",
+              "task-9",
+              "task-10",
+              "task-14",
+              "task-15"
+            ],
+            "title" : "No Points"
+          },
+          {
+            "color" : null,
+            "id" : "-1.5",
+            "rows" : [
+              "task-8"
+            ],
+            "title" : "-1.5"
+          },
+          {
+            "color" : null,
+            "id" : "0",
+            "rows" : [
+              "task-17",
+              "task-18"
+            ],
+            "title" : "0"
+          },
+          {
+            "color" : null,
+            "id" : "2",
+            "rows" : [
+              "task-19"
+            ],
+            "title" : "2"
+          },
+          {
+            "color" : null,
+            "id" : "2.5",
+            "rows" : [
+              "task-13"
+            ],
+            "title" : "2.5"
+          },
+          {
+            "color" : null,
+            "id" : "3.5",
+            "rows" : [
+              "task-6"
+            ],
+            "title" : "3.5"
+          },
+          {
+            "color" : null,
+            "id" : "4",
+            "rows" : [
+              "task-11"
+            ],
+            "title" : "4"
+          },
+          {
+            "color" : null,
+            "id" : "5",
+            "rows" : [
+              "task-3",
+              "task-4"
+            ],
+            "title" : "5"
+          },
+          {
+            "color" : null,
+            "id" : "6.5",
+            "rows" : [
+              "task-7"
+            ],
+            "title" : "6.5"
+          },
+          {
+            "color" : null,
+            "id" : "7",
+            "rows" : [
+              "task-16"
+            ],
+            "title" : "7"
+          },
+          {
+            "color" : null,
+            "id" : "11",
+            "rows" : [
+              "task-12"
+            ],
+            "title" : "11"
+          },
+          {
+            "color" : null,
+            "id" : "12",
+            "rows" : [
+              "task-20"
+            ],
+            "title" : "12"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "propertyID" : "title"
+          },
+          "id" : "v-g-title",
+          "name" : "v-g-title",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach title",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-15"
+            ],
+            "title" : "No Name"
+          },
+          {
+            "color" : null,
+            "id" : "Agent",
+            "rows" : [
+              "task-10"
+            ],
+            "title" : "Agent"
+          },
+          {
+            "color" : null,
+            "id" : "alpha",
+            "rows" : [
+              "task-20"
+            ],
+            "title" : "alpha"
+          },
+          {
+            "color" : null,
+            "id" : "Alpha",
+            "rows" : [
+              "task-19"
+            ],
+            "title" : "Alpha"
+          },
+          {
+            "color" : null,
+            "id" : "ÄÖÜ Umlaute",
+            "rows" : [
+              "task-16"
+            ],
+            "title" : "ÄÖÜ Umlaute"
+          },
+          {
+            "color" : null,
+            "id" : "Board",
+            "rows" : [
+              "task-14"
+            ],
+            "title" : "Board"
+          },
+          {
+            "color" : null,
+            "id" : "Crash beim Start",
+            "rows" : [
+              "task-1"
+            ],
+            "title" : "Crash beim Start"
+          },
+          {
+            "color" : null,
+            "id" : "Dark Mode",
+            "rows" : [
+              "task-5"
+            ],
+            "title" : "Dark Mode"
+          },
+          {
+            "color" : null,
+            "id" : "emoji 🚀",
+            "rows" : [
+              "task-17"
+            ],
+            "title" : "emoji 🚀"
+          },
+          {
+            "color" : null,
+            "id" : "Export",
+            "rows" : [
+              "task-6"
+            ],
+            "title" : "Export"
+          },
+          {
+            "color" : null,
+            "id" : "Formeln",
+            "rows" : [
+              "task-12"
+            ],
+            "title" : "Formeln"
+          },
+          {
+            "color" : null,
+            "id" : "Import",
+            "rows" : [
+              "task-7"
+            ],
+            "title" : "Import"
+          },
+          {
+            "color" : null,
+            "id" : "Kalender",
+            "rows" : [
+              "task-9"
+            ],
+            "title" : "Kalender"
+          },
+          {
+            "color" : null,
+            "id" : "Login",
+            "rows" : [
+              "task-2"
+            ],
+            "title" : "Login"
+          },
+          {
+            "color" : null,
+            "id" : "Rollup",
+            "rows" : [
+              "task-13"
+            ],
+            "title" : "Rollup"
+          },
+          {
+            "color" : null,
+            "id" : "Sidebar",
+            "rows" : [
+              "task-11"
+            ],
+            "title" : "Sidebar"
+          },
+          {
+            "color" : null,
+            "id" : "Suche",
+            "rows" : [
+              "task-8"
+            ],
+            "title" : "Suche"
+          },
+          {
+            "color" : null,
+            "id" : "Sync-Konflikt",
+            "rows" : [
+              "task-4"
+            ],
+            "title" : "Sync-Konflikt"
+          },
+          {
+            "color" : null,
+            "id" : "Typo",
+            "rows" : [
+              "task-3"
+            ],
+            "title" : "Typo"
+          },
+          {
+            "color" : null,
+            "id" : "zebra",
+            "rows" : [
+              "task-18"
+            ],
+            "title" : "zebra"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "dateGrouping" : "relative",
+            "propertyID" : "due"
+          },
+          "id" : "v-g-due-relative",
+          "name" : "v-g-due-relative",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach Datum (relative)",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "No Due"
+          },
+          {
+            "color" : null,
+            "id" : "r-30",
+            "rows" : [
+              "task-1",
+              "task-7",
+              "task-13",
+              "task-17"
+            ],
+            "title" : "Last 30 days"
+          },
+          {
+            "color" : null,
+            "id" : "r0",
+            "rows" : [
+              "task-18"
+            ],
+            "title" : "Today"
+          },
+          {
+            "color" : null,
+            "id" : "r1",
+            "rows" : [
+              "task-6"
+            ],
+            "title" : "Tomorrow"
+          },
+          {
+            "color" : null,
+            "id" : "r7",
+            "rows" : [
+              "task-8",
+              "task-11"
+            ],
+            "title" : "Next 7 days"
+          },
+          {
+            "color" : null,
+            "id" : "r30",
+            "rows" : [
+              "task-4",
+              "task-9",
+              "task-10",
+              "task-20"
+            ],
+            "title" : "Next 30 days"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "dateGrouping" : "day",
+            "propertyID" : "due"
+          },
+          "id" : "v-g-due-day",
+          "name" : "v-g-due-day",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach Datum (day)",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "No Due"
+          },
+          {
+            "color" : null,
+            "id" : "2023-10-26",
+            "rows" : [
+              "task-13"
+            ],
+            "title" : "October 26, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-10-28",
+            "rows" : [
+              "task-1"
+            ],
+            "title" : "October 28, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-10-29",
+            "rows" : [
+              "task-17"
+            ],
+            "title" : "October 29, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-02",
+            "rows" : [
+              "task-7"
+            ],
+            "title" : "November 2, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-14",
+            "rows" : [
+              "task-18"
+            ],
+            "title" : "November 14, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-15",
+            "rows" : [
+              "task-6"
+            ],
+            "title" : "November 15, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-16",
+            "rows" : [
+              "task-8"
+            ],
+            "title" : "November 16, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-21",
+            "rows" : [
+              "task-11"
+            ],
+            "title" : "November 21, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-28",
+            "rows" : [
+              "task-10"
+            ],
+            "title" : "November 28, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-11-30",
+            "rows" : [
+              "task-20"
+            ],
+            "title" : "November 30, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-12-08",
+            "rows" : [
+              "task-4"
+            ],
+            "title" : "December 8, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "2023-12-10",
+            "rows" : [
+              "task-9"
+            ],
+            "title" : "December 10, 2023"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "dateGrouping" : "week",
+            "propertyID" : "due"
+          },
+          "id" : "v-g-due-week",
+          "name" : "v-g-due-week",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach Datum (week)",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "No Due"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-10-23",
+            "rows" : [
+              "task-1",
+              "task-13",
+              "task-17"
+            ],
+            "title" : "Week of October 23, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-10-30",
+            "rows" : [
+              "task-7"
+            ],
+            "title" : "Week of October 30, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-11-13",
+            "rows" : [
+              "task-6",
+              "task-8",
+              "task-18"
+            ],
+            "title" : "Week of November 13, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-11-20",
+            "rows" : [
+              "task-11"
+            ],
+            "title" : "Week of November 20, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-11-27",
+            "rows" : [
+              "task-10",
+              "task-20"
+            ],
+            "title" : "Week of November 27, 2023"
+          },
+          {
+            "color" : null,
+            "id" : "w2023-12-04",
+            "rows" : [
+              "task-4",
+              "task-9"
+            ],
+            "title" : "Week of December 4, 2023"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "dateGrouping" : "month",
+            "propertyID" : "due"
+          },
+          "id" : "v-g-due-month",
+          "name" : "v-g-due-month",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach Datum (month)",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "No Due"
+          },
+          {
+            "color" : null,
+            "id" : "m2023-10-01",
+            "rows" : [
+              "task-1",
+              "task-13",
+              "task-17"
+            ],
+            "title" : "October 2023"
+          },
+          {
+            "color" : null,
+            "id" : "m2023-11-01",
+            "rows" : [
+              "task-6",
+              "task-7",
+              "task-8",
+              "task-10",
+              "task-11",
+              "task-18",
+              "task-20"
+            ],
+            "title" : "November 2023"
+          },
+          {
+            "color" : null,
+            "id" : "m2023-12-01",
+            "rows" : [
+              "task-4",
+              "task-9"
+            ],
+            "title" : "December 2023"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "dateGrouping" : "year",
+            "propertyID" : "due"
+          },
+          "id" : "v-g-due-year",
+          "name" : "v-g-due-year",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppiert nach Datum (year)",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-2",
+              "task-3",
+              "task-5",
+              "task-12",
+              "task-14",
+              "task-15",
+              "task-16",
+              "task-19"
+            ],
+            "title" : "No Due"
+          },
+          {
+            "color" : null,
+            "id" : "y2023",
+            "rows" : [
+              "task-1",
+              "task-4",
+              "task-6",
+              "task-7",
+              "task-8",
+              "task-9",
+              "task-10",
+              "task-11",
+              "task-13",
+              "task-17",
+              "task-18",
+              "task-20"
+            ],
+            "title" : "2023"
+          }
+        ],
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : null,
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "groupBy" : {
+            "groupOrder" : [
+              "k-feat",
+              "",
+              "k-bug"
+            ],
+            "hiddenGroups" : [
+              "k-chore"
+            ],
+            "hideEmptyGroups" : true,
+            "propertyID" : "kind"
+          },
+          "id" : "v-g-opts",
+          "name" : "v-g-opts",
+          "sortKey" : "a0",
+          "sorts" : [
+            {
+              "ascending" : false,
+              "propertyID" : "points"
+            }
+          ],
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "board",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Gruppen: versteckt, leere aus, eigene Reihenfolge",
+      "output" : {
+        "groups" : [
+          {
+            "color" : null,
+            "id" : "",
+            "rows" : [
+              "task-20",
+              "task-12",
+              "task-16",
+              "task-7",
+              "task-11",
+              "task-18",
+              "task-8",
+              "task-1",
+              "task-2",
+              "task-15"
+            ],
+            "title" : "No Kind"
+          },
+          {
+            "color" : "red",
+            "id" : "k-bug",
+            "rows" : [
+              "task-4",
+              "task-6",
+              "task-17",
+              "task-9"
+            ],
+            "title" : "Bug"
+          }
+        ],
+        "rows" : [
+          "task-20",
+          "task-12",
+          "task-16",
+          "task-7",
+          "task-3",
+          "task-4",
+          "task-11",
+          "task-6",
+          "task-13",
+          "task-19",
+          "task-17",
+          "task-18",
+          "task-8",
+          "task-1",
+          "task-2",
+          "task-5",
+          "task-9",
+          "task-10",
+          "task-14",
+          "task-15"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "log",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"log\"",
+      "output" : {
+        "rows" : [
+          "task-2"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "LOG",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"LOG\"",
+      "output" : {
+        "rows" : [
+          "task-2"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "ä",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"ä\"",
+      "output" : {
+        "rows" : [
+          "task-4",
+          "task-5",
+          "task-8",
+          "task-16",
+          "task-18",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "a b",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"a b\"",
+      "output" : {
+        "rows" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "🚀",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"🚀\"",
+      "output" : {
+        "rows" : [
+          "task-17"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"\"",
+      "output" : {
+        "rows" : [
+          "task-1",
+          "task-2",
+          "task-3",
+          "task-4",
+          "task-5",
+          "task-6",
+          "task-7",
+          "task-8",
+          "task-9",
+          "task-10",
+          "task-11",
+          "task-12",
+          "task-13",
+          "task-14",
+          "task-15",
+          "task-16",
+          "task-17",
+          "task-18",
+          "task-19",
+          "task-20"
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "T-3",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"T-3\"",
+      "output" : {
+        "rows" : [
+
+        ]
+      }
+    },
+    {
+      "input" : {
+        "search" : "zzz",
+        "view" : {
+          "blockID" : "tasks-block",
+          "createdAt" : 784000000,
+          "databaseID" : "tasks",
+          "id" : "v-q",
+          "name" : "v-q",
+          "sortKey" : "a0",
+          "stamp" : {
+            "counter" : 0,
+            "millis" : 4,
+            "node" : "fx"
+          },
+          "type" : "table",
+          "updatedAt" : 784000000
+        }
+      },
+      "name" : "Suche \"zzz\"",
+      "output" : {
+        "rows" : [
+
+        ]
+      }
+    }
+  ],
+  "module" : "queries",
+  "now" : 1700000000000,
+  "records" : [
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "favorites" : [
+
+        ],
+        "id" : "workspace",
+        "name" : "My Workspace",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 1,
+          "node" : "fx"
+        },
+        "updatedAt" : 784000000
+      },
+      "kind" : "workspace"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "home",
+        "parent" : "w",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Home",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "tasks-block",
+        "parent" : "b:home",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Aufgaben",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "projects-block",
+        "parent" : "b:home",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Projekte",
+        "type" : "databaseInline",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1"
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "blockID" : "tasks-block",
+        "createdAt" : 784000000,
+        "id" : "tasks",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "points",
+            "name" : "Points",
+            "numberFormat" : "number",
+            "type" : "number"
+          },
+          {
+            "id" : "kind",
+            "name" : "Kind",
+            "options" : [
+              {
+                "color" : "red",
+                "id" : "k-bug",
+                "name" : "Bug"
+              },
+              {
+                "color" : "blue",
+                "id" : "k-feat",
+                "name" : "Feature"
+              },
+              {
+                "color" : "gray",
+                "id" : "k-chore",
+                "name" : "Chore"
+              }
+            ],
+            "type" : "select"
+          },
+          {
+            "id" : "tags",
+            "name" : "Tags",
+            "options" : [
+              {
+                "color" : "purple",
+                "id" : "t-ui",
+                "name" : "UI"
+              },
+              {
+                "color" : "green",
+                "id" : "t-sync",
+                "name" : "Sync"
+              },
+              {
+                "color" : "orange",
+                "id" : "t-ai",
+                "name" : "AI"
+              }
+            ],
+            "type" : "multiSelect"
+          },
+          {
+            "id" : "status",
+            "name" : "Status",
+            "options" : [
+              {
+                "color" : "default",
+                "id" : "s-open",
+                "name" : "Offen"
+              },
+              {
+                "color" : "blue",
+                "id" : "s-doing",
+                "name" : "In Arbeit"
+              },
+              {
+                "color" : "green",
+                "id" : "s-done",
+                "name" : "Erledigt"
+              }
+            ],
+            "statusGroups" : [
+              {
+                "color" : "gray",
+                "id" : "g-todo",
+                "name" : "To-do",
+                "optionIDs" : [
+                  "s-open"
+                ]
+              },
+              {
+                "color" : "blue",
+                "id" : "g-prog",
+                "name" : "In progress",
+                "optionIDs" : [
+                  "s-doing"
+                ]
+              },
+              {
+                "color" : "green",
+                "id" : "g-done",
+                "name" : "Complete",
+                "optionIDs" : [
+                  "s-done"
+                ]
+              }
+            ],
+            "type" : "status"
+          },
+          {
+            "id" : "done",
+            "name" : "Done",
+            "type" : "checkbox"
+          },
+          {
+            "id" : "due",
+            "name" : "Due",
+            "type" : "date"
+          },
+          {
+            "id" : "note",
+            "name" : "Note",
+            "type" : "text"
+          },
+          {
+            "id" : "who",
+            "name" : "Who",
+            "type" : "person"
+          },
+          {
+            "formula" : "prop(\"Points\") * 2",
+            "id" : "double",
+            "name" : "Double",
+            "type" : "formula"
+          },
+          {
+            "formula" : "prop(\"Name\") + \" (\" + format(prop(\"Points\")) + \")\"",
+            "id" : "label",
+            "name" : "Label",
+            "type" : "formula"
+          },
+          {
+            "id" : "project",
+            "name" : "Project",
+            "relation" : {
+              "databaseID" : "projects",
+              "syncedPropertyID" : "ptasks"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "pname",
+            "name" : "Project name",
+            "rollup" : {
+              "function" : "showOriginal",
+              "relationPropertyID" : "project",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "uid",
+            "idPrefix" : "T",
+            "name" : "ID",
+            "type" : "uniqueID"
+          },
+          {
+            "id" : "created",
+            "name" : "Created",
+            "type" : "createdTime"
+          }
+        ],
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Aufgaben",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "blockID" : "projects-block",
+        "createdAt" : 784000000,
+        "id" : "projects",
+        "properties" : [
+          {
+            "id" : "title",
+            "name" : "Name",
+            "type" : "title"
+          },
+          {
+            "id" : "ptasks",
+            "name" : "Tasks",
+            "relation" : {
+              "databaseID" : "tasks",
+              "syncedPropertyID" : "project"
+            },
+            "type" : "relation"
+          },
+          {
+            "id" : "total",
+            "name" : "Total",
+            "rollup" : {
+              "function" : "sum",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "avg",
+            "name" : "Average",
+            "rollup" : {
+              "function" : "average",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "points"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "count",
+            "name" : "Count",
+            "rollup" : {
+              "function" : "countAll",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "title"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "pct",
+            "name" : "Done %",
+            "rollup" : {
+              "function" : "percentChecked",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "done"
+            },
+            "type" : "rollup"
+          },
+          {
+            "id" : "latest",
+            "name" : "Latest due",
+            "rollup" : {
+              "function" : "latest",
+              "relationPropertyID" : "ptasks",
+              "targetPropertyID" : "due"
+            },
+            "type" : "rollup"
+          },
+          {
+            "formula" : "prop(\"Tasks\").filter(current.prop(\"Done\") == false).length()",
+            "id" : "open",
+            "name" : "Open tasks",
+            "type" : "formula"
+          }
+        ],
+        "stamp" : {
+          "counter" : 1,
+          "millis" : 3,
+          "node" : "fx"
+        },
+        "title" : "Projekte",
+        "updatedAt" : 784000000
+      },
+      "kind" : "database"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "task-1",
+        "parent" : "d:tasks",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Crash beim Start",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 720224000
+              }
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 1
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784003600,
+        "createdBy" : "user-1",
+        "id" : "task-2",
+        "parent" : "d:tasks",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Login",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ui"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 2
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784007200,
+        "createdBy" : "user-1",
+        "id" : "task-3",
+        "parent" : "d:tasks",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Typo",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 3
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784010800,
+        "createdBy" : "user-1",
+        "id" : "task-4",
+        "parent" : "d:tasks",
+        "sk" : "a3",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sync-Konflikt",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723766400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 4
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784014400,
+        "createdBy" : "user-1",
+        "id" : "task-5",
+        "parent" : "d:tasks",
+        "sk" : "a4",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Dark Mode",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 5
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784018000,
+        "createdBy" : "user-1",
+        "id" : "task-6",
+        "parent" : "d:tasks",
+        "sk" : "a5",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Export",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721779200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 3.5
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 6
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784021600,
+        "createdBy" : "user-1",
+        "id" : "task-7",
+        "parent" : "d:tasks",
+        "sk" : "a6",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Import",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720656000
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 6.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 7
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784025200,
+        "createdBy" : "user-1",
+        "id" : "task-8",
+        "parent" : "d:tasks",
+        "sk" : "a7",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Suche",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 721865600
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : -1.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 8
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784028800,
+        "createdBy" : "user-1",
+        "id" : "task-9",
+        "parent" : "d:tasks",
+        "sk" : "a8",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Kalender",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 723939200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 9
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784032400,
+        "createdBy" : "user-1",
+        "id" : "task-10",
+        "parent" : "d:tasks",
+        "sk" : "a9",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Agent",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722902400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 10
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784036000,
+        "createdBy" : "user-1",
+        "id" : "task-11",
+        "parent" : "d:tasks",
+        "sk" : "aA",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Sidebar",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 722297600
+              }
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 4
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 11
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-2",
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784039600,
+        "createdBy" : "user-1",
+        "id" : "task-12",
+        "parent" : "d:tasks",
+        "sk" : "aB",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Formeln",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "points" : {
+            "number" : {
+              "_0" : 11
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 12
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784043200,
+        "createdBy" : "user-1",
+        "id" : "task-13",
+        "parent" : "d:tasks",
+        "sk" : "aC",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Rollup",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720051200
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "Notiz mit Text"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2.5
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 13
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784046800,
+        "createdBy" : "user-1",
+        "id" : "task-14",
+        "parent" : "d:tasks",
+        "sk" : "aD",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Board",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "wichtig"
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 14
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784050400,
+        "createdBy" : "user-1",
+        "id" : "task-15",
+        "parent" : "d:tasks",
+        "sk" : "aE",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 15
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784054000,
+        "createdBy" : "user-1",
+        "id" : "task-16",
+        "parent" : "d:tasks",
+        "sk" : "aF",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "ÄÖÜ Umlaute",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 7
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-done"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 16
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784057600,
+        "createdBy" : "user-1",
+        "id" : "task-17",
+        "parent" : "d:tasks",
+        "sk" : "aG",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "emoji 🚀",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 720310400
+              }
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-bug"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-2"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "tags" : {
+            "multiSelect" : {
+              "_0" : [
+                "t-sync",
+                "t-ai"
+              ]
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 17
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784061200,
+        "createdBy" : "user-1",
+        "id" : "task-18",
+        "parent" : "d:tasks",
+        "sk" : "aH",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "zebra",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : false,
+                "start" : 721692800
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 0
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 18
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784064800,
+        "createdBy" : "user-1",
+        "id" : "task-19",
+        "parent" : "d:tasks",
+        "sk" : "aI",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : false
+            }
+          },
+          "kind" : {
+            "select" : {
+              "_0" : "k-chore"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 2
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-3"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-open"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 19
+            }
+          },
+          "who" : {
+            "person" : {
+              "_0" : [
+                "user-1"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784068400,
+        "createdBy" : "user-1",
+        "id" : "task-20",
+        "parent" : "d:tasks",
+        "sk" : "aJ",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "alpha",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "done" : {
+            "checkbox" : {
+              "_0" : true
+            }
+          },
+          "due" : {
+            "date" : {
+              "_0" : {
+                "includeTime" : true,
+                "start" : 723075200
+              }
+            }
+          },
+          "note" : {
+            "text" : {
+              "_0" : "später"
+            }
+          },
+          "points" : {
+            "number" : {
+              "_0" : 12
+            }
+          },
+          "project" : {
+            "relation" : {
+              "_0" : [
+                "pr-1"
+              ]
+            }
+          },
+          "status" : {
+            "status" : {
+              "_0" : "s-doing"
+            }
+          },
+          "uid" : {
+            "uniqueID" : {
+              "_0" : 20
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-1",
+        "parent" : "d:projects",
+        "sk" : "a0",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Based",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-1",
+                "task-5",
+                "task-9",
+                "task-10",
+                "task-12",
+                "task-13",
+                "task-18",
+                "task-20"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-2",
+        "parent" : "d:projects",
+        "sk" : "a1",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Publit",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-2",
+                "task-4",
+                "task-8",
+                "task-11",
+                "task-14",
+                "task-15",
+                "task-17"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    },
+    {
+      "data" : {
+        "createdAt" : 784000000,
+        "createdBy" : "user-1",
+        "id" : "pr-3",
+        "parent" : "d:projects",
+        "sk" : "a2",
+        "stamp" : {
+          "counter" : 0,
+          "millis" : 2,
+          "node" : "fx"
+        },
+        "text" : "Leer",
+        "type" : "page",
+        "updatedAt" : 784000000,
+        "updatedBy" : "user-1",
+        "values" : {
+          "ptasks" : {
+            "relation" : {
+              "_0" : [
+                "task-3",
+                "task-7",
+                "task-16",
+                "task-19"
+              ]
+            }
+          }
+        }
+      },
+      "kind" : "block"
+    }
+  ]
+}

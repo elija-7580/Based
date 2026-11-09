@@ -1,0 +1,6 @@
+import Foundation
+open class MXDiagnosticPayload: NSObject, @unchecked Sendable { open var timeStampBegin: Date { Date() }; open var timeStampEnd: Date { Date() }; open func jsonRepresentation() -> Data { Data() }; open var hangDiagnostics: [NSObject]? { nil }; open var crashDiagnostics: [NSObject]? { nil }; open var cpuExceptionDiagnostics: [NSObject]? { nil }; open var diskWriteExceptionDiagnostics: [NSObject]? { nil }; open var appLaunchDiagnostics: [NSObject]? { nil } }
+open class MXMetricPayload: NSObject, @unchecked Sendable { open var timeStampBegin: Date { Date() }; open var timeStampEnd: Date { Date() }; open func jsonRepresentation() -> Data { Data() } }
+public protocol MXMetricManagerSubscriber: NSObjectProtocol { func didReceive(_ payloads: [MXMetricPayload]); func didReceive(_ payloads: [MXDiagnosticPayload]) }
+extension MXMetricManagerSubscriber { public func didReceive(_ payloads: [MXMetricPayload]) {}; public func didReceive(_ payloads: [MXDiagnosticPayload]) {} }
+open class MXMetricManager: NSObject, @unchecked Sendable { public static let shared = MXMetricManager(); open func add(_ s: MXMetricManagerSubscriber) {}; open func remove(_ s: MXMetricManagerSubscriber) {} }

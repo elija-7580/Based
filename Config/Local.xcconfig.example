@@ -1,0 +1,9 @@
+// Copy to Config/Local.xcconfig and fill in your Apple Developer team to enable iCloud sync.
+DEVELOPMENT_TEAM = YOURTEAMID
+BASED_BUNDLE_ID = com.yourname.based
+BASED_CLOUDKIT_CONTAINER = iCloud.com.yourname.based
+BASED_CLOUD_SYNC = YES
+BASED_ENTITLEMENTS_SUFFIX = -iCloud
+// Optional (macOS): run Claude Code / Codex / Gemini directly on this Mac. Builds the app without the
+// App Sandbox (hardened runtime stays on). Leave empty to keep the sandbox and use a Based server for agents.
+// BASED_AGENTS_SUFFIX = -Agents

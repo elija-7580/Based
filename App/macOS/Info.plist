@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>CFBundleDisplayName</key><string>Based</string>
+	<key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+	<key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>Based links</string><key>CFBundleURLSchemes</key><array><string>based</string></array></dict></array>
+	<key>BasedCloudKitContainer</key><string>$(BASED_CLOUDKIT_CONTAINER)</string>
+	<key>BasedGitCommit</key><string>$(BASED_GIT_COMMIT)</string>
+	<key>BasedGitDate</key><string>$(BASED_GIT_DATE)</string>
+	<key>BasedUpdateRepo</key><string>$(BASED_UPDATE_REPO)</string>
+	<key>BasedDistribution</key><string>$(BASED_DISTRIBUTION)</string>
+	<key>SUFeedURL</key><string>$(BASED_UPDATE_FEED)</string>
+	<key>SUPublicEDKey</key><string>$(BASED_SPARKLE_PUBLIC_KEY)</string>
+	<key>SUEnableAutomaticChecks</key><true/>
+	<key>SUScheduledCheckInterval</key><integer>21600</integer>
+	<key>SUEnableInstallerLauncherService</key><true/>
+	<key>BasedCloudSyncEnabled</key><string>$(BASED_CLOUD_SYNC)</string>
+	<key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSHumanReadableCopyright</key><string>MIT License</string>
+	<key>NSMicrophoneUsageDescription</key><string>Based records meetings and lectures you choose to transcribe.</string>
+	<key>NSAudioCaptureUsageDescription</key><string>Based records the other participants of a call (Zoom, Meet, Teams) when you transcribe a meeting.</string>
+</dict>
+</plist>

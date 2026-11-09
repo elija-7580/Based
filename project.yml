@@ -1,0 +1,244 @@
+name: Based
+options:
+  bundleIdPrefix: com.friedrich-ulrich
+  deploymentTarget:
+    macOS: "14.0"
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+configFiles:
+  Debug: Config/Based.xcconfig
+  Release: Config/Based.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+packages:
+  BasedCore:
+    path: Packages/BasedCore
+  BasedBrain:
+    path: Packages/BasedBrain
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    from: 1.2.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.4
+  FluidAudio:   # on-device speech recognition (Parakeet v3) and speaker diarization for meeting notes
+    url: https://github.com/FluidInference/FluidAudio
+    from: 0.18.3
+targets:
+  Based-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - App/Shared
+      - App/macOS
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+      - package: SwiftTerm   # real terminal for Claude Code / Codex sessions (macOS only)
+      - package: Sparkle     # self-updates for the downloadable DMG build (macOS only)
+      - package: FluidAudio
+    settings:
+      base:
+        PRODUCT_NAME: Based
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID)
+        INFOPLIST_FILE: App/macOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/macOS/Based$(BASED_ENTITLEMENTS_SUFFIX)$(BASED_AGENTS_SUFFIX).entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+        # BSD-118: the script below runs `swift build` on Packages/BasedBrain, which script sandboxing would block.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Embed based command line
+        basedOnDependencyAnalysis: false
+        # BSD-118: ships `based` in Based.app/Contents/Helpers for Settings → Diagnostics → "Install command line".
+        # Never fails the app build: without it the section reports that this build has no CLI. BASED_SKIP_CLI=1 skips it.
+        script: |
+          set -u
+          [ "${BASED_SKIP_CLI:-}" = "1" ] && exit 0
+          PKG="$SRCROOT/Packages/BasedBrain"
+          SCRATCH="$DERIVED_FILE_DIR/based-cli"
+          DEST="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Helpers"
+          LOG="$DERIVED_FILE_DIR/based-cli.log"
+          mkdir -p "$DERIVED_FILE_DIR"
+          swiftpm() { env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$HOME" DEVELOPER_DIR="$DEVELOPER_DIR" xcrun swift build -c release --product based --package-path "$PKG" --scratch-path "$SCRATCH" "$@"; }
+          if swiftpm >"$LOG" 2>&1; then
+            BIN="$(swiftpm --show-bin-path 2>>"$LOG")/based"
+            mkdir -p "$DEST" && cp -f "$BIN" "$DEST/based"
+            if [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+              codesign --force --options runtime --timestamp=none --sign "$EXPANDED_CODE_SIGN_IDENTITY" "$DEST/based" || echo "warning: could not sign Contents/Helpers/based"
+            fi
+          else
+            echo "warning: based command line not built (see $LOG); Settings → Install command line will say so"
+          fi
+          exit 0
+  Based-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - App/Shared
+      - App/iOS
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+      - package: FluidAudio
+    settings:
+      base:
+        PRODUCT_NAME: Based
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID)
+        INFOPLIST_FILE: App/iOS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/iOS/Based$(BASED_ENTITLEMENTS_SUFFIX).entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+  Based-macOS-UITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - App/UITests
+    dependencies:
+      - target: Based-macOS
+    settings:
+      base:
+        TEST_TARGET_NAME: Based-macOS
+        GENERATE_INFOPLIST_FILE: YES
+  Based-iOS-UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - App/UITests
+    dependencies:
+      - target: Based-iOS
+    settings:
+      base:
+        TEST_TARGET_NAME: Based-iOS
+        GENERATE_INFOPLIST_FILE: YES
+  # BSD-66: Apple Watch app ("hold a thought") + complication. Standalone targets — not embedded in Based-iOS, so a
+  # problem here never breaks the iOS/macOS builds. Install from Xcode with the Based-watchOS scheme.
+  Based-watchOS:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - App/watchOS
+      - path: Packages/BasedCore/Sources/BasedCore/Watch/WatchCaptureTransfer.swift
+        group: App/watchOS/Shared
+    dependencies:
+      - target: Based-watchOS-Complication
+    info:
+      path: App/watchOS/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: $(BASED_BUNDLE_ID)
+        NSMicrophoneUsageDescription: Based records your thought as a voice note and sends it to Captures on your iPhone.
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [basedwatch]
+    settings:
+      base:
+        PRODUCT_NAME: Based
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).watchkitapp
+        TARGETED_DEVICE_FAMILY: "4"
+  Based-watchOS-Complication:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - App/watchOSWidget
+    info:
+      path: App/watchOSWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_NAME: BasedComplication
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).watchkitapp.complication
+        TARGETED_DEVICE_FAMILY: "4"
+  # BSD-11: Share extension and widgets (iOS). Not embedded in Based-iOS yet: they need the App Group
+  # group.$(BASED_BUNDLE_ID) on the app too (see the backlog entry for the steps). Both link BasedBrain.
+  Based-iOS-Share:
+    type: app-extension
+    platform: iOS
+    sources:
+      - App/ShareExtension
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+    info:
+      path: App/ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        BasedAppGroup: group.$(BASED_BUNDLE_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_NAME: BasedShare
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).share
+        CODE_SIGN_ENTITLEMENTS: App/ShareExtension/BasedShare.entitlements
+  Based-iOS-Widgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - App/Widgets
+    dependencies:
+      - package: BasedCore
+      - package: BasedBrain
+        product: BasedBrain
+    info:
+      path: App/Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Based
+        BasedAppGroup: group.$(BASED_BUNDLE_ID)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_NAME: BasedWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: $(BASED_BUNDLE_ID).widgets
+        CODE_SIGN_ENTITLEMENTS: App/Widgets/BasedWidgets.entitlements
+schemes:
+  Based-macOS:
+    build:
+      targets:
+        Based-macOS: all
+        Based-macOS-UITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - Based-macOS-UITests
+  Based-iOS:
+    build:
+      targets:
+        Based-iOS: all
+        Based-iOS-UITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - Based-iOS-UITests
+  Based-watchOS:
+    build:
+      targets:
+        Based-watchOS: all
+    run:
+      config: Debug
