@@ -554,3 +554,11 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - Tests: MeetingTests, VoiceProfileTests, ShareTests; end-to-end against a running server (links, roles, invite,
   revoke, publish, push rejection, move-out). Linux tests need Swift 6.4 (6.0–6.2 crash on `@MainActor` XCTest).
 
+## Pass 24 — Nachtlauf 2026-11-08/09 (Schicht A + B)
+- 55+ Commits BSD-14 … BSD-120 (siehe replica/backlog.md, Abschnitt „Nachtlauf 2026-11-08/09“, und Notion „Based Backlog“).
+- Testnetz: alle XCTest-Suiten auf Swift Testing; `swift test` läuft unter Linux/Swift 6.2 ohne `--disable-xctest` (BasedCore 46 → 252, BasedBrain 32 → 330).
+- Typecheck: 52 → 0 Fehler (`bash ci/typecheck/run.sh`).
+- based.sqlite Format v3 (Schema-Version + Migrationsliste, Backup vor Migration).
+- Server: Routen in `Packages/BasedBrain/Sources/BasedBrain/Server/` (Router mit Auth-Middleware, owner-only als Default).
+- Nicht auf GitHub gepusht (Repo in der geplanten Sitzung nicht freigegeben); Patch-Serie im Notion-Abschnitt „Pass 24“.
+

@@ -1,12 +1,30 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 24 (Nachtlauf 2026-11-08/09, Abschnitt direkt unten); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
 > Wichtig: Bis Pass 10 kompilierte die App in Xcode nicht (3 Fehler aus Pass 8/9, jetzt behoben). Alles
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
 > geprüft. `bash ci/typecheck/run.sh` prüft `App/Shared` unter Linux gegen SwiftUI/AppKit/MapKit-Stubs.
+
+## Nachtlauf 2026-11-08/09 (Pass 24)
+Alle Einträge sind Commits auf `main` dieser Nacht (lokal; Einspielen per Patch-Serie, siehe Notion „Pass 24“). Unter Linux/Swift 6.2 verifiziert: `swift test` ohne `--disable-xctest` (BasedCore 252, BasedBrain 330) und `bash ci/typecheck/run.sh` → 0 Fehler. Auf dem Mac nicht geprüft; Klick-Anleitungen stehen in den Backlog-Einträgen (Notion „Based Backlog“).
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| Testnetz grün (Swift Testing statt XCTest) | ✅ | BSD-19/20; zeitabhängige Tests stabilisiert (BSD-114) |
+| Typecheck grün | ✅ | BSD-21: 52 → 0 Fehler; iOS-Typecheck fehlt noch (BSD-95) |
+| CI-Vorlage Swift 6.2 | 🟡 | BSD-22; Aktivierung durch Elija (BSD-13) |
+| ADRs 0001–0010 | ✅ | BSD-14, BSD-29 (0010 „proposed“: Automerge) |
+| Kein stiller Datenverlust | 🟡 | BSD-15 Schreibfehler sichtbar, BSD-16 undekodierbar ≠ Löschung, BSD-17 Formeln absturzsicher, BSD-18 Typwechsel, BSD-99 Block löschen → Unterseiten in den Papierkorb |
+| Sync korrekt | 🟡 | BSD-23 Schema-Version/Migrationen (v3), BSD-24 + BSD-104 gestempelte Tombstones/Waisen/GC, BSD-25 unbekannte Felder, BSD-26 Archiv-Origin, BSD-27 Undo vs. Remote, BSD-28 CloudKit aus; zwei echte Geräte ungetestet |
+| Sicherheit Server | 🟡 | BSD-33 Env-Allowlist/Session-Token, BSD-34 Router + Auth + Limits, BSD-35 XSS/CSP, BSD-36 Prozesse, BSD-37 kein Shell-Hänger |
+| Performance | 🟡 | BSD-38 inkrementelle Indizes (App-Seite BSD-117), BSD-39 DB-Revisionen, BSD-40 Erwähnungen |
+| Relationen / Re-Import / Export | 🟡 | BSD-31 (+BSD-112), BSD-32, BSD-67 |
+| Synced Blocks „Copy and sync“ | 🟡 | BSD-41; derselbe Block zweimal auf einer Seite: BSD-120 |
+| Agenten-Kern | 🟡 | BSD-43 Runs, 44 Projekte, 45/94 ChatEngine, 46 Streaming, 47 Kontext, 48 Warteschlange, 49 Routing, 50/98 Berechtigungen, 51 Budget, 52/105 Hauptagent, 53 Sandbox, 55 Startseite, 56 Einrichtung, 57 Brief, 58 MCP, 59 Memories, 60 Skills, 61 Quellen, 54 CLI |
+| Erfassen | 🟡 | BSD-63, BSD-65 (iOS-Intents ungeprüft), BSD-111; Rest BSD-113 |
 
 ## Grundlagen
 | Anforderung | Status | Notiz |

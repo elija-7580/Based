@@ -125,9 +125,9 @@ Property: button,properties,could,yes,partial,property exists; no automations
 Property: place / verification,properties,could,yes,partial,place: address text; verification: flag only
 Number formats,properties,should,yes,yes,
 Change property type with value conversion,properties,should,yes,yes,
-Sync between Mac and iPhone,sync,must,yes,partial,CloudKit private database; CKSyncEngine implemented; untested without Apple Developer team
+Sync between Mac and iPhone,sync,must,yes,partial,"Server sync v2 is the primary channel (BSD-28, ADR 0001); iCloud is an opt-in experimental switch. Stamped tombstones (BSD-24), orphan rescue + 90-day tombstone GC (BSD-104), unknown fields kept (BSD-25); untested between real devices"
 Offline editing,sync,must,yes,yes,local-first
-Conflict handling,sync,must,yes,partial,LWW per record + fractional ordering; HLC last-writer-wins per record; fractional index avoids list conflicts; no field-level merge
+Conflict handling,sync,must,yes,partial,"HLC LWW per record + fractional ordering; stamped deletions (newer edit/restore wins, BSD-24); undo skips records changed remotely (BSD-27); text CRDT proposed (ADR 0010, Automerge) but not integrated"
 Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested"
 Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now
 Page history / versions,history,should,yes,no,
@@ -150,10 +150,10 @@ Notion AI,ai,could,yes,skip,out of scope
 Integrations / connections marketplace,integrations,could,yes,skip,their network is not part of the product you can rebuild
 Floating page outline (right rail),pages,should,yes,yes,hover to expand; per-page toggle
 AI chat over workspace (Notion AI),ai,should,yes,yes,⌘J; Anthropic/OpenAI/Ollama/Apple Intelligence; tools over pages & databases
-AI memories (one page per topic),ai,should,yes,yes,Memories database in Agent Brain
-Skills (reusable instructions),ai,should,yes,yes,Skills database; exposed as MCP prompts
-Custom agents on schedule,ai,should,yes,yes,Agents database; based-server or Mac runs schedules; token budgets
-MCP server for external AI clients,ai,should,yes,yes,stdio + Streamable HTTP; tools/resources/prompts
+AI memories (one page per topic),ai,should,yes,yes,"Memories database in Agent Brain; suggestions from chats into the Inbox, saved only after confirmation (BSD-59)"
+Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; SKILL.md import/export and mirror to ~/.claude/skills (BSD-60)
+Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)"
+MCP server for external AI clients,ai,should,yes,yes,"stdio + Streamable HTTP; version negotiation, projects/runs/inbox/main-agent tools, paging, docs/mcp.md (BSD-58); permission rules apply (BSD-98)"
 Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device
 Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1"
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud
@@ -179,7 +179,7 @@ CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects an
 Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning"
 "Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D"
 "Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps
-Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; removed content → trash; original timestamps and authors kept
+Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; blocks edited or added in Based are kept via import fingerprints (BSD-32); removed untouched content → trash; original timestamps and authors kept
 Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression"
 Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store
 Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import
@@ -194,14 +194,28 @@ Sub-agents (agents start agents),agents,should,n/a,yes,"Pass 12: spawn_agent / w
 Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / agent, drag & drop, inline approvals"
 Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector"
 Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12
-CI build on every push,infra,should,n/a,partial,workflow ready in ci/github-actions-ci.yml; needs one manual copy to .github/workflows
-"Copy logs (diagnostic report to clipboard)",app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice"
-"Hang stack sampling (where the main thread is stuck)",app,should,n/a,partial,"Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker"
+CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml updated for Swift 6.2 container, both packages, typecheck, cache (BSD-22); still needs one manual copy to .github/workflows (BSD-13)"
+Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice"
+Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library"
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)"
-Agent Brain can't be deleted,ai,must,n/a,yes,"store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens"
+Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens
 Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine
 Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS)
-Lossless workspace archive export/import,export,should,no,yes,.based.jsonl in sync-protocol shape (WorkspaceArchive)
+Lossless workspace archive export/import,export,should,no,yes,.based.zip v2 with asset bytes and zip-slip protection; .based.jsonl v1 still read/written (BSD-67); restored archives are pushed to the server (BSD-26)
 Web client,platforms,should,yes,partial,based-server /app: tree + pages over sync v2, live updates, plain-text editing
 AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)"
+Agent runs as records (Runs database),agents,must,n/a,yes,"BSD-43: every chat turn, coding session, sub-agent and scheduled run is a row; list_runs/get_run"
+Projects database,agents,should,n/a,yes,BSD-44 (+BSD-102 dedupe across devices): sessions and runs linked; AI sidebar section
+Main agent with sub-agents,agents,should,n/a,partial,"BSD-52/105: one thread, delegate/check_runs/report, heartbeat, ⌘J opens it, coding jobs via Claude Code/Codex; iPhone via server open (BSD-116)"
+Auto model routing Low/Auto/High,ai,should,n/a,partial,BSD-49: rule-based routes; classifier/runtime fallback in BSD-97
+Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115"
+"Streaming, retry and context compaction for API models",ai,must,n/a,yes,"BSD-46/47/48: SSE streaming, retry before first token, auto-continue, compaction above 75%, prompt queue"
+Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)"
+Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108
+Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief"
+Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111: Captures DB, Sort captures agent, iPhone shortcuts (untested), POST /capture, Mac menu capture; rest BSD-113"
+CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118
+Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block"
+Schema version + migrations for based.sqlite,app,must,n/a,yes,"BSD-23: PRAGMA user_version, numbered migrations, backup before migrating, refuses newer files (now v3)"
+Visible save errors (no silent in-memory fallback),app,must,n/a,yes,"BSD-15: rollback + read-only banner + storage error screen; undecodable records kept frozen, never synced as deletions (BSD-16)"
