@@ -37,6 +37,8 @@ public struct Agent: Sendable, Identifiable, Equatable {
     public var runningNode: String? = nil
     /// When the agent row was created: a new schedule is due from its next fire time on, not at once.
     public var createdAt: Date? = nil
+    /// BSD-52: the main agent (Kind = main in the Agents database): its scheduled run is the heartbeat.
+    public var isMain: Bool = false
 }
 
 /// The "Agent Brain" lives inside the workspace as a page with three databases, so it syncs like
@@ -269,7 +271,8 @@ public final class BrainStore {
             return Agent(id: row.id, name: row.title, instructions: body(of: row.id),
                          schedule: sched.isEmpty ? nil : sched, model: model.isEmpty ? nil : model,
                          enabled: bool(row, agentsDB, "Enabled", default: true), lastRun: last, dailyTokenBudget: budget,
-                         monthlyBudget: monthly, runningSince: since, runningNode: node.isEmpty ? nil : node, createdAt: row.createdAt)
+                         monthlyBudget: monthly, runningSince: since, runningNode: node.isEmpty ? nil : node, createdAt: row.createdAt,
+                         isMain: text(row, agentsDB, AgentCol.kind) == AgentCol.mainKind)
         }
     }
 

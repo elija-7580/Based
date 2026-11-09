@@ -221,6 +221,25 @@ final class BrainModel {
 
     func newChat() { promptQueue.detach(); chatID = nil; turns = []; artifact = nil }
 
+    // MARK: Main agent (BSD-52)
+
+    /// The main agent for the current providers (delegation tools, routing, permissions).
+    var mainAgent: MainAgent {
+        let m = MainAgent(runtime: runtime)
+        m.installed = []          // sub-agents use API models until coding sessions are wired as launcher (follow-up of BSD-52)
+        m.defaultModel = defaultModel
+        m.permissions = brain.permissions(mode: permissionMode)
+        return m
+    }
+
+    /// Id of the main agent's thread (created on first use).
+    func mainThreadID() -> RecordID {
+        brain.ensureMainAgent()
+        return brain.ensureMainThread(machine: happier.machineName)
+    }
+
+    var isMainThread: Bool { chatID.map { brain.isMainThread($0) } ?? false }
+
     func openChat(_ id: RecordID?) {
         guard let id else { newChat(); return }
         guard id != chatID || turns.isEmpty else { return }
@@ -276,7 +295,9 @@ final class BrainModel {
         let decision = ChatRouting.route(engineSpec, task: task, compute: compute, registry: registry,
                                          installed: installedCLIs, defaultModel: defaultModel)
             .keepingConversation(resumeKey: existingChat.flatMap { brain.resumeKey($0) }, hasHistory: !turns.isEmpty)
-        let engine = decision.choice
+        // BSD-52: the main agent's thread always runs the main agent (low compute, delegation tools).
+        let mainRef = existingChat.flatMap { brain.isMainThread($0) ? $0 : nil }.flatMap { _ in mainAgent.modelRef() }
+        let engine = mainRef.map(ChatEngineChoice.model) ?? decision.choice
         let page = ChatRouting.page(pageContext, in: store, onDevice: engine.isOnDevice)
         let p = ChatRouting.prompt(trimmed, attachments: attachmentTexts, page: page, onDevice: engine.isOnDevice)
         let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
@@ -304,6 +325,8 @@ final class BrainModel {
         let backend: ChatBackend
         let system = ChatRouting.systemPrompt(for: engine, context: engine.isCLI ? brain.systemContext(query: trimmed) : "")
         switch engine {
+        case .model(let ref) where mainRef != nil:
+            backend = MainAgentChatBackend(agent: mainAgent, modelRef: ref)
         case .model(let ref):
             backend = ModelChatBackend(runtime: runtime, modelRef: ref, permissions: brain.permissions(mode: permissionMode))
         case .cli(var spec):
@@ -325,10 +348,11 @@ final class BrainModel {
         let chat = ChatEngine(sink: brain)
         let request = ChatRequest(prompt: p, displayPrompt: shown + attachNote, history: history,
                                   resume: chat.resume(for: sid, with: backend), cwd: folder, system: system)
-        let engineLabel = [ChatRouting.label(engine), decision.routeLabel].filter { !$0.isEmpty }.joined(separator: " · ")
-        let routeWhy = decision.route == nil ? nil : "\(decision.compute.title): \(decision.reason)"
+        let engineLabel = mainRef != nil ? "Main agent · " + ChatRouting.label(engine)
+            : [ChatRouting.label(engine), decision.routeLabel].filter { !$0.isEmpty }.joined(separator: " · ")
+        let routeWhy = mainRef != nil || decision.route == nil ? nil : "\(decision.compute.title): \(decision.reason)"
         let turn = chat.send(request, session: sid, via: backend)
-        brain.noteRoute(session: sid, decision)
+        if mainRef == nil { brain.noteRoute(session: sid, decision) }
         Task {
             // Events land on the reply turn (looked up by id: the list may change while it runs).
             for await e in turn.events {

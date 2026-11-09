@@ -34,6 +34,7 @@ struct ChatPanel: View {
         HStack(spacing: 10) {
             Menu {
                 Button("New chat", systemImage: "square.and.pencil") { brain.newChat() }
+                Button("Main agent", systemImage: "person.crop.circle.badge.checkmark") { model.openChat(brain.mainThreadID(), fullPage: false) }
                 if !happier.chats.isEmpty { Divider() }
                 ForEach(happier.chats.prefix(20)) { c in
                     Button(c.title.nonEmptyOr("New chat")) { model.openChat(c.id, fullPage: false) }

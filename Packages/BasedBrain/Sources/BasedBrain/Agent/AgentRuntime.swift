@@ -1,6 +1,16 @@
 import Foundation
 import BasedCore
 
+/// Tools that one run adds to the workspace tools (BSD-52: the main agent's delegation tools).
+public struct AgentToolSet: Sendable {
+    public var specs: [ToolSpec]
+    public var call: @Sendable (String, JSONValue) async -> AgentTools.ToolResult
+    public init(specs: [ToolSpec], call: @escaping @Sendable (String, JSONValue) async -> AgentTools.ToolResult) {
+        self.specs = specs; self.call = call
+    }
+    public func handles(_ name: String) -> Bool { specs.contains { $0.name == name } }
+}
+
 /// Runs a model with the workspace tools until it stops calling tools.
 public final class AgentRuntime: @unchecked Sendable {
     public let registry: ModelRegistry
@@ -29,6 +39,7 @@ public final class AgentRuntime: @unchecked Sendable {
     /// `callerSession`: the chat session running this (sub-agents it spawns are attached to it).
     public func run(prompt: String, modelRef: String?, systemExtra: String? = nil, history: [ChatMessage] = [],
                     callerSession: String? = nil, permissions: AgentPermissions? = nil,
+                    extraTools: AgentToolSet? = nil,
                     events: (@Sendable (ChatEvent) -> Void)? = nil) async throws -> Outcome {
         let onEvent = events
         guard let (provider, model) = registry.resolve(modelRef ?? "") else { throw AIError.unavailable("No AI provider configured. Add an API key in Settings → AI.") }
@@ -36,7 +47,7 @@ public final class AgentRuntime: @unchecked Sendable {
             return try await runOnDevice(provider: provider, model: model, prompt: prompt, systemExtra: systemExtra, history: history)
         }
         let context = await MainActor.run { tools.brain.systemContext(query: prompt) }
-        let specs = await MainActor.run { tools.specs }
+        let specs = await MainActor.run { tools.specs } + (extraTools?.specs ?? [])
         var system = """
         You are Based, the user's personal workspace assistant. You work inside their notes (pages and databases) \
         using tools. Prefer reading existing content before creating new pages. Keep answers concise. \
@@ -115,7 +126,9 @@ public final class AgentRuntime: @unchecked Sendable {
                 onEvent?(.toolUse(id: call.id, name: call.name, input: call.arguments))
                 let res: AgentTools.ToolResult
                 // BSD-50: mode and rules decide before the tool runs.
-                if let blocked = await tools.authorize(call.name, call.arguments, permissions: permissions) { res = blocked }
+                // BSD-52: tools of this run only (the main agent's delegate / check_runs / report).
+                if let extra = extraTools, extra.handles(call.name) { res = await extra.call(call.name, call.arguments) }
+                else if let blocked = await tools.authorize(call.name, call.arguments, permissions: permissions) { res = blocked }
                 else if await MainActor.run(body: { tools.isExternal(call.name) }), let ext = await MainActor.run(body: { tools.externalCall }), let r = await ext(call.name, call.arguments) { res = r }
                 else if await MainActor.run(body: { tools.isHost(call.name) }), let host = await MainActor.run(body: { tools.hostCall }),
                         let r = await host(call.name, Self.withCaller(call.arguments, callerSession)) { res = r }

@@ -336,13 +336,15 @@ extension BrainStore {
     /// Kind of run a session gets: chats ("based") are chat runs, sessions with a parent are sub-agents.
     static func runKind(agentID: String, parentID: RecordID?) -> AgentRun.Kind {
         if parentID != nil { return .subagent }
+        if agentID == BrainStore.mainThreadAgentID { return .main }   // BSD-52: the main agent's thread
         return agentID == "based" ? .chat : .session
     }
 
     /// Called when a session is created: it gets a run that points at it (sub-agents under the parent's run).
     func startRun(forSession sid: RecordID, title: String, agentID: String, parentID: RecordID?) {
         let parentRun = parentID.flatMap { latestRun(forSession: $0)?.id }
-        startRun(title: title, kind: Self.runKind(agentID: agentID, parentID: parentID), status: .waiting,
+        let kind = Self.runKind(agentID: agentID, parentID: parentID)
+        startRun(title: title, kind: kind, status: .waiting, agentID: kind == .main ? mainAgent()?.id : nil,
                  parentID: parentRun, sessionID: sid, engine: agentID, projectID: projectID(ofSession: sid))
     }
 
@@ -368,12 +370,12 @@ extension BrainStore {
                 }
             }()
             if let target {
-                if current == nil || (current!.status.isTerminal && !target.isTerminal && current!.kind == .chat) {
+                if current == nil || (current!.status.isTerminal && !target.isTerminal && [.chat, .main].contains(current!.kind)) {
                     let sess = sessions().first { $0.id == sid }
                     let kind = Self.runKind(agentID: agentID ?? sess?.agentID ?? "", parentID: sess?.parentID)
                     let parentRun = sess?.parentID.flatMap { latestRun(forSession: $0)?.id }
                     let id = startRun(title: s.title.isEmpty ? "Run" : s.title, kind: kind, status: target,
-                                      parentID: parentRun, sessionID: sid, engine: agentID ?? sess?.agentID ?? "",
+                                      agentID: kind == .main ? mainAgent()?.id : nil, parentID: parentRun, sessionID: sid, engine: agentID ?? sess?.agentID ?? "",
                                       projectID: sess?.projectID)
                     current = run(id)
                 } else if let c = current, c.status != target {

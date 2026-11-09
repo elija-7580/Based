@@ -188,6 +188,14 @@ public final class AgentScheduler: @unchecked Sendable {
             case .skipNotDue: continue
             case .run: break
             }
+            if a.isMain {
+                // BSD-52: the main agent's scheduled run is its heartbeat — no model call, updates only when
+                // delegated work ended since the last beat (a.lastRun is the previous beat).
+                let n = await MainActor.run { brain.mainHeartbeat(lastBeat: a.lastRun, now: now) }
+                await MainActor.run { brain.releaseLease(agent: a.id, node: node) }
+                if n > 0 { onEvent?("Heartbeat \(a.name): \(n) update(s)") }
+                continue
+            }
             onEvent?("Run \(a.name) (\(a.schedule ?? ""))")
             let o = await runtime.run(agent: a, trigger: "schedule \(a.schedule ?? "")")
             await MainActor.run { brain.releaseLease(agent: a.id, node: node) }

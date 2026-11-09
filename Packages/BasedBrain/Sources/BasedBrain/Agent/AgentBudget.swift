@@ -15,6 +15,8 @@ import BasedCore
 enum AgentCol {
     static let monthlyBudget = "Monthly budget", spent = "Spent this month"
     static let runningSince = "Running since", node = "Node"
+    /// BSD-52: "main" marks the main agent's row.
+    static let kind = "Kind", mainKind = "main"
 }
 
 /// Where scheduled agents run.
