@@ -117,6 +117,9 @@ struct SettingsView: View {
                 AgentSetupSection().environment(model.brain.happier)
                 PermissionsSettingsSection()
                 MainAgentSettingsSection()
+                #if os(macOS)
+                SkillsSettingsSection()
+                #endif
                 AgentsSettingsView().environment(model.brain.happier)
                 AISettingsView()
             case .connections: ConnectionsSettingsView().environment(model.brain.happier)
