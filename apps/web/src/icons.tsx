@@ -1,0 +1,40 @@
+// Icons nach v8: Linien auf 24-px-Raster, 2 px, runde Enden; aktive Navigation gefüllt. Kein Sparkle für KI.
+
+const P = {
+  home: "M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 19z",
+  homeDoor: "M10 20.5v-5h4v5",
+  search: "M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM20 20l-4.6-4.6",
+  inbox: "M4 13 6.6 6.2A1.5 1.5 0 0 1 8 5.2h8a1.5 1.5 0 0 1 1.4 1L20 13v5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18zM4 13h4.5l1.5 2.5h4l1.5-2.5H20",
+  agent: "M12 3.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4.5 20.5a7.5 7.5 0 0 1 15 0z",
+  graph: "M6.5 4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM17.5 6a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM10.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM8.8 7.2l6.4.8M7.5 8.8l2.2 6.4M16 10.6l-4 5",
+  settings: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8",
+  model: "M8 7h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zM10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5",
+  perm: "M12 3.5 19 6.5v5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9v-5zM9 12l2 2 4-4",
+  auto: "M5 12h4l2-6 2 12 2-6h4",
+  fast: "M13 3 5 14h6l-1 7 8-11h-6z",
+  deep: "M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+  pick: "M4 7h16M4 12h16M4 17h10",
+  ask: "M12 3.5 19 6.5v5c0 4.3-2.9 7.6-7 9-4.1-1.4-7-4.7-7-9v-5zM12 9v4M12 16h.01",
+  free: "M7 11V8a5 5 0 0 1 9.6-2M5.5 11h13a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-6A1.5 1.5 0 0 1 5.5 11z",
+  research: "M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM20 20l-4.6-4.6",
+  night: "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z",
+  tutor: "M3 9l9-5 9 5-9 5zM7 11.5V16c0 1.5 2.2 3 5 3s5-1.5 5-3v-4.5",
+  plus: "M12 5v14M5 12h14",
+  send: "M12 19V5M6 11l6-6 6 6",
+  chevron: "M7 10l5 5 5-5",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  page: "M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5zM14 3.5V8h4",
+  calendar: "M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5zM4 10h16M8 3v4M16 3v4",
+  database: "M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5zM4 10h16M10 10v9",
+} as const;
+
+export type IconName = keyof typeof P;
+
+export function Icon({ name, size = 20, filled = false, cut }: { name: IconName; size?: number; filled?: boolean; cut?: IconName }) {
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" style={{ flex: "none" }}>
+      <path d={P[name]} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      {cut && filled ? <path d={P[cut]} fill="none" stroke="var(--bg)" strokeWidth={2} strokeLinecap="round" /> : null}
+    </svg>
+  );
+}

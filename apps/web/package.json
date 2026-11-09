@@ -14,7 +14,8 @@
   "dependencies": {
     "@based/core": "workspace:*",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@based/design-tokens": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",

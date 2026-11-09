@@ -35,6 +35,18 @@ const block = (selector: string, vars: [string, string][]): string =>
 /** The whole stylesheet. Switches live on the root element:
  *  data-theme="light|dark", data-style="bold", data-density="compact",
  *  data-marker="mint|sky|rose", data-calm. */
+function typeVars(): [string, string][] {
+  const out: [string, string][] = [];
+  for (const g of typeGroups) {
+    if (g.name.startsWith("Bold")) continue;
+    for (const st of g.styles) {
+      out.push([`type-${st.name}-size`, st.fontSize], [`type-${st.name}-leading`, String(st.lineHeight)],
+        [`type-${st.name}-weight`, String(st.fontWeight)], [`type-${st.name}-tracking`, st.letterSpacing ?? "0"]);
+    }
+  }
+  return out;
+}
+
 export function buildCss(): string {
   const themed = (theme: ThemeId): [string, string][] => [
     ...colors.map((c): [string, string] => [c.name, c.value[theme]]),
@@ -56,6 +68,9 @@ export function buildCss(): string {
     ["size-greeting", "28px"], ["weight-heading", "600"],
     ["size-body", "16px"], ["leading-body", "1.68"],
     ["row-pad", "10px"], ["cell-pad", "8px"],
+    // BSD-178: every default type style as variables (--type-<name>-size/-leading/-weight/-tracking), so
+    // components never write font literals (ADR 0009).
+    ...typeVars(),
     // Floating chrome (tab bar, toolbars, sheets, popovers): solid unless data-material says otherwise.
     ["chrome-bg", "var(--surface-raised)"],
     ["chrome-filter", "none"],
