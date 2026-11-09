@@ -85,7 +85,12 @@ struct AgentHomeView: View {
                         AgentHomeCard(item: c.item, open: open, answer: answer)
                             .frame(width: g.cardWidth, height: g.cardHeight)
                             .position(x: c.center.x, y: c.center.y)
-                            .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+                            // BSD-128: a new card glides out of the sun onto its orbit; a finished one drifts outwards.
+                            .transition(.asymmetric(
+                                insertion: .offset(x: g.center.x - c.center.x, y: g.center.y - c.center.y)
+                                    .combined(with: .scale(scale: 0.3)).combined(with: .opacity),
+                                removal: .offset(x: (c.center.x - g.center.x) * 0.6, y: (c.center.y - g.center.y) * 0.6)
+                                    .combined(with: .opacity)))
                     }
                     ForEach(layout.overflow, id: \.lane) { b in
                         Text("+\(b.count)").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
@@ -98,6 +103,7 @@ struct AgentHomeView: View {
                 }
                 .frame(width: g.width, height: g.height)
                 .clipped()
+                .animation(.spring(response: 0.6, dampingFraction: 0.85), value: layout.cards.map(\.id))
                 .animation(DS.Motion.reorder, value: layout.cards.map(\.id))
                 .animation(DS.Motion.reorder, value: range)
                 Spacer(minLength: 0)
@@ -320,15 +326,23 @@ struct AgentHomeList: View {
 struct MainAgentInput: View {
     @Environment(AppModel.self) private var model
     @State private var text = ""
+    /// BSD-128: compute, model and permission mode for the next message (the main agent's defaults otherwise).
+    @State private var options = MainTurnOptions.default
 
     var body: some View {
-        HStack(spacing: DS.Space.md) {
-            TextField("Message the main agent", text: $text, axis: .vertical)
-                .textFieldStyle(.plain).font(DS.Text.ui()).lineLimit(1...4)
-                .onSubmit(send)
-            Button(action: send) { Image(systemName: "arrow.up.circle.fill").font(.system(size: 22)) }
-                .buttonStyle(.plain).disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .accessibilityLabel("Send to the main agent")
+        VStack(alignment: .leading, spacing: DS.Space.sm) {
+            HStack(spacing: DS.Space.md) {
+                TextField("Message the main agent", text: $text, axis: .vertical)
+                    .textFieldStyle(.plain).font(DS.Text.ui()).lineLimit(1...4)
+                    .onSubmit(send)
+                Button(action: send) { Image(systemName: "arrow.up.circle.fill").font(.system(size: 22)) }
+                    .buttonStyle(.plain).disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Send to the main agent")
+            }
+            HStack(spacing: DS.Space.md) {
+                optionsMenu
+                Spacer(minLength: 0)
+            }
         }
         .padding(DS.Space.lg)
         .frame(maxWidth: 720)
@@ -338,11 +352,56 @@ struct MainAgentInput: View {
         .accessibilityIdentifier("agentHome.input")
     }
 
+    /// One quiet menu: compute level, an exact model (API models), permission mode.
+    private var optionsMenu: some View {
+        Menu {
+            Section("Compute") {
+                ForEach(ComputeLevel.allCases, id: \.self) { level in
+                    Button { options.compute = level; options.model = "" } label: {
+                        checkLabel(level.title, on: options.model.isEmpty && (options.compute ?? .low) == level)
+                    }
+                }
+            }
+            ForEach(model.brain.apiModelGroups.filter { !$0.onDevice }, id: \.provider) { g in
+                Section(g.provider) {
+                    ForEach(g.models, id: \.self) { ref in
+                        Button { options.model = ref } label: {
+                            checkLabel(String(ref.split(separator: "/").last ?? ""), on: options.model == ref)
+                        }
+                    }
+                }
+            }
+            Section("Permissions") {
+                Button { options.permission = nil } label: { checkLabel("As set for the main agent", on: options.permission == nil) }
+                ForEach(PermissionMode.allCases, id: \.self) { m in
+                    Button { options.permission = m } label: { checkLabel(m.title, on: options.permission == m) }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "dial.low").font(.system(size: 11))
+                Text(options.label).font(DS.Text.small(.medium)).lineLimit(1)
+            }
+            .foregroundStyle(Theme.secondary)
+        }
+        #if os(macOS)
+        .menuStyle(.borderlessButton)
+        #endif
+        .fixedSize()
+        .help("Compute, model and permissions for this message")
+        .accessibilityIdentifier("agentHome.options")
+    }
+
+    @ViewBuilder
+    private func checkLabel(_ title: String, on: Bool) -> some View {
+        if on { Label(title, systemImage: "checkmark") } else { Text(title) }
+    }
+
     private func send() {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
         text = ""
         model.openChat(model.brain.mainThreadID(), fullPage: false)
-        model.brain.ask(t)
+        model.brain.ask(t, mainOptions: options)
     }
 }

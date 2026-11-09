@@ -182,6 +182,8 @@ struct MySettings: View {
     @AppStorage(Prefs.fontFamily) private var font = "default"
     @AppStorage(Prefs.smallText) private var smallText = false
     @AppStorage(Prefs.fullWidth) private var fullWidth = false
+    /// BSD-128: the sun behind the agents' home screen.
+    @AppStorage("home.sun") private var homeSun = "auto"
 
     var body: some View {
         Section("Appearance") {
@@ -191,6 +193,10 @@ struct MySettings: View {
             Toggle("Small text by default", isOn: $smallText)
             Toggle("Full width by default", isOn: $fullWidth)
             Toggle("Compact sidebar", isOn: $compact)
+            Picker("Sun on the agents' home", selection: $homeSun) {
+                Text("Auto (by time of day)").tag("auto"); Text("Morning").tag("morning"); Text("Evening").tag("evening"); Text("Off").tag("off")
+            }
+            .accessibilityIdentifier("settings.homeSun")
         }
         Section("Home") {
             Picker("Home page", selection: Binding(get: { model.homePageID ?? "" }, set: { model.setHome($0.isEmpty ? nil : $0) })) {

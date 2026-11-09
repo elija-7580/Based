@@ -350,8 +350,13 @@ public struct MainAgentChatBackend: ChatBackend {
     public let modelRef: String
     /// BSD-98: approval card in the main thread (as `ModelChatBackend.approve`).
     public var approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)?
-    public init(agent: MainAgent, modelRef: String, approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil) {
+    /// BSD-128: effort and permissions of this message (the home field), nil / "" = the main agent's own.
+    public var effort: String
+    public var permissions: AgentPermissions?
+    public init(agent: MainAgent, modelRef: String, approve: (@Sendable (PermissionCall, PermissionVerdict) async -> Bool)? = nil,
+                effort: String = "", permissions: AgentPermissions? = nil) {
         self.agent = agent; self.modelRef = modelRef; self.approve = approve
+        self.effort = effort; self.permissions = permissions
     }
     public var resumeKind: String? { nil }
     public func run(_ request: ChatRequest, session: RecordID, emit: @escaping @Sendable (ChatEvent) -> Void) async throws -> ChatReply {
@@ -365,8 +370,8 @@ public struct MainAgentChatBackend: ChatBackend {
             return MainAgent.systemPrompt(instructions: main.instructions, projects: brain.projectBriefs())
         }
         let o = try await agent.runtime.run(prompt: request.prompt, modelRef: modelRef, systemExtra: system, history: request.history,
-                                            callerSession: session, permissions: agent.permissions, approve: approve,
-                                            extraTools: agent.toolSet(thread: session), events: emit)
+                                            callerSession: session, permissions: permissions ?? agent.permissions, approve: approve,
+                                            extraTools: agent.toolSet(thread: session), effort: effort, events: emit)
         try Task.checkCancellation()
         return ChatReply(text: o.text)
     }

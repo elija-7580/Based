@@ -65,9 +65,9 @@ final class BrainModel {
     var queued: [QueuedPrompt] = []
 
     struct QueuedPrompt: Identifiable, Equatable { let id: UUID; var text: String }
-    struct PendingAsk { var prompt: String; var pageContext: RecordID?; var attachments: [ChatAttachment] }
+    struct PendingAsk { var prompt: String; var pageContext: RecordID?; var attachments: [ChatAttachment]; var mainOptions: MainTurnOptions? = nil }
     @ObservationIgnored private lazy var promptQueue: ChatPromptQueue<PendingAsk> = {
-        let q = ChatPromptQueue<PendingAsk> { [weak self] p in self?.startTurn(p.prompt, pageContext: p.pageContext, attachments: p.attachments) }
+        let q = ChatPromptQueue<PendingAsk> { [weak self] p in self?.startTurn(p.prompt, pageContext: p.pageContext, attachments: p.attachments, mainOptions: p.mainOptions) }
         q.onChange = { [weak self, weak q] in
             guard let self, let q else { return }
             self.isRunning = q.isBusy
@@ -310,11 +310,13 @@ final class BrainModel {
     func stop() { promptQueue.stopCurrent() }
 
     /// Sends a message, or queues it while a reply is running (BSD-48).
-    func ask(_ prompt: String, pageContext: RecordID? = nil, attachments: [ChatAttachment] = []) {
+    /// `mainOptions` (BSD-128, the home screen's field): compute, model and permission mode of this message in the
+    /// main agent's thread.
+    func ask(_ prompt: String, pageContext: RecordID? = nil, attachments: [ChatAttachment] = [], mainOptions: MainTurnOptions? = nil) {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !attachments.isEmpty else { return }
         let shown = trimmed.isEmpty ? attachments.map(\.name).joined(separator: ", ") : trimmed
-        promptQueue.submit(shown, PendingAsk(prompt: prompt, pageContext: pageContext, attachments: attachments))
+        promptQueue.submit(shown, PendingAsk(prompt: prompt, pageContext: pageContext, attachments: attachments, mainOptions: mainOptions))
     }
 
     /// Takes a waiting message back.
@@ -323,7 +325,7 @@ final class BrainModel {
     func sendQueuedNow(_ id: UUID) { promptQueue.sendNow(id) }
 
     /// Starts one turn (called by the prompt queue when it is this message's turn).
-    private func startTurn(_ prompt: String, pageContext: RecordID?, attachments: [ChatAttachment]) -> ChatTurnHandle? {
+    private func startTurn(_ prompt: String, pageContext: RecordID?, attachments: [ChatAttachment], mainOptions: MainTurnOptions? = nil) -> ChatTurnHandle? {
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !attachments.isEmpty else { return nil }
         // BSD-49: Auto routes by task and compute level; an explicit picker choice wins. Within a chat, Auto stays
@@ -342,7 +344,10 @@ final class BrainModel {
                                          registry: registry, installed: installedCLIs, defaultModel: defaultModel)
             .keepingConversation(resumeKey: resumeKey, hasHistory: hasHistory)
         // BSD-52: the main agent's thread always runs the main agent (low compute, delegation tools).
-        let mainRef = existingChat.flatMap { brain.isMainThread($0) ? $0 : nil }.flatMap { _ in mainAgent.modelRef() }
+        // BSD-128: the home field's options (compute, model, permission mode) for this message only.
+        let mainTurn = mainAgent.turn(mainOptions ?? .default)
+        let mainRef = existingChat.flatMap { brain.isMainThread($0) ? $0 : nil }.flatMap { _ in mainTurn.modelRef }
+        let mainPermissions = mainOptions?.permission.map { brain.permissions(mode: $0) }
         let engine = mainRef.map(ChatEngineChoice.model) ?? decision.choice
         let page = ChatRouting.page(pageContext, in: store, onDevice: engine.isOnDevice)
         let p = ChatRouting.prompt(trimmed, attachments: attachmentTexts, page: page, onDevice: engine.isOnDevice)
@@ -372,7 +377,8 @@ final class BrainModel {
         let makeBackend: @MainActor @Sendable (ChatEngineChoice, String) -> ChatBackend = { [self] choice, effort in
             switch choice {
             case .model(let ref) where mainRef != nil:
-                return MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid))
+                return MainAgentChatBackend(agent: mainAgent, modelRef: ref, approve: brain.inboxApprover(session: sid),
+                                            effort: mainTurn.effort, permissions: mainPermissions)
             case .model(let ref):
                 // BSD-98: global → project of this chat; "ask" shows an approval card in the chat (Inbox item of the session).
                 // BSD-126: the route's effort goes along for this turn.
