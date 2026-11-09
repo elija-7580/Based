@@ -1,7 +1,6 @@
 import Foundation
-import BasedBrain
 
-/// First web client (read-only), served by based-server at `/app`: pages through `GET /sync/v2/pull`, keeps the
+/// First web client (read-only), served by based-server at `/app` (moved from based-server into BasedBrain with BSD-34): pages through `GET /sync/v2/pull`, keeps the
 /// records in the browser and renders the page tree and pages — the same data any Based client syncs
 /// (docs/sync-protocol.md). A starting point for the full web / Windows / Linux client (docs/platforms.md).
 ///

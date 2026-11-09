@@ -311,7 +311,12 @@ public final class ShareService {
     /// The change log as the principal sees it. Changed records they can't (or can no longer) read are sent as
     /// deletions, so a page moved out of a shared area disappears from their copy.
     public func pullPage(for p: SharePrincipal, sync: SyncServer, after: Int64, limit: Int) -> SyncPage {
-        let page = sync.pullPage(after: after, limit: limit)
+        (try? tryPullPage(for: p, sync: sync, after: after, limit: limit)) ?? SyncPage(records: [], deletions: [], next: after, more: false)
+    }
+
+    /// Throws when the change log can't be read (BSD-34: answered with 500, never as an empty "up to date" page).
+    public func tryPullPage(for p: SharePrincipal, sync: SyncServer, after: Int64, limit: Int) throws -> SyncPage {
+        let page = try sync.tryPullPage(after: after, limit: limit)
         if case .owner = p { return page }
         var records: [Record] = [], deletions = page.deletions
         for r in page.records {

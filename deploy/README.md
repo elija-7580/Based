@@ -10,7 +10,16 @@
 | `POST /agents/run` `{agent}` | Run a stored agent now |
 | `GET /health` | Liveness |
 
-All endpoints except `/health` need `Authorization: Bearer $BASED_TOKEN`.
+All endpoints except `/health`, `/app` and the sharing pages (`/s/…`, `/p/…`, invite accept) need
+`Authorization: Bearer $BASED_TOKEN` – the header only; `?token=` in the URL is ignored (it would end up in logs).
+Routes are registered in one table with auth middleware (`Packages/BasedBrain/Sources/BasedBrain/Server/`, ADR 0006):
+a new route is owner-only unless it says otherwise. Limits: 1 MiB request body (32 MiB for sync pushes and MCP),
+413 above that; 30 s receive timeout; 64 simultaneous connections (503 beyond). CORS headers are only sent for the
+origin of `BASED_PUBLIC_URL`.
+
+**Without a token the server only listens on 127.0.0.1.** To open it to the network anyway (e.g. a trusted LAN
+during setup), pass `--insecure-public` (or `BASED_INSECURE_PUBLIC=1`); it logs a warning and every endpoint
+except the sandboxes is open to anyone who can reach it.
 Scheduled agents run inside the server (every minute it checks the **Agents** database in your
 Agent Brain page: `Schedule` such as `daily 07:00`, `weekdays 18:00`, `every 30m`, `weekly mon 09:00`
 or 5-field cron; `Model` such as `anthropic/claude-sonnet-4-5`; `Daily token budget`).

@@ -1,9 +1,9 @@
 import Foundation
 import BasedCore
-import BasedBrain
 
-// Sharing endpoints (docs/sharing.md). Requests with the owner token fall through to the normal routes; device
-// tokens (bdu_…) and link secrets (bdl_…) are served here with everything filtered by their role.
+// Sharing endpoints (docs/sharing.md). BSD-34: registered on the server's router like every other route. The
+// public ones need no token; the rest are `.ownerOrShared`: the owner token, a device token (bdu_…) or an access-link
+// secret (bdl_…), with everything filtered by the caller's role.
 //
 //   GET  /s/<secret>                      link landing: the web client (access link) or the join page (invite)
 //   GET  /p/<id>[/<pageID>]               published page, server-rendered, read-only
@@ -15,7 +15,7 @@ import BasedBrain
 //   POST /share/v1/links                  {pageID, kind: access|invite|publish, role, label?, expiresInDays?, uses?}
 //   POST /share/v1/links/<id>/revoke
 //   POST /share/v1/grants                 {userID, pageID, role|null}
-//   sync v2 (pull / push / wait) and /api/blocks/insert-after for shared principals
+//   sync v2 (pull / push / wait) and /api/blocks/insert-after for shared principals (ServerRoutes.swift)
 //   GET  /.well-known/apple-app-site-association   Universal Links → the app opens /s/* and /p/* links
 
 enum ShareRoutes {
@@ -24,14 +24,11 @@ enum ShareRoutes {
         (ProcessInfo.processInfo.environment["BASED_PUBLIC_URL"] ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 
-    static func handle(_ req: HTTPServer.Request, share: ShareService, sync: SyncServer, store: WorkspaceStore,
-                       ownerToken: String) async -> HTTPServer.Response? {
-        let path = req.path
+    static func register(on r: ServerRouter, share: ShareService, store: WorkspaceStore) {
         // Public routes.
-        if req.method == "GET", path == "/.well-known/apple-app-site-association" { return aasa() }
-        if req.method == "GET", path.hasPrefix("/s/") {
-            let secret = String(path.dropFirst(3))
-            let link = await MainActor.run { share.link(secret: secret) }
+        r.add("GET", "/.well-known/apple-app-site-association", access: .public) { _ in aasa() }
+        r.add("GET", "/s/*", access: .public) { ctx in
+            let link = await MainActor.run { share.link(secret: ctx.captures[0]) }
             guard let link, link.isActive() else { return .text("This link has expired or was revoked.", status: 404) }
             switch link.kind {
             case .access: return html(WebApp.html)
@@ -39,9 +36,10 @@ enum ShareRoutes {
             case .publish: return HTTPServer.Response(status: 302, headers: ["Location": "/p/\(link.id)"])
             }
         }
-        if req.method == "GET", path.hasPrefix("/p/") { return await published(path, share: share, store: store) }
-        if req.method == "POST", path == "/share/v1/invites/accept" {
-            let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        r.add("GET", "/p/*", access: .public) { ctx in await published(ctx.request.path, share: share, store: store) }
+        r.add("GET", "/p/*/*", access: .public) { ctx in await published(ctx.request.path, share: share, store: store) }
+        r.add("POST", "/share/v1/invites/accept", access: .public) { ctx in
+            let body = (try? JSONValue.parse(ctx.request.body)) ?? .object([:])
             let result: Result<(ShareUser, String, RecordID), ShareError> = await MainActor.run {
                 do { let r = try share.acceptInvite(secret: body["secret"]?.string ?? "", name: body["name"]?.string ?? ""); return .success((r.user, r.token, r.pageID)) }
                 catch let e as ShareError { return .failure(e) } catch { return .failure(.invalid("\(error)")) }
@@ -53,19 +51,9 @@ enum ShareRoutes {
             }
         }
 
-        // Authenticated: owner or a shared principal.
-        let bearer = req.bearerToken ?? ""
-        let isOwner = !ownerToken.isEmpty && SecureToken.equal(bearer, ownerToken)
-        let sharedPrincipal: SharePrincipal? = isOwner ? nil : await MainActor.run { share.principal(forToken: bearer) }
-        let principal: SharePrincipal? = isOwner || ownerToken.isEmpty ? .owner : sharedPrincipal
-        let isShareRoute = path.hasPrefix("/share/v1/")
-        // Owner sync and API traffic keeps using the existing routes.
-        if principal == .owner && !isShareRoute { return nil }
-        guard isShareRoute || bearer.hasPrefix("bdu_") || bearer.hasPrefix("bdl_") else { return nil }
-        guard let p = principal else { return .json(["error": "unauthorized"], status: 401) }
-
-        switch (req.method, path) {
-        case ("GET", "/share/v1/me"):
+        // Owner or a shared principal.
+        r.add("GET", "/share/v1/me", access: .ownerOrShared) { ctx in
+            let p = ctx.principal
             let info: JSONValue = await MainActor.run {
                 let roots = p == .owner ? [] : share.roots(for: p)
                 return .object([
@@ -76,45 +64,25 @@ enum ShareRoutes {
                 ])
             }
             return .json(info)
-        case ("GET", "/share/v1/resolve"):
+        }
+        r.add("GET", "/share/v1/resolve", access: .ownerOrShared) { ctx in
             // The app opening one of this server's share URLs: which page is it? (owner only)
-            guard p == .owner else { return .json(["error": "forbidden"], status: 403) }
-            let parts = (req.query["path"]?.removingPercentEncoding ?? "").split(separator: "/").map(String.init)
+            guard ctx.principal == .owner else { return .json(["error": "forbidden"], status: 403) }
+            let parts = (ctx.request.query["path"]?.removingPercentEncoding ?? "").split(separator: "/").map(String.init)
             let page: String? = await MainActor.run {
                 if parts.count == 2, parts[0] == "s" { return share.link(secret: parts[1])?.pageID }
                 if parts.count >= 2, parts[0] == "p" { return parts.count >= 3 ? parts[2] : share.publishedLink(id: parts[1])?.pageID }
                 return nil
             }
             return .json(["pageID": page.map(JSONValue.string) ?? .null])
-        case ("GET", "/share/v1/snapshot"):
-            let page = await MainActor.run { share.snapshot(for: p) }
-            return encoded(page)
-        case ("GET", "/sync/v2/pull"):
-            let after = req.query["after"].flatMap { Int64($0) } ?? 0
-            let limit = req.query["limit"].flatMap { Int($0) } ?? 500
-            let page = await MainActor.run { share.pullPage(for: p, sync: sync, after: after, limit: limit) }
-            return encoded(page)
-        case ("POST", "/sync/v2/push"):
-            guard let body = try? JSONDecoder().decode(SyncPush.self, from: req.body) else { return .json(["error": "bad body"], status: 400) }
-            let result = await MainActor.run { share.push(for: p, sync: sync, body) }
-            if !result.rejected.isEmpty { Log.info("share: rejected \(result.rejected.count) record(s) from \(p.label)", category: "share") }
-            return encoded(result.reply)
-        case ("GET", "/sync/v2/wait"):
-            let after = req.query["after"].flatMap { Int64($0) } ?? 0
-            let timeout = req.query["timeout"].flatMap { Double($0) } ?? 25
-            return encoded(SyncWait(seq: await sync.waitForChanges(after: after, timeout: timeout)))
-        case ("POST", "/api/blocks/insert-after"):
-            let body = (try? JSONValue.parse(req.body)) ?? .object([:])
-            guard let after = body["after"]?.string else { return .json(["error": "missing after"], status: 400) }
-            let text = body["text"]?.string ?? ""
-            let id: String? = await MainActor.run {
-                guard share.canInsert(after: after, by: p) else { return nil }
-                return store.insertBlock(.text, after: after, text: RichText(text))
-            }
-            guard let id else { return .json(["error": "forbidden"], status: 403) }
-            return .json(["id": .string(id)])
-        case ("POST", "/share/v1/links"):
-            let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        }
+        r.add("GET", "/share/v1/snapshot", access: .ownerOrShared) { ctx in
+            let p = ctx.principal
+            return encoded(await MainActor.run { share.snapshot(for: p) })
+        }
+        r.add("POST", "/share/v1/links", access: .ownerOrShared) { ctx in
+            let p = ctx.principal
+            let body = (try? JSONValue.parse(ctx.request.body)) ?? .object([:])
             guard let pageID = body["pageID"]?.string,
                   let kind = SharingLink.Kind(rawValue: body["kind"]?.string ?? "access"),
                   let role = ShareRole(rawValue: body["role"]?.string ?? "view") else { return .json(["error": "pageID, kind, role"], status: 400) }
@@ -132,8 +100,9 @@ enum ShareRoutes {
                 return .json(["id": .string(c.link.id), "url": .string(url), "kind": .string(kind.rawValue), "role": .string(role.rawValue)])
             case .failure(let e): return failure(e)
             }
-        case ("GET", _) where path.hasPrefix("/share/v1/pages/"):
-            let pageID = String(path.dropFirst("/share/v1/pages/".count))
+        }
+        r.add("GET", "/share/v1/pages/*", access: .ownerOrShared) { ctx in
+            let p = ctx.principal, pageID = ctx.captures[0]
             let out: JSONValue? = await MainActor.run {
                 guard share.role(of: p, onPage: pageID)?.canShare == true else { return nil }
                 let a = share.access(to: pageID)
@@ -147,23 +116,53 @@ enum ShareRoutes {
                 ])
             }
             return out.map { .json($0) } ?? .json(["error": "forbidden"], status: 403)
-        case ("POST", _) where match(path, "/share/v1/links/*/revoke") != nil:
-            let id = match(path, "/share/v1/links/*/revoke")![0]
+        }
+        r.add("POST", "/share/v1/links/*/revoke", access: .ownerOrShared) { ctx in
+            let p = ctx.principal, id = ctx.captures[0]
             let err: ShareError? = await MainActor.run {
                 do { try share.revokeLink(id, by: p); return nil } catch let e as ShareError { return e } catch { return .invalid("\(error)") }
             }
             return err.map(failure) ?? .json(["ok": true])
-        case ("POST", "/share/v1/grants"):
-            let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        }
+        r.add("POST", "/share/v1/grants", access: .ownerOrShared) { ctx in
+            let p = ctx.principal
+            let body = (try? JSONValue.parse(ctx.request.body)) ?? .object([:])
             guard let user = body["userID"]?.string, let pageID = body["pageID"]?.string else { return .json(["error": "userID, pageID"], status: 400) }
             let role = body["role"]?.string.flatMap(ShareRole.init(rawValue:))
             let err: ShareError? = await MainActor.run {
                 do { try share.setGrant(user: user, pageID: pageID, role: role, by: p); return nil } catch let e as ShareError { return e } catch { return .invalid("\(error)") }
             }
             return err.map(failure) ?? .json(["ok": true])
-        default:
-            return isShareRoute ? .json(["error": "not found"], status: 404) : .json(["error": "not available for shared access"], status: 403)
         }
+    }
+
+    // MARK: Shared principals on the sync / editing routes (the owner takes the normal path in ServerRoutes.swift)
+
+    static func sharedPull(_ p: SharePrincipal, _ req: HTTPServer.Request, share: ShareService, sync: SyncServer) async -> HTTPServer.Response {
+        let after = req.query["after"].flatMap { Int64($0) } ?? 0
+        let limit = req.query["limit"].flatMap { Int($0) } ?? 500
+        let page: SyncPage? = await MainActor.run { try? share.tryPullPage(for: p, sync: sync, after: after, limit: limit) }
+        guard let page else { return .json(["error": "change log unavailable"], status: 500) }
+        return encoded(page)
+    }
+
+    static func sharedPush(_ p: SharePrincipal, _ req: HTTPServer.Request, share: ShareService, sync: SyncServer) async -> HTTPServer.Response {
+        guard let body = try? JSONDecoder().decode(SyncPush.self, from: req.body) else { return .json(["error": "bad body"], status: 400) }
+        let result = await MainActor.run { share.push(for: p, sync: sync, body) }
+        if !result.rejected.isEmpty { Log.info("share: rejected \(result.rejected.count) record(s) from \(p.label)", category: "share") }
+        return encoded(result.reply)
+    }
+
+    static func sharedInsert(_ p: SharePrincipal, _ req: HTTPServer.Request, share: ShareService, store: WorkspaceStore) async -> HTTPServer.Response {
+        let body = (try? JSONValue.parse(req.body)) ?? .object([:])
+        guard let after = body["after"]?.string else { return .json(["error": "missing after"], status: 400) }
+        let text = body["text"]?.string ?? ""
+        let id: String? = await MainActor.run {
+            guard share.canInsert(after: after, by: p) else { return nil }
+            return store.insertBlock(.text, after: after, text: RichText(text))
+        }
+        guard let id else { return .json(["error": "forbidden"], status: 403) }
+        return .json(["id": .string(id)])
     }
 
     // MARK: Helpers

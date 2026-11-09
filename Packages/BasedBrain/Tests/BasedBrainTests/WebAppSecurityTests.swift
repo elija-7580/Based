@@ -2,13 +2,13 @@ import Foundation
 import Testing
 @testable import BasedBrain
 
-/// BSD-35: the web client's script (based-server/WebApp.swift) escapes workspace values, drops unsafe link schemes
+/// BSD-35: the web client's script (BasedBrain/Server/WebApp.swift) escapes workspace values, drops unsafe link schemes
 /// and keeps the token in sessionStorage unless the user chooses otherwise. The script runs in Node with DOM stubs
 /// (skipped when Node isn't installed).
 @Suite struct WebAppSecurityTests {
     static var webAppSource: String? {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("Sources/based-server/WebApp.swift")
+            .appendingPathComponent("Sources/BasedBrain/Server/WebApp.swift")
         return try? String(contentsOf: url, encoding: .utf8)
     }
 

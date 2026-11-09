@@ -234,13 +234,19 @@ public final class SyncServer {
 extension SyncServer {
     /// Changes after `after` (server sequence), oldest first, at most `limit` records + deletions per page.
     public func pullPage(after: Int64, limit: Int = 500) -> SyncPage {
+        (try? tryPullPage(after: after, limit: limit)) ?? SyncPage(records: [], deletions: [], next: after, more: false)
+    }
+
+    /// Like `pullPage`, but a change-log read error is thrown (BSD-34: the server answers 500) instead of looking
+    /// like "nothing new" – an empty page with `more: false` made clients believe they were up to date.
+    public func tryPullPage(after: Int64, limit: Int = 500) throws -> SyncPage {
         guard let log = store.persistence as? ChangeLogging else {
             // No change log (in-memory server): one page with everything newer than nothing.
             let all = pull(since: nil)
             return SyncPage(records: all.records, deletions: all.deletions, next: 0, more: false)
         }
         let limit = max(1, min(limit, 5_000))
-        let entries = (try? log.changes(after: after, limit: limit + 1)) ?? []
+        let entries = try log.changes(after: after, limit: limit + 1)
         let page = entries.prefix(limit)
         var records: [Record] = [], deletions: [RecordKey] = [], stamps: [RecordKey: Stamp] = [:]
         for e in page {
