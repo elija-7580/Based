@@ -53,6 +53,8 @@ struct SearchOverlay: View {
     @State private var highlighted = 0
     @State private var rows: [Row] = []
     /// BSD-62: the semantic half of a search arrives after the keyword hits (the query has to be embedded first).
+    /// BSD-137: the running keyword search (cancelled by the next keystroke).
+    @State private var keywordTask: Task<Void, Never>?
     @State private var semanticTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
@@ -97,7 +99,7 @@ struct SearchOverlay: View {
         .frame(width: 680)
         .frame(minHeight: 300, maxHeight: 560)
         .onAppear { OverlayFocus.grab { focused = true }; recompute() }
-        .onDisappear { model.quickFindForNewTab = false }
+        .onDisappear { model.quickFindForNewTab = false; keywordTask?.cancel(); semanticTask?.cancel() }
         .onChange(of: query) { _, _ in highlighted = 0; recompute() }
         .onChange(of: scope) { _, _ in highlighted = 0; recompute() }
         .onChange(of: titleOnly) { _, _ in recompute() }
@@ -243,6 +245,8 @@ struct SearchOverlay: View {
 
     private func recompute() {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        keywordTask?.cancel()
+        semanticTask?.cancel()
         var out: [Row] = []
         if !q.isEmpty { out.append(Row(id: "ask", kind: .ask(q), section: "")) }
         switch scope {
@@ -253,16 +257,29 @@ struct SearchOverlay: View {
                     out.append(Row(id: b.id, kind: .page(b.id, snippet: nil), section: Self.bucket(b.updatedAt)))
                 }
             } else {
+                // BSD-137: the scan runs off the main thread on a prebuilt index; a newer keystroke cancels it.
+                // Until it answers, the previous page hits stay so the list doesn't flash empty.
+                out += rows.filter { if case .page = $0.kind { return true } else { return false } }
                 var f = SearchFilters()
                 f.titleOnly = titleOnly
-                let hits = Log.measure("search", category: "ui", warnAfter: 0.08) {
-                    SearchEngine(store: model.store).search(q, filters: f, sort: sort, limit: 60)
+                let sort = sort
+                let engine = SearchEngine(store: model.store)
+                keywordTask = Task { @MainActor in
+                    let start = Date()
+                    guard let hits = await engine.searchAsync(q, filters: f, sort: sort, limit: 60), !Task.isCancelled,
+                          scope == .pages, query.trimmingCharacters(in: .whitespacesAndNewlines) == q else { return }
+                    let ms = Int(Date().timeIntervalSince(start) * 1000)
+                    if ms > 300 { Log.info("search took \(ms) ms (off main)", category: "ui") }
+                    var out = rows.filter { if case .page = $0.kind { return false } else { return true } }
+                    for h in hits {
+                        let section = sort == .bestMatch ? "Best matches" : Self.bucket(model.store.blocks[h.pageID]?.updatedAt ?? .distantPast)
+                        out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: section))
+                    }
+                    rows = out
+                    highlighted = min(highlighted, max(0, out.count - 1))
+                    if out.count > 1, highlighted == 0 { highlighted = 1 }
+                    addSemanticHits(q, filters: f)
                 }
-                for h in hits {
-                    let section = sort == .bestMatch ? "Best matches" : Self.bucket(model.store.blocks[h.pageID]?.updatedAt ?? .distantPast)
-                    out.append(Row(id: h.pageID, kind: .page(h.pageID, snippet: h.snippet), section: section))
-                }
-                addSemanticHits(q, filters: f)
             }
         case .chats:
             for c in happier.chats where q.isEmpty || c.title.localizedCaseInsensitiveContains(q) {

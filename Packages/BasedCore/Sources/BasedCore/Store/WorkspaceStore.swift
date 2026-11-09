@@ -342,6 +342,9 @@ public final class WorkspaceStore {
     /// Revision-keyed caches for whole-workspace page lists (Home "Recents", Quick Find, link pickers).
     var recentPagesCache: (revision: Int, limit: Int, pages: [Block])?
     var allPagesCache: (revision: Int, pages: [Block])?
+    /// BSD-137: Quick Find's folded search index for `revision` (see `SearchCorpus`). It holds a snapshot of
+    /// `blocks`/`databases`, so every write path drops it first; otherwise the next write would copy both maps.
+    var searchCorpusCache: SearchCorpus?
     /// BSD-38: maintained on every block write, so page lists never scan all blocks.
     /// Page-like blocks (pages, rows, database pages), trashed or not.
     var pageIDs = Set<RecordID>()
@@ -995,6 +998,7 @@ public final class WorkspaceStore {
     }
 
     func _setBlock(_ b: Block, _ parents: inout Set<String>) {
+        searchCorpusCache = nil   // BSD-137: release its snapshot before writing (no copy-on-write of `blocks`)
         let old = blocks[b.id]
         blocks[b.id] = b
         noteBlockChange(old: old, new: b)
@@ -1014,6 +1018,7 @@ public final class WorkspaceStore {
     }
 
     func _setDatabase(_ d: Database) {
+        searchCorpusCache = nil
         if databases[d.id]?.blockID != d.blockID { hierarchyRevision &+= 1 }
         databases[d.id] = d
     }
@@ -1041,6 +1046,7 @@ public final class WorkspaceStore {
     func _setWorkspace(_ w: Workspace) { workspace = w }
 
     func _remove(_ key: RecordKey, _ parents: inout Set<String>) {
+        searchCorpusCache = nil
         switch key.kind {
         case .block:
             if let old = blocks.removeValue(forKey: key.id) {
@@ -1070,6 +1076,7 @@ public final class WorkspaceStore {
     /// into its parent's sorted list (binary search + dictionary lookups per block). Same result as `_setBlock`.
     /// Returns whether a workspace record was among them.
     func bulkLoad(_ records: [Record]) -> Bool {
+        searchCorpusCache = nil
         var loadedWorkspace = false
         var groups: [String: [(sortKey: String, id: RecordID)]] = [:]
         blocks.reserveCapacity(blocks.count + records.count)

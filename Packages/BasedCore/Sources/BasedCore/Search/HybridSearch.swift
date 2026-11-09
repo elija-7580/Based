@@ -169,7 +169,9 @@ public struct HybridSearch {
 
     public func search(_ query: String, filters: SearchFilters = SearchFilters(), sort: SearchSort = .bestMatch,
                        limit: Int = 50, now: Date = Date()) async -> [SearchHit] {
-        let keyword = SearchEngine(store: store).search(query, filters: filters, sort: sort, limit: limit, now: now)
+        // BSD-137: the keyword half off the main thread too (same index as Quick Find).
+        guard let keyword = await SearchEngine(store: store).searchAsync(query, filters: filters, sort: sort, limit: limit, now: now)
+        else { return [] }
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let semantic, !q.isEmpty, !filters.titleOnly, sort == .bestMatch,
               let vector = try? await semantic.provider.embed([q]).first else { return keyword }
