@@ -691,6 +691,7 @@ public final class AgentTools {
         if p.type == .title { return row.title }
         guard let v = row.values[p.id] else { return "" }
         switch v {
+        case .unknown: return ""   // BSD-107: value kind from a newer Based
         case .text(let t): return t.plainText
         case .number(let n): return CellFormatter.number(n, p.numberFormat)
         case .select(let o), .status(let o): return p.option(o)?.name ?? ""

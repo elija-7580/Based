@@ -197,6 +197,9 @@ public struct FileValue: Codable, Hashable, Sendable {
 
 /// A stored value of a database row property.
 public enum PropertyValue: Codable, Hashable, Sendable {
+    /// BSD-107: a value kind written by a newer Based (`{"hologram": {…}}`). Kept as raw JSON and written back
+    /// unchanged; queries, formulas and cells treat it as empty and read-only.
+    case unknown(JSONValue)
     case text(RichText)
     case number(Double)
     case select(String)
@@ -269,9 +272,19 @@ public enum FilterOp: String, Codable, CaseIterable, Sendable {
     case equals, notEquals, contains, notContains, startsWith, endsWith, isEmpty, isNotEmpty
     case greater, less, greaterOrEqual, lessOrEqual
     case before, after, onOrBefore, onOrAfter, within
+    /// BSD-107: an operator from a newer Based. The condition hides nothing; `FilterCondition` keeps the raw
+    /// string and writes it back.
+    case unknown = "__unknown"
+
+    /// Every operator this version offers (never `.unknown`).
+    public static var allCases: [FilterOp] {
+        [.equals, .notEquals, .contains, .notContains, .startsWith, .endsWith, .isEmpty, .isNotEmpty,
+         .greater, .less, .greaterOrEqual, .lessOrEqual, .before, .after, .onOrBefore, .onOrAfter, .within]
+    }
 
     public var displayName: String {
         switch self {
+        case .unknown: return "Unknown (newer version)"
         case .equals: return "Is"
         case .notEquals: return "Is not"
         case .contains: return "Contains"
@@ -332,9 +345,42 @@ public struct FilterCondition: Codable, Hashable, Sendable, Identifiable {
     public var propertyID: String
     public var op: FilterOp
     public var value: FilterValue?
+    /// BSD-107: keys this version doesn't know, and the raw operator when `op == .unknown` (key "op"); written
+    /// back unchanged. A value this version can't decode is kept here too (key "value").
+    var extra: [String: JSONValue] = [:]
 
     public init(id: String = RecordIDs.make(), propertyID: String, op: FilterOp, value: FilterValue? = nil) {
         self.id = id; self.propertyID = propertyID; self.op = op; self.value = value
+    }
+
+    enum CodingKeys: String, CodingKey, CaseIterable { case id, propertyID, op, value }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        propertyID = try c.decode(String.self, forKey: .propertyID)
+        let rawOp = try c.decode(String.self, forKey: .op)
+        if let known = FilterOp(rawValue: rawOp), known != .unknown { op = known } else {
+            op = .unknown
+            extra["op"] = .string(rawOp)
+        }
+        if c.contains(.value), !(try c.decodeNil(forKey: .value)) {
+            do { value = try c.decode(FilterValue.self, forKey: .value) } catch {
+                // A value kind from a newer version: keep it raw.
+                extra["value"] = try c.decode(JSONValue.self, forKey: .value)
+                value = nil
+            }
+        }
+        extra.merge(try UnknownKeys.decode(from: decoder, known: Set(CodingKeys.allCases.map(\.rawValue)))) { a, _ in a }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(propertyID, forKey: .propertyID)
+        if op == .unknown, case .string(let raw)? = extra["op"] { try c.encode(raw, forKey: .op) } else { try c.encode(op, forKey: .op) }
+        if let value { try c.encode(value, forKey: .value) } else if let raw = extra["value"] { try c.encode(raw, forKey: .value) }
+        try UnknownKeys.encode(extra.filter { $0.key != "op" && $0.key != "value" }, to: encoder)
     }
 }
 

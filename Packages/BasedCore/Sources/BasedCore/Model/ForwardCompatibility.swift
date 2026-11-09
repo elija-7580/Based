@@ -342,3 +342,83 @@ extension Workspace {
     }
 }
 
+
+// MARK: PropertyValue (BSD-107)
+
+extension PropertyValue {
+    /// Mirror of the known cases with the synthesized coding (`{"text":{"_0":…}}`), so known values keep their
+    /// exact stored form.
+    private enum Known: Codable {
+        case text(RichText)
+        case number(Double)
+        case select(String)
+        case multiSelect([String])
+        case status(String)
+        case date(DateValue)
+        case person([String])
+        case files([FileValue])
+        case checkbox(Bool)
+        case url(String)
+        case email(String)
+        case phone(String)
+        case relation([RecordID])
+        case uniqueID(Int)
+        case place(String)
+    }
+
+    static let knownCaseNames: Set<String> = ["text", "number", "select", "multiSelect", "status", "date", "person", "files",
+                                              "checkbox", "url", "email", "phone", "relation", "uniqueID", "place"]
+
+    public init(from decoder: Decoder) throws {
+        // An object whose single key isn't a case this version knows: a newer value kind, kept raw. Anything else
+        // (including a damaged known value) decodes — or fails — as before.
+        let keyed = try? decoder.container(keyedBy: AnyCodingKey.self)
+        if let keyed, keyed.allKeys.count == 1, let key = keyed.allKeys.first, !Self.knownCaseNames.contains(key.stringValue) {
+            self = .unknown(try JSONValue(from: decoder))
+            return
+        }
+        switch try Known(from: decoder) {
+        case .text(let v): self = .text(v)
+        case .number(let v): self = .number(v)
+        case .select(let v): self = .select(v)
+        case .multiSelect(let v): self = .multiSelect(v)
+        case .status(let v): self = .status(v)
+        case .date(let v): self = .date(v)
+        case .person(let v): self = .person(v)
+        case .files(let v): self = .files(v)
+        case .checkbox(let v): self = .checkbox(v)
+        case .url(let v): self = .url(v)
+        case .email(let v): self = .email(v)
+        case .phone(let v): self = .phone(v)
+        case .relation(let v): self = .relation(v)
+        case .uniqueID(let v): self = .uniqueID(v)
+        case .place(let v): self = .place(v)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        let known: Known
+        switch self {
+        case .unknown(let raw): try raw.encode(to: encoder); return
+        case .text(let v): known = .text(v)
+        case .number(let v): known = .number(v)
+        case .select(let v): known = .select(v)
+        case .multiSelect(let v): known = .multiSelect(v)
+        case .status(let v): known = .status(v)
+        case .date(let v): known = .date(v)
+        case .person(let v): known = .person(v)
+        case .files(let v): known = .files(v)
+        case .checkbox(let v): known = .checkbox(v)
+        case .url(let v): known = .url(v)
+        case .email(let v): known = .email(v)
+        case .phone(let v): known = .phone(v)
+        case .relation(let v): known = .relation(v)
+        case .uniqueID(let v): known = .uniqueID(v)
+        case .place(let v): known = .place(v)
+        }
+        try known.encode(to: encoder)
+    }
+
+    /// True for a value kind from a newer version (shown empty, not editable).
+    public var isUnknown: Bool { if case .unknown = self { return true } else { return false } }
+}

@@ -215,11 +215,13 @@ struct PropertyCell: View {
     @Environment(AppModel.self) private var model
     @State private var editing = false
 
-    private var editable: Bool { !locked && !property.type.isComputed && property.type != .title }
+    /// BSD-107: a property type or value kind from a newer Based is shown but never edited (it'd be overwritten).
+    private var fromNewerVersion: Bool { property.type == .unknown || row.values[property.id]?.isUnknown == true }
+    private var editable: Bool { !locked && !property.type.isComputed && property.type != .title && !fromNewerVersion }
 
     var body: some View {
         Group {
-            if property.type == .checkbox {
+            if property.type == .checkbox && !fromNewerVersion {
                 Button {
                     model.store.setValue(row.id, property.id, .checkbox(!value.bool))
                 } label: {
@@ -234,7 +236,9 @@ struct PropertyCell: View {
                 InlineScalarField(rowID: row.id, property: property, placeholder: placeholder)
             } else {
                 ZStack(alignment: .leading) {
-                    if value.isEmpty && !placeholder.isEmpty {
+                    if fromNewerVersion {
+                        Text("Needs a newer version of Based").foregroundStyle(Theme.secondary.opacity(0.6)).lineLimit(1)
+                    } else if value.isEmpty && !placeholder.isEmpty {
                         Text(placeholder).foregroundStyle(Theme.secondary.opacity(0.6))
                     }
                     PropertyValueView(property: property, value: value, row: row, wrap: wrap)
