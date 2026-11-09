@@ -153,6 +153,9 @@ public final class AgentScheduler: @unchecked Sendable {
     public let node: String
     public var tick: TimeInterval = 60
     public var onEvent: (@Sendable (String) -> Void)?
+    /// Runs right before a scheduled agent's model run (after its lease) — e.g. the Mac transcribes waiting voice
+    /// notes before "Sort captures" looks at them (BSD-111). Not called for the main agent's heartbeat.
+    public var beforeRun: (@Sendable (Agent) async -> Void)?
     private var task: Task<Void, Never>?
 
     public init(runtime: AgentRuntime, node: String = "server") { self.runtime = runtime; self.node = node }
@@ -197,6 +200,7 @@ public final class AgentScheduler: @unchecked Sendable {
                 continue
             }
             onEvent?("Run \(a.name) (\(a.schedule ?? ""))")
+            if let beforeRun { await beforeRun(a) }
             let o = await runtime.run(agent: a, trigger: "schedule \(a.schedule ?? "")")
             await MainActor.run { brain.releaseLease(agent: a.id, node: node) }
             if let o { onEvent?("Done \(a.name): \(o.usage.total) tokens") }

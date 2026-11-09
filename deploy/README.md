@@ -8,6 +8,7 @@
 | `GET /sync/pull?since=…`, `POST /sync/push` | Sync for the Mac/iPhone apps (works next to iCloud) |
 | `POST /ask` `{prompt, model}` | Run the workspace agent once |
 | `POST /agents/run` `{agent}` | Run a stored agent now |
+| `POST /capture` `{text, url, source, transcript}` | Drop a thought or link into Agent Brain → Captures (201 with id; 400 when empty/invalid). For Shortcuts, scripts, a watch |
 | `GET /health` | Liveness |
 
 All endpoints except `/health`, `/app` and the sharing pages (`/s/…`, `/p/…`, invite accept) need

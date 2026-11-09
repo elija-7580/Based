@@ -157,6 +157,28 @@ public enum BasedServerRoutes {
             } catch { return .json(["error": .string("\(error)")], status: 500) }
         }
 
+        // MARK: Capture (BSD-111)
+        // Shortcuts, scripts, a watch or another AI drop a thought into Captures: {"text", "url", "source", "transcript"}.
+        // Owner only (default). 201 with the new row, 400 with the reason for empty/invalid input.
+        r.add("POST", "/capture") { ctx in
+            guard let body = try? JSONValue.parse(ctx.request.body), case .object = body else {
+                return .json(["error": #"send JSON: {"text": "…", "url": "https://…", "source": "Shortcut"}"#], status: 400)
+            }
+            let outcome: (id: RecordID?, title: String, error: String?) = await MainActor.run {
+                do {
+                    let id = try tools.brain.addCapture(CaptureInput.from(json: body, defaultSource: .shortcut))
+                    return (id, tools.brain.capture(id)?.title ?? "", nil)
+                } catch let p as CaptureInput.Problem {
+                    return (nil, "", p.description)
+                } catch {
+                    return (nil, "", "\(error)")
+                }
+            }
+            guard let id = outcome.id else { return .json(["error": .string(outcome.error ?? "invalid capture")], status: 400) }
+            return .json(["id": .string(id), "title": .string(outcome.title),
+                          "message": .string("Saved to Captures. \"\(BrainStore.captureSorterName)\" sorts it tonight.")], status: 201)
+        }
+
         // MARK: Happier-style control room (ACP agents, inbox, connections)
         r.add("GET", "/acp/agents") { _ in
             .json(["agents": .array(happier.agents.map { a in

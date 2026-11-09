@@ -112,6 +112,13 @@ final class BrainModel {
         // BSD-58: coding agents / MCP clients on the local endpoint can hand work to the main agent too.
         happier.mainAgentProvider = { [weak self] in self?.mainAgent }
         brainMergeToken = brain.mergeDuplicatesAfterRemoteChanges()
+        #if os(macOS)
+        // BSD-111: catch up on voice notes that arrived without text (also when the server runs "Sort captures").
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            await self?.transcribeWaitingCaptures()
+        }
+        #endif
         reloadProviders()
         configureScheduler()
         startServerSyncIfConfigured()
@@ -413,7 +420,22 @@ final class BrainModel {
         guard scheduleHost.runsOnThisDevice(serverConfigured: !serverURL.isEmpty), hasProvider else { return }
         let s = AgentScheduler(runtime: runtime, node: happier.machineName)
         s.onEvent = { [weak self] line in Task { @MainActor in self?.schedulerLog.append(line); if (self?.schedulerLog.count ?? 0) > 200 { self?.schedulerLog.removeFirst() } } }
+        // BSD-111: waiting voice notes get their transcript before "Sort captures" looks at them.
+        s.beforeRun = { [weak self] agent in
+            guard agent.name == BrainStore.captureSorterName else { return }
+            await self?.transcribeWaitingCaptures()
+        }
         s.start(); scheduler = s
+    }
+
+    /// Transcribes voice notes in Captures that still have no text (on this device, with the meeting-notes model).
+    func transcribeWaitingCaptures() async {
+        guard let r = await VoiceCaptureService.transcribeWaiting(brain: brain, assets: assets) else { return }
+        var line = "Transcribed \(r.transcribed) voice note(s)"
+        if r.notOnDevice > 0 { line += ", \(r.notOnDevice) not on this Mac yet" }
+        if !r.failed.isEmpty { line += ", \(r.failed.count) failed: " + r.failed.prefix(2).joined(separator: "; ") }
+        schedulerLog.append(line)
+        Log.notice("captures: " + line, category: "capture")
     }
 
     // MARK: Smart properties

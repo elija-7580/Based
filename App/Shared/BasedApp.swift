@@ -76,6 +76,10 @@ struct BasedCommands: Commands {
             Button("New AI Chat") { run("⇧⌘N") { model.openChat(nil, fullPage: true) } }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
             Button("New Meeting Notes") { run("meeting") { model.newMeetingNotes() } }
+            // BSD-111: quick capture into Captures (same sheet as based://capture and the iPhone shortcut).
+            Button("Capture a Thought…") { run("capture") { model.captureRoute = .compose("") } }
+                .keyboardShortcut("c", modifiers: [.command, .control])
+            Button("Record a Voice Note") { run("capture-record") { model.captureRoute = .record } }
             Button("New Tab") { run("⌘T") { model.newTabWithSearch() } }
                 .keyboardShortcut("t")
             Divider()
