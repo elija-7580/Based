@@ -308,7 +308,9 @@ extension PrimitiveButtonStyle where Self == PlainButtonStyle { public static va
 extension PrimitiveButtonStyle where Self == BorderlessButtonStyle { public static var borderless: BorderlessButtonStyle { .init() } }
 extension PrimitiveButtonStyle where Self == BorderedButtonStyle { public static var bordered: BorderedButtonStyle { .init() } }
 extension PrimitiveButtonStyle where Self == BorderedProminentButtonStyle { public static var borderedProminent: BorderedProminentButtonStyle { .init() } }
+#if !STUB_IOS   // .link gibt es auf iOS nicht
 extension PrimitiveButtonStyle where Self == LinkButtonStyle { public static var link: LinkButtonStyle { .init() } }
+#endif
 extension PrimitiveButtonStyle where Self == DefaultButtonStyle { public static var automatic: DefaultButtonStyle { .init() } }
 extension PrimitiveButtonStyle where Self == AccessoryBarButtonStyle { public static var accessoryBar: AccessoryBarButtonStyle { .init() } }
 extension PrimitiveButtonStyle where Self == AccessoryBarActionButtonStyle { public static var accessoryBarAction: AccessoryBarActionButtonStyle { .init() } }

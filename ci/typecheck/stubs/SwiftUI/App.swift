@@ -85,7 +85,16 @@ public struct EmptyCommands: _PrimitiveCommands { public init() {} }
     public static func buildExpression<C: Commands>(_ c: C) -> C { c }
     public static func buildBlock() -> EmptyCommands { EmptyCommands() }
     public static func buildBlock<C: Commands>(_ c: C) -> C { c }
-    public static func buildBlock<each C: Commands>(_ c: repeat each C) -> _C<(repeat each C)> { .init() }
+    // Wie im echten SDK: höchstens 10 Elemente pro Block (Xcode 26 meldet sonst "extra argument in call").
+    public static func buildBlock<C0: Commands, C1: Commands>(_ c0: C0, _ c1: C1) -> _C<(C0, C1)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands>(_ c0: C0, _ c1: C1, _ c2: C2) -> _C<(C0, C1, C2)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3) -> _C<(C0, C1, C2, C3)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4) -> _C<(C0, C1, C2, C3, C4)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands, C5: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5) -> _C<(C0, C1, C2, C3, C4, C5)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands, C5: Commands, C6: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6) -> _C<(C0, C1, C2, C3, C4, C5, C6)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands, C5: Commands, C6: Commands, C7: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7) -> _C<(C0, C1, C2, C3, C4, C5, C6, C7)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands, C5: Commands, C6: Commands, C7: Commands, C8: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8) -> _C<(C0, C1, C2, C3, C4, C5, C6, C7, C8)> { .init() }
+    public static func buildBlock<C0: Commands, C1: Commands, C2: Commands, C3: Commands, C4: Commands, C5: Commands, C6: Commands, C7: Commands, C8: Commands, C9: Commands>(_ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4, _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8, _ c9: C9) -> _C<(C0, C1, C2, C3, C4, C5, C6, C7, C8, C9)> { .init() }
     public static func buildOptional<C: Commands>(_ c: C?) -> _C<C> { .init() }
     public static func buildEither<T: Commands, F: Commands>(first: T) -> _C<(T, F)> { .init() }
     public static func buildEither<T: Commands, F: Commands>(second: F) -> _C<(T, F)> { .init() }

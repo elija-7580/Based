@@ -179,7 +179,13 @@ struct ProjectDetailView: View {
                 if !p.pageIDs.isEmpty {
                     Text("Pages").font(DS.Text.small(.semibold)).foregroundStyle(Theme.secondary)
                     ForEach(p.pageIDs.filter { model.store.blocks[$0] != nil }, id: \.self) { id in
-                        Button(model.store.title(of: id).nonEmptyOr("Untitled")) { model.selection = .page(id); dismiss() }.buttonStyle(.link)
+                        Button(model.store.title(of: id).nonEmptyOr("Untitled")) { model.selection = .page(id); dismiss() }
+                            #if os(macOS)
+                            .buttonStyle(.link)
+                            #else
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Color.accentColor)
+                            #endif
                     }
                 }
                 HStack {

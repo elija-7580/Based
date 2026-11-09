@@ -166,14 +166,14 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Debug -destination 'generic/platform=macOS' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build-macos.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+            -derivedDataPath build -skipPackagePluginValidation -skipMacroValidation CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee build-macos.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
           grep -q "BUILD SUCCEEDED" build-macos.log
       - name: Build iOS app (Simulator)
         if: always()
         run: |
           set -o pipefail
           xcodebuild -project Based.xcodeproj -scheme Based-iOS -configuration Debug -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-ios.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+            -derivedDataPath build -skipPackagePluginValidation -skipMacroValidation CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build-ios.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
           grep -q "BUILD SUCCEEDED" build-ios.log
       - name: Publish logs
         if: always() && github.event_name == 'push'
@@ -216,7 +216,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Debug -destination 'platform=macOS' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" test 2>&1 | tee uitests-macos.log \
+            -derivedDataPath build -skipPackagePluginValidation -skipMacroValidation CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" test 2>&1 | tee uitests-macos.log \
             | grep -E "error:|Test Case .* (passed|failed)|TEST (SUCCEEDED|FAILED)|Executed" || true
           grep -q "TEST SUCCEEDED" uitests-macos.log
       - name: Publish log

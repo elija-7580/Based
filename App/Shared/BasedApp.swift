@@ -94,7 +94,13 @@ struct BasedCommands: Commands {
         action()
     }
 
+    // Xcode 26: CommandsBuilder nimmt höchstens 10 Elemente pro Block – daher zwei Teile (P0, CI 09.11.).
     var body: some Commands {
+        fileAndEditCommands
+        formatAndNavigationCommands
+    }
+
+    @CommandsBuilder private var fileAndEditCommands: some Commands {
         #if os(macOS)
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") {
@@ -166,6 +172,9 @@ struct BasedCommands: Commands {
             Button("Search Workspace…") { run("⌘P") { model.showCommandPalette = false; model.showQuickFind = true } }
                 .keyboardShortcut("p")
         }
+    }
+
+    @CommandsBuilder private var formatAndNavigationCommands: some Commands {
         CommandMenu("Format") {
             Button("Bold") { model.activeEditor?.toggleMark(.bold) }.keyboardShortcut("b")
             Button("Italic") { model.activeEditor?.toggleMark(.italic) }.keyboardShortcut("i")
