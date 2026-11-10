@@ -3,7 +3,8 @@
 // während einer laufenden Antwort ein (PromptQueue), speichert den laufenden Turn gedrosselt als Records (BSD-77)
 // und fragt bei Schreib-Werkzeugen nach Freigabe (Permission-Pille). Ohne DOM, damit es in Vitest läuft.
 import {
-  combineToolHosts, foldTranscript, historyFromEvents, ModelEngine, PromptQueue, runTurn,
+  combineToolHosts, foldTranscript, historyFromEvents, ModelEngine, PlanRecorder, PromptQueue, runPlan, runTurn,
+  type PlannedStep, type RuleEffect,
   type AIProvider, type ChatEngine, type ChatEvent, type ChatInfo, type PermissionMode, type QueuedPrompt, type RunningTurn, type StoredChatEvent, type ToolCall, type ToolHost, type ToolPolicy,
 } from "@based/brain";
 import type { JSONValue } from "@based/core";
@@ -46,9 +47,14 @@ export interface ChatViewState {
   error: string | undefined;
   /** Ein Engine-Override ist aktiv (Tests) oder ein Modell eingerichtet. */
   ready: boolean;
+  /** BSD-245: im Plan-Modus gesammelte Schritte des letzten Turns (bis „Run plan“ oder „Dismiss“). */
+  plan: { chatID: string; steps: PlannedStep[] } | undefined;
 }
 
-const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false };
+/** BSD-245: Regeln (global, Pfade) für Werkzeugaufrufe im Chat; je Turn neu geholt. */
+export type ChatRules = (call: ToolCall) => RuleEffect | undefined | Promise<RuleEffect | undefined>;
+
+const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false, plan: undefined };
 
 /** Wo die Engine eines Turns ihr Modell aufruft (für Privacy-Redact: lokale Modelle brauchen keins). */
 export type TurnReach = "external" | "local" | "cli";
@@ -89,6 +95,8 @@ export interface ChatControllerOptions {
   fetch?: typeof globalThis.fetch;
   /** BSD-160: nach jedem Turn (gespeichert) – z. B. als Run-Record mit Verbrauch. */
   onTurnEnd?: (turn: { chatID: string; prompt: string; events: readonly StoredChatEvent[] }) => void;
+  /** BSD-245: Regeln für den Turn (Einstellungen → Main agent, mit Pfad-Regeln); ohne: nur der Modus. */
+  rules?: () => Promise<ChatRules | undefined>;
 }
 
 export class ChatController {
@@ -192,6 +200,30 @@ export class ChatController {
   retry() {
     const last = [...this.state.events].reverse().find((e) => e.type === "userMessage") as Extract<ChatEvent, { type: "userMessage" }> | undefined;
     if (last) this.send(last.text);
+  }
+
+  /**
+   * BSD-245: den gesammelten Plan ausführen (das ist die Freigabe): Schritte laufen der Reihe nach, Regeln gelten
+   * weiter (deny blockiert), danach zurück in den Modus vor dem Plan. Jeder Schritt wird eine Werkzeug-Karte.
+   */
+  async runPlan(): Promise<void> {
+    const plan = this.state.plan;
+    if (!plan || plan.chatID !== this.state.chatID || this.state.running) return;
+    this.set({ plan: undefined });
+    const rules = await this.o.rules?.().catch(() => undefined);
+    const events: StoredChatEvent[] = [];
+    const host = this.toolHost();
+    await this.catalog?.catch(() => undefined);
+    const results = await runPlan(host, plan.steps, { rules }, new AbortController().signal, (e) => events.push(e));
+    const failed = results.filter((r) => r.result.isError).length;
+    events.push({ type: "notice", text: `Ran the plan: ${results.length} ${results.length === 1 ? "step" : "steps"}${failed ? `, ${failed} failed` : ""}.` });
+    this.o.config?.leavePlan();
+    await this.appendEvents(events);
+  }
+
+  /** BSD-245: den gesammelten Plan verwerfen (nichts wird ausgeführt). */
+  dismissPlan() {
+    if (this.state.plan) this.set({ plan: undefined });
   }
 
   /** Antwort auf eine Freigabe-Anfrage. */
@@ -327,12 +359,16 @@ export class ChatController {
     };
     await save();
 
+    const plan = new PlanRecorder();
+    const rules = await this.o.rules?.().catch(() => undefined);
     const policy: ToolPolicy = {
       mode: this.permission(),
       approve: (call) => new Promise<boolean>((resolve) => {
         if (signal.aborted) return resolve(false);
         this.set({ approvals: [...this.state.approvals, { call, resolve }] });
       }),
+      rules,
+      onPlanned: plan.record,
     };
     const tools = this.toolHost();
     await this.catalog?.catch(() => undefined);
@@ -372,6 +408,7 @@ export class ChatController {
     show();
     await save();
     if (engine) this.o.onTurnEnd?.({ chatID: id, prompt: text, events: turn });
+    if (plan.steps.length > 0 && live()) this.set({ plan: { chatID: id, steps: plan.steps } });
     if (engine && !signal.aborted && this.hooks.after) {
       const more = await this.hooks.after(turn, { chatID: id, complete: (sys, p) => this.complete(sys, p, prep?.wrapProvider) }).catch(() => undefined);
       if (more?.length && live()) await this.appendEvents(more).catch(() => undefined);

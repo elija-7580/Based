@@ -1,7 +1,9 @@
 // BSD-159: der Chat – im rechten Panel (⌘J) und als Vollseite. Kopf mit Verlauf, neuem Chat, Einstellungen und
 // Größe; darunter Verlauf, Einstellungen oder Gespräch; unten Warteschlange und Composer (Agent · Compute ·
 // Permission). Zustand: ChatController (eins für Panel und Vollseite).
+import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/Layout";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { List, ListItem } from "@astryxdesign/core/List";
@@ -96,7 +98,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
   const models = config.models().filter((m) => m.usable);
   const active = config.activeModel();
   const computeOptions: ComposerOption[] = models.map((m) => ({ name: m.ref, desc: m.kind === "ollama" ? "On this computer" : "Your API key", icon: m.kind === "ollama" ? "fast" : "model" }));
-  const permissionOptions: ComposerOption[] = PERMISSIONS.map((p) => ({ name: p.name, desc: p.desc, icon: p.mode === "free" ? "free" : p.mode === "ask" ? "ask" : "perm" }));
+  const permissionOptions: ComposerOption[] = PERMISSIONS.map((p) => ({ name: p.name, desc: p.desc, icon: p.mode === "free" ? "free" : p.mode === "ask" || p.mode === "plan" ? "ask" : "perm" }));
   const permissionName = PERMISSIONS.find((p) => p.mode === ai.settings.permission)?.name ?? "Ask before edits";
 
   const empty = s.ready ? (
@@ -161,6 +163,21 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                     </li>
                   ))}
                 </ul>
+              ) : null}
+              {s.plan && s.plan.chatID === s.chatID && !s.running ? (
+                // BSD-245: Plan-Modus – gesammelte Schritte erst nach „Run plan“ ausführen.
+                <Banner
+                  status="info"
+                  data-testid="chat-plan"
+                  title={`Plan ready: ${s.plan.steps.length} ${s.plan.steps.length === 1 ? "change" : "changes"}`}
+                  description={s.plan.steps.map((x, i) => `${i + 1}. ${x.name.replace(/_/g, " ")}`).join(" · ")}
+                  endContent={
+                    <HStack gap={2}>
+                      <Button size="sm" variant="primary" label="Run plan" onClick={() => void controller.runPlan()} />
+                      <Button size="sm" variant="ghost" label="Dismiss" onClick={() => controller.dismissPlan()} />
+                    </HStack>
+                  }
+                />
               ) : null}
               {brain ? <BrainComposerBar brain={brain} /> : null}
               <div className="chat-composer">

@@ -1,6 +1,6 @@
 // BSD-159: der eine ChatController der App und der Haken für Tests/E2E (`globalThis.__basedChat`): eine
 // ScriptedEngine statt eines echten Anbieters einsetzen – deterministisch, ohne Netz.
-import { chatTitleFrom, combineToolHosts, MAIN_AGENT_ID, ScriptedEngine, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
+import { chatTitleFrom, combineToolHosts, MAIN_AGENT_ID, mainArgument, Permissions, ScriptedEngine, targetPage, type AgentData, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
 import type { StoreClient } from "../worker/client.js";
 import { aiConfig } from "./aiConfig.js";
 import { installBrain } from "../brain/setup.js";
@@ -53,7 +53,20 @@ export function restoreLastChat(c: ChatController) {
 
 export function chatController(client: StoreClient): ChatController {
   if (!shared) {
-    shared = new ChatController({ backend: client, config: aiConfig(), onTurnEnd: (t) => void recordChatRun(client, t).catch(() => undefined) });
+    shared = new ChatController({
+      backend: client, config: aiConfig(), onTurnEnd: (t) => void recordChatRun(client, t).catch(() => undefined),
+      // BSD-245: die globalen Regeln (Einstellungen → Main agent) gelten auch im Chat, mit Pfad-Regeln.
+      rules: async () => {
+        const main = await client.agents<AgentData>({ op: "main" });
+        if (!main.permissions.rules.trim()) return undefined;
+        const perms = Permissions.from(main.permissions.rules, main.permissions.mode);
+        return async (call) => {
+          const target = targetPage(call.arguments);
+          const paths = target ? await client.chatPagePaths(target).catch(() => undefined) : undefined;
+          return perms.ruleVerdict({ tool: "based." + call.name, argument: mainArgument(call.arguments), paths })?.effect;
+        };
+      },
+    });
     // Agent Brain: Skills, Privacy-Redact, Memories, Zitate (BSD-163/198/199).
     installBrain(client, shared);
     // BSD-222: Werkzeuge der MCP-Connections neben denen des Workspaces und des Agent Brain; vor dem Turn kurz auf

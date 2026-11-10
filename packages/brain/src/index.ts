@@ -8,6 +8,7 @@ export * from "./retry.js";
 export * from "./context.js";
 export * from "./pricing.js";
 export * from "./engine.js";
+export * from "./planmode.js";
 export * from "./history.js";
 export * from "./tools.js";
 export * from "./transcript.js";
