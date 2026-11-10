@@ -184,6 +184,7 @@ async function seed(page: Page) {
 for (const theme of ["light", "dark"] as const) {
   test(`Screenshots Startseite (${theme})`, async ({ page, browserName }) => {
     test.skip(browserName !== "chromium", "Screenshots nur einmal");
+    test.setTimeout(120_000);
     await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
     await page.setViewportSize({ width: 1440, height: 960 });
     await open(page);
@@ -205,6 +206,14 @@ for (const theme of ["light", "dark"] as const) {
       await page.screenshot({ path: `../../docs/design/screens/web-home-card-states-${name}-${theme}.png`, clip: { x: box.x - 24, y: box.y - 320, width: box.width + 48, height: box.height + 340 } });
     };
     await shot("understanding");
+
+    // Agent-Detail (vor dem Neuladen: danach gelten unterbrochene Unteragenten als gescheitert)
+    await page.getByTestId("arc-running").filter({ hasText: "competitors" }).click();
+    await expect(page.getByTestId("agent-detail")).toBeVisible();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `../../docs/design/screens/web-agent-detail-${theme}.png` });
+    await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Home" }).click();
     await page.reload();
     await open(page);
     await call(page, "useRules", 0);
@@ -238,14 +247,7 @@ for (const theme of ["light", "dark"] as const) {
     await expect(card(page)).toHaveAttribute("data-phase", "fallback", { timeout: 10_000 });
     await shot("fallback");
 
-    // Agent-Detail und Projekt-Detail
-    await page.getByTestId("arc-running").filter({ hasText: "competitors" }).click();
-    await expect(page.getByTestId("agent-detail")).toBeVisible();
-    await page.mouse.move(0, 0);
-    await page.waitForTimeout(250);
-    await page.screenshot({ path: `../../docs/design/screens/web-agent-detail-${theme}.png` });
-    await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Home" }).click();
-    await page.getByTestId("arc-done").first().waitFor();
+    // Projekt-Detail
     await send(page, "Publit: idea — offline timetable cache");
     await expect(card(page)).toHaveAttribute("data-phase", /done|proposal/, { timeout: 10_000 });
     if ((await card(page).getAttribute("data-phase")) === "proposal") await card(page).getByRole("button", { name: "Go ahead" }).click();
