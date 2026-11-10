@@ -54,3 +54,60 @@ export function pageFormat(store: WorkspaceStore, id: string): { font: PageFont;
   const f = store.blocks.get(id)?.props?.format;
   return { font: (f?.font as PageFont | undefined) ?? "default", smallText: f?.smallText === true, fullWidth: f?.fullWidth === true, locked: f?.locked === true };
 }
+
+// MARK: BSD-201 Teil 2 – Cover und Bild-Icon (Swift PageOps.setPageCover, PageIcon.asset/.url)
+
+export interface CoverAsset { id: string; name: string; size?: number; mime?: string }
+/** Wie Swift `PageCover` (Codable-Enum mit `_0`). */
+export type PageCoverValue = { gradient: { _0: number } } | { color: { _0: string } } | { asset: { _0: CoverAsset } } | { url: { _0: string } };
+
+/** Cover setzen oder entfernen (dann auch die Position). Ein Undo-Schritt. */
+export function setPageCover(store: WorkspaceStore, id: string, cover: PageCoverValue | undefined): void {
+  if (!store.blocks.has(id)) return;
+  store.transact(cover ? "Change cover" : "Remove cover", (tx) => tx.update(id, (x) => {
+    const props = { ...(x.props ?? {}) };
+    if (cover) props.cover = cover as never;
+    else {
+      delete props.cover;
+      if (props.format) {
+        const f = { ...props.format };
+        delete f.coverPosition;
+        props.format = f;
+      }
+    }
+    clean(props, x);
+  }));
+}
+
+/** Vertikale Lage des Cover-Bilds, 0 (oben) … 1 (unten); Standard 0,5. */
+export function setCoverPosition(store: WorkspaceStore, id: string, position: number): void {
+  if (!store.blocks.has(id)) return;
+  const p = Math.round(Math.min(1, Math.max(0, position)) * 1000) / 1000;
+  store.transact("Reposition cover", (tx) => tx.update(id, (x) => {
+    const props = { ...(x.props ?? {}) };
+    const format: Format = { ...(props.format ?? {}) };
+    if (p === 0.5) delete format.coverPosition;
+    else format.coverPosition = p;
+    props.format = format;
+    clean(props, x);
+  }));
+}
+
+/** Hochgeladenes Bild (Asset) oder Bild-Link als Seiten-Icon, wie Swift `PageIcon.asset` / `.url`. */
+export function setPageIconImage(store: WorkspaceStore, id: string, image: { asset: CoverAsset } | { url: string }): void {
+  if (!store.blocks.has(id)) return;
+  store.transact("Change icon", (tx) => tx.update(id, (x) => {
+    x.props = { ...(x.props ?? {}), icon: image as never };
+  }));
+}
+
+/** Cover einer Seite lesen (unbekannte Formen: `undefined`). */
+export function pageCover(store: WorkspaceStore, id: string): PageCoverValue | undefined {
+  const c = store.blocks.get(id)?.props?.cover as Record<string, { _0?: unknown }> | undefined;
+  if (!c || typeof c !== "object") return undefined;
+  if (typeof c.gradient?._0 === "number") return { gradient: { _0: c.gradient._0 } };
+  if (typeof c.color?._0 === "string") return { color: { _0: c.color._0 } };
+  if (c.asset?._0 && typeof (c.asset._0 as CoverAsset).id === "string") return { asset: { _0: c.asset._0 as CoverAsset } };
+  if (typeof c.url?._0 === "string") return { url: { _0: c.url._0 } };
+  return undefined;
+}

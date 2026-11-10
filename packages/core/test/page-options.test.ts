@@ -31,3 +31,32 @@ describe("Seiten-Optionen", () => {
     expect(pageFormat(s, "p")).toEqual({ font: "default", smallText: false, fullWidth: false, locked: false });
   });
 });
+
+describe("Cover und Bild-Icon (BSD-201 Teil 2)", async () => {
+  const { pageCover, setCoverPosition, setPageCover, setPageIconImage } = await import("../src/index.js");
+  it("Cover wie Swift PageCover (_0), Position, Entfernen räumt die Position mit auf", () => {
+    const s = mk();
+    setPageCover(s, "p", { color: { _0: "blue" } });
+    expect(s.blocks.get("p")?.props?.cover).toEqual({ color: { _0: "blue" } });
+    setPageCover(s, "p", { asset: { _0: { id: "A1", name: "beach.jpg", size: 10, mime: "image/jpeg" } } });
+    expect(pageCover(s, "p")).toEqual({ asset: { _0: { id: "A1", name: "beach.jpg", size: 10, mime: "image/jpeg" } } });
+    setCoverPosition(s, "p", 0.2);
+    expect(s.blocks.get("p")?.props?.format).toEqual({ hideOutline: true, coverPosition: 0.2 });
+    setCoverPosition(s, "p", 0.5);
+    expect(s.blocks.get("p")?.props?.format).toEqual({ hideOutline: true });
+    setCoverPosition(s, "p", 0.8);
+    setPageCover(s, "p", undefined);
+    expect(s.blocks.get("p")?.props?.cover).toBeUndefined();
+    expect(s.blocks.get("p")?.props?.format).toEqual({ hideOutline: true });
+    s.undo();
+    expect(pageCover(s, "p")).toMatchObject({ asset: {} });
+    expect(pageCover(s, "p")).toBeDefined();
+  });
+  it("Bild als Icon wie Swift PageIcon.asset / .url", () => {
+    const s = mk();
+    setPageIconImage(s, "p", { asset: { id: "I1", name: "logo.png" } });
+    expect(s.blocks.get("p")?.props?.icon).toEqual({ asset: { id: "I1", name: "logo.png" } });
+    setPageIconImage(s, "p", { url: "https://example.com/i.png" });
+    expect(s.blocks.get("p")?.props?.icon).toEqual({ url: "https://example.com/i.png" });
+  });
+});

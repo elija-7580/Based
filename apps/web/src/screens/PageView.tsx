@@ -8,6 +8,7 @@ import { BlockView } from "../components/BlockView.js";
 import { openPageWindow } from "../desktop.js";
 import { ExportDialog } from "../components/ImportExport.js";
 import { MoveDialog } from "../components/MoveDialog.js";
+import { CoverPicker, PageCoverBand, uploadPageIcon, useImageURL } from "../components/PageCover.js";
 import { ShareButton } from "../components/Share.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
@@ -67,6 +68,12 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const format = store && page ? pageFormat(store, pageID) : { font: "default" as const, smallText: false, fullWidth: false, locked: false };
   const icon = typeof page?.props?.icon === "string" && isEmojiIcon(page.props.icon) ? page.props.icon : undefined;
   const [iconPicker, setIconPicker] = useState(false);
+  // BSD-201 Teil 2: Bild als Icon (Swift PageIcon.asset / .url) und Cover.
+  const rawIcon = page?.props?.icon as { asset?: { id: string; name: string }; url?: string } | string | undefined;
+  const iconImage = rawIcon && typeof rawIcon === "object" ? (rawIcon.asset ? { asset: rawIcon.asset } : rawIcon.url ? { url: rawIcon.url } : undefined) : undefined;
+  const iconImageURL = useImageURL(iconImage);
+  const [coverPicker, setCoverPicker] = useState(false);
+  const iconFile = useRef<HTMLInputElement>(null);
   const storeReadOnly = trashed || state.status.state === "readonly";
   const readOnly = storeReadOnly || format.locked;
 
@@ -187,20 +194,36 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       ) : null}
       <article className={dbID ? "page page-database" : "page"} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
         data-full-width={format.fullWidth ? "" : undefined} data-locked={format.locked ? "" : undefined}>
+        {store && page && page.props?.cover ? <PageCoverBand store={store} pageID={pageID} readOnly={readOnly} position={typeof page.props?.format?.coverPosition === "number" ? page.props.format.coverPosition : 0.5} /> : null}
         <div className="page-grid">
           <div className="spacer-cell" />
           <div className="page-head">
-            {icon || (!readOnly && page) ? (
+            {icon || iconImage || (!readOnly && page) ? (
               <div className="page-icon-row">
                 {icon ? (
                   <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}>{icon}</button>
+                ) : iconImage ? (
+                  <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}>
+                    {iconImageURL ? <img className="page-icon-img" src={iconImageURL} alt="" data-testid="page-icon-image" /> : null}
+                  </button>
                 ) : (
                   <button type="button" className="page-add-icon btn ghost" onClick={() => setIconPicker(true)}>Add icon</button>
                 )}
+                {!readOnly && page && !page.props?.cover ? <button type="button" className="page-add-icon btn ghost" onClick={() => setCoverPicker((o) => !o)}>Add cover</button> : null}
+                {iconPicker && !readOnly ? (
+                  <>
+                    <button type="button" className="btn ghost" onClick={() => iconFile.current?.click()}>Upload image</button>
+                    <input ref={iconFile} type="file" accept="image/*" hidden data-testid="icon-file" onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (f && store && await uploadPageIcon(store, pageID, f)) setIconPicker(false);
+                    }} />
+                  </>
+                ) : null}
                 {iconPicker && store ? (
                   <EmojiPicker className="page-icon-picker" current={icon} onClose={() => setIconPicker(false)}
                     onPick={(e) => { setPageIcon(store, pageID, e); setIconPicker(false); }} />
                 ) : null}
+                {coverPicker && store ? <CoverPicker store={store} pageID={pageID} hasCover={false} onClose={() => setCoverPicker(false)} /> : null}
               </div>
             ) : null}
             {format.locked ? (
