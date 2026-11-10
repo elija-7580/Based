@@ -14,7 +14,8 @@ import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
-import { deviceNode, startPage, syncConfig } from "../../shell/storage.js";
+import { deviceNode, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
@@ -134,7 +135,9 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
   const trash = state.outline?.trash.length ?? 0;
   return (
     <Group>
-      <Row label="Name"><Value testID="workspace-name">{state.outline?.workspaceName || "Workspace"}</Value></Row>
+      <Row label="Name" hint="Used for exports and shown to people you share with">
+        <WorkspaceName name={state.outline?.workspaceName ?? ""} onRename={(name) => void client.command({ op: "renameWorkspace", name })} />
+      </Row>
       <Row label="Contents" hint="Pages and databases outside the Trash">
         <Value testID="workspace-counts">{count(nodes.filter((n) => n.kind === "page").length, "page")} · {count(nodes.filter((n) => n.kind === "database").length, "database")}</Value>
       </Row>
@@ -149,6 +152,50 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
       </Row>
       <BasedConfirm open={confirm} onClose={() => setConfirm(false)} title="Empty the Trash?" description={`${count(trash, "page")} will be deleted for good. This can't be undone.`} actionLabel="Empty Trash" onConfirm={async () => { await client.command({ op: "emptyTrash" }); }} />
       {exporting ? <ExportDialog client={client} onClose={() => setExporting(false)} /> : null}
+    </Group>
+  );
+}
+
+/** BSD-205: Workspace-Name, gespeichert beim Verlassen des Feldes oder mit Enter. */
+function WorkspaceName({ name, onRename }: { name: string; onRename: (name: string) => void }) {
+  const [value, setValue] = useState(name);
+  const [prev, setPrev] = useState(name);
+  if (prev !== name) {
+    setPrev(name);
+    setValue(name);
+  }
+  const commit = () => { if (value.trim() && value.trim() !== name) onRename(value); else setValue(name); };
+  return (
+    <span data-testid="workspace-name" onBlur={commit}>
+      <BasedField label="Workspace name" value={value} onChange={setValue} placeholder="Workspace" onEnter={commit} />
+    </span>
+  );
+}
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const AUTO = "auto";
+
+/** BSD-205: Wochenbeginn für Kalender, Datumsauswahl und Diagramm-Wochen (pro Gerät). */
+function LanguageSection(_: SettingsSectionProps) {
+  const [value, setValue] = useState(() => {
+    const d = weekStartPref.get();
+    return d === undefined ? AUTO : String(d);
+  });
+  const auto = DAY_NAMES[weekStartForLocale()]!;
+  return (
+    <Group>
+      <Row label="Start week on" hint="Calendars and date pickers start the week on this day">
+        <Selector
+          label="Start week on"
+          value={value}
+          onChange={(v) => {
+            const next = v ?? AUTO;
+            setValue(next);
+            weekStartPref.set(next === AUTO ? undefined : Number(next));
+          }}
+          options={[{ value: AUTO, label: `Automatic (${auto})` }, ...[1, 0, 6].map((d) => ({ value: String(d), label: DAY_NAMES[d]! }))]}
+        />
+      </Row>
     </Group>
   );
 }
@@ -271,6 +318,7 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
   registerSettingsSection({ id: "start-page", page: "my-settings", title: "Start page", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
   registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection });
+  registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });
   registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection });
   registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection });
