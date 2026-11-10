@@ -1,7 +1,6 @@
-// Asset-Speicher der Web-Shell: Bilder und Anhänge (Import, später Uploads) als Bytes in IndexedDB, Schlüssel = Asset-ID
-// aus den Records (`props.asset.id`). IndexedDB, weil alle drei Stellen daran müssen – der Import-Worker schreibt, der
-// Hauptthread liest für die Anzeige (`based-asset:<id>` → Blob-URL), der Store-Worker liest für Exporte – und OPFS im
-// Hauptthread nicht überall schreibbar ist. Nur lokal: Dateien werden (noch) nicht mit dem Server abgeglichen.
+// Alter Asset-Speicher der Web-Shell (IndexedDB, Schlüssel = Asset-ID aus den Records). BSD-230: Importe legen Dateien
+// jetzt über den Sync ab (SHA-256, OPFS, BSD-78); dieser Speicher wird nur noch gelesen und beim Start einmalig in den
+// synchronisierten Speicher migriert (`StoreHost.migrateImportedAssets`), danach sind die Einträge gelöscht.
 import type { AssetRef } from "@based/core";
 
 export interface StoredAsset {
@@ -18,6 +17,8 @@ export interface AssetStore {
   put(id: string, asset: StoredAsset): Promise<void>;
   get(id: string): Promise<StoredAsset | undefined>;
   has(id: string): Promise<boolean>;
+  /** BSD-230: nach der Migration in den synchronisierten Speicher entfernen. */
+  delete?(id: string): Promise<void>;
 }
 
 export class MemoryAssetStore implements AssetStore {
@@ -27,6 +28,9 @@ export class MemoryAssetStore implements AssetStore {
   }
   async get(id: string): Promise<StoredAsset | undefined> {
     return this.files.get(id);
+  }
+  async delete(id: string): Promise<void> {
+    this.files.delete(id);
   }
   async has(id: string): Promise<boolean> {
     return this.files.has(id);
@@ -106,6 +110,11 @@ export class IDBAssetStore implements AssetStore {
   async has(id: string): Promise<boolean> {
     const db = await this.conn();
     return (await done(db.transaction(STORE, "readonly").objectStore(STORE).count(id))) > 0;
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await this.conn();
+    await done(db.transaction(STORE, "readwrite").objectStore(STORE).delete(id));
   }
 }
 

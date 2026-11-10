@@ -68,13 +68,13 @@ async function importWith(files: { path: string; data: Uint8Array }[], maxAssetB
   const sink = new MemoryAssetSink();
   const payload = structuredClone(prepareFiles(files, { assets: sink, maxAssetBytes }));
   const x = setup();
-  // wie der Import-Worker: gesammelte Dateien in den Asset-Speicher
-  for (const [id, f] of sink.files) await x.assets.put(id, { data: f.data, name: f.ref.name, ...(f.ref.mime ? { mime: f.ref.mime } : {}) });
   await x.client.init({});
+  // BSD-230: die Dateien reisen mit dem Ergebnis; der Store-Worker legt sie über den Sync ab (SHA-256).
   const summary = await x.client.commitImport(payload);
   await settle();
   const blocks = [...x.host.ws!.store.blocks.values()];
-  return { ...x, sink, payload, summary, blocks };
+  const get = async (id: string) => { const r = await x.client.assetGet(id); return r.ok ? new Uint8Array(r.bytes) : undefined; };
+  return { ...x, sink, payload, summary, blocks, get };
 }
 
 const ofType = (blocks: Block[], type: string) => blocks.filter((b) => b.type === type);
@@ -88,12 +88,11 @@ describe("Import mit Anhängen", () => {
     const withAsset = images.find((b) => b.props?.asset);
     expect(withAsset?.props?.asset).toMatchObject({ name: "map.png", size: PNG.length, mime: "image/png" });
     expect(withAsset?.props?.url).toBeUndefined();
-    const stored = await r.assets.get(withAsset!.props!.asset!.id);
-    expect([...stored!.data]).toEqual([...PNG]);
-    expect(stored).toMatchObject({ name: "map.png", mime: "image/png" });
+    expect(withAsset!.props!.asset!.id).toMatch(/^[0-9a-f]{64}$/);
+    expect([...(await r.get(withAsset!.props!.asset!.id))!]).toEqual([...PNG]);
     const pdf = r.blocks.find((b) => b.props?.asset?.name === "ticket.pdf");
     expect(pdf?.type).toBe("pdf");
-    expect(dec.decode((await r.assets.get(pdf!.props!.asset!.id))!.data)).toBe("%PDF-1.4 ticket");
+    expect(dec.decode((await r.get(pdf!.props!.asset!.id))!)).toBe("%PDF-1.4 ticket");
     // zu groß: kein Asset, aber eine klare Meldung; fehlend: gemeldet
     expect(r.blocks.some((b) => b.props?.asset?.name === "huge.bin")).toBe(false);
     const warnings = r.summary.warnings.join("\n");
@@ -117,7 +116,7 @@ describe("Import mit Anhängen", () => {
       expect(images.length).toBe(3);
       const local = images.find((b) => b.props?.asset);
       expect(local?.props?.asset).toMatchObject({ name: "summit.png", mime: "image/png" });
-      expect([...(await r.assets.get(local!.props!.asset!.id))!.data]).toEqual([...PNG]);
+      expect([...(await r.get(local!.props!.asset!.id))!]).toEqual([...PNG]);
       expect(images.filter((b) => b.props?.url === "https://example.com/x.png").length).toBe(1);
       expect(r.summary.assets).toBe(1);
       expect(r.summary.warnings.join("\n")).toMatch(/Missing file “.*images\/lost\.png”/);
@@ -154,7 +153,7 @@ describe("Import mit Anhängen", () => {
     expect(readZipEntries(archive.data).filter((e) => e.path.startsWith("assets/")).length).toBe(2);
   });
 
-  it("Based-Archiv mit Dateien: Dateien kommen mit ihren IDs in den Speicher", async () => {
+  it("Based-Archiv mit Dateien: Dateien kommen in den Sync-Speicher, Verweise bleiben gültig", async () => {
     const a = await importWith([{ path: "Export.zip", data: notionZip() }]);
     const archive = await a.client.exportWorkspace("archive");
     const sink = new MemoryAssetSink();
@@ -163,6 +162,12 @@ describe("Import mit Anhängen", () => {
     expect(payload.notes.join("\n")).not.toContain("not imported");
     const img = a.blocks.find((b) => b.props?.asset?.name === "map.png")!;
     expect([...sink.files.get(img.props!.asset!.id)!.data]).toEqual([...PNG]);
+    // in ein zweites Gerät importieren: gleicher Inhalt = gleicher Hash
+    const b = setup();
+    await b.client.init({});
+    await b.client.commitImport(structuredClone(payload));
+    const got = await b.client.assetGet(img.props!.asset!.id);
+    expect(got.ok && [...new Uint8Array(got.bytes)]).toEqual([...PNG]);
   });
 
   it("based-asset:-URLs werden einmal je Datei zu Blob-URLs; Fehlendes schlägt fehl", async () => {
