@@ -1,17 +1,18 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { pageFormat, rowsOf, setPageFormat, setPageIcon, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { pageFormat, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
 import { ExportDialog } from "../components/ImportExport.js";
+import { MoveDialog } from "../components/MoveDialog.js";
 import { ShareButton } from "../components/Share.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
-import type { History, Route } from "../shell/router.js";
+import { routeToHash, type History, type Route } from "../shell/router.js";
 import { slots } from "../slots.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
@@ -52,6 +53,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   useRevision(replica?.store);
   const [menu, setMenu] = useState<{ top: number; right: number } | undefined>();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [restored, setRestored] = useState<HistoryRestoreResult | undefined>();
   useSyncExternalStore(history.subscribe, () => `${history.canBack}${history.canForward}`);
 
@@ -81,6 +83,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const subpages = outline?.children[pageID]?.length ?? 0;
   const dbID = page?.type === "databasePage" ? page.props?.databaseID : undefined;
+  const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
 
   let body;
   if (failed) body = <p className="t-desc">Couldn't open this page: {failed}</p>;
@@ -114,7 +117,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           ))}
           <span className="crumb-current" aria-current="page">{title || "Untitled"}</span>
         </nav>
-        <span className="spacer">{state.status.state === "synced" || state.status.state === "local" ? "Saved" : SYNC_LABEL[state.status.state]}</span>
+        <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : SYNC_LABEL[state.status.state]}</span>
         {page && !trashed ? (
           <>
             <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
@@ -140,7 +143,19 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
           outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
-          options={store && page && !storeReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined} />
+          options={store && page && !storeReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
+          actions={page && !trashed ? {
+            copyLink: () => void copyPageLink(pageID),
+            duplicate: () => void client.command({ op: "duplicate", ids: [pageID] }),
+            move: () => setMoving(true),
+            favorite: { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
+            exportPage: () => setExporting(true),
+            trash: () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
+            edited,
+          } : undefined} />
+      ) : null}
+      {moving && outline ? (
+        <MoveDialog client={client} state={state} ids={[pageID]} onClose={() => setMoving(false)} />
       ) : null}
       {historyOpen ? (
         <VersionHistory client={client} pageID={pageID} current={store} onClose={() => setHistoryOpen(false)} onRestored={(r) => {
@@ -215,7 +230,47 @@ interface PageOptionsMenu { format: ReturnType<typeof pageFormat>; isDatabase: b
 
 const FONTS: readonly { id: PageFont; label: string }[] = [{ id: "default", label: "Default" }, { id: "serif", label: "Serif" }, { id: "mono", label: "Mono" }];
 
-function PageMenu({ pos, onClose, onHistory, outline, options }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined }) {
+/** BSD-204: Seitenaktionen im •••-Menü (wie Notion): Link kopieren, Duplizieren, Verschieben, Favorit, Export, Papierkorb. */
+interface PageActions {
+  copyLink: () => void;
+  duplicate: () => void;
+  move: () => void;
+  favorite: { on: boolean; toggle: () => void };
+  exportPage: () => void;
+  trash: () => void;
+  /** „Edited …“ als Fußzeile. */
+  edited?: string | undefined;
+}
+
+/** Letzte Änderung an der Seite oder ihrem Inhalt (Swift-Zeit), `undefined` ohne Zeitstempel. */
+function lastEdited(store: WorkspaceStore, pageID: string): number | undefined {
+  let t = store.blocks.get(pageID)?.updatedAt;
+  for (const id of subtree(store, pageID, false)) {
+    const u = store.blocks.get(id)?.updatedAt;
+    if (u !== undefined && (t === undefined || u > t)) t = u;
+  }
+  return t;
+}
+
+/** „Edited just now“, „Edited 5 min ago“, „Edited yesterday“, „Edited 3 Nov“. */
+export function editedLabel(t: number | undefined, now = new Date()): string | undefined {
+  if (t === undefined || !(t > 0)) return undefined;
+  const r = relative(fromSwift(t), now);
+  if (r === "just now") return "Edited just now";
+  if (r === "Yesterday") return "Edited yesterday";
+  if (/^\d+ (min|h)$/.test(r)) return `Edited ${r} ago`;
+  return `Edited ${r}`;
+}
+
+async function copyPageLink(pageID: string) {
+  const url = new URL(globalThis.location.href);
+  url.hash = routeToHash({ name: "page", id: pageID });
+  try {
+    await navigator.clipboard.writeText(url.toString());
+  } catch { /* ohne Zwischenablage-Recht: nichts */ }
+}
+
+function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined; actions?: PageActions | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
@@ -223,7 +278,16 @@ function PageMenu({ pos, onClose, onHistory, outline, options }: { pos: { top: n
       const t = e.target as Element;
       if (!ref.current?.contains(t) && !t.closest?.("[data-menu-trigger]")) onClose();
     };
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      // BSD-238: ↑/↓ zwischen den Einträgen.
+      else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && ref.current?.contains(document.activeElement)) {
+        const items = [...ref.current.querySelectorAll<HTMLElement>("[role^=menuitem]")];
+        const i = items.indexOf(document.activeElement as HTMLElement);
+        items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+        e.preventDefault();
+      }
+    };
     window.addEventListener("mousedown", down);
     window.addEventListener("keydown", key);
     return () => {
@@ -233,6 +297,16 @@ function PageMenu({ pos, onClose, onHistory, outline, options }: { pos: { top: n
   }, [onClose]);
   return (
     <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
+      {actions ? (
+        <>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="page" size={18} />Copy link</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate(); }}><Icon name="duplicate" size={18} />Duplicate</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move(); }}><Icon name="move" size={18} />Move to…</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.exportPage(); }}><Icon name="expand" size={18} />Export…</button>
+          <div className="menu-sep" role="separator" />
+        </>
+      ) : null}
       <button type="button" role="menuitem" className="menu-item" onClick={onHistory}><Icon name="restore" size={18} />Version history</button>
       {outline ? <button type="button" role="menuitem" className="menu-item" onClick={outline.toggle}><Icon name="page" size={18} />{outline.hidden ? "Show outline" : "Hide outline"}</button> : null}
       {options ? (
@@ -258,6 +332,13 @@ function PageMenu({ pos, onClose, onHistory, outline, options }: { pos: { top: n
           <button type="button" role="menuitemcheckbox" aria-checked={options.format.locked} className="menu-item" onClick={() => { options.set({ locked: !options.format.locked }); onClose(); }}>
             <Icon name="lock" size={18} />Lock page{options.format.locked ? <span className="menu-check" aria-hidden="true">✓</span> : null}
           </button>
+        </>
+      ) : null}
+      {actions ? (
+        <>
+          <div className="menu-sep" role="separator" />
+          <button type="button" role="menuitem" className="menu-item danger" onClick={() => { onClose(); actions.trash(); }}><Icon name="trash" size={18} />Move to Trash</button>
+          {actions.edited ? <p className="menu-foot t-meta" data-testid="page-menu-edited">{actions.edited}</p> : null}
         </>
       ) : null}
     </div>
