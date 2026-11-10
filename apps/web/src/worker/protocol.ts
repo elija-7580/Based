@@ -73,6 +73,24 @@ export interface PageRecords {
   records: WireRecord[];
 }
 
+/** Eine Seite für Erwähnungen, das @-Menü und Backlinks (Titel, Icon, Papierkorb). */
+export interface PageInfo {
+  id: string;
+  title: string;
+  icon?: string;
+  kind: "page" | "database" | "row";
+  /** Pfad über der Seite („Teamspace / Elternseite“); nur bei der Suche. */
+  path?: string;
+  /** Die Seite oder eine Seite über ihr liegt im Papierkorb. */
+  trashed: boolean;
+}
+
+/** Antwort auf `includeSynced`: die Records des Originals (leer, wenn es das Original nicht gibt). */
+export interface SyncedRecords {
+  found: boolean;
+  records: WireRecord[];
+}
+
 export type Request =
   | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string }
   | { type: "command"; command: Command }
@@ -90,7 +108,15 @@ export type Request =
   | { type: "exportPage"; pageID: string; format: ExportFormat }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat }
   /** Versionsverlauf einer Seite (BSD-73). */
-  | { type: "history"; action: HistoryAction };
+  | { type: "history"; action: HistoryAction }
+  /** Angaben zu Seiten (Antwort: Record<id, PageInfo | null>; `null` = gibt es nicht). */
+  | { type: "pageInfo"; ids: string[] }
+  /** Seitensuche fürs @-Menü, nur Titel (Antwort: PageInfo[]). Bricht keine Quick-Find-Suche ab. */
+  | { type: "findPages"; query: string; limit?: number }
+  /** Seiten, die `pageID` erwähnen oder verlinken (Antwort: PageInfo[]). */
+  | { type: "backlinks"; pageID: string }
+  /** Ein Synced-Block-Original (von einer anderen Seite) in die Replik von `pageID` aufnehmen (Antwort: SyncedRecords). */
+  | { type: "includeSynced"; pageID: string; source: string };
 
 export type HistoryAction =
   | { op: "list"; pageID: string }

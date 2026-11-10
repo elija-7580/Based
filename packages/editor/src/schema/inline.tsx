@@ -1,9 +1,9 @@
 // BSD-154: Erwähnungen (Seite, Person, Datum, Link) und Gleichungen im Text.
 import { createReactInlineContentSpec } from "@blocknote/react";
-import { useRef, useState } from "react";
-import { dateFromSwift } from "@based/core";
+import { useEffect, useRef, useState } from "react";
+import { canonicalStringify, dateFromSwift } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
-import { useEnv, useStoreRevision } from "../ui/env.js";
+import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { pageIcon, pageTitle } from "./blocks.js";
 
 function formatDate(value: string): string {
@@ -19,28 +19,105 @@ function formatDate(value: string): string {
   }
 }
 
-function MentionView(props: { kind: string; value: string; text: string }) {
+/** Emoji-Icon einer Seite; Symbolnamen (ASCII) kann der Editor nicht zeichnen, dann das Standardzeichen. */
+function mentionIcon(icon: string | undefined, kind: string | undefined): string {
+  if (icon && /[^\u0000-\u00ff]/.test(icon)) return icon;
+  return kind === "database" ? "▦" : "📄";
+}
+
+function PageMention(props: { id: string; text: string }) {
   const env = useEnv();
   useStoreRevision(env.store);
-  switch (props.kind) {
-    case "page": {
-      const rec = env.store.blocks.get(props.value);
-      const open = () => {
-        env.flush();
-        env.onOpenPage?.(props.value);
-      };
-      return (
-        <span className="bx-mention" data-kind="page" role="link" tabIndex={-1} onClick={open}>
-          <span aria-hidden>{rec ? pageIcon(rec) : "📄"}</span>{rec ? pageTitle(rec) : props.text || "Unknown page"}
+  const ref = usePageRef(env.pages, props.id);
+  // Seiten im eigenen Store (Unterseiten) sind sofort da; alles andere kennt das Seitenverzeichnis der Shell.
+  const local = env.store.blocks.get(props.id);
+  const missing = ref ? ref.missing === true && !local : false;
+  const trashed = ref?.trashed === true || (local ? local.trashedAt !== undefined : false);
+  const title = (ref && !ref.missing ? ref.title : undefined) ?? (local ? pageTitle(local) : undefined) ?? (props.text || "Untitled");
+  const icon = ref && !ref.missing ? mentionIcon(ref.icon, ref.kind) : local ? pageIcon(local) : "📄";
+  const open = (e: { preventDefault(): void; stopPropagation(): void }) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (missing) return;
+    env.flush();
+    env.onOpenPage?.(props.id);
+  };
+  return (
+    <span className="bx-mention" data-kind="page" data-page={props.id} data-trashed={trashed ? "true" : undefined} data-missing={missing ? "true" : undefined}
+      role="link" tabIndex={-1} title={missing ? "This page no longer exists" : trashed ? "This page is in the Trash" : undefined}
+      onClick={open} onKeyDown={(e) => e.key === "Enter" && open(e)}>
+      <span className="bx-mention-icon" aria-hidden>{icon}</span>
+      <span className="bx-mention-title">{title}</span>
+      {missing ? <span className="bx-mention-flag">deleted</span> : trashed ? <span className="bx-mention-flag">in Trash</span> : null}
+    </span>
+  );
+}
+
+type DateProps = { start: number; end?: number; includeTime?: boolean; remind?: boolean };
+
+/** Datums-Erwähnung: Klick öffnet ein kleines Feld mit der Erinnerungs-Flagge (wird nur gespeichert). */
+function DateMention(props: { value: string; editable: boolean; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  let parsed: DateProps | undefined;
+  try {
+    parsed = JSON.parse(props.value) as DateProps;
+  } catch { /* kaputter Wert: als Text zeigen */ }
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("mousedown", down);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+  const remind = parsed?.remind === true;
+  const toggle = (on: boolean) => {
+    if (!parsed) return;
+    const next: DateProps = { ...parsed };
+    if (on) next.remind = true;
+    else delete next.remind;
+    props.onChange(canonicalStringify(next));
+  };
+  return (
+    <span className="bx-mention" data-kind="date" data-remind={remind ? "true" : undefined} ref={ref}
+      role={props.editable ? "button" : undefined} tabIndex={-1} aria-haspopup={props.editable ? "dialog" : undefined} aria-expanded={props.editable ? open : undefined}
+      onClick={(e) => {
+        if (!props.editable || !parsed) return;
+        if ((e.target as Element).closest(".bx-date-pop")) return;
+        e.preventDefault();
+        setOpen(!open);
+      }}>
+      @{formatDate(props.value)}{remind ? <span className="bx-mention-remind" aria-label="Reminder set" title="Reminder set"> ⏰</span> : null}
+      {open ? (
+        <span className="bx-date-pop" role="dialog" aria-label="Date options" contentEditable={false}>
+          <label className="bx-date-remind">
+            <input type="checkbox" checked={remind} onChange={(e) => toggle(e.target.checked)} />
+            <span>Remind me</span>
+          </label>
+          <span className="bx-muted">Saved with the date. Notifications come later.</span>
         </span>
-      );
-    }
+      ) : null}
+    </span>
+  );
+}
+
+function MentionView(props: { kind: string; value: string; text: string; editable: boolean; onChange: (value: string) => void }) {
+  const env = useEnv();
+  switch (props.kind) {
+    case "page":
+      return <PageMention id={props.value} text={props.text} />;
     case "user": {
       const name = env.people?.find((p) => p.id === props.value)?.name ?? props.text ?? props.value;
       return <span className="bx-mention" data-kind="user">@{name}</span>;
     }
     case "date":
-      return <span className="bx-mention" data-kind="date">@{formatDate(props.value)}</span>;
+      return <DateMention value={props.value} editable={props.editable && env.editable} onChange={props.onChange} />;
     default:
       return <a className="bx-mention" data-kind="link" href={props.value} target="_blank" rel="noreferrer">{props.text || props.value}</a>;
   }
@@ -48,7 +125,12 @@ function MentionView(props: { kind: string; value: string; text: string }) {
 
 export const mentionInline = createReactInlineContentSpec(
   { type: INLINE.mention, propSchema: { kind: { default: "page" }, value: { default: "" }, text: { default: "" } }, content: "none" },
-  { render: ({ inlineContent }) => <MentionView kind={inlineContent.props.kind} value={inlineContent.props.value} text={inlineContent.props.text} /> },
+  {
+    render: ({ inlineContent, updateInlineContent, editor }) => (
+      <MentionView kind={inlineContent.props.kind} value={inlineContent.props.value} text={inlineContent.props.text} editable={editor.isEditable}
+        onChange={(value) => updateInlineContent({ type: INLINE.mention, props: { kind: inlineContent.props.kind, value, text: inlineContent.props.text } } as never)} />
+    ),
+  },
 );
 
 /**

@@ -50,6 +50,32 @@ afterEach(() => {
 const text = (store: WorkspaceStore, id: string) => plainText(store.blocks.get(id)?.text);
 
 describe("DocSession", () => {
+  it("leere Seiten: der erste Absatz hat je Seite eine eigene ID (nie BlockNotes feste `initialBlockId`)", async () => {
+    const store = smallStore([blk("e1", "page", "w", "a5", { text: "Leer 1" }), blk("e2", "page", "w", "a6", { text: "Leer 2" })]);
+    const rev = store.revision;
+    const s1 = new DocSession(store, "e1", { converter, debounceMs: 0 });
+    const s2 = new DocSession(store, "e2", { converter, debounceMs: 0 });
+    const ed1 = mount(s1);
+    const ed2 = mount(s2);
+    await new Promise((r) => setTimeout(r, 20)); // y-prosemirror übernimmt den Y-Stand nach dem Einhängen
+    const id1 = ed1.document[0]!.id;
+    const id2 = ed2.document[0]!.id;
+    expect(ed1.document).toHaveLength(1);
+    expect(id1).not.toBe("initialBlockId");
+    expect(id2).not.toBe("initialBlockId");
+    expect(id1).not.toBe(id2);
+    expect(store.revision).toBe(rev); // der leere Absatz ist noch kein Record
+    ed1.updateBlock(id1, { content: "erste Seite" });
+    ed2.updateBlock(id2, { content: "zweite Seite" });
+    s1.flush();
+    s2.flush();
+    expect(store.children("b:e1").map((id) => text(store, id))).toEqual(["erste Seite"]);
+    expect(store.children("b:e2").map((id) => text(store, id))).toEqual(["zweite Seite"]);
+    s1.close();
+    s2.close();
+  });
+
+
   it("Migration: erstes Öffnen übernimmt die Records, ohne zu schreiben", () => {
     const store = corpusStore();
     const rev = store.revision;

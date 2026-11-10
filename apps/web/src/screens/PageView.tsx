@@ -2,6 +2,7 @@
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
 import { rowsOf, type WorkspaceStore } from "@based/core";
+import { isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
 import { ExportDialog } from "../components/ImportExport.js";
@@ -129,7 +130,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           </>
         ) : null}
       </header>
-      {menu ? <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }} /> : null}
+      {menu ? (
+        <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
+          outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined} />
+      ) : null}
       {historyOpen ? (
         <VersionHistory client={client} pageID={pageID} current={store} onClose={() => setHistoryOpen(false)} onRestored={(r) => {
           setHistoryOpen(false);
@@ -179,7 +183,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
 }
 
 /** Seitenmenü (⋯) in der Kopfzeile. */
-function PageMenu({ pos, onClose, onHistory }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void }) {
+function PageMenu({ pos, onClose, onHistory, outline }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
@@ -198,6 +202,7 @@ function PageMenu({ pos, onClose, onHistory }: { pos: { top: number; right: numb
   return (
     <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
       <button type="button" role="menuitem" className="menu-item" onClick={onHistory}><Icon name="restore" size={18} />Version history</button>
+      {outline ? <button type="button" role="menuitem" className="menu-item" onClick={outline.toggle}><Icon name="page" size={18} />{outline.hidden ? "Show outline" : "Hide outline"}</button> : null}
     </div>
   );
 }

@@ -3,10 +3,12 @@
 // Callbacks aus dem EditorEnv.
 import { defaultProps, type BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
-import { plainText, type Block } from "@based/core";
+import { containingPage, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
-import { CUSTOM } from "../mapping/bn.js";
-import { useEnv, useStoreRevision } from "../ui/env.js";
+import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
+import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
+import { scrollToHeading } from "../ui/Outline.js";
+import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 
 const colorProps = { textColor: defaultProps.textColor, backgroundColor: defaultProps.backgroundColor };
 const CALLOUT_ICONS = ["💡", "📌", "⚠️", "✅", "❗", "ℹ️"];
@@ -193,26 +195,62 @@ export const linkToPageBlock = createReactBlockSpec(
 
 // MARK: Synced Block
 
-function SyncedView(props: { id: string; source: string }) {
+function SyncedView(props: { id: string; source: string; editor: AnyEditor }) {
   const env = useEnv();
   useStoreRevision(env.store);
+  const { store } = env;
   const root = props.source || props.id;
   const isCopy = props.source !== "";
-  const missing = isCopy && !env.store.blocks.has(props.source);
+  const missing = isCopy && !store.blocks.has(props.source);
   const loop = env.ancestors.includes(root) || root === env.rootID;
+  // Liegt das Original (bzw. seine Seite) im Papierkorb? Dann wäre der Inhalt nur noch von hier aus bearbeitbar.
+  const trashed = isCopy && !missing ? trashedRoot(store, props.source) : undefined;
+  const home = isCopy && !missing ? containingPage(store, props.source) : undefined;
+  const homeRef = usePageRef(env.pages, home ?? "");
+  const homeTitle = home ? (homeRef && !homeRef.missing ? homeRef.title : pageTitle(store.blocks.get(home))) : undefined;
+  const openHome = () => {
+    if (!home) return;
+    env.flush();
+    env.onOpenPage?.(home);
+  };
+  const copy = async () => {
+    const text = SYNC_CLIPBOARD_PREFIX + root;
+    rememberSyncClipboard(text);
+    try {
+      await globalThis.navigator?.clipboard?.writeText(text);
+    } catch { /* ohne Berechtigung: „Paste synced block“ im Slash-Menü */ }
+    env.notify("Copied. Paste on another page to sync this block there.");
+  };
+  const unsync = () => {
+    env.flush();
+    // Erst den Inhalt als eigene Kopie in den Store, dann zeigt der Block nicht mehr auf das Original.
+    if (unsyncCopy(store, props.id, { undoable: false })) props.editor.updateBlock(props.id, { props: { source: "" } });
+  };
   return (
-    <div className="bx-synced" data-copy={isCopy ? "true" : "false"} contentEditable={false}>
-      <div className="bx-synced-label">{isCopy ? "Synced copy" : "Synced block"}</div>
-      {missing ? <div className="bx-muted">The original synced block was deleted.</div>
-        : loop ? <div className="bx-muted">This synced block contains itself.</div>
-          : env.renderSynced(root)}
+    <div className="bx-synced" data-copy={isCopy ? "true" : "false"} data-trashed={trashed ? "true" : undefined} contentEditable={false}>
+      <div className="bx-synced-label">
+        <span>{isCopy ? "Synced copy" : "Synced block"}</span>
+        {isCopy && home && !trashed ? (
+          <button type="button" className="bx-synced-action" onClick={openHome} title="Open the page with the original">Original in {homeTitle}</button>
+        ) : null}
+        {env.editable && !missing ? <button type="button" className="bx-synced-action" onClick={() => void copy()}>Copy and sync</button> : null}
+        {env.editable && isCopy ? <button type="button" className="bx-synced-action" onClick={unsync}>Unsync</button> : null}
+      </div>
+      {trashed ? (
+        <div className="bx-synced-note" role="status">
+          The original of this synced block is in the Trash{homeTitle ? ` (${homeTitle})` : ""}. Restore it there, or unsync to keep the content here.
+        </div>
+      ) : null}
+      {missing ? <div className="bx-muted bx-synced-note">The original synced block was deleted.</div>
+        : loop ? <div className="bx-muted bx-synced-note">This synced block contains itself.</div>
+          : env.renderSynced(root, { readOnly: trashed !== undefined })}
     </div>
   );
 }
 
 export const syncedBlock = createReactBlockSpec(
   { type: CUSTOM.syncedBlock, propSchema: { source: { default: "" } }, content: "none" },
-  { render: ({ block }) => <SyncedView id={block.id} source={block.props.source} /> },
+  { render: ({ block, editor }) => <SyncedView id={block.id} source={block.props.source} editor={editor} /> },
 );
 
 // MARK: Datenbank (Platzhalter; die Ansicht zeichnet ein anderes Paket)
@@ -272,26 +310,16 @@ export const embedBlock = createReactBlockSpec(
 function TocView() {
   const env = useEnv();
   useStoreRevision(env.store);
-  const out: { id: string; level: number; title: string }[] = [];
-  const walk = (parent: string) => {
-    for (const id of env.store.children(parent)) {
-      const b = env.store.blocks.get(id);
-      if (!b || b.trashedAt !== undefined) continue;
-      const m = /^heading([1-4])$/.exec(b.type);
-      if (m) out.push({ id, level: Number(m[1]), title: plainText(b.text) });
-      if (b.type !== "page" && b.type !== "databasePage" && b.type !== "syncedBlock") walk("b:" + id);
-    }
-  };
-  walk("b:" + env.rootID);
+  const out = headingOutline(env.store, env.rootID);
   if (out.length === 0) return <span className="bx-muted">Add headings to create a table of contents.</span>;
   return (
     <ul className="bx-toc">
       {out.map((h) => (
-        <li key={h.id} data-level={h.level}>
+        <li key={h.id} data-level={h.depth + 1}>
           <a href={"#" + h.id} onClick={(e) => {
             e.preventDefault();
-            document.querySelector(`[data-id="${CSS.escape(h.id)}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}>{h.title || "Untitled"}</a>
+            scrollToHeading(null, h.id);
+          }}>{h.title}</a>
         </li>
       ))}
     </ul>

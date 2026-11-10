@@ -19,7 +19,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { astryxTheme } from "./astryxTheme.js";
 import "./styles.css";
 import { ShellDatabaseView } from "./databaseSlot.js";
-import { ShellPageEditor } from "./editorSlot.js";
+import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
@@ -43,6 +43,7 @@ const link = new StoreLink({
   },
 });
 const client = new StoreClient(link);
+connectEditor(client);
 link.onReconnect = () => void client.resync();
 client.onDevice = deviceNode.set;
 addEventListener("pagehide", (e: PageTransitionEvent) => {

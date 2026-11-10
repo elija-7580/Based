@@ -12,7 +12,7 @@ import {
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "./interop.js";
-import type { Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
+import type { Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -166,6 +166,27 @@ export class StoreClient {
 
   historyRestore(pageID: string, versionID: number): Promise<HistoryRestoreResult> {
     return this.request<HistoryRestoreResult>({ type: "history", action: { op: "restore", pageID, versionID } });
+  }
+
+  /** Angaben zu Seiten für Erwähnungen (`null` = gibt es nicht). */
+  pageInfo(ids: string[]): Promise<Record<string, PageInfo | null>> {
+    return this.request({ type: "pageInfo", ids });
+  }
+
+  /** Seitensuche fürs @-Menü (nur Titel, im Worker). */
+  findPages(query: string, limit?: number): Promise<PageInfo[]> {
+    return this.request(limit === undefined ? { type: "findPages", query } : { type: "findPages", query, limit });
+  }
+
+  backlinks(pageID: string): Promise<PageInfo[]> {
+    return this.request({ type: "backlinks", pageID });
+  }
+
+  /** Ein Synced-Block-Original in die offene Replik von `pageID` holen (für „Paste synced block“). */
+  async includeSynced(pageID: string, source: string): Promise<boolean> {
+    const r = await this.request<SyncedRecords>({ type: "includeSynced", pageID, source });
+    if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
+    return r.found;
   }
 
   syncNow(): Promise<boolean> {

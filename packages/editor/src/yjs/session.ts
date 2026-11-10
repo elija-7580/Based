@@ -19,6 +19,8 @@ import { syncChildren } from "./xmldiff.js";
 export const STORE_ORIGIN = { source: "based-store" } as const;
 /** Origin beim Laden eines gespeicherten Zustands. */
 export const LOAD_ORIGIN = { source: "based-load" } as const;
+/** BlockNotes feste ID für den ersten Block eines leeren Dokuments (Kollaborations-Modus). */
+const INITIAL_BLOCK_ID = "initialBlockId";
 /** Name des XML-Fragments im Y.Doc. */
 export const FRAGMENT = "blocks";
 
@@ -161,7 +163,11 @@ export class DocSession {
     // Den leeren Absatz am Ende (BlockNote hält immer einen bereit) nicht wegnehmen, solange er nur im Editor existiert.
     const live = this.fragment.length ? this.opts.converter.fromFragment(this.fragment) : [];
     const last = live[live.length - 1];
-    if (last && isDraft(last, this.store) && !target.some((b) => b.id === last.id)) target.push(last);
+    if (last && last.id !== INITIAL_BLOCK_ID && isDraft(last, this.store) && !target.some((b) => b.id === last.id)) target.push(last);
+    // Ein leeres Dokument bekommt seinen ersten (leeren) Absatz mit eigener ID. Sonst legt BlockNote ihn an – im
+    // Kollaborations-Modus mit der festen ID `initialBlockId`, und zwei leere Seiten teilten sich denselben Record
+    // (der erste Absatz der einen Seite wanderte beim Schreiben auf die andere).
+    if (target.length === 0) target.push({ id: globalThis.crypto.randomUUID(), type: "paragraph", props: {}, content: [], children: [] });
     const tmp = new Y.Doc();
     const tmpFragment = tmp.getXmlFragment(FRAGMENT);
     this.opts.converter.toFragment(target, tmpFragment);
