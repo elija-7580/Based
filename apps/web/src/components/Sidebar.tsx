@@ -11,7 +11,7 @@ import { Icon, type IconName } from "../icons.js";
 import { MoveDialog } from "./MoveDialog.js";
 import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./TeamspaceDialog.js";
 import type { Route } from "../shell/router.js";
-import { ancestorsInOutline, dropZone, flattenSidebar, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
+import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages } from "../shell/storage.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
@@ -65,6 +65,9 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   const [menu, setMenu] = useState<Menu | undefined>();
   const [drop, setDrop] = useState<{ key: string; zone: "before" | "inside" | "after" } | undefined>();
   const [moving, setMoving] = useState<string[] | undefined>();
+  // BSD-203: Mehrfachauswahl (⇧-Klick, ⇧↑/⇧↓) für Sammelaktionen; Esc oder ein normaler Klick hebt sie auf.
+  const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
+  const pickAnchor = useRef<string | undefined>(undefined);
   const [editTeamspace, setEditTeamspace] = useState<TeamspaceEdit | undefined>();
   const [deleteTeamspace, setDeleteTeamspace] = useState<{ id: string; name: string; pages: number } | undefined>();
   const dragging = useRef<string | undefined>(undefined);
@@ -74,6 +77,19 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   // Breite ziehen (gemerkt), ⌘\ blendet die Seitenleiste aus und wieder ein.
   const [width, setWidth] = useState(sidebarSize.width);
   const [hidden, setHidden] = useState(sidebarSize.hidden);
+  // BSD-203: eingeklappt → Zeiger an den linken Rand (oder über „Show sidebar“) zeigt sie schwebend (Hover-Peek).
+  const [peek, setPeek] = useState(false);
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const peekOpen = () => {
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    setPeek(true);
+  };
+  const peekClose = () => {
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    peekTimer.current = setTimeout(() => setPeek(false), 240);
+  };
+  useEffect(() => () => { if (peekTimer.current) clearTimeout(peekTimer.current); }, []);
+  useEffect(() => { if (!hidden) setPeek(false); }, [hidden]);
   const drag = useRef<{ x: number; w: number } | undefined>(undefined);
   useEffect(() => applySidebar(width, hidden), [width, hidden]);
   useEffect(() => {
@@ -107,6 +123,47 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   }, [outline, activeID]);
 
   const rows = useMemo(() => (outline ? flattenSidebar(outline, expanded, collapsed) : []), [outline, expanded, collapsed]);
+  const pageRowIDs = useMemo(() => rows.flatMap((r) => (r.kind === "page" && !r.key.startsWith("fav/") ? [r.id] : [])), [rows]);
+  const pick = useCallback((id: string, mode: "toggle" | "range") => {
+    setPicked((prev) => {
+      // ⇧-Klick: Bereich vom Anker (zuletzt gewählt, sonst die offene Seite) bis hier – wie im Finder.
+      const anchor = pickAnchor.current ?? activeID;
+      if (mode === "range" && anchor) {
+        const ids = pickRange(pageRowIDs, anchor, id);
+        if (ids.length) {
+          if (!pickAnchor.current) pickAnchor.current = anchor;
+          return new Set(ids);
+        }
+      }
+      const next = new Set(prev);
+      // Die gerade offene Seite zählt beim ersten ⇧-Klick mit (wie im Finder).
+      if (next.size === 0 && activeID && activeID !== id) next.add(activeID);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      pickAnchor.current = id;
+      return next;
+    });
+  }, [pageRowIDs, activeID]);
+  const clearPicked = useCallback(() => {
+    pickAnchor.current = undefined;
+    setPicked((p) => (p.size ? new Set() : p));
+  }, []);
+  const open = useCallback((id: string) => {
+    clearPicked();
+    onOpenPage(id);
+  }, [clearPicked, onOpenPage]);
+  useEffect(() => {
+    if (!picked.size) return;
+    const onKey = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape" && !menu) clearPicked(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [picked, menu, clearPicked]);
+  // Gelöschte oder nicht mehr sichtbare Seiten fallen aus der Auswahl.
+  useEffect(() => {
+    if (!picked.size || !outline) return;
+    const live = [...picked].filter((id) => outline.nodes[id] && !outline.trash.some((t) => t.id === id));
+    if (live.length !== picked.size) setPicked(new Set(live));
+  }, [outline, picked]);
   const reveal = useMemo(() => rowIndexOf(rows, activeID), [rows, activeID]);
 
   const toggle = useCallback((id: string) => setExp((s) => (s.has(id) ? s.delete(id) : s.add(id))), [setExp]);
@@ -236,13 +293,19 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         title={titles.get(row.id) ?? "Untitled"}
         icon={outline?.nodes[row.id]?.icon}
         active={row.id === activeID}
+        picked={picked.has(row.id)}
+        onPick={pick}
         favorite={outline?.favorites.includes(row.id) ?? false}
         renaming={renaming === row.id && !row.key.startsWith("fav/")}
         dropClass={dropClass}
-        onOpen={onOpenPage}
+        onOpen={open}
         onToggle={toggle}
         onAdd={addInside}
-        onMenu={(id, x, y) => setMenu({ id, x, y })}
+        onMenu={(id, x, y) => {
+          // Rechtsklick außerhalb der Auswahl: nur diese Seite.
+          if (picked.size && !picked.has(id)) clearPicked();
+          setMenu({ id, x, y });
+        }}
         onRename={commitRename}
         onCancelRename={() => setRenaming(undefined)}
         onDragStart={(e) => {
@@ -288,14 +351,19 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   return (
     <>
     {hidden ? (
-      <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title="Show sidebar (⌘\)" data-testid="sidebar-show" onClick={() => {
-        sidebarSize.setHidden(false);
-        setHidden(false);
-      }}>
-        <Icon name="sidebar" size={18} />
-      </button>
+      <>
+        <div className="sidebar-peek-zone" aria-hidden="true" data-testid="sidebar-peek-zone" onMouseEnter={peekOpen} onMouseLeave={peekClose} />
+        <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title="Show sidebar (⌘\)" data-testid="sidebar-show"
+          onMouseEnter={peekOpen} onMouseLeave={peekClose} onClick={() => {
+            sidebarSize.setHidden(false);
+            setHidden(false);
+          }}>
+          <Icon name="sidebar" size={18} />
+        </button>
+      </>
     ) : null}
-    <nav className="sidebar" aria-label="Workspace" hidden={hidden}>
+    <nav className={"sidebar" + (hidden && peek ? " peek" : "")} aria-label="Workspace" hidden={hidden && !peek} data-picked={picked.size || undefined}
+      onMouseEnter={hidden ? peekOpen : undefined} onMouseLeave={hidden ? peekClose : undefined}>
       <div className="brand">
         <img className="on-light" src={markLight} alt="" />
         <img className="on-dark" src={markDark} alt="" />
@@ -318,7 +386,23 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         {SYNC_LABEL[status.state]}
         {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
       </div>
-      {menu ? (
+      {menu && picked.size > 1 && picked.has(menu.id) ? (
+        <BulkMenu
+          menu={menu}
+          count={picked.size}
+          allFavorite={[...picked].every((id) => outline?.favorites.includes(id))}
+          onClose={() => setMenu(undefined)}
+          onFavorite={(on) => void client.command({ op: "favorite", ids: [...picked], on })}
+          onDuplicate={() => void client.command({ op: "duplicate", ids: [...picked] })}
+          onMove={() => setMoving([...picked])}
+          onTrash={() => {
+            const ids = [...picked];
+            void client.command({ op: "trash", ids });
+            clearPicked();
+            if (activeID && ids.includes(activeID)) onNavigate({ name: "home" });
+          }}
+        />
+      ) : menu ? (
         <PageMenu
           menu={menu}
           favorite={outline?.favorites.includes(menu.id) ?? false}
@@ -337,7 +421,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
           }}
         />
       ) : null}
-      {moving && state.outline ? <MoveDialog client={client} state={state} ids={moving} onClose={() => setMoving(undefined)} /> : null}
+      {moving && state.outline ? <MoveDialog client={client} state={state} ids={moving} onClose={() => setMoving(undefined)} onMoved={() => clearPicked()} /> : null}
       {editTeamspace ? (
         <TeamspaceDialog client={client} teamspace={editTeamspace} onClose={() => setEditTeamspace(undefined)} onSaved={() => {
           // neuer Teamspace ist sichtbar: „Teamspaces“ aufklappen
@@ -389,6 +473,8 @@ interface RowProps {
   title: string;
   icon: string | undefined;
   active: boolean;
+  picked: boolean;
+  onPick: (id: string, mode: "toggle" | "range") => void;
   favorite: boolean;
   renaming: boolean;
   dropClass: string;
@@ -409,6 +495,7 @@ const PageRow = memo(function PageRow(p: RowProps) {
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return;
     if (e.key === "Enter") p.onOpen(row.id);
+    else if (e.key === " " && e.shiftKey) { e.preventDefault(); p.onPick(row.id, "toggle"); }
     else if (e.key === "ArrowRight" && !row.expanded) p.onToggle(row.id);
     else if (e.key === "ArrowLeft" && row.expanded) p.onToggle(row.id);
   };
@@ -417,14 +504,20 @@ const PageRow = memo(function PageRow(p: RowProps) {
       role="treeitem"
       aria-level={row.depth + 1}
       aria-expanded={row.hasChildren || row.expanded ? row.expanded : undefined}
-      aria-selected={p.active}
+      aria-selected={p.active || p.picked}
       aria-label={p.title}
       tabIndex={p.active ? 0 : -1}
-      className={"tree-row" + (p.active ? " active" : "") + p.dropClass}
+      className={"tree-row" + (p.active ? " active" : "") + (p.picked ? " picked" : "") + p.dropClass}
+      data-picked={p.picked ? "" : undefined}
       style={{ ...p.style, paddingLeft: indent(row.depth) }}
       draggable={!p.renaming}
       data-row=""
-      onClick={() => p.onOpen(row.id)}
+      onClick={(e) => {
+        if (e.shiftKey) {
+          e.preventDefault();
+          p.onPick(row.id, e.altKey ? "toggle" : "range");
+        } else p.onOpen(row.id);
+      }}
       onKeyDown={onKey}
       onDragStart={p.onDragStart}
       onDragEnd={p.onDragEnd}
@@ -500,6 +593,40 @@ const PageRow = memo(function PageRow(p: RowProps) {
     </div>
   );
 });
+
+/** Sammelaktionen für mehrere ausgewählte Seiten (wie Notion). */
+function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, onMove, onTrash }: {
+  menu: Menu; count: number; allFavorite: boolean; onClose: () => void;
+  onFavorite: (on: boolean) => void; onDuplicate: () => void; onMove: () => void; onTrash: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const away = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
+    const esc = (e: globalThis.KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+  const item = (label: string, icon: IconName, run: () => void) => (
+    <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); run(); }}>
+      <Icon name={icon} size={16} />
+      {label}
+    </button>
+  );
+  return (
+    <div ref={ref} role="menu" aria-label={`Actions for ${count} pages`} className="menu" style={{ left: menu.x, top: menu.y }}>
+      <p className="menu-foot t-meta">{count} pages selected</p>
+      {item(allFavorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!allFavorite))}
+      {item("Duplicate", "duplicate", onDuplicate)}
+      {item("Move to…", "move", onMove)}
+      {item("Move to Trash", "trash", onTrash)}
+    </div>
+  );
+}
 
 function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, quickMoves, onQuickMove }: {
   menu: Menu;
