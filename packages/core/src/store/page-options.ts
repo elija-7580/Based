@@ -72,6 +72,7 @@ export function setPageCover(store: WorkspaceStore, id: string, cover: PageCover
       if (props.format) {
         const f = { ...props.format };
         delete f.coverPosition;
+        delete f.coverHeight;
         props.format = f;
       }
     }
@@ -88,6 +89,27 @@ export function setCoverPosition(store: WorkspaceStore, id: string, position: nu
     const format: Format = { ...(props.format ?? {}) };
     if (p === 0.5) delete format.coverPosition;
     else format.coverPosition = p;
+    props.format = format;
+    clean(props, x);
+  }));
+}
+
+/** Höhe des Covers als Faktor der Standardhöhe (Elija 11.11.: „wie weit das Bild in die Seite hineingeht“).
+ * Nur im TS-Stack; ältere Seiten ohne Wert haben 1. Die Swift-App ignoriert das Feld, der Sync behält es. */
+export const COVER_HEIGHT_MIN = 0.5;
+export const COVER_HEIGHT_MAX = 3;
+export function coverHeight(store: WorkspaceStore, id: string): number {
+  const h = store.blocks.get(id)?.props?.format?.coverHeight;
+  return typeof h === "number" && Number.isFinite(h) ? Math.min(COVER_HEIGHT_MAX, Math.max(COVER_HEIGHT_MIN, h)) : 1;
+}
+export function setCoverHeight(store: WorkspaceStore, id: string, height: number): void {
+  if (!store.blocks.has(id)) return;
+  const h = Math.round(Math.min(COVER_HEIGHT_MAX, Math.max(COVER_HEIGHT_MIN, height)) * 100) / 100;
+  store.transact("Resize cover", (tx) => tx.update(id, (x) => {
+    const props = { ...(x.props ?? {}) };
+    const format: Format = { ...(props.format ?? {}) };
+    if (h === 1) delete format.coverHeight;
+    else format.coverHeight = h;
     props.format = format;
     clean(props, x);
   }));

@@ -504,12 +504,15 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .sidebar.peek .sidebar-resize { display: none; }
 
 /* BSD-201 Teil 2: Cover und Bild-Icon */
-.page-cover { position: relative; height: calc(var(--space-8) * 3.5); margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-5); border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: visible; background: var(--surface-raised); }
+.page-cover { position: relative; height: calc(var(--space-8) * 3.5 * var(--cover-scale, 1)); margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-5); border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: visible; background: var(--surface-raised); }
 .page-cover > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; user-select: none; }
 .page-cover[data-repositioning] { cursor: grab; touch-action: none; }
 .page-cover[data-repositioning]:active { cursor: grabbing; }
 .page-cover-hint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: var(--space-1) var(--space-3); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); pointer-events: none; }
 .page-cover-actions[data-visible] { opacity: 1; }
+.page-cover-resize { position: absolute; left: 0; right: 0; bottom: calc(-1 * var(--space-1)); height: var(--space-2); cursor: ns-resize; z-index: 2; }
+.page-cover-resize::after { content: ""; position: absolute; left: 50%; top: 50%; width: var(--space-8); height: var(--space-1); transform: translate(-50%, -50%); border-radius: var(--radius-sm); background: var(--ink-2); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.page-cover:hover .page-cover-resize::after, .page-cover-resize:focus-visible::after { opacity: 0.6; }
 .page-cover-actions { position: absolute; right: var(--space-4); bottom: var(--space-3); display: flex; gap: var(--space-1); opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .page-cover:hover .page-cover-actions, .page-cover-actions:focus-within { opacity: 1; }
 .cover-picker { position: absolute; right: var(--space-4); top: 100%; z-index: 30; display: grid; gap: var(--space-1); }

@@ -2,7 +2,7 @@
 // „Change cover“ und „Reposition“ (senkrecht ziehen), und das Bild-Icon. Werte wie Swift (PageCover, PageIcon).
 import { useEffect, useRef, useState } from "react";
 import { ASSET_URL_PREFIX } from "@based/editor";
-import { pageCover, setCoverPosition, setPageCover, setPageIconImage, type CoverAsset, type PageCoverValue, type WorkspaceStore } from "@based/core";
+import { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight, pageCover, setCoverPosition, setPageCover, setPageIconImage, type CoverAsset, type PageCoverValue, type WorkspaceStore } from "@based/core";
 import { assets } from "../assetBridge.js";
 
 /** Farben fürs Cover: nur Töne, für die es Tokens gibt (Status-Tönungen); weitere Farben/Verläufe sind eine Designfrage. */
@@ -82,6 +82,9 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<number | undefined>();
   const drag = useRef<{ y: number; pos: number; id: number } | undefined>(undefined);
+  // Höhe: Unterkante ziehen (Faktor der Standardhöhe, pro Seite gespeichert).
+  const [liveHeight, setLiveHeight] = useState<number | undefined>();
+  const resize = useRef<{ y: number; h: number; px: number; id: number } | undefined>(undefined);
   useEffect(() => {
     if (!editing) return;
     const key = (e: KeyboardEvent) => {
@@ -93,10 +96,12 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
   });
   if (!cover) return null;
   const pos = draft ?? position;
+  const scale = liveHeight ?? coverHeight(store, pageID);
   const save = () => { if (draft !== undefined) setCoverPosition(store, pageID, draft); setEditing(false); setDraft(undefined); };
   const cancel = () => { setEditing(false); setDraft(undefined); };
   return (
-    <div className="page-cover" data-testid="page-cover" style={image ? undefined : { background: coverBackground(cover) }}
+    <div className="page-cover" data-testid="page-cover"
+      style={{ ["--cover-scale" as string]: String(scale), ...(image ? {} : { background: coverBackground(cover) }) }}
       data-repositioning={editing ? "" : undefined}
       onPointerDown={(e) => {
         if (!editing || e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
@@ -128,6 +133,36 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
             </>
           )}
         </div>
+      ) : null}
+      {!readOnly ? (
+        <div className="page-cover-resize" role="separator" aria-orientation="horizontal" aria-label="Cover height" data-testid="cover-resize"
+          tabIndex={0} aria-valuemin={COVER_HEIGHT_MIN} aria-valuemax={COVER_HEIGHT_MAX} aria-valuenow={scale}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+            e.preventDefault();
+            setCoverHeight(store, pageID, scale + (e.key === "ArrowDown" ? 0.1 : -0.1));
+          }}
+          onDoubleClick={() => setCoverHeight(store, pageID, 1)}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault(); e.stopPropagation();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            resize.current = { y: e.clientY, h: scale, px: Math.max(1, e.currentTarget.parentElement!.clientHeight), id: e.pointerId };
+          }}
+          onPointerMove={(e) => {
+            const r = resize.current;
+            if (!r || r.id !== e.pointerId) return;
+            e.stopPropagation();
+            setLiveHeight(Math.min(COVER_HEIGHT_MAX, Math.max(COVER_HEIGHT_MIN, r.h * (1 + (e.clientY - r.y) / r.px))));
+          }}
+          onPointerUp={(e) => {
+            const r = resize.current;
+            if (!r || r.id !== e.pointerId) return;
+            resize.current = undefined;
+            if (liveHeight !== undefined) setCoverHeight(store, pageID, liveHeight);
+            setLiveHeight(undefined);
+          }}
+          onPointerCancel={() => { resize.current = undefined; setLiveHeight(undefined); }} />
       ) : null}
       {picker ? <CoverPicker store={store} pageID={pageID} hasCover onClose={() => setPicker(false)} /> : null}
     </div>

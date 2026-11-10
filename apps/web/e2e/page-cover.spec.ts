@@ -55,6 +55,19 @@ test("Cover: Farbe, Bild hochladen, verschieben, entfernen", async ({ page }) =>
   await page.keyboard.press("Escape");
   await expect(img).toHaveAttribute("style", saved!);
 
+  // Höhe: Unterkante ziehen (Elija 11.11.), bleibt nach dem Loslassen; Doppelklick setzt zurück.
+  const before = (await cover.boundingBox())!.height;
+  await cover.hover();
+  const handle = page.getByTestId("cover-resize");
+  const h = (await handle.boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 + 120, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(async () => (await cover.boundingBox())!.height).toBeGreaterThan(before + 60);
+  await handle.dblclick();
+  await expect.poll(async () => Math.round((await cover.boundingBox())!.height)).toBe(Math.round(before));
+
   await cover.hover();
   await cover.getByRole("button", { name: "Change cover" }).click();
   await page.getByTestId("cover-picker").getByRole("button", { name: "Remove cover" }).click();

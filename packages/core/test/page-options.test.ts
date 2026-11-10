@@ -32,6 +32,26 @@ describe("Seiten-Optionen", () => {
   });
 });
 
+describe("Cover-Höhe", async () => {
+  const { coverHeight, setCoverHeight, setPageCover } = await import("../src/index.js");
+  it("Standard 1 für alte Seiten ohne Wert, begrenzt 0,5…3, 1 wird nicht gespeichert, Entfernen des Covers räumt auf", () => {
+    const s = mk();
+    expect(coverHeight(s, "p")).toBe(1);
+    setPageCover(s, "p", { color: { _0: "blue" } });
+    setCoverHeight(s, "p", 1.756);
+    expect(s.blocks.get("p")?.props?.format?.coverHeight).toBe(1.76);
+    expect(coverHeight(s, "p")).toBe(1.76);
+    setCoverHeight(s, "p", 9);
+    expect(coverHeight(s, "p")).toBe(3);
+    setCoverHeight(s, "p", 1);
+    expect(s.blocks.get("p")?.props?.format?.coverHeight).toBeUndefined();
+    setCoverHeight(s, "p", 0.1);
+    expect(coverHeight(s, "p")).toBe(0.5);
+    setPageCover(s, "p", undefined);
+    expect(s.blocks.get("p")?.props?.format?.coverHeight).toBeUndefined();
+  });
+});
+
 describe("Cover und Bild-Icon (BSD-201 Teil 2)", async () => {
   const { pageCover, setCoverPosition, setPageCover, setPageIconImage } = await import("../src/index.js");
   it("Cover wie Swift PageCover (_0), Position, Entfernen räumt die Position mit auf", () => {
