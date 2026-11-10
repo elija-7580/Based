@@ -60,7 +60,7 @@ describe("Router", () => {
 describe("Sync v2", () => {
   it("info, push, pull in Seiten", async () => {
     const app = await start();
-    expect((await get(`${app.url}/sync/v2/info`)).body).toEqual({ protocol: 2, seq: 0, oldestSeq: 0 });
+    expect((await get(`${app.url}/sync/v2/info`)).body).toMatchObject({ protocol: 2, seq: 0, oldestSeq: 0 });
     const records = Array.from({ length: 7 }, (_, i) => page(`p${i}`, `Seite ${i}`));
     const push = await post(`${app.url}/sync/v2/push`, { records, deletions: [] });
     expect(push.body).toEqual({ newer: [], seq: 7, deleted: [] });
@@ -155,7 +155,7 @@ describe("Sync v2", () => {
     await post(`${app.url}/sync/v2/push`, { records: [], deletions: [{ kind: "block", id: "p3", stamp: old }] });
     expect(app.sync.compactTombstones()).toBe(1);
     const info = (await get(`${app.url}/sync/v2/info`)).body!;
-    expect(info).toEqual({ protocol: 2, seq: 5, oldestSeq: 5 });
+    expect(info).toMatchObject({ protocol: 2, seq: 5, oldestSeq: 5 });
     const pulled = (await get(`${app.url}/sync/v2/pull?after=0`)).body!;
     expect((pulled.deletions as { id: string }[]).map((d) => d.id)).toEqual(["p2"]);
     expect(app.sync.compactTombstones()).toBe(0);

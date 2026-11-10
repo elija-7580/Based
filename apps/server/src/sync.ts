@@ -139,6 +139,7 @@ export class SyncService {
   push(body: unknown): PushReply {
     const p = decodePush(body);
     for (const k of p.deletions) if (!p.stamps.has(k)) p.stamps.set(k, this.store.clock.now());
+    this.adoptDeviceWorkspace(p.records);
     const merge = this.store.applyRemote(p.records, p.deletions, p.stamps);
     const newer: WireRecord[] = [];
     // `stale` enthält auch Löschungen, die gegen einen neueren Stand verloren: der Record existiert noch → newer.
@@ -149,6 +150,26 @@ export class SyncService {
     const deleted = [...merge.tombstoned.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, s]) => wireDeletion(k, s));
     this.wake();
     return { newer, seq: this.seq, deleted };
+  }
+
+  /**
+   * BSD-179: Der Swift-based-server legt beim ersten Start einen eigenen Workspace-Record an („My Workspace“,
+   * Stempel = Startzeit, node des Servers). Gegen den verliert per Last-Writer-Wins jeder ältere Record eines
+   * Geräts – Name, Icon, Favoriten, Home-Seite und Teamspaces wären weg. Dieser Server legt keinen an, kann aber
+   * eine solche Datei übernehmen. Deshalb: solange der Workspace-Record hier der unberührte, vom Server selbst
+   * gestempelte Standard ist, gewinnt der gepushte Record eines Geräts. Er bekommt einen frischen Server-Stempel,
+   * damit er auch Geräte erreicht, die den Standard schon geholt haben (gleiches Wire-Format, nur ein neuerer
+   * Stempel). Ein von einem Gerät geschriebener Stand ist nie „unberührt“ (anderer node) und bleibt bei LWW.
+   */
+  private adoptDeviceWorkspace(records: WireRecord[]) {
+    const mine = this.store.workspace;
+    if (!isUntouchedServerDefault(mine, this.store.clock.node)) return;
+    const i = records.findIndex((r) => r.kind === "workspace" && r.data.id === mine.id);
+    const pushed = records[i];
+    if (!pushed || pushed.kind !== "workspace") return;
+    if (compare(pushed.data.stamp, mine.stamp) >= 0) return; // gewinnt ohnehin
+    if (isDefaultContent(pushed.data)) return; // nichts zu retten
+    records[i] = { ...pushed, data: { ...pushed.data, stamp: this.store.clock.now() } };
   }
 
   /** Änderungen nach `after`, älteste zuerst, höchstens `limit` Einträge pro Seite. */
@@ -266,6 +287,18 @@ export class SyncService {
     const reply = this.push({ records: b?.records, deletions: b?.deletions ?? [] });
     return { records: reply.newer, deletions: [], cursor: this.store.clock.current };
   }
+}
+
+type WorkspaceData = Extract<WireRecord, { kind: "workspace" }>["data"];
+
+/** Inhalt wie ein neu angelegter Workspace: Standardname, keine Favoriten, Teamspaces, Icon oder Home-Seite. */
+function isDefaultContent(w: WorkspaceData): boolean {
+  return w.name === "My Workspace" && w.favorites.length === 0 && (w.teamspaces?.length ?? 0) === 0 && w.icon === undefined && w.homePageID === undefined;
+}
+
+/** Der Standard-Record, den ein Server (node = `node`) selbst angelegt hat und den niemand geändert hat. */
+export function isUntouchedServerDefault(w: WorkspaceData, node: string): boolean {
+  return w.stamp.node === node && w.stamp.millis > 0 && isDefaultContent(w);
 }
 
 function compare(a: Stamp, b: Stamp): number {

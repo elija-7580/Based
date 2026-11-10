@@ -3,6 +3,8 @@
 // KaTeX offline (BSD-10, src/equation.tsx).
 import { useEffect, useState } from "react";
 import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { assets } from "./assetBridge.js";
+import "./assets.css";
 import { Equation } from "./equation.js";
 import { slots, type PageEditorProps } from "./slots.js";
 
@@ -24,9 +26,19 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
   };
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
+  const files = assets();
   return (
     <div className="shell-editor">
-      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} />
+      <PageEditor
+        store={store}
+        pageID={pageID}
+        editable={!readOnly}
+        onOpenPage={onOpenPage}
+        theme={theme}
+        renderDatabase={renderDatabase}
+        renderEquation={renderEquation}
+        {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})}
+      />
     </div>
   );
 }

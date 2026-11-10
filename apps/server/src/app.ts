@@ -1,14 +1,18 @@
 // Der TS-based-server als Ganzes: Routen (Sync v2, v1-Kompatibilität, MCP, Health) über einem SyncService.
+import { createReadStream, mkdtempSync } from "node:fs";
 import { createServer, type Server } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
+import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, parseRange, referencedAssets } from "./assets.js";
 import { Collab, YStateStore } from "./collab.js";
 import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
-import { BadRequest, DEFAULT_PAGE, SyncService, type SyncServiceOptions } from "./sync.js";
+import { BadRequest, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
 export interface AppOptions extends SyncServiceOptions {
   token: string;
@@ -22,10 +26,17 @@ export interface AppOptions extends SyncServiceOptions {
   collabDb?: string | SqlDatabase;
   /** Hocuspocus speichert nach so vielen ms Ruhe. */
   collabDebounce?: number;
+  /** Ordner für Dateien (Standard: `<db>.assets` neben der Datenbank, bei In-Memory ein temporärer Ordner). */
+  assetsDir?: string;
+  /** Größte Datei in Bytes (Standard 100 MiB). */
+  maxAssetBytes?: number;
 }
 
 export interface App {
   sync: SyncService;
+  assets: AssetStore;
+  /** Nicht mehr referenzierte Dateien aufräumen (läuft mit der Tombstone-GC; für Tests einzeln aufrufbar). */
+  collectAssets(nowMillis?: number): { removed: number; marked: number; partials: number };
   pages: Pages;
   collab: Collab;
   router: Router;
@@ -63,6 +74,14 @@ export function createApp(opts: AppOptions): App {
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
   const collab = new Collab({ store: sync.store, states: new YStateStore(collabDb), token: opts.token, log, ...(opts.collabDebounce !== undefined ? { debounce: opts.collabDebounce } : {}) });
 
+  const persistentDb = typeof opts.db === "string" && opts.db !== ":memory:";
+  const temporaryAssets = !opts.assetsDir && !persistentDb;
+  const assets = new AssetStore(
+    opts.assetsDir ?? (persistentDb ? (opts.db as string).replace(/(\.sqlite)?$/, ".assets") : mkdtempSync(join(tmpdir(), "based-assets-"))),
+    { ...(opts.maxAssetBytes !== undefined ? { maxBytes: opts.maxAssetBytes } : {}), ...(opts.nowMillis ? { nowMillis: opts.nowMillis } : {}) },
+  );
+  const collectAssets = (nowMillis?: number) => assets.collect(referencedAssets(sync.store), TOMBSTONE_RETENTION_DAYS, nowMillis);
+
   // 400 statt 500 für kaputte Anfragen; Meldungen ohne Inhalte.
   const handle = <T>(f: () => T) => {
     try {
@@ -79,7 +98,7 @@ export function createApp(opts: AppOptions): App {
   router.add("GET", "/", health, { access: "public" });
 
   // MARK: Sync v2 (docs/sync-protocol.md)
-  router.add("GET", "/sync/v2/info", () => json(sync.info()));
+  router.add("GET", "/sync/v2/info", () => json({ ...sync.info(), assets: { maxBytes: assets.maxBytes, chunkBytes: ASSET_CHUNK_LIMIT } }));
   router.add("GET", "/sync/v2/pull", ({ url }) => handle(() => json(sync.pull(intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE)))));
   router.add("POST", "/sync/v2/push", ({ body }) => handle(() => json(sync.push(parseJSON(body)))), { bodyLimit: LARGE_BODY_LIMIT });
   router.add("GET", "/sync/v2/wait", async ({ url, signal }) => {
@@ -95,6 +114,64 @@ export function createApp(opts: AppOptions): App {
     }
     return json({ seq: await sync.wait(after, timeout, signal) });
   });
+
+  // MARK: Assets (BSD-78, docs/sync-protocol.md „Assets“): inhaltsadressierte Blobs, Schlüssel = SHA-256
+  const assetHash = (params: Record<string, string>) => {
+    const h = params.hash ?? "";
+    if (!ASSET_HASH.test(h)) throw new BadRequest("asset id must be a lowercase hex SHA-256");
+    return h;
+  };
+  const assetReply = async (f: () => Promise<ReturnType<typeof json>> | ReturnType<typeof json>) => {
+    try {
+      return await f();
+    } catch (e) {
+      if (e instanceof BadRequest) return error(e.message, 400);
+      if (e instanceof AssetError) return json({ error: e.message, ...e.extra }, e.status);
+      throw e;
+    }
+  };
+  router.add("GET", "/sync/v2/asset/:hash/status", ({ params }) => assetReply(() => json(assets.status(assetHash(params)))));
+  router.add("HEAD", "/sync/v2/asset/:hash", ({ params }) =>
+    assetReply(() => {
+      const found = assets.locate(assetHash(params));
+      return found ? { status: 200, headers: { "Content-Length": String(found.size), "Content-Type": "application/octet-stream" } } : { status: 404 };
+    }),
+  );
+  router.add(
+    "PUT",
+    "/sync/v2/asset/:hash",
+    ({ params, url, body }) =>
+      assetReply(async () => {
+        const hash = assetHash(params);
+        const offset = intParam(url, "offset", 0);
+        const total = intParam(url, "total", offset + body.length);
+        const status = await assets.write(hash, offset, total, body);
+        if (status.complete) log.info("asset stored", { bytes: status.received });
+        return json(status, status.complete ? 200 : 202);
+      }),
+    { bodyLimit: ASSET_CHUNK_LIMIT },
+  );
+  router.add("GET", "/sync/v2/asset/:hash", ({ params, req, res }) =>
+    assetReply(() => {
+      const found = assets.locate(assetHash(params));
+      if (!found) return error("not found", 404);
+      const range = parseRange(req.headers.range, found.size);
+      if (range === null) return { status: 416, json: { error: "range not satisfiable", size: found.size }, headers: { "Content-Range": `bytes */${found.size}` } };
+      const start = range?.start ?? 0, end = range?.end ?? found.size - 1;
+      // Inhalt ist unveränderlich (der Name ist sein Hash); nie als HTML ausliefern.
+      res.writeHead(range ? 206 : 200, {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": String(found.size === 0 ? 0 : end - start + 1),
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, max-age=31536000, immutable",
+        "Accept-Ranges": "bytes",
+        ...(range ? { "Content-Range": `bytes ${start}-${end}/${found.size}` } : {}),
+      });
+      if (found.size === 0) res.end();
+      else createReadStream(found.path, { start, end }).on("error", () => res.destroy()).pipe(res);
+      return undefined;
+    }),
+  );
 
   // MARK: Sync v1 (nur für sehr alte Apps)
   router.add("GET", "/sync/pull", ({ url }) =>
@@ -157,6 +234,12 @@ export function createApp(opts: AppOptions): App {
     } catch (e) {
       log.warning("tombstone compaction failed", { error: e instanceof Error ? e.name : "unknown" });
     }
+    try {
+      const r = collectAssets();
+      if (r.removed > 0 || r.partials > 0) log.info("collected unreferenced assets", { removed: r.removed, partials: r.partials, marked: r.marked });
+    } catch (e) {
+      log.warning("asset collection failed", { error: e instanceof Error ? e.name : "unknown" });
+    }
   };
   if (opts.compactEvery !== false) {
     compact();
@@ -166,6 +249,8 @@ export function createApp(opts: AppOptions): App {
 
   return {
     sync,
+    assets,
+    collectAssets,
     pages,
     collab,
     router,
@@ -192,6 +277,7 @@ export function createApp(opts: AppOptions): App {
       });
       db.close();
       collabDb.close();
+      if (temporaryAssets) assets.destroy();
     },
   };
 }

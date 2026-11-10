@@ -118,6 +118,44 @@ Long poll. It answers as soon as the server has a change after `after`, or after
 55). Clients loop on it and run a sync round when `seq > pulled`, so changes from other devices arrive within
 about a second without constant polling.
 
+## Assets (files and images, BSD-78)
+
+Bytes of images and attachments don't travel in records. A record only carries an `AssetRef`
+(`{"id", "name", "size"?, "mime"?}`, e.g. in `props.asset` of an image block); the bytes are a **blob addressed by
+its SHA-256**. For files added in Based Next, `AssetRef.id` is that hash (64 lowercase hex characters), so the same
+file is stored and uploaded once, whatever its name. No new record field, no change to push/pull.
+
+`GET /sync/v2/info` additionally returns `"assets": {"maxBytes": 104857600, "chunkBytes": 8388608}` on servers that
+store files. A server without that field (the Swift `based-server`) doesn't; clients then keep uploads queued.
+
+| request | reply |
+|---|---|
+| `GET /sync/v2/asset/<sha256>/status` | `{"complete": false, "received": 2097152}` or `{"complete": true, "received": n, "size": n}` |
+| `PUT /sync/v2/asset/<sha256>?offset=<n>&total=<size>` (body: raw bytes of one chunk, at most `chunkBytes`) | `202 {"complete": false, "received": n}`; with the last chunk `200 {"complete": true, …}` |
+| `GET /sync/v2/asset/<sha256>` (optional `Range: bytes=a-b`) | `200`/`206` `application/octet-stream`; `404` until the upload is complete |
+| `HEAD /sync/v2/asset/<sha256>` | `200` with `Content-Length`, or `404` |
+
+- **Upload, resumable:** ask `status`, continue at `received`, send chunks in order. `offset` must equal what the
+  server has (`409 {"received": n}` otherwise: continue there); `offset=0` starts over. Without query parameters a
+  `PUT` is a whole small file. An existing blob answers `complete` at once (idempotent, deduplication across devices).
+- **Verification:** with the last chunk the server hashes the file; if it isn't `<sha256>`: `422`, partial upload
+  dropped. Clients verify downloads the same way.
+- **Limits and errors:** `total` above `maxBytes` (default 100 MiB, `--max-asset-mb`) → `413 {"error": "asset too
+  large", "limit": n}`; a chunk above `chunkBytes` → `413`; malformed id → `400`; no or wrong token → `401` (same
+  auth middleware as every route, ADR 0006).
+- **Client:** new files go into the device's blob store and a persistent upload queue (`meta assets.uploads`). Each
+  sync round uploads queued files before pushing records; offline or failing uploads are retried with backoff
+  (2 s … 5 min), a file above the limit is marked failed and not retried. Other devices download a blob only when a
+  block showing it is opened (ranged requests of 1 MiB, an interrupted download continues); until then the block is a
+  placeholder. `404`/incomplete means the device that added the file hasn't uploaded it yet: retry later.
+- **Cleanup:** hourly (with the tombstone GC) the server marks blobs no record references and deletes one only after
+  it has been unreferenced for 90 days in a row, the tombstone retention; unfinished uploads without progress go
+  after 7 days. Clients don't delete local blobs yet.
+- **Swift app:** its `AssetRef.id` is a UUID and its files travel only through CloudKit; such files are not on the
+  server and show as "only stored on the device it was added on" in Based Next. Files from Based Next reach the
+  Swift app as records whose bytes it can't fetch until it implements these routes.
+- Logs carry counts and sizes only: no names, no hashes (route paths are logged as `/sync/v2/asset/:hash`).
+
 ## Client algorithm
 
 The client keeps a **local change log**: every local write gets an increasing local sequence number, plus a
@@ -183,5 +221,5 @@ channel ("Server", "iCloud", "Server + iCloud", "Local only").
 | macOS / iOS (Swift)    | `ServerSync` in BasedBrain; v2 with automatic fallback to v1               |
 | Linux (Swift)          | BasedCore + BasedBrain build and test on Linux; `based-server` runs there |
 | TypeScript (`packages/sync`) | v2 only (BSD-152): `SqlitePersistence` (same file format and migrations as the Swift app), `SyncClient`; drivers `@based/sync/node` (node:sqlite) and `@based/sync/wasm` (SQLite-WASM + OPFS in a worker). Tested against an in-process server and, with `BASED_SERVER_BIN`, the Swift `based-server`. Orphan rescue (BSD-104) not ported yet |
-| TypeScript server (`apps/server`) | v2 + v1 (BSD-158) on the same file format; long poll event-driven; tested with `SyncClient` and the unchanged Swift `ServerSync` (`ci/server/swift-client-compat.sh`). See `docs/server.md` |
+| TypeScript server (`apps/server`) | v2 + v1 (BSD-158) on the same file format; assets (BSD-78); long poll event-driven; tested with `SyncClient` and the unchanged Swift `ServerSync` (`ci/server/swift-client-compat.sh`). See `docs/server.md` |
 | Web / Windows / Linux UI | planned. See `docs/platforms.md`                                         |

@@ -70,6 +70,24 @@ Client-Code wiederverwendet. Eingehende Pushes werden als *remote* geloggt; `pul
   Swift-Clients nutzen v1 nur nach einem 404 auf v2, also nie gegen diesen Server.
 - Der Swift-Server legt beim Start eigene Records an (Agent-Brain-Datenbanken, Workspace-Record mit frischem
   Stempel); der TS-Server nicht. Er ändert beim Start nichts am Workspace.
+- **Workspace-Record beim ersten Sync (BSD-179):** Gegen den Standard-Record des Swift-Servers („My Workspace“,
+  Stempel = Startzeit, node `server`) verliert per Last-Writer-Wins der ältere Record eines Geräts – Name, Icon,
+  Favoriten, Home-Seite, Teamspaces. Der TS-Server legt keinen solchen Record an (frischer Server: Change-Log leer).
+  Übernimmt er eine Datei vom Swift-Server, steht der Record aber darin. Deshalb in `SyncService.push`: solange der
+  Workspace-Record der unberührte, vom Server selbst gestempelte Standard ist (node = `--node`, Standardname, keine
+  Favoriten/Teamspaces/Icon/Home-Seite), gewinnt der gepushte Record eines Geräts und bekommt einen frischen
+  Server-Stempel (so erreicht er auch Geräte, die den Standard schon geholt haben). Kein neues Feld auf dem Draht.
+  Der Swift-Server ist unverändert und hat den Fehler weiter. `test/fresh-server-workspace.test.ts`.
+
+## Dateien (Assets, BSD-78)
+
+`src/assets.ts`, Protokoll in `docs/sync-protocol.md` („Assets“). Blobs liegen als Dateien neben der Datenbank:
+`<db>.assets/<ersten 2 Hex>/<sha256>`, angefangene Uploads in `partial/`, Vormerkungen der GC in
+`unreferenced.json` (`--assets <dir>` / `BASED_ASSETS_DIR`, Grenze `--max-asset-mb` / `BASED_MAX_ASSET_MB`,
+Standard 100). Die SQLite-Datei bleibt unverändert (gleiches Format wie Swift). Der Router kennt dafür Pfadmuster
+(`/sync/v2/asset/:hash`), `PUT` und `HEAD`; Auth und Body-Grenze (8 MiB je Stück) wie bei jeder Route, ins Log kommt
+das Muster statt des Pfads. Aufräumen (`App.collectAssets`) läuft mit der Tombstone-GC. Backups müssen den
+Assets-Ordner mitnehmen. `test/assets.test.ts`.
 
 ## MCP
 

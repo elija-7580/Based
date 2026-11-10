@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Appearance } from "../appearance.js";
 import { ImportExportSettings } from "../components/ImportExport.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
+import { assetsLabel } from "../assetBridge.js";
 import { syncConfig } from "../shell/storage.js";
 import type { StoreClient } from "../worker/client.js";
 import type { StatusInfo } from "../worker/protocol.js";
@@ -95,7 +96,7 @@ function SyncSettings({ client, status }: { client: StoreClient; status: StatusI
       <form className="setting" onSubmit={(e) => { e.preventDefault(); connect(); }}>
         <div>
           <div className="setting-label">Server</div>
-          <div className="t-desc" data-testid="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}</div>
+          <div className="t-desc" data-testid="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}{status.assets ? ` · ${assetsLabel(status.assets)}` : ""}</div>
         </div>
         <div className="fields">
           <label className="field">

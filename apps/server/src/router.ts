@@ -17,12 +17,30 @@ export interface RouteContext {
   url: URL;
   /** Gelesener Body (leer bei GET). */
   body: Buffer;
+  /** Werte der `:name`-Abschnitte des Routenpfads. */
+  params: Record<string, string>;
   /** Wird ausgelöst, wenn der Client die Verbindung schließt. */
   signal: AbortSignal;
 }
 
 /** Antwort eines Handlers; `undefined` = der Handler hat selbst geantwortet (MCP-Transport). */
 export type RouteResult = { status: number; json?: unknown; text?: string; headers?: Record<string, string> } | undefined;
+
+/** Passt `path` auf das Muster (`/a/:name/b`)? Gibt die Parameter zurück. Ohne `:` nur exakter Vergleich. */
+export function matchPath(pattern: string, path: string): Record<string, string> | undefined {
+  if (!pattern.includes(":")) return pattern === path ? {} : undefined;
+  const a = pattern.split("/"), b = path.split("/");
+  if (a.length !== b.length) return undefined;
+  const params: Record<string, string> = {};
+  for (let i = 0; i < a.length; i++) {
+    const seg = a[i]!;
+    if (seg.startsWith(":")) {
+      if (!b[i]) return undefined;
+      params[seg.slice(1)] = b[i]!;
+    } else if (seg !== b[i]) return undefined;
+  }
+  return params;
+}
 
 export interface Route {
   method: string;
@@ -103,18 +121,21 @@ export class Router {
     const controller = new AbortController();
     res.on("close", () => controller.abort());
     let result: RouteResult;
+    // Ins Log kommt das Muster der Route, nie der konkrete Pfad mit Kennungen.
+    const matched = this.routes.find((r) => matchPath(r.path, path));
+    const logPath = matched ? matched.path : path;
     try {
       result = await this.dispatch(req, res, url, path, controller.signal);
     } catch (e) {
       // Fehlermeldung ohne Inhalte: nur der Typ.
-      this.config.log.error("handler failed", { method: req.method, path, error: e instanceof Error ? e.name : "unknown" });
+      this.config.log.error("handler failed", { method: req.method, path: logPath, error: e instanceof Error ? e.name : "unknown" });
       result = error("internal error", 500);
     }
-    if (result && !res.headersSent && !res.writableEnded) send(res, result);
+    if (result && !res.headersSent && !res.writableEnded) send(res, result, req.method === "HEAD");
     const status = result?.status ?? res.statusCode;
     this.config.log.log(status >= 500 ? "error" : "debug", "request", {
       method: req.method,
-      path,
+      path: logPath,
       status,
       ms: Math.round(performance.now() - started),
     });
@@ -126,12 +147,12 @@ export class Router {
       return {
         status: 204,
         headers: {
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Authorization, Content-Type, Mcp-Session-Id, Mcp-Protocol-Version",
+          "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+          "Access-Control-Allow-Headers": "Authorization, Content-Type, Range, Mcp-Session-Id, Mcp-Protocol-Version",
         },
       };
     }
-    const candidates = this.routes.filter((r) => r.path === path);
+    const candidates = this.routes.filter((r) => matchPath(r.path, path));
     if (candidates.length === 0) return error("not found", 404);
     const route = candidates.find((r) => r.method === method);
     if (!route) {
@@ -151,13 +172,16 @@ export class Router {
       }
       throw e;
     }
-    return route.handler({ req, res, url, body, signal });
+    return route.handler({ req, res, url, body, signal, params: matchPath(route.path, path) ?? {} });
   }
 }
 
-function send(res: ServerResponse, r: NonNullable<RouteResult>) {
+function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false) {
   for (const [k, v] of Object.entries(r.headers ?? {})) res.setHeader(k, v);
-  if (r.json !== undefined) {
+  if (head) {
+    res.writeHead(r.status);
+    res.end();
+  } else if (r.json !== undefined) {
     const data = JSON.stringify(r.json);
     res.writeHead(r.status, { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) });
     res.end(data);
