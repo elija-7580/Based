@@ -4,8 +4,16 @@
 // (die Worker-Datei `store.worker.ts` verbindet ihn nur mit `self`).
 import {
   buildOutline,
+  buildPageGraph,
   createPage,
+  createTeamspace,
   deleteForever,
+  deleteTeamspace,
+  duplicatePages,
+  filterGraph,
+  libraryItems,
+  renameTeamspace,
+  setTeamspaceIcon,
   dropPages,
   emptyTrash,
   insertPage,
@@ -30,16 +38,19 @@ import {
   MemoryHistoryStorage,
   VersionHistory,
   type Block,
+  type GraphFilter,
   type HistoryStorage,
+  type PageGraph,
   type RecordKeyString,
   type StoreChange,
   type WireRecord,
   type WorkspaceStore,
 } from "@based/core";
 import { SyncClient, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
-import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
+import type { AssetStore } from "./assets.js";
+import { commitImportPayload, exportPage, exportWorkspace, printPage } from "./interop.js";
 import { PageHistory } from "./history.js";
-import type { Command, Event, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
+import type { Command, Event, GraphResult, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -59,6 +70,8 @@ export interface HostOptions {
   online?: () => boolean;
   /** Sync-Takt (Tests: kurz). */
   syncTiming?: { intervalMs?: number; waitTimeoutSeconds?: number; pushDelayMs?: number };
+  /** Asset-Speicher (Bilder, Anhänge) für Exporte; ohne: Dateien gelten als fehlend. */
+  assets?: AssetStore;
   /** Aufschub für Quick Find, damit neuere Eingaben ältere abbrechen (Tests: synchron über 0). */
   defer?: (fn: () => void) => void;
 }
@@ -110,8 +123,11 @@ export class StoreHost {
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(commitImportPayload(this.store, msg.payload, msg.parent)); break;
-        case "exportPage": reply(exportPage(this.store, msg.pageID, msg.format)); break;
-        case "exportWorkspace": reply(exportWorkspace(this.store, msg.format)); break;
+        case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.opts.assets, msg.html)); break;
+        case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.opts.assets, msg.html)); break;
+        case "printPage": reply(await printPage(this.store, msg.pageID, this.opts.assets, msg.css)); break;
+        case "library": reply(libraryItems(this.store)); break;
+        case "graph": reply(this.graph(msg.filter)); break;
         case "history": reply(this.historyAction(msg.action)); break;
       }
     } catch (e) {
@@ -203,10 +219,29 @@ export class StoreHost {
       case "moveToSection":
         return movePages(store, c.ids, { kind: "top", section: c.section === PRIVATE_SECTION ? { kind: "private" } : { kind: "teamspace", id: c.section } });
       case "favorite": return setFavorite(store, c.ids, c.on);
+      case "moveInto": return movePages(store, c.ids, { kind: "page", id: c.parent });
+      case "duplicate": return duplicatePages(store, c.ids);
+      case "createTeamspace": return createTeamspace(store, c.name, c.icon);
+      case "renameTeamspace": return renameTeamspace(store, c.id, c.name);
+      case "setTeamspaceIcon": return setTeamspaceIcon(store, c.id, c.icon);
+      case "deleteTeamspace": return deleteTeamspace(store, c.id);
       case "undo": return store.undo().name;
       case "redo": return store.redo().name;
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
     }
+  }
+
+  // MARK: Seitengraph
+
+  private graphCache: { revision: number; graph: PageGraph } | undefined;
+
+  /** Graph des aktuellen Stands (je Revision einmal gebaut), zugeschnitten nach `filter`. */
+  graph(filter: GraphFilter = {}): GraphResult {
+    const t0 = performance.now();
+    const store = this.store;
+    if (this.graphCache?.revision !== store.revision) this.graphCache = { revision: store.revision, graph: buildPageGraph(store) };
+    const all = this.graphCache.graph;
+    return { graph: filterGraph(all, filter), totalNodes: all.nodes.length, totalEdges: all.edges.length, took: performance.now() - t0 };
   }
 
   // MARK: Versionsverlauf (BSD-73)

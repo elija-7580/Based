@@ -1,9 +1,9 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { Block, DropZone, HistoryStats, HistoryVersion, Outline, RecordKeyString, WireRecord } from "@based/core";
+import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outline, PageGraph, RecordKeyString, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
-import type { ExportFormat, WorkspaceExportFormat } from "./interop.js";
+import type { ExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 
 export interface SyncConfig {
   url: string;
@@ -45,6 +45,15 @@ export type Command =
   | { op: "drop"; ids: string[]; target: string; zone: DropZone }
   | { op: "moveToSection"; ids: string[]; section: string }
   | { op: "favorite"; ids: string[]; on: boolean }
+  /** Seiten in eine andere Seite verschieben (ans Ende). */
+  | { op: "moveInto"; ids: string[]; parent: string }
+  /** Seiten duplizieren (Antwort: IDs der Kopien). */
+  | { op: "duplicate"; ids: string[] }
+  /** Teamspaces: anlegen (Antwort: ID), umbenennen, Icon (Emoji oder keins), löschen (Seiten wandern nach Private). */
+  | { op: "createTeamspace"; name: string; icon?: string }
+  | { op: "renameTeamspace"; id: string; name: string }
+  | { op: "setTeamspaceIcon"; id: string; icon?: string }
+  | { op: "deleteTeamspace"; id: string }
   | { op: "undo" }
   | { op: "redo" }
   /** Testdaten: `count` Seiten mit je einem Absatz (E2E, Messungen). */
@@ -87,10 +96,25 @@ export type Request =
   /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */
   | { type: "commitImport"; payload: ImportPayload; parent?: string }
   /** Exporte (Antwort: ExportFile). */
-  | { type: "exportPage"; pageID: string; format: ExportFormat }
-  | { type: "exportWorkspace"; format: WorkspaceExportFormat }
+  | { type: "exportPage"; pageID: string; format: ExportFormat; html?: HTMLExportChoice }
+  | { type: "exportWorkspace"; format: WorkspaceExportFormat; html?: HTMLExportChoice }
+  /** Druckansicht einer Seite (Antwort: PrintDocument). */
+  | { type: "printPage"; pageID: string; css?: string }
+  /** Library: alle Einträge (Antwort: LibraryItem[]); gefiltert und sortiert wird im Hauptthread. */
+  | { type: "library" }
+  /** Seitengraph, im Worker gebaut und zugeschnitten (Antwort: GraphResult). */
+  | { type: "graph"; filter?: GraphFilter }
   /** Versionsverlauf einer Seite (BSD-73). */
   | { type: "history"; action: HistoryAction };
+
+export interface GraphResult {
+  graph: PageGraph;
+  /** Größe des ganzen Graphs vor dem Zuschnitt. */
+  totalNodes: number;
+  totalEdges: number;
+  /** Rechenzeit im Worker (ms). */
+  took: number;
+}
 
 export type HistoryAction =
   | { op: "list"; pageID: string }
