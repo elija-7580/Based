@@ -286,3 +286,79 @@ test("Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar", as
   await page.getByRole("tab", { name: "Today", exact: true }).click();
   await expect.poll(async () => (await names()).map((t) => t.replace(/Open$/, "")).sort()).toEqual(["Runs through today"]);
 });
+
+test("Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben", async ({ page }) => {
+  const external: string[] = [];
+  page.on("request", (r) => { const u = new URL(r.url()); if (!["localhost", "127.0.0.1"].includes(u.hostname) && !u.protocol.startsWith("data") && !u.protocol.startsWith("blob")) external.push(r.url()); });
+  const place = (name: string, lat: number, lon: number) => pv("place", JSON.stringify({ lat, lon, name }));
+  await seedDatabase(page, {
+    title: "Places",
+    properties: [title, { id: "where", name: "Where", type: "place" }, status],
+    rows: [
+      { id: "vie", title: "Vienna office", values: { where: place("Vienna", 48.2082, 16.3738) } },
+      { id: "ber", title: "Berlin office", values: { where: place("Berlin", 52.52, 13.405) } },
+      { id: "lis", title: "Lisbon office", values: { where: place("Lisbon", 38.7223, -9.1393), st: pv("status", "doing") } },
+      { id: "nyc", title: "New York office", values: { where: place("New York", 40.7128, -74.006) } },
+      { id: "txt", title: "Somewhere", values: { where: pv("place", "Old harbour") } },
+      { id: "none", title: "Nowhere yet" },
+    ],
+    views: [{ id: "v-map", name: "Map", type: "map", extra: { mapPropertyID: "where", mapHeight: "medium", properties: [{ id: "title", visible: true }, { id: "st", visible: true }] } }],
+  });
+  const map = page.getByTestId("map-view");
+  await expect(map).toBeVisible();
+  // Jede Zeile mit Koordinaten ist als Pin oder in einem Cluster da.
+  const onMap = async () => (await map.getByTestId("map-pin").count()) + (await map.getByTestId("map-cluster").allTextContents()).reduce((n, t) => n + Number(t), 0);
+  await expect.poll(onMap).toBe(4);
+  await expect(map).toContainText("4 on map");
+  await expect(page.getByTestId("map-no-location")).toContainText("Somewhere");
+  await expect(page.getByTestId("map-no-location")).toContainText("Old harbour");
+  await expect(page.getByTestId("map-no-location")).toContainText("Nowhere yet");
+
+  // Auswahl → Zeilenkarte mit Status; Esc schließt.
+  await map.getByRole("button", { name: "Pin: Lisbon office" }).click();
+  const card = page.getByTestId("map-card");
+  await expect(card).toContainText("Lisbon office");
+  await expect(card).toContainText("Doing");
+  await shots(page, "web-db-map");
+  await page.getByRole("application", { name: "Map of Where" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(card).toHaveCount(0);
+
+  // Herauszoomen fasst nahe Pins zusammen; Klick auf den Cluster zoomt wieder hinein.
+  const canvas = page.getByRole("application", { name: "Map of Where" });
+  for (let i = 0; i < 8; i++) await map.getByRole("button", { name: "Zoom out" }).click();
+  await expect(map.getByTestId("map-cluster").first()).toBeVisible();
+  const zoomOut = Number(await canvas.getAttribute("data-zoom"));
+  const members = Number(await map.getByTestId("map-cluster").first().textContent());
+  await map.getByTestId("map-cluster").first().click();
+  await expect.poll(async () => Number(await canvas.getAttribute("data-zoom"))).toBeGreaterThan(zoomOut);
+  await expect.poll(() => map.getByTestId("map-pin").count()).toBeGreaterThanOrEqual(members);
+  if (!(await map.getByRole("button", { name: "Pin: Berlin office" }).isVisible())) await map.getByRole("button", { name: "Show all pins" }).click();
+  for (let i = 0; i < 4 && !(await map.getByRole("button", { name: "Pin: Berlin office" }).isVisible()); i++) await map.getByTestId("map-cluster").first().click();
+  // Ziehen verschiebt die Karte.
+  const before = await map.getByRole("button", { name: "Pin: Berlin office" }).boundingBox();
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2 + 40, { steps: 6 });
+  await page.mouse.up();
+  const after = await map.getByRole("button", { name: "Pin: Berlin office" }).boundingBox();
+  expect(Math.round(after!.x - before!.x)).toBe(120);
+  expect(Math.round(after!.y - before!.y)).toBe(40);
+
+  // Ort von Hand: Koordinaten prüfen, dann erscheint der Pin.
+  await page.getByRole("button", { name: "Add location to Nowhere yet" }).click();
+  const editor = page.getByRole("dialog", { name: "Edit Where" });
+  await editor.getByLabel("Name").fill("Graz");
+  await editor.getByLabel("Latitude").fill("47,07");
+  await editor.getByLabel("Latitude").press("Enter");
+  await expect(editor.getByRole("alert")).toHaveText("Enter both latitude and longitude");
+  await editor.getByLabel("Longitude").fill("15.44");
+  await editor.getByLabel("Longitude").press("Enter");
+  await expect(editor).toHaveCount(0);
+  await map.getByRole("button", { name: "Show all pins" }).click();
+  await expect.poll(onMap).toBe(5);
+  await expect(map).toContainText("5 on map");
+  await expect(page.getByTestId("map-no-location")).not.toContainText("Nowhere yet");
+  expect(external).toEqual([]);
+});

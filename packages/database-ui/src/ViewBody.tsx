@@ -10,6 +10,7 @@ import { DashboardLayout } from "./layouts/Dashboard.js";
 import { GalleryLayout, ListLayout } from "./layouts/List.js";
 import { EmptyState } from "./layouts/shared.js";
 import { TableLayout } from "./layouts/Table.js";
+import { MapLayout } from "./layouts/Map.js";
 import { TimelineLayout } from "./layouts/Timeline.js";
 
 /** Abfrageergebnis einer Ansicht (memoisiert auf Version/Ansicht/Suche). */
@@ -32,6 +33,7 @@ export function ViewBody({ view, search, compact, requestEdit }: { view: Databas
     case "dashboard": return <DashboardLayout view={view} />;
     case "calendar": return <CalendarLayout view={view} result={result} />;
     case "timeline": return <TimelineLayout view={view} result={result} />;
+    case "map": return <MapLayout view={view} result={result} />;
     default:
       return <EmptyState>This layout (“{view.type}”) isn’t available here yet ({result.rows.length} pages).</EmptyState>;
   }

@@ -10,6 +10,7 @@ import {
   editText, fromInputValue, parseTextInput, storedDate, storedFiles, storedIDs, toInputValue, withDate,
 } from "../logic/values.js";
 import { Icon, OptionPill, Popover, type Anchor } from "../ui.js";
+import { PlaceEditor } from "./PlaceEditor.js";
 
 export interface CellEditorProps {
   row: Block;
@@ -29,7 +30,8 @@ export function isEditable(type: string): boolean {
 
 export function CellEditor(props: CellEditorProps) {
   switch (props.prop.type) {
-    case "title": case "text": case "number": case "url": case "email": case "phone": case "place": return <TextEditor {...props} />;
+    case "title": case "text": case "number": case "url": case "email": case "phone": return <TextEditor {...props} />;
+    case "place": return <PlaceEditor {...props} />;
     case "select": case "status": case "multiSelect": return <OptionsEditor {...props} />;
     case "date": return <DateEditor {...props} />;
     case "person": return <ListEditor {...props} kind="person" />;

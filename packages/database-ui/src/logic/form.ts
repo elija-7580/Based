@@ -9,6 +9,7 @@ import {
   addRow, plainText, propertyOf, pv, updateView, visiblePropertyIDs, values,
   type Database, type DatabaseView, type PropertySchema, type PropertyValue, type WorkspaceStore,
 } from "@based/core";
+import { coordinateError, encodePlace, parseCoordinate } from "./place.js";
 
 /** Typen, die ein Formular abfragen kann (wie Swift FormLayout.supported). */
 export const FORM_TYPES: ReadonlySet<string> = new Set(["title", "text", "number", "select", "multiSelect", "status", "date", "checkbox", "url", "email", "phone", "place"]);
@@ -110,12 +111,6 @@ const PHONE = /^\+?[0-9 ()./-]{3,}$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/;
 
 const str = (a: FormAnswer | undefined) => (typeof a === "string" ? a.trim() : "");
-const coord = (s: string | undefined) => {
-  const t = s?.trim().replace(",", ".") ?? "";
-  if (!t) return undefined;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : NaN;
-};
 
 export function isBlank(a: FormAnswer | undefined): boolean {
   if (a === undefined || a === false) return true;
@@ -155,12 +150,7 @@ export function validateAnswer(q: FormQuestion, a: FormAnswer | undefined): stri
     }
     case "place": {
       const p = (typeof a === "object" && !Array.isArray(a) ? a : {}) as PlaceAnswer;
-      const lat = coord(p.lat), lon = coord(p.lon);
-      if ((lat === undefined) !== (lon === undefined)) return "Enter both latitude and longitude";
-      if (Number.isNaN(lat) || Number.isNaN(lon)) return "Coordinates must be numbers";
-      if (lat !== undefined && (lat < -90 || lat > 90)) return "Latitude must be between −90 and 90";
-      if (lon !== undefined && (lon < -180 || lon > 180)) return "Longitude must be between −180 and 180";
-      return undefined;
+      return coordinateError(p.lat, p.lon);
     }
     default: return undefined;
   }
@@ -177,16 +167,9 @@ export function validateForm(questions: readonly FormQuestion[], answers: FormAn
 
 /** Ort wie Swift `PlaceValue.raw`: ohne Koordinaten und Adresse nur der Name, sonst JSON mit sortierten Schlüsseln. */
 export function placeRaw(p: PlaceAnswer): string | undefined {
-  const name = p.name?.trim() || undefined, address = p.address?.trim() || undefined;
-  const lat = coord(p.lat), lon = coord(p.lon);
-  const hasCoords = lat !== undefined && lon !== undefined && !Number.isNaN(lat) && !Number.isNaN(lon);
-  if (!hasCoords && !address) return name;
-  const o: Record<string, unknown> = {};
-  if (address) o.address = address;
-  if (hasCoords) o.lat = lat;
-  if (hasCoords) o.lon = lon;
-  if (name) o.name = name;
-  return JSON.stringify(o);
+  const lat = parseCoordinate(p.lat), lon = parseCoordinate(p.lon);
+  const ok = lat !== undefined && lon !== undefined && !Number.isNaN(lat) && !Number.isNaN(lon);
+  return encodePlace({ ...(p.name ? { name: p.name } : {}), ...(p.address ? { address: p.address } : {}), ...(ok ? { lat, lon } : {}) });
 }
 
 /** Antworten → Titel und Werte einer neuen Zeile (nur gültige, nicht-leere Antworten). */
