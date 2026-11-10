@@ -61,9 +61,28 @@ export interface ShareRouteOptions {
   log: Logger;
   /** Öffentliche Adresse des Servers (für den Geräte-Token-Hinweis); sonst aus Host-Header. */
   serverURL?: string | undefined;
+  /** BSD-235: Web-Client (Gast-Modus); Access-Links zeigen dann „Open in Based“. */
+  webURL?: string | undefined;
 }
 
-export function registerShareRoutes(router: Router, { share, sync, assets, log, serverURL: publicURL }: ShareRouteOptions) {
+/**
+ * BSD-235: Adresse, unter der der Web-Client einen Access-Link im Gast-Modus öffnet. Der Link steht im Fragment
+ * (`#/share/…`) – Fragmente gehen nie an einen Server, das Geheimnis landet also in keinem Zugriffslog.
+ */
+export function guestURL(webURL: string, shareURL: string): string {
+  return `${webURL.replace(/\/+$/, "")}/#/share/${encodeURIComponent(shareURL)}`;
+}
+
+/** Leiste „Open in Based“ oben auf der Leseansicht eines Access-Links (ohne Skript, CSP bleibt). */
+function withOpenInBased(html: string, href: string, role: string): string {
+  const label = role === "edit" ? "Open in Based to edit" : "Open in Based";
+  const bar = `<p style="margin:0 0 1em;padding:.5em .75em;border-radius:6px;background:rgba(127,127,127,.12)"><a href="${escapeAttr(href)}" data-based-open>${label}</a></p>`;
+  return html.replace(/<body([^>]*)>/i, (m) => m + bar);
+}
+
+const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+export function registerShareRoutes(router: Router, { share, sync, assets, log, serverURL: publicURL, webURL }: ShareRouteOptions) {
   const store = share.store;
 
   // MARK: Veröffentlichte Seiten
@@ -103,7 +122,7 @@ export function registerShareRoutes(router: Router, { share, sync, assets, log, 
   router.add("GET", "/p/:id/asset/:hash", (ctx) => assetFor(share.publishedLink(ctx.params.id!), ctx.params.hash!, ctx), { access: "public" });
 
   // MARK: Link-Landeseiten (/s/<secret>)
-  const landing = (secret: string, target: string | undefined) => {
+  const landing = (ctx: RouteContext, secret: string, target: string | undefined) => {
     const link = share.link(secret);
     if (!link || !share.isActive(link)) return linkGone();
     switch (link.kind) {
@@ -112,12 +131,15 @@ export function registerShareRoutes(router: Router, { share, sync, assets, log, 
       case "access": {
         // Lesend im Browser; bearbeiten geht mit dem Geheimnis als Token in Based (Settings → Sync & server).
         const html = renderSharedPage(share, link, target ?? link.pageID, `/s/${encodeURIComponent(secret)}`);
-        return html === undefined ? linkGone() : htmlResponse(html);
+        if (html === undefined) return linkGone();
+        // BSD-235: mit Web-Client: Gast-Modus anbieten (bearbeiten nach Rolle)
+        const shareURL = `${serverURL(ctx, publicURL)}/s/${encodeURIComponent(secret)}`;
+        return htmlResponse(webURL ? withOpenInBased(html, guestURL(webURL, shareURL), link.role) : html);
       }
     }
   };
-  router.add("GET", "/s/:secret", ({ params }) => landing(params.secret!, undefined), { access: "public" });
-  router.add("GET", "/s/:secret/:page", ({ params }) => landing(params.secret!, params.page), { access: "public" });
+  router.add("GET", "/s/:secret", (ctx) => landing(ctx, ctx.params.secret!, undefined), { access: "public" });
+  router.add("GET", "/s/:secret/:page", (ctx) => landing(ctx, ctx.params.secret!, ctx.params.page), { access: "public" });
   router.add("GET", "/s/:secret/asset/:hash", (ctx) => {
     const l = share.link(ctx.params.secret!);
     return assetFor(l && l.kind === "access" && share.isActive(l) ? l : undefined, ctx.params.hash!, ctx);
@@ -157,6 +179,23 @@ export function registerShareRoutes(router: Router, { share, sync, assets, log, 
       pages: roots.map((r) => ({ id: r.pageID, title: titleOf(store, r.pageID), role: r.role })),
     });
   }, { access: "shared" });
+  // BSD-235: welche Seite hinter einer Share-URL steht (Besitzer; die App öffnet sie dann selbst, statt der Leseansicht)
+  router.add("GET", "/share/v1/resolve", ({ url }) => {
+    const path = url.searchParams.get("path") ?? "";
+    let pathname = path;
+    try {
+      pathname = new URL(path, "http://x").pathname;
+    } catch {
+      return error("bad path", 400);
+    }
+    const parts = pathname.split("/").filter((x) => x !== "").map((x) => decodeURIComponent(x));
+    let link: SharingLink | undefined;
+    if (parts[0] === "s" && parts[1]) link = share.link(parts[1]);
+    else if (parts[0] === "p" && parts[1]) link = share.publishedLink(parts[1]);
+    if (!link || !share.isActive(link)) return error("not found", 404);
+    const page = parts[2] && parts[2] !== "asset" && store.blocks.has(parts[2]) ? parts[2] : link.pageID;
+    return json({ kind: link.kind, linkID: link.id, pageID: page, rootPageID: link.pageID, role: link.role, title: titleOf(store, page) });
+  }, { access: "owner" });
   router.add("GET", "/share/v1/snapshot", ({ caller }) => json(share.snapshot(principalOf(caller), sync)), { access: "shared" });
   router.add("GET", "/share/v1/pages/:page", ({ caller, params }) => {
     const p = principalOf(caller);

@@ -24,6 +24,8 @@ export interface Options {
   node: string;
   stdio: boolean;
   publicURL: string | undefined;
+  /** BSD-235: Web-Client für den Gast-Modus („Open in Based“ auf Access-Links). */
+  webURL: string | undefined;
   /** Ordner für Dateien (Standard: neben der Datenbank). */
   assetsDir: string | undefined;
   /** Größte Datei in MiB. */
@@ -40,7 +42,7 @@ export interface Options {
   codingAgents: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -52,6 +54,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     node: env.BASED_NODE ?? "server",
     stdio: false,
     publicURL: env.BASED_PUBLIC_URL,
+    webURL: env.BASED_WEB_URL,
     assetsDir: env.BASED_ASSETS_DIR,
     maxAssetMB: env.BASED_MAX_ASSET_MB ? Number(env.BASED_MAX_ASSET_MB) : undefined,
     sandbox: undefined,
@@ -77,6 +80,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--token": o.token = value(a); break;
       case "--node": o.node = value(a); break;
       case "--public-url": o.publicURL = value(a); break;
+      case "--web-url": o.webURL = value(a); break;
       case "--assets": o.assetsDir = value(a); break;
       case "--max-asset-mb": o.maxAssetMB = Number(value(a)); break;
       case "--sandbox": sandbox = value(a); break;
@@ -191,6 +195,7 @@ async function main() {
 
   const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
     log,
+    ...(opts.webURL ? { webURL: opts.webURL } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
