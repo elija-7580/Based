@@ -132,8 +132,8 @@ Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested"
 Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now,no
 Page history / versions,history,should,yes,no,,yes
 Comments and discussions,collaboration,should,yes,no,,no
-Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view",no
-Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included",no
+Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view","partial: Rollen/Vererbung, Access-Links, Einladungen, Widerruf, gefilterter Pull/Push im TS-Server, Share-Panel; Gast-Modus im Web und Universal Links fehlen"
+Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included","yes (Pass 30: /p/<id> server-gerendert, Token-Styles, CSP, HTML-Blöcke in Sandbox; Publish/Unpublish im Share-Panel)"
 Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended",yes
 Import Markdown files,import,must,yes,yes,,yes
 Export page as Markdown,export,must,yes,yes,,yes
@@ -150,9 +150,9 @@ Notion AI,ai,could,yes,skip,out of scope,n/a
 Integrations / connections marketplace,integrations,could,yes,skip,their network is not part of the product you can rebuild,n/a
 Floating page outline (right rail),pages,should,yes,yes,hover to expand; per-page toggle,"yes (Pass 30: Gliederung rechts, Hover, Klick scrollt, pro Seite abschaltbar)"
 AI chat over workspace (Notion AI),ai,should,yes,yes,⌘J; Anthropic/OpenAI/Ollama/Apple Intelligence; tools over pages & databases,"yes (Pass 30: BSD-159, BYOK Anthropic/OpenAI-kompatibel/Ollama, Werkzeuge über Seiten und Datenbanken; echte Anbieter ungeprüft)"
-AI memories (one page per topic),ai,should,yes,yes,"Memories database in Agent Brain; suggestions from chats into the Inbox, saved only after confirmation (BSD-59)",no
-Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; SKILL.md import/export and mirror to ~/.claude/skills (BSD-60),no
-Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)",no
+AI memories (one page per topic),ai,should,yes,yes,"Memories database in Agent Brain; suggestions from chats into the Inbox, saved only after confirmation (BSD-59)","yes (Pass 30: Memories-Datenbank, Vorschläge erst nach Save, opt-in)"
+Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; SKILL.md import/export and mirror to ~/.claude/skills (BSD-60),"yes (Pass 30: Skills-Datenbank, SKILL.md/ZIP-Import/Export, Router mit Chips)"
+Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)","partial: Zeitpläne nur solange die App offen ist, nur Hauptagent"
 MCP server for external AI clients,ai,should,yes,yes,"stdio + Streamable HTTP; version negotiation, projects/runs/inbox/main-agent tools, paging, docs/mcp.md (BSD-58); permission rules apply (BSD-98)","partial: stdio und Streamable HTTP mit Seiten-Werkzeugen (suchen, lesen, anlegen, ändern, Papierkorb); Datenbanken, Projekte/Runs/Inbox/Hauptagent und Berechtigungsregeln fehlen"
 Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device,no
 Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1",no
@@ -160,7 +160,7 @@ Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
 HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",no
 Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,no
-Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,no
+Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,partial: Freigaben in #tasks und auf der Startseite (Needs you); keine Inbox über Geräte
 Switch agent mid-session,ai,should,no,yes,transcript hand-off,no
 E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no
 MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,no
@@ -187,7 +187,7 @@ Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,pa
 Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding"
 Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes
 Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"partial: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings; Breite ändern, ⌘\ einklappen + Hover-Peek fehlen"
-Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Export, ••• (nur Version history); Share und AI fehlen"
+Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Share, Export, •••; AI-Knopf fehlt"
 Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token,"partial: Warnungsliste nach Datei-Import; kein kopierbarer Bericht, kein API-Import"
 Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later,partial: Name/Adresse/Koordinaten von Hand; keine Ortssuche
 Sub-agents (agents start agents),agents,should,n/a,yes,"Pass 12: spawn_agent / wait_for_agents / message_agent / stop_agent MCP tools, depth 3, fan-out 8, results reported to parent",no
@@ -199,24 +199,24 @@ Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report w
 Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library",no
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: im Browser über den Browser-Verlauf; in der Desktop-Hülle keine eigene Behandlung, ⌘←/⌘→ und Verlaufsmenü fehlen"
-Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,no
+Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())"
 Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,no
 Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"partial: Turn into, B/I/U/S/Code, Link, Farbe vorhanden; „Ask AI“ fehlt"
 Lossless workspace archive export/import,export,should,no,yes,.based.zip v2 with asset bytes and zip-slip protection; .based.jsonl v1 still read/written (BSD-67); restored archives are pushed to the server (BSD-26),yes
 Web client,platforms,should,yes,partial,"based-server /app: tree + pages over sync v2, live updates, plain-text editing",yes
-AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)",no
-Agent runs as records (Runs database),agents,must,n/a,yes,"BSD-43: every chat turn, coding session, sub-agent and scheduled run is a row; list_runs/get_run",no
-Projects database,agents,should,n/a,yes,BSD-44 (+BSD-102 dedupe across devices): sessions and runs linked; AI sidebar section,no
-Main agent with sub-agents,agents,should,n/a,partial,"BSD-52/105: one thread, delegate/check_runs/report, heartbeat, ⌘J opens it, coding jobs via Claude Code/Codex; iPhone via server open (BSD-116)",no
+AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)","partial: Aufnahme (Mikrofon, Tab-Audio in Chromium), Notizen mit Zeit, Wiedergabe, Zusammenfassung mit [m:ss]; keine Transkription, keine Sprechertrennung"
+Agent runs as records (Runs database),agents,must,n/a,yes,"BSD-43: every chat turn, coding session, sub-agent and scheduled run is a row; list_runs/get_run","yes (Pass 30: BSD-160, Records für Chat-Turn/Hauptagent/Unteragent/Zeitplan)"
+Projects database,agents,should,n/a,yes,BSD-44 (+BSD-102 dedupe across devices): sessions and runs linked; AI sidebar section,partial: Projekte als Records mit Updates auf der Projektseite; keine Datenbank-Ansicht
+Main agent with sub-agents,agents,should,n/a,partial,"BSD-52/105: one thread, delegate/check_runs/report, heartbeat, ⌘J opens it, coding jobs via Claude Code/Codex; iPhone via server open (BSD-116)","partial: Auftragskarten, Plan per Schema, Unteragenten (BSD-195/196/160); kein Heartbeat, keine Coding-Agenten"
 Auto model routing Low/Auto/High,ai,should,n/a,partial,BSD-49: rule-based routes; classifier/runtime fallback in BSD-97,no
-Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115",no
+Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115","partial: Modus + Regeln global/Projekt, greifen auch im Chat; kein Plan-Modus, keine Pfad-Regeln"
 "Streaming, retry and context compaction for API models",ai,must,n/a,yes,"BSD-46/47/48: SSE streaming, retry before first token, auto-continue, compaction above 75%, prompt queue","yes (Pass 30: SSE-Streaming, Retry vor erstem Token, Fortsetzen, Kompaktierung)"
-Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)",no
+Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)","partial: Docker-CLI + lokal, Allowlist, Snapshots, Aufräumen, /sandbox-Routen; Docker ungeprüft, keine Laufzeit pro Lauf"
 Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108,"partial: Layout nach Design mit Demo-Daten, Composer ohne Funktion; echte Agenten fehlen"
 Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief",no
 Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111/113: Captures DB, Sort captures agent (auto:low), iPhone shortcuts (untested), POST /capture incl. audio, Mac hot key ⌥⇧Space + menu bar (BSD-64), Apple Watch app (BSD-66)",no
-CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118,no
-Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block",no
+CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118,"partial: apps/cli über MCP (page/search/tools); ask/runs/inbox erst, wenn der TS-Server sie anbietet; keine Installation aus der App"
+Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block","yes (Pass 30: [[block:id]] → nummerierte Quellen, Klick springt)"
 Schema version + migrations for based.sqlite,app,must,n/a,yes,"BSD-23: PRAGMA user_version, numbered migrations, backup before migrating, refuses newer files (now v3)",yes
 Visible save errors (no silent in-memory fallback),app,must,n/a,yes,"BSD-15: rollback + read-only banner + storage error screen; undecodable records kept frozen, never synced as deletions (BSD-16)",yes
-Related pages (by meaning),search,could,n/a,yes,"BSD-62: on-device sentence embeddings (embeddings.sqlite, not synced), end of page + agents' search tool",no
+Related pages (by meaning),search,could,n/a,yes,"BSD-62: on-device sentence embeddings (embeddings.sqlite, not synced), end of page + agents' search tool","partial: lokaler TF-IDF-Index nur als Agent-Werkzeug; keine Anzeige, kein Embedding-Modell"
