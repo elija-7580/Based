@@ -32,3 +32,5 @@ button.lib-title:hover .lib-title-text { text-decoration: underline; text-underl
   .lib-row { grid-template-columns: var(--space-6) var(--space-5) minmax(0, 1fr) calc(var(--space-8) + var(--space-5)); }
   .lib-kind, .lib-location, .lib-date:last-child { display: none; }
 }
+.lib-head h1 { color: var(--ink); }
+.lib-bulk strong { color: var(--ink); }

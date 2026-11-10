@@ -44,3 +44,5 @@
   .gx { flex-direction: column; }
   .gx-side { width: auto; border-left: 0; border-top: 1px solid var(--line); max-height: 45%; }
 }
+.gx-side, .gx-side h2, .gx-title h1 { color: var(--ink); }
+.gx-result { color: var(--ink); }

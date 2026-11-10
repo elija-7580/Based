@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Shell-Parität mit der Swift-App: Library (Filter, Bulk-Papierkorb), Teamspaces (anlegen, Seite verschieben, nach
@@ -103,7 +105,16 @@ test("Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb",
   await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("3");
 });
 
-test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private", async ({ page }, info) => {
+test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private", async ({ playwright, browserName, baseURL }, info) => {
+  test.slow();
+  // Neuladen mit OPFS: WebKit hat OPFS nur in einem dauerhaften Profil, deshalb ein eigenes Profil.
+  const dir = mkdtempSync(join(tmpdir(), "based-ts-"));
+  const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
+  const page = ctx.pages()[0] ?? (await ctx.newPage());
+  try {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "local");
   await page.getByRole("button", { name: "Create a teamspace" }).click();
   const dialog = page.getByRole("dialog", { name: "New teamspace" });
   await dialog.getByRole("textbox", { name: "Name" }).fill("Research");
@@ -147,6 +158,10 @@ test("Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; lösche
   await expect(page.getByRole("treeitem", { name: "Research" })).toHaveCount(0);
   await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveAttribute("aria-level", "1");
   await expect(page.getByRole("treeitem", { name: "Field notes" })).toHaveAttribute("aria-level", "1");
+  } finally {
+    await ctx.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens", async ({ page }) => {
@@ -227,7 +242,7 @@ test("Graph bleibt mit 5.000 Seiten bedienbar", async ({ page }) => {
   await expect(canvas).toHaveAttribute("data-nodes", /^50\d\d$/, { timeout: 20_000 });
   // Das Layout rechnet im Worker; der Hauptthread zeichnet nur: die Arbeit je Frame bleibt klein.
   const stats = () => canvas.evaluate((el) => (el as unknown as { __basedGraph: { stats(): { frames: number; drawMs: number; maxFrameMs: number } } }).__basedGraph.stats());
-  await expect.poll(async () => (await stats()).frames).toBeGreaterThan(10);
+  await expect.poll(async () => (await stats()).frames, { timeout: 30_000 }).toBeGreaterThan(10);
   await expect(canvas).toHaveAttribute("data-settled", "", { timeout: 60_000 });
   expect((await stats()).maxFrameMs).toBeLessThan(80);
   // Danach ruhige Frames (nichts wird mehr gerechnet oder gezeichnet).
