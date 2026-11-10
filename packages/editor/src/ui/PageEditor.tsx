@@ -2,6 +2,7 @@
 // im Store als materialisierte Ansicht. Undo/Redo lokal über den Yjs-UndoManager.
 import "@blocknote/ariakit/style.css";
 import "../styles.css";
+import "../meeting.css";
 import { BlockNoteEditor, type PartialBlock } from "@blocknote/core";
 import { filterSuggestionItems, SideMenuExtension } from "@blocknote/core/extensions";
 import { withCollaboration } from "@blocknote/core/yjs";
@@ -11,12 +12,13 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
   useBlockNoteEditor, useComponentsContext, useExtensionState, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { createMeeting, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
+import type { MeetingHost } from "./meetingHost.js";
 import { mentionItems } from "./mentions.js";
 import { PageOutline } from "./Outline.js";
 import { handlePaste } from "./paste.js";
@@ -52,6 +54,8 @@ export interface PageEditorProps {
   uploadFile?: (file: File, blockId?: string) => Promise<string>;
   theme?: "light" | "dark";
   className?: string;
+  /** BSD-226: Aufnahme, Wiedergabe und Zusammenfassung für Meeting-Blöcke (`/meet`). */
+  meeting?: MeetingHost;
 }
 
 interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages"> {
@@ -168,6 +172,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     pages: shared.pages,
     editable,
     notify: shared.notify,
+    meeting: shared.meeting,
     flush: () => session.flush(),
     renderSynced: (root, opts) => (
       <div className="bx-synced-editor">
@@ -220,6 +225,7 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insert({ type: CUSTOM.database } as never) },
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
+    { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
     { title: "Breadcrumb", subtext: "Show where this page sits.", aliases: ["path"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.breadcrumb } as never) },
     { title: "2 columns", subtext: "Two columns side by side.", aliases: ["columns", "layout"], group: "Advanced blocks", onItemClick: () => insert(columns(2) as never) },
@@ -237,6 +243,26 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
   }
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
   return [...defaults, ...custom];
+}
+
+/**
+ * BSD-226: Meeting-Block einfügen. Erst die Records (Meeting mit Notiz- und Zusammenfassungs-Abschnitt) still in den
+ * Store, dann der Block mit derselben ID ins Dokument – der Editor übernimmt Elternteil und Sortierschlüssel.
+ */
+export function insertMeeting(editor: BasedEditor, session: DocSession): string {
+  session.flush();
+  const id = globalThis.crypto.randomUUID().toUpperCase();
+  session.quietly(() => createMeeting(session.store, { parent: "b:" + session.rootID, id, undoable: false }));
+  const cur = editor.getTextCursorPosition().block;
+  const block = { id, type: CUSTOM.meeting } as never;
+  const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
+  if (empty) editor.replaceBlocks([cur], [block]);
+  else editor.insertBlocks([block], cur, "after");
+  // Ein leerer Absatz danach, damit man unter dem Block weiterschreiben kann.
+  if (editor.document[editor.document.length - 1]?.id === id) {
+    editor.insertBlocks([{ type: "paragraph" } as never], id, "after");
+  }
+  return id;
 }
 
 /** Gleichung im Text an der Schreibmarke einfügen (leer: öffnet ihr Eingabefeld). */

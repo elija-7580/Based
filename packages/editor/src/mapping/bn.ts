@@ -46,6 +46,7 @@ export const CUSTOM = {
   button: "button",
   columnList: "columnList",
   column: "column",
+  meeting: "meeting",
   opaque: "opaque",
 } as const;
 

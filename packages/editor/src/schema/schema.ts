@@ -10,6 +10,7 @@ import {
   linkToPageBlock, opaqueBlock, pageBlock, syncedBlock, tocBlock,
 } from "./blocks.js";
 import { inlineEquation, mentionInline } from "./inline.js";
+import { meetingBlock } from "./meeting.js";
 
 export function createBasedSchema() {
   const { audio, bulletListItem, checkListItem, codeBlock, divider, file, image, numberedListItem, paragraph, quote, table, toggleListItem, video } = defaultBlockSpecs;
@@ -30,6 +31,7 @@ export function createBasedSchema() {
       button: buttonBlock(),
       columnList: columnListBlock(),
       column: columnBlock(),
+      meeting: meetingBlock(),
       opaque: opaqueBlock(),
     },
     inlineContentSpecs: { ...defaultInlineContentSpecs, mention: mentionInline, inlineEquation },
