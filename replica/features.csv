@@ -139,7 +139,7 @@ Import Markdown files,import,must,yes,yes,,yes
 Export page as Markdown,export,must,yes,yes,,yes
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
 Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)"
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K, ⌘,, ⌘\, ⌘T/⌘W, ⌘[ ⌘], ⇧⌘[ ⇧⌘]; F6/⇧F6 Bereiche, Tabelle Tab/⇧Tab/Leertaste, Menüs ↑↓ (BSD-238); ⌘N, ⌘P, ⇧⌘L, ⌘J, ⌘1–9 fehlen"
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, F6 (BSD-204/238); ⇧⌘U fehlt; im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab"
 Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Rest „Not available yet“"
 iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil)
 iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil)
