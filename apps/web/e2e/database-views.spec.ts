@@ -178,7 +178,10 @@ async function peekScenario(page: Page, browserName: string) {
   await expect(position).toHaveText("2 of 3");
   await expect(peek.getByText("Notes inside the row")).toBeVisible();
 
-  // Esc schließt; nach dem Neuladen bleibt er zu.
+  // Esc schließt; nach dem Neuladen bleibt er zu. (Ein offener Tooltip unter dem Zeiger nimmt das erste Esc –
+  // Astryx-Ebenenstapel, WCAG 1.4.13 –, darum den Zeiger vorher von den Knöpfen nehmen.)
+  await page.mouse.move(5, 5);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
   await rowTitle.focus();
   await page.keyboard.press("Escape");
   await expect(peek).toHaveCount(0);
@@ -192,7 +195,7 @@ async function peekScenario(page: Page, browserName: string) {
   await page.getByRole("button", { name: "Bravo", exact: true }).click();
   await expect(peek).toHaveAttribute("data-mode", "centerPeek");
   await expect(position).toHaveText("2 of 3"); // ohne Sortierung: Alpha, Bravo, Charlie
-  if (browserName === "chromium") await page.screenshot({ path: `${SHOTS}web-db-peek-center-light.png` });
+  if (browserName === "chromium") { await page.waitForTimeout(400); await page.screenshot({ path: `${SHOTS}web-db-peek-center-light.png` }); }
   await page.keyboard.press("Control+Shift+ArrowDown");
   await expect(rowTitle).toHaveValue("Charlie");
   await page.getByRole("button", { name: "Open as full page" }).click();
