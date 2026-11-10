@@ -56,6 +56,7 @@ import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage } from "./interop.js";
 import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
+import { AgentHost } from "./agents.js";
 import type { AssetGetResult, AssetInfo, Command, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -121,6 +122,8 @@ export class StoreHost {
   private historyTimer: ReturnType<typeof setInterval> | undefined;
   /** Chats und Agent-Werkzeuge (BSD-159). */
   private chatHost: ChatHost | undefined;
+  /** Aufträge und Runs des Hauptagenten (BSD-195/196/160). */
+  private agentHost: AgentHost | undefined;
 
   constructor(private readonly opts: HostOptions) {}
 
@@ -131,6 +134,10 @@ export class StoreHost {
 
   private get chat(): ChatHost {
     return (this.chatHost ??= new ChatHost(this.store, () => this.searchIndex()));
+  }
+
+  private get agents(): AgentHost {
+    return (this.agentHost ??= new AgentHost(this.store));
   }
 
   /** Eine Anfrage der UI. Antworten gehen als `reply` mit derselben ID zurück. */
@@ -167,6 +174,7 @@ export class StoreHost {
           );
           break;
         case "chat": reply(this.chat.handle(msg.action)); break;
+        case "agents": reply(this.agents.handle(msg.action)); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -363,6 +371,7 @@ export class StoreHost {
       }
     }
     this.chatHost?.noteChange(change);
+    this.agentHost?.noteChange(change);
     this.scheduleFlush();
   }
 
@@ -419,6 +428,8 @@ export class StoreHost {
     this.pageDelta.clear();
     const chats = this.chatHost?.takeList();
     if (chats) this.opts.post({ type: "chats", chats });
+    const agents = this.agentHost?.takeSnapshot();
+    if (agents) this.opts.post({ type: "agents", snapshot: agents });
     this.postStatus();
   }
 

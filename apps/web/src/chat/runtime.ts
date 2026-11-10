@@ -1,11 +1,32 @@
 // BSD-159: der eine ChatController der App und der Haken für Tests/E2E (`globalThis.__basedChat`): eine
 // ScriptedEngine statt eines echten Anbieters einsetzen – deterministisch, ohne Netz.
-import { ScriptedEngine, type ScriptStep } from "@based/brain";
+import { chatTitleFrom, MAIN_AGENT_ID, ScriptedEngine, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
 import type { StoreClient } from "../worker/client.js";
 import { aiConfig } from "./aiConfig.js";
 import { ChatController } from "./controller.js";
 
 let shared: ChatController | undefined;
+
+/** BSD-160 / ADR 0007: jeder Chat-Turn ist ein Run (Verbrauch in €, Modell, Chat) – fürs Budget und die Übersicht. */
+async function recordChatRun(client: StoreClient, t: { chatID: string; prompt: string; events: readonly StoredChatEvent[] }) {
+  const usage = { inputTokens: 0, outputTokens: 0, costUSD: 0 };
+  let model: string | undefined, failed: string | undefined, result = "";
+  for (const e of t.events) {
+    if (e.type === "usage") {
+      const u = e as Extract<ChatEvent, { type: "usage" }>;
+      usage.inputTokens += u.inputTokens;
+      usage.outputTokens += u.outputTokens;
+      usage.costUSD += u.costUSD ?? 0;
+      model ??= u.model;
+    } else if (e.type === "started") model ??= (e as Extract<ChatEvent, { type: "started" }>).model;
+    else if (e.type === "failed") failed = (e as Extract<ChatEvent, { type: "failed" }>).message;
+    else if (e.type === "text") result = (e as Extract<ChatEvent, { type: "text" }>).text;
+  }
+  await client.agents({ op: "createRun", data: {
+    kind: "chat", status: failed ? "failed" : "done", agentID: MAIN_AGENT_ID, title: chatTitleFrom(t.prompt) || "Chat", chatID: t.chatID, usage,
+    ...(model ? { model } : {}), result: (failed ?? result).slice(0, 280),
+  } });
+}
 const LAST_KEY = "based.chat";
 
 function remember(id: string | undefined) {
@@ -30,7 +51,7 @@ export function restoreLastChat(c: ChatController) {
 
 export function chatController(client: StoreClient): ChatController {
   if (!shared) {
-    shared = new ChatController({ backend: client, config: aiConfig() });
+    shared = new ChatController({ backend: client, config: aiConfig(), onTurnEnd: (t) => void recordChatRun(client, t).catch(() => undefined) });
     let last: string | undefined;
     shared.subscribe(() => {
       const id = shared!.getState().chatID;

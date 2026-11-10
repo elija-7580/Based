@@ -12,6 +12,9 @@ import { Library } from "./screens/Library.js";
 import { PageView } from "./screens/PageView.js";
 import { Settings } from "./screens/Settings.js";
 import { Trash } from "./screens/Trash.js";
+import { tasksRuntime } from "./tasks/runtime.js";
+import { TasksScreen } from "./tasks/TasksScreen.js";
+import "./tasks/AgentSettingsSection.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
@@ -37,6 +40,10 @@ export function App({ client, history }: { client: StoreClient; history: History
   }, [appearance]);
 
   useEffect(() => recentPages.subscribe(setRecent), []);
+  // Hauptagent: offene Aufträge fortsetzen, Unteragenten und Zeitpläne (solange die App offen ist)
+  useEffect(() => {
+    if (state.ready) tasksRuntime(client).start();
+  }, [state.ready, client]);
   useEffect(() => {
     if (route.name === "page") recentPages.touch(route.id);
   }, [route]);
@@ -103,6 +110,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <Trash client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "chat") {
     screen = <ChatPage client={client} history={history} />;
+  } else if (route.name === "tasks") {
+    screen = <TasksScreen client={client} state={state} />;
   } else if (route.name === "library") {
     screen = <Library client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "graph") {

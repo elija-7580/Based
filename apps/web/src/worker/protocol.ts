@@ -5,7 +5,8 @@ import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outlin
 import type { ImportPayload } from "./importer.js";
 import type { ExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
-import type { ChatInfo } from "@based/brain";
+import type { AgentAction } from "./agents.js";
+import type { AgentSnapshot, ChatInfo } from "@based/brain";
 
 export interface SyncConfig {
   url: string;
@@ -165,7 +166,9 @@ export type Request =
   /** Ein Synced-Block-Original (von einer anderen Seite) in die Replik von `pageID` aufnehmen (Antwort: SyncedRecords). */
   | { type: "includeSynced"; pageID: string; source: string }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
-  | { type: "chat"; action: ChatAction };
+  | { type: "chat"; action: ChatAction }
+  /** Aufträge, Runs, Projekte, Zeitpläne des Hauptagenten (BSD-195/196/160, worker/agents.ts). */
+  | { type: "agents"; action: AgentAction };
 
 export interface GraphResult {
   graph: PageGraph;
@@ -224,6 +227,8 @@ export type Event =
   | { type: "device"; node: string }
   /** Die Chat-Liste hat sich geändert (lokal, anderer Tab oder Sync). */
   | { type: "chats"; chats: ChatInfo[] }
+  /** Agenten-Records haben sich geändert (lokal, anderer Tab oder Sync). */
+  | { type: "agents"; snapshot: AgentSnapshot }
   /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
   | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] };
 
