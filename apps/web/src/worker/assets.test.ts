@@ -163,7 +163,13 @@ describe("Dateien über den Store-Worker", () => {
 
     // B kennt den Block schon, die Datei ist noch nicht auf dem Server (A hat keinen Server eingestellt).
     const notes: string[] = [];
-    const el = { tagName: "IMG", setAttribute: (k: string, v: string) => void (k === "data-asset-state" && notes.push(v)), getAttribute: () => url } as unknown as Element;
+    const removed: string[] = [];
+    const el = {
+      tagName: "IMG",
+      setAttribute: (k: string, v: string) => void (k === "data-asset-state" && notes.push(v)),
+      removeAttribute: (k: string) => void removed.push(k),
+      getAttribute: () => url,
+    } as unknown as Element;
     const bridgeB = createAssetBridge(b.client, { createObjectURL, retry: { minMs: 20, maxMs: 40 }, elements: () => [el] });
     let resolved: string | undefined;
     const p = bridgeB.resolveFileUrl(url).then((u) => (resolved = u));
@@ -175,6 +181,7 @@ describe("Dateien über den Store-Worker", () => {
     expect(made[1]!.type).toBe("image/png");
     expect(new Uint8Array(await made[1]!.arrayBuffer())).toEqual(data);
     expect(notes[0]).toBe("loading");
+    expect(removed).toContain("data-asset-state"); // Platzhalter weg, sobald das Bild da ist
     // Nicht übertragbare Datei: kein endloses Warten.
     await expect(bridgeB.resolveFileUrl("based-asset:0F2B6C1E-1111-4222-8333-444455556666")).rejects.toThrow(/only stored on the device/);
   });

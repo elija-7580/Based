@@ -70,11 +70,20 @@ export function createAssetBridge(client: StoreClient, opts: AssetBridgeOptions 
   const objectURL = opts.createObjectURL ?? ((b: Blob) => URL.createObjectURL(b));
   const blobURL = (bytes: ArrayBuffer) => objectURL(new Blob([bytes], { type: safeBlobType(new Uint8Array(bytes, 0, Math.min(bytes.byteLength, 16))) }));
 
+  // Hinweis am Medium (Zustand, alt, title) und am Block (`data-asset-notice`, als Platzhalter gezeichnet, assets.css).
   const note = (url: string, code: string) => {
     for (const el of elements(url)) {
       el.setAttribute("data-asset-state", code);
       if (el.tagName === "IMG") el.setAttribute("alt", assetNotice(code));
       el.setAttribute("title", assetNotice(code));
+      el.closest?.("[data-url]")?.setAttribute("data-asset-notice", assetNotice(code));
+    }
+  };
+  const clear = (url: string) => {
+    for (const el of elements(url)) {
+      el.removeAttribute("data-asset-state");
+      el.removeAttribute("title");
+      el.closest?.("[data-url]")?.removeAttribute("data-asset-notice");
     }
   };
 
@@ -86,6 +95,7 @@ export function createAssetBridge(client: StoreClient, opts: AssetBridgeOptions 
       if (r.ok) {
         const out = blobURL(r.bytes);
         urls.set(id, out);
+        clear(url);
         return out;
       }
       note(url, r.code);

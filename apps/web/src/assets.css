@@ -1,10 +1,14 @@
 /* BSD-78: Platzhalter für Dateien, die noch geladen werden oder (noch) nicht auf diesem Gerät liegen. Solange die
-   Blob-URL fehlt, hat das Bild des Blocks (`data-url="based-asset:<id>"`) kein `src`; der Hinweistext kommt als
-   alt-Text aus assetBridge.ts. */
-.shell-editor [data-url^="based-asset:"] img:not([src]) {
+   Blob-URL fehlt, hat das Bild des Blocks (`data-url="based-asset:<id>"`) kein `src`; assetBridge.ts schreibt den
+   Hinweis an den Block (`data-asset-notice`), hier als Kasten gezeichnet. Am Block statt am <img>: Inhalte an
+   Bildern (`content`, `::after`) zeichnen Chromium und WebKit verschieden. */
+.shell-editor [data-url^="based-asset:"][data-asset-notice] img:not([src]) {
+  display: none;
+}
+
+.shell-editor [data-url^="based-asset:"][data-asset-notice]::after {
+  content: attr(data-asset-notice);
   display: block;
-  /* zeigt den Hinweis als Text statt des Symbols für ein kaputtes Bild (Chromium, WebKit) */
-  content: attr(alt);
   box-sizing: border-box;
   width: 100%;
   max-width: 480px;
@@ -14,8 +18,6 @@
   border-radius: 8px;
   background: var(--surface-soft);
   color: var(--muted);
-  font: inherit;
   font-size: 13px;
   line-height: 1.4;
-  text-align: center;
 }

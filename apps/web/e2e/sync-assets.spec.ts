@@ -149,11 +149,13 @@ test("Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter,
   const imgC = c.locator(".shell-editor img.bn-visual-media");
   await expect(imgC).toHaveAttribute("data-asset-state", "offline", { timeout: 20_000 });
   await expect(imgC).toHaveAttribute("alt", /loads when the sync server is reachable/);
+  await expect(c.locator(`.shell-editor [data-url="based-asset:${hash}"]`)).toHaveAttribute("data-asset-notice", /loads when the sync server is reachable/);
   await expect(c.locator(`.shell-editor [data-url="based-asset:${hash}"]`)).toHaveCount(1);
   expect(await imgC.getAttribute("src")).toBeNull();
   await c.screenshot({ path: join(screens, "web-sync-assets-placeholder-dark.png") });
   await c.unroute("**/sync/v2/asset/**");
   await expect(imgC).toHaveAttribute("src", /^blob:/, { timeout: 30_000 });
+  await expect(c.locator(`.shell-editor [data-url="based-asset:${hash}"]`)).not.toHaveAttribute("data-asset-notice", /.*/);
   await c.screenshot({ path: join(screens, "web-sync-assets-dark.png") });
 
   for (const p of [a, b, c]) await p.context().close();
