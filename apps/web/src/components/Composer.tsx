@@ -61,13 +61,19 @@ export interface ComposerProps {
   autoFocus?: boolean;
   /** ID des Eingabefelds (Label). */
   inputID?: string;
+  /** Der Entwurf hat sich geändert (Agent Brain: Skill-Chips, sensible Stellen). */
+  onDraftChange?: (text: string) => void;
 }
 
-export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask" }: ComposerProps) {
+export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange }: ComposerProps) {
   const [open, setOpen] = useState<Menu["key"] | null>(null);
   const [pickedState, setPicked] = useState<Record<Menu["key"], string>>({ agent: "Main", compute: "Auto", permission: "Ask before edits" });
   const picked = { ...pickedState, ...pickedProp };
-  const [text, setText] = useState("");
+  const [text, setTextState] = useState("");
+  const setText = (t: string) => {
+    setTextState(t);
+    onDraftChange?.(t);
+  };
   const ref = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const live = onSubmit !== undefined;

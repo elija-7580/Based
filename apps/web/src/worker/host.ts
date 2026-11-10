@@ -56,6 +56,7 @@ import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage } from "./interop.js";
 import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
+import { BrainHost } from "./brain.js";
 import type { AssetGetResult, AssetInfo, Command, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -121,6 +122,8 @@ export class StoreHost {
   private historyTimer: ReturnType<typeof setInterval> | undefined;
   /** Chats und Agent-Werkzeuge (BSD-159). */
   private chatHost: ChatHost | undefined;
+  /** Agent Brain: Skills, Memories, lokaler Index, Löschschutz (BSD-163, worker/brain.ts). */
+  private brainHost: BrainHost | undefined;
 
   constructor(private readonly opts: HostOptions) {}
 
@@ -131,6 +134,10 @@ export class StoreHost {
 
   private get chat(): ChatHost {
     return (this.chatHost ??= new ChatHost(this.store, () => this.searchIndex()));
+  }
+
+  private get brain(): BrainHost {
+    return (this.brainHost ??= new BrainHost(this.store));
   }
 
   /** Eine Anfrage der UI. Antworten gehen als `reply` mit derselben ID zurück. */
@@ -167,6 +174,7 @@ export class StoreHost {
           );
           break;
         case "chat": reply(this.chat.handle(msg.action)); break;
+        case "brain": reply(this.brain.handle(msg.action)); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -254,9 +262,9 @@ export class StoreHost {
         return store.blocks.has(created.blockID) ? created.blockID : undefined;
       }
       case "rename": return renamePage(store, c.id, c.title);
-      case "trash": return trashPages(store, c.ids);
+      case "trash": return trashPages(store, this.brain.guardDelete(c.ids).allowed);
       case "restore": return restorePages(store, c.ids);
-      case "deleteForever": this.history?.forget(c.ids); return deleteForever(store, c.ids);
+      case "deleteForever": { const ids = this.brain.guardDelete(c.ids).allowed; this.history?.forget(ids); return deleteForever(store, ids); }
       case "emptyTrash": this.history?.forget(trashedPages(store).map((b) => b.id)); return emptyTrash(store);
       case "drop": return dropPages(store, c.ids, c.target, c.zone);
       case "moveToSection":
@@ -363,6 +371,7 @@ export class StoreHost {
       }
     }
     this.chatHost?.noteChange(change);
+    this.brain.noteChange(change);
     this.scheduleFlush();
   }
 

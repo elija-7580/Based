@@ -1,0 +1,40 @@
+/* Agent Brain im Chat und in den Einstellungen (BSD-163/198/199). Nur Tokens (ADR 0009). */
+
+.brain-bar { display: flex; flex-direction: column; gap: var(--space-1); padding: 0 var(--space-4) var(--space-2); }
+.brain-chips, .brain-turn-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.brain-chip {
+  display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--surface-raised);
+  border: 1px solid var(--line); color: var(--ink); max-width: 100%;
+}
+.brain-chip-label, .brain-chip-remove, .brain-chip-add {
+  display: inline-flex; align-items: center; gap: var(--space-1); border: 0; background: transparent; color: inherit; font: inherit;
+  font-size: var(--type-meta-size); line-height: var(--leading-body); cursor: pointer; padding: 0 var(--space-2); min-height: var(--space-6);
+  border-radius: var(--radius-pill);
+}
+.brain-chip-label { padding-right: var(--space-1); }
+.brain-chip-remove { padding: 0 var(--space-2) 0 var(--space-1); color: var(--muted); }
+.brain-chip-label:hover, .brain-chip-remove:hover, .brain-chip-add:hover { background: var(--selected); }
+.brain-chip-label:focus-visible, .brain-chip-remove:focus-visible, .brain-chip-add:focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+.brain-chip-add { border: 1px dashed var(--control-border); color: var(--muted); }
+
+.brain-sensitive { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--muted); }
+.brain-sensitive .t-desc { flex: 1 1 auto; }
+
+.brain-turn { display: flex; flex-direction: column; gap: var(--space-2); }
+.brain-redacted { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.brain-redacted .brain-chip-label { border: 1px solid var(--line); background: var(--surface-raised); color: var(--muted); padding-right: var(--space-2); }
+.brain-memory-actions { display: inline-flex; gap: var(--space-1); }
+.brain-memory-done { margin: 0; }
+
+.brain-cite { text-decoration: none; padding-inline: 1px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.brain-cite:hover { color: var(--ink); }
+.brain-source { color: inherit; }
+
+/* Ziel eines Zitat-Sprungs: kurz hinterlegt. */
+.brain-cite-target { background: var(--selected); border-radius: var(--radius-sm); transition: background var(--duration) var(--ease-out); }
+
+/* Einstellungen */
+.brain-settings { display: flex; flex-direction: column; gap: var(--space-4); }
+.brain-settings-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.brain-settings-kinds { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.brain-preview { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--surface-raised); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); margin: 0; font-family: var(--font-mono); font-size: var(--type-meta-size); }

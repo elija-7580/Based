@@ -5,6 +5,7 @@ import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outlin
 import type { ImportPayload } from "./importer.js";
 import type { ExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
+import type { BrainAction } from "./brain.js";
 import type { ChatInfo } from "@based/brain";
 
 export interface SyncConfig {
@@ -165,7 +166,9 @@ export type Request =
   /** Ein Synced-Block-Original (von einer anderen Seite) in die Replik von `pageID` aufnehmen (Antwort: SyncedRecords). */
   | { type: "includeSynced"; pageID: string; source: string }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
-  | { type: "chat"; action: ChatAction };
+  | { type: "chat"; action: ChatAction }
+  /** Agent Brain: Skills, Memories, Skill-Router, Zitate, lokaler Index (BSD-163/198, worker/brain.ts). */
+  | { type: "brain"; action: BrainAction };
 
 export interface GraphResult {
   graph: PageGraph;
