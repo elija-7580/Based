@@ -1,0 +1,23 @@
+{
+  "name": "@based/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "based – die Kommandozeile für einen Based-Server (MCP über Streamable HTTP)",
+  "bin": {
+    "based": "./bin/based.js"
+  },
+  "scripts": {
+    "start": "node bin/based.js",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@based/server": "workspace:*",
+    "@types/node": "^22.10.2"
+  }
+}

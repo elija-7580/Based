@@ -1,0 +1,2 @@
+/* Share-Panel: lange Links umbrechen statt den Dialog zu sprengen. Sonst Astryx-Standard. */
+.share-url { overflow-wrap: anywhere; user-select: all; }

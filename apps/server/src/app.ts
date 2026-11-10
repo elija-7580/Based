@@ -12,7 +12,11 @@ import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
-import { BadRequest, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
+import { registerSandboxRoutes } from "./sandbox-routes.js";
+import type { SandboxManager } from "./sandbox.js";
+import { ShareService } from "./share.js";
+import { principalOf, registerShareRoutes } from "./share-routes.js";
+import { BadRequest, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
 export interface AppOptions extends SyncServiceOptions {
   token: string;
@@ -30,6 +34,8 @@ export interface AppOptions extends SyncServiceOptions {
   assetsDir?: string;
   /** Größte Datei in Bytes (Standard 100 MiB). */
   maxAssetBytes?: number;
+  /** Sandboxen pro Lauf (BSD-161); ohne: keine /sandbox-Routen. */
+  sandbox?: SandboxManager | undefined;
 }
 
 export interface App {
@@ -38,6 +44,8 @@ export interface App {
   /** Nicht mehr referenzierte Dateien aufräumen (läuft mit der Tombstone-GC; für Tests einzeln aufrufbar). */
   collectAssets(nowMillis?: number): { removed: number; marked: number; partials: number };
   pages: Pages;
+  /** Freigaben, Links, Veröffentlichen (docs/sharing.md). */
+  share: ShareService;
   collab: Collab;
   router: Router;
   server: Server;
@@ -69,7 +77,8 @@ export function createApp(opts: AppOptions): App {
   const db = typeof opts.db === "string" || opts.db === undefined ? openNodeDatabase(opts.db ?? ":memory:") : opts.db;
   const sync = new SyncService(db, opts);
   const pages = new Pages(sync.store);
-  const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log });
+  const share = new ShareService(sync.store, sync.persistence, opts.nowMillis);
+  const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t) });
   const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
   const collab = new Collab({ store: sync.store, states: new YStateStore(collabDb), token: opts.token, log, ...(opts.collabDebounce !== undefined ? { debounce: opts.collabDebounce } : {}) });
@@ -97,10 +106,17 @@ export function createApp(opts: AppOptions): App {
   router.add("GET", "/health", health, { access: "public" });
   router.add("GET", "/", health, { access: "public" });
 
-  // MARK: Sync v2 (docs/sync-protocol.md)
-  router.add("GET", "/sync/v2/info", () => json({ ...sync.info(), assets: { maxBytes: assets.maxBytes, chunkBytes: ASSET_CHUNK_LIMIT } }));
-  router.add("GET", "/sync/v2/pull", ({ url }) => handle(() => json(sync.pull(intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE)))));
-  router.add("POST", "/sync/v2/push", ({ body }) => handle(() => json(sync.push(parseJSON(body)))), { bodyLimit: LARGE_BODY_LIMIT });
+  // MARK: Sync v2 (docs/sync-protocol.md). Gäste (Geräte-Token, Access-Link) sehen nur ihren Bereich (docs/sharing.md).
+  router.add("GET", "/sync/v2/info", () => json({ ...sync.info(), assets: { maxBytes: assets.maxBytes, chunkBytes: ASSET_CHUNK_LIMIT } }), { access: "shared" });
+  router.add("GET", "/sync/v2/pull", ({ url, caller }) =>
+    handle(() => json(share.pull(principalOf(caller), sync, intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE)))), { access: "shared" });
+  router.add("POST", "/sync/v2/push", ({ body, caller }) =>
+    handle(() => {
+      const p = principalOf(caller);
+      const { rejected, ...reply } = share.push(p, sync, decodePush(parseJSON(body)));
+      if (rejected.length > 0) log.info("share: rejected records from a shared principal", { count: rejected.length });
+      return json(reply);
+    }), { bodyLimit: LARGE_BODY_LIMIT, access: "shared" });
   router.add("GET", "/sync/v2/wait", async ({ url, signal }) => {
     let after: number, timeout: number;
     try {
@@ -113,7 +129,7 @@ export function createApp(opts: AppOptions): App {
       throw e;
     }
     return json({ seq: await sync.wait(after, timeout, signal) });
-  });
+  }, { access: "shared" });
 
   // MARK: Assets (BSD-78, docs/sync-protocol.md „Assets“): inhaltsadressierte Blobs, Schlüssel = SHA-256
   const assetHash = (params: Record<string, string>) => {
@@ -130,18 +146,28 @@ export function createApp(opts: AppOptions): App {
       throw e;
     }
   };
-  router.add("GET", "/sync/v2/asset/:hash/status", ({ params }) => assetReply(() => json(assets.status(assetHash(params)))));
-  router.add("HEAD", "/sync/v2/asset/:hash", ({ params }) =>
+  // Gäste: lesen nur Dateien aus ihrem Bereich, hochladen nur mit Bearbeiten-Rolle.
+  const guestMayRead = (caller: Parameters<typeof principalOf>[0], hash: string) => share.canReadAsset(principalOf(caller), hash);
+  const guestMayWrite = (caller: Parameters<typeof principalOf>[0]) => {
+    const p = principalOf(caller);
+    return p.kind === "owner" || share.roots(p).some((r) => r.role === "edit" || r.role === "full");
+  };
+  router.add("GET", "/sync/v2/asset/:hash/status", ({ params, caller }) =>
+    assetReply(() => (guestMayWrite(caller) ? json(assets.status(assetHash(params))) : error("forbidden", 403))), { access: "shared" });
+  router.add("HEAD", "/sync/v2/asset/:hash", ({ params, caller }) =>
     assetReply(() => {
-      const found = assets.locate(assetHash(params));
+      const hash = assetHash(params);
+      if (!guestMayRead(caller, hash)) return { status: 404 };
+      const found = assets.locate(hash);
       return found ? { status: 200, headers: { "Content-Length": String(found.size), "Content-Type": "application/octet-stream" } } : { status: 404 };
-    }),
+    }), { access: "shared" },
   );
   router.add(
     "PUT",
     "/sync/v2/asset/:hash",
-    ({ params, url, body }) =>
+    ({ params, url, body, caller }) =>
       assetReply(async () => {
+        if (!guestMayWrite(caller)) return error("forbidden", 403);
         const hash = assetHash(params);
         const offset = intParam(url, "offset", 0);
         const total = intParam(url, "total", offset + body.length);
@@ -149,11 +175,13 @@ export function createApp(opts: AppOptions): App {
         if (status.complete) log.info("asset stored", { bytes: status.received });
         return json(status, status.complete ? 200 : 202);
       }),
-    { bodyLimit: ASSET_CHUNK_LIMIT },
+    { bodyLimit: ASSET_CHUNK_LIMIT, access: "shared" },
   );
-  router.add("GET", "/sync/v2/asset/:hash", ({ params, req, res }) =>
+  router.add("GET", "/sync/v2/asset/:hash", ({ params, req, res, caller }) =>
     assetReply(() => {
-      const found = assets.locate(assetHash(params));
+      const hash = assetHash(params);
+      if (!guestMayRead(caller, hash)) return error("not found", 404);
+      const found = assets.locate(hash);
       if (!found) return error("not found", 404);
       const range = parseRange(req.headers.range, found.size);
       if (range === null) return { status: 416, json: { error: "range not satisfiable", size: found.size }, headers: { "Content-Range": `bytes */${found.size}` } };
@@ -170,8 +198,12 @@ export function createApp(opts: AppOptions): App {
       if (found.size === 0) res.end();
       else createReadStream(found.path, { start, end }).on("error", () => res.destroy()).pipe(res);
       return undefined;
-    }),
+    }), { access: "shared" },
   );
+
+  // MARK: Teilen (docs/sharing.md)
+  registerShareRoutes(router, { share, sync, assets, log });
+  if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
 
   // MARK: Sync v1 (nur für sehr alte Apps)
   router.add("GET", "/sync/pull", ({ url }) =>
@@ -252,6 +284,7 @@ export function createApp(opts: AppOptions): App {
     assets,
     collectAssets,
     pages,
+    share,
     collab,
     router,
     server,
@@ -268,6 +301,7 @@ export function createApp(opts: AppOptions): App {
     },
     async close() {
       if (gc) clearInterval(gc);
+      if (opts.sandbox) await opts.sandbox.stopAll();
       sync.close(); // offene Long-Polls antworten sofort
       pages.dispose();
       await collab.close();

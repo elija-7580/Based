@@ -11,3 +11,6 @@ export { SyncService, decodePush, BadRequest, type PullPage, type PushReply, typ
 export { createMcpServer } from "./mcp.js";
 export { Pages } from "./pages.js";
 export { Router } from "./router.js";
+export { createLogger, silentLogger, type Logger } from "./log.js";
+export { ShareService } from "./share.js";
+export { SandboxManager, DockerSandboxProvider, LocalSandboxProvider, SandboxEnvironmentPolicy } from "./sandbox.js";

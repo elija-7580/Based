@@ -3,7 +3,8 @@
 Der TypeScript-Server aus Phase 3 (BSD-158, ADR 0011). Er spricht dasselbe Sync-v2-Protokoll wie der Swift-
 `based-server` ([sync-protocol.md](sync-protocol.md)) auf demselben SQLite-Dateiformat und bietet MCP
 ([mcp.md](mcp.md)) und Echtzeit-Text über Hocuspocus (Yjs). Erster Schnitt: Sync, MCP-Seitenwerkzeuge, Hocuspocus.
-Teilen, Agenten, Captures usw. bleiben vorerst beim Swift-Server (siehe „Offen“).
+Dazu Teilen (Freigaben, Links, Publish to web, [sharing.md](sharing.md)) und Sandboxen pro Lauf. Agenten,
+Captures usw. bleiben vorerst beim Swift-Server (siehe „Offen“). Die Kommandozeile `based` liegt in `apps/cli`.
 
 ## Starten
 
@@ -21,6 +22,8 @@ pnpm --filter @based/server start -- --stdio --db ./based.sqlite     # MCP für 
 | `--node` | `BASED_NODE` | `server` | HLC-Kennung der Server-Stempel; zwei Server am selben Workspace brauchen verschiedene |
 | `--public-url` | `BASED_PUBLIC_URL` | – | einziger Origin mit CORS-Headern |
 | `--stdio` | | aus | MCP über stdin/stdout statt HTTP |
+| `--sandbox` | `BASED_SANDBOX` | aus | `docker` oder `local`: Sandbox pro Lauf, Routen `/sandbox/*` |
+| `--sandbox-dir` | `BASED_SANDBOX_DIR` | `<db>.sandbox` | Snapshot-Archive |
 | | `BASED_LOG_LEVEL` | `info` | `debug` loggt jede Anfrage |
 
 Neben der Datenbank legt der Server `<db>.collab.sqlite` an (Y-Zustände für `/collab`).
@@ -33,16 +36,20 @@ verweigert den Start.
 | Methode | Pfad | Zugriff | Body-Grenze | |
 |---|---|---|---|---|
 | GET | `/health`, `/` | öffentlich | | `{ok, name, impl: "ts", protocol: 2, time}` |
-| GET | `/sync/v2/info` | Owner | | `{protocol, seq, oldestSeq}` |
-| POST | `/sync/v2/push` | Owner | 32 MiB | `{records, deletions}` → `{newer, seq, deleted}` |
-| GET | `/sync/v2/pull?after&limit` | Owner | | Seiten, `limit` 1…5000 (Standard 500) |
-| GET | `/sync/v2/wait?after&timeout` | Owner | | Long-Poll, 1…55 s (Standard 25) |
+| GET | `/sync/v2/info` | Owner, Gast | | `{protocol, seq, oldestSeq}` |
+| POST | `/sync/v2/push` | Owner, Gast | 32 MiB | `{records, deletions}` → `{newer, seq, deleted}`; Gäste nach Rolle geprüft |
+| GET | `/sync/v2/pull?after&limit` | Owner, Gast | | Seiten, `limit` 1…5000 (Standard 500); Gäste gefiltert |
+| GET | `/sync/v2/wait?after&timeout` | Owner, Gast | | Long-Poll, 1…55 s (Standard 25) |
+| GET | `/p/<id>[/<page>]`, `/s/<secret>` | öffentlich | | Publish to web, Link-Landeseiten ([sharing.md](sharing.md)) |
+| | `/share/v1/…` | Owner, Gast | 4 KiB | Freigaben, Links, Widerruf ([sharing.md](sharing.md)) |
+| | `/sandbox/…` | Owner | | Läufe, Snapshots, Restore, Aufräumen (nur mit `--sandbox`) |
 | POST | `/sync/push`, GET `/sync/pull?since` | Owner | 32 MiB | v1 für sehr alte Apps (Stempel-Cursor) |
 | POST | `/mcp` | Owner | 32 MiB | MCP Streamable HTTP (zustandslos, JSON-Antworten) |
 | GET/DELETE | `/mcp` | Owner | | 405 (kein SSE) |
 | WS | `/collab` | Token in der Auth-Nachricht | 16 MiB/Nachricht | Hocuspocus, Dokument `page:<id>` |
 
-Router-Kette wie Swift `ServerRouter` (ADR 0006): CORS-Preflight → Route (404, 405 mit `Allow`) →
+„Gast“ = Geräte-Token (`bdu_…`) oder Access-Link-Geheimnis (`bdl_…`); ein gültiger Gast-Token an einer Owner-Route
+bekommt 403. Router-Kette wie Swift `ServerRouter` (ADR 0006): CORS-Preflight → Route (404, 405 mit `Allow`) →
 Authentifizierung → Body lesen mit Grenze (413) → Handler. Unterschiede zum Swift-Router: Auth kommt **vor** dem
 Lesen des Bodys (Unangemeldete können keine 32 MiB hochladen); der Token wird nur aus `Authorization: Bearer`
 gelesen (nie `?token=`) und in konstanter Laufzeit verglichen.
@@ -113,6 +120,36 @@ seitige `DocSession` mit einem kopflosen `BlockConverter` (BlockNote-Schema ohne
 aus den Records füllt und Änderungen als eine Store-Transaktion schreibt; Clients übernehmen dann keine Records
 mehr, wenn der Server einen Zustand liefert.
 
+## Sandbox pro Lauf (BSD-161)
+
+`src/sandbox.ts` (Port von Swift `Sandbox.swift`, `SandboxPart3/4.swift`). `DockerSandboxProvider` steuert die
+`docker`-CLI über einen `CommandRunner`: ein Container je Lauf (`--init`, Labels `based.sandbox`/`based.run`,
+`--cpus`, `--memory`, `--pids-limit`, `no-new-privileges`, `--cap-drop ALL`, optional `--network none`), Projekt-
+ordner unter `/workspace/<projekt>`. Umgebung nur über `SandboxEnvironmentPolicy` (Allowlist; Namen, die nach
+Geheimnis aussehen, nur ausdrücklich) und nur als `-e NAME` – Werte nie in argv, nie im Log; die docker-CLI selbst
+bekommt nur `PATH`, `HOME`, `DOCKER_*`. Snapshot = `docker commit` + tar.gz des Ordners; Restore ersetzt den
+Container und legt den alten Ordner als `<ordner>.before-restore-<zeit>` daneben. `LocalSandboxProvider` arbeitet
+direkt im Ordner (Snapshots als tar.gz). `SandboxManager` hält die Sandboxen pro Lauf, beendet sie beim
+Herunterfahren und findet verwaiste Container; Aufräumen alter Archive/Images/Sicherungen nur mit Bestätigung und
+nur, was ein frischer Scan meldet. Owner-Routen `/sandbox/runs[/<run>]`, `…/snapshots`, `…/restore`, `…/stop`,
+`/sandbox/leftovers`, `/sandbox/cleanup`. Gestartet werden Sandboxen vom Agenten-Laufzeitsystem, das im TS-Server
+noch fehlt; der Treiber für Claude Code im Container ist nicht gebaut. Docker selbst ist ungeprüft (Tests mit
+gemocktem Prozess); die lokale Variante läuft in den Tests mit echtem `tar`. Die Docker-Engine-API (statt CLI) ist
+nicht umgesetzt.
+
+## CLI `based` (`apps/cli`)
+
+Ein Node-Einstieg (`bin/based.js`, lädt die TS-Quellen über tsx). Spricht den Server über MCP (Streamable HTTP,
+`POST /mcp`, Bearer-Token). Befehle wie die Swift-CLI: `ask [--wait]`, `runs`, `run`, `page get|new|list`,
+`search`, `inbox`, `tools`, `sandbox shell`, `login`, `config`. Der Token nie als Argument (`BASED_TOKEN`,
+`--token-file`, `based login` liest stdin bzw. verdeckt am Terminal, `~/.config/based/config.json` mit 0600);
+http nur für localhost. Werkzeug-Argumente passen sich dem Schema an (TS: `id`/`parent`, Swift: `page_id`/
+`parent_id`). Was der Server nicht anbietet (TS: Hauptagent, Läufe, Inbox), meldet der Befehl mit Exit 1.
+
+```sh
+pnpm --filter @based/cli start -- search "Roadmap"      # oder: apps/cli/bin/based.js …
+```
+
 ## Tests
 
 ```sh
@@ -120,6 +157,10 @@ pnpm --filter @based/server test                                   # Vitest: Pro
 SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--reference]
 ```
 
+- `test/share.test.ts`: Rollen/Vererbung, gefilterter Pull/Push, Löschung beim Herausbewegen, Hashes, Widerruf,
+  Einladung, Publish (ohne Token lesbar, privater Bereich nicht, HTML-Block-Sandbox, Bilder).
+- `test/sandbox.test.ts`: Docker-Kommandozeilen (gemockter Prozess), Allowlist, lokale Snapshots, Aufräumen, Routen.
+- `apps/cli/test/cli.test.ts`: `based` gegen einen In-Process-Server.
 - `test/sync-http.test.ts`: Endpunkte und Router (401/404/405/413/400, CORS), newer/deleted, Long-Poll, GC, v1.
 - `test/client-compat.test.ts`: `SyncClient` aus `packages/sync` gegen den Server über HTTP (Swift-Korpus
   byte-gleich, Offline, Tombstones, GC mit Full-Pull, Live über Long-Poll, falscher Token).
@@ -131,11 +172,10 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
 
 ## Offen
 
-- **Teilen** (docs/sharing.md: `/s/<secret>`, `/p/<id>`, `/share/v1/…`, gefilterter Pull/Push für Gäste) ist nicht
-  gebaut. Plan: `ShareService` nach TS portieren (Nutzer, Grants, Links in `meta`, Geheimnisse nur als SHA-256),
-  der Router bekommt die Zugriffsart `ownerOrShared` mit Principal; `pull` filtert Records nach Leserecht (Seiten,
-  die den geteilten Bereich verlassen, als Löschung), `push` prüft Record für Record und rollt mit der Server-Kopie
-  zurück; veröffentlichte Seiten als HTML über `HTMLExporter`. Bis dahin bekommen Share-Tokens 401 (Swift: 403).
+- **Teilen**: Universal Links (`/.well-known/apple-app-site-association`) und `/share/v1/resolve` fehlen noch; ein
+  Gast-Modus im Web-Client (nur geteilte Seiten, ohne Workspace-Record) ist nicht gebaut – Gäste lesen im Browser,
+  bearbeiten mit dem Token in Based. Eine Seite, die *in* den geteilten Bereich verschoben wird, kommt bei Gästen
+  ohne ihren (unveränderten) Inhalt an, bis der sich ändert oder der Gast `/share/v1/snapshot` lädt (wie Swift).
 - **Deploy** (`deploy/`) ist unverändert und startet den Swift-Server. Umstieg: Dockerfile mit `node:22-slim`,
   `pnpm deploy --filter @based/server` (oder ein esbuild-Bündel statt `tsx`), gleiche Variablen (`BASED_TOKEN`,
   `BASED_DB=/data/based.sqlite`, `BASED_PORT`, `BASED_PUBLIC_URL`), gleiches Volume; Caddy leitet WebSockets ohne

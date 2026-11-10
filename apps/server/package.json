@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "start": "tsx src/main.ts",
     "typecheck": "tsc -p .",
@@ -10,6 +13,7 @@
   },
   "dependencies": {
     "@based/core": "workspace:*",
+    "@based/design-tokens": "workspace:*",
     "@based/sync": "workspace:*",
     "@hocuspocus/server": "^4.8.0",
     "@modelcontextprotocol/sdk": "^1.32.2",

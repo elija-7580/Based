@@ -66,3 +66,34 @@ GET  /.well-known/apple-app-site-association
 
 For Universal Links the app additionally needs the *Associated Domains* capability with `applinks:<your domain>`
 (Xcode → Signing & Capabilities). It isn't in the default entitlements because the domain is yours.
+
+## TypeScript server (`apps/server`)
+
+The TS server implements the same model (`src/share.ts`, `src/share-routes.ts`, `src/publish.ts`); the Swift
+server stays the reference until it is switched off.
+
+- **Stored the same way:** users, grants and links in `meta` under `share.v1`, same JSON as Swift (dates as seconds
+  since 2001), so a database file keeps its shares when it moves between the two servers. Secrets only as SHA-256.
+- **Router:** routes declare `access: "shared"` (owner token, device token or access-link secret) or `"owner"`. A
+  valid guest token on an owner route gets **403** (MCP, Sync v1, `/sandbox/*` …); no token or a wrong one gets 401.
+- **Sync:** `/sync/v2/info|pull|push|wait` and `/share/v1/snapshot` accept guests. Pull turns changed records the
+  guest can't read into unstamped deletions; a page that leaves the shared area takes its content (sub-pages,
+  database, rows, views) with it. Push applies only records with edit access where they are *and* where they go;
+  the rest come back in `newer` (only if the guest may read them). Assets: guests read only files referenced from
+  readable records and upload only with an edit role somewhere.
+- **Publish:** `/p/<id>[/<page>]` is rendered with the core HTML exporter (`exportHTMLPage`, `offline: true`) and the
+  token stylesheet from `@based/design-tokens/export-css` — no scripts, no fonts or scripts from other servers.
+  CSP `default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; media-src 'self'; frame-src 'self'; …`.
+  Images come from `/p/<id>/asset/<hash>` (only files of the published area). HTML blocks load from
+  `/p/<id>/<page>/html/<block>` with `Content-Security-Policy: sandbox allow-scripts; default-src 'none'; …`
+  (opaque origin, no network). Embeds of other sites don't load on published pages (frame-src `'self'`).
+  Publishing a page twice returns the same link; links to pages outside the area become plain text.
+- **Access links** (`/s/<secret>`) open a read-only rendering in the browser; to edit, the secret is used as the
+  token in Based (Settings → Sync & server). **Invites** show a form (no JavaScript); joining shows the device token
+  once, with the server URL to connect with.
+- Link URLs are built by the client from the server URL it is connected to (`path` in the API answer); the TS
+  server needs no `BASED_PUBLIC_URL` for that. Universal Links (`apple-app-site-association`) are not served yet.
+
+In the web client: **Share** in the page header (`apps/web/src/components/Share.tsx`, HTTP in `@based/sync`
+`ShareAPI`): Publish / Copy link / Unpublish, access links and invites with a role, revoke, roles of people.
+Without a connected sync server the panel says so and offers the way to Settings.

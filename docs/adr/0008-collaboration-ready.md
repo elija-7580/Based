@@ -28,3 +28,9 @@ web client, acceptable size and performance on large pages.
 - The collaboration step later is mostly the text layer, not a rewrite.
 - Until then, concurrent edits to the same block still resolve by LWW.
 - Follow-ups: BSD-29 (CRDT spike), BSD-30 (properties as records).
+
+## Note (2026-11-10)
+
+Sharing on the TS server (roles, filtered sync, publish to web) works on top of LWW per record and does not
+depend on the text CRDT: guests sync like any device, with records filtered by role. Real-time multi-user editing
+stays out of scope until the `/collab` path materialises Y changes into records (docs/server.md).
