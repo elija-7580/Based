@@ -1,7 +1,7 @@
 // BSD-154: Erwähnungen (Seite, Person, Datum, Link) und Gleichungen im Text.
 import { createReactInlineContentSpec } from "@blocknote/react";
 import { useEffect, useRef, useState } from "react";
-import { canonicalStringify, dateFromSwift } from "@based/core";
+import { canonicalStringify, dateFromSwift, dateParts, withDateParts, type DateParts } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
 import { isEmojiIcon, useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { pageIcon, pageTitle } from "./blocks.js";
@@ -55,7 +55,7 @@ function PageMention(props: { id: string; text: string }) {
 
 type DateProps = { start: number; end?: number; includeTime?: boolean; remind?: boolean };
 
-/** Datums-Erwähnung: Klick öffnet ein kleines Feld mit der Erinnerungs-Flagge (wird nur gespeichert). */
+/** Datums-Erwähnung: Klick öffnet den Wähler (Tag, Ende für einen Bereich, Uhrzeit) und die Erinnerungs-Flagge. */
 function DateMention(props: { value: string; editable: boolean; onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
@@ -95,7 +95,8 @@ function DateMention(props: { value: string; editable: boolean; onChange: (value
       }}>
       @{formatDate(props.value)}{remind ? <span className="bx-mention-remind" aria-label="Reminder set" title="Reminder set"> ⏰</span> : null}
       {open ? (
-        <span className="bx-date-pop" role="dialog" aria-label="Date options" contentEditable={false}>
+        <span className="bx-date-pop" role="dialog" aria-label="Date options" contentEditable={false} onKeyDown={(e) => { if (e.key !== "Escape") e.stopPropagation(); }}>
+          {parsed ? <DatePicker value={parsed} onChange={(v) => props.onChange(canonicalStringify(v))} /> : null}
           <label className="bx-date-remind">
             <input type="checkbox" checked={remind} onChange={(e) => toggle(e.target.checked)} />
             <span>Remind me</span>
@@ -103,6 +104,35 @@ function DateMention(props: { value: string; editable: boolean; onChange: (value
           <span className="bx-muted">Saved with the date. Notifications come later.</span>
         </span>
       ) : null}
+    </span>
+  );
+}
+
+/** BSD-210: Tag, „End date“ (Bereich) und „Include time“ – native Felder, Wert wie in den Swift-Records. */
+function DatePicker(props: { value: DateProps; onChange: (v: DateProps) => void }) {
+  const parts = dateParts(props.value);
+  const set = (patch: Partial<DateParts>) => props.onChange(withDateParts(props.value, { ...parts, ...patch }));
+  const hasEnd = parts.endDay !== undefined;
+  return (
+    <span className="bx-date-picker">
+      <span className="bx-date-row">
+        <input type="date" className="bx-field" aria-label="Start day" value={parts.startDay} onChange={(e) => set({ startDay: e.target.value })} />
+        {parts.includeTime ? <input type="time" className="bx-field" aria-label="Start time" value={parts.startTime} onChange={(e) => set({ startTime: e.target.value })} /> : null}
+      </span>
+      {hasEnd ? (
+        <span className="bx-date-row">
+          <input type="date" className="bx-field" aria-label="End day" value={parts.endDay} onChange={(e) => set({ endDay: e.target.value })} />
+          {parts.includeTime ? <input type="time" className="bx-field" aria-label="End time" value={parts.endTime ?? parts.startTime} onChange={(e) => set({ endTime: e.target.value })} /> : null}
+        </span>
+      ) : null}
+      <label className="bx-date-remind">
+        <input type="checkbox" checked={hasEnd} onChange={(e) => set(e.target.checked ? { endDay: parts.startDay, endTime: parts.startTime } : { endDay: undefined, endTime: undefined })} />
+        <span>End date</span>
+      </label>
+      <label className="bx-date-remind">
+        <input type="checkbox" checked={parts.includeTime} onChange={(e) => set({ includeTime: e.target.checked, startTime: e.target.checked && parts.startTime === "00:00" ? "09:00" : parts.startTime })} />
+        <span>Include time</span>
+      </label>
     </span>
   );
 }

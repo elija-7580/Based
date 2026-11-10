@@ -98,3 +98,45 @@ export function dateMentionValue(date: Date, remind = false): { start: number; i
   if (remind) v.remind = true;
   return v;
 }
+
+// MARK: Datumswähler (BSD-210): Start, optional Ende (Bereich) und Uhrzeit, wie Notions Datums-Popover.
+
+export interface DateMentionValue { start: number; end?: number; includeTime?: boolean; remind?: boolean }
+/** Felder des Wählers in lokaler Zeit: Tag „YYYY-MM-DD“, Uhrzeit „HH:MM“. */
+export interface DateParts { startDay: string; startTime: string; endDay?: string | undefined; endTime?: string | undefined; includeTime: boolean }
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const dayOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const timeOf = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const SWIFT_EPOCH = 978307200;
+const fromSwift = (s: number) => new Date((s + SWIFT_EPOCH) * 1000);
+
+export function dateParts(v: DateMentionValue): DateParts {
+  const s = fromSwift(v.start);
+  const e = v.end !== undefined ? fromSwift(v.end) : undefined;
+  return { startDay: dayOf(s), startTime: timeOf(s), endDay: e ? dayOf(e) : undefined, endTime: e ? timeOf(e) : undefined, includeTime: v.includeTime === true };
+}
+
+function localDate(day: string, time: string | undefined): Date | undefined {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+  if (!m) return undefined;
+  const t = time ? /^(\d{1,2}):(\d{2})$/.exec(time) : null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), t ? Number(t[1]) : 0, t ? Number(t[2]) : 0);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+/**
+ * Neuer Wert aus den Feldern des Wählers. Ohne Uhrzeit zählt Mitternacht; ein Ende vor dem Start wird mit ihm
+ * getauscht (wie Notion). Ungültige Eingaben lassen den alten Wert stehen. `remind` bleibt erhalten.
+ */
+export function withDateParts(v: DateMentionValue, p: DateParts): DateMentionValue {
+  const start = localDate(p.startDay, p.includeTime ? p.startTime : undefined);
+  if (!start) return v;
+  let end = p.endDay ? localDate(p.endDay, p.includeTime ? (p.endTime ?? p.startTime) : undefined) : undefined;
+  let s = start;
+  if (end && end.getTime() < s.getTime()) [s, end] = [end, s];
+  const out: DateMentionValue = { start: dateToSwift(s), includeTime: p.includeTime };
+  if (end) out.end = dateToSwift(end);
+  if (v.remind) out.remind = true;
+  return out;
+}
