@@ -8,9 +8,27 @@ import { CodeBlock } from "@astryxdesign/core/CodeBlock";
 import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { Markdown } from "@astryxdesign/core/Markdown";
 import { formatCost, formatTokens, PAGE_URI, type ChatPart, type ChatTurnBuilder, type TranscriptItem, type TurnUsage } from "@based/brain";
-import { memo, type ReactNode } from "react";
+import { createContext, memo, useContext, type ComponentType, type ReactNode } from "react";
 import { AgentBar } from "../components/AgentMark.js";
 import type { PendingApproval } from "./controller.js";
+
+/** Erweiterungen der Antwortanzeige (Agent Brain: Zitate → nummerierte Quellen mit Sprung zum Block). */
+export interface AnswerHooks {
+  /** Text vor dem Markdown umformen (ein React-Hook, wird immer aufgerufen). */
+  useText: (text: string, streaming: boolean) => string;
+  /** Links mit eigenem Schema (`based-cite:`). */
+  Link?: ComponentType<{ href: string; children: ReactNode }>;
+  /** Zusätze am Ende eines Antwort-Turns (Nummer der Nutzer-Nachricht davor, ab 1). */
+  turnExtras?: (userOrdinal: number) => ReactNode;
+}
+const identity = (t: string) => t;
+export const AnswerHooksContext = createContext<AnswerHooks>({ useText: identity });
+
+function MarkdownLink({ href, children }: { href: string; children: ReactNode }) {
+  const { Link } = useContext(AnswerHooksContext);
+  if (Link && href.startsWith("based-cite:")) return <Link href={href}>{children}</Link>;
+  return href.startsWith("#") ? <a href={href}>{children}</a> : <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>;
+}
 
 /** Links auf Seiten (based://page/<id>) werden Sprünge innerhalb der App. */
 export const internalLinks = (md: string) => md.replaceAll(PAGE_URI, "#page-");
@@ -20,15 +38,16 @@ const MD_COMPONENTS = {
   image: ({ src, alt }: { src: string; alt: string }) => (
     <a className="chat-image-link" href={src} target="_blank" rel="noopener noreferrer">{alt ? `Image: ${alt}` : "Image"}</a>
   ),
-  link: ({ href, children }: { href: string; children: ReactNode }) =>
-    href.startsWith("#") ? <a href={href}>{children}</a> : <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
+  link: MarkdownLink,
 };
 
 /** Markdown einer Antwort; nur neu geparst, wenn sich der Text ändert (BSD-74: kein Re-Parse je Delta anderer Teile). */
 export const AnswerMarkdown = memo(function AnswerMarkdown({ text, streaming }: { text: string; streaming: boolean }) {
+  const hooks = useContext(AnswerHooksContext);
+  const shown = hooks.useText(text, streaming);
   return (
     <Markdown isStreaming={streaming} density="compact" contentWidth="100%" headingLevelStart={3} components={MD_COMPONENTS}>
-      {internalLinks(text)}
+      {internalLinks(shown)}
     </Markdown>
   );
 });
@@ -79,7 +98,8 @@ function Thinking({ part }: { part: ChatPart }) {
   );
 }
 
-function AssistantTurn({ turn, last, approvals, onAnswer, onRetry }: { turn: ChatTurnBuilder; last: boolean; approvals: readonly PendingApproval[]; onAnswer: (id: string, ok: boolean) => void; onRetry: () => void }) {
+function AssistantTurn({ turn, last, approvals, onAnswer, onRetry, ordinal }: { turn: ChatTurnBuilder; last: boolean; approvals: readonly PendingApproval[]; onAnswer: (id: string, ok: boolean) => void; onRetry: () => void; ordinal: number }) {
+  const { turnExtras } = useContext(AnswerHooksContext);
   const usage = usageLine(turn.usage);
   const meta = [turn.model, usage].filter(Boolean).join(" · ");
   return (
@@ -98,6 +118,7 @@ function AssistantTurn({ turn, last, approvals, onAnswer, onRetry }: { turn: Cha
           {turn.error && !turn.stopped ? (
             <Banner status="error" title="The answer failed" description={turn.error} endContent={last ? <Button size="sm" label="Retry" onClick={onRetry} /> : undefined} />
           ) : null}
+          {turnExtras?.(ordinal)}
           {meta && turn.done ? <span className="t-data chat-meta" data-testid="turn-usage">{meta}</span> : null}
         </div>
       </div>
@@ -114,6 +135,13 @@ export function ChatMessages({ items, running, approvals, onAnswer, onRetry, emp
   empty: ReactNode;
 }) {
   const lastAssistant = items.findLastIndex((i) => i.kind === "assistant");
+  // Nummer der Nutzer-Nachricht vor jedem Eintrag (für Zusätze je Turn).
+  const ordinals: number[] = [];
+  items.reduce((n, item) => {
+    const m = item.kind === "user" ? n + 1 : n;
+    ordinals.push(m);
+    return m;
+  }, 0);
   return (
     <ChatMessageList isStreaming={running} density="compact" emptyState={empty} align="top">
       {items.map((item, i) =>
@@ -122,7 +150,7 @@ export function ChatMessages({ items, running, approvals, onAnswer, onRetry, emp
             <ChatMessageBubble variant="ghost"><span className="chat-user-text" data-testid="user-message">{item.text}</span></ChatMessageBubble>
           </ChatMessage>
         ) : (
-          <AssistantTurn key={item.id} turn={item.turn} last={i === lastAssistant && i === items.length - 1} approvals={approvals} onAnswer={onAnswer} onRetry={onRetry} />
+          <AssistantTurn key={item.id} turn={item.turn} last={i === lastAssistant && i === items.length - 1} approvals={approvals} onAnswer={onAnswer} onRetry={onRetry} ordinal={ordinals[i]!} />
         ),
       )}
     </ChatMessageList>

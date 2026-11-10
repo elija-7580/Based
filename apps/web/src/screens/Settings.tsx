@@ -14,6 +14,7 @@ import type { ShellState, StoreClient } from "../worker/client.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
 import { settingsRegistry } from "./settings/registry.js";
 import { registerBuiltinSettings } from "./settings/sections.js";
+import "../brain/BrainSettings.js";
 import "./settings/settings.css";
 
 registerBuiltinSettings();

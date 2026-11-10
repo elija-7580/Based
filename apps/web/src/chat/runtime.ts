@@ -3,6 +3,7 @@
 import { chatTitleFrom, MAIN_AGENT_ID, ScriptedEngine, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
 import type { StoreClient } from "../worker/client.js";
 import { aiConfig } from "./aiConfig.js";
+import { installBrain } from "../brain/setup.js";
 import { ChatController } from "./controller.js";
 
 let shared: ChatController | undefined;
@@ -52,6 +53,8 @@ export function restoreLastChat(c: ChatController) {
 export function chatController(client: StoreClient): ChatController {
   if (!shared) {
     shared = new ChatController({ backend: client, config: aiConfig(), onTurnEnd: (t) => void recordChatRun(client, t).catch(() => undefined) });
+    // Agent Brain: Skills, Privacy-Redact, Memories, Zitate (BSD-163/198/199).
+    installBrain(client, shared);
     let last: string | undefined;
     shared.subscribe(() => {
       const id = shared!.getState().chatID;

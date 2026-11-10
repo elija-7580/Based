@@ -12,7 +12,9 @@ import { Icon } from "../icons.js";
 import { relative } from "../shell/format.js";
 import { AiSettingsSection, PERMISSIONS } from "./AiSettingsSection.js";
 import { aiConfig, type AiConfig } from "./aiConfig.js";
-import { ChatMessages, usageLine } from "./ChatMessages.js";
+import { BrainChatContext, BrainComposerBar, brainEventsByTurn, CitationLink, TurnBrainExtras, useCitedText } from "../brain/BrainChatUI.js";
+import { brainChatOf } from "../brain/setup.js";
+import { AnswerHooksContext, ChatMessages, usageLine, type AnswerHooks } from "./ChatMessages.js";
 import { transcriptOf, type ChatController } from "./controller.js";
 import "./chat.css";
 
@@ -76,6 +78,16 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
   const info = chats.find((c) => c.id === s.chatID);
   const title = info?.title || (t.items[0]?.kind === "user" ? t.items[0].text : "") || "New chat";
   const total = usageLine(t.usage);
+  const brain = brainChatOf(controller);
+  const brainEvents = useMemo(() => brainEventsByTurn(s.events), [s.events]);
+  const answerHooks = useMemo<AnswerHooks>(() => (brain ? {
+    useText: useCitedText,
+    Link: CitationLink,
+    turnExtras: (n) => {
+      const ev = brainEvents.get(n);
+      return ev ? <TurnBrainExtras events={ev} brain={brain} /> : null;
+    },
+  } : { useText: (x: string) => x }), [brain, brainEvents]);
 
   useEffect(() => {
     if (!ai.loaded) void config.load();
@@ -100,6 +112,8 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
 
   const showSettings = pane === "settings";
   return (
+    <BrainChatContext.Provider value={brain}>
+    <AnswerHooksContext.Provider value={answerHooks}>
     <section className={`chat-view chat-${mode}`} aria-label="Chat with Based" data-testid={mode === "panel" ? "chat-panel" : "chat-page"}>
       <header className="chat-head">
         <span className="chat-title t-section" title={title}>{showSettings ? "Chat settings" : pane === "history" && mode === "panel" ? "Chats" : title}</span>
@@ -148,13 +162,18 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   ))}
                 </ul>
               ) : null}
+              {brain ? <BrainComposerBar brain={brain} /> : null}
               <div className="chat-composer">
                 <Composer
+                  onDraftChange={brain ? (text) => brain.setDraft(text) : undefined}
                   showDetails={mode === "page" || !!total}
                   inputID={`chat-input-${mode}`}
                   autoFocus
                   placeholder={s.running ? "Queue a message for when Based is done" : "Ask your notes, or tell Based what to do"}
-                  onSubmit={(text) => void controller.send(text)}
+                  onSubmit={(text) => {
+                    brain?.captureSend(text);
+                    void controller.send(text);
+                  }}
                   busy={s.running}
                   onStop={() => controller.stop()}
                   disabled={!s.ready}
@@ -179,5 +198,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
         </div>
       </div>
     </section>
+    </AnswerHooksContext.Provider>
+    </BrainChatContext.Provider>
   );
 }

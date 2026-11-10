@@ -17,3 +17,4 @@ export { AnthropicProvider, AnthropicStream, ANTHROPIC_FALLBACK_MODELS, type Ant
 export { OpenAIProvider, OpenAIStream, OLLAMA_BASE_URL, type OpenAIOptions, type TokenField } from "./providers/openai.js";
 export * from "./meeting.js";
 export * from "./agents/index.js";
+export * from "./agentbrain/index.js";

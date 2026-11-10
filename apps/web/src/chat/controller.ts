@@ -3,8 +3,8 @@
 // während einer laufenden Antwort ein (PromptQueue), speichert den laufenden Turn gedrosselt als Records (BSD-77)
 // und fragt bei Schreib-Werkzeugen nach Freigabe (Permission-Pille). Ohne DOM, damit es in Vitest läuft.
 import {
-  foldTranscript, historyFromEvents, ModelEngine, PromptQueue, runTurn,
-  type ChatEngine, type ChatEvent, type ChatInfo, type PermissionMode, type QueuedPrompt, type RunningTurn, type StoredChatEvent, type ToolCall, type ToolHost, type ToolPolicy,
+  combineToolHosts, foldTranscript, historyFromEvents, ModelEngine, PromptQueue, runTurn,
+  type AIProvider, type ChatEngine, type ChatEvent, type ChatInfo, type PermissionMode, type QueuedPrompt, type RunningTurn, type StoredChatEvent, type ToolCall, type ToolHost, type ToolPolicy,
 } from "@based/brain";
 import type { JSONValue } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "../worker/chat.js";
@@ -50,6 +50,37 @@ export interface ChatViewState {
 
 const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false };
 
+/** Wo die Engine eines Turns ihr Modell aufruft (für Privacy-Redact: lokale Modelle brauchen keins). */
+export type TurnReach = "external" | "local" | "cli";
+
+/** Was ein Hook vor dem Turn beisteuert (Agent Brain: Skills, Redact – apps/web/src/brain/turn.ts). */
+export interface TurnPrep {
+  /** Zusatz fürs System-Prompt. */
+  system?: string;
+  /** Ereignisse direkt nach der Nutzer-Nachricht (z. B. gewählte Skills; unbekannte Typen bleiben im Transkript). */
+  events?: StoredChatEvent[];
+  /** Engine ohne Anbieter-Schnittstelle einhüllen (ScriptedEngine, später CLIs). */
+  wrapEngine?: (engine: ChatEngine) => ChatEngine;
+  /** Anbieter einhüllen (ModelEngine: sitzt vor JEDEM Modellaufruf, auch für Tool-Ergebnisse). */
+  wrapProvider?: (provider: AIProvider) => AIProvider;
+  /** Ereignisse am Ende des Turns (z. B. „n details redacted“). */
+  finish?: () => StoredChatEvent[];
+}
+
+export interface TurnContext {
+  chatID: string;
+  reach: TurnReach;
+  signal: AbortSignal;
+}
+
+export interface TurnHooks {
+  prepare?: (text: string, ctx: TurnContext) => Promise<TurnPrep | undefined>;
+  /** Nach dem Turn (gespeichert): weitere Ereignisse, die angehängt werden (Memory-Vorschläge). */
+  after?: (turn: readonly StoredChatEvent[], ctx: { chatID: string; complete: (system: string, prompt: string) => Promise<string> }) => Promise<StoredChatEvent[] | undefined>;
+  /** Zusätzliche Werkzeuge (Agent Brain). */
+  tools?: () => ToolHost | undefined;
+}
+
 export interface ChatControllerOptions {
   backend: ChatBackend;
   config?: AiConfig | undefined;
@@ -61,6 +92,8 @@ export interface ChatControllerOptions {
 }
 
 export class ChatController {
+  /** Haken für das Agent Brain (Skills, Redact, Memories); ohne bleibt der Chat wie er ist. */
+  hooks: TurnHooks = {};
   private state: ChatViewState = EMPTY;
   private listeners = new Set<() => void>();
   private readonly queue: PromptQueue<string>;
@@ -174,20 +207,58 @@ export class ChatController {
     const catalog = this.catalog;
     let specs: ToolCatalog | undefined;
     void catalog.then((c) => { specs = c; });
-    return {
+    const base: ToolHost = {
       get specs() { return specs?.specs ?? []; },
       isWrite: (n) => specs?.write.includes(n) ?? true,
       call: (name, input) => this.o.backend.chatTool(name, input),
     };
+    const extra = this.hooks.tools?.();
+    return extra ? combineToolHosts(base, extra) : base;
   }
 
-  private async engine(ctx: EngineContext): Promise<ChatEngine | undefined> {
-    if (this.override) return this.override(ctx);
+  private async engine(ctx: EngineContext, prep?: TurnPrep, system?: string): Promise<ChatEngine | undefined> {
+    if (this.override) {
+      const e = await this.override(ctx);
+      return e && prep?.wrapEngine ? prep.wrapEngine(e) : e;
+    }
     const cfg = this.o.config;
     const choice = cfg?.activeModel();
     if (!cfg || !choice) return undefined;
-    const provider = await cfg.provider(choice, this.o.fetch);
-    return new ModelEngine({ provider, model: choice.model, tools: ctx.tools, policy: ctx.policy });
+    let provider = await cfg.provider(choice, this.o.fetch);
+    if (prep?.wrapProvider) provider = prep.wrapProvider(provider);
+    return new ModelEngine({ provider, model: choice.model, tools: ctx.tools, policy: ctx.policy, ...(system ? { system } : {}) });
+  }
+
+  /** Wohin das eingestellte Modell spricht. */
+  reach(): TurnReach {
+    if (this.override) return "external";
+    const choice = this.o.config?.activeModel();
+    if (!choice) return "external";
+    if (choice.kind === "ollama") return "local";
+    const base = this.o.config?.getState().settings.providers[choice.kind]?.baseURL ?? "";
+    return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(base) ? "local" : "external";
+  }
+
+  /** Ein einzelner Modellaufruf ohne Werkzeuge (Memory-Vorschläge). Ohne Modell: Fehler. */
+  private async complete(system: string, prompt: string, wrap?: (p: AIProvider) => AIProvider): Promise<string> {
+    const cfg = this.o.config;
+    const choice = cfg?.activeModel();
+    if (!cfg || !choice) throw new Error("No model is set up.");
+    let provider = await cfg.provider(choice, this.o.fetch);
+    if (wrap) provider = wrap(provider);
+    const r = await provider.stream([{ role: "system", content: system }, { role: "user", content: prompt }], { model: choice.model, tools: [], maxTokens: 1024 });
+    return r.message.content;
+  }
+
+  /** Ereignisse an den offenen Chat anhängen (z. B. Entscheidung über einen Memory-Vorschlag). */
+  async appendEvents(events: StoredChatEvent[]): Promise<void> {
+    const id = this.state.chatID;
+    if (!id || events.length === 0) return;
+    await this.saving;
+    const base = this.stored.get(id) ?? (await this.o.backend.chatLoad(id)).events.length;
+    const r = await this.o.backend.chatSave(id, base, events);
+    this.stored.set(id, r.events);
+    if (this.state.chatID === id) this.set({ events: [...this.state.events, ...events] });
   }
 
   private permission(): PermissionMode {
@@ -265,26 +336,46 @@ export class ChatController {
     };
     const tools = this.toolHost();
     await this.catalog?.catch(() => undefined);
+    let prep: TurnPrep | undefined;
+    try {
+      prep = await this.hooks.prepare?.(text, { chatID: id, reach: this.reach(), signal });
+    } catch (e) {
+      turn.push({ type: "notice", text: "Skills and privacy checks were skipped: " + message(e) });
+    }
+    if (prep?.events?.length) {
+      turn.push(...prep.events);
+      show();
+    }
     let engine: ChatEngine | undefined;
     try {
-      engine = await this.engine({ tools, policy });
+      engine = await this.engine({ tools, policy }, prep, undefined);
     } catch (e) {
       turn.push({ type: "failed", message: message(e) });
     }
-    if (!engine && turn.length === 1) turn.push({ type: "failed", message: "No model is set up. Add a provider and a model in the chat settings." });
+    if (!engine && !turn.some((e) => e.type === "failed")) turn.push({ type: "failed", message: "No model is set up. Add a provider and a model in the chat settings." });
     if (engine) {
       const history = historyFromEvents(prior);
-      for await (const e of runTurn(engine, { prompt: text, history }, signal)) {
+      const request = prep?.system ? { prompt: text, history, system: prep.system } : { prompt: text, history };
+      // Hängt ein Hook Ereignisse an, kommen sie nach dem Turn-Ende – damit nichts in die Antwort fällt.
+      let ended = false;
+      for await (const e of runTurn(engine, request, signal)) {
         turn.push(e);
+        if (e.type === "result" || e.type === "failed") ended = true;
         show();
         scheduleSave();
       }
+      const extra = ended ? prep?.finish?.() ?? [] : [];
+      if (extra.length > 0) turn.push(...extra);
     }
     if (timer) clearTimeout(timer);
     timer = undefined;
     show();
     await save();
     if (engine) this.o.onTurnEnd?.({ chatID: id, prompt: text, events: turn });
+    if (engine && !signal.aborted && this.hooks.after) {
+      const more = await this.hooks.after(turn, { chatID: id, complete: (sys, p) => this.complete(sys, p, prep?.wrapProvider) }).catch(() => undefined);
+      if (more?.length && live()) await this.appendEvents(more).catch(() => undefined);
+    }
   }
 }
 
