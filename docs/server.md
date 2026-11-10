@@ -250,9 +250,9 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
 
 ## Offen
 
-- **Teilen**: Universal Links (`/.well-known/apple-app-site-association`) und `/share/v1/resolve` fehlen noch; ein
-  Gast-Modus im Web-Client (nur geteilte Seiten, ohne Workspace-Record) ist nicht gebaut – Gäste lesen im Browser,
-  bearbeiten mit dem Token in Based. Eine Seite, die *in* den geteilten Bereich verschoben wird, kommt bei Gästen
+- **Teilen**: Universal Links (`/.well-known/apple-app-site-association`) fehlen noch; `/share/v1/resolve` und
+  „Open in Based“ (`--web-url`) gibt es (BSD-235 Teil 1), der Gast-Start im Web-Client fehlt (Teil 2) – bis dahin
+  lesen Gäste im Browser und bearbeiten mit dem Token in Based. Eine Seite, die *in* den geteilten Bereich verschoben wird, kommt bei Gästen
   ohne ihren (unveränderten) Inhalt an, bis der sich ändert oder der Gast `/share/v1/snapshot` lädt (wie Swift).
 - **Deploy** (`deploy/`) ist unverändert und startet den Swift-Server. Umstieg: Dockerfile mit `node:22-slim`,
   `pnpm deploy --filter @based/server` (oder ein esbuild-Bündel statt `tsx`), gleiche Variablen (`BASED_TOKEN`,
@@ -262,6 +262,7 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
   genauso. Was der TS-Server noch nicht kann (Agenten, Scheduler, Captures, Sessions, Teilen, Web-App `/app`),
   fehlt dann – ein paralleler Betrieb nach Pfaden bräuchte zwei Workspaces, die sich gegenseitig per Sync v2
   abgleichen (zwei `--node`-Kennungen).
-- **MCP**: Datenbank-, Agenten-, Projekt-, Capture- und Host-Werkzeuge, `find_replace`, `move_page`,
-  `duplicate_page`, `backlinks`, `set_favorite`, Prompts (Skills), `/mcp/session/<id>` mit Sitzungs-Tokens.
+- **MCP**: Agenten-, Projekt-, Run-, Inbox-, Capture- und Host-Werkzeuge, Prompts (Skills), `/mcp/session/<id>` mit
+  Sitzungs-Tokens. Da sind: Seiten (inkl. `find_replace`, `move_page`, `duplicate_page`, `backlinks`,
+  `set_favorite`, BSD-221 Teil 2) und Datenbanken (Teil 1).
 - Schreibfehler der Datenbank (Store schreibgeschützt) ergeben 500; ein Health-Feld dafür fehlt noch.

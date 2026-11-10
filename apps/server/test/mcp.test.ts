@@ -39,8 +39,38 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "based_guide", "create_page", "database_schema", "list_databases", "list_pages", "list_trash", "query_database", "read_page", "replace_page_content", "restore_page", "search", "trash_page", "update_page", "update_row"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "list_databases", "list_pages", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row"].sort(),
     );
+  });
+
+  it("BSD-221 Teil 2: find_replace, move_page, duplicate_page, backlinks, set_favorite", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const a = idIn(textOf(await call("create_page", { title: "Alpha", markdown: "Hallo **Welt**, Hallo Welt" })));
+    const b = idIn(textOf(await call("create_page", { title: "Beta", markdown: `Siehe [Alpha](based://page/${a})` })));
+    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Servus" }))).toBe("Replaced 1 match(es) in Alpha.");
+    expect(textOf(await call("read_page", { id: a }))).toContain("Servus **Welt**, Hallo Welt");
+    expect(textOf(await call("find_replace", { id: a, find: "Hallo", replace: "Grüß", all: true }))).toBe("Replaced 1 match(es) in Alpha.");
+    expect(textOf(await call("find_replace", { id: a, find: "fehlt", replace: "x" }))).toBe("No match for that text in Alpha.");
+
+    expect(textOf(await call("backlinks", { id: a }))).toBe(`- Beta (id: ${b})`);
+    expect(textOf(await call("backlinks", { id: b }))).toBe("No backlinks.");
+
+    await call("move_page", { id: b, parent_id: a });
+    expect(store.blocks.get(b)?.parent).toBe("b:" + a);
+    expect((await call("move_page", { id: a, parent_id: b })).isError).toBe(true); // in die eigene Unterseite
+    await call("move_page", { id: b });
+    expect(store.blocks.get(b)?.parent).toBe("w");
+
+    const copy = idIn(textOf(await call("duplicate_page", { id: a })));
+    expect(copy).not.toBe(a);
+    expect(textOf(await call("read_page", { id: copy }))).toContain("Servus **Welt**, Grüß Welt");
+
+    await call("set_favorite", { id: a, favorite: true });
+    expect(store.workspace.favorites).toContain(a);
+    await call("set_favorite", { id: a, favorite: false });
+    expect(store.workspace.favorites).not.toContain(a);
+    expect((await call("set_favorite", { id: "nope", favorite: true })).isError).toBe(true);
   });
 
   it("ohne gültigen Token: 401, keine Verbindung", async () => {

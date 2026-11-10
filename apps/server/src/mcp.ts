@@ -4,6 +4,7 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
 
@@ -203,6 +204,96 @@ export function createMcpServer(pages: Pages): McpServer {
     "list_trash",
     { description: "Pages in the Trash, most recently deleted first", inputSchema: { limit, offset }, annotations: { readOnlyHint: true } },
     guarded(({ limit: n, offset: o }: { limit?: number | undefined; offset?: number | undefined }) => text(paged(pages.trashList().map(line), n ?? 50, o ?? 0))),
+  );
+
+  // MARK: Seiten-Werkzeuge wie die Swift-App (BSD-221 Teil 2, AgentTools.swift)
+  const store = pages.store;
+  const pageOf = (id: string) => {
+    if (!isPageLike(store.blocks.get(id))) throw new ToolError(`No page ${id}`);
+    return id;
+  };
+
+  server.registerTool(
+    "find_replace",
+    {
+      description: "Replace text inside a page's blocks (like editing a passage) without rewriting the whole page. Matches are case-sensitive; formatting around the passage is kept.",
+      inputSchema: { id: z.string(), find: z.string().min(1), replace: z.string(), all: z.boolean().optional().describe("Replace every match (default: first only)") },
+    },
+    guarded(({ id, find, replace, all }: { id: string; find: string; replace: string; all?: boolean | undefined }) => {
+      pageOf(id);
+      const changes: { id: string; text: ReturnType<typeof replaceInRichText>["text"] }[] = [];
+      let count = 0;
+      const visit = (parent: string): boolean => {
+        for (const cid of store.children(parent)) {
+          const b = store.blocks.get(cid);
+          if (!b || isPageLike(b)) continue;
+          if (b.text !== undefined) {
+            const r = replaceInRichText(b.text, find, replace, { all: all === true });
+            if (r.count > 0) {
+              changes.push({ id: cid, text: r.text });
+              count += r.count;
+              if (all !== true) return true;
+            }
+          }
+          if (visit("b:" + cid)) return true;
+        }
+        return false;
+      };
+      visit("b:" + id);
+      if (count === 0) return text(`No match for that text in ${pages.title(id)}.`);
+      store.transact("MCP: find and replace", (tx) => {
+        for (const c of changes) {
+          tx.update(c.id, (x) => {
+            if (c.text === "" || (Array.isArray(c.text) && c.text.length === 0)) delete x.text;
+            else x.text = c.text;
+          });
+        }
+      });
+      return text(`Replaced ${count} match(es) in ${pages.title(id)}.`);
+    }),
+  );
+
+  server.registerTool(
+    "move_page",
+    { description: "Move a page under another page, or to the top level (Private) when parent_id is omitted.", inputSchema: { id: z.string(), parent_id: z.string().optional() } },
+    guarded(({ id, parent_id }: { id: string; parent_id?: string | undefined }) => {
+      pageOf(id);
+      if (parent_id !== undefined) pageOf(parent_id);
+      const ok = movePages(store, [id], parent_id !== undefined ? { kind: "page", id: parent_id } : { kind: "top", section: PRIVATE });
+      if (!ok) throw new ToolError(`Couldn't move ${pages.title(id)} there (into itself or one of its sub-pages?).`);
+      return text(`Moved ${pages.title(id)}${parent_id !== undefined ? ` under ${pages.title(parent_id)}` : " to the top level"}.`);
+    }),
+  );
+
+  server.registerTool(
+    "duplicate_page",
+    { description: "Duplicate a page with all its content (placed right after the original).", inputSchema: { id: z.string() } },
+    guarded(({ id }: { id: string }) => {
+      pageOf(id);
+      const copy = duplicatePages(store, [id])[0];
+      if (!copy) throw new ToolError(`Could not duplicate ${id}`);
+      return text(`Duplicated as ${pages.title(copy)} (id: ${copy}) [link: ${PAGE_URI}${copy}]`);
+    }),
+  );
+
+  server.registerTool(
+    "backlinks",
+    { description: "Pages that link to or mention a page.", inputSchema: { id: z.string(), limit, offset }, annotations: { readOnlyHint: true } },
+    guarded(({ id, limit: n, offset: o }: { id: string; limit?: number | undefined; offset?: number | undefined }) => {
+      pageOf(id);
+      const ids = backlinksTo(store, id);
+      return text(ids.length === 0 ? "No backlinks." : paged(ids.map(line), n ?? 50, o ?? 0));
+    }),
+  );
+
+  server.registerTool(
+    "set_favorite",
+    { description: "Add a page to or remove it from Favorites.", inputSchema: { id: z.string(), favorite: z.boolean().describe("true to add, false to remove") } },
+    guarded(({ id, favorite }: { id: string; favorite: boolean }) => {
+      pageOf(id);
+      setFavorite(store, [id], favorite);
+      return text(`${favorite ? "Added" : "Removed"} ${pages.title(id)} ${favorite ? "to" : "from"} Favorites.`);
+    }),
   );
 
   // Ressourcen
