@@ -71,6 +71,8 @@ test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen",
   await expect(menu.getByTestId("page-menu-edited")).toHaveText("Edited just now");
   await expect(menu.getByRole("menuitem", { name: "Copy link" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
+  await expect(menu.getByRole("menuitem", { name: "Open in new window" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
   await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(menu).toBeHidden();
