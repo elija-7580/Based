@@ -75,6 +75,7 @@ export {
   setGroupHidden, setPropertyVisible, setRelationLimitOne, setRelationTarget, setRollup, setRowTitle, setSorts, setValue, setViewType,
   uniquePropertyName, updateChart, updateOption, updateProperty, updateView, valueCase, valueForGroup, viewsForBlock, visiblePropertyIDs,
   wouldCreateRollupCycle, DASHBOARD_COLUMNS, DASHBOARD_MAX_WIDGETS_PER_ROW, WIDGET_TYPES,
+  databasesNeedingIDCheck, repairUniqueIDs, uniqueIDRepair, valuesMatchingSchema,
 } from "./store/database-ops.js";
 export type { AddRowOptions, CreatedDatabase, InsertPosition as RowInsertPosition } from "./store/database-ops.js";
 export { chartDateBucket, chartNumber, chartPoints } from "./query/chart.js";
