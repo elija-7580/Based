@@ -190,6 +190,15 @@ describe("Unteragenten", () => {
     expect(changed).toBeGreaterThan(0);
   });
 
+  it("unterbrochener Lauf (App zu) wird als fehlgeschlagen gemeldet, nicht wiederholt", async () => {
+    const { agents, store } = setup();
+    const r = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "A", instructions: "x" });
+    expect(agents.claimRun(r.id, "old-tab")).toBe(true);
+    const runner = new AgentRunner({ backend: backend(agents, store), owner: "old-tab", engine: () => new ScriptedEngine({ script: [{ text: "again" }] }) });
+    await runner.tick();
+    expect(agents.run(r.id)!.data).toMatchObject({ status: "failed", result: "Interrupted — Based was closed while this ran." });
+  });
+
   it("gelöschter/abgebrochener Lauf (Undo) wird nicht gestartet; tick startet wartende", async () => {
     const { agents, store } = setup();
     agents.saveMain((d) => { d.permissions.mode = "free"; });

@@ -69,8 +69,9 @@ export class TasksRuntime {
 
   constructor(private readonly client: StoreClient, private readonly config: AiConfig = aiConfig()) {
     const online = () => this.onlineOverride ?? (typeof navigator === "undefined" ? true : navigator.onLine !== false);
-    this.runner = new TaskRunner({ backend: clientTaskBackend(client), engine: () => this.plannerEngine(), online, onError: (e) => console.warn("main agent:", e) });
-    this.agents = new AgentRunner({ backend: clientRunBackend(client), engine: (req) => this.agentEngine(req), onChange: () => this.refresh() });
+    const owner = tabOwner();
+    this.runner = new TaskRunner({ backend: clientTaskBackend(client), engine: () => this.plannerEngine(), online, owner, onError: (e) => console.warn("main agent:", e) });
+    this.agents = new AgentRunner({ backend: clientRunBackend(client), engine: (req) => this.agentEngine(req), owner: owner + "-agents", onChange: () => this.refresh() });
     this.state = { ...this.state, ready: this.isReady() };
     config.subscribe(() => {
       this.refresh();
@@ -104,7 +105,11 @@ export class TasksRuntime {
     void this.client.agentSnapshot().catch(() => undefined);
     void this.runner.resume();
     void this.agents.tick();
-    this.timer = setInterval(() => void this.agents.tick(), 30_000);
+    // abgelaufene Leases (anderer Tab geschlossen) und fällige Zeitpläne
+    this.timer = setInterval(() => {
+      void this.agents.tick();
+      void this.runner.resume();
+    }, 30_000);
     if (typeof window !== "undefined") window.addEventListener("online", () => void this.runner.resume());
     // neue wartende Unteragenten (aus einem Plan) sofort starten
     let queued = "";
@@ -186,6 +191,21 @@ export class TasksRuntime {
       },
     };
   }
+}
+
+/** Kennung dieses Browser-Tabs für Leases: überlebt Neuladen (sessionStorage), damit ein Auftrag, der beim Neuladen
+ *  mitten in der Arbeit war, sofort weiterläuft statt auf das Ablaufen der eigenen Lease zu warten. */
+function tabOwner(): string {
+  const fresh = "tab-" + Math.random().toString(36).slice(2, 10);
+  try {
+    const s = globalThis.sessionStorage;
+    const v = s?.getItem("based.tasks.owner");
+    if (v) return v;
+    s?.setItem("based.tasks.owner", fresh);
+  } catch {
+    // ohne sessionStorage: neue Kennung je Start
+  }
+  return fresh;
 }
 
 let shared: TasksRuntime | undefined;

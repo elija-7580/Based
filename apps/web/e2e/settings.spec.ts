@@ -46,7 +46,10 @@ test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", 
   await nav(page).getByRole("button", { name: "Agents & AI", exact: true }).click();
   await expect(page.getByTestId("settings-section-ai-providers")).toBeVisible();
   await expect(page.getByTestId("settings-missing").getByText("API keys for AI providers")).toHaveCount(0);
-  await expect(page.getByTestId("settings-missing").getByText("Agents and the main agent")).toBeVisible();
+  // BSD-160: „Main agent“ (Budget, Regeln, Projekte, Zeitpläne) ist jetzt auch echt; Skills bleiben offen.
+  await expect(page.getByTestId("settings-section-main-agent")).toBeVisible();
+  await expect(page.getByTestId("settings-missing").getByText("Agents and the main agent")).toHaveCount(0);
+  await expect(page.getByTestId("settings-missing").getByText("Skills")).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Connections", exact: true }).click();
   await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toBeVisible();

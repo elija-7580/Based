@@ -120,7 +120,7 @@ export class AgentStore {
   }
 
   /** Arbeit an einem Auftrag übernehmen (ein Tab/Gerät zur Zeit). `false`: jemand anderes hält ihn. */
-  claim(id: string, owner: string, ttlSeconds = 120): boolean {
+  claim(id: string, owner: string, ttlSeconds = 300): boolean {
     const t = this.task(id);
     const now = this.store.now();
     if (t.data.lease && t.data.lease.owner !== owner && t.data.lease.until > now) return false;
