@@ -3,7 +3,7 @@
 // Entf), Agent-Strich für von Agenten geänderte Zeilen.
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { plainText,
+import { dbops, deleteRows, plainText,
   CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setValue, valueCase,
   visiblePropertyIDs, type Block, type DatabaseView, type PropertySchema, type QueryResult,
 } from "@based/core";
@@ -17,7 +17,7 @@ import { EmptyState, GroupHeader, groupProperty, RowMenu, useAddRow } from "./sh
 
 export const ROW_HEIGHT = 36;
 const GROUP_HEIGHT = 44;
-const GUTTER = 28;
+const GUTTER = 48; // Auswahl-Kästchen + Zeilen-Menü (BSD-213)
 
 interface Active { rowID: string; col: number }
 interface Editing extends Active { anchor: Anchor; initialText?: string }
@@ -37,13 +37,20 @@ interface RowProps {
   onMenu: (row: Block, el: HTMLElement) => void;
   onOpen: ((id: string) => void) | undefined;
   onToggle: (row: Block, p: PropertySchema) => void;
+  /** BSD-213: Zeile ausgewählt (Kästchen); `onSelect(row, shift)`. Fehlt: keine Auswahl (gesperrt). */
+  selected: boolean;
+  onSelect: ((row: Block, shift: boolean) => void) | undefined;
 }
 
-const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle }: RowProps) {
+const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, activeCol, agent, wrap, onCell, onMenu, onOpen, onToggle, selected, onSelect }: RowProps) {
   return (
     <>
       <div className="dbui-gutter" role="presentation">
         {agent && <span className="dbui-agent-bar" role="img" aria-label="Changed by Based" />}
+        {onSelect && (
+          <input type="checkbox" className="dbui-row-check" tabIndex={-1} checked={selected} aria-label={`Select ${plainText(row.text) || "Untitled"}`}
+            onClick={(e) => { e.preventDefault(); onSelect(row, e.shiftKey); }} onChange={() => undefined} />
+        )}
         <button type="button" className="dbui-row-handle" aria-label="Row actions" tabIndex={-1} onClick={(e) => onMenu(row, e.currentTarget)}><Icon name="more" size={14} /></button>
       </div>
       {lead > 0 && <div className="dbui-col-spacer" style={{ width: lead }} aria-hidden />}
@@ -61,6 +68,22 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
     </>
   );
 });
+
+/** BSD-213: Leiste über der Tabelle, solange Zeilen ausgewählt sind. Duplizieren/Löschen je ein Undo-Schritt. */
+function SelectionBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
+  const { store, locked, rowActions } = useDB();
+  const n = ids.length;
+  return (
+    <div className="dbui-selection-bar" role="toolbar" aria-label="Selected pages" data-testid="selection-bar">
+      <span className="dbui-data">{n} selected</span>
+      {rowActions?.openInTabs && <button type="button" className="dbui-chip" onClick={() => rowActions.openInTabs!(ids)}>Open in new tabs</button>}
+      {rowActions?.copyLinks && <button type="button" className="dbui-chip" onClick={() => rowActions.copyLinks!(ids)}>Copy links</button>}
+      {!locked && <button type="button" className="dbui-chip" onClick={() => { dbops.duplicateRows(store, ids); onClear(); }}>Duplicate</button>}
+      {!locked && <button type="button" className="dbui-chip danger" onClick={() => { deleteRows(store, ids); onClear(); }}>Delete</button>}
+      <button type="button" className="dbui-icon-btn" aria-label="Clear selection" onClick={onClear}><Icon name="close" size={14} /></button>
+    </div>
+  );
+}
 
 function HeaderCell({ p, width, view, onResize }: { p: PropertySchema; width: number; view: DatabaseView; onResize: (w: number, done: boolean) => void }) {
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -122,6 +145,9 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   const [addProp, setAddProp] = useState<Anchor | null>(null);
   const [liveWidths, setLiveWidths] = useState<Record<string, number>>({});
   const [pendingEdit, setPendingEdit] = useState<string | null>(null);
+  // BSD-213: Zeilen-Mehrfachauswahl (Kästchen, ⇧-Klick = Bereich, alle wählen) mit Sammelaktionen.
+  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
+  const selectAnchor = useRef<string | null>(null);
   const addRow = useAddRow(view);
   const wrap = view.wrapCells === true;
 
@@ -295,17 +321,46 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     } else setLiveWidths((m) => ({ ...m, [id]: w }));
   }, [store, view.id]);
 
+  const rowOrder = useMemo(() => result.rows.map((r) => r.id), [result.rows]);
+  // Gelöschte oder herausgefilterte Zeilen fallen aus der Auswahl.
+  useEffect(() => {
+    if (!selected.size) return;
+    const live = rowOrder.filter((id) => selected.has(id));
+    if (live.length !== selected.size) setSelected(new Set(live));
+  }, [rowOrder, selected]);
+  const onSelect = useCallback((row: Block, shift: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const anchor = selectAnchor.current;
+      if (shift && anchor && anchor !== row.id) {
+        const a = rowOrder.indexOf(anchor), b = rowOrder.indexOf(row.id);
+        if (a >= 0 && b >= 0) for (const id of rowOrder.slice(Math.min(a, b), Math.max(a, b) + 1)) next.add(id);
+      } else if (next.has(row.id)) next.delete(row.id);
+      else next.add(row.id);
+      selectAnchor.current = row.id;
+      return next;
+    });
+  }, [rowOrder]);
+  const allSelected = rowOrder.length > 0 && selected.size === rowOrder.length;
+
   const editingRow = editing ? store.blocks.get(editing.rowID) : undefined;
   const editingProp = editing ? props[editing.col] : undefined;
   const menuRow = menu ? store.blocks.get(menu.row.id) : undefined;
   const vItems = virtualizer.getVirtualItems();
 
   return (
-    <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll">
+    <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll" onKeyDown={(e) => { if (e.key === "Escape" && selected.size && !editing) { setSelected(new Set()); } }}>
+      {selected.size > 0 && <SelectionBar ids={[...selected]} onClear={() => setSelected(new Set())} />}
       <div className="dbui-table" role="grid" aria-label={view.name} aria-rowcount={result.rows.length + 1} aria-colcount={props.length}
         tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onFocus={(e) => { if (e.target === e.currentTarget && !active && !editing) setActive(firstCell()); }} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
         <div className="dbui-thead" role="row" style={{ width: total }}>
-          <div className="dbui-gutter" />
+          <div className="dbui-gutter">
+            {!locked && rowOrder.length > 0 && (
+              <input type="checkbox" className={"dbui-row-check" + (selected.size ? " shown" : "")} tabIndex={-1} aria-label="Select all"
+                checked={allSelected} ref={(el) => { if (el) el.indeterminate = selected.size > 0 && !allSelected; }}
+                onChange={() => setSelected(allSelected ? new Set() : new Set(rowOrder))} />
+            )}
+          </div>
           {props.map((p, i) => <HeaderCell key={p.id} p={p} width={widths[i]!} view={view} onResize={resize(p.id)} />)}
           {!locked && <button type="button" className="dbui-th-add" aria-label="Add property" onClick={(e) => setAddProp(e.currentTarget)}><Icon name="plus" size={14} /></button>}
         </div>
@@ -328,10 +383,10 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           }
           if (it.kind !== "row") return null;
           return (
-            <div key={vi.key} role="row" className={"dbui-vrow" + (wrap ? " wrap" : "")} style={style} data-index={vi.index} data-row-id={it.row.id}
+            <div key={vi.key} role="row" className={"dbui-vrow" + (wrap ? " wrap" : "") + (selected.has(it.row.id) ? " selected" : "")} aria-selected={selected.has(it.row.id) || undefined} style={style} data-index={vi.index} data-row-id={it.row.id}
               aria-rowindex={vi.index + 2} ref={wrap ? virtualizer.measureElement : undefined}>
               <TableRow row={it.row} from={from} to={to} lead={lead} props={props} widths={widths} activeCol={active?.rowID === it.row.id ? active.col : -1} agent={isAgentEdit(it.row)} wrap={wrap}
-                onCell={onCell} onMenu={onMenu} onOpen={onOpenPage} onToggle={onToggle} />
+                onCell={onCell} onMenu={onMenu} onOpen={onOpenPage} onToggle={onToggle} selected={selected.has(it.row.id)} onSelect={locked ? undefined : onSelect} />
             </div>
           );
         })}

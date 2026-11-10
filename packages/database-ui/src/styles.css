@@ -560,3 +560,16 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-split > .dbui-split-more { border-start-start-radius: 0; border-end-start-radius: 0; padding: 0 var(--space-1); }
 .dbui-template-row { display: flex; align-items: center; gap: var(--space-1); }
 .dbui-template-row > .dbui-menu-item { flex: 1; min-width: 0; }
+
+/* BSD-213: Zeilen-Mehrfachauswahl in der Tabelle */
+.dbui-table { --dbui-gutter: calc(var(--space-7) + var(--space-2)); }
+.dbui-table .dbui-gutter { justify-content: flex-end; gap: var(--space-1); padding-right: var(--space-1); }
+.dbui-row-check { margin: 0; opacity: 0; accent-color: var(--ink); }
+.dbui-vrow:hover .dbui-row-check, .dbui-vrow.selected .dbui-row-check, .dbui-thead:hover .dbui-row-check, .dbui-row-check.shown, .dbui-row-check:focus-visible { opacity: 1; }
+.dbui-table:has(.dbui-vrow.selected) .dbui-row-check { opacity: 1; }
+.dbui-vrow.selected { background: var(--selected); }
+.dbui-selection-bar {
+  position: sticky; left: 0; z-index: 3; display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap;
+  padding: var(--space-1) var(--space-2); background: var(--surface-raised); border-radius: var(--radius-md); margin-bottom: var(--space-1);
+}
+.dbui-chip.danger { color: var(--danger); }
