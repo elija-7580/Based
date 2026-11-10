@@ -53,10 +53,20 @@ export interface DocSessionOptions {
   debounceMs?: number;
   /** Speicherverzögerung für den Y-Zustand in ms (Standard 400). */
   saveDelayMs?: number;
+  /**
+   * Fehler beim verzögerten Schreiben (z. B. ein Y.Doc, das nicht zum Schema passt). Ohne: weiterwerfen. Der Server
+   * setzt es, damit ein kaputtes Update eines Geräts den Prozess nicht beendet.
+   */
+  onError?: (error: unknown) => void;
+  /**
+   * Vorhandenes Y.Doc statt eines neuen (BSD-220: der Server bindet das Hocuspocus-Dokument einer Seite). Ein
+   * gespeicherter Zustand ist dann schon angewandt; `docStore` bleibt meist leer.
+   */
+  doc?: Y.Doc;
 }
 
 export class DocSession {
-  readonly doc = new Y.Doc();
+  readonly doc: Y.Doc;
   readonly fragment: Y.XmlFragment;
   private dirty = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -69,6 +79,7 @@ export class DocSession {
   private closed = false;
 
   constructor(readonly store: WorkspaceStore, readonly rootID: string, private readonly opts: DocSessionOptions) {
+    this.doc = opts.doc ?? new Y.Doc();
     this.fragment = this.doc.getXmlFragment(FRAGMENT);
     const saved = opts.docStore?.load(rootID);
     if (saved) Y.applyUpdate(this.doc, saved, LOAD_ORIGIN);
@@ -87,8 +98,10 @@ export class DocSession {
       if (!ids.some((id) => this.isRelevant(id))) return;
       // Erst eigene, noch nicht geschriebene Änderungen sichern (ohne die gerade geänderten Records anzufassen),
       // dann den Store ins Y.Doc übernehmen.
-      this.flush(new Set(ids));
-      this.reconcile();
+      this.guarded(() => {
+        this.flush(new Set(ids));
+        this.reconcile();
+      });
     });
     if (!saved) this.save();
   }
@@ -110,10 +123,22 @@ export class DocSession {
     this.dirty = true;
     const ms = this.opts.debounceMs ?? 120;
     if (ms <= 0) {
-      this.flush();
+      this.guarded(() => this.flush());
       return;
     }
-    if (this.timer === undefined) this.timer = setTimeout(() => this.flush(), ms);
+    if (this.timer === undefined) this.timer = setTimeout(() => this.guarded(() => this.flush()), ms);
+  }
+
+  private guarded(fn: () => unknown) {
+    if (!this.opts.onError) {
+      fn();
+      return;
+    }
+    try {
+      fn();
+    } catch (e) {
+      this.opts.onError(e);
+    }
   }
 
   /** Ausstehende Editor-Änderungen jetzt in den Store schreiben. `exclude`: Records, die gerade von außen kamen. */

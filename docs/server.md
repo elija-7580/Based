@@ -113,12 +113,27 @@ Name `page:<id>`, XML-Fragment `blocks` wie `packages/editor` (`DocSession`). Au
 Nachricht (Provider-Option `token`), unbekannte Seiten werden abgewiesen. Speichern 2 s nach der letzten Änderung
 (spätestens 10 s) in `<db>.collab.sqlite`, Tabelle `yjs_documents(name, state, updated)`.
 
-**Noch nicht verbunden:** Der Server materialisiert Y-Änderungen nicht selbst in Records und füllt ein neues Y.Doc
-nicht aus den Records. Solange das so ist, darf der Web-Editor `/collab` nicht einschalten: zwei Geräte würden
-beim ersten Öffnen jeweils die Records ins leere Dokument übernehmen (doppelter Inhalt). Nächster Schritt: Server-
-seitige `DocSession` mit einem kopflosen `BlockConverter` (BlockNote-Schema ohne DOM), die das Y.Doc beim Laden
-aus den Records füllt und Änderungen als eine Store-Transaktion schreibt; Clients übernehmen dann keine Records
-mehr, wenn der Server einen Zustand liefert.
+**Brücke Y.Doc ↔ Records (BSD-220, Teil 1):** Je geladenem Dokument läuft eine `DocSession` aus
+`@based/editor/headless` (kopfloser BlockNote-Konverter, läuft in Node ohne DOM). Regeln:
+
+- **Nur der Server füllt.** Gibt es noch keinen Y-Zustand, füllt der Server das Y.Doc aus den Records und setzt
+  `based.origin = "server"` (Y.Map `based`). Ein Gerät übernimmt Records nie selbst in ein Dokument, das es mit
+  `/collab` abgleicht (sonst doppelter Inhalt); ein lokal gefüllter Zustand ohne diese Markierung wird beim ersten
+  Verbinden verworfen und durch den des Servers ersetzt (Client-Teil, BSD-220 Teil 2).
+- **Text gewinnt über Yjs.** Y-Änderungen der Geräte schreibt der Server nach 120 ms Ruhe als eine
+  Store-Transaktion (frische HLC-Stempel) – so erreichen sie Sync v2 und den Swift-Client. Zwei Geräte, die offline
+  denselben Absatz ändern, behalten beide Änderungen (Yjs-Merge statt LWW).
+- **Records von außen** (Sync-Push eines Geräts ohne Yjs, Swift-Client, MCP, Agenten) übernimmt der Server per Diff
+  ins Y.Doc; die Geräte bekommen sie über Yjs. Für solche Records gilt weiter LWW je Block gegen gleichzeitige
+  Y-Änderungen desselben Blocks.
+- **Kein Zustand geht verloren, den Geräte kennen:** Diffs aus dem Store speichert der Server sofort (vor dem
+  Verteilen), Y-Änderungen der Geräte vor dem Materialisieren; beim Laden wird nach dem Nachziehen gespeichert.
+- Ein Update, das nicht zum Schema passt, wird protokolliert (ohne Inhalt) und ändert keine Records.
+
+Offen (Teil 2): Geräte mit `/collab` schreiben ihre Text-Records nur lokal (kein Push, der Server materialisiert),
+sonst kann ein Record-Push, der vor dem Y-Update desselben Geräts ankommt, als Diff noch einmal eingefügt werden;
+Web-Client: Y-Zustände dauerhaft (Worker-SQLite), Provider an `/collab` mit Token aus dem verschlüsselten Speicher,
+Abstammungs-Regel oben. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
 
 ## Sandbox pro Lauf (BSD-161)
 
