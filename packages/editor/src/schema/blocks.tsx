@@ -4,9 +4,10 @@
 import { defaultProps, type BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { containingPage, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
+import { columnFractions, resizeColumns } from "../ui/columns.js";
 import { scrollToHeading } from "../ui/Outline.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 
@@ -373,9 +374,69 @@ export const columnListBlock = createReactBlockSpec(
   { render: () => <div className="bx-columns-handle" contentEditable={false} aria-label="Columns" /> },
 );
 
+/**
+ * BSD-210: Spalte mit Breite. Der Anteil (`width` = Swift `ratio`) wird als Flex-Gewicht an den Spaltenrahmen
+ * geschrieben; rechts jeder Spalte außer der letzten liegt ein Griff zum Ziehen (Maus, Pfeiltasten) – ein Undo-Schritt.
+ * Rechts, nicht links: links erscheint BlockNotes Blockgriff und läge darüber.
+ */
+function ColumnView(props: { editor: AnyEditor; id: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const env = useEnv();
+  const { editor, id } = props;
+  // Während des Ziehens: Anteile aller Spalten (sonst gilt der gespeicherte Anteil).
+  const [live, setLive] = useState<number[] | undefined>();
+  const cols: { id: string; width: number }[] = (editor.getParentBlock(id)?.children ?? [])
+    .map((b: { id: string; props: { width?: unknown } }) => ({ id: b.id, width: Number(b.props.width) || 0 }));
+  const fractions = columnFractions(cols.map((c) => c.width));
+  const index = cols.findIndex((c) => c.id === id);
+  const save = (next: readonly number[]) => {
+    editor.transact(() => cols.forEach((c, k) => editor.updateBlock(c.id, { props: { width: next[k] } })));
+  };
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const row = (ref.current?.closest(".bn-block-outer") as HTMLElement | null)?.parentElement?.getBoundingClientRect().width;
+    if (!row) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const start = e.clientX;
+    let next = fractions;
+    const move = (ev: PointerEvent) => {
+      next = resizeColumns(fractions, index + 1, (ev.clientX - start) / row);
+      setLive(next);
+    };
+    const up = () => {
+      globalThis.removeEventListener("pointermove", move);
+      globalThis.removeEventListener("pointerup", up);
+      setLive(undefined);
+      if (next !== fractions) save(next);
+    };
+    globalThis.addEventListener("pointermove", move);
+    globalThis.addEventListener("pointerup", up);
+  };
+  // Breite als Flex-Gewicht über eine Regel am Spaltenrahmen (dessen DOM gehört ProseMirror, nicht anfassen).
+  const sel = (cid: string) => `[data-id="${CSS.escape(cid)}"]`;
+  let rules = index >= 0 ? `${sel(id)} { --bx-col: ${fractions[index]}; }` : "";
+  if (live) rules += cols.map((c, k) => `${sel(c.id)}${sel(c.id)} { --bx-col: ${live[k]}; }`).join("\n");
+  return (
+    <div className="bx-column-handle" ref={ref} contentEditable={false} aria-label="Column">
+      <style>{rules}</style>
+      {env.editable && index >= 0 && index < cols.length - 1 ? (
+        <div className="bx-column-resize" role="separator" aria-orientation="vertical" aria-label="Resize column" tabIndex={0}
+          aria-valuenow={Math.round((fractions[index] ?? 0) * 100)} aria-valuemin={0} aria-valuemax={100}
+          onPointerDown={onPointerDown}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+            e.preventDefault();
+            e.stopPropagation();
+            save(resizeColumns(fractions, index + 1, e.key === "ArrowRight" ? 0.05 : -0.05));
+          }} />
+      ) : null}
+    </div>
+  );
+}
+
 export const columnBlock = createReactBlockSpec(
   { type: CUSTOM.column, propSchema: { width: { default: 0 } }, content: "none" },
-  { render: () => <div className="bx-column-handle" contentEditable={false} aria-label="Column" /> },
+  { render: ({ block, editor }) => <ColumnView editor={editor as AnyEditor} id={block.id} /> },
 );
 
 // MARK: Unbekannt / nur in der App bearbeitbar

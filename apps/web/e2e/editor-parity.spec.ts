@@ -637,3 +637,54 @@ test("Duplicate kopiert Unterseiten tief (BSD-207, Teil 3)", async ({ page }) =>
   await expect(page.getByLabel("Page title")).toHaveValue("Nested plan (1)");
   await expect(editor(page).getByText("Inside the sub-page")).toBeVisible();
 });
+
+test("Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210)", async ({ page, browserName }) => {
+  await createPage(page, "Fine tuning");
+  await openPage(page, "Fine tuning");
+  await caretInLastLine(page);
+  await page.keyboard.type("/4 columns");
+  await expect(page.getByRole("option", { name: /4 columns/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  const cols = editor(page).locator(".bn-block-outer:has(> .bn-block > .react-renderer > .bn-block-content[data-content-type=column])");
+  await expect(cols).toHaveCount(4);
+  const widths = () => cols.evaluateAll((os) => os.map((o) => Math.round(o.getBoundingClientRect().width)));
+  const before = await widths();
+  expect(Math.max(...before) - Math.min(...before)).toBeLessThan(3);
+
+  const handle = editor(page).getByRole("separator", { name: "Resize column" }).first();
+  await cols.nth(1).hover();
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 60, box.y + 10, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(async () => (await widths())[0]! - (await widths())[1]!).toBeGreaterThan(80);
+  const after = await widths();
+  // Tastatur: Griff fokussieren, ← schiebt zurück
+  await handle.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect.poll(async () => (await widths())[0]!).toBeLessThan(after[0]!);
+  const kept = await widths();
+
+  await caretInLastLine(page);
+  await page.keyboard.type("1. Top");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("Sub");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("Deep");
+  const marker = (text: string) => editor(page).locator(".bn-block-content[data-content-type=numberedListItem]", { hasText: text }).last()
+    .evaluate((el) => getComputedStyle(el, "::before").content);
+  expect(await marker("Top")).not.toContain("counter(");
+  expect(await marker("Sub")).toContain("lower-alpha");
+  expect(await marker("Deep")).toContain("lower-roman");
+  await page.screenshot({ path: test.info().outputPath(`numbering-${browserName}.png`) });
+
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Fine tuning");
+  await expect(cols).toHaveCount(4);
+  await expect.poll(async () => Math.abs((await widths())[0]! - kept[0]!)).toBeLessThan(4);
+});
