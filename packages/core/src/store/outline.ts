@@ -13,6 +13,8 @@ export interface OutlineSection {
   /** `private` oder die Teamspace-ID. */
   id: string;
   name: string;
+  /** Emoji des Teamspaces, falls gesetzt. */
+  icon?: string;
 }
 
 export interface OutlineNode {
@@ -55,7 +57,15 @@ export function iconText(b: Block | undefined): string | undefined {
 /** Seitenleisten-Struktur eines Stands (eine Tiefensuche über alle Blöcke). */
 export function buildOutline(store: WorkspaceStore): Outline {
   const teamspaces = store.workspace.teamspaces ?? [];
-  const sections: OutlineSection[] = [...teamspaces.map((t) => ({ id: t.id, name: t.name })), { id: PRIVATE_SECTION, name: "Private" }];
+  const sections: OutlineSection[] = [
+    ...teamspaces.map((t) => {
+      const s: OutlineSection = { id: t.id, name: t.name };
+      const icon = typeof t.icon === "string" ? t.icon : (t.icon?.emoji ?? t.icon?.symbol);
+      if (icon) s.icon = icon;
+      return s;
+    }),
+    { id: PRIVATE_SECTION, name: "Private" },
+  ];
   const children: Record<string, string[]> = {};
   const nodes: Record<string, OutlineNode> = {};
   for (const s of sections) children[sectionKey(s.id)] = [];

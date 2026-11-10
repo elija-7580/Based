@@ -11,7 +11,7 @@ import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
 import type { WorkspaceStore } from "../store/store.js";
-import { commitImport, emptyReport, ImportBuilder, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
+import { AssetRejected, commitImport, emptyReport, ImportBuilder, looksLikeLocalFile, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
@@ -33,6 +33,8 @@ export interface NotionImportOptions {
   now?: (() => number) | undefined;
   /** Autor neuer Markdown-Seiten (Swift `store.userID`). */
   userID?: string | null | undefined;
+  /** Verweise auf Dateien, die im Import fehlen, als Warnung in den Bericht (die Swift-App meldet sie nicht). */
+  warnMissingFiles?: boolean | undefined;
 }
 
 /** Ein Teil des Imports: ein Dateibaum und ein Pfad darin (Ordner oder Datei). */
@@ -84,6 +86,7 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const imp = new NotionHTMLImporter(builder, src.files, {
         progress: (f) => progress(0.5 + (i + f) / html.length * 0.4),
         isCancelled: opts.isCancelled,
+        warnMissingFiles: opts.warnMissingFiles,
       });
       imp.importExport(src.path);
     });
@@ -277,14 +280,23 @@ class MarkdownNotionImporter {
     if (src.includes("://")) return { url: src };
     const u = joinPath(dir, src);
     const data = this.files.isFile(u) ? this.files.read(u) : undefined;
-    if (!this.opts.assets || !data) return { url: src };
+    if (!data) {
+      if (this.opts.warnMissingFiles && looksLikeLocalFile(src)) this.warn(`Missing file “${u}” — it isn't in the import`);
+      return { url: src };
+    }
+    if (!this.opts.assets) return { url: src };
     try {
       const ref = this.opts.assets.importData(data, basename(u), mimeFor(extname(u)));
       this.report.assets += 1;
       return { asset: ref };
-    } catch {
+    } catch (e) {
+      this.warn(e instanceof AssetRejected ? e.message : `Couldn't copy file ${basename(u)}`);
       return { url: src };
     }
+  }
+
+  private warn(w: string) {
+    if (!this.report.warnings.includes(w)) this.report.warnings.push(w);
   }
 
   private putImported(item: MarkdownBlock, parent: string, sortKey: string) {

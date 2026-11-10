@@ -45,6 +45,45 @@ export class MemoryAssetSink implements AssetSink {
   }
 }
 
+/** Eine Datei, die der Speicher nicht annimmt; die Meldung steht im Import-Bericht. */
+export class AssetRejected extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AssetRejected";
+  }
+}
+
+/** Größenlimit je Datei beim Import (100 MB). */
+export const DEFAULT_MAX_ASSET_BYTES = 100 * 1024 * 1024;
+
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(n < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+/** Lässt nur Dateien bis `maxBytes` durch; größere werden abgelehnt (`AssetRejected`) und in `skipped` gemerkt. */
+export class LimitedAssetSink implements AssetSink {
+  readonly skipped: { name: string; size: number }[] = [];
+  constructor(private readonly inner: AssetSink, readonly maxBytes: number = DEFAULT_MAX_ASSET_BYTES) {}
+  importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef {
+    if (data.length > this.maxBytes) {
+      this.skipped.push({ name, size: data.length });
+      throw new AssetRejected(`Skipped “${name}” (${formatBytes(data.length)}): larger than the ${formatBytes(this.maxBytes)} limit for attached files`);
+    }
+    return this.inner.importData(data, name, mime);
+  }
+}
+
+/** Sieht ein `src`/`href` wie eine Datei aus dem Export aus (relativer Pfad mit Endung)? Für „fehlt“-Warnungen. */
+export function looksLikeLocalFile(src: string): boolean {
+  if (src === "" || src.startsWith("#") || src.startsWith("data:") || src.startsWith("mailto:") || src.includes("://") || /^[a-z][a-z0-9+.-]*:/i.test(src)) return false;
+  const path = src.split(/[?#]/)[0]!;
+  const name = path.split("/").pop() ?? "";
+  const dot = name.lastIndexOf(".");
+  return dot > 0 && dot < name.length - 1;
+}
+
 const extensionOf = (name: string) => { const i = name.lastIndexOf("."); return i <= 0 ? "" : name.slice(i + 1); };
 
 /** MIME-Typ einer Endung (Swift `FileAssetStore.mime(for:)`). */
@@ -274,7 +313,9 @@ export class ImportBuilder {
     const map = new Map<string, AssetRef>();
     if (sink) {
       for (const [id, f] of this.pendingAssets) {
-        try { map.set(id, sink.importData(f.data, f.name, f.mime)); } catch { this.warnings.push(`Couldn't copy file ${f.name}`); }
+        try { map.set(id, sink.importData(f.data, f.name, f.mime)); } catch (e) {
+          this.warnings.push(e instanceof AssetRejected ? e.message : `Couldn't copy file ${f.name}`);
+        }
       }
     }
     const fix = (a: AssetRef | undefined) => (a === undefined || !a.id.startsWith("pending-") ? a : map.get(a.id));
