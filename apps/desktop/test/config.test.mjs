@@ -29,3 +29,9 @@ test("Updater liest die next-Releases und hat einen öffentlichen Schlüssel", (
 test("Icons liegen vor", () => {
   for (const f of conf.bundle.icon) assert.ok(existsSync(new URL(`../src-tauri/${f}`, import.meta.url)), f);
 });
+
+test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen angelegt werden", () => {
+  const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
+  assert.deepEqual(cap.windows, ["main", "page-*"]);
+  assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
+});

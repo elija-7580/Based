@@ -5,6 +5,7 @@ import { pageFormat, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont,
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
+import { openPageWindow } from "../desktop.js";
 import { ExportDialog } from "../components/ImportExport.js";
 import { MoveDialog } from "../components/MoveDialog.js";
 import { ShareButton } from "../components/Share.js";
@@ -146,6 +147,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           options={store && page && !storeReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined}
           actions={page && !trashed ? {
             copyLink: () => void copyPageLink(pageID),
+            openWindow: () => void openPageWindow(routeToHash({ name: "page", id: pageID }), title),
             duplicate: () => void client.command({ op: "duplicate", ids: [pageID] }),
             move: () => setMoving(true),
             favorite: { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
@@ -233,6 +235,7 @@ const FONTS: readonly { id: PageFont; label: string }[] = [{ id: "default", labe
 /** BSD-204: Seitenaktionen im •••-Menü (wie Notion): Link kopieren, Duplizieren, Verschieben, Favorit, Export, Papierkorb. */
 interface PageActions {
   copyLink: () => void;
+  openWindow: () => void;
   duplicate: () => void;
   move: () => void;
   favorite: { on: boolean; toggle: () => void };
@@ -300,6 +303,7 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
       {actions ? (
         <>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="page" size={18} />Copy link</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.openWindow(); }}><Icon name="expand" size={18} />Open in new window</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate(); }}><Icon name="duplicate" size={18} />Duplicate</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move(); }}><Icon name="move" size={18} />Move to…</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button>

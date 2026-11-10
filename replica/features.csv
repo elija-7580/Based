@@ -17,7 +17,7 @@ Sidebar page tree with expand/collapse,navigation,must,yes,yes,,yes
 Drag and drop pages in sidebar,navigation,should,yes,yes,,yes
 Breadcrumbs,navigation,should,yes,yes,,yes
 Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)",yes
-Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system,partial: neuer Tab per ⌘-Klick/Mittelklick; eigenes Fenster fehlt
+Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system,"partial: neuer Tab per ⌘-Klick/Mittelklick; „Open in new window“ (Seitenmenü, Seitenleiste) – Tauri-Fenster page-*, Mac-Test offen (BSD-202)"
 Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs",yes
 Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)",yes
 Recent pages in search,search,should,yes,yes,,yes
