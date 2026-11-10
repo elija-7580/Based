@@ -286,7 +286,7 @@ export class StoreHost {
       }
       for (const [pageID, keys] of this.openPages) if (keys.has(key) || this.belongsTo(key, pageID)) this.notePageChange(pageID, key);
     }
-    this.chat.noteChange(change);
+    this.chatHost?.noteChange(change);
     this.scheduleFlush();
   }
 
