@@ -22,6 +22,7 @@ import {
   turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor, type URLChoice,
 } from "./blockActions.js";
 import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "./MovePicker.js";
+import { AIBox, type AIRequest, type EditorAI } from "./AIBox.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
 import type { CollabHandle, CollabSource } from "../yjs/collab.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
@@ -75,6 +76,8 @@ export interface PageEditorProps {
    * Store. Ohne: die Datenbanken, die der Store des Editors kennt.
    */
   databases?: DatabaseSource;
+  /** BSD-225: „Ask AI“ (leere Zeile + Leertaste, /AI, Formatleiste). Ohne: keine AI-Einträge. */
+  ai?: EditorAI;
 }
 
 interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages"> {
@@ -86,6 +89,21 @@ interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages">
   startMove: (req: MoveRequest) => void;
   /** BSD-212: Auswahl „Linked view of database“ für einen (ggf. eingebetteten) Editor öffnen. */
   startLink: (req: LinkRequest) => void;
+  /** BSD-225: AI-Feld öffnen. */
+  startAI: (req: AIRequest) => void;
+}
+
+/** BSD-225: AI-Feld für die Schreibmarke bzw. die Auswahl in `editor` (an dem Block, unter ihm am Bildschirm). */
+function aiRequest(editor: BasedEditor, withSelection: boolean): AIRequest | undefined {
+  const view = editor.prosemirrorView;
+  if (!view) return undefined;
+  const blockID = editor.getTextCursorPosition().block.id;
+  const sel = view.state.selection;
+  const selection = withSelection && !sel.empty ? { text: view.state.doc.textBetween(sel.from, sel.to, "\n"), from: sel.from, to: sel.to } : undefined;
+  const el = globalThis.document?.querySelector(`[data-id="${CSS.escape(blockID)}"]`);
+  const r = el?.getBoundingClientRect();
+  const coords = view.coordsAtPos(sel.to);
+  return { editor, blockID, selection, page: view.state.doc.textBetween(0, view.state.doc.content.size, "\n").slice(0, 6000), x: r?.left ?? coords.left, y: (r?.bottom ?? coords.bottom) + 4 };
 }
 
 /** Offene Auswahl „Linked view of database“: in welchen Editor. */
@@ -142,8 +160,9 @@ export function PageEditor(props: PageEditorProps) {
   }, []);
   const [move, setMove] = useState<MoveRequest | undefined>();
   const [link, setLink] = useState<LinkRequest | undefined>();
+  const [aiReq, setAIReq] = useState<AIRequest | undefined>();
   const shared: Shared = {
-    ...rest, pageID, notify, startMove: setMove, startLink: setLink,
+    ...rest, pageID, notify, startMove: setMove, startLink: setLink, startAI: setAIReq,
     docStore: props.docStore ?? defaultDocStore(props.store),
     pages: props.pages ?? defaultDirectory(props.store),
   };
@@ -176,6 +195,7 @@ export function PageEditor(props: PageEditorProps) {
       }
     }}>
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
+      {aiReq && props.ai ? <AIBox ai={props.ai} req={aiReq} onClose={() => { setAIReq(undefined); aiReq.editor.focus(); }} /> : null}
       {link ? <DatabasePicker source={databases} onClose={() => setLink(undefined)} onPick={(d) => void pickDatabase(link, d)} /> : null}
       {move ? <MovePicker pages={shared.pages} selfID={move.session.rootID} moving={move.ids} onClose={() => setMove(undefined)} onPick={(p) => void pickTarget(move, p)} /> : null}
       {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
@@ -394,6 +414,18 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           e.preventDefault();
           duplicate(targetBlocks(actions, caretBlockID(editor)));
         }
+        // BSD-225: Leertaste auf leerer Zeile öffnet „Ask AI“ (wie Notion), wenn die Shell eine AI anbietet.
+        if (shared.ai && shared.ai.available?.() !== false && editable && e.key === " " && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.nativeEvent.isComposing) {
+          const cur = editor.getTextCursorPosition().block;
+          if (cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0) {
+            const req = aiRequest(editor, false);
+            if (req) {
+              e.preventDefault();
+              shared.startAI(req);
+              return;
+            }
+          }
+        }
         // Esc: Blockauswahl (nicht, solange ein Menü offen ist – das schließt Esc selbst).
         if (e.key === "Escape" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.nativeEvent.isComposing && !globalThis.document?.querySelector(".bn-suggestion-menu")) {
           const ids = targetBlocks(actions, caretBlockID(editor)).map((b) => b.id);
@@ -425,6 +457,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} />} />} />
           <FormattingToolbarController formattingToolbar={() => (
             <FormattingToolbar>
+              {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
               {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
             </FormattingToolbar>
           )} />
@@ -464,6 +497,7 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Link to page", subtext: "Link to an existing page.", aliases: ["link"], group: "Basic blocks", onItemClick: () => insert({ type: CUSTOM.linkToPage } as never) },
     { title: "Synced block", subtext: "Sync content across pages.", aliases: ["sync"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.syncedBlock } as never) },
     { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insertInlineDatabase(editor, session) },
+    ...(shared.ai ? [{ title: "Ask AI", subtext: "Let AI write from a prompt.", aliases: ["ai", "write", "generate"], group: "AI", onItemClick: () => { const r = aiRequest(editor, false); if (r) shared.startAI(r); } }] : []),
     { title: "Linked view of database", subtext: "Show an existing database on this page.", aliases: ["linked", "linked database", "view"], group: "Database", onItemClick: () => shared.startLink({ editor, session }) },
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
@@ -561,6 +595,12 @@ export function insertLinkedView(editor: BasedEditor, session: DocSession, datab
 /** Gleichung im Text an der Schreibmarke einfügen (leer: öffnet ihr Eingabefeld). */
 export function insertInlineEquation(editor: BasedEditor, expression = "") {
   editor.insertInlineContent([{ type: INLINE.equation, props: { expression, text: "" } } as never]);
+}
+
+/** BSD-225: „Ask AI“ vorn in der Formatleiste über einer Auswahl. */
+function AskAIButton({ onAsk }: { onAsk: () => void }) {
+  const Components = useComponentsContext()!;
+  return <Components.FormattingToolbar.Button className="bn-button bx-ask-ai" label="Ask AI" mainTooltip="Ask AI" onClick={onAsk}>Ask AI</Components.FormattingToolbar.Button>;
 }
 
 // MARK: Block-Menü mit „Copy and sync“

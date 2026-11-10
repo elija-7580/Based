@@ -9,6 +9,8 @@ import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
 import { Equation } from "./equation.js";
 import { createMeetingHost } from "./meeting/host.js";
+import { chatController } from "./chat/runtime.js";
+import { editorAI } from "./editorAI.js";
 import { ShellPageDirectory } from "./shell/pageDirectory.js";
 import { slots, type PageEditorProps } from "./slots.js";
 import type { StoreClient } from "./worker/client.js";
@@ -60,12 +62,14 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   // BSD-220: Echtzeit-Text nur, wenn eingeschaltet (beim Öffnen der Seite entschieden).
   const collabOn = syncConfig.get()?.collab === true;
   const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID) : undefined), [pageID, collabOn]);
+  // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
+  const ai = useMemo(() => (client ? editorAI((system, prompt, signal) => chatController(client).write(system, prompt, signal), () => chatController(client).canWrite()) : undefined), [client]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   return (
     <div className="shell-editor">
       <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>

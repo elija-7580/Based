@@ -7,6 +7,8 @@ export { isEmojiIcon, storePageDirectory } from "./ui/env.js";
 export { EmojiPicker } from "./ui/EmojiPicker.js";
 export type { EmojiPickerProps } from "./ui/EmojiPicker.js";
 export type { DatabaseRef, DatabaseSource } from "./ui/MovePicker.js";
+export { AIBox, applyAIResult, SELECTION_ACTIONS } from "./ui/AIBox.js";
+export type { AIRequest, EditorAI } from "./ui/AIBox.js";
 export { isOutlineHidden, PageOutline, scrollToHeading, setOutlineHidden } from "./ui/Outline.js";
 export { mentionItems } from "./ui/mentions.js";
 export { handlePaste, htmlToBlocks, insertMarkdown, insertParsed } from "./ui/paste.js";
