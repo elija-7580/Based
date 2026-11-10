@@ -4,3 +4,4 @@ export * from "./agents.js";
 export * from "./inbox.js";
 export * from "./client.js";
 export * from "./engine.js";
+export * from "./sessions.js";

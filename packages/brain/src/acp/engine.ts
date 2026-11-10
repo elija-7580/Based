@@ -66,8 +66,8 @@ export interface AcpEngineOptions {
   /** Bestehende Sitzung fortsetzen (`session/load`, falls der Agent es kann). */
   resumeSessionId?: string | undefined;
   inbox: PermissionInbox;
-  /** Modus + Regeln; ohne: „askEdits“ ohne Regeln. */
-  permissions?: Permissions | undefined;
+  /** Modus + Regeln; ohne: „askEdits“ ohne Regeln. Funktion = jeweils aktueller Stand (Modus änderbar). */
+  permissions?: Permissions | (() => Permissions) | undefined;
   /** Name des vorherigen Agenten bei einem Wechsel (für die Übergabe). */
   handoffFrom?: string | undefined;
 }
@@ -197,7 +197,8 @@ export class AcpEngine implements ChatEngine {
   }
 
   private async permission(req: AcpPermissionRequest, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<string | undefined> {
-    const d = autoDecide(req, this.o.permissions ?? new Permissions());
+    const p = typeof this.o.permissions === "function" ? this.o.permissions() : this.o.permissions;
+    const d = autoDecide(req, p ?? new Permissions());
     if (d.effect !== "ask") {
       if (d.effect === "deny") emit({ type: "notice", text: `Denied “${req.title}”: ${d.reason}` });
       return d.optionId;

@@ -152,6 +152,28 @@ noch fehlt; der Treiber für Claude Code im Container ist nicht gebaut. Docker s
 gemocktem Prozess); die lokale Variante läuft in den Tests mit echtem `tar`. Die Docker-Engine-API (statt CLI) ist
 nicht umgesetzt.
 
+## Coding-Agenten (BSD-223)
+
+Aus, solange der Server ohne `--coding-root <ordner>` (wiederholbar; oder `BASED_CODING_ROOTS=/a:/b`) startet.
+Sitzungen laufen nur in diesen Ordnern; der Agent darf über `fs/*` nur im Sitzungsordner lesen und schreiben
+(Symlinks aufgelöst). Agenten: Standardliste aus `@based/brain` (`DEFAULT_AGENTS`: Claude Code, Codex, Gemini CLI,
+OpenCode), gestartet mit gefilterter Umgebung (Allowlist, BSD-33; `BASED_*` und Geheimnis-Namen nie). Für einen
+Agenten freigegebene Variablen: `BASED_CODING_ENV="claude=ANTHROPIC_API_KEY,gemini=GEMINI_API_KEY"`. Token auf der
+Kommandozeile eines Agenten werden abgelehnt. Alle Routen nur mit Owner-Token:
+
+| Route | Zweck |
+|---|---|
+| `GET /coding/agents` | eingeschaltete Agenten |
+| `GET/POST /coding/sessions` | Sitzungen; anlegen mit `{agent, cwd, mode?, resume?, handoffFrom?}` (`handoffFrom` = Agentenwechsel, das Transkript der alten Sitzung geht mit) |
+| `GET /coding/sessions/:id/events?since=N&wait=ms` | ChatEvents ab N, Long-Poll bis 25 s |
+| `POST /coding/sessions/:id/prompt` `{prompt}` | Turn starten (202; läuft schon einer: 409) |
+| `POST /coding/sessions/:id/mode` `{mode}` | ask · askEdits · free · plan |
+| `POST /coding/sessions/:id/cancel`, `DELETE /coding/sessions/:id` | Turn stoppen bzw. Sitzung beenden |
+| `GET /coding/inbox?since=V&wait=ms` | offene Freigaben (Long-Poll auf die Version) |
+| `POST /coding/inbox/:id` `{optionId}` | Freigabe beantworten (`null` = abbrechen) |
+
+Modus und Regeln entscheiden zuerst (Bash/Edit/Read …, wie im Chat); nur „ask“ landet in der Inbox.
+
 ## CLI `based` (`apps/cli`)
 
 Ein Node-Einstieg (`bin/based.js`, lädt die TS-Quellen über tsx). Spricht den Server über MCP (Streamable HTTP,
