@@ -159,8 +159,8 @@ Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,yes
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
 HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",no
-Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,no
-Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); keine Inbox über Geräte, offene Freigabe geht beim Neuladen verloren"
+Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,"partial: Kern in @based/brain (ACP-Client, Sitzung als ChatEngine, Agentenwechsel mit Transkript-Übergabe, Fortsetzen per session/load, Node-Prozess mit Env-Allowlist; BSD-223 Teil 1); Server/Desktop-Anbindung und Oberfläche fehlen"
+Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); Kern-Inbox für ACP-Freigaben mit Regeln (BSD-223 Teil 1); keine Inbox über Geräte, offene Freigabe geht beim Neuladen verloren"
 Switch agent mid-session,ai,should,no,yes,transcript hand-off,no
 E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no
 MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,"partial: Einstellungen → Connections (Katalog GitHub/Linear + eigene Streamable-HTTP-Server, Token verschlüsselt, an/aus, für Agenten), Werkzeuge mcp__<name>__<tool> im Chat und für den Hauptagenten mit Freigabe (BSD-222); OAuth-Anmeldung (Notion, Slack, Drive, Sentry) und stdio-Server (Desktop) fehlen"
