@@ -1,4 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // BSD-159: Chat mit ScriptedEngine (deterministisch, ohne Netz) – ⌘J, gestreamte Antwort mit Tool-Karte und
 // Freigabe, die Seite entsteht wirklich im Workspace, Kosten sichtbar, nach Neuladen ist der Verlauf noch da; Stop,
@@ -33,7 +36,22 @@ const LISBON: Step[] = [
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da", async ({ page }) => {
+// Eigenes Profil: WebKit hat OPFS nur in einem dauerhaften Kontext (sonst „Not saved“ und nach Neuladen leer).
+test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da", async ({ playwright, browserName, baseURL }) => {
+  const dir = mkdtempSync(join(tmpdir(), "based-chat-"));
+  const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
+  try {
+    const page = ctx.pages()[0] ?? (await ctx.newPage());
+    await fresh(page);
+    await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "local");
+    await lisbonFlow(page);
+  } finally {
+    await ctx.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+async function lisbonFlow(page: Page) {
   await page.keyboard.press(`${mod}+j`);
   await expect(panel(page)).toBeVisible();
   // ohne Modell: Hinweis statt Fehler
@@ -81,7 +99,7 @@ test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt �
 
   await page.keyboard.press(`${mod}+j`);
   await expect(panel(page)).toHaveCount(0);
-});
+}
 
 test("Stop bricht ab; Nachricht während der Antwort wartet und folgt", async ({ page }) => {
   await useScript(page, [[{ text: "Working on a long answer" }, { hold: true }], [{ text: "Second answer." }]], 10);
