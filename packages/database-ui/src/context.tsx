@@ -31,7 +31,16 @@ export interface FormRenderProps {
 }
 
 /** Steckplatz der Shell für Oberflächen aus ihrem Komponenten-Baukasten (Formular). */
-export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined }>({});
+/**
+ * BSD-208: Dateien für die Files-&-Media-Property. `upload` legt die Datei in den Asset-Speicher der Shell und gibt
+ * ihre ID zurück; `open` liefert eine anzeigbare URL (Blob) zu einer Asset-ID.
+ */
+export interface FileHost {
+  upload: (file: File) => Promise<string>;
+  open: (assetID: string) => Promise<string>;
+}
+
+export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined }>({});
 
 export function useDB(): DBContextValue {
   const c = useContext(DBContext);

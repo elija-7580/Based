@@ -456,3 +456,33 @@ test("5.000 Zeilen: Karte, Peek und Formular bleiben flüssig", async ({ page, b
   expect(report.peekStepMs as number).toBeLessThan(250);
   expect(report.formSubmitMs as number).toBeLessThan(1500);
 });
+
+test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208)", async ({ page, browserName }) => {
+  await fresh(page);
+  await seedDatabase(page, {
+    title: "Attachments",
+    properties: [title, { id: "f", name: "Files", type: "files" }],
+    rows: [{ title: "Alpha" }],
+    views: [{ id: "v-table", name: "Table", type: "table" }],
+  });
+  const row = page.getByRole("row", { name: /Alpha/ });
+  await row.getByRole("gridcell").nth(1).click();
+  const editor = page.getByLabel("Edit Files");
+  if (!(await editor.isVisible())) await row.getByRole("gridcell").nth(1).dblclick();
+  await expect(editor).toBeVisible();
+  await editor.locator("input[type=file][aria-label='Upload file']").setInputFiles({ name: "report.txt", mimeType: "text/plain", buffer: Buffer.from("quarterly numbers") });
+  await expect(editor.getByText("report.txt")).toBeVisible();
+  await page.keyboard.press("Escape");
+  const chip = row.getByRole("button", { name: "report.txt" });
+  await expect(chip).toBeVisible();
+  // window.open abfangen: geöffnet wird die Blob-URL aus dem Asset-Speicher, mit dem hochgeladenen Inhalt.
+  await page.evaluate(() => { (window as unknown as { open: (u: string) => null }).open = (u: string) => { (window as unknown as { __opened: string }).__opened = u; return null; }; });
+  await chip.click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __opened?: string }).__opened ?? "")).toMatch(/^blob:/);
+  expect(await page.evaluate(async () => (await fetch((window as unknown as { __opened: string }).__opened)).text())).toBe("quarterly numbers");
+  // Neuladen nur in Chromium: WebKit speichert in diesem (nicht dauerhaften) Kontext nichts (kein OPFS).
+  if (browserName !== "chromium") return;
+  await page.reload();
+  await expect(page.getByTestId("database-view")).toBeVisible();
+  await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
+});

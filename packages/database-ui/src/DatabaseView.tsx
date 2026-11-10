@@ -5,7 +5,7 @@ import {
   addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
-import { DBContext, ShellSlots, useDatabaseContext, useDB, type FormRenderProps } from "./context.js";
+import { DBContext, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps } from "./context.js";
 import { countConditions, describeCondition, topConditions } from "./logic/filters.js";
 import { openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek, type OpenMode, type PeekState } from "./logic/peek.js";
 import { FilterEditor } from "./menus/FilterEditor.js";
@@ -54,6 +54,8 @@ export interface DatabaseViewProps {
   onViewChange?: ((viewID: string) => void) | undefined;
   /** Agent-Strich: Standard ist `updatedBy` „agent…“/„based“. */
   isAgentEdit?: ((row: Block) => boolean) | undefined;
+  /** BSD-208: Asset-Speicher für Datei-Uploads in der Files-&-Media-Property; ohne: nur Links. */
+  files?: FileHost | undefined;
   /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
   weekStart?: number | undefined;
   /** Nur lesen (zusätzlich zur Sperre der Datenbank). */
@@ -271,7 +273,7 @@ export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
   const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart });
   const style = { height: props.height ?? "100%" };
-  const slots = useMemo(() => ({ renderForm: props.renderForm }), [props.renderForm]);
+  const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files }), [props.renderForm, props.files]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (
     <DBContext.Provider value={ctx}>

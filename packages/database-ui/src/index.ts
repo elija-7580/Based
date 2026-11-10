@@ -9,7 +9,7 @@ export { OPEN_MODE_LABELS, openModeOf, parsePeek, peekPosition, peekShortcut, re
 export type { OpenMode, PeekPosition, PeekState } from "./logic/peek.js";
 export { ViewBody, useQuery } from "./ViewBody.js";
 export { DBContext, ShellSlots, useDatabaseContext, useDatabaseVersion, useDB } from "./context.js";
-export type { DBContextValue, FormRenderProps } from "./context.js";
+export type { DBContextValue, FileHost, FormRenderProps } from "./context.js";
 export {
   FORM_TYPES, answersToRow, formConfig, formDescription, formQuestions, formTitle, hiddenFormProperties, isBlank, parseFormDate, placeRaw,
   setFormDescription, setFormTitle, setQuestionDescription, setQuestionRequired, submitForm, validateAnswer, validateForm,

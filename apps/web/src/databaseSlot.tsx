@@ -9,6 +9,8 @@ import "@based/database-ui/styles.css";
 import { FormView } from "./database/FormView.js";
 import { InPeek, RowPeek } from "./database/RowPeek.js";
 import { wantsNewTab } from "./shell/newTabIntent.js";
+import { assets } from "./assetBridge.js";
+import { ASSET_URL_PREFIX } from "@based/editor";
 import type { DatabaseViewProps } from "./slots.js";
 
 /** Offener Peek je Datenbank-Block, pro Browser-Tab (überlebt Neuladen). */
@@ -30,9 +32,13 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     bypass: wantsNewTab,
     render: (p) => <RowPeek {...p} databaseTitle={plainText(store.databases.get(databaseID)?.title) || "Untitled"} readOnly={readOnly} onOpenPage={onOpenPage} />,
   }), [nested, blockID, databaseID, store, readOnly, onOpenPage]);
+  const files = useMemo(() => {
+    const a = assets();
+    return a ? { upload: async (f: File) => (await a.uploadFile(f)).slice(ASSET_URL_PREFIX.length), open: (id: string) => a.resolveFileUrl(ASSET_URL_PREFIX + id) } : undefined;
+  }, []);
   return (
     <div className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} files={files} />
     </div>
   );
 }
