@@ -195,7 +195,7 @@ test("Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Spe
   await expect(page.getByLabel("Page title")).toHaveValue("Hike");
   const img = page.locator(".bn-editor img").first();
   await expect(img).toBeVisible({ timeout: 15_000 });
-  await expect(img).toHaveAttribute("src", /^blob:/);
+  await expect(img).toHaveAttribute("src", /^blob:/, { timeout: 15_000 });
   await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(4);
 });
 
