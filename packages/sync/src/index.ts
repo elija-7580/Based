@@ -17,3 +17,6 @@ export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";
 // BSD-78: Dateien als inhaltsadressierte Blobs über den Server-Sync
 export { ASSET_HASH, ASSET_QUEUE_KEY, AssetError, AssetSync, DEFAULT_ASSET_CHUNK, MemoryAssetBlobStore, isAssetHash, safeBlobType, sha256Hex } from "./assets.js";
 export type { AssetBlobStore, AssetErrorCode, AssetMetaStore, AssetServer, AssetSyncOptions, AssetSyncStatus, QueuedUpload, StoredAsset } from "./assets.js";
+// Teilen über den Server (docs/sharing.md)
+export { LINK_ROLES, SHARE_ROLE_LABEL, ShareAPI, ShareAPIError, publishedLink, shareErrorMessage, shareURL } from "./share.js";
+export type { PageAccess, ShareLinkInfo, ShareLinkKind, SharePerson, ShareRole } from "./share.js";

@@ -6,6 +6,7 @@ import { isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
 import { ExportDialog } from "../components/ImportExport.js";
+import { ShareButton } from "../components/Share.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
@@ -114,6 +115,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
               <Icon name="star" size={18} filled={favorite} />
             </button>
+            <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
             <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
             <button type="button" className="icon-btn ghost" aria-label="Page menu" data-menu-trigger="" aria-haspopup="menu" aria-expanded={menu !== undefined} title="More" onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
