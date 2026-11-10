@@ -69,15 +69,15 @@ Links in text (⌘K),editor,must,yes,yes,,yes
 Text color and background color,editor,must,yes,yes,,yes
 Block color,editor,should,yes,yes,,yes
 Turn into (any block type),editor,must,yes,yes,,partial: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout; Gleichung/Medien nicht
-Turn into page,editor,should,yes,yes,,no
-Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"partial: Turn into, Duplicate (⌘D), Colors, Copy and sync, Delete; Move to fehlt"
+Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)"
+Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete"
 Drag handle to reorder blocks,editor,must,yes,yes,,yes
 Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns",no
 Multi-block selection (Esc / shift),editor,should,yes,yes,,partial: Auswahl über mehrere Blöcke per Maus/Shift; Esc-Blockauswahl und Sammelaktionen fehlen
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
 Duplicate block (⌘D),editor,should,yes,yes,,yes (10.11.: Blockmenü und ⌘D; Unterseiten/Datenbanken/Synced Blocks noch nicht)
 Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes
-Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,no
+Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,yes (BSD-207: ⌘⌥T / Ctrl+Alt+T)
 Undo / redo for text and structure,editor,must,yes,yes,,yes
 Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30: Markdown-Erkennung + Kern-Parser, HTML hat Vorrang, ⇧⌘V Klartext)"
 Paste URL as bookmark / mention / link,editor,could,yes,yes,,partial: URL über markiertem Text wird Link; Auswahl Bookmark/Mention/Embed fehlt

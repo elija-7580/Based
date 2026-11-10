@@ -16,9 +16,10 @@ import { createDatabase, createMeeting, keysBetween, syncedOriginal, syncedPaste
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
-import { canTurnInto, duplicateBlocks, isCurrent, targetBlocks, TURN_INTO, turnInto, type ActionEditor } from "./blockActions.js";
+import { canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto, turnIntoPage, type ActionEditor } from "./blockActions.js";
+import { MovePicker } from "./MovePicker.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
-import { EnvContext, storePageDirectory, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
+import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
 import { mentionItems } from "./mentions.js";
 import { PageOutline } from "./Outline.js";
@@ -64,7 +65,12 @@ interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages">
   pages: PageDirectory;
   pageID: string;
   notify: (message: string) => void;
+  /** BSD-207: „Move to“ für Blöcke eines (ggf. eingebetteten) Editors öffnen. */
+  startMove: (req: MoveRequest) => void;
 }
+
+/** Offenes „Move to“: welche Blöcke aus welchem Editor. */
+interface MoveRequest { editor: ActionEditor; session: DocSession; ids: string[] }
 
 const memoryDocStores = new WeakMap<WorkspaceStore, YDocStore>();
 function defaultDocStore(store: WorkspaceStore): YDocStore {
@@ -97,14 +103,31 @@ export function PageEditor(props: PageEditorProps) {
   useEffect(() => () => {
     if (timer.current !== undefined) clearTimeout(timer.current);
   }, []);
+  const [move, setMove] = useState<MoveRequest | undefined>();
   const shared: Shared = {
-    ...rest, pageID, notify,
+    ...rest, pageID, notify, startMove: setMove,
     docStore: props.docStore ?? defaultDocStore(props.store),
     pages: props.pages ?? defaultDirectory(props.store),
   };
+  const pickTarget = async (req: MoveRequest, page: PageRef) => {
+    setMove(undefined);
+    let last: string | undefined;
+    try {
+      last = await shared.pages.lastChildKey?.(page.id);
+    } catch { /* ohne: was der Store kennt */ }
+    const n = moveBlocksToPage(req.editor, req.session, req.ids, page.id, last);
+    notify(n ? `Moved to ${page.title || "Untitled"}` : "Those blocks can’t be moved there.");
+  };
   return (
-    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer}>
+    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer} onKeyDown={(e) => {
+      // ⌘⌥T / Ctrl+Alt+T: alle Toggles der Seite auf- bzw. zuklappen (wie Notion).
+      if ((e.metaKey || e.ctrlKey) && e.altKey && !e.shiftKey && e.code === "KeyT") {
+        e.preventDefault();
+        if (container) toggleAll(container);
+      }
+    }}>
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
+      {move ? <MovePicker pages={shared.pages} selfID={move.session.rootID} moving={move.ids} onClose={() => setMove(undefined)} onPick={(p) => void pickTarget(move, p)} /> : null}
       {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
       {notice ? (
         <div className="bx-notice" role="status" data-testid="editor-notice">
@@ -200,7 +223,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} notify={shared.notify} />} />} />
+          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} notify={shared.notify} startMove={shared.startMove} />} />} />
           <FormattingToolbarController formattingToolbar={() => (
             <FormattingToolbar>
               {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
@@ -305,11 +328,12 @@ export function insertInlineEquation(editor: BasedEditor, expression = "") {
 
 // MARK: Block-Menü mit „Copy and sync“
 
-function BlockMenu(props: { session: DocSession; notify: (message: string) => void }) {
+function BlockMenu(props: { session: DocSession; notify: (message: string) => void; startMove: (req: MoveRequest) => void }) {
   return (
     <DragHandleMenu>
-      <TurnIntoItem />
+      <TurnIntoItem session={props.session} />
       <DuplicateItem notify={props.notify} />
+      <MoveToItem session={props.session} startMove={props.startMove} />
       <BlockColorsItem>Colors</BlockColorsItem>
       <CopyAndSyncItem session={props.session} />
       <RemoveBlockItem>Delete</RemoveBlockItem>
@@ -334,8 +358,24 @@ function DuplicateItem(props: { notify: (message: string) => void }) {
   );
 }
 
-/** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen. */
-function TurnIntoItem() {
+/** BSD-207: „Move to“ – öffnet die Seitensuche; wirkt auf die Auswahl, wenn der Block darin liegt. */
+function MoveToItem(props: { session: DocSession; startMove: (req: MoveRequest) => void }) {
+  const Components = useComponentsContext()!;
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  if (!block) return null;
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+      const a = editor as unknown as ActionEditor;
+      props.startMove({ editor: a, session: props.session, ids: targetBlocks(a, block.id).map((b) => b.id) });
+    }}>
+      Move to
+    </Components.Generic.Menu.Item>
+  );
+}
+
+/** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen, dazu „Page“. */
+function TurnIntoItem(props: { session: DocSession }) {
   const Components = useComponentsContext()!;
   const portalElement = usePortalElement();
   const editor = useBlockNoteEditor() as unknown as BasedEditor;
@@ -355,6 +395,9 @@ function TurnIntoItem() {
             {o.label}
           </Components.Generic.Menu.Item>
         ))}
+        <Components.Generic.Menu.Item key={TURN_INTO_PAGE.key} className="bn-menu-item" onClick={() => void turnIntoPage(a, props.session, current.id)}>
+          {TURN_INTO_PAGE.label}
+        </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
   );
