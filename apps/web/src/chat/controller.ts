@@ -1,0 +1,293 @@
+// BSD-159: Zustand des Chats im Hauptthread – ein Objekt für Panel und Vollseite. Hält den offenen Chat (Ereignisse
+// aus dem Store-Worker), lässt Turns über eine Engine laufen (ein ChatEvent-Strom, ADR 0005), reiht Nachrichten
+// während einer laufenden Antwort ein (PromptQueue), speichert den laufenden Turn gedrosselt als Records (BSD-77)
+// und fragt bei Schreib-Werkzeugen nach Freigabe (Permission-Pille). Ohne DOM, damit es in Vitest läuft.
+import {
+  foldTranscript, historyFromEvents, ModelEngine, PromptQueue, runTurn,
+  type ChatEngine, type ChatEvent, type ChatInfo, type PermissionMode, type QueuedPrompt, type RunningTurn, type StoredChatEvent, type ToolCall, type ToolHost, type ToolPolicy,
+} from "@based/brain";
+import type { JSONValue } from "@based/core";
+import type { ChatLoaded, ToolCatalog } from "../worker/chat.js";
+import type { AiConfig } from "./aiConfig.js";
+
+/** Was der Controller vom Store-Client braucht (StoreClient; in Tests ein Fake). */
+export interface ChatBackend {
+  chatList(): Promise<ChatInfo[]>;
+  chatCreate(title?: string): Promise<ChatInfo>;
+  chatLoad(id: string): Promise<ChatLoaded>;
+  chatSave(id: string, base: number, events: StoredChatEvent[]): Promise<{ events: number }>;
+  chatDelete(id: string): Promise<void>;
+  chatToolSpecs(): Promise<ToolCatalog>;
+  chatTool(name: string, input: JSONValue): Promise<{ text: string; isError: boolean }>;
+}
+
+export interface EngineContext {
+  tools: ToolHost;
+  policy: ToolPolicy;
+}
+
+/** Baut die Engine für einen Turn; `undefined` = kein Modell eingerichtet. */
+export type EngineFactory = (ctx: EngineContext) => Promise<ChatEngine | undefined> | ChatEngine | undefined;
+
+export interface PendingApproval {
+  call: ToolCall;
+  resolve: (ok: boolean) => void;
+}
+
+export interface ChatViewState {
+  chatID: string | undefined;
+  /** Ereignisse des offenen Chats (gespeichert + laufender Turn). */
+  events: StoredChatEvent[];
+  loading: boolean;
+  running: boolean;
+  waiting: readonly QueuedPrompt<string>[];
+  approvals: readonly PendingApproval[];
+  /** Fehler außerhalb eines Turns (Laden, Speichern). */
+  error: string | undefined;
+  /** Ein Engine-Override ist aktiv (Tests) oder ein Modell eingerichtet. */
+  ready: boolean;
+}
+
+const EMPTY: ChatViewState = { chatID: undefined, events: [], loading: false, running: false, waiting: [], approvals: [], error: undefined, ready: false };
+
+export interface ChatControllerOptions {
+  backend: ChatBackend;
+  config?: AiConfig | undefined;
+  /** Gespeichert wird höchstens so oft (ms) während eines Turns; das Ende immer sofort. */
+  saveEveryMs?: number;
+  fetch?: typeof globalThis.fetch;
+}
+
+export class ChatController {
+  private state: ChatViewState = EMPTY;
+  private listeners = new Set<() => void>();
+  private readonly queue: PromptQueue<string>;
+  private override: EngineFactory | undefined;
+  private catalog: Promise<ToolCatalog> | undefined;
+  private saving: Promise<unknown> = Promise.resolve();
+  private readonly saveEveryMs: number;
+  /** Erhöht sich bei jedem Chatwechsel: ein Turn im Hintergrund schreibt nicht mehr in die Anzeige. */
+  private view = 0;
+  /** Gespeicherte Ereignisse je Chat (verdichtet – nicht dasselbe wie die angezeigten mit allen Deltas). */
+  private stored = new Map<string, number>();
+
+  constructor(private readonly o: ChatControllerOptions) {
+    this.saveEveryMs = o.saveEveryMs ?? 400;
+    this.queue = new PromptQueue<string>((text) => this.startTurn(text));
+    this.queue.onChange = () => this.set({ waiting: this.queue.waiting, running: this.queue.isBusy });
+    o.config?.subscribe(() => this.set({ ready: this.isReady() }));
+    this.state = { ...EMPTY, ready: this.isReady() };
+  }
+
+  getState = (): ChatViewState => this.state;
+
+  subscribe = (fn: () => void): (() => void) => {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  };
+
+  private set(patch: Partial<ChatViewState>) {
+    this.state = { ...this.state, ...patch };
+    for (const fn of this.listeners) fn();
+  }
+
+  private isReady(): boolean {
+    return this.override !== undefined || this.o.config?.activeModel() !== undefined;
+  }
+
+  /** Engine für Tests/E2E/Vorführungen (ScriptedEngine); `undefined` = wieder das eingestellte Modell. */
+  setEngineFactory(f: EngineFactory | undefined) {
+    this.override = f;
+    this.set({ ready: this.isReady() });
+  }
+
+  // MARK: Chats
+
+  /** Einen gespeicherten Chat öffnen. Eine laufende Antwort im alten Chat läuft im Hintergrund zu Ende und wird gespeichert. */
+  async open(id: string): Promise<void> {
+    if (id === this.state.chatID && !this.state.error) return;
+    this.queue.detach();
+    const v = ++this.view;
+    this.set({ chatID: id, events: [], loading: true, error: undefined, approvals: [], running: false });
+    try {
+      const loaded = await this.o.backend.chatLoad(id);
+      if (v !== this.view) return;
+      this.stored.set(id, loaded.events.length);
+      this.set({ events: loaded.events, loading: false });
+    } catch (e) {
+      if (v !== this.view) return;
+      this.set({ loading: false, error: message(e) });
+    }
+  }
+
+  /** Neuer, leerer Chat (wird erst beim ersten Senden angelegt). */
+  newChat() {
+    this.queue.detach();
+    this.view += 1;
+    this.set({ chatID: undefined, events: [], loading: false, error: undefined, approvals: [], running: false });
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.o.backend.chatDelete(id);
+    if (this.state.chatID === id) this.newChat();
+  }
+
+  // MARK: Senden
+
+  /** Nachricht senden – sofort, oder eingereiht, wenn gerade eine Antwort läuft. */
+  send(text: string): string | undefined {
+    const t = text.trim();
+    if (!t) return undefined;
+    return this.queue.submit(t, t);
+  }
+
+  stop() {
+    this.queue.stopCurrent();
+  }
+
+  removeQueued(id: string) {
+    this.queue.remove(id);
+  }
+
+  sendNow(id: string) {
+    this.queue.sendNow(id);
+  }
+
+  /** Die letzte Nachricht nach einem Fehler noch einmal schicken. */
+  retry() {
+    const last = [...this.state.events].reverse().find((e) => e.type === "userMessage") as Extract<ChatEvent, { type: "userMessage" }> | undefined;
+    if (last) this.send(last.text);
+  }
+
+  /** Antwort auf eine Freigabe-Anfrage. */
+  answer(callID: string, ok: boolean) {
+    const a = this.state.approvals.find((x) => x.call.id === callID);
+    if (!a) return;
+    this.set({ approvals: this.state.approvals.filter((x) => x !== a) });
+    a.resolve(ok);
+  }
+
+  private toolHost(): ToolHost {
+    this.catalog ??= this.o.backend.chatToolSpecs();
+    const catalog = this.catalog;
+    let specs: ToolCatalog | undefined;
+    void catalog.then((c) => { specs = c; });
+    return {
+      get specs() { return specs?.specs ?? []; },
+      isWrite: (n) => specs?.write.includes(n) ?? true,
+      call: (name, input) => this.o.backend.chatTool(name, input),
+    };
+  }
+
+  private async engine(ctx: EngineContext): Promise<ChatEngine | undefined> {
+    if (this.override) return this.override(ctx);
+    const cfg = this.o.config;
+    const choice = cfg?.activeModel();
+    if (!cfg || !choice) return undefined;
+    const provider = await cfg.provider(choice, this.o.fetch);
+    return new ModelEngine({ provider, model: choice.model, tools: ctx.tools, policy: ctx.policy });
+  }
+
+  private permission(): PermissionMode {
+    return this.o.config?.getState().settings.permission ?? "askEdits";
+  }
+
+  private startTurn(text: string): RunningTurn {
+    const abort = new AbortController();
+    const v = this.view;
+    const done = this.runTurn(text, abort.signal, v).catch((e: unknown) => {
+      if (v === this.view) this.set({ error: message(e) });
+    });
+    return {
+      done,
+      cancel: () => {
+        abort.abort();
+        // offene Freigaben dieses Turns gelten als abgelehnt
+        for (const a of this.state.approvals) a.resolve(false);
+        if (v === this.view) this.set({ approvals: [] });
+      },
+    };
+  }
+
+  private async runTurn(text: string, signal: AbortSignal, v: number): Promise<void> {
+    const live = () => v === this.view;
+    let chatID = this.state.chatID;
+    if (!chatID) {
+      const info = await this.o.backend.chatCreate();
+      chatID = info.id;
+      if (live()) this.set({ chatID });
+    }
+    const id = chatID;
+    // Ereignisse vor diesem Turn: so viele, wie gespeichert sind (der Turn schreibt nur seinen Teil neu).
+    let before = live() ? this.state.events : undefined;
+    let base = this.stored.get(id);
+    if (!before || base === undefined) {
+      const loaded = (await this.o.backend.chatLoad(id)).events;
+      base = loaded.length;
+      before ??= loaded;
+    }
+    const prior = before;
+    const start = base;
+    const turn: StoredChatEvent[] = [{ type: "userMessage", text, at: Date.now() }];
+    const show = () => {
+      if (live()) this.set({ events: [...prior, ...turn], error: undefined });
+    };
+    show();
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const save = () => {
+      const snapshot = [...turn];
+      this.saving = this.saving.then(async () => {
+        const r = await this.o.backend.chatSave(id, start, snapshot);
+        this.stored.set(id, r.events);
+      }).catch((e: unknown) => {
+        if (live()) this.set({ error: "Couldn't save this chat: " + message(e) });
+      });
+      return this.saving;
+    };
+    const scheduleSave = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        void save();
+      }, this.saveEveryMs);
+    };
+    await save();
+
+    const policy: ToolPolicy = {
+      mode: this.permission(),
+      approve: (call) => new Promise<boolean>((resolve) => {
+        if (signal.aborted) return resolve(false);
+        this.set({ approvals: [...this.state.approvals, { call, resolve }] });
+      }),
+    };
+    const tools = this.toolHost();
+    await this.catalog?.catch(() => undefined);
+    let engine: ChatEngine | undefined;
+    try {
+      engine = await this.engine({ tools, policy });
+    } catch (e) {
+      turn.push({ type: "failed", message: message(e) });
+    }
+    if (!engine && turn.length === 1) turn.push({ type: "failed", message: "No model is set up. Add a provider and a model in the chat settings." });
+    if (engine) {
+      const history = historyFromEvents(prior);
+      for await (const e of runTurn(engine, { prompt: text, history }, signal)) {
+        turn.push(e);
+        show();
+        scheduleSave();
+      }
+    }
+    if (timer) clearTimeout(timer);
+    timer = undefined;
+    show();
+    await save();
+  }
+}
+
+export function message(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
+/** Summen und Turns des offenen Chats (für die Anzeige). */
+export const transcriptOf = (events: readonly StoredChatEvent[]) => foldTranscript(events);

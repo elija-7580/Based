@@ -44,6 +44,7 @@ import {
 import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
 import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
 import { PageHistory } from "./history.js";
+import { ChatHost } from "./chat.js";
 import type { AssetGetResult, AssetInfo, Command, Event, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -104,12 +105,18 @@ export class StoreHost {
   /** Versionsverlauf (BSD-73). */
   history: PageHistory | undefined;
   private historyTimer: ReturnType<typeof setInterval> | undefined;
+  /** Chats und Agent-Werkzeuge (BSD-159). */
+  private chatHost: ChatHost | undefined;
 
   constructor(private readonly opts: HostOptions) {}
 
   private get store(): WorkspaceStore {
     if (!this.ws) throw new Error("not initialised");
     return this.ws.store;
+  }
+
+  private get chat(): ChatHost {
+    return (this.chatHost ??= new ChatHost(this.store, () => this.searchIndex()));
   }
 
   /** Eine Anfrage der UI. Antworten gehen als `reply` mit derselben ID zurück. */
@@ -142,6 +149,7 @@ export class StoreHost {
             (e: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) }),
           );
           break;
+        case "chat": reply(this.chat.handle(msg.action)); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -318,6 +326,7 @@ export class StoreHost {
         if (kind === "block" && store.blocks.get(id)?.props?.syncSource) this.syncedDirty.add(pageID);
       }
     }
+    this.chatHost?.noteChange(change);
     this.scheduleFlush();
   }
 
@@ -372,6 +381,8 @@ export class StoreHost {
       if (d.upserts.size || d.deletions.size) this.opts.post({ type: "pageChanges", pageID, upserts: [...d.upserts.values()], deletions: [...d.deletions] });
     }
     this.pageDelta.clear();
+    const chats = this.chatHost?.takeList();
+    if (chats) this.opts.post({ type: "chats", chats });
     this.postStatus();
   }
 

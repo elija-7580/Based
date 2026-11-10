@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@astryxdesign/core": "^0.7.11",
+    "@based/brain": "workspace:*",
     "@based/core": "workspace:*",
     "@based/database-ui": "workspace:*",
     "@based/design-tokens": "workspace:*",

@@ -2,6 +2,7 @@
 // Listen als Flächen (v8), keine Karten. Agent-Details nur mit „Show agent details“. Agent-Abschnitte sind noch
 // Demo (src/data.ts); „Pick up again“ zeigt die zuletzt geöffneten echten Seiten (BSD-153).
 import { AgentBar } from "../components/AgentMark.js";
+import { askBased } from "../chat/runtime.js";
 import { Composer } from "../components/Composer.js";
 import { AGENT_TASKS, THIS_WEEK } from "../data.js";
 import { Icon } from "../icons.js";
@@ -53,7 +54,7 @@ export function Home({ showDetails, recent, state, onOpenPage, onNewPage, onNewD
               <button type="button" className="btn primary">Approve</button>
             </div>
           </div>
-          <Composer showDetails={showDetails} />
+          <Composer showDetails={showDetails} onSubmit={askBased} />
         </section>
 
         <div className="split">

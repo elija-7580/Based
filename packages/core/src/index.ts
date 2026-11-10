@@ -45,7 +45,7 @@ export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, pa
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
-export { toRichText, runsOf } from "./interop/runs.js";
+export { toRichText, runsOf, replaceInRichText } from "./interop/runs.js";
 export { EXPORT_CSS, exportHTMLPage } from "./interop/html-document.js";
 export { ASSETS_FOLDER, defaultHTMLPageLink, encodeExportPath, exportSummary, planWorkspaceExport, relativeExportPath, subpages, topLevelPages, uniqueExportName, writeExportZip } from "./interop/workspace-export.js";
 export type { ExportFormat, ExportPlan, ExportReport } from "./interop/workspace-export.js";

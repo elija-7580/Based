@@ -75,6 +75,9 @@ importers:
       '@astryxdesign/core':
         specifier: ^0.7.11
         version: 0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@based/brain':
+        specifier: workspace:*
+        version: link:../../packages/brain
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -145,6 +148,19 @@ importers:
       vite:
         specifier: ^6.0.5
         version: 6.4.6(@types/node@22.20.5)(jiti@2.7.0)(tsx@4.23.15)
+
+  packages/brain:
+    dependencies:
+      '@based/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/core:
     dependencies:

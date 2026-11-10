@@ -12,6 +12,9 @@ import {
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "./interop.js";
+import type { ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
+import type { JSONValue } from "@based/core";
+import type { ChatLoaded, ToolCatalog } from "./chat.js";
 import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
@@ -20,6 +23,8 @@ export interface ShellState {
   titles: ReadonlyMap<string, string>;
   status: StatusInfo;
   error?: string;
+  /** Chats, zuletzt geänderte zuerst (`undefined`: noch nicht geladen). */
+  chats?: readonly ChatInfo[];
 }
 
 const INITIAL: ShellState = { ready: false, outline: undefined, titles: new Map(), status: { state: "starting", persistent: false, canUndo: false, canRedo: false } };
@@ -94,6 +99,7 @@ export class StoreClient {
       }
       case "status": this.set({ status: ev.status }); return;
       case "device": this.onDevice?.(ev.node); return;
+      case "chats": this.set({ chats: ev.chats }); return;
       case "pageChanges": this.replicas.get(ev.pageID)?.receive(ev.upserts, ev.deletions); return;
     }
   };
@@ -187,6 +193,48 @@ export class StoreClient {
     const r = await this.request<SyncedRecords>({ type: "includeSynced", pageID, source });
     if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
     return r.found;
+  }
+
+  // MARK: Chats (BSD-159)
+
+  /** Chat-Liste laden; danach hält der Worker sie über `chats`-Ereignisse aktuell. */
+  async chatList(): Promise<ChatInfo[]> {
+    const chats = await this.request<ChatInfo[]>({ type: "chat", action: { op: "list" } });
+    this.set({ chats });
+    return chats;
+  }
+
+  chatCreate(title?: string): Promise<ChatInfo> {
+    return this.request<ChatInfo>({ type: "chat", action: title ? { op: "create", title } : { op: "create" } });
+  }
+
+  chatLoad(id: string): Promise<ChatLoaded> {
+    return this.request<ChatLoaded>({ type: "chat", action: { op: "load", id } });
+  }
+
+  chatSave(id: string, base: number, events: StoredChatEvent[], meta?: ChatMeta): Promise<{ events: number }> {
+    return this.request<{ events: number }>({ type: "chat", action: meta ? { op: "save", id, base, events, meta } : { op: "save", id, base, events } });
+  }
+
+  chatRename(id: string, title: string): Promise<void> {
+    return this.request<void>({ type: "chat", action: { op: "rename", id, title } });
+  }
+
+  chatDelete(id: string): Promise<void> {
+    return this.request<void>({ type: "chat", action: { op: "delete", id } });
+  }
+
+  chatToolSpecs(): Promise<ToolCatalog> {
+    return this.request<ToolCatalog>({ type: "chat", action: { op: "toolSpecs" } });
+  }
+
+  /** Ein Agent-Werkzeug im Worker ausführen (eine Transaktion auf dem echten Store). */
+  chatTool(name: string, input: JSONValue): Promise<ToolResult> {
+    return this.request<ToolResult>({ type: "chat", action: { op: "tool", name, input } });
+  }
+
+  chatImportLegacy(): Promise<ChatInfo[]> {
+    return this.request<ChatInfo[]>({ type: "chat", action: { op: "importLegacy" } });
   }
 
   syncNow(): Promise<boolean> {

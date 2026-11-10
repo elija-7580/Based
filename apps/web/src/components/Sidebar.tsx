@@ -179,6 +179,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   const nav: { name: string; icon: IconName; cut?: IconName; active: boolean; key?: string; badge?: string; go: () => void }[] = [
     { name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home", go: () => onNavigate({ name: "home" }) },
     { name: "Search", icon: "search", active: false, key: "⌘K", go: onQuickFind },
+    { name: "Chat", icon: "chat", active: route.name === "chat", key: "⌘J", go: () => onNavigate({ name: "chat" }) },
     { name: "Graph", icon: "graph", active: route.name === "graph", go: () => onNavigate({ name: "graph" }) },
     { name: "Trash", icon: "trash", active: route.name === "trash", ...(trashCount ? { badge: String(trashCount) } : {}), go: () => onNavigate({ name: "trash" }) },
     { name: "Settings", icon: "settings", active: route.name === "settings", key: "⌘,", go: () => onNavigate({ name: "settings" }) },

@@ -1,0 +1,87 @@
+/* BSD-159: Chat im Based-Look – Panel rechts (Fläche wie die Seite), Vollseite, Composer-Feld mehrzeilig.
+   Nur Tokens (ADR 0009). */
+
+.chat-dock {
+  position: relative; flex: none; display: flex; min-width: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0; height: 100vh; position: sticky; top: 0;
+}
+.chat-resize {
+  width: var(--space-3); flex: none; cursor: col-resize; display: flex; justify-content: center; touch-action: none;
+}
+.chat-resize::after {
+  content: ""; width: var(--marker-width); margin-block: auto; height: var(--space-8); border-radius: var(--radius-pill); background: var(--line);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.chat-resize:hover::after, .chat-resize:focus-visible::after { background: var(--muted); }
+.chat-resize:focus-visible { outline: none; }
+
+.chat-view { display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1; background: var(--bg); color: var(--ink); }
+.chat-panel { border-radius: var(--radius-xl); box-shadow: var(--shadow-panel); overflow: hidden; }
+.chat-page { height: 100%; }
+
+.chat-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-2) var(--space-5); min-height: var(--space-8); }
+.chat-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-head-actions { display: inline-flex; gap: var(--space-1); flex: none; }
+
+.chat-body { flex: 1; min-height: 0; display: flex; }
+.chat-side { width: calc(var(--sidebar-width) + var(--space-5)); flex: none; overflow: auto; padding: 0 var(--space-3) var(--space-4); border-right: 1px solid var(--line); }
+.chat-history-empty { padding: var(--space-3); }
+.chat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.chat-scroll { flex: 1; min-height: 0; overflow: auto; padding: var(--space-2) var(--space-5) var(--space-4); }
+.chat-page .chat-scroll, .chat-page .chat-composer, .chat-page .chat-queue { width: 100%; max-width: calc(var(--page-measure) + var(--space-7) * 2); margin-inline: auto; }
+.chat-error { color: var(--danger); padding-block: var(--space-2); }
+
+.chat-answer { display: flex; gap: var(--space-3); align-items: stretch; width: 100%; }
+.chat-answer-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.chat-text { font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-2); overflow-wrap: anywhere; }
+.chat-user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-meta { align-self: flex-start; }
+.chat-pending { animation: chat-pulse 1.2s var(--ease-out) infinite alternate; }
+@keyframes chat-pulse { from { opacity: 0.45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .chat-pending { animation: none; } }
+.chat-thinking-text { white-space: pre-wrap; padding: var(--space-1) 0 var(--space-1) var(--space-5); }
+.chat-image-link { color: var(--muted); }
+
+.chat-tool { display: flex; flex-direction: column; gap: var(--space-2); background: var(--surface-raised); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); }
+.chat-approval { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.chat-approval .t-desc { flex: 1 1 calc(var(--page-measure) / 3); }
+
+.chat-queue { list-style: none; margin: 0; padding: 0 var(--space-4) var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); }
+.chat-queued { display: flex; align-items: center; gap: var(--space-2); background: var(--surface-raised); border-radius: var(--radius-lg); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3); }
+.chat-queued-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.chat-composer { padding: 0 var(--space-3) var(--space-3); }
+.composer-input {
+  width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--size-body); line-height: var(--leading-body);
+  outline: none; padding: var(--space-1) 0 var(--space-3); resize: none; max-height: calc(var(--space-8) * 5); overflow-y: auto; display: block;
+}
+.composer-input::placeholder { color: var(--muted); }
+.composer-bar .stop { background: var(--surface-raised); color: var(--ink); }
+.composer-bar .stop.push { margin-left: auto; }
+.composer-bar .stop.push + .send { margin-left: 0; }
+.composer-bar .details + .stop { margin-left: 0; }
+
+.ai-settings { display: flex; flex-direction: column; gap: var(--space-4); padding-block: var(--space-2); max-width: var(--page-measure); }
+.ai-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+  .chat-dock { position: fixed; inset: 0; width: auto !important; padding: var(--space-2); z-index: 20; background: var(--canvas); }
+  .chat-resize { display: none; }
+  .chat-side { display: none; }
+}
+
+/* Astryx-Teile im Chat folgen den Based-Farben (auch dunkel): Text erbt die Tinte der Fläche. */
+.chat-view { --chat-ink: var(--ink-2); }
+.chat-text, .chat-text :where(:not(svg, svg *, code, pre, pre *)) { color: var(--chat-ink); }
+.chat-text :where(strong, b, h3, h4, h5, h6, th) { color: var(--ink); }
+.chat-text :where(td, th) { border-color: var(--line); }
+.chat-tool, .chat-tool :where(:not(svg, svg *)) { color: var(--ink-2); }
+.chat-tool :where(button) { background: transparent; }
+.chat-user-text { display: block; background: var(--surface-raised); color: var(--ink); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); }
+.chat-thinking, .chat-thinking :where(:not(svg, svg *)) { color: var(--muted); }
+.chat-view :where(h3) { color: var(--ink); }
+.chat-view :where(.chat-scroll) [role="log"] { color: var(--ink-2); }
+.chat-view :where([aria-current="true"]) { background: var(--selected); color: var(--ink); }
+.chat-view :where([aria-current="true"]) :where(:not(svg, svg *)) { color: var(--ink); }
+.chat-view :where(li) :where(span) { color: inherit; }
+.chat-import { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-3) var(--space-2); }

@@ -2,6 +2,7 @@
 // Einstellungen. Home behält vorerst die Demo-Abschnitte (src/data.ts), „Pick up again“ ist echt.
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { appearanceStore, applyAppearance, onSystemThemeChange } from "./appearance.js";
+import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { TabBar } from "./components/TabBar.js";
@@ -99,6 +100,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} />;
   } else if (route.name === "trash") {
     screen = <Trash client={client} state={state} onOpenPage={openPage} />;
+  } else if (route.name === "chat") {
+    screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "graph") {
     screen = <Graph />;
   } else if (route.name === "settings") {
@@ -114,6 +117,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         <TabBar history={history} titles={state.titles} />
         <div className="panel">{screen}</div>
       </main>
+      <ChatDock client={client} history={history} route={route} />
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}
     </div>
   );
