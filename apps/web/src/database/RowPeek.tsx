@@ -53,12 +53,18 @@ function useSettledRow(rowID: string, delay = 180): string {
 
 function Body({ p }: { p: Props }) {
   const settled = useSettledRow(p.rowID);
+  // BSD-238: per Tastatur geöffnet (Fokus noch im Raster oder nirgends): Fokus in den Peek, damit Esc und Tab dort wirken.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const a = document.activeElement;
+    if (!a || a === document.body || a.getAttribute("role") === "grid") bodyRef.current?.focus({ preventScroll: true });
+  }, []);
   if (!p.row || p.row.trashedAt !== undefined) return <p className="t-desc row-peek-gone" role="status">This page was deleted.</p>;
   const Editor = slots.PageEditor;
   const readOnly = p.readOnly || p.locked;
   return (
     <InPeek.Provider value={true}>
-      <div className="row-peek-body" data-testid="row-peek" data-row-id={p.rowID} data-mode={p.mode} tabIndex={-1} data-autofocus="">
+      <div ref={bodyRef} className="row-peek-body" data-testid="row-peek" data-row-id={p.rowID} data-mode={p.mode} tabIndex={-1} data-autofocus="">
         <Title p={p} />
         <RowProperties rowID={p.rowID} />
         <div className="row-peek-content" data-testid="row-peek-content">
