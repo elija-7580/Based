@@ -108,3 +108,19 @@ export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
 export { LinkIndex, backlinksTo, containingPage, linkedPages, mentionedPages } from "./store/links.js";
 export { syncedCopies, syncedDependencies, syncedInstances, syncedOriginal, syncedPasteProblem, trashedRoot, unsyncCopy } from "./store/synced.js";
 export type { SyncedPasteProblem } from "./store/synced.js";
+// BSD-226: Meeting-Notizen (Datenmodell, Transkript-Chunks, Zeitstempel, Zitate, Zusammenfassung)
+export {
+  ME_SPEAKER, OTHERS_SPEAKER, TRANSCRIPT_CHUNK_SIZE, assignSpeakers, citations, secondsFromTimecode, segmentOrder, segmentsFromWords, speakerName,
+  speakerOf, splitCitations, timecode, transcriptParagraphs, transcriptText, vocabularyFromContext,
+} from "./model/meeting.js";
+export type {
+  AudioTrackRole, Citation, MeetingContextItem, MeetingInfo, MeetingSectionKind, MeetingSpeaker, MeetingStatus, MeetingTrack, SpeakerTurn,
+  TranscriptParagraph, TranscriptSegment, TranscriptWord,
+} from "./model/meeting.js";
+export {
+  addMeetingContext, addMeetingTrack, appendTranscript, applyMeetingSummary, applySpeakerTurns, createMeeting, editTranscript, findMeetingSection,
+  meetingContaining, meetingContextText, meetingInfo, meetingNotesText, meetingSection, meetingSummaryTexts, meetingTitleFor, meetingTranscript,
+  meetingVocabulary, mergeSpeakers, mergedSpeakers, removeMeetingContext, renameSpeaker, replaceTranscript, setMeetingStatus, setMeetingTitle,
+  setSegmentSpeaker, stampNote, stampedNotes, transcriptChunks, unstampedNotes, updateMeeting,
+} from "./store/meeting-ops.js";
+export type { CreateMeetingOptions } from "./store/meeting-ops.js";
