@@ -10,7 +10,8 @@ import { runTurn } from "../engine.js";
 import type { StoredChatEvent } from "../events.js";
 import type { ToolCall } from "../messages.js";
 import { mayContinue, spentThisMonth } from "./budget.js";
-import { mainArgument, Permissions } from "./permissions.js";
+import { mainArgument, Permissions, targetPage } from "./permissions.js";
+import { PlanRecorder } from "../planmode.js";
 import { fromMs, isRunFinished, MAIN_AGENT_ID, toMs, type AgentData, type ProjectData, type Rec, type RunData, type ScheduleData } from "./records.js";
 import type { NewRun, RunPatch } from "./store.js";
 
@@ -49,6 +50,8 @@ export interface AgentRunnerOptions {
   onChange?: () => void;
   /** Welche Werkzeuge schreiben (für „Ask before edits“). */
   isWrite?: (name: string) => boolean;
+  /** BSD-245: Pfade einer Seite für Pfad-Regeln (`pagePathCandidates` dort, wo der Store liegt). */
+  pathOf?: (pageID: string) => Promise<readonly string[]> | readonly string[];
 }
 
 export const SUBAGENT_SYSTEM = "You are a sub-agent of Based's main agent. Do the task below with the workspace tools, then reply with a short result (what you did, which pages). Stay within the task.";
@@ -145,9 +148,16 @@ export class AgentRunner {
       const projects = await b.projects();
       const project = run.data.projectID ? projects.find((p) => p.id === run.data.projectID) : undefined;
       const perms = Permissions.from(main.permissions.rules, main.permissions.mode).layered(project?.data.permissions);
+      const plan = new PlanRecorder();
       const policy: ToolPolicy = {
         mode: perms.mode,
-        rules: (call) => perms.ruleVerdict({ tool: "based." + call.name, argument: mainArgument(call.arguments) })?.effect,
+        rules: async (call) => {
+          const target = targetPage(call.arguments);
+          const paths = target && this.o.pathOf ? await Promise.resolve(this.o.pathOf(target)).catch(() => []) : undefined;
+          return perms.ruleVerdict({ tool: "based." + call.name, argument: mainArgument(call.arguments), paths })?.effect;
+        },
+        // Plan-Modus: Schreibschritte sammeln; sie stehen danach im Ergebnis des Laufs.
+        onPlanned: plan.record,
         approve: (call) => new Promise<boolean>((resolve) => {
           if (abort.signal.aborted) return resolve(false);
           this.approvals.push({ runID, call, resolve });
@@ -180,7 +190,8 @@ export class AgentRunner {
         else if (e.type === "failed" && !e.stopped) failed = e.message;
       }
       await b.chatSave(chat.id, 0, events).catch(() => undefined);
-      const result = stopReason ? `Stopped: ${stopReason}` : failed ? failed : (final.trim().slice(0, 280) || "Done");
+      const planned = plan.steps.length ? `\nPlanned (not run, plan mode): ${plan.steps.map((x) => x.name).join(", ")}` : "";
+      const result = stopReason ? `Stopped: ${stopReason}` : failed ? failed : ((final.trim().slice(0, 280) || "Done") + planned);
       const stillThere = (await b.runs()).find((r) => r.id === runID);
       if (!stillThere || stillThere.data.status === "cancelled") return;
       await b.updateRun(runID, { status: stopReason || failed ? "failed" : abort.signal.aborted ? "cancelled" : "done", result, lease: null });

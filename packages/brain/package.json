@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "BSD-159: KI-Fundament \u2013 ein ChatEvent-Strom f\u00fcr alle Engines (ADR 0005), Anbieter, Werkzeuge, Transkripte. Reines TS, kein DOM.",
+  "description": "BSD-159: KI-Fundament – ein ChatEvent-Strom für alle Engines (ADR 0005), Anbieter, Werkzeuge, Transkripte. Reines TS, kein DOM.",
   "exports": {
     ".": "./src/index.ts",
-    "./home": "./src/home/index.ts"
+    "./home": "./src/home/index.ts",
+    "./mcp": "./src/mcp/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@based/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {

@@ -4,10 +4,11 @@ import { readFileSync } from "node:fs";
 import { afterAll, describe, expect, it } from "vitest";
 import { parseRecord } from "../src/index.js";
 import { FIXTURES_DIR, loadFixtureFiles } from "./fixtures/load.js";
+import { DEVIATIONS } from "./fixtures/deviations.js";
 import { PORTS } from "./fixtures/ports.js";
 
 const files = loadFixtureFiles();
-const report = new Map<string, { passed: number; total: number; ported: boolean }>();
+const report = new Map<string, { passed: number; total: number; ported: boolean; deviations?: number }>();
 const tally = (module: string, total: number, ported: boolean) => {
   const r = report.get(module) ?? { passed: 0, total: 0, ported };
   r.total += total;
@@ -27,6 +28,13 @@ recordTally.passed = corpus.filter((l) => {
 }).length;
 
 describe("Fixture-Dateien sind gültig", () => {
+  it("bewusste Abweichungen verweisen auf vorhandene Fälle", () => {
+    for (const [file, cases] of Object.entries(DEVIATIONS)) {
+      const f = files.find((x) => x.file === file);
+      expect(f, file).toBeDefined();
+      for (const name of Object.keys(cases)) expect(f!.cases.map((c) => c.name), `${file}: ${name}`).toContain(name);
+    }
+  });
   it("es gibt Fixtures für die Kernmodule", () => {
     const modules = new Set(files.map((f) => f.module));
     for (const m of ["hlc", "sortkeys", "formulas", "merge", "queries", "values", "conversion", "search", "clipboard", "undo-remote"]) expect(modules, m).toContain(m);
@@ -58,9 +66,16 @@ for (const f of files) {
     describe.skip(`${f.file} (nicht portiert)`, () => it("–", () => {}));
     continue;
   }
+  const deviations = DEVIATIONS[f.file] ?? {};
   describe(f.file, () => {
     it.each(f.cases.map((c, i) => [i, c.name, c] as const))("#%i %s", (_i, _name, c) => {
-      expect(port(c.input, f.meta)).toEqual(c.output);
+      const dev = deviations[c.name];
+      // Bewusste Abweichung: Swift-Ergebnis muss sich vom TS-Ergebnis unterscheiden, sonst ist der Eintrag veraltet.
+      if (dev) {
+        expect(dev.output(c.output), `${dev.reason}: Abweichung ist gegenstandslos`).not.toEqual(c.output);
+        t.deviations = (t.deviations ?? 0) + 1;
+      }
+      expect(port(c.input, f.meta)).toEqual(dev ? dev.output(c.output) : c.output);
       t.passed += 1;
     });
   });
@@ -69,6 +84,6 @@ for (const f of files) {
 afterAll(() => {
   const lines = [...report.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([m, r]) => `  ${m.padEnd(10)} ${r.ported ? `${r.passed}/${r.total} grün` : `nicht portiert (${r.total} Fälle)`}`);
+    .map(([m, r]) => `  ${m.padEnd(10)} ${r.ported ? `${r.passed}/${r.total} grün${r.deviations ? ` (davon ${r.deviations} bewusst abweichend, test/fixtures/deviations.ts)` : ""}` : `nicht portiert (${r.total} Fälle)`}`);
   console.log("Golden Fixtures (fixtures/, swift run based-fixtures):\n" + lines.join("\n"));
 });

@@ -8,6 +8,7 @@ export * from "./retry.js";
 export * from "./context.js";
 export * from "./pricing.js";
 export * from "./engine.js";
+export * from "./planmode.js";
 export * from "./history.js";
 export * from "./tools.js";
 export * from "./transcript.js";
@@ -18,3 +19,6 @@ export { OpenAIProvider, OpenAIStream, OLLAMA_BASE_URL, type OpenAIOptions, type
 export * from "./meeting.js";
 export * from "./agents/index.js";
 export * from "./agentbrain/index.js";
+// BSD-222: Connections (Records, Katalog) ohne SDK; Client und ToolHost über `@based/brain/mcp`.
+export * from "./mcp/catalog.js";
+export * from "./mcp/connections.js";

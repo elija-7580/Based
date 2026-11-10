@@ -6,7 +6,8 @@ import type { Block, Database, DatabaseView, FilterGroup, FilterItem, PropertySc
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { databaseOfRow, richPlain, TITLE_PROPERTY_ID, titleProperty } from "../query/engine.js";
 import { newID, plainString, propertyConversion } from "./conversion.js";
-import { keyOf, type Tx, type WorkspaceStore } from "./store.js";
+import { afterRemoteMerge, keyOf, type Tx, type WorkspaceStore } from "./store.js";
+import type { WireRecord } from "../model/records.js";
 
 export type ViewType = DatabaseView["type"];
 export type GroupRule = NonNullable<DatabaseView["groupBy"]>;
@@ -245,6 +246,111 @@ export function linkMirrors(store: WorkspaceStore, rowID: string, tx: Tx) {
     }
   }
 }
+
+// MARK: BSD-123 – doppelte ID-Nummern nach Sync (Port von Swift `UniqueIDRepair.swift`)
+//
+// Die nächste Nummer liegt im Datenbank-Record und wird lokal hochgezählt. Zwei Geräte, die zwischen zwei Syncs
+// Zeilen anlegen, vergeben dieselbe Nummer; LWW auf dem Datenbank-Record behält die Doppelung. Nach jedem
+// Remote-Merge: die älteste Zeile (createdAt, dann ID) behält ihre Nummer, jede weitere bekommt die nächste freie,
+// `nextUniqueID` steigt über das Maximum. Alle Geräte kommen zum selben Ergebnis; Zeilen im Papierkorb zählen mit.
+
+const uniqueNumber = (v: PropertyValue | undefined): number | undefined => {
+  const n = (v as { uniqueID?: { _0?: unknown } } | undefined)?.uniqueID?._0;
+  return typeof n === "number" && Number.isInteger(n) ? n : undefined;
+};
+
+/** Datenbanken mit ID-Property, die `records` berühren (ihre Zeilen oder der Datenbank-Record selbst). */
+export function databasesNeedingIDCheck(store: WorkspaceStore, records: readonly WireRecord[]): Set<string> {
+  const out = new Set<string>();
+  for (const r of records) {
+    const id = r.kind === "block" ? (r.data.parent.startsWith("d:") ? r.data.parent.slice(2) : undefined) : r.kind === "database" ? r.data.id : undefined;
+    if (id && store.databases.get(id)?.properties.some((p) => p.type === "uniqueID")) out.add(id);
+  }
+  return out;
+}
+
+/** Neue Nummern für Zeilen, deren ID die einer älteren doppelt, und das nötige `nextUniqueID` (rein, liest nur). */
+export function uniqueIDRepair(store: WorkspaceStore, databaseID: string): { property: string; renumber: Map<string, number>; next: number | undefined } | undefined {
+  const db = store.databases.get(databaseID);
+  const uid = db?.properties.find((p) => p.type === "uniqueID");
+  if (!db || !uid) return undefined;
+  const numbered = allRows(store, databaseID)
+    .map((r) => [r, uniqueNumber(r.values?.[uid.id])] as const)
+    .filter((x): x is readonly [Block, number] => x[1] !== undefined)
+    .sort((a, b) => (a[0].createdAt !== b[0].createdAt ? a[0].createdAt - b[0].createdAt : a[0].id < b[0].id ? -1 : a[0].id > b[0].id ? 1 : 0));
+  let max = numbered.reduce((m, [, n]) => Math.max(m, n), 0);
+  const seen = new Set<number>();
+  const renumber = new Map<string, number>();
+  for (const [row, n] of numbered) {
+    if (!seen.has(n)) {
+      seen.add(n);
+      continue;
+    }
+    max += 1;
+    renumber.set(row.id, max);
+    seen.add(max);
+  }
+  const next = (db.nextUniqueID ?? 1) <= max ? max + 1 : undefined;
+  if (renumber.size === 0 && next === undefined) return undefined;
+  return { property: uid.id, renumber, next };
+}
+
+/** Doppelte IDs in `databaseIDs` als eine lokale, nicht rückgängig machbare Änderung reparieren (synct wie jede). */
+export function repairUniqueIDs(store: WorkspaceStore, databaseIDs: Iterable<string>) {
+  const fixes = [...databaseIDs].sort().map((id) => [id, uniqueIDRepair(store, id)] as const).filter((x) => x[1] !== undefined);
+  if (fixes.length === 0 || store.isReadOnly) return;
+  store.transact("Repair IDs", (tx) => {
+    for (const [dbID, fix] of fixes) {
+      for (const [row, n] of fix!.renumber) tx.update(row, (b) => setRowValue(b, fix!.property, pv("uniqueID", n)));
+      if (fix!.next !== undefined) updDB(tx, store, dbID, (d) => { d.nextUniqueID = fix!.next; });
+    }
+  }, { undoable: false });
+}
+
+afterRemoteMerge.push((store, records) => {
+  const ids = databasesNeedingIDCheck(store, records);
+  if (ids.size > 0) repairUniqueIDs(store, ids);
+});
+
+// MARK: BSD-122 – Werte einer Zeile, die aus dem Papierkorb zurückkommt
+
+const VALUE_KIND: Record<string, string> = {
+  title: "text", text: "text", number: "number", date: "date", person: "person", files: "files", checkbox: "checkbox", url: "url",
+  email: "email", phone: "phone", relation: "relation", uniqueID: "uniqueID", place: "place", select: "select", status: "status", multiSelect: "multiSelect",
+};
+
+/**
+ * `values` ohne das, was nicht mehr zum Schema passt: ein Wert, dessen Art nicht zum Property-Typ passt, und
+ * Option-IDs, die die Property nicht mehr hat. Unbekannte Properties/Werte und berechnete Typen bleiben (Swift
+ * `valuesMatchingSchema`).
+ */
+export function valuesMatchingSchema(values: Record<string, PropertyValue>, db: Database): Record<string, PropertyValue> {
+  const out = { ...values };
+  for (const [pid, v] of Object.entries(values)) {
+    const p = db.properties.find((x) => x.id === pid);
+    const kind = v && typeof v === "object" ? Object.keys(v)[0] : undefined;
+    if (!p || !kind || !(kind in VALUE_KIND_SET)) continue; // unbekannte Property oder unbekannte Wert-Art
+    const want = VALUE_KIND[p.type];
+    if (want === undefined) continue; // berechnete oder unbekannte Typen
+    if (kind !== want) {
+      delete out[pid];
+      continue;
+    }
+    const options = new Set((p.options ?? []).map((o) => o.id));
+    const raw = (v as Record<string, { _0?: unknown }>)[kind]?._0;
+    if (kind === "select" || kind === "status") {
+      if (typeof raw !== "string" || !options.has(raw)) delete out[pid];
+    } else if (kind === "multiSelect" && Array.isArray(raw)) {
+      const rest = raw.filter((x): x is string => typeof x === "string" && options.has(x));
+      if (rest.length !== raw.length) {
+        if (rest.length === 0) delete out[pid];
+        else out[pid] = pv("multiSelect", rest);
+      }
+    }
+  }
+  return out;
+}
+const VALUE_KIND_SET: Record<string, true> = Object.fromEntries(Object.values(VALUE_KIND).map((k) => [k, true]));
 
 function assignUniqueID(store: WorkspaceStore, tx: Tx, databaseID: string, rowID: string) {
   const db = store.databases.get(databaseID);

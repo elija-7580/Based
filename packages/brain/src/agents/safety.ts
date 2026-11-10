@@ -44,7 +44,8 @@ export interface SafetyResult {
 const modeEffect = (mode: PermissionMode, c: ActionCategory): Decision => {
   if (c === "read") return "auto";
   if (mode === "free") return "auto";
-  if (mode === "ask") return "propose";
+  // Ask und Plan (BSD-245): jede Änderung wird als Plan vorgeschlagen und erst nach Freigabe ausgeführt.
+  if (mode === "ask" || mode === "plan") return "propose";
   // Ask before edits: Neues anlegen ist umkehrbar (Undo), Bestehendes ändern fragt; Kosten entscheidet das Budget.
   return c === "edit" ? "propose" : "auto";
 };
@@ -62,7 +63,7 @@ export function assess(plan: ValidPlan, ctx: SafetyContext): SafetyResult {
       continue;
     }
     let d = modeEffect(ctx.mode, categoryOf(a));
-    if (d === "propose") reasons.push(`${ctx.mode === "ask" ? "Ask mode" : "Ask before edits"}: ${a.type.replace(/_/g, " ")}`);
+    if (d === "propose") reasons.push(`${ctx.mode === "ask" ? "Ask mode" : ctx.mode === "plan" ? "Plan mode" : "Ask before edits"}: ${a.type.replace(/_/g, " ")}`);
     if (a.type === "spawn_agent") {
       const est = a.estimateEUR ?? ctx.defaultEstimateEUR ?? 0;
       if (ctx.perTaskEUR !== undefined && est > ctx.perTaskEUR) {

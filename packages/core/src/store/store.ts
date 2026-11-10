@@ -20,6 +20,12 @@ export const WORKSPACE_ID = "workspace";
 /** Swift `Date` = Sekunden seit 2001-01-01. */
 const swiftNow = () => (Date.now() - 978_307_200_000) / 1000;
 
+/**
+ * Läuft nach jedem Remote-Merge (Swift: am Ende von `applyRemote`). BSD-123: database-ops.ts repariert dort doppelte
+ * ID-Nummern; als Liste, damit store.ts nicht von den Datenbank-Operationen abhängt.
+ */
+export const afterRemoteMerge: ((store: WorkspaceStore, records: readonly WireRecord[]) => void)[] = [];
+
 export type ChangeOrigin = "local" | "undo" | "redo" | "remote" | "load" | "import";
 const isLocalWrite = (o: ChangeOrigin) => o === "local" || o === "undo" || o === "redo" || o === "import";
 
@@ -575,6 +581,7 @@ export class WorkspaceStore {
     }
     // Ohne Speichern darf der Sync seinen Cursor nicht weiterschieben: werfen statt still verwerfen.
     if (!this.commit(tx, "Sync", undefined, "remote", false)) throw new StoreReadOnlyError(this.writeFailure?.message ?? "write failed");
+    for (const hook of afterRemoteMerge) hook(this, records);
     return { stale, tombstoned };
   }
 

@@ -52,8 +52,11 @@ test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", 
   await expect(page.getByTestId("settings-section-brain-skills")).toBeVisible();
   await expect(page.getByTestId("settings-missing").getByText("Sandbox cleanup")).toBeVisible();
 
+  // BSD-222: MCP-Server sind echt; „Tool permissions“ bleibt offen. Ohne Connection gibt es noch keine Schalter.
   await nav(page).getByRole("button", { name: "Connections", exact: true }).click();
-  await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toBeVisible();
+  await expect(page.getByTestId("settings-section-mcp-connections")).toBeVisible();
+  await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toHaveCount(0);
+  await expect(page.getByTestId("settings-missing").getByText("Tool permissions")).toBeVisible();
   await expect(page.getByTestId("settings-page").getByRole("switch")).toHaveCount(0);
 });
 

@@ -3,7 +3,9 @@
 // Hauptthread (tasks/runtime.ts), weil Engine und API-Schlüssel dort leben. Jede Liste, die sich ändert (lokal, anderer
 // Tab, Sync), geht als `agents`-Ereignis an alle Clients.
 import { parseKey, type StoreChange, type WorkspaceStore } from "@based/core";
-import { AGENT_RECORD_TYPES, AgentStore, type AgentData, type AgentSnapshot, type NewRun, type PlannerExample, type ProjectStatus, type RunPatch, type TaskEvent } from "@based/brain";
+import {
+  addConnection, AGENT_RECORD_TYPES, AgentStore, CONNECTION_TYPE, listConnections, removeConnection, updateConnection,
+  type ConnectionPatch, type NewConnection, type AgentData, type AgentSnapshot, type NewRun, type PlannerExample, type ProjectStatus, type RunPatch, type TaskEvent } from "@based/brain";
 
 export type AgentAction =
   | { op: "snapshot" }
@@ -34,7 +36,12 @@ export type AgentAction =
   | { op: "schedules" }
   | { op: "updateSchedule"; id: string; patch: { enabled?: boolean; when?: string; prompt?: string } }
   | { op: "deleteSchedule"; id: string }
-  | { op: "claimSchedule"; id: string; nowMs: number };
+  | { op: "claimSchedule"; id: string; nowMs: number }
+  /** BSD-222: MCP-Connections (Konfiguration ohne Geheimnis; das Token liegt im Hauptthread verschlüsselt). */
+  | { op: "connections" }
+  | { op: "addConnection"; input: NewConnection; id?: string }
+  | { op: "updateConnection"; id: string; patch: ConnectionPatch }
+  | { op: "removeConnection"; id: string };
 
 export class AgentHost {
   readonly agents: AgentStore;
@@ -82,6 +89,10 @@ export class AgentHost {
       case "updateSchedule": return this.checked(() => s.updateSchedule(a.id, a.patch));
       case "deleteSchedule": return s.deleteSchedule(a.id);
       case "claimSchedule": return s.claimSchedule(a.id, a.nowMs);
+      case "connections": return listConnections(this.store);
+      case "addConnection": return this.checked(() => addConnection(this.store, a.input, a.id));
+      case "updateConnection": return this.checked(() => updateConnection(this.store, a.id, a.patch));
+      case "removeConnection": return this.checked(() => removeConnection(this.store, a.id));
     }
   }
 
@@ -98,7 +109,7 @@ export class AgentHost {
       const { kind, id } = parseKey(key);
       if (kind !== "block") continue;
       const b = this.store.blocks.get(id);
-      if (!b || AGENT_RECORD_TYPES.has(b.type)) {
+      if (!b || AGENT_RECORD_TYPES.has(b.type) || b.type === CONNECTION_TYPE) {
         this.dirty = true;
         return;
       }

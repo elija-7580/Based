@@ -57,6 +57,9 @@ importers:
       '@based/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@based/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       '@based/sync':
         specifier: workspace:*
         version: link:../../packages/sync
@@ -173,6 +176,9 @@ importers:
       '@based/core':
         specifier: workspace:*
         version: link:../core
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.32.2
+        version: 1.32.2(zod@4.6.7)
       zod:
         specifier: ^4.6.7
         version: 4.6.7

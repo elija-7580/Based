@@ -1,6 +1,6 @@
 // BSD-176: Randfälle von HTML-Leser, URL-Prüfung und Seitenlinks, die die Golden Fixtures nicht abdecken.
 import { describe, expect, it } from "vitest";
-import { ClipboardHTMLImporter, decodeEntities, importedJSON, pageIDFromLink, parseHTML, sanitizeURL } from "../src/index.js";
+import { ClipboardHTMLImporter, decodeEntities, importedJSON, MarkdownImporter, pageIDFromLink, parseHTML, sanitizeURL } from "../src/index.js";
 
 describe("HTML-Leser", () => {
   it("dekodiert Entities nur mit Semikolon in Reichweite", () => {
@@ -32,5 +32,21 @@ describe("URLs", () => {
     expect(pageIDFromLink("based://page/doc-1")).toBe("doc-1");
     expect(pageIDFromLink("https://www.notion.so/Tasks-1fe618c1167e80f8946ec1a7918dfc28")).toBe("1fe618c1-167e-80f8-946e-c1a7918dfc28");
     expect(pageIDFromLink("https://example.com")).toBe("https://example.com");
+  });
+});
+
+describe("Markdown-Import: eingerückte Zeile nach Block ohne Kinder (BSD-183)", () => {
+  const types = (md: string) => new MarkdownImporter().parse(md).map((b) => [b.type, b.children.length]);
+  it("Code-Block bleibt erhalten, eingerückte Zeile wird eigener Block", () => {
+    const blocks = new MarkdownImporter().parse("```js\nlet a = 1\n```\n    eingerückt\nweiter");
+    expect(blocks.map((b) => b.type)).toEqual(["code", "text", "text"]);
+    expect(blocks[0]!.props).toMatchObject({ language: "js" });
+  });
+  it("Trenner, Gleichung und Bild gehen nicht verloren", () => {
+    expect(types("---\n  - a\n      - b")).toEqual([["divider", 0], ["bulletedList", 1]]);
+    expect(types("$$x$$\n    y")).toEqual([["equation", 0], ["text", 0]]);
+  });
+  it("Block mit Kindern nimmt die eingerückte Zeile weiter als Kind", () => {
+    expect(types("- a\n    - b")).toEqual([["bulletedList", 1]]);
   });
 });

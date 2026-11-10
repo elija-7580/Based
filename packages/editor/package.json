@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./headless": {
+      "types": "./src/headless-api.ts",
+      "default": "./src/headless.ts"
+    }
   },
   "scripts": {
     "typecheck": "tsc -p .",
