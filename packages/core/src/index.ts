@@ -33,7 +33,7 @@ export { LIBRARY_KINDS, duplicateTitleKeys, filterLibrary, libraryItems, titleKe
 export type { LibraryItem, LibraryKind, LibraryQuery, LibrarySort } from "./store/library.js";
 export { GRAPH_EDGE_KINDS, buildPageGraph, filterGraph, graphAdjacency } from "./graph/page-graph.js";
 export type { GraphEdge, GraphEdgeKind, GraphFilter, GraphNode, GraphNodeKind, PageGraph } from "./graph/page-graph.js";
-export { ForceLayout, hashID } from "./graph/layout.js";
+export { ForceLayout, hashID, layoutBounds, nodeAtPoint } from "./graph/layout.js";
 export type { LayoutOptions, Point } from "./graph/layout.js";
 export { PRIVATE_SECTION, buildOutline, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";

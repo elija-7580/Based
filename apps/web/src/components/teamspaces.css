@@ -16,3 +16,5 @@
 /* Export-Dialog: Optionen für HTML */
 .export-options { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; background: var(--surface-raised); border-radius: var(--radius-xl); padding: var(--space-4); }
 .export-options .t-desc { color: var(--muted); }
+/* Menü einer Zeile offen: Aktionen sichtbar lassen, auch wenn der Zeiger ins Menü wandert */
+.tree-row:has([aria-expanded="true"]) .tree-actions { display: inline-flex; }

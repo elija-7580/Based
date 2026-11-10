@@ -1,7 +1,7 @@
 // Graph auf echten Daten: Knoten = Seiten, Datenbanken und Zeilen, Kanten = Unterseiten, Erwähnungen/Links und
 // Relationen. Der Graph wird im Store-Worker gebaut und zugeschnitten (`client.graph(filter)`, Logik in @based/core),
-// das Kraft-Layout läuft hier mit einem Zeitbudget pro Frame (ForceLayout aus @based/core) und zeichnet auf Canvas –
-// flüssig auch bei 5.000 Knoten. Klick öffnet die Seite, Überfahren hebt die Nachbarn hervor, die Suche findet Seiten.
+// das Kraft-Layout (ForceLayout aus @based/core) rechnet in einem eigenen Layout-Worker, hier wird nur auf Canvas
+// gezeichnet – flüssig auch bei 5.000 Knoten. Klick öffnet die Seite, Überfahren hebt die Nachbarn hervor, die Suche findet Seiten.
 // Farben und Schrift kommen zur Laufzeit aus den Design-Tokens (CSS-Variablen), keine Literale.
 // Design: Seiten der obersten Ebene gefüllt in Tinte, Seiten darunter als Ringe (docs/design/README.md). Der Marker
 // (Agent-Änderungen) bleibt frei, bis Records die Herkunft „Agent“ tragen.
@@ -12,11 +12,12 @@ import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/Segme
 import { Selector } from "@astryxdesign/core/Selector";
 import { Switch } from "@astryxdesign/core/Switch";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import { ForceLayout, GRAPH_EDGE_KINDS, graphAdjacency, type GraphEdgeKind, type GraphFilter, type GraphNode, type PageGraph, type Point } from "@based/core";
+import { GRAPH_EDGE_KINDS, graphAdjacency, type GraphEdgeKind, type GraphFilter, type GraphNode, type PageGraph } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
+import { startLayout, type GraphLayout } from "../worker/layoutClient.js";
 import type { GraphResult } from "../worker/protocol.js";
 import "./graph.css";
 
@@ -53,7 +54,7 @@ interface View { k: number; x: number; y: number }
 /** Alles, was die Zeichenschleife braucht (außerhalb von React, damit Frames nichts neu rendern). */
 interface Scene {
   graph: PageGraph;
-  layout: ForceLayout;
+  layout: GraphLayout;
   neighbors: number[][];
   index: Map<string, number>;
   links: [number, number][];
@@ -62,9 +63,9 @@ interface Scene {
   byDegree: number[];
 }
 
-function buildScene(graph: PageGraph, previous: ReadonlyMap<string, Point> | undefined): Scene {
+function buildScene(graph: PageGraph, previous: GraphLayout | undefined): Scene {
   const adj = graphAdjacency(graph);
-  const layout = new ForceLayout(graph.nodes.map((n) => n.id), adj.links, {}, previous);
+  const layout = startLayout(graph.nodes.map((n) => n.id), adj.links, previous);
   const radius = new Float32Array(graph.nodes.length);
   graph.nodes.forEach((n, i) => {
     const deg = adj.neighbors[i]!.length;
@@ -98,6 +99,9 @@ export function Graph({ client, state, onOpenPage }: Props) {
   const hover = useRef(-1);
   const live = useRef({ selected: undefined as string | undefined, matches: new Set<number>(), query: "" });
   const size = useRef({ w: 0, h: 0, dpr: 1 });
+  const settledRef = useRef(false);
+  /** Messwerte der letzten Frames (ms) für Tests und Diagnose. */
+  const stats = useRef({ frames: 0, layoutMs: 0, drawMs: 0, maxFrameMs: 0 });
 
   const sections = state.outline?.sections ?? [];
   const activeSection = section !== ALL && sections.some((s) => s.id === section) ? section : ALL;
@@ -129,11 +133,13 @@ export function Graph({ client, state, onOpenPage }: Props) {
   // Neuer Graph: Layout mit den bisherigen Plätzen fortsetzen.
   useEffect(() => {
     if (!result) return;
-    const prev = scene.current?.layout.positions();
+    const prev = scene.current?.layout;
     scene.current = buildScene(result.graph, prev);
+    prev?.dispose();
     hover.current = -1;
     setHovered(undefined);
-    setSettled(scene.current.layout.settled);
+    settledRef.current = scene.current.layout.settled;
+    setSettled(settledRef.current);
     dirty.current = true;
   }, [result]);
 
@@ -209,27 +215,35 @@ export function Graph({ client, state, onOpenPage }: Props) {
     resize();
 
     let raf = 0;
-    let wasSettled = false;
     const frame = () => {
       raf = requestAnimationFrame(frame);
       const s = scene.current;
       if (!s) return;
-      if (!s.layout.settled) {
-        s.layout.run(FRAME_BUDGET_MS);
+      const t0 = performance.now();
+      s.layout.tick(FRAME_BUDGET_MS);
+      if (s.layout.takeChanged()) {
         if (autoFit.current) fit();
         dirty.current = true;
       }
-      if (s.layout.settled !== wasSettled) {
-        wasSettled = s.layout.settled;
-        setSettled(wasSettled);
+      const t1 = performance.now();
+      if (s.layout.settled !== settledRef.current) {
+        settledRef.current = s.layout.settled;
+        setSettled(settledRef.current);
       }
       if (!dirty.current) return;
       dirty.current = false;
       draw(ctx, s, view.current, size.current, paint.current!, hover.current, live.current);
+      const t2 = performance.now();
+      const st = stats.current;
+      st.frames += 1;
+      st.layoutMs = t1 - t0;
+      st.drawMs = t2 - t1;
+      st.maxFrameMs = Math.max(st.maxFrameMs, t2 - t0);
     };
     raf = requestAnimationFrame(frame);
     // Für E2E-Tests: Bildschirmposition eines Knotens.
     (canvas as HTMLCanvasElement & { __basedGraph?: unknown }).__basedGraph = {
+      stats: () => ({ ...stats.current }),
       position(id: string) {
         const s = scene.current;
         const i = s?.index.get(id);
@@ -242,6 +256,7 @@ export function Graph({ client, state, onOpenPage }: Props) {
       cancelAnimationFrame(raf);
       ro.disconnect();
       themeWatch.disconnect();
+      scene.current?.layout.dispose();
     };
   }, [fit]);
 
@@ -282,10 +297,7 @@ export function Graph({ client, state, onOpenPage }: Props) {
     if (d.kind === "pan") view.current = { ...view.current, x: d.vx + p.x - d.sx, y: d.vy + p.y - d.sy };
     else if (s) {
       const v = view.current;
-      s.layout.pinned = d.node;
-      s.layout.x[d.node] = (p.x - v.x) / v.k;
-      s.layout.y[d.node] = (p.y - v.y) / v.k;
-      s.layout.reheat(0.25);
+      s.layout.pin(d.node, (p.x - v.x) / v.k, (p.y - v.y) / v.k);
     }
     dirty.current = true;
   };
@@ -293,7 +305,7 @@ export function Graph({ client, state, onOpenPage }: Props) {
     const d = drag.current;
     drag.current = undefined;
     const s = scene.current;
-    if (s) s.layout.pinned = -1;
+    if (s && d?.kind === "node" && d.moved) s.layout.pin(-1, 0, 0);
     if (!d || d.moved || d.kind !== "node" || !s) return;
     const node = s.graph.nodes[d.node];
     if (node && e.type === "pointerup") onOpenPage(node.id);

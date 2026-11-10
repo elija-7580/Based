@@ -83,7 +83,9 @@ test("Import eines Notion-HTML-Exports (ZIP) legt die Seiten an", async ({ page 
   await expect(dialog).toBeVisible();
   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Export-abc.zip", mimeType: "application/zip", buffer: notionExportZip() });
   await expect(dialog.getByTestId("import-summary")).toHaveText(/Imported 2 pages, 2 databases, \d+ rows\./);
-  await expect(dialog.getByText(/not imported — file storage/)).toBeVisible();
+  // Bilder und Anhänge kommen in den Asset-Speicher (IndexedDB) statt zu entfallen
+  await expect(dialog.getByTestId("import-summary")).toContainText("attached file");
+  await expect(dialog.getByText(/not imported — file storage/)).toHaveCount(0);
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(dialog).toHaveCount(0);
   await expect(page.getByRole("treeitem", { name: "Home" })).toBeVisible();

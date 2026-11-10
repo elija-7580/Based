@@ -43,6 +43,8 @@ export class ForceLayout {
   // Raster (wiederverwendet)
   private cellHead = new Int32Array(0);
   private readonly cellNext: Int32Array;
+  private readonly cellX: Int32Array;
+  private readonly cellY: Int32Array;
 
   static readonly ALPHA_MIN = 0.01;
   static readonly ALPHA_DECAY = 0.985;
@@ -50,8 +52,8 @@ export class ForceLayout {
   constructor(readonly ids: readonly string[], readonly links: readonly (readonly [number, number])[], opts: LayoutOptions = {}, initial?: ReadonlyMap<string, Point>) {
     const n = ids.length;
     this.linkDistance = opts.linkDistance ?? 46;
-    this.repelRadius = opts.repelRadius ?? 120;
-    this.repelStrength = opts.repelStrength ?? 900;
+    this.repelRadius = opts.repelRadius ?? 96;
+    this.repelStrength = opts.repelStrength ?? 700;
     this.gravity = opts.gravity ?? 0.012;
     this.x = new Float32Array(n);
     this.y = new Float32Array(n);
@@ -59,6 +61,8 @@ export class ForceLayout {
     this.vy = new Float32Array(n);
     this.degree = new Uint32Array(n);
     this.cellNext = new Int32Array(n);
+    this.cellX = new Int32Array(n);
+    this.cellY = new Int32Array(n);
     for (const [a, b] of links) { this.degree[a]! += 1; this.degree[b]! += 1; }
     // Startscheibe: Fläche wächst mit der Knotenzahl, damit die Dichte gleich bleibt.
     const radius = Math.sqrt(Math.max(1, n)) * this.linkDistance * 0.6;
@@ -129,43 +133,37 @@ export class ForceLayout {
       vy[s]! += dy * k * (1 - bias);
     }
 
-    // Abstoßung über ein Raster mit Zellgröße = Reichweite: nur die 9 Zellen um einen Knoten zählen.
+    // Abstoßung über ein gehashtes Raster mit Zellgröße = Reichweite: nur die 9 Zellen um einen Knoten zählen. Gehasht
+    // statt als Feld, damit weit verstreute Knoten (Ausreißer) das Raster nicht aufblähen; Kollisionen im Hash werden
+    // über die gemerkte Zelle jedes Knotens aussortiert.
     const R = this.repelRadius, R2 = R * R;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (let i = 0; i < n; i++) {
-      const px = x[i]!, py = y[i]!;
-      if (px < minX) minX = px;
-      if (px > maxX) maxX = px;
-      if (py < minY) minY = py;
-      if (py > maxY) maxY = py;
+    let size = this.cellHead.length;
+    if (size < 2 * n) {
+      size = 1;
+      while (size < 2 * n) size <<= 1;
+      this.cellHead = new Int32Array(size);
     }
-    // Rastergröße begrenzen (Ausreißer dürfen das Raster nicht aufblähen)
-    let cell = R;
-    let cols = Math.floor((maxX - minX) / cell) + 1, rows = Math.floor((maxY - minY) / cell) + 1;
-    while (cols * rows > 4 * n + 64) {
-      cell *= 2;
-      cols = Math.floor((maxX - minX) / cell) + 1;
-      rows = Math.floor((maxY - minY) / cell) + 1;
-    }
-    if (this.cellHead.length < cols * rows) this.cellHead = new Int32Array(cols * rows);
-    const head = this.cellHead, next = this.cellNext;
-    head.fill(-1, 0, cols * rows);
+    const mask = size - 1;
+    const head = this.cellHead, next = this.cellNext, cxs = this.cellX, cys = this.cellY;
+    const hash = (cx: number, cy: number) => (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663)) & mask;
+    head.fill(-1);
     for (let i = 0; i < n; i++) {
-      const c = Math.floor((x[i]! - minX) / cell) + Math.floor((y[i]! - minY) / cell) * cols;
-      next[i] = head[c]!;
-      head[c] = i;
+      const cx = Math.floor(x[i]! / R), cy = Math.floor(y[i]! / R);
+      cxs[i] = cx;
+      cys[i] = cy;
+      const h = hash(cx, cy);
+      next[i] = head[h]!;
+      head[h] = i;
     }
     const strength = this.repelStrength * a;
     for (let i = 0; i < n; i++) {
       const px = x[i]!, py = y[i]!;
-      const cx = Math.floor((px - minX) / cell), cy = Math.floor((py - minY) / cell);
+      const cx = cxs[i]!, cy = cys[i]!;
       let fx = 0, fy = 0;
       for (let oy = cy - 1; oy <= cy + 1; oy++) {
-        if (oy < 0 || oy >= rows) continue;
         for (let ox = cx - 1; ox <= cx + 1; ox++) {
-          if (ox < 0 || ox >= cols) continue;
-          for (let j = head[ox + oy * cols]!; j >= 0; j = next[j]!) {
-            if (j === i) continue;
+          for (let j = head[hash(ox, oy)]!; j >= 0; j = next[j]!) {
+            if (j === i || cxs[j] !== ox || cys[j] !== oy) continue;
             let dx = px - x[j]!, dy = py - y[j]!;
             let d2 = dx * dx + dy * dy;
             if (d2 >= R2) continue;
@@ -229,26 +227,36 @@ export class ForceLayout {
 
   /** Umschließendes Rechteck. */
   bounds(): { minX: number; minY: number; maxX: number; maxY: number } {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (let i = 0; i < this.ids.length; i++) {
-      const px = this.x[i]!, py = this.y[i]!;
-      if (px < minX) minX = px;
-      if (px > maxX) maxX = px;
-      if (py < minY) minY = py;
-      if (py > maxY) maxY = py;
-    }
-    if (this.ids.length === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-    return { minX, minY, maxX, maxY };
+    return layoutBounds(this.x, this.y, this.ids.length);
   }
 
   /** Knoten am Punkt (Radius in Graph-Koordinaten); der nächste gewinnt. */
   nodeAt(px: number, py: number, radius: number): number {
-    let best = -1, bestD = radius * radius;
-    for (let i = 0; i < this.ids.length; i++) {
-      const dx = this.x[i]! - px, dy = this.y[i]! - py;
-      const d = dx * dx + dy * dy;
-      if (d <= bestD) { best = i; bestD = d; }
-    }
-    return best;
+    return nodeAtPoint(this.x, this.y, this.ids.length, px, py, radius);
   }
+}
+
+/** Umschließendes Rechteck von Positionen. */
+export function layoutBounds(x: ArrayLike<number>, y: ArrayLike<number>, n: number): { minX: number; minY: number; maxX: number; maxY: number } {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < n; i++) {
+    const px = x[i]!, py = y[i]!;
+    if (px < minX) minX = px;
+    if (px > maxX) maxX = px;
+    if (py < minY) minY = py;
+    if (py > maxY) maxY = py;
+  }
+  if (n === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  return { minX, minY, maxX, maxY };
+}
+
+/** Knoten am Punkt (Radius in Graph-Koordinaten); der nächste gewinnt. */
+export function nodeAtPoint(x: ArrayLike<number>, y: ArrayLike<number>, n: number, px: number, py: number, radius: number): number {
+  let best = -1, bestD = radius * radius;
+  for (let i = 0; i < n; i++) {
+    const dx = x[i]! - px, dy = y[i]! - py;
+    const d = dx * dx + dy * dy;
+    if (d <= bestD) { best = i; bestD = d; }
+  }
+  return best;
 }
