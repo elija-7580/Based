@@ -1,8 +1,8 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { rowsOf, type WorkspaceStore } from "@based/core";
-import { isOutlineHidden, setOutlineHidden } from "@based/editor";
+import { pageFormat, rowsOf, setPageFormat, setPageIcon, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { BlockView } from "../components/BlockView.js";
 import { ExportDialog } from "../components/ImportExport.js";
@@ -60,7 +60,12 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const title = state.titles.get(pageID) ?? "";
   const outline = state.outline;
   const trashed = page?.trashedAt !== undefined;
-  const readOnly = trashed || state.status.state === "readonly";
+  // BSD-201: Seiten-Optionen (Icon, Schrift, Small text, Full width, Sperre) aus den Block-Props.
+  const format = store && page ? pageFormat(store, pageID) : { font: "default" as const, smallText: false, fullWidth: false, locked: false };
+  const icon = typeof page?.props?.icon === "string" && isEmojiIcon(page.props.icon) ? page.props.icon : undefined;
+  const [iconPicker, setIconPicker] = useState(false);
+  const storeReadOnly = trashed || state.status.state === "readonly";
+  const readOnly = storeReadOnly || format.locked;
 
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];
@@ -134,7 +139,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       </header>
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
-          outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined} />
+          outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
+          options={store && page && !storeReadOnly ? { format, isDatabase: dbID !== undefined, set: (patch) => setPageFormat(store, pageID, patch) } : undefined} />
       ) : null}
       {historyOpen ? (
         <VersionHistory client={client} pageID={pageID} current={store} onClose={() => setHistoryOpen(false)} onRestored={(r) => {
@@ -162,10 +168,30 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           }}>Delete forever</button>
         </div>
       ) : null}
-      <article className={dbID ? "page page-database" : "page"}>
+      <article className={dbID ? "page page-database" : "page"} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
+        data-full-width={format.fullWidth ? "" : undefined} data-locked={format.locked ? "" : undefined}>
         <div className="page-grid">
           <div className="spacer-cell" />
           <div className="page-head">
+            {icon || (!readOnly && page) ? (
+              <div className="page-icon-row">
+                {icon ? (
+                  <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}>{icon}</button>
+                ) : (
+                  <button type="button" className="page-add-icon btn ghost" onClick={() => setIconPicker(true)}>Add icon</button>
+                )}
+                {iconPicker && store ? (
+                  <EmojiPicker className="page-icon-picker" current={icon} onClose={() => setIconPicker(false)}
+                    onPick={(e) => { setPageIcon(store, pageID, e); setIconPicker(false); }} />
+                ) : null}
+              </div>
+            ) : null}
+            {format.locked ? (
+              <div className="page-locked t-desc" role="status">
+                <Icon name="lock" size={14} /> Locked
+                {!storeReadOnly && store ? <button type="button" className="btn ghost" onClick={() => setPageFormat(store, pageID, { locked: false })}>Unlock</button> : null}
+              </div>
+            ) : null}
             <TitleField id={pageID} title={title} readOnly={readOnly || !page} onRename={(t) => void client.command({ op: "rename", id: pageID, title: t })} />
             {page ? (
               <div className="meta-line t-desc">
@@ -185,7 +211,11 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
 }
 
 /** Seitenmenü (⋯) in der Kopfzeile. */
-function PageMenu({ pos, onClose, onHistory, outline }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined }) {
+interface PageOptionsMenu { format: ReturnType<typeof pageFormat>; isDatabase: boolean; set: (patch: PageFormatPatch) => void }
+
+const FONTS: readonly { id: PageFont; label: string }[] = [{ id: "default", label: "Default" }, { id: "serif", label: "Serif" }, { id: "mono", label: "Mono" }];
+
+function PageMenu({ pos, onClose, onHistory, outline, options }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
@@ -205,6 +235,31 @@ function PageMenu({ pos, onClose, onHistory, outline }: { pos: { top: number; ri
     <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
       <button type="button" role="menuitem" className="menu-item" onClick={onHistory}><Icon name="restore" size={18} />Version history</button>
       {outline ? <button type="button" role="menuitem" className="menu-item" onClick={outline.toggle}><Icon name="page" size={18} />{outline.hidden ? "Show outline" : "Hide outline"}</button> : null}
+      {options ? (
+        <>
+          {!options.isDatabase ? (
+            <div className="page-font-row" role="group" aria-label="Font">
+              {FONTS.map((f) => (
+                <button key={f.id} type="button" role="menuitemradio" aria-checked={options.format.font === f.id} className="page-font" data-font={f.id}
+                  onClick={() => options.set({ font: f.id })}>
+                  <span className="page-font-sample" aria-hidden="true">Ag</span>{f.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {!options.isDatabase ? (
+            <button type="button" role="menuitemcheckbox" aria-checked={options.format.smallText} className="menu-item" onClick={() => options.set({ smallText: !options.format.smallText })}>
+              <Icon name="page" size={18} />Small text{options.format.smallText ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+            </button>
+          ) : null}
+          <button type="button" role="menuitemcheckbox" aria-checked={options.format.fullWidth} className="menu-item" onClick={() => options.set({ fullWidth: !options.format.fullWidth })}>
+            <Icon name="page" size={18} />Full width{options.format.fullWidth ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+          </button>
+          <button type="button" role="menuitemcheckbox" aria-checked={options.format.locked} className="menu-item" onClick={() => { options.set({ locked: !options.format.locked }); onClose(); }}>
+            <Icon name="lock" size={18} />Lock page{options.format.locked ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

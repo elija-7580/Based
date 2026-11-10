@@ -855,3 +855,43 @@ test("Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-20
   await expect(editor(page).locator("audio").last()).toHaveAttribute("src", /^blob:/);
   await expect(editor(page).locator(".bn-file-name-with-icon", { hasText: "notes.txt" })).toBeVisible();
 });
+
+test("Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201)", async ({ page }) => {
+  await createPage(page, "Options page");
+  await openPage(page, "Options page");
+  await page.locator(".page-head").hover();
+  await page.getByRole("button", { name: "Add icon" }).click();
+  const picker = page.getByRole("dialog", { name: "Choose an icon" });
+  await picker.getByLabel("Filter emoji").fill("rocket");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
+
+  const article = page.locator("article.page");
+  const menu = async () => page.getByRole("button", { name: "Page menu" }).click();
+  await menu();
+  await page.getByRole("menuitemradio", { name: /Serif/ }).click();
+  await expect(article).toHaveAttribute("data-font", "serif");
+  await page.getByRole("menuitemcheckbox", { name: /Small text/ }).click();
+  await page.getByRole("menuitemcheckbox", { name: /Full width/ }).click();
+  await expect(article).toHaveAttribute("data-small-text", "");
+  await expect(article).toHaveAttribute("data-full-width", "");
+  const before = await page.locator(".page-grid").evaluate((g) => g.getBoundingClientRect().width);
+  expect(before).toBeGreaterThan(900);
+  await page.keyboard.press("Escape");
+
+  await menu();
+  await page.getByRole("menuitemcheckbox", { name: /Lock page/ }).click();
+  await expect(article).toHaveAttribute("data-locked", "");
+  await expect(editor(page)).toHaveAttribute("contenteditable", "false");
+  await expect(page.getByLabel("Page title")).toHaveJSProperty("readOnly", true);
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("treeitem", { name: /Options page/ }).click();
+  await expect(page.getByRole("button", { name: "Page icon" })).toHaveText("🚀");
+  await expect(article).toHaveAttribute("data-font", "serif");
+  await expect(article).toHaveAttribute("data-locked", "");
+  await page.getByRole("button", { name: "Unlock" }).click();
+  await expect(article).not.toHaveAttribute("data-locked", "");
+  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+});

@@ -1,14 +1,14 @@
 feature,area,priority,original,clone,notes,ts
 Create / rename / delete pages,pages,must,yes,yes,,yes
 Nested subpages (page inside page),pages,must,yes,yes,,yes
-Page icon (emoji),pages,must,yes,yes,,"partial: Icon wird in Seitenleiste und Seitenlinks angezeigt, lässt sich aber nicht setzen oder ändern (kein Picker)"
+Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
 Page icon (uploaded image),pages,could,yes,yes,,no
 Page cover (gallery / color / gradient),pages,should,yes,yes,,no
 Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,no
-Page font (default / serif / mono),pages,should,yes,yes,,no
-Small text,pages,should,yes,yes,,no
-Full width,pages,should,yes,yes,,no
-Lock page,pages,should,yes,yes,,no
+Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
+Small text,pages,should,yes,yes,,yes (BSD-201)
+Full width,pages,should,yes,yes,,yes (BSD-201)
+Lock page,pages,should,yes,yes,,"yes (BSD-201: Editor, Titel und Datenbank schreibgeschützt, Unlock-Knopf)"
 Duplicate page,pages,must,yes,yes,,"yes (Pass 30: Seitenmenü Duplicate, Library-Bulk)"
 Move page to another page,pages,must,yes,yes,,"yes (Pass 30: Move-to-Dialog, Ziehen, Teamspaces)"
 Trash with restore and delete forever,pages,must,yes,yes,,yes
