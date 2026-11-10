@@ -1,5 +1,7 @@
 // BSD-204: Befehlspalette „New…“ (⌘N), wie SearchOverlay.swift im Modus „New“: Seite, Datenbank, Chat, Import.
 // Tippen filtert, Pfeiltasten wählen, Enter führt aus, Esc schließt. Aussehen wie Quick Find.
+// BSD-256: Bei leerem Suchfeld führen die Ziffern 1–9 den Eintrag mit dieser Nummer sofort aus (Nummer rechts sichtbar);
+// beim Tippen filtern Ziffern wie jeder andere Buchstabe.
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon, type IconName } from "../icons.js";
 
@@ -44,7 +46,11 @@ export function NewPalette({ commands, onClose }: { commands: readonly PaletteCo
             aria-label="New" placeholder="Create something new…" value={query}
             onChange={(e) => { setQuery(e.target.value); setSelected(0); }}
             onKeyDown={(e) => {
-              if (e.key === "ArrowDown") { e.preventDefault(); setSelected((s) => Math.min(items.length - 1, s + 1)); }
+              if (query === "" && /^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                const i = Number(e.key) - 1;
+                if (items[i]) { e.preventDefault(); run(i); }
+              }
+              else if (e.key === "ArrowDown") { e.preventDefault(); setSelected((s) => Math.min(items.length - 1, s + 1)); }
               else if (e.key === "ArrowUp") { e.preventDefault(); setSelected((s) => Math.max(0, s - 1)); }
               else if (e.key === "Enter") { e.preventDefault(); run(selected); }
               else if (e.key === "Escape") { e.preventDefault(); onClose(); }
@@ -58,6 +64,7 @@ export function NewPalette({ commands, onClose }: { commands: readonly PaletteCo
               <span className="tile"><Icon name={c.icon} size={18} /></span>
               <span className="grow"><strong>{c.title}</strong></span>
               {c.hint ? <span className="key t-data qf-key">{c.hint}</span> : null}
+              {query === "" && i < 9 ? <span className="key t-data qf-key qf-digit" aria-label={`Press ${i + 1}`}>{i + 1}</span> : null}
             </li>
           ))}
           {items.length === 0 ? <li className="qf-none t-desc">Nothing to create by that name</li> : null}

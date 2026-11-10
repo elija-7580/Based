@@ -73,6 +73,11 @@ export function App({ client, history }: { client: StoreClient; history: History
     if (id) openPage(id);
   }, [client, openPage]);
 
+  const newMeeting = useCallback(async () => {
+    const id = await client.command<string | undefined>({ op: "createMeetingPage" });
+    if (id) openPage(id);
+  }, [client, openPage]);
+
   // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).
   const [palette, setPalette] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -114,10 +119,12 @@ export function App({ client, history }: { client: StoreClient; history: History
     return () => window.removeEventListener("keydown", onKey);
   }, [history, newPage, setAppearance]);
 
+  // BSD-256: feste Reihenfolge, Ziffern 1–9 wählen direkt (1 Page, 2 AI chat, 3 Meeting notes, 4 Database).
   const commands: PaletteCommand[] = [
     { id: "page", title: "New page", hint: "⌥⌘N", icon: "page", keywords: "document note", run: () => void newPage() },
+    { id: "chat", title: "New AI chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) },
+    { id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() },
     { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
-    { id: "chat", title: "New chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) },
     { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting(true) },
   ];
 

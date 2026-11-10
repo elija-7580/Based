@@ -14,7 +14,7 @@ test("⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; �
   await page.keyboard.press("ControlOrMeta+n");
   const palette = page.getByTestId("new-palette");
   await expect(palette).toBeVisible();
-  await expect(palette.getByRole("option")).toHaveCount(4);
+  await expect(palette.getByRole("option")).toHaveCount(5);
   await page.keyboard.type("datab");
   await expect(palette.getByRole("option")).toHaveCount(1);
   await page.keyboard.press("Enter");
@@ -28,6 +28,35 @@ test("⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; �
   await page.keyboard.press("ControlOrMeta+n");
   await page.keyboard.press("Escape");
   await expect(palette).toBeHidden();
+});
+
+test("⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256)", async ({ page }) => {
+  await ready(page);
+  const palette = page.getByTestId("new-palette");
+  await page.keyboard.press("ControlOrMeta+n");
+  await expect(palette.getByRole("option").nth(2)).toContainText("meeting notes");
+  await expect(palette.locator(".qf-digit")).toHaveText(["1", "2", "3", "4", "5"]);
+  await page.keyboard.press("1");
+  await expect(palette).toBeHidden();
+  await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();
+  await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(1);
+
+  await page.keyboard.press("ControlOrMeta+n");
+  await page.keyboard.press("3");
+  await expect(palette).toBeHidden();
+  await expect(page.getByLabel("Page title")).toHaveValue(/^Meeting/);
+  await expect(page.getByTestId("meeting-block")).toBeVisible();
+
+  await page.keyboard.press("ControlOrMeta+n");
+  await page.keyboard.press("4");
+  await expect(page.locator(".shell-database.full")).toBeVisible();
+
+  // Mit Text im Feld ist eine Ziffer nur ein Zeichen
+  await page.keyboard.press("ControlOrMeta+n");
+  await page.keyboard.type("x1");
+  await expect(palette).toBeVisible();
+  await expect(palette.getByRole("combobox", { name: "New" })).toHaveValue("x1");
+  await page.keyboard.press("Escape");
 });
 
 test("⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs", async ({ page }) => {
