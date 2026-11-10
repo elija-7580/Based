@@ -86,3 +86,17 @@ test("Fokusrahmen per Tastatur in der Highlight-Farbe (Marker)", async ({ page }
   });
   expect(outline).toBe(marker);
 });
+
+test("Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite", async ({ page }) => {
+  await ready(page);
+  await page.keyboard.press("ControlOrMeta+Comma");
+  await expect(page.getByTestId("settings-section-start-page")).toBeVisible();
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  const pageID = decodeURIComponent(new URL(page.url()).hash.replace(/^#\/?page-/, ""));
+  await page.evaluate((v) => localStorage.setItem("based.startPage", JSON.stringify(v)), pageID);
+  await page.getByRole("button", { name: "Graph" }).click();
+  await page.keyboard.press("ControlOrMeta+w");
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  await expect(page.getByTestId("based-root")).toBeVisible();
+});

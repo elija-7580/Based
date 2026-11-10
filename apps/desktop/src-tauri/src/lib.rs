@@ -5,6 +5,18 @@ use tauri::{Emitter, Manager};
 
 /// Menü-ID für „Check for Updates…“; das Web-Frontend hört auf das Ereignis `desktop://check-updates`.
 const CHECK_UPDATES: &str = "check-updates";
+/// ⌘W schließt den Tab, nie das Fenster (Web-Frontend: `desktop://close-tab`; der letzte Tab wird zur Startseite).
+const CLOSE_TAB: &str = "close-tab";
+/// ⇧⌘W: Fenster ausblenden – die App läuft weiter, Klick aufs Dock-Symbol holt es zurück (wie Notion).
+const CLOSE_WINDOW: &str = "close-window";
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn show_main(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
 
 pub fn run() {
     tauri::Builder::default()
@@ -56,18 +68,42 @@ pub fn run() {
                     &PredefinedMenuItem::maximize(app, None)?,
                     &PredefinedMenuItem::fullscreen(app, None)?,
                     &PredefinedMenuItem::separator(app)?,
-                    &PredefinedMenuItem::close_window(app, None)?,
+                    &MenuItem::with_id(app, CLOSE_TAB, "Close Tab", true, Some("CmdOrCtrl+W"))?,
+                    &MenuItem::with_id(app, CLOSE_WINDOW, "Close Window", true, Some("CmdOrCtrl+Shift+W"))?,
                 ],
             )?;
             Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu])
         })
         .on_menu_event(|app, event| {
+            let Some(window) = app.get_webview_window("main") else { return };
             if event.id() == CHECK_UPDATES {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.emit("desktop://check-updates", ());
+                let _ = window.emit("desktop://check-updates", ());
+            } else if event.id() == CLOSE_TAB {
+                let _ = window.emit("desktop://close-tab", ());
+            } else if event.id() == CLOSE_WINDOW {
+                let _ = window.hide();
+            }
+        })
+        // Roter Knopf: auf dem Mac nur ausblenden, die App (und offene Tabs) bleiben; Beenden über ⌘Q.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if cfg!(target_os = "macos") {
+                    api.prevent_close();
+                    let _ = window.hide();
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("Based Next konnte nicht starten");
+        .build(tauri::generate_context!())
+        .expect("Based Next konnte nicht starten")
+        .run(|app, event| {
+            // Klick aufs Dock-Symbol bei ausgeblendetem Fenster.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
+                if !has_visible_windows {
+                    show_main(app);
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }

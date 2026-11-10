@@ -70,7 +70,8 @@ export function App({ client, history }: { client: StoreClient; history: History
         // kommen sie an. Sonst: + in der Tab-Leiste, ⌘-Klick, Mittelklick.
         e.preventDefault();
         history.openTab();
-      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "w" && history.tabs.length > 1) {
+      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "w") {
+        // Auch der letzte Tab: dann öffnet die Startseite, die App bleibt offen.
         e.preventDefault();
         history.close();
       } else if (mod && e.shiftKey && (e.code === "BracketLeft" || e.code === "BracketRight")) {

@@ -134,6 +134,8 @@ export class History {
   constructor(
     private readonly win: Pick<Window, "location" | "history" | "addEventListener"> = window,
     private readonly storage: TabsStorage | undefined = browserTabsStorage(),
+    /** Startseite für neue Tabs und nach dem Schließen des letzten Tabs (Einstellung „Start page“). */
+    private readonly home: () => Route = () => ({ name: "home" }),
   ) {
     const fromHash = routeFromHash(win.location.hash);
     const saved = storage?.load();
@@ -141,7 +143,7 @@ export class History {
       this.list = saved.tabs.map((t) => ({ id: t.id, entries: t.entries.map((h) => routeFromHash("#" + h)), index: Math.min(Math.max(0, t.index | 0), t.entries.length - 1) }));
       this.activeIndex = Math.max(0, this.list.findIndex((t) => t.id === saved.active));
     } else {
-      this.list = [{ id: newTabID(), entries: [fromHash], index: 0 }];
+      this.list = [{ id: newTabID(), entries: [win.location.hash.replace(/^#\/?/, "") ? fromHash : this.home()], index: 0 }];
     }
     const st = win.history.state as { b?: number } | null;
     if (typeof st?.b === "number") this.pos = st.b;
@@ -224,7 +226,7 @@ export class History {
   }
 
   /** Neuer Tab rechts vom aktiven; `background`: der aktive bleibt (⌘-Klick). */
-  openTab(r: Route = { name: "home" }, opts: { background?: boolean } = {}): string {
+  openTab(r: Route = this.home(), opts: { background?: boolean } = {}): string {
     const tab: TabState = { id: newTabID(), entries: [r], index: 0 };
     this.list.splice(this.activeIndex + 1, 0, tab);
     if (!opts.background) {
@@ -243,13 +245,13 @@ export class History {
     this.changed();
   }
 
-  /** Tab schließen; der letzte wird zu einem leeren Tab (Home). */
+  /** Tab schließen; nach dem letzten öffnet ein neuer Tab mit der Startseite – die App bleibt offen. */
   close(id: string = this.activeID) {
     const i = this.list.findIndex((t) => t.id === id);
     if (i < 0) return;
     const wasActive = i === this.activeIndex;
     this.list.splice(i, 1);
-    if (this.list.length === 0) this.list.push({ id: newTabID(), entries: [{ name: "home" }], index: 0 });
+    if (this.list.length === 0) this.list.push({ id: newTabID(), entries: [this.home()], index: 0 });
     if (i < this.activeIndex || (wasActive && this.activeIndex >= this.list.length)) this.activeIndex -= 1;
     this.activeIndex = Math.max(0, Math.min(this.activeIndex, this.list.length - 1));
     this.syncURL();

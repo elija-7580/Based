@@ -71,11 +71,13 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
 }
 
 /** Einstieg aus main.tsx: im Browser ohne Wirkung. */
-export async function startDesktop() {
+export async function startDesktop(onCloseTab?: () => void) {
   if (!isTauri()) return;
   applyDesktopShell();
   const { listen } = await import("@tauri-apps/api/event");
   await listen("desktop://check-updates", () => void checkForUpdates({ interactive: true }));
+  // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
+  if (onCloseTab) await listen("desktop://close-tab", () => onCloseTab());
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht.
   setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }

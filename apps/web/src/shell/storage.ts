@@ -102,6 +102,15 @@ export const recentPages = {
   },
 };
 
+/** Selbst gewählte Startseite (Einstellungen → My settings): eine Seiten-ID oder `undefined` für Home. */
+export const startPage = {
+  get: (): string | undefined => {
+    const v = read<unknown>("based.startPage", undefined);
+    return typeof v === "string" && v ? v : undefined;
+  },
+  set: (id: string | undefined) => write("based.startPage", id),
+};
+
 export const expandedPages = {
   get: (): Set<string> => new Set(read<string[]>("based.expanded", [])),
   set: (s: ReadonlySet<string>) => write("based.expanded", [...s]),

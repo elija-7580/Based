@@ -6,8 +6,8 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { startDesktop } from "./desktop.js";
-import { History } from "./shell/router.js";
-import { deviceNode, recentPages, syncConfig } from "./shell/storage.js";
+import { browserTabsStorage, History } from "./shell/router.js";
+import { deviceNode, recentPages, startPage, syncConfig } from "./shell/storage.js";
 import { StoreClient } from "./worker/client.js";
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
@@ -28,8 +28,6 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(appearanceStore.get());
-// BSD-164: in der Tauri-Hülle Titelleiste und Updates (im Browser ohne Wirkung).
-void startDesktop().catch(() => undefined);
 
 const link = new StoreLink({
   ...browserLinkOptions(),
@@ -53,7 +51,13 @@ addEventListener("pagehide", (e: PageTransitionEvent) => {
   // nicht beim Wechsel in den Back-Forward-Cache: dann kommt der Tab ggf. zurück
   if (!e.persisted) link.leave();
 });
-const history = new History();
+// Startseite: selbst gewählte Seite (Einstellungen → My settings → Start page) oder Home.
+const history = new History(window, browserTabsStorage(), () => {
+  const id = startPage.get();
+  return id ? { name: "page", id } : { name: "home" };
+});
+// BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
+void startDesktop(() => history.close()).catch(() => undefined);
 
 // Startwerte holt der Store-Tab selbst (initParams); `init` verbindet nur.
 void client

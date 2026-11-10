@@ -1,6 +1,7 @@
 // Die eingebauten Abschnitte der Einstellungen – angemeldet über dieselbe Registry, die auch andere Bereiche nutzen.
 // Nur was in Based Next wirklich wirkt; alles andere nennt die Seite ehrlich unter „Not available yet“.
 import { Link } from "@astryxdesign/core/Link";
+import { Selector } from "@astryxdesign/core/Selector";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Switch } from "@astryxdesign/core/Switch";
 import { Text } from "@astryxdesign/core/Text";
@@ -13,7 +14,7 @@ import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
-import { deviceNode, syncConfig } from "../../shell/storage.js";
+import { deviceNode, startPage, syncConfig } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
@@ -231,6 +232,35 @@ function AboutSection() {
   );
 }
 
+const HOME = "__home";
+
+/** Startseite: wohin neue Tabs, der Start der App und das Schließen des letzten Tabs führen. */
+function StartPageSection({ state }: SettingsSectionProps) {
+  const [value, setValue] = useState(() => startPage.get() ?? HOME);
+  const nodes = state.outline?.nodes ?? {};
+  const pages = Object.entries(nodes)
+    .filter(([, n]) => n.kind === "page" || n.kind === "database")
+    .map(([id]) => ({ value: id, label: state.titles.get(id) || "Untitled" }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const known = value === HOME || pages.some((p) => p.value === value);
+  return (
+    <Group>
+      <Row label="Open on start" hint="New tabs, app start and closing the last tab lead here">
+        <Selector
+          label="Start page"
+          value={known ? value : HOME}
+          onChange={(v) => {
+            const next = v ?? HOME;
+            setValue(next);
+            startPage.set(next === HOME ? undefined : next);
+          }}
+          options={[{ value: HOME, label: "Home" }, ...pages]}
+        />
+      </Row>
+    </Group>
+  );
+}
+
 let registered = false;
 
 /** Meldet die eingebauten Abschnitte einmal an (aus Settings.tsx). */
@@ -239,6 +269,7 @@ export function registerBuiltinSettings() {
   registered = true;
   registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection });
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
+  registerSettingsSection({ id: "start-page", page: "my-settings", title: "Start page", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
   registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });
   registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection });

@@ -160,6 +160,26 @@ describe("Routen und Verlauf", () => {
   });
 });
 
+describe("Startseite", () => {
+  it("neuer Tab, App-Start und Schließen des letzten Tabs führen zur gewählten Startseite", () => {
+    const start: Route = { name: "page", id: "start" };
+    const h = new History(fakeWindow().win, undefined, () => start);
+    expect(h.route).toEqual(start);
+    h.navigate({ name: "graph" });
+    h.openTab();
+    expect(h.route).toEqual(start);
+    h.close();
+    h.close();
+    expect(h.tabs).toHaveLength(1);
+    expect(h.route).toEqual(start);
+  });
+
+  it("ein Link (Hash) beim Start gewinnt über die Startseite", () => {
+    const h = new History(fakeWindow("#graph").win, undefined, () => ({ name: "page", id: "start" }));
+    expect(h.route).toEqual({ name: "graph" });
+  });
+});
+
 function fakeWindow(hash = "") {
   const entries: { state: unknown; hash: string }[] = [{ state: null, hash }];
   let i = 0;
