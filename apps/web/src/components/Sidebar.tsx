@@ -13,12 +13,13 @@ import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./Te
 import type { Route } from "../shell/router.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages } from "../shell/storage.js";
+import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 
 /** Nur geschlossene Formen werden im aktiven Zustand gefüllt (Lupe und Zahnrad nicht). */
-const FILLABLE = new Set<IconName>(["home", "graph", "trash"]);
+const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
 const PRIVATE = "private";
 const DRAG_TYPE = "application/x-based-page";
 
@@ -69,6 +70,25 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   const dragging = useRef<string | undefined>(undefined);
   const height = useMemo(rowHeight, []);
   const activeID = route.name === "page" ? route.id : undefined;
+
+  // Breite ziehen (gemerkt), ⌘\ blendet die Seitenleiste aus und wieder ein.
+  const [width, setWidth] = useState(sidebarSize.width);
+  const [hidden, setHidden] = useState(sidebarSize.hidden);
+  const drag = useRef<{ x: number; w: number } | undefined>(undefined);
+  useEffect(() => applySidebar(width, hidden), [width, hidden]);
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (!isSidebarToggle(e)) return;
+      e.preventDefault();
+      setHidden((h) => {
+        sidebarSize.setHidden(!h);
+        return !h;
+      });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const resize = (w: number) => setWidth(sidebarSize.setWidth(w));
 
   const setExp = useCallback((f: (s: Set<string>) => void) => {
     setExpanded((prev) => {
@@ -265,7 +285,16 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   const menuSection = menu ? outline?.nodes[menu.id]?.section : undefined;
 
   return (
-    <nav className="sidebar" aria-label="Workspace">
+    <>
+    {hidden ? (
+      <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title="Show sidebar (⌘\)" data-testid="sidebar-show" onClick={() => {
+        sidebarSize.setHidden(false);
+        setHidden(false);
+      }}>
+        <Icon name="sidebar" size={18} />
+      </button>
+    ) : null}
+    <nav className="sidebar" aria-label="Workspace" hidden={hidden}>
       <div className="brand">
         <img className="on-light" src={markLight} alt="" />
         <img className="on-dark" src={markDark} alt="" />
@@ -315,7 +344,39 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         }} />
       ) : null}
       {deleteTeamspace ? <DeleteTeamspaceDialog client={client} {...deleteTeamspace} onClose={() => setDeleteTeamspace(undefined)} /> : null}
+      <div
+        className="sidebar-resize"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        aria-valuemin={SIDEBAR_MIN}
+        aria-valuemax={SIDEBAR_MAX}
+        aria-valuenow={width}
+        tabIndex={0}
+        title="Drag to resize · click to hide (⌘\)"
+        data-testid="sidebar-resize"
+        onPointerDown={(e) => {
+          drag.current = { x: e.clientX, w: width };
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          if (drag.current) resize(drag.current.w + e.clientX - drag.current.x);
+        }}
+        onPointerUp={(e) => {
+          const moved = drag.current ? Math.abs(e.clientX - drag.current.x) > 3 : true;
+          drag.current = undefined;
+          if (!moved) {
+            sidebarSize.setHidden(true);
+            setHidden(true);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft") resize(width - 16);
+          else if (e.key === "ArrowRight") resize(width + 16);
+        }}
+      />
     </nav>
+    </>
   );
 }
 

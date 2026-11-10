@@ -86,7 +86,7 @@ Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and
 Emoji picker with search,editor,should,yes,yes,,partial: Emoji-Suche im Text mit „:“; kein Picker für Seiten- und Callout-Icons
 Word / character count,editor,could,yes,yes,,no
 Placeholders per block type,editor,should,yes,yes,,yes
-Database inline,databases,must,yes,yes,,partial: vorhandene Inline-Datenbanken laufen im Editor; „/Database – Inline“ legt keine Datenbank an (nur Platzhalter)
+Database inline,databases,must,yes,yes,,yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an)
 Database full page,databases,must,yes,yes,,yes
 Linked database view,databases,should,yes,yes,,partial: Kern (createLinkedView) und Anzeige vorhanden; keine Bedienung zum Anlegen
 Table view,databases,must,yes,yes,,yes
@@ -139,7 +139,7 @@ Import Markdown files,import,must,yes,yes,,yes
 Export page as Markdown,export,must,yes,yes,,yes
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
 Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)"
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K, ⌘,, ⌘T/⌘W, ⌘[ ⌘], ⇧⌘[ ⇧⌘]; ⌘N, ⌘P, ⌘\, ⇧⌘L, ⌘J, ⌘1–9 fehlen"
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K, ⌘,, ⌘\, ⌘T/⌘W, ⌘[ ⌘], ⇧⌘[ ⇧⌘]; ⌘N, ⌘P, ⇧⌘L, ⌘J, ⌘1–9 fehlen"
 Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Rest „Not available yet“"
 iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil)
 iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil)
@@ -186,7 +186,7 @@ Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11
 Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,partial: Number-Chart und Caption ja; Farbschema und Höhe fehlen
 Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding"
 Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes
-Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"partial: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings; Breite ändern, ⌘\ einklappen + Hover-Peek fehlen"
+Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"partial: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings, Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden; Hover-Peek fehlt"
 Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Share, Export, •••; AI-Knopf fehlt"
 Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token,"partial: Warnungsliste nach Datei-Import; kein kopierbarer Bericht, kein API-Import"
 Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later,partial: Name/Adresse/Koordinaten von Hand; keine Ortssuche

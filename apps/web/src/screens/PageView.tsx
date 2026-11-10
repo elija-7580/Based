@@ -162,7 +162,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           }}>Delete forever</button>
         </div>
       ) : null}
-      <article className="page">
+      <article className={dbID ? "page page-database" : "page"}>
         <div className="page-grid">
           <div className="spacer-cell" />
           <div className="page-head">

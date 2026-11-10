@@ -40,11 +40,11 @@ export function Settings({ page: pageID, value, onChange, client, state, onNavig
   const nav = (
     <VStack gap={4}>
       {SETTINGS_GROUPS.map((g) => (
-        <List key={g.id} density="compact" header={<Text type="supporting" color="secondary" className="settings-nav-head">{g.title}</Text>}>
+        <List key={g.id} density="compact" header={<Text type="supporting" weight="semibold" color="secondary" className="settings-nav-head">{g.title}</Text>}>
           {SETTINGS_PAGES.filter((p) => p.group === g.id).map((p) => (
             <ListItem
               key={p.id}
-              label={p.title}
+              label={<Text type="body" weight={!kit && p.id === page.id ? "semibold" : "medium"}>{p.title}</Text>}
               isSelected={!kit && p.id === page.id}
               onClick={() => onNavigate({ name: "settings", page: p.id })}
               {...(settingsRegistry.status(p.id) === "unavailable" ? { endContent: <Text type="supporting" color="secondary">Not yet</Text> } : {})}

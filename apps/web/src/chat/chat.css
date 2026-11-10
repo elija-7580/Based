@@ -3,7 +3,7 @@
 
 .chat-dock {
   position: relative; flex: none; display: flex; min-width: 0;
-  padding: var(--space-3) var(--space-3) var(--space-3) 0; height: 100vh; position: sticky; top: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0; height: 100%;
 }
 .chat-resize {
   width: var(--space-3); flex: none; cursor: col-resize; display: flex; justify-content: center; touch-action: none;

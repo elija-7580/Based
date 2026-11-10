@@ -1,7 +1,9 @@
 /* Einstellungen: nur Maße und Flächen, die Astryx-Props nicht hergeben. Farben über Tokens. */
 .settings-screen { flex: 1; min-height: 0; }
 .settings-nav { background: var(--sidebar); }
-.settings-nav-head { padding-inline: var(--space-3); }
+.settings-nav-head { padding-inline: var(--space-3); text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--type-meta-size); }
+/* Seitentitel und Abschnitte in der Kopfschrift (Charakter wie Seitentitel). */
+.settings-page h1, .settings-page h2 { font-family: var(--font-head); letter-spacing: var(--tracking-title); }
 .settings-page { max-width: var(--page-measure); margin-inline: auto; }
 .settings-missing { border: 1px dashed var(--control-border); }
 .kit { max-width: var(--page-measure); margin-inline: auto; }

@@ -12,7 +12,7 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
   useBlockNoteEditor, useComponentsContext, useExtensionState, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { createMeeting, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { createDatabase, createMeeting, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
@@ -222,7 +222,7 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Page", subtext: "Embed a sub-page inside this page.", aliases: ["subpage", "new page"], group: "Basic blocks", onItemClick: () => insert({ type: CUSTOM.page } as never) },
     { title: "Link to page", subtext: "Link to an existing page.", aliases: ["link"], group: "Basic blocks", onItemClick: () => insert({ type: CUSTOM.linkToPage } as never) },
     { title: "Synced block", subtext: "Sync content across pages.", aliases: ["sync"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.syncedBlock } as never) },
-    { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insert({ type: CUSTOM.database } as never) },
+    { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insertInlineDatabase(editor, session) },
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
@@ -259,6 +259,28 @@ export function insertMeeting(editor: BasedEditor, session: DocSession): string 
   if (empty) editor.replaceBlocks([cur], [block]);
   else editor.insertBlocks([block], cur, "after");
   // Schreibmarke in den Absatz danach (bei Bedarf angelegt): kein ausgewählter Block, man schreibt unter ihm weiter.
+  let next = editor.getNextBlock(id);
+  if (!next) {
+    editor.insertBlocks([{ type: "paragraph" } as never], id, "after");
+    next = editor.getNextBlock(id);
+  }
+  if (next) editor.setTextCursorPosition(next, "start");
+  return id;
+}
+
+/**
+ * „/Database – Inline“: Datenbank, erste Ansicht und Beispielzeilen still in den Store, dann der Block mit derselben
+ * ID ins Dokument (wie insertMeeting) – vorher entstand nur ein Platzhalter ohne Datenbank.
+ */
+export function insertInlineDatabase(editor: BasedEditor, session: DocSession): string {
+  session.flush();
+  const id = globalThis.crypto.randomUUID().toUpperCase();
+  const made = session.quietly(() => createDatabase(session.store, { parent: "b:" + session.rootID, inline: true, blockID: id, undoable: false }));
+  const cur = editor.getTextCursorPosition().block;
+  const block = { id, type: CUSTOM.database, props: { databaseID: made.databaseID, viewID: made.viewID } } as never;
+  const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
+  if (empty) editor.replaceBlocks([cur], [block]);
+  else editor.insertBlocks([block], cur, "after");
   let next = editor.getNextBlock(id);
   if (!next) {
     editor.insertBlocks([{ type: "paragraph" } as never], id, "after");

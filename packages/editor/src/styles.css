@@ -210,3 +210,11 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
    wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */
 .bx-editor p, .bx-editor h1, .bx-editor h2, .bx-editor h3, .bx-editor h4, .bx-editor h5, .bx-editor h6 { color: inherit; font-family: inherit; }
 .bx-editor p.bn-inline-content { font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit; }
+
+/* Formatleiste: BlockNote/Ariakit setzt `overflow: scroll` – bei „Rollbalken immer anzeigen“ (macOS) erschienen
+   dadurch leere Leisten unten und rechts. Nur waagrecht scrollen, ohne sichtbaren Balken; Fläche wie die Menüs. */
+.bn-root .bn-ak-toolbar {
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
+}
+.bn-root .bn-ak-toolbar::-webkit-scrollbar { display: none; }

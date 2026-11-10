@@ -166,11 +166,11 @@ export interface CreatedDatabase {
 }
 
 /** Datenbank inline (im Seiteninhalt) oder als ganze Seite, mit einer ersten Ansicht und Beispielzeilen. */
-export function createDatabase(store: WorkspaceStore, opts: { parent: string; title?: RichText; inline?: boolean; viewType?: string; sampleRows?: number; position?: InsertPosition }): CreatedDatabase {
+export function createDatabase(store: WorkspaceStore, opts: { parent: string; title?: RichText; inline?: boolean; viewType?: string; sampleRows?: number; position?: InsertPosition; blockID?: string; undoable?: boolean }): CreatedDatabase {
   const viewType = opts.viewType ?? "table";
   return store.transact("New database", (tx) => {
     const t = store.now();
-    const blockID = newID();
+    const blockID = opts.blockID ?? newID();
     const props: PropertySchema[] = [{ id: TITLE_PROPERTY_ID, name: "Name", type: "title" }];
     let groupBy: string | undefined, dateProp: string | undefined;
     if (viewType === "board") {
@@ -198,7 +198,7 @@ export function createDatabase(store: WorkspaceStore, opts: { parent: string; ti
       for (const k of keysBetween(n, undefined, undefined)) tx.put({ kind: "block", data: newBlock(store, { type: "page", parent: "d:" + db.id, sk: k }) });
     }
     return { blockID, databaseID: db.id, viewID: view.id };
-  });
+  }, { undoable: opts.undoable ?? true });
 }
 
 /** „Linked view of database“: ein Block, der eine bestehende Datenbank mit eigenen Ansichten zeigt. */

@@ -19,7 +19,7 @@ export function Row({ label, hint, labelID, children }: { label: string; hint?: 
     <HStack gap={4} hAlign="between" vAlign="center" wrap="wrap">
       <StackItem size="fill">
         <VStack gap={0}>
-          <Text type="label" display="block" {...(labelID ? { id: labelID } : {})}>{label}</Text>
+          <Text type="label" weight="semibold" display="block" {...(labelID ? { id: labelID } : {})}>{label}</Text>
           {hint ? <Text type="supporting" color="secondary" display="block">{hint}</Text> : null}
         </VStack>
       </StackItem>
