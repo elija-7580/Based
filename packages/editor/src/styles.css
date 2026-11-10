@@ -138,3 +138,75 @@
 .bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
 .bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--muted); }
 .bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
+
+/* Erwähnungen: Icon + Titel, Papierkorb/gelöscht markiert; Datum mit Erinnerungs-Feld */
+.bx-mention[data-kind="page"] { display: inline-flex; align-items: baseline; gap: var(--space-1); white-space: nowrap; max-width: 100%; }
+.bx-mention-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); overflow: hidden; text-overflow: ellipsis; }
+.bx-mention[data-kind="page"]:hover { background: var(--surface-raised); }
+.bx-mention[data-trashed="true"] .bx-mention-title, .bx-mention[data-missing="true"] .bx-mention-title { color: var(--muted); text-decoration: line-through; }
+.bx-mention[data-missing="true"] { cursor: default; }
+.bx-mention-flag { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); }
+.bx-mention[data-kind="date"] { position: relative; }
+.bx-mention[data-kind="date"][role="button"]:hover { background: var(--surface-raised); }
+.bx-date-pop {
+  position: absolute; top: 100%; left: 0; z-index: 20; display: grid; gap: var(--space-1); min-width: max-content;
+  margin-top: var(--space-1); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--bg);
+  border: 1px solid var(--line); box-shadow: var(--shadow-menu); color: var(--ink); font-family: var(--font-ui); cursor: default;
+}
+.bx-date-remind { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+
+/* Synced Block: Aktionen in der Beschriftung, Hinweis bei Original im Papierkorb */
+.bx-synced-label { display: flex; align-items: center; gap: var(--space-2); }
+.bx-synced-action { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); }
+.bx-synced-action:hover { color: var(--ink); }
+.bx-synced .bx-synced-action { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
+.bx-synced:hover > .bx-synced-label .bx-synced-action, .bx-synced:focus-within > .bx-synced-label .bx-synced-action { opacity: 1; }
+.bx-synced-note { margin: var(--space-2) var(--space-4); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-soft); color: var(--ink-2); font-size: var(--type-description-size); }
+.bx-synced[data-trashed="true"] { border-style: dashed; }
+
+/* Hinweis am Editor */
+.bx-notice {
+  position: fixed; left: 50%; bottom: var(--space-8); transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink);
+  border: 1px solid var(--line); box-shadow: var(--shadow-float); font-family: var(--font-ui); font-size: var(--type-ui-size);
+}
+.bx-notice-close { background: none; border: 0; padding: 0; color: var(--muted); font: inherit; cursor: pointer; }
+
+/* Schwebende Gliederung am rechten Rand: Balken, bei Hover/Fokus aufgeklappt */
+.bx-outline {
+  position: fixed; right: var(--space-4); top: 50%; transform: translateY(-50%); z-index: 15; max-height: 60vh; overflow: hidden auto;
+  padding: var(--space-2); border-radius: var(--radius-lg); border: 1px solid transparent; font-family: var(--font-ui);
+  transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+.bx-outline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.bx-outline-item {
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); width: 100%; min-height: var(--space-4);
+  background: none; border: 0; padding: 0 var(--space-1); border-radius: var(--radius-sm); color: var(--muted); font: inherit;
+  font-size: var(--type-description-size); cursor: pointer; text-align: left;
+}
+.bx-outline-bar { display: block; flex: none; width: var(--space-5); height: var(--space-1); border-radius: var(--radius-pill); background: var(--line); }
+li[data-depth="1"] > .bx-outline-item .bx-outline-bar { width: var(--space-4); }
+li[data-depth="2"] > .bx-outline-item .bx-outline-bar { width: var(--space-3); }
+li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
+.bx-outline-item[aria-current] .bx-outline-bar { background: var(--ink); }
+.bx-outline-label { display: none; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-outline:hover, .bx-outline:focus-within { background: var(--bg); border-color: var(--line); box-shadow: var(--shadow-float); width: min(18rem, 60vw); }
+.bx-outline:hover .bx-outline-label, .bx-outline:focus-within .bx-outline-label { display: block; }
+.bx-outline:hover .bx-outline-bar, .bx-outline:focus-within .bx-outline-bar { display: none; }
+.bx-outline:hover .bx-outline-item, .bx-outline:focus-within .bx-outline-item { justify-content: flex-start; padding: var(--space-1) var(--space-2); }
+.bx-outline:hover li[data-depth="1"] > .bx-outline-item, .bx-outline:focus-within li[data-depth="1"] > .bx-outline-item { padding-left: var(--space-5); }
+.bx-outline:hover li[data-depth="2"] > .bx-outline-item, .bx-outline:focus-within li[data-depth="2"] > .bx-outline-item { padding-left: var(--space-7); }
+.bx-outline:hover li[data-depth="3"] > .bx-outline-item, .bx-outline:focus-within li[data-depth="3"] > .bx-outline-item { padding-left: var(--space-8); }
+.bx-outline-item:hover { background: var(--surface-raised); color: var(--ink); }
+.bx-outline-item[aria-current] { color: var(--ink); font-weight: var(--type-ui-weight); }
+.bx-outline-item:focus-visible { outline: 1px solid var(--muted); }
+@media (max-width: 52rem) { .bx-outline { display: none; } }
+@media print { .bx-outline, .bx-notice { display: none; } }
+
+/* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */
+.bx-editor .bn-editor:focus, .bx-editor .bn-editor:focus-visible { outline: none; }
+
+/* Astryx setzt in seiner Basisschicht Farbe und Schrift auf p und h1–h6 (aus dem Astryx-Theme, das nicht dunkel
+   wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */
+.bx-editor p, .bx-editor h1, .bx-editor h2, .bx-editor h3, .bx-editor h4, .bx-editor h5, .bx-editor h6 { color: inherit; font-family: inherit; }
+.bx-editor p.bn-inline-content { font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit; }

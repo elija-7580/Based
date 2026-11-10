@@ -11,7 +11,12 @@ import {
   insertPage,
   isDescendant,
   isPageLike,
+  isTrashed,
+  iconText,
   keysBetween,
+  LinkIndex,
+  syncedDependencies,
+  syncedOriginal,
   movePages,
   pageAncestors,
   parseKey,
@@ -39,7 +44,7 @@ import {
 import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
 import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
 import { PageHistory } from "./history.js";
-import type { AssetGetResult, AssetInfo, Command, Event, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, Event, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -89,6 +94,12 @@ export class StoreHost {
   private index: SearchIndex | undefined;
   private indexDirty = new Set<RecordKeyString>();
   private pendingSearch: { id: number; query: string; limit: number } | undefined;
+  /** Backlink-Index: beim ersten Gebrauch gebaut, danach inkrementell (wie der Volltextindex). */
+  private links: LinkIndex | undefined;
+  private linksDirty = new Set<RecordKeyString>();
+  /** Je offener Seite: Synced-Originale von anderen Seiten (samt Inhalt) und deren Vorfahren, die die Replik mitführt. */
+  private syncedDeps = new Map<string, { roots: Set<string>; ancestors: Set<string> }>();
+  private syncedDirty = new Set<string>();
   private lastStatus = "";
   /** Versionsverlauf (BSD-73). */
   history: PageHistory | undefined;
@@ -111,7 +122,11 @@ export class StoreHost {
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30); break;
         case "warmSearch": this.searchIndex(); reply(true); break;
         case "openPage": reply(this.openPage(msg.pageID)); break;
-        case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); this.history?.pageClosed(msg.pageID); reply(true); break;
+        case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); this.syncedDeps.delete(msg.pageID); this.syncedDirty.delete(msg.pageID); this.history?.pageClosed(msg.pageID); reply(true); break;
+        case "pageInfo": reply(this.pageInfos(msg.ids)); break;
+        case "findPages": reply(this.findPages(msg.query, msg.limit ?? 8)); break;
+        case "backlinks": reply(this.backlinks(msg.pageID)); break;
+        case "includeSynced": reply(this.includeSynced(msg.pageID, msg.source)); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -288,6 +303,7 @@ export class StoreHost {
     for (const key of change.keys) {
       const { kind, id } = parseKey(key);
       if (this.index && (kind === "block" || kind === "database")) this.indexDirty.add(key);
+      if (this.links && kind === "block") this.linksDirty.add(key);
       if (kind === "workspace") this.structureDirty = true;
       else if (kind === "block") this.trackBlock(id);
       else if (kind === "database") {
@@ -295,7 +311,12 @@ export class StoreHost {
         if (owner) this.trackTitle(owner);
         else for (const [pid] of this.titles) if (store.blocks.get(pid)?.props?.databaseID === id) this.trackTitle(pid);
       }
-      for (const [pageID, keys] of this.openPages) if (keys.has(key) || this.belongsTo(key, pageID)) this.notePageChange(pageID, key);
+      for (const [pageID, keys] of this.openPages) {
+        if (!keys.has(key) && !this.belongsTo(key, pageID)) continue;
+        this.notePageChange(pageID, key);
+        // Eine Synced-Kopie ist dazugekommen oder zeigt woandershin: die Replik braucht das Original.
+        if (kind === "block" && store.blocks.get(id)?.props?.syncSource) this.syncedDirty.add(pageID);
+      }
     }
     this.scheduleFlush();
   }
@@ -345,6 +366,8 @@ export class StoreHost {
       this.opts.post({ type: "titles", titles: Object.fromEntries(this.titleDelta), full: false });
       this.titleDelta.clear();
     }
+    for (const pageID of this.syncedDirty) this.refreshSyncedDeps(pageID);
+    this.syncedDirty.clear();
     for (const [pageID, d] of this.pageDelta) {
       if (d.upserts.size || d.deletions.size) this.opts.post({ type: "pageChanges", pageID, upserts: [...d.upserts.values()], deletions: [...d.deletions] });
     }
@@ -362,7 +385,86 @@ export class StoreHost {
     else if (kind === "database") blockID = store.databases.get(id)?.blockID;
     else if (kind === "view") blockID = store.views.get(id)?.blockID;
     if (!blockID) return false;
-    return blockID === pageID || isDescendant(store, blockID, pageID);
+    if (blockID === pageID || isDescendant(store, blockID, pageID)) return true;
+    const deps = this.syncedDeps.get(pageID);
+    if (!deps) return false;
+    if (deps.roots.has(blockID)) return true;
+    if (kind === "block" && deps.ancestors.has(blockID)) return true;
+    for (const root of deps.roots) if (isDescendant(store, blockID, root)) return true;
+    return false;
+  }
+
+  /** Records für die Replik: die Blöcke `ids` samt eigenen Datenbanken und Ansichten. */
+  private recordsFor(ids: readonly string[]): WireRecord[] {
+    const store = this.store;
+    const out: WireRecord[] = [];
+    const blockSet = new Set(ids);
+    for (const id of ids) {
+      const b = store.blocks.get(id);
+      if (!b) continue;
+      out.push({ kind: "block", data: b });
+      const db = b.props?.databaseID;
+      if (db && store.databases.get(db)?.blockID === id) out.push({ kind: "database", data: store.databases.get(db)! });
+    }
+    for (const v of store.views.values()) if (blockSet.has(v.blockID)) out.push({ kind: "view", data: v });
+    return out;
+  }
+
+  /** Records der Synced-Originale (samt Inhalt) und ihrer Vorfahren (nur die Blöcke selbst). */
+  private syncedRecords(roots: Iterable<string>, ancestors: Iterable<string>): WireRecord[] {
+    const store = this.store;
+    const ids: string[] = [];
+    for (const r of roots) ids.push(r, ...subtree(store, r));
+    const out = this.recordsFor(ids);
+    for (const a of ancestors) {
+      const b = store.blocks.get(a);
+      if (b) out.push({ kind: "block", data: b });
+    }
+    return out;
+  }
+
+  /** Nach einer Änderung an Synced-Kopien: neu dazugekommene Originale an die Replik schicken (es wird nur mehr, nie weniger). */
+  private refreshSyncedDeps(pageID: string) {
+    const keys = this.openPages.get(pageID);
+    const deps = this.syncedDeps.get(pageID);
+    if (!keys || !deps) return;
+    const store = this.store;
+    // Auch Kopien in schon mitgeführten Originalen zählen (verschachtelt).
+    const next = syncedDependencies(store, pageID, (id) => subtree(store, id));
+    const newRoots = [...next.roots].filter((r) => !deps.roots.has(r));
+    const newAncestors = [...next.ancestors].filter((a) => !deps.ancestors.has(a));
+    if (newRoots.length === 0 && newAncestors.length === 0) return;
+    for (const r of newRoots) deps.roots.add(r);
+    for (const a of newAncestors) deps.ancestors.add(a);
+    const records = this.syncedRecords(newRoots, newAncestors);
+    for (const r of records) keys.add(recordKey(r));
+    if (records.length) this.opts.post({ type: "pageChanges", pageID, upserts: records, deletions: [] });
+  }
+
+  /** „Paste synced block“ auf einer Seite, die das Original noch nicht kennt: Original in die Replik aufnehmen. */
+  includeSynced(pageID: string, source: string): SyncedRecords {
+    const store = this.store;
+    const original = syncedOriginal(store, source);
+    const keys = this.openPages.get(pageID);
+    const deps = this.syncedDeps.get(pageID);
+    if (!original || !store.blocks.has(original) || !keys || !deps) return { found: false, records: [] };
+    if (original === pageID || isDescendant(store, original, pageID)) return { found: true, records: [] };
+    const ancestors: string[] = [];
+    for (let cur = store.blocks.get(original), n = 0; cur && n < 1000; n++) {
+      const p = cur.parent;
+      const next = p.startsWith("b:") ? p.slice(2) : p.startsWith("d:") ? store.databases.get(p.slice(2))?.blockID : undefined;
+      if (!next || next === pageID) break;
+      ancestors.push(next);
+      cur = store.blocks.get(next);
+    }
+    deps.roots.add(original);
+    for (const a of ancestors) deps.ancestors.add(a);
+    const records = this.syncedRecords([original], ancestors);
+    // Die Kopie, die `source` war, liegt ggf. selbst auf einer fremden Seite: ihr Record gehört dazu.
+    const src = store.blocks.get(source);
+    if (src && source !== original) records.push({ kind: "block", data: src });
+    for (const r of records) keys.add(recordKey(r));
+    return { found: true, records };
   }
 
   private notePageChange(pageID: string, key: RecordKeyString) {
@@ -387,21 +489,69 @@ export class StoreHost {
     const records: WireRecord[] = [{ kind: "workspace", data: store.workspace }];
     const keys = new Set<RecordKeyString>();
     const page = store.blocks.get(pageID);
+    const deps = { roots: new Set<string>(), ancestors: new Set<string>() };
     if (page) {
-      const ids = [pageID, ...subtree(store, pageID)];
-      const blockSet = new Set(ids);
-      for (const id of ids) {
-        const b = store.blocks.get(id)!;
-        records.push({ kind: "block", data: b });
-        const db = b.props?.databaseID;
-        if (db && store.databases.get(db)?.blockID === id) records.push({ kind: "database", data: store.databases.get(db)! });
-      }
-      for (const v of store.views.values()) if (blockSet.has(v.blockID)) records.push({ kind: "view", data: v });
+      records.push(...this.recordsFor([pageID, ...subtree(store, pageID)]));
+      // Synced-Kopien zeigen den Inhalt eines Originals, das auf einer anderen Seite liegen kann.
+      const d = syncedDependencies(store, pageID, (id) => subtree(store, id));
+      deps.roots = d.roots;
+      deps.ancestors = d.ancestors;
+      records.push(...this.syncedRecords(d.roots, d.ancestors));
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
     this.openPages.set(pageID, keys);
+    this.syncedDeps.set(pageID, deps);
     this.history?.pageOpened(pageID);
     return { pageID, node: store.clock.node, records };
+  }
+
+  // MARK: Seiten-Angaben, Seitensuche und Backlinks (Erwähnungen im Editor)
+
+  private pageInfo(id: string): PageInfo | null {
+    const store = this.store;
+    const b = store.blocks.get(id);
+    if (!b || !isPageLike(b)) return null;
+    const info: PageInfo = {
+      id, title: titleOf(store, id), trashed: isTrashed(store, id),
+      kind: b.type === "databasePage" ? "database" : b.parent.startsWith("d:") ? "row" : "page",
+    };
+    const icon = iconText(b);
+    if (icon) info.icon = icon;
+    return info;
+  }
+
+  pageInfos(ids: readonly string[]): Record<string, PageInfo | null> {
+    const out: Record<string, PageInfo | null> = {};
+    for (const id of ids) out[id] = this.pageInfo(id);
+    return out;
+  }
+
+  /** Seitensuche nur über Titel (das @-Menü sucht Seiten, nicht Inhalte). */
+  findPages(query: string, limit = 8): PageInfo[] {
+    const store = this.store;
+    if (!query.trim()) return [];
+    const found = this.searchIndex().run(query, { limit, filters: { titleOnly: true } }) ?? [];
+    const out: PageInfo[] = [];
+    for (const h of found) {
+      const info = this.pageInfo(h.pageID);
+      if (!info || info.trashed) continue;
+      const path = pageAncestors(store, h.pageID).map((id) => titleOf(store, id)).join(" / ");
+      if (path) info.path = path;
+      out.push(info);
+    }
+    return out;
+  }
+
+  backlinks(pageID: string): PageInfo[] {
+    const store = this.store;
+    if (!this.links) {
+      this.links = LinkIndex.fromStore(store);
+      this.linksDirty.clear();
+    } else if (this.linksDirty.size) {
+      this.links.apply(store, this.linksDirty);
+      this.linksDirty.clear();
+    }
+    return this.links.backlinks(store, pageID).map((id) => this.pageInfo(id)).filter((p): p is PageInfo => p !== null);
   }
 
   /** Änderungen aus einer Replik: als lokale Transaktion speichern (neu gestempelt, wird gepusht). */

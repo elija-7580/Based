@@ -11,13 +11,16 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
   useBlockNoteEditor, useComponentsContext, useExtensionState, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { canonicalStringify, dateToSwift, keysBetween, type WorkspaceStore } from "@based/core";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
-import { pageIcon, pageTitle } from "../schema/blocks.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
-import { EnvContext, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type Person } from "./env.js";
+import { EnvContext, storePageDirectory, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
+import { mentionItems } from "./mentions.js";
+import { PageOutline } from "./Outline.js";
+import { handlePaste } from "./paste.js";
+import { lastCopiedSync, rememberSyncClipboard } from "./syncClipboard.js";
 
 export interface PageEditorProps {
   store: WorkspaceStore;
@@ -31,6 +34,15 @@ export interface PageEditorProps {
   onOpenPage?: (pageID: string) => void;
   /** Personen für @-Erwähnungen. */
   people?: readonly Person[];
+  /** Alle Seiten des Workspaces (Suche im @-Menü, Titel/Icon/Papierkorb von Erwähnungen). Ohne: nur der Store. */
+  pages?: PageDirectory;
+  /**
+   * Einen Synced Block von einer anderen Seite in den Store holen (Seiten-Repliken kennen nur ihre Seite).
+   * Liefert `false`, wenn es ihn nicht gibt. Ohne: der Store muss ihn schon enthalten.
+   */
+  loadSynced?: (sourceID: string) => Promise<boolean>;
+  /** Schwebende Gliederung am rechten Rand (Standard: an; pro Seite über `props.format.hideOutline` abschaltbar). */
+  outline?: boolean;
   /** Ablage der Y-Zustände; ohne: im Speicher (pro Store). */
   docStore?: YDocStore;
   /** Standard: bearbeitbar, solange der Store nicht schreibgeschützt ist. */
@@ -42,8 +54,11 @@ export interface PageEditorProps {
   className?: string;
 }
 
-interface Shared extends Omit<PageEditorProps, "pageID" | "className"> {
+interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages"> {
   docStore: YDocStore;
+  pages: PageDirectory;
+  pageID: string;
+  notify: (message: string) => void;
 }
 
 const memoryDocStores = new WeakMap<WorkspaceStore, YDocStore>();
@@ -57,18 +72,47 @@ function defaultDocStore(store: WorkspaceStore): YDocStore {
   return s;
 }
 
+const directories = new WeakMap<WorkspaceStore, PageDirectory>();
+function defaultDirectory(store: WorkspaceStore): PageDirectory {
+  let d = directories.get(store);
+  if (!d) directories.set(store, (d = storePageDirectory(store)));
+  return d;
+}
+
 export function PageEditor(props: PageEditorProps) {
   const { pageID, className, ...rest } = props;
-  const shared: Shared = { ...rest, docStore: props.docStore ?? defaultDocStore(props.store) };
+  const [notice, setNotice] = useState<string | undefined>();
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const notify = useCallback((message: string) => {
+    setNotice(message);
+    if (timer.current !== undefined) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setNotice(undefined), 6000);
+  }, []);
+  useEffect(() => () => {
+    if (timer.current !== undefined) clearTimeout(timer.current);
+  }, []);
+  const shared: Shared = {
+    ...rest, pageID, notify,
+    docStore: props.docStore ?? defaultDocStore(props.store),
+    pages: props.pages ?? defaultDirectory(props.store),
+  };
   return (
-    <div className={"bx-editor " + (className ?? "")} data-page={pageID}>
+    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer}>
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
+      {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
+      {notice ? (
+        <div className="bx-notice" role="status" data-testid="editor-notice">
+          <span>{notice}</span>
+          <button type="button" className="bx-notice-close" aria-label="Dismiss" onClick={() => setNotice(undefined)}>×</button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 /** Ein Editor auf einer Dokument-Wurzel (Seite oder Synced-Block-Original). */
-function DocEditor(props: { rootID: string; ancestors: readonly string[]; shared: Shared }) {
+function DocEditor(props: { rootID: string; ancestors: readonly string[]; shared: Shared; readOnly?: boolean }) {
   const { store, docStore } = props.shared;
   const [session, setSession] = useState<DocSession>();
   useEffect(() => {
@@ -77,27 +121,42 @@ function DocEditor(props: { rootID: string; ancestors: readonly string[]; shared
     return () => releaseSession(s);
   }, [store, props.rootID, docStore]);
   if (!session || session.store !== store || session.rootID !== props.rootID) return null;
-  return <BoundEditor key={props.rootID} session={session} ancestors={props.ancestors} shared={props.shared} />;
+  return <BoundEditor key={props.rootID} session={session} ancestors={props.ancestors} shared={props.shared} readOnly={props.readOnly === true} />;
 }
 
-function BoundEditor(props: { session: DocSession; ancestors: readonly string[]; shared: Shared }) {
+/** ⇧⌘V / Ctrl+Shift+V: der Browser liefert dann nur `text/plain` – nicht von normalem Einfügen zu unterscheiden. */
+const PLAIN_PASTE_WINDOW_MS = 1000;
+
+function BoundEditor(props: { session: DocSession; ancestors: readonly string[]; shared: Shared; readOnly: boolean }) {
   const { session, shared } = props;
   const { store } = shared;
   const editorRef = useRef<BasedEditor | null>(null);
+  const plainPasteAt = useRef(0);
+  const sharedRef = useRef(shared);
+  sharedRef.current = shared;
+  const ancestorsRef = useRef(props.ancestors);
+  ancestorsRef.current = props.ancestors;
   const editor = useMemo((): BasedEditor => {
     const options = withCollaboration({
       schema: basedSchema(),
       collaboration: { fragment: session.fragment, user: { name: store.userID ?? "me", color: "var(--muted)" } },
       ...(shared.resolveFileUrl ? { resolveFileUrl: shared.resolveFileUrl } : {}),
       ...(shared.uploadFile ? { uploadFile: shared.uploadFile } : {}),
-      pasteHandler: ({ event, defaultPasteHandler }: { event: ClipboardEvent; defaultPasteHandler: () => boolean | undefined }): boolean =>
-        (editorRef.current !== null && pasteSynced(editorRef.current, session, event)) || (defaultPasteHandler() ?? false),
+      pasteHandler: ({ event, defaultPasteHandler }: { event: ClipboardEvent; defaultPasteHandler: (c?: { prioritizeMarkdownOverHTML?: boolean; plainTextAsMarkdown?: boolean }) => boolean | undefined }): boolean => {
+        const ed = editorRef.current;
+        if (!ed) return defaultPasteHandler() ?? false;
+        const plainOnly = Date.now() - plainPasteAt.current < PLAIN_PASTE_WINDOW_MS;
+        plainPasteAt.current = 0;
+        if (!plainOnly && pasteSynced(ed, session, event, ancestorsRef.current, sharedRef.current)) return true;
+        return handlePaste(ed, { event, defaultPasteHandler, plainOnly });
+      },
     });
     return BlockNoteEditor.create(options) as unknown as BasedEditor;
   }, [session]);
   editorRef.current = editor;
   useEffect(() => () => void session.flush(), [editor, session]);
 
+  const editable = !props.readOnly && (shared.editable ?? !store.isReadOnly);
   const env: EditorEnv = {
     store,
     rootID: session.rootID,
@@ -106,35 +165,43 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     renderEquation: shared.renderEquation,
     onOpenPage: shared.onOpenPage,
     people: shared.people,
+    pages: shared.pages,
+    editable,
+    notify: shared.notify,
     flush: () => session.flush(),
-    renderSynced: (root) => (
+    renderSynced: (root, opts) => (
       <div className="bx-synced-editor">
-        <DocEditor rootID={root} ancestors={[...props.ancestors, session.rootID]} shared={shared} />
+        <DocEditor rootID={root} ancestors={[...props.ancestors, session.rootID]} shared={shared} readOnly={props.readOnly || opts?.readOnly === true} />
       </div>
     ),
   };
-  const editable = shared.editable ?? !store.isReadOnly;
+  const mentionOptions = { pages: shared.pages, people: shared.people ?? [], selfID: shared.pageID };
 
   return (
     <EnvContext.Provider value={env}>
-      <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
-        {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
-        <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, store), q)} />
-        <SuggestionMenuController triggerCharacter="@" getItems={async (q) => mentionItems(editor, store, shared.people ?? [], q)} />
-        <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} />} />} />
-        <FormattingToolbarController formattingToolbar={() => (
-          <FormattingToolbar>
-            {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
-          </FormattingToolbar>
-        )} />
-      </BlockNoteView>
+      <div className="bx-doc" onKeyDownCapture={(e) => {
+        if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt.current = Date.now();
+      }}>
+        <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
+          {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
+          <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
+          <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
+          <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
+          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} />} />} />
+          <FormattingToolbarController formattingToolbar={() => (
+            <FormattingToolbar>
+              {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
+            </FormattingToolbar>
+          )} />
+        </BlockNoteView>
+      </div>
     </EnvContext.Provider>
   );
 }
 
 // MARK: Slash-Menü
 
-function slashItems(editor: BasedEditor, store: WorkspaceStore): DefaultReactSuggestionItem[] {
+function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonly string[], shared: Shared): DefaultReactSuggestionItem[] {
   const insert = (block: PartialBlock<never, never, never>) => {
     const cur = editor.getTextCursorPosition().block;
     const empty = Array.isArray(cur.content) && cur.content.length === 0 && cur.type === "paragraph";
@@ -161,7 +228,13 @@ function slashItems(editor: BasedEditor, store: WorkspaceStore): DefaultReactSug
     { title: "Embed", subtext: "Embed a link.", aliases: ["iframe"], group: "Media", onItemClick: () => insert({ type: CUSTOM.embed, props: { kind: "embed" } } as never) },
     { title: "PDF", subtext: "Embed a PDF.", aliases: ["pdf"], group: "Media", onItemClick: () => insert({ type: CUSTOM.embed, props: { kind: "pdf" } } as never) },
   ];
-  void store;
+  const copied = syncSourceFromClipboard(lastCopiedSync() ?? "");
+  if (copied) {
+    custom.push({
+      title: "Paste synced block", subtext: "Insert the block you copied with “Copy and sync”.", aliases: ["sync", "paste"], group: "Advanced blocks",
+      onItemClick: () => void pasteSyncedSource(editor, session, copied, ancestors, shared),
+    });
+  }
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
   return [...defaults, ...custom];
 }
@@ -169,31 +242,6 @@ function slashItems(editor: BasedEditor, store: WorkspaceStore): DefaultReactSug
 /** Gleichung im Text an der Schreibmarke einfügen (leer: öffnet ihr Eingabefeld). */
 export function insertInlineEquation(editor: BasedEditor, expression = "") {
   editor.insertInlineContent([{ type: INLINE.equation, props: { expression, text: "" } } as never]);
-}
-
-// MARK: @-Erwähnungen
-
-function mentionItems(editor: BasedEditor, store: WorkspaceStore, people: readonly Person[], query: string): DefaultReactSuggestionItem[] {
-  const q = query.toLowerCase();
-  const insert = (kind: string, value: string, text: string) => () =>
-    editor.insertInlineContent([{ type: INLINE.mention, props: { kind, value, text } } as never, " "]);
-  const day = (offset: number) => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + offset);
-    return canonicalStringify({ start: dateToSwift(d), includeTime: false });
-  };
-  const pages = [...store.blocks.values()]
-    .filter((b) => (b.type === "page" || b.type === "databasePage") && b.trashedAt === undefined && pageTitle(b).toLowerCase().includes(q))
-    .slice(0, 6)
-    .map((b): DefaultReactSuggestionItem => ({ title: pageTitle(b), subtext: "Page", group: "Pages", icon: <span>{pageIcon(b)}</span>, onItemClick: insert("page", b.id, pageTitle(b)) }));
-  const persons = people.filter((p) => p.name.toLowerCase().includes(q))
-    .map((p): DefaultReactSuggestionItem => ({ title: p.name, subtext: "Person", group: "People", onItemClick: insert("user", p.id, p.name) }));
-  const dates: DefaultReactSuggestionItem[] = [
-    { title: "Today", group: "Date", onItemClick: insert("date", day(0), "Today") },
-    { title: "Tomorrow", group: "Date", onItemClick: insert("date", day(1), "Tomorrow") },
-  ].filter((d) => d.title.toLowerCase().includes(q));
-  return [...persons, ...dates, ...pages];
 }
 
 // MARK: Block-Menü mit „Copy and sync“
@@ -223,9 +271,6 @@ function CopyAndSyncItem(props: { session: DocSession }) {
     </Components.Generic.Menu.Item>
   );
 }
-
-/** Zuletzt mit „Copy and sync“ kopiert (falls die Zwischenablage nicht erlaubt ist). */
-let lastSyncClipboard: string | undefined;
 
 /**
  * „Copy and sync“ (wie in Notion): die Blöcke werden zu einem Synced Block (Original), dessen Verweis in die
@@ -257,7 +302,7 @@ export async function copyAndSync(editor: BasedEditor, session: DocSession, bloc
     editor.replaceBlocks([...blockIDs], [{ id: original, type: CUSTOM.syncedBlock } as never]);
   }
   const text = SYNC_CLIPBOARD_PREFIX + original;
-  lastSyncClipboard = text;
+  rememberSyncClipboard(text);
   try {
     await globalThis.navigator?.clipboard?.writeText(text);
   } catch {
@@ -266,29 +311,47 @@ export async function copyAndSync(editor: BasedEditor, session: DocSession, bloc
   return original;
 }
 
+const PASTE_PROBLEMS: Record<SyncedPasteProblem, string> = {
+  noSource: "That synced block no longer exists.",
+  alreadyOnPage: "This synced block is already on this page.",
+  insideItself: "A synced block can't be placed inside itself.",
+};
+
 /** Einfügen von `based-sync:<id>` erzeugt eine synchronisierte Kopie hinter dem aktuellen Block. */
-function pasteSynced(editor: BasedEditor, session: DocSession, event: ClipboardEvent): boolean {
+function pasteSynced(editor: BasedEditor, session: DocSession, event: ClipboardEvent, ancestors: readonly string[], shared: Shared): boolean {
   const text = event.clipboardData?.getData("text/plain") ?? "";
   const src = syncSourceFromClipboard(text);
   if (!src) return false;
-  return insertSyncedCopy(editor, session, src);
+  void pasteSyncedSource(editor, session, src, ancestors, shared);
+  return true;
 }
 
-/** Synchronisierte Kopie eines Synced Blocks einfügen (wie Swift `pasteSyncedCopy`). */
-export function insertSyncedCopy(editor: BasedEditor, session: DocSession, source: string): boolean {
-  const rec = session.store.blocks.get(source);
-  if (!rec || rec.type !== "syncedBlock") return false;
-  const original = rec.props?.syncSource ?? rec.id;
-  if (original === session.rootID) return false; // in sich selbst
+/** Verweis prüfen (ggf. das Original erst von einer anderen Seite holen), dann einfügen oder den Grund melden. */
+async function pasteSyncedSource(editor: BasedEditor, session: DocSession, source: string, ancestors: readonly string[], shared: Shared): Promise<void> {
+  if (!session.store.blocks.has(source) && shared.loadSynced) {
+    try {
+      await shared.loadSynced(source);
+    } catch { /* unten: noSource */ }
+  }
+  const problem = insertSyncedCopy(editor, session, source, ancestors);
+  if (problem) shared.notify(PASTE_PROBLEMS[problem]);
+}
+
+/**
+ * Synchronisierte Kopie eines Synced Blocks einfügen (wie Swift `pasteSyncedCopy`). Gibt den Grund zurück, wenn
+ * das nicht geht: unbekannte Quelle, in sich selbst, oder derselbe Block steht schon in diesem Dokument.
+ */
+export function insertSyncedCopy(editor: BasedEditor, session: DocSession, source: string, ancestors: readonly string[] = []): SyncedPasteProblem | undefined {
+  session.flush();
+  const problem = syncedPasteProblem(session.store, source, session.rootID, ancestors);
+  if (problem) return problem;
+  const original = syncedOriginal(session.store, source)!;
   const cur = editor.getTextCursorPosition().block;
   const copy = { type: CUSTOM.syncedBlock, props: { source: original } } as never;
   const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
   if (empty) editor.replaceBlocks([cur], [copy]);
   else editor.insertBlocks([copy], cur, "after");
-  return true;
+  return undefined;
 }
 
-/** Für Tests und die Shell: was „Copy and sync“ zuletzt kopiert hat. */
-export function lastCopiedSync(): string | undefined {
-  return lastSyncClipboard;
-}
+export { lastCopiedSync };

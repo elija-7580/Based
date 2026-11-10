@@ -29,15 +29,19 @@ export interface MarkdownImporterOptions {
   resolveLink?: (target: string) => string | undefined;
   /** Bild-Quelle → URL oder Datei. */
   resolveAsset?: (src: string) => { url?: string | undefined; asset?: AssetRef | undefined };
+  /** Großzügiger lesen als der Swift-Import (Einfügen im Editor): mehr To-do-Schreibweisen. */
+  lenient?: boolean;
 }
 
 export class MarkdownImporter {
   readonly resolveLink: (target: string) => string | undefined;
   readonly resolveAsset: (src: string) => { url?: string | undefined; asset?: AssetRef | undefined };
+  readonly lenient: boolean;
 
   constructor(opts: MarkdownImporterOptions = {}) {
     this.resolveLink = opts.resolveLink ?? (() => undefined);
     this.resolveAsset = opts.resolveAsset ?? ((src) => ({ url: src }));
+    this.lenient = opts.lenient ?? false;
   }
 
   /** Trennt eine führende „# Titel“-Zeile ab. */
@@ -115,11 +119,13 @@ export class MarkdownImporter {
       }
 
       // Code-Block
-      if (trimmed.startsWith("```")) {
-        const lang = trimSpaces(trimmed.slice(3));
+      if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
+        // Zaun mit ``` oder ~~~ (Einfügen aus anderen Editoren); geschlossen wird mit demselben Zeichen.
+        const fence = trimmed.slice(0, 3);
+        const lang = trimSpaces(trimmed.replace(/^(`{3,}|~{3,})/, "")).split(/\s+/)[0] ?? "";
         const body: string[] = [];
         let j = i + 1;
-        while (j < n && !trimSpaces(lines[j]!).startsWith("```")) {
+        while (j < n && !trimSpaces(lines[j]!).startsWith(fence)) {
           body.push(lines[j]!.slice(Math.min(indent, indentOf(lines[j]!))));
           j++;
         }
@@ -215,7 +221,7 @@ export class MarkdownImporter {
         continue;
       }
       // Trennlinie
-      if (trimmed === "---" || trimmed === "***" || trimmed === "___") { out.push(block("divider")); i++; continue; }
+      if (/^(-{3,}|\*{3,}|_{3,}|(- ){2,}-|(\* ){2,}\*)$/.test(trimmed)) { out.push(block("divider")); i++; continue; }
       // Überschriften
       const h = MarkdownImporter.heading(trimmed);
       if (h) { out.push(block(h[0], this.inline(h[1]))); i++; continue; }
@@ -245,7 +251,8 @@ export class MarkdownImporter {
       const mid = trimmed.indexOf("](");
       if (trimmed.startsWith("![") && mid >= 0 && trimmed.endsWith(")")) {
         const alt = trimmed.slice(2, mid);
-        const src = trimmed.slice(mid + 2, -1);
+        // Optionaler Titel hinter der Quelle: ![alt](bild.png "Titel")
+        const src = trimmed.slice(mid + 2, -1).replace(/\s+"[^"]*"$/, "");
         const r = this.resolveAsset(removingPercentEncoding(src) ?? src);
         const p: BlockProps = {};
         if (r.asset === undefined) p.url = r.url ?? src;
@@ -256,7 +263,7 @@ export class MarkdownImporter {
         continue;
       }
       // Listen
-      const item = MarkdownImporter.listItem(trimmed);
+      const item = MarkdownImporter.listItem(trimmed, this.lenient);
       if (item) {
         const p: BlockProps = {};
         if (item[0] === "todo") p.checked = item[1];
@@ -280,14 +287,19 @@ export class MarkdownImporter {
   }
 
   static heading(t: string): [string, string] | undefined {
-    for (const [prefix, type] of [["#### ", "heading4"], ["### ", "heading3"], ["## ", "heading2"], ["# ", "heading1"]] as const) {
-      if (t.startsWith(prefix)) return [type, t.slice(prefix.length)];
+    // Based kennt vier Ebenen: H5 und H6 werden zur kleinsten Überschrift.
+    for (const [prefix, type] of [["###### ", "heading4"], ["##### ", "heading4"], ["#### ", "heading4"], ["### ", "heading3"], ["## ", "heading2"], ["# ", "heading1"]] as const) {
+      if (t.startsWith(prefix)) return [type, t.slice(prefix.length).replace(/\s+#+\s*$/, "")];
     }
     return undefined;
   }
 
-  static listItem(t: string): [string, boolean, string] | undefined {
-    for (const p of ["- [ ] ", "* [ ] ", "- [x] ", "- [X] ", "* [x] "]) {
+  static listItem(t: string, lenient = false): [string, boolean, string] | undefined {
+    // `lenient` (Einfügen im Editor): auch „* [X]“ und „+ [ ]“; der Datei-Import bleibt wie Swift (Golden Fixtures).
+    const todo = lenient
+      ? ["- [ ] ", "* [ ] ", "+ [ ] ", "- [x] ", "- [X] ", "* [x] ", "* [X] ", "+ [x] ", "+ [X] "]
+      : ["- [ ] ", "* [ ] ", "- [x] ", "- [X] ", "* [x] "];
+    for (const p of todo) {
       if (t.startsWith(p)) return ["todo", p.includes("x") || p.includes("X"), t.slice(p.length)];
     }
     if (t === "- [ ]") return ["todo", false, ""];
@@ -461,6 +473,17 @@ class InlineParser {
           const page = this.resolve(target);
           if (page !== undefined) runs.push({ t: label, m: PLAIN, mention: { page: { _0: page } } });
           else runs.push(...new InlineParser(graphemes(label), this.resolve).parse(undefined, { ...marks, link: target }));
+          this.i = close + 1;
+          continue;
+        }
+      }
+      if (c === "<" && (this.peek("<http://") || this.peek("<https://") || this.peek("<mailto:"))) {
+        // Autolink <https://…>
+        const close = this.find(">", i + 1);
+        const url = close !== undefined ? chars.slice(i + 1, close).join("") : "";
+        if (close !== undefined && !/\s/.test(url)) {
+          flush();
+          runs.push({ t: url.replace(/^mailto:/, ""), m: { ...marks, link: url } });
           this.i = close + 1;
           continue;
         }

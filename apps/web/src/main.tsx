@@ -20,7 +20,7 @@ import { astryxThemes } from "./astryxTheme.js";
 import "./styles.css";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { connectAssets } from "./assetBridge.js";
-import { ShellPageEditor } from "./editorSlot.js";
+import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
 
@@ -45,6 +45,7 @@ const link = new StoreLink({
   },
 });
 const client = new StoreClient(link);
+connectEditor(client);
 link.onReconnect = () => void client.resync();
 client.onDevice = deviceNode.set;
 connectAssets(client);

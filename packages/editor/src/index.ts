@@ -1,7 +1,12 @@
 // @based/editor – Seiten-Editor auf BlockNote-Kern (MPL-2.0) + Yjs (BSD-154). Keine @blocknote/xl-* (ADR 0011).
 export { PageEditor, copyAndSync, insertInlineEquation, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
 export type { PageEditorProps } from "./ui/PageEditor.js";
-export type { DatabaseRenderProps, EquationRenderProps, Person } from "./ui/env.js";
+export type { DatabaseRenderProps, EquationRenderProps, PageDirectory, PageRef, Person } from "./ui/env.js";
+export { isEmojiIcon, storePageDirectory } from "./ui/env.js";
+export { isOutlineHidden, PageOutline, scrollToHeading, setOutlineHidden } from "./ui/Outline.js";
+export { mentionItems } from "./ui/mentions.js";
+export { handlePaste, insertMarkdown } from "./ui/paste.js";
+export { importedToBlocks, markdownToBlocks, singleParagraph } from "./mapping/imported.js";
 
 // Reine Abbildung Records ⇄ BlockNote
 export { ASSET_URL_PREFIX, CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "./mapping/bn.js";

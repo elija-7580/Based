@@ -1,0 +1,12 @@
+/* Backlinks am Seitenende. Nur Tokens aus @based/design-tokens. */
+.backlinks { margin-top: var(--space-8); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.backlinks-head { margin: 0 0 var(--space-2); color: var(--muted); }
+.backlinks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.backlink {
+  display: flex; align-items: center; gap: var(--space-2); width: 100%; min-height: var(--space-7); padding: var(--space-1) var(--space-2);
+  margin-inline: calc(-1 * var(--space-2)); background: none; border: 0; border-radius: var(--radius-sm); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.backlink:hover { background: var(--surface-raised); }
+.backlink-icon { display: inline-flex; color: var(--muted); }
+.backlink-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-backlinks { padding-inline: var(--space-8); }

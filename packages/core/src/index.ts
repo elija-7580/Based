@@ -88,3 +88,13 @@ export { MemoryHistoryStorage, VersionHistory, compressObject, decompressObject,
 export type { HistoryStats, HistoryStorage, HistoryVersion, VersionContent, VersionHistoryOptions } from "./history/version-history.js";
 export { restoreVersion, versionBlocks } from "./history/restore.js";
 export type { RestoreOptions, RestoreResult } from "./history/restore.js";
+// Editor-Parität: Einfügen (Markdown-Erkennung), Datums-Erwähnungen, Gliederung, Backlinks, Synced Blocks.
+export { hasInlineMarkdown, isMarkdownBlockLine, looksLikeMarkdown, pasteKind } from "./editor/paste.js";
+export type { PasteInput, PasteKind } from "./editor/paste.js";
+export { dateMentionValue, dateSuggestions, parseTypedDate } from "./editor/date-mention.js";
+export type { DateSuggestion } from "./editor/date-mention.js";
+export { activeHeadingIndex, headingOutline, withDepth } from "./editor/headings.js";
+export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
+export { LinkIndex, backlinksTo, containingPage, linkedPages, mentionedPages } from "./store/links.js";
+export { syncedCopies, syncedDependencies, syncedInstances, syncedOriginal, syncedPasteProblem, trashedRoot, unsyncCopy } from "./store/synced.js";
+export type { SyncedPasteProblem } from "./store/synced.js";

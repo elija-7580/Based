@@ -249,7 +249,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
 .trash-banner { display: flex; align-items: center; gap: var(--space-3); justify-content: center; padding: var(--space-2) var(--space-4); background: var(--surface-raised); flex-wrap: wrap; }
 .page-head { margin-bottom: var(--space-4); }
-.title-input { width: 100%; border: 0; padding: 0; margin: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; outline: none; }
+.title-input { width: 100%; border: 0; padding: 0; margin: 0; background: transparent; color: var(--ink); font: inherit; letter-spacing: inherit; outline: none; }
 .title-input::placeholder { color: var(--muted); }
 .page-body { min-width: 0; }
 .blocks { display: flex; flex-direction: column; gap: var(--space-2); }
