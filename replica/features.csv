@@ -160,7 +160,7 @@ Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
 HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",no
 Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,no
-Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,partial: Freigaben in #tasks und auf der Startseite (Needs you); keine Inbox über Geräte
+Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); keine Inbox über Geräte, offene Freigabe geht beim Neuladen verloren"
 Switch agent mid-session,ai,should,no,yes,transcript hand-off,no
 E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no
 MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,no
@@ -212,7 +212,7 @@ Auto model routing Low/Auto/High,ai,should,n/a,partial,BSD-49: rule-based routes
 Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115","partial: Modus + Regeln global/Projekt, greifen auch im Chat; kein Plan-Modus, keine Pfad-Regeln"
 "Streaming, retry and context compaction for API models",ai,must,n/a,yes,"BSD-46/47/48: SSE streaming, retry before first token, auto-continue, compaction above 75%, prompt queue","yes (Pass 30: SSE-Streaming, Retry vor erstem Token, Fortsetzen, Kompaktierung)"
 Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)","partial: Docker-CLI + lokal, Allowlist, Snapshots, Aufräumen, /sandbox-Routen; Docker ungeprüft, keine Laufzeit pro Lauf"
-Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108,"partial: Layout nach Design mit Demo-Daten, Composer ohne Funktion; echte Agenten fehlen"
+Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108,"partial: Startseite nach Mockup v10 auf echten Records (Zeitbogen, Auftragskarten, Agent-/Projekt-Detail); Redact/Skill-Chips an der Karte, Pause, Mobile/Watch fehlen"
 Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief",no
 Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111/113: Captures DB, Sort captures agent (auto:low), iPhone shortcuts (untested), POST /capture incl. audio, Mac hot key ⌥⇧Space + menu bar (BSD-64), Apple Watch app (BSD-66)",no
 CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118,"partial: apps/cli über MCP (page/search/tools); ask/runs/inbox erst, wenn der TS-Server sie anbietet; keine Installation aus der App"
