@@ -454,3 +454,25 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .tab:hover .tab-close, .tab.active .tab-close, .tab-close:focus-visible { opacity: 1; }
 .tab-close:hover { background: var(--selected); color: var(--ink); }
 .tab-new { flex: none; }
+
+/* BSD-201: Seiten-Optionen – Icon über dem Titel, Schrift, Small text, Full width, Sperre */
+.page-icon-row { position: relative; display: flex; align-items: center; min-height: var(--space-6); margin-bottom: var(--space-2); }
+.page-icon { background: none; border: 0; padding: 0; font-size: calc(var(--size-title) * 1.6); line-height: 1; border-radius: var(--radius-md); cursor: pointer; }
+.page-icon:hover:not(:disabled) { background: var(--surface-raised); }
+.page-add-icon { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); color: var(--muted); }
+.page-head:hover .page-add-icon, .page-add-icon:focus-visible { opacity: 1; }
+.page-icon-picker { position: absolute; top: 100%; left: 0; z-index: 30; margin-top: var(--space-1); }
+.page-locked { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); margin-bottom: var(--space-2); }
+.page[data-full-width] .page-grid { max-width: none; }
+.page[data-font="serif"] { --font-body: ui-serif, "New York", Georgia, serif; --font-head: ui-serif, "New York", Georgia, serif; }
+.page[data-font="mono"] { --font-body: var(--font-mono); --font-head: var(--font-mono); }
+.page[data-font="serif"] .title-input, .page[data-font="mono"] .title-input { font-family: var(--font-head); }
+.page[data-small-text] { --type-body-size: var(--type-ui-size); }
+.page-font-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); padding: var(--space-1); }
+.page-font { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-1); background: none; border: 0; border-radius: var(--radius-md); color: var(--muted); font: inherit; font-size: var(--type-meta-size); cursor: pointer; }
+.page-font[aria-checked="true"] { background: var(--surface-raised); color: var(--ink); }
+.page-font:hover { background: var(--surface-raised); }
+.page-font-sample { font-size: var(--icon-md); color: var(--ink); }
+.page-font[data-font="serif"] .page-font-sample { font-family: ui-serif, "New York", Georgia, serif; }
+.page-font[data-font="mono"] .page-font-sample { font-family: var(--font-mono); }
+.menu-check { margin-left: auto; color: var(--ink); }
