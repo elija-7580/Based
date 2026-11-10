@@ -3,7 +3,7 @@ import { createReactInlineContentSpec } from "@blocknote/react";
 import { useEffect, useRef, useState } from "react";
 import { canonicalStringify, dateFromSwift } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
-import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
+import { isEmojiIcon, useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { pageIcon, pageTitle } from "./blocks.js";
 
 function formatDate(value: string): string {
@@ -21,7 +21,7 @@ function formatDate(value: string): string {
 
 /** Emoji-Icon einer Seite; Symbolnamen (ASCII) kann der Editor nicht zeichnen, dann das Standardzeichen. */
 function mentionIcon(icon: string | undefined, kind: string | undefined): string {
-  if (icon && /[^\u0000-\u00ff]/.test(icon)) return icon;
+  if (isEmojiIcon(icon)) return icon;
   return kind === "database" ? "▦" : "📄";
 }
 

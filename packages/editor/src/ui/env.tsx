@@ -89,6 +89,11 @@ export function useStoreRevision(store: WorkspaceStore): number {
   );
 }
 
+/** Ein Icon, das sich als Text zeichnen lässt (Emoji); Symbolnamen aus Swift („doc.text“) sind reines ASCII. */
+export function isEmojiIcon(icon: string | undefined): icon is string {
+  return icon !== undefined && [...icon].some((c) => c.codePointAt(0)! > 0xff);
+}
+
 /** Neu rendern, wenn das Seitenverzeichnis sich ändert; liefert die Angabe zu einer Seite. */
 export function usePageRef(pages: PageDirectory, id: string): PageRef | undefined {
   // Der Schnappschuss ist ein String, damit React Gleichheit erkennt (get() darf jedes Mal ein neues Objekt liefern).

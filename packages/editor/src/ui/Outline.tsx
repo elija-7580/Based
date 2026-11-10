@@ -50,7 +50,6 @@ export function scrollToHeading(root: HTMLElement | null, id: string): void {
 export function PageOutline(props: { store: WorkspaceStore; pageID: string; container: HTMLElement | null }) {
   const { store, pageID, container } = props;
   const revision = useStoreRevision(store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- `revision` steht für „Store geändert“
   const headings = useMemo((): OutlineHeading[] => headingOutline(store, pageID), [store, pageID, revision]);
   const hidden = isOutlineHidden(store, pageID);
   const [active, setActive] = useState(0);

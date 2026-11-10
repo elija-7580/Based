@@ -1,6 +1,7 @@
 // Backlinks am Seitenende: Seiten, die diese Seite erwähnen oder verlinken (Index im Store-Worker). Frischt sich
 // auf, wenn sich Titel oder Seitenstruktur ändern und wenn das Fenster wieder in den Vordergrund kommt.
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { isEmojiIcon } from "@based/editor";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
 import type { PageInfo } from "../worker/protocol.js";
@@ -30,7 +31,7 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
         {links.map((p) => (
           <li key={p.id}>
             <button type="button" className="backlink" onClick={() => onOpenPage(p.id)}>
-              <span className="backlink-icon" aria-hidden="true">{p.icon && /[^\u0000-ÿ]/.test(p.icon) ? p.icon : <Icon name={p.kind === "database" ? "database" : "page"} size={18} />}</span>
+              <span className="backlink-icon" aria-hidden="true">{isEmojiIcon(p.icon) ? p.icon : <Icon name={p.kind === "database" ? "database" : "page"} size={18} />}</span>
               <span className="backlink-title">{p.title}</span>
             </button>
           </li>

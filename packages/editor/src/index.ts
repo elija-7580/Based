@@ -2,7 +2,7 @@
 export { PageEditor, copyAndSync, insertInlineEquation, insertSyncedCopy, lastCopiedSync } from "./ui/PageEditor.js";
 export type { PageEditorProps } from "./ui/PageEditor.js";
 export type { DatabaseRenderProps, EquationRenderProps, PageDirectory, PageRef, Person } from "./ui/env.js";
-export { storePageDirectory } from "./ui/env.js";
+export { isEmojiIcon, storePageDirectory } from "./ui/env.js";
 export { isOutlineHidden, PageOutline, scrollToHeading, setOutlineHidden } from "./ui/Outline.js";
 export { mentionItems } from "./ui/mentions.js";
 export { handlePaste, insertMarkdown } from "./ui/paste.js";

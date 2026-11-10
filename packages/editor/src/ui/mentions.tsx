@@ -4,7 +4,7 @@ import type { DefaultReactSuggestionItem } from "@blocknote/react";
 import { canonicalStringify, dateMentionValue, dateSuggestions } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
 import type { BasedEditor } from "../schema/schema.js";
-import type { PageDirectory, PageRef, Person } from "./env.js";
+import { isEmojiIcon, type PageDirectory, type PageRef, type Person } from "./env.js";
 
 export const MENTION_TRIGGERS = ["@", "[["] as const;
 
@@ -12,7 +12,7 @@ function insertMention(editor: BasedEditor, kind: string, value: string, text: s
   editor.insertInlineContent([{ type: INLINE.mention, props: { kind, value, text } } as never, " "], { updateSelection: true });
 }
 
-const icon = (p: PageRef) => (p.icon && /[^\u0000-ÿ]/.test(p.icon) ? p.icon : p.kind === "database" ? "▦" : "📄");
+const icon = (p: PageRef) => (isEmojiIcon(p.icon) ? p.icon : p.kind === "database" ? "▦" : "📄");
 
 export interface MentionMenuOptions {
   pages: PageDirectory;
