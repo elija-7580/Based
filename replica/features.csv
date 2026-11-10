@@ -2,9 +2,9 @@ feature,area,priority,original,clone,notes,ts
 Create / rename / delete pages,pages,must,yes,yes,,yes
 Nested subpages (page inside page),pages,must,yes,yes,,yes
 Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
-Page icon (uploaded image),pages,could,yes,yes,,no
-Page cover (gallery / color / gradient),pages,should,yes,yes,,no
-Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,no
+Page icon (uploaded image),pages,could,yes,yes,,"yes (BSD-201): Upload image im Icon-Menü, gespeichert wie Swift PageIcon.asset"
+Page cover (gallery / color / gradient),pages,should,yes,yes,,"partial (BSD-201): Farbe (Töne mit Token), Swift-Verläufe werden angezeigt; Galerie und Verlaufs-Auswahl fehlen (Designfrage: Farben)"
+Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition durch Ziehen, Remove"
 Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
 Small text,pages,should,yes,yes,,yes (BSD-201)
 Full width,pages,should,yes,yes,,yes (BSD-201)
@@ -47,7 +47,7 @@ Video / audio blocks,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-S
 File block,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, offline, E2E)"
 PDF block,blocks,could,yes,yes,,"yes (BSD-208: Upload oder Link, Anzeige im Block; Record wie Swift mit asset)"
 Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,partial: Karte mit URL bzw. importiertem Titel; kein Abruf von Titel/Vorschau
-Embed (web),blocks,could,yes,yes,,partial: nur Link-Karte; kein eingebetteter Inhalt
+Embed (web),blocks,could,yes,yes,,"yes (BSD-209): YouTube (ohne Cookies), Vimeo, Loom, Figma, CodePen, Spotify, Google Maps eingebettet (iframe, sandbox); andere Seiten als Link-Karte"
 Table of contents,blocks,should,yes,yes,,yes
 Breadcrumb block,blocks,could,yes,yes,,yes
 Columns (2-5),blocks,should,yes,yes,,"yes (BSD-210: 2–5 Spalten per Slash, Breite ziehen oder per Pfeiltasten, gespeichert als ratio)"
@@ -200,8 +200,8 @@ Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)"
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: im Browser über den Browser-Verlauf; in der Desktop-Hülle keine eigene Behandlung, ⌘←/⌘→ und Verlaufsmenü fehlen"
 Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())"
-Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,no
-Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"partial: Turn into, B/I/U/S/Code, Link, Farbe vorhanden; „Ask AI“ fehlt"
+Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,"yes (BSD-225): Leertaste auf leerer Zeile (wenn ein Modell eingerichtet ist) oder /Ask AI; Vorschau → Insert / Try again / Discard, ein Undo-Schritt; jede Engine aus BSD-159"
+Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"yes: Ask AI (Improve, Fix spelling, Make shorter, Summarize, eigene Anweisung → Replace/Insert below; BSD-225), Turn into, B/I/U/S/Code, Link, Farbe"
 Lossless workspace archive export/import,export,should,no,yes,.based.zip v2 with asset bytes and zip-slip protection; .based.jsonl v1 still read/written (BSD-67); restored archives are pushed to the server (BSD-26),yes
 Web client,platforms,should,yes,partial,"based-server /app: tree + pages over sync v2, live updates, plain-text editing",yes
 AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)","partial: Aufnahme (Mikrofon, Tab-Audio in Chromium), Notizen mit Zeit, Wiedergabe, Zusammenfassung mit [m:ss]; keine Transkription, keine Sprechertrennung"

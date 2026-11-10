@@ -304,3 +304,21 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-pdf-frame { display: block; width: 100%; height: calc(var(--space-8) * 10); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-soft); }
 .bx-pdf-empty { display: grid; gap: var(--space-2); justify-items: start; width: 100%; }
 .bx-pdf-empty .bx-field { width: 100%; }
+
+/* BSD-225: Ask AI im Editor */
+.bx-ai {
+  position: fixed; z-index: 46; display: grid; gap: var(--space-2); width: min(calc(var(--page-measure) - var(--space-6)), 90vw); padding: var(--space-2);
+  border-radius: var(--radius-lg); background: var(--bg); border: 1px solid var(--line); box-shadow: var(--shadow-menu); font-family: var(--font-ui); font-size: var(--type-ui-size);
+}
+.bx-ai-input { width: 100%; }
+.bx-ai-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.bx-ai-action { border: 0; background: var(--surface-raised); color: var(--ink); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3); font: inherit; cursor: pointer; }
+.bx-ai-action.primary { background: var(--button); color: var(--button-ink); }
+.bx-ai-status { margin: 0; display: flex; gap: var(--space-2); align-items: center; color: var(--muted); }
+.bx-ai-preview { white-space: pre-wrap; max-height: calc(var(--space-8) * 5); overflow: auto; padding: var(--space-2); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink-2); }
+
+/* BSD-209: eingebettete Inhalte (iframe) bekannter Anbieter */
+.bx-embed { margin: 0; display: grid; gap: var(--space-1); }
+.bx-embed-frame { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
+.bx-embed-caption { font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-embed-caption a { color: inherit; }

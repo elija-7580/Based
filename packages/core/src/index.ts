@@ -110,10 +110,12 @@ export { activeHeadingIndex, headingOutline, withDepth } from "./editor/headings
 export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
 export type { EmojiEntry } from "./editor/emoji.js";
-export { pageFormat, setPageFormat, setPageIcon } from "./store/page-options.js";
-export type { PageFont, PageFormatPatch } from "./store/page-options.js";
+export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
+export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
 export { CODE_LANGUAGES, syntaxTokens } from "./editor/syntax.js";
 export type { SyntaxKind, SyntaxToken } from "./editor/syntax.js";
+export { embedTarget } from "./editor/embed.js";
+export type { EmbedTarget } from "./editor/embed.js";
 export { LinkIndex, backlinksTo, containingPage, linkedPages, mentionedPages } from "./store/links.js";
 export { syncedCopies, syncedDependencies, syncedInstances, syncedOriginal, syncedPasteProblem, trashedRoot, unsyncCopy } from "./store/synced.js";
 export type { SyncedPasteProblem } from "./store/synced.js";
