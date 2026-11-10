@@ -11,6 +11,12 @@ import { deviceNode, recentPages, syncConfig } from "./shell/storage.js";
 import { StoreClient } from "./worker/client.js";
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
+// Astryx (meta/astryx): fertig gebaute Styles in eigenen Layern (reset → astryx-base → astryx-theme).
+// Vor styles.css, damit die Based-Tokens und -Styles (ohne Layer) immer Vorrang haben.
+import "@astryxdesign/core/reset.css";
+import "@astryxdesign/core/astryx.css";
+import { Theme } from "@astryxdesign/core/theme";
+import { astryxTheme } from "./astryxTheme.js";
 import "./styles.css";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { ShellPageEditor } from "./editorSlot.js";
@@ -60,5 +66,9 @@ const root = document.getElementById("root");
 if (!root) throw new Error("#root fehlt");
 // Sync-Server erst aus IndexedDB lesen (wenige ms), damit die Einstellungen ihn beim ersten Zeichnen kennen.
 void syncConfig.load().finally(() => {
-  createRoot(root).render(<StrictMode><App client={client} history={history} /></StrictMode>);
+  createRoot(root).render(<StrictMode>
+      <Theme theme={astryxTheme}>
+        <App client={client} history={history} />
+      </Theme>
+    </StrictMode>);
 });
