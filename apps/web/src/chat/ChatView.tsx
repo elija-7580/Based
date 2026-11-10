@@ -21,9 +21,25 @@ const fromSwift = (t: number) => (t + 978_307_200) * 1000;
 
 export type ChatPane = "chat" | "history" | "settings";
 
-export function ChatHistoryList({ chats, current, onOpen, onDelete }: { chats: readonly ChatInfo[]; current: string | undefined; onOpen: (id: string) => void; onDelete: (id: string) => void }) {
-  if (chats.length === 0) return <p className="t-desc chat-history-empty">No chats yet.</p>;
+/** BSD-77: alte Chats der Mac-App (Datenbank „Sessions“) übernehmen – die alten Seiten bleiben unverändert. */
+function ImportOldChats({ onImport }: { onImport: () => Promise<number> }) {
+  const [done, setDone] = useState<string | undefined>();
   return (
+    <div className="chat-import">
+      <Button size="sm" variant="ghost" label="Import chats from the Mac app" clickAction={async () => {
+        const n = await onImport();
+        setDone(n === 0 ? "No old chats found." : `Imported ${n} chat${n === 1 ? "" : "s"}.`);
+      }} />
+      {done ? <span className="t-meta" role="status">{done}</span> : null}
+    </div>
+  );
+}
+
+export function ChatHistoryList({ chats, current, onOpen, onDelete, onImport }: { chats: readonly ChatInfo[]; current: string | undefined; onOpen: (id: string) => void; onDelete: (id: string) => void; onImport?: () => Promise<number> }) {
+  const importer = onImport ? <ImportOldChats onImport={onImport} /> : null;
+  if (chats.length === 0) return <><p className="t-desc chat-history-empty">No chats yet.</p>{importer}</>;
+  return (
+    <>
     <List density="compact" header={<span className="t-meta">Chats</span>}>
       {chats.map((c) => (
         <ListItem
@@ -36,11 +52,15 @@ export function ChatHistoryList({ chats, current, onOpen, onDelete }: { chats: r
         />
       ))}
     </List>
+    {importer}
+    </>
   );
 }
 
 export interface ChatViewProps {
   controller: ChatController;
+  /** Alte Transkripte übernehmen; gibt die Zahl neuer Chats zurück. */
+  onImport?: () => Promise<number>;
   chats: readonly ChatInfo[];
   mode: "panel" | "page";
   onClose?: () => void;
@@ -48,7 +68,7 @@ export interface ChatViewProps {
   config?: AiConfig;
 }
 
-export function ChatView({ controller, chats, mode, onClose, onToggleMode, config = aiConfig() }: ChatViewProps) {
+export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImport, config = aiConfig() }: ChatViewProps) {
   const s = useSyncExternalStore(controller.subscribe, controller.getState);
   const ai = useSyncExternalStore(config.subscribe, config.getState);
   const [pane, setPane] = useState<ChatPane>("chat");
@@ -98,7 +118,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, confi
       <div className="chat-body">
         {mode === "page" && !showSettings ? (
           <aside className="chat-side" aria-label="Chats">
-            <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => void controller.open(id)} onDelete={(id) => void controller.remove(id)} />
+            <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => void controller.open(id)} onDelete={(id) => void controller.remove(id)} {...(onImport ? { onImport } : {})} />
           </aside>
         ) : null}
         <div className="chat-main">
@@ -106,7 +126,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, confi
             <div className="chat-scroll"><AiSettingsSection config={config} compact={mode === "panel"} /></div>
           ) : pane === "history" && mode === "panel" ? (
             <div className="chat-scroll">
-              <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => { void controller.open(id); setPane("chat"); }} onDelete={(id) => void controller.remove(id)} />
+              <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => { void controller.open(id); setPane("chat"); }} onDelete={(id) => void controller.remove(id)} {...(onImport ? { onImport } : {})} />
             </div>
           ) : (
             <>

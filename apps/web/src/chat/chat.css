@@ -84,3 +84,4 @@
 .chat-view :where([aria-current="true"]) { background: var(--selected); color: var(--ink); }
 .chat-view :where([aria-current="true"]) :where(:not(svg, svg *)) { color: var(--ink); }
 .chat-view :where(li) :where(span) { color: inherit; }
+.chat-import { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-3) var(--space-2); }

@@ -79,7 +79,6 @@ test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt �
   await panel(page).getByRole("button", { name: "Chats" }).click();
   await expect(panel(page).getByText("Make a page for my Lisbon trip")).toBeVisible();
 
-  // ⌘Z nimmt die Seite des Agenten in einem Schritt zurück, der Chat bleibt
   await page.keyboard.press(`${mod}+j`);
   await expect(panel(page)).toHaveCount(0);
 });

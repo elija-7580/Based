@@ -100,7 +100,7 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
           else if (e.key === "ArrowRight") resize(width - 24);
         }}
       />
-      <ChatView controller={controller} chats={chats} mode="panel" onClose={() => setOpenSaved(false)} onToggleMode={() => { setOpenSaved(false); history.navigate({ name: "chat" }); }} />
+      <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="panel" onClose={() => setOpenSaved(false)} onToggleMode={() => { setOpenSaved(false); history.navigate({ name: "chat" }); }} />
     </aside>
   );
 }
@@ -110,6 +110,6 @@ export function ChatPage({ client, history }: { client: StoreClient; history: Hi
   const controller = chatController(client);
   const chats = useChats(client);
   return (
-    <ChatView controller={controller} chats={chats} mode="page" onToggleMode={() => { openChatPanel(); history.back(); }} />
+    <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="page" onToggleMode={() => { openChatPanel(); history.back(); }} />
   );
 }
