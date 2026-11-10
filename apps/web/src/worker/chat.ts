@@ -3,7 +3,7 @@
 // gespeichert, gesynct und erscheint in offenen Seiten. Die Engine selbst (Netz, API-Schlüssel) läuft im
 // Hauptthread; der Schlüssel kommt nie hierher.
 import { parseKey, type SearchIndex, type StoreChange, type WorkspaceStore } from "@based/core";
-import { CHAT_TYPE, ChatStore, importLegacyChats, WorkspaceTools, type ChatInfo, type ChatMeta, type StoredChatEvent, type ToolResult, type ToolSpec } from "@based/brain";
+import { CHAT_TYPE, ChatStore, importLegacyChats, pagePathCandidates, WorkspaceTools, type ChatInfo, type ChatMeta, type StoredChatEvent, type ToolResult, type ToolSpec } from "@based/brain";
 import type { JSONValue } from "@based/core";
 
 export type ChatAction =
@@ -16,6 +16,8 @@ export type ChatAction =
   | { op: "delete"; id: string }
   | { op: "toolSpecs" }
   | { op: "tool"; name: string; input: JSONValue }
+  /** BSD-245: Seitenpfade für Pfad-Regeln (`Titel/Titel`, mit Bereich davor). */
+  | { op: "pagePaths"; id: string }
   /** Alte Swift-Transkripte (Datenbank „Sessions“) als Chats übernehmen. */
   | { op: "importLegacy" };
 
@@ -59,6 +61,7 @@ export class ChatHost {
         return { specs, write: specs.map((s) => s.name).filter((n) => this.tools.isWrite(n)) } satisfies ToolCatalog;
       }
       case "tool": return this.tools.callSync(a.name, a.input) satisfies ToolResult;
+      case "pagePaths": return pagePathCandidates(this.store, a.id);
       case "importLegacy": return this.checked(() => importLegacyChats(this.chats));
     }
   }

@@ -253,6 +253,11 @@ export class StoreClient {
     return this.request<ToolResult>({ type: "chat", action: { op: "tool", name, input } });
   }
 
+  /** BSD-245: Pfade einer Seite für Pfad-Regeln (worker/chat.ts). */
+  chatPagePaths(id: string): Promise<string[]> {
+    return this.request<string[]>({ type: "chat", action: { op: "pagePaths", id } });
+  }
+
   chatImportLegacy(): Promise<ChatInfo[]> {
     return this.request<ChatInfo[]>({ type: "chat", action: { op: "importLegacy" } });
   }

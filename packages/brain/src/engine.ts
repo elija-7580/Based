@@ -40,16 +40,32 @@ export interface ToolHost {
   call(name: string, input: JSONValue, signal?: AbortSignal): Promise<ToolResult>;
 }
 
-/** Permission-Pille: jede Aktion fragen · vor Änderungen fragen · frei arbeiten. */
-export type PermissionMode = "ask" | "askEdits" | "free";
+/**
+ * Permission-Pille: jede Aktion fragen · vor Änderungen fragen · frei arbeiten · planen (BSD-245: nur lesen,
+ * schreibende Aufrufe werden nicht ausgeführt, sondern als Planschritte gesammelt).
+ */
+export type PermissionMode = "ask" | "askEdits" | "free" | "plan";
+
+export type RuleEffect = "allow" | "ask" | "deny";
 
 export interface ToolPolicy {
   mode: PermissionMode;
   /** Fragt den Nutzer (Karte im Chat). Fehlt sie, werden fragepflichtige Aufrufe abgelehnt. */
   approve?: ((call: ToolCall) => Promise<boolean>) | undefined;
-  /** BSD-160: Regeln (allow/ask/deny) vor dem Modus; `undefined` = keine Regel greift. */
-  rules?: ((call: ToolCall) => "allow" | "ask" | "deny" | undefined) | undefined;
+  /**
+   * BSD-160: Regeln (allow/ask/deny) vor dem Modus; `undefined` = keine Regel greift. Darf asynchron sein (BSD-245:
+   * Pfad-Regeln brauchen den Seitenpfad aus dem Store).
+   */
+  rules?: ((call: ToolCall) => RuleEffect | undefined | Promise<RuleEffect | undefined>) | undefined;
+  /** BSD-245, Plan-Modus: ein schreibender Aufruf, der nicht ausgeführt, sondern als Planschritt gesammelt wurde. */
+  onPlanned?: ((call: ToolCall) => void) | undefined;
 }
+
+/** Antwort an das Modell für einen gesammelten Planschritt. */
+export const PLANNED_RESULT = "Plan mode: this change was NOT made. It is recorded as a step of your plan; the user runs the plan after reviewing it. Continue with read-only tools and finish with a short numbered plan.";
+
+/** Zusatz zum System-Prompt im Plan-Modus. */
+export const PLAN_MODE_PROMPT = "# Plan mode\nYou are in plan mode. Do not change anything yet: use read-only tools to investigate, then propose a short numbered plan. Calls to tools that change something are recorded as plan steps instead of being run; the user reviews the plan and runs it.";
 
 /** Tool-Ausgabe im Ereignis (Transkript): vollständig bis 64 kB, darüber gekürzt (BSD-77; Auslagern als Asset fehlt noch). */
 export const TOOL_OUTPUT_EVENT_LIMIT = 64_000;
@@ -74,8 +90,12 @@ function raceAbort<T>(p: Promise<T>, signal: AbortSignal): Promise<T> {
 export async function executeTool(host: ToolHost, call: ToolCall, policy: ToolPolicy, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<ToolResult> {
   const known = host.specs.some((s) => s.name === call.name);
   if (!known) return { text: `Unknown tool ${call.name}`, isError: true };
-  const verdict = policy.rules?.(call);
+  const verdict = await policy.rules?.(call);
   if (verdict === "deny") return { text: "A permission rule blocks this action.", isError: true };
+  if (policy.mode === "plan" && host.isWrite(call.name)) {
+    policy.onPlanned?.(call);
+    return { text: PLANNED_RESULT, isError: false };
+  }
   const needsAsk = verdict === "ask" || (verdict !== "allow" && (policy.mode === "ask" || (policy.mode === "askEdits" && host.isWrite(call.name))));
   if (needsAsk) {
     if (!policy.approve) return { text: "This action needs the user's approval, and nobody can be asked right now.", isError: true };
@@ -197,6 +217,7 @@ export class ModelEngine implements ChatEngine {
     const today = (this.o.today ?? (() => new Date().toISOString().slice(0, 10)))();
     let system = `${this.o.system ?? BASED_SYSTEM_PROMPT}\n\nToday is ${today}.`;
     if (request.system) system += "\n\n# Agent instructions\n" + request.system;
+    if (this.o.policy?.mode === "plan") system += "\n\n" + PLAN_MODE_PROMPT;
     let messages: ChatMessage[] = [{ role: "system", content: system }, ...(request.history ?? []), { role: "user", content: request.prompt }];
     emit({ type: "started", model: this.label });
 
@@ -336,14 +357,20 @@ export class ScriptedEngine implements ChatEngine {
         const call: ToolCall = { id: step.id ?? `call_${turn}_${n}`, name: step.tool, arguments: step.input };
         yield { type: "toolUse", id: call.id, name: call.name, input: call.arguments };
         const pending: ChatEvent[] = [];
+        let wake: (() => void) | undefined;
         const policy = this.o.policy ?? { mode: "free" as const };
         const run = this.o.tools
-          ? executeTool(this.o.tools, call, policy, signal, (e) => pending.push(e))
+          ? executeTool(this.o.tools, call, policy, signal, (e) => { pending.push(e); wake?.(); })
           : Promise.resolve<ToolResult>({ text: `Unknown tool ${call.name}`, isError: true });
-        // Die Freigabe-Anfrage muss raus, bevor auf die Antwort gewartet wird.
-        await Promise.resolve();
-        await Promise.resolve();
-        while (pending.length > 0) yield pending.shift()!;
+        // Die Freigabe-Anfrage muss raus, bevor auf die Antwort gewartet wird – auch wenn Regeln asynchron prüfen
+        // (BSD-245): warten, bis ein Ereignis kommt oder das Werkzeug fertig ist.
+        let done = false;
+        void run.then(() => { done = true; wake?.(); }, () => { done = true; wake?.(); });
+        while (!done) {
+          if (pending.length === 0) await new Promise<void>((r) => { wake = r; });
+          wake = undefined;
+          while (pending.length > 0) yield pending.shift()!;
+        }
         const res = await run;
         while (pending.length > 0) yield pending.shift()!;
         yield { type: "toolResult", id: call.id, output: clip(res.text, TOOL_OUTPUT_EVENT_LIMIT), isError: res.isError };

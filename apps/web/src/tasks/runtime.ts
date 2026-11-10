@@ -72,7 +72,10 @@ export class TasksRuntime {
     const online = () => this.onlineOverride ?? (typeof navigator === "undefined" ? true : navigator.onLine !== false);
     const owner = tabOwner();
     this.runner = new TaskRunner({ backend: clientTaskBackend(client), engine: () => this.plannerEngine(), online, owner, onError: (e) => console.warn("main agent:", e) });
-    this.agents = new AgentRunner({ backend: clientRunBackend(client), engine: (req) => this.agentEngine(req), owner: owner + "-agents", onChange: () => this.refresh() });
+    this.agents = new AgentRunner({
+      backend: clientRunBackend(client), engine: (req) => this.agentEngine(req), owner: owner + "-agents", onChange: () => this.refresh(),
+      pathOf: (id) => client.chatPagePaths(id), // BSD-245: Pfad-Regeln
+    });
     this.state = { ...this.state, ready: this.isReady() };
     config.subscribe(() => {
       this.refresh();

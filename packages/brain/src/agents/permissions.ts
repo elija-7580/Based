@@ -4,8 +4,12 @@
 // Werkzeugnamen: die Chat-Werkzeuge als `based.<name>` (z. B. `based.create_page`), die Aktionen des Hauptagenten
 // ebenso (`based.spawn_agent`, `based.file_to_project` …); `based.*` trifft alle. Das Muster prüft das Hauptargument
 // (Seiten-ID, Projektname, Titel) als Glob (`*`, `?`, ohne Groß/Klein).
+// BSD-245: Pfad-Regeln `Tool(path:Projekte/**)` prüfen den Seitenpfad des Ziels (Titel der Vorfahren mit „/“,
+// wahlweise mit dem Bereich davor: `Private/…` bzw. der Teamspace-Name); `*` innerhalb eines Abschnitts, `**` über
+// Abschnitte. Vorrang bleibt deny > ask > allow (sicher zuerst); unter Treffern gleicher Wirkung nennt der Grund die
+// spezifischste Regel. Modus `plan`: nur lesen, Schreiben wird als Planschritt gesammelt (engine.ts).
 import type { PermissionMode } from "../engine.js";
-import type { JSONValue } from "@based/core";
+import { isPageLike, pageAncestors, sectionOf, titleOf, type JSONValue, type WorkspaceStore } from "@based/core";
 
 export type PermissionEffect = "allow" | "ask" | "deny";
 
@@ -18,6 +22,29 @@ export interface PermissionRule {
 export interface PermissionCall {
   tool: string;
   argument?: string | undefined;
+  /** BSD-245: Pfade der Zielseite (siehe `pagePathCandidates`); ohne: Pfad-Regeln greifen nicht. */
+  paths?: readonly string[] | undefined;
+}
+
+export const PATH_PREFIX = "path:";
+
+/** Pfad-Glob: `**` über Abschnitte, `*`/`?` innerhalb eines Abschnitts, ohne Groß/Klein, `/` am Rand egal. */
+export function pathGlobMatch(pattern: string, path: string): boolean {
+  const norm = (x: string) => x.trim().replace(/^\/+|\/+$/g, "").toLowerCase();
+  let re = "";
+  const pat = norm(pattern);
+  for (let i = 0; i < pat.length; i++) {
+    const ch = pat[i]!;
+    if (ch === "*" && pat[i + 1] === "*") {
+      // „a/**“ trifft auch „a“ selbst; „**/b“ auch „b“.
+      if (pat[i + 2] === "/") { re += "(?:.*/)?"; i += 2; }
+      else if (re.endsWith("/")) { re = re.slice(0, -1) + "(?:/.*)?"; i += 1; }
+      else { re += ".*"; i += 1; }
+    } else if (ch === "*") re += "[^/]*";
+    else if (ch === "?") re += "[^/]";
+    else re += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp("^" + re + "$", "s").test(norm(path));
 }
 
 export interface PermissionVerdict {
@@ -52,7 +79,8 @@ export function parseMode(s: string): PermissionMode | undefined {
   const k = s.toLowerCase().replace(/[\s_-]/g, "");
   if (["ask", "askpermissions", "askalways"].includes(k)) return "ask";
   if (["askedits", "askbeforeedits", "default", "acceptedits"].includes(k)) return "askEdits";
-  if (["free", "workfreely", "bypass", "alloweverything"].includes(k)) return "free";
+  if (["free", "workfreely", "bypass", "alloweverything", "bypasspermissions"].includes(k)) return "free";
+  if (["plan", "planmode", "planfirst"].includes(k)) return "plan";
   return undefined;
 }
 
@@ -106,8 +134,15 @@ export function parseLayer(text: string): { mode?: PermissionMode; rules: Permis
 export function ruleMatches(r: PermissionRule, call: PermissionCall): boolean {
   if (!globMatch(r.tool, call.tool)) return false;
   if (r.pattern === undefined) return true;
+  if (r.pattern.toLowerCase().startsWith(PATH_PREFIX)) {
+    const pat = r.pattern.slice(PATH_PREFIX.length);
+    return (call.paths ?? []).some((p) => pathGlobMatch(pat, p));
+  }
   return call.argument !== undefined && globMatch(r.pattern, call.argument);
 }
+
+/** Wie genau eine Regel ist (für den Grund): feste Zeichen im Muster, dann im Werkzeugnamen. */
+const specificity = (r: PermissionRule) => (r.pattern ?? "").replace(/[*?]/g, "").length * 1000 + r.tool.replace(/[*?]/g, "").length;
 
 export class Permissions {
   constructor(readonly mode: PermissionMode = "askEdits", readonly rules: readonly PermissionRule[] = []) {}
@@ -128,8 +163,10 @@ export class Permissions {
   ruleVerdict(call: PermissionCall): PermissionVerdict | undefined {
     const hits = this.rules.filter((r) => ruleMatches(r, call));
     for (const e of ["deny", "ask", "allow"] as const) {
-      const r = hits.find((h) => h.effect === e);
-      if (r) return { effect: e, reason: `rule “${ruleText(r)}”` };
+      const same = hits.filter((h) => h.effect === e);
+      if (same.length === 0) continue;
+      const r = same.reduce((a, b) => (specificity(b) > specificity(a) ? b : a));
+      return { effect: e, reason: `rule “${ruleText(r)}”` };
     }
     return undefined;
   }
@@ -139,6 +176,7 @@ export class Permissions {
     const r = this.ruleVerdict(call);
     if (r) return r;
     if (!write || this.mode === "free") return { effect: "allow", reason: `${this.mode} mode` };
+    if (this.mode === "plan") return { effect: "deny", reason: "plan mode (recorded as a plan step)" };
     return { effect: "ask", reason: this.mode === "ask" ? "ask mode" : "ask before edits" };
   }
 }
@@ -151,4 +189,28 @@ export function mainArgument(input: JSONValue | Record<string, unknown>): string
     if (typeof o[k] === "string") return o[k];
   }
   return undefined;
+}
+
+/** Zielseite eines Aufrufs (für Pfad-Regeln): die Seite selbst oder die Elternseite, unter der etwas entsteht. */
+export function targetPage(input: JSONValue | Record<string, unknown>): string | undefined {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const o = input as Record<string, unknown>;
+  for (const k of ["page_id", "row_id", "parent_id", "block_id"]) if (typeof o[k] === "string" && o[k] !== "") return o[k];
+  return undefined;
+}
+
+/**
+ * Pfade einer Seite für Pfad-Regeln: Titel von oben nach unten mit „/“ (ohne Bereich) und dieselbe Kette mit dem
+ * Bereich davor („Private/…“ oder der Teamspace-Name). Für einen Block die Seite, die ihn enthält. `[]` = unbekannt.
+ */
+export function pagePathCandidates(store: WorkspaceStore, id: string): string[] {
+  let page = store.blocks.get(id);
+  while (page && !isPageLike(page) && page.parent.startsWith("b:")) page = store.blocks.get(page.parent.slice(2));
+  if (!page) return [];
+  const chain = [...pageAncestors(store, page.id), page.id];
+  const path = chain.map((x) => titleOf(store, x).replaceAll("/", "∕") || "Untitled").join("/");
+  const top = store.blocks.get(chain[0]!);
+  const section = top ? sectionOf(store, top) : { kind: "private" as const };
+  const sectionName = section.kind === "teamspace" ? (store.workspace.teamspaces ?? []).find((t) => t.id === section.id)?.name ?? "Teamspace" : "Private";
+  return [path, `${sectionName}/${path}`];
 }

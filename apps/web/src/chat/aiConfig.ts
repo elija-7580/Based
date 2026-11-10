@@ -41,6 +41,8 @@ export interface AiSettings {
   /** Gewähltes Modell als „<anbieter>/<modell>“. */
   model?: string;
   permission: PermissionMode;
+  /** BSD-245: Modus vor dem Plan-Modus. */
+  planReturn?: PermissionMode;
 }
 
 export interface ModelChoice {
@@ -91,7 +93,8 @@ function sanitize(raw: unknown): AiSettings {
     if (Array.isArray(p.models)) out.providers[k].models = p.models.filter((m): m is string => typeof m === "string" && m !== "");
   }
   if (typeof r.model === "string") out.model = r.model;
-  if (r.permission === "ask" || r.permission === "askEdits" || r.permission === "free") out.permission = r.permission;
+  if (r.permission === "ask" || r.permission === "askEdits" || r.permission === "free" || r.permission === "plan") out.permission = r.permission;
+  if (r.planReturn === "ask" || r.planReturn === "askEdits" || r.planReturn === "free") out.planReturn = r.planReturn;
   return out;
 }
 
@@ -193,7 +196,16 @@ export class AiConfig {
   }
 
   setPermission(permission: PermissionMode) {
-    this.save({ ...this.state.settings, permission });
+    const cur = this.state.settings;
+    // BSD-245: in den Plan-Modus merkt sich den Modus davor; „Plan ausführen“ kehrt dorthin zurück.
+    const planReturn = permission === "plan" && cur.permission !== "plan" ? cur.permission : cur.planReturn;
+    this.save({ ...cur, permission, ...(planReturn && planReturn !== "plan" ? { planReturn } : {}) });
+  }
+
+  /** Plan-Modus verlassen (nach „Plan ausführen“): zurück zum Modus davor (Standard: Ask before edits). */
+  leavePlan() {
+    if (this.state.settings.permission !== "plan") return;
+    this.setPermission(this.state.settings.planReturn ?? "askEdits");
   }
 
   /** Alle eingetragenen Modelle. */

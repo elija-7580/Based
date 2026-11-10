@@ -15,6 +15,7 @@ export const PERMISSIONS: { mode: PermissionMode; name: string; desc: string }[]
   { mode: "ask", name: "Ask every time", desc: "Confirm each action, also searching and reading" },
   { mode: "askEdits", name: "Ask before edits", desc: "Reads freely, asks before writing" },
   { mode: "free", name: "Work freely", desc: "Edits without asking — every change is one undo step" },
+  { mode: "plan", name: "Plan first", desc: "Reads freely and proposes a plan; changes run only after you run the plan" },
 ];
 
 export function AiSettingsSection({ config = aiConfig(), compact = false }: { config?: AiConfig; compact?: boolean }) {

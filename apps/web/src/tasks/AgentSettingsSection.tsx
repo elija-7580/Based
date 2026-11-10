@@ -67,8 +67,8 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
           </SegmentedControl>
         </Row>
         <TextArea label="Rules" width="100%" rows={4} value={rules} onChange={setRules}
-          placeholder={"allow based.create_page\nask based.spawn_agent\ndeny based.file_to_project(Private*)"}
-          description={parsed.errors.length > 0 ? `Can't read: ${parsed.errors.join(" · ")}` : "One rule per line: allow, ask or deny, then a tool like based.spawn_agent (based.* for all), optionally with (pattern). Deny wins over ask, ask over allow."} />
+          placeholder={"allow based.create_page\nask based.spawn_agent\ndeny based.*(path:Private/**)"}
+          description={parsed.errors.length > 0 ? `Can't read: ${parsed.errors.join(" · ")}` : "One rule per line: allow, ask or deny, then a tool like based.spawn_agent (based.* for all), optionally with (pattern). (path:Projects/**) matches pages by their place: titles from the top, ** for any depth, Private/ or a teamspace name in front. Deny wins over ask, ask over allow. The rules apply to the chat too."} />
       </Group>
 
       <Group>
