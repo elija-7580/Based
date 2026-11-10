@@ -16,6 +16,7 @@ import { createDatabase, createMeeting, duplicatePages, keysBetween, syncedOrigi
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
+import { syntaxHighlighting } from "../schema/code.js";
 import {
   canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
   turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor,
@@ -175,6 +176,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
   const editor = useMemo((): BasedEditor => {
     const options = withCollaboration({
       schema: basedSchema(),
+      extensions: [syntaxHighlighting],
       collaboration: { fragment: session.fragment, user: { name: store.userID ?? "me", color: "var(--muted)" } },
       ...(shared.resolveFileUrl ? { resolveFileUrl: shared.resolveFileUrl } : {}),
       ...(shared.uploadFile ? { uploadFile: shared.uploadFile } : {}),
@@ -353,6 +355,7 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
+    { title: "HTML", subtext: "HTML code with a live preview (sandboxed, offline).", aliases: ["html", "web"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "html" } } as never) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
     { title: "Breadcrumb", subtext: "Show where this page sits.", aliases: ["path"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.breadcrumb } as never) },
     { title: "2 columns", subtext: "Two columns side by side.", aliases: ["columns", "layout"], group: "Advanced blocks", onItemClick: () => insert(columns(2) as never) },

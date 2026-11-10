@@ -721,3 +721,38 @@ test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) =
   await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("button", { name: "Remove" }).click();
   await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
 });
+
+test("Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209)", async ({ page }) => {
+  await createPage(page, "Code page");
+  await openPage(page, "Code page");
+  await caretInLastLine(page);
+  await page.keyboard.type("/Code block");
+  await expect(page.getByRole("option", { name: /Code Block/i }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("const answer = 42; // truth");
+  const code = editor(page).locator("[data-content-type=codeBlock]").first();
+  await code.locator("select").selectOption("javascript");
+  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+  await expect(code.locator(".bx-tok-number")).toHaveText(["42"]);
+  await expect(code.locator(".bx-tok-comment")).toHaveText(["// truth"]);
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Code page");
+  await expect(code.locator("select")).toHaveValue("javascript");
+  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+
+  // HTML: Vorschau im iframe ohne gleiche Origin
+  await createPage(page, "HTML page");
+  await openPage(page, "HTML page");
+  await caretInLastLine(page);
+  await page.keyboard.type("/Code block");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("<p id=\"x\">Hello preview</p>");
+  const html = editor(page).locator("[data-content-type=codeBlock]").first();
+  await html.locator("select").selectOption("html");
+  const frame = html.locator("iframe.bx-html-preview");
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(page.frameLocator("iframe.bx-html-preview").locator("#x")).toHaveText("Hello preview");
+  expect(await frame.evaluate((f) => (f as HTMLIFrameElement).contentDocument)).toBeNull();
+});

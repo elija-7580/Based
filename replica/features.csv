@@ -39,7 +39,7 @@ Toggle headings,blocks,should,yes,yes,,yes
 Quote,blocks,must,yes,yes,,yes
 Callout with icon and color,blocks,must,yes,yes,,"yes (BSD-210: Emoji-Picker mit Suche, Random, Remove)"
 Divider,blocks,must,yes,yes,,yes
-Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …),partial: Codeblock ohne Sprachauswahl und Syntax-Highlighting
+Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …),"yes (BSD-209: Sprachwahl, Hervorhebung offline mit dem Swift-Hervorheber aus @based/core)"
 Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network,yes
 Inline equation,blocks,should,yes,partial,inline TeX kept as monospace chip,yes
 Image block (upload / link) with caption,blocks,must,yes,yes,,partial: Upload über BSD-78 (Datei-Blöcke im Editor); Bild-Picker-Feinschliff offen
@@ -158,7 +158,7 @@ Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intell
 Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1",no
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,yes
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
-HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",no
+HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",partial: /html und Sprache HTML mit Vorschau im abgeschotteten iframe (BSD-209); Mermaid fehlt
 Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,no
 Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); keine Inbox über Geräte, offene Freigabe geht beim Neuladen verloren"
 Switch agent mid-session,ai,should,no,yes,transcript hand-off,no
