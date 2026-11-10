@@ -209,8 +209,8 @@ test("Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet", async ({ pag
   await command(page, { op: "seed", count: 120, prefix: "Note" });
   await page.getByRole("button", { name: "Graph" }).click();
   const canvas = page.getByTestId("graph-canvas");
-  await expect(canvas).toHaveAttribute("data-nodes", /^\d+$/);
-  expect(Number(await canvas.getAttribute("data-nodes"))).toBeGreaterThanOrEqual(124);
+  // Der Graph füllt sich asynchron aus dem Worker (erst 0 Knoten): warten statt einmal lesen.
+  await expect.poll(async () => Number(await canvas.getAttribute("data-nodes")), { timeout: 15_000 }).toBeGreaterThanOrEqual(124);
   await expect(page.getByTestId("graph-stats")).toContainText("pages");
   await expect(canvas).toHaveAttribute("data-settled", "", { timeout: 20_000 });
 

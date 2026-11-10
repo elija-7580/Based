@@ -569,3 +569,11 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - Typecheck jetzt dreifach: macOS, `--ios` (UIKit-Stub, BSD-95), `run-watch.sh` (BSD-66); je 0 Fehler.
 - Tests (sauberer Build): BasedCore 252 → 322, BasedBrain 330 → 408.
 - Neue Xcode-Targets in project.yml (Watch-App + Complication, Share Extension, Widgets) und ein Post-Build-Skript für die `based`-CLI (BSD-118): unter Linux nur YAML geprüft, xcodegen/Xcode-Build am Mac offen.
+
+## Pass 30 — Based Next: Parität mit der Swift-App im Design „Based Default“ (10.11.2026)
+- Astryx (PR #5) war schon in main; Gate auf 2b51665 grün (38 E2E).
+- Paritäts-Audit: Spalte `ts` in `replica/features.csv` für alle 221 Zeilen; 28 neue Backlog-Einträge (BSD-201 … 228), 16 Einträge der Phasen 2–4 von „Blockiert“ auf „Bereit“.
+- Welle 1 (sechs Agents, Worktrees `run/*`): Astryx-Theme „Based Default“ aus den Tokens + Einstellungen aus Astryx (17 Seiten, Registry) + Bold-Schriften lokal; Datumsfilter-Zeitraum, Side/Center Peek, Form-View, Map-View offline; Markdown einfügen, @/[[-Erwähnungen, Backlinks, Outline, Synced Blocks; Library, Teamspaces, HTML/PDF-Export, Anhänge beim Import, Graph auf echten Daten; BSD-179, BSD-78 (Dateien über Sync); BSD-159/77/74 (`packages/brain`, Chat-UI).
+- Welle 2 (`run2/*`): BSD-195/196/160 (Aufträge, Plan per Schema, Runs/Projekte/Rechte/Budget), BSD-198/199/163 (Skill-Router, Redact-Regeln, Agent Brain), BSD-161 (Sandbox, CLI `based`) + Teilen/Publish to web, Meeting Notes (`/meet` ohne Transkription), Startseite nach Mockup v10 (BSD-162/197/133).
+- Beim Zusammenführen: zwei Asset-Speicher (Import: IndexedDB/Record-ID, Sync: OPFS/SHA-256) laufen über den Store-Worker; IndexedDB-Schreiben wartet jetzt auf das Transaktionsende (importierte Bilder fehlten gelegentlich).
+- Tests am Ende: core 1479, brain 309, web 91, server 63, cli 10 u. a.; E2E 138 in Chromium + WebKit.

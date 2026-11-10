@@ -83,7 +83,15 @@ export class IDBAssetStore implements AssetStore {
     const bytes = asset.data.slice();
     const value: { data: ArrayBuffer; name: string; mime?: string } = { data: bytes.buffer, name: asset.name };
     if (asset.mime) value.mime = asset.mime;
+    // Auf das Ende der Transaktion warten, nicht nur auf die Anfrage: der Import-Worker wird nach „done“ beendet, und
+    // eine noch offene Transaktion ginge dabei verloren (importierte Bilder fehlten dann gelegentlich).
+    const committed = new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+      tx.onerror = () => reject(tx.error ?? new Error("IndexedDB transaction failed"));
+    });
     await done(tx.objectStore(STORE).put(value, id));
+    await committed;
   }
 
   async get(id: string): Promise<StoredAsset | undefined> {
