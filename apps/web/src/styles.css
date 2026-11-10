@@ -243,6 +243,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-item .tile { width: var(--space-6); height: var(--space-6); background: var(--surface-raised); }
 .qf-item[aria-selected="true"] .tile { background: var(--bg); }
 .qf-item .grow { flex: 1; min-width: 0; }
+.qf-item .qf-key { color: var(--muted); }
 .qf-snippet { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qf-none { padding: var(--space-3); }
 @keyframes fade-in { from { opacity: 0; } }
