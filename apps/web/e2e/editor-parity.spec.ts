@@ -688,3 +688,36 @@ test("Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210)", a
   await expect(cols).toHaveCount(4);
   await expect.poll(async () => Math.abs((await widths())[0]! - kept[0]!)).toBeLessThan(4);
 });
+
+test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) => {
+  await createPage(page, "Callout icons");
+  await openPage(page, "Callout icons");
+  await caretInLastLine(page);
+  await page.keyboard.type("/Callout");
+  await expect(page.getByRole("option", { name: /Callout/ }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Remember the milk");
+  const icon = editor(page).getByRole("button", { name: "Icon" });
+  await expect(icon).toHaveText("💡");
+  await icon.click();
+  const picker = page.getByRole("dialog", { name: "Choose an icon" });
+  await expect(picker).toBeVisible();
+  await picker.getByLabel("Filter emoji").fill("rocket");
+  await expect(picker.getByRole("option").first()).toHaveText("🚀");
+  await page.keyboard.press("Enter");
+  await expect(picker).toHaveCount(0);
+  await expect(icon).toHaveText("🚀");
+  // Remove setzt das Standard-Icon zurück; Esc schließt ohne Änderung
+  await icon.click();
+  await page.keyboard.press("Escape");
+  await expect(picker).toHaveCount(0);
+  await expect(icon).toHaveText("🚀");
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Callout icons");
+  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("🚀");
+  await editor(page).getByRole("button", { name: "Icon" }).click();
+  await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("button", { name: "Remove" }).click();
+  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
+});

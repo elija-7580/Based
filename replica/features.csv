@@ -37,7 +37,7 @@ To-do list,blocks,must,yes,yes,,yes
 Toggle list,blocks,must,yes,yes,,yes
 Toggle headings,blocks,should,yes,yes,,yes
 Quote,blocks,must,yes,yes,,yes
-Callout with icon and color,blocks,must,yes,yes,,"partial: Farbe ja; Icon nur durch 6 feste Symbole durchklicken, kein Emoji-Picker"
+Callout with icon and color,blocks,must,yes,yes,,"yes (BSD-210: Emoji-Picker mit Suche, Random, Remove)"
 Divider,blocks,must,yes,yes,,yes
 Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …),partial: Codeblock ohne Sprachauswahl und Syntax-Highlighting
 Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network,yes
@@ -83,7 +83,7 @@ Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30: Markdo
 Paste URL as bookmark / mention / link,editor,could,yes,yes,,partial: URL über markiertem Text wird Link; Auswahl Bookmark/Mention/Embed fehlt
 Copy blocks as Markdown,editor,should,yes,yes,,"partial: BlockNote legt Markdown als Klartext in die Zwischenablage; Markdown-Export des Kerns (eigene Blöcke) nicht angebunden, kein Menüpunkt"
 Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search",no
-Emoji picker with search,editor,should,yes,yes,,partial: Emoji-Suche im Text mit „:“; kein Picker für Seiten- und Callout-Icons
+Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)"
 Word / character count,editor,could,yes,yes,,no
 Placeholders per block type,editor,should,yes,yes,,yes
 Database inline,databases,must,yes,yes,,yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an)

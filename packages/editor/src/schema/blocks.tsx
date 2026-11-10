@@ -8,11 +8,13 @@ import { useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointer
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { columnFractions, resizeColumns } from "../ui/columns.js";
+import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { scrollToHeading } from "../ui/Outline.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 
 const colorProps = { textColor: defaultProps.textColor, backgroundColor: defaultProps.backgroundColor };
-const CALLOUT_ICONS = ["💡", "📌", "⚠️", "✅", "❗", "ℹ️"];
+/** Standard-Icon eines Callouts ohne eigenes (wie Swift). */
+const CALLOUT_ICONS = ["💡"];
 
 // MARK: Hilfen
 
@@ -66,22 +68,35 @@ function InlineField(props: { value: string; placeholder: string; multiline?: bo
 
 // MARK: Callout
 
+/** Callout-Icon: Klick öffnet den Emoji-Picker (vorher: sechs feste Symbole durchklicken). */
+function CalloutIcon(props: { editor: AnyEditor; id: string; icon: string }) {
+  const env = useEnv();
+  const [open, setOpen] = useState(false);
+  const shown = props.icon || CALLOUT_ICONS[0]!;
+  return (
+    <span className="bx-callout-icon-wrap" contentEditable={false}>
+      <button type="button" className="bx-callout-icon" aria-label="Icon" aria-haspopup="dialog" aria-expanded={open} disabled={!env.editable}
+        onClick={() => setOpen((o) => !o)}>{shown}</button>
+      {open ? (
+        <EmojiPicker className="bx-callout-picker" current={props.icon || undefined} onClose={() => setOpen(false)}
+          onPick={(emoji) => {
+            props.editor.updateBlock(props.id, { props: { icon: emoji ?? "" } });
+            setOpen(false);
+          }} />
+      ) : null}
+    </span>
+  );
+}
+
 export const calloutBlock = createReactBlockSpec(
   { type: CUSTOM.callout, propSchema: { ...colorProps, icon: { default: "" } }, content: "inline" },
   {
-    render: ({ block, editor, contentRef }) => {
-      const icon = block.props.icon || CALLOUT_ICONS[0]!;
-      const next = () => {
-        const i = CALLOUT_ICONS.indexOf(icon);
-        editor.updateBlock(block, { props: { icon: CALLOUT_ICONS[(i + 1) % CALLOUT_ICONS.length]! } });
-      };
-      return (
-        <div className="bx-callout" data-color={block.props.backgroundColor}>
-          <button type="button" className="bx-callout-icon" contentEditable={false} onClick={next} aria-label="Icon">{icon}</button>
-          <div className="bx-callout-text" ref={contentRef} />
-        </div>
-      );
-    },
+    render: ({ block, editor, contentRef }) => (
+      <div className="bx-callout" data-color={block.props.backgroundColor}>
+        <CalloutIcon editor={editor as AnyEditor} id={block.id} icon={block.props.icon} />
+        <div className="bx-callout-text" ref={contentRef} />
+      </div>
+    ),
   },
 );
 

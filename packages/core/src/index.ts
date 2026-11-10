@@ -105,6 +105,8 @@ export { dateMentionValue, dateSuggestions, parseTypedDate } from "./editor/date
 export type { DateSuggestion } from "./editor/date-mention.js";
 export { activeHeadingIndex, headingOutline, withDepth } from "./editor/headings.js";
 export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
+export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
+export type { EmojiEntry } from "./editor/emoji.js";
 export { LinkIndex, backlinksTo, containingPage, linkedPages, mentionedPages } from "./store/links.js";
 export { syncedCopies, syncedDependencies, syncedInstances, syncedOriginal, syncedPasteProblem, trashedRoot, unsyncCopy } from "./store/synced.js";
 export type { SyncedPasteProblem } from "./store/synced.js";
