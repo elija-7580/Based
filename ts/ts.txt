@@ -16,51 +16,52 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1471 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1472)[39m
+packages/core test: [2m      Tests [22m [1m[32m1479 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1480)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
-packages/sync test: [2m      Tests [22m [1m[32m33 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (36)[39m
-packages/brain test: [2m      Tests [22m [1m[32m82 passed[39m[22m[90m (82)[39m
-packages/editor test: [2m      Tests [22m [1m[32m31 passed[39m[22m[90m (31)[39m
-apps/web test: [2m      Tests [22m [1m[32m81 passed[39m[22m[90m (81)[39m
-apps/server test: [2m      Tests [22m [1m[32m47 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (48)[39m
+packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
+packages/editor test: [2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
+packages/brain test: [2m      Tests [22m [1m[32m309 passed[39m[22m[90m (309)[39m
+apps/web test: [2m      Tests [22m [1m[32m91 passed[39m[22m[90m (91)[39m
+apps/server test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
+apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  115 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.6s)
-  ✓  116 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.8s)
+  ✓  149 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.0s)
+  ✓  150 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.7s)
+  ✓  151 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.6s)
+  ✓  152 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.8s)
 
 
-  1) [webkit] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
+  1) [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ─────────────────────────────
 
-    Error: expect(locator).toHaveAttribute(expected) failed
+    Error: expect(locator).toHaveCount(expected) failed
 
-    Locator: locator('.bn-editor img').first()
-    Expected pattern: /^blob:/
-    Received string:  ""
-    Timeout: 15000ms
+    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
 
     Call log:
-      - Expect "toHaveAttribute" locator('.bn-editor img').first() with timeout 15000ms
-      - waiting for locator('.bn-editor img').first()
-        - locator resolved to <img alt="summit.png" draggable="false" class="bn-visual-media" contenteditable="false"/>
-        32 × unexpected value "null"
-           - locator resolved to <img draggable="false" class="bn-visual-media" contenteditable="false" data-asset-state="not-addressable" alt="This file is only stored on the device it was added on." title="This file is only stored on the device it was added on."/>
-        - unexpected value "null"
+      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
+      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
 
 
-      197 |   const img = page.locator(".bn-editor img").first();
-      198 |   await expect(img).toBeVisible({ timeout: 15_000 });
-    > 199 |   await expect(img).toHaveAttribute("src", /^blob:/, { timeout: 15_000 });
-          |                     ^
-      200 |   await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).naturalWidth)).toBe(4);
-      201 | });
-      202 |
-        at /home/runner/work/Based/Based/apps/web/e2e/shell-parity.spec.ts:199:21
+      161 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      162 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
+    > 163 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
+          |                                                                            ^
+      164 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
+      165 |   } finally {
+      166 |     await ctx.close();
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:163:76
 
-    Error Context: test-results/shell-parity-Import-eines--d7962-Bild-aus-dem-Asset-Speicher-webkit/error-context.md
+    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
 
   1 failed
-    [webkit] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
-  7 skipped
-  108 passed (5.5m)
+    [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ──────────────────────────────
+  14 skipped
+  137 passed (7.3m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
