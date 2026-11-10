@@ -484,3 +484,156 @@ test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => 
   await page.reload();
   await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
 });
+
+/** Blockmenü am Block mit diesem Text öffnen. */
+async function blockMenu(page: Page, text: string) {
+  const block = editor(page).locator(".bn-block-content", { hasText: text }).first();
+  await block.hover();
+  await page.locator(".bn-side-menu [draggable=true]").first().click();
+}
+
+test("Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2)", async ({ page }) => {
+  await createPage(page, "Move target");
+  await createPage(page, "Move source");
+  await openPage(page, "Move source");
+  await caretInLastLine(page);
+  await page.keyboard.type("Alpha stays");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Beta moves");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Gamma becomes a page");
+  await settled(page);
+
+  await blockMenu(page, "Beta moves");
+  await page.getByRole("menuitem", { name: "Move to" }).click();
+  const picker = page.getByTestId("block-move");
+  await expect(picker).toBeVisible();
+  await picker.getByLabel("Find a page").fill("Move target");
+  await expect(picker.getByRole("option", { name: /Move target/ })).toBeVisible();
+  await expect(picker.getByRole("option", { name: /Move source/ })).toHaveCount(0);
+  await page.keyboard.press("Enter");
+  await expect(picker).toHaveCount(0);
+  await expect(page.getByTestId("editor-notice")).toContainText("Moved to Move target");
+  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+  await expect(editor(page).getByText("Alpha stays")).toBeVisible();
+
+  await blockMenu(page, "Gamma becomes a page");
+  await page.getByRole("menuitem", { name: "Turn into" }).hover();
+  await page.getByRole("menuitem", { name: "Page", exact: true }).click();
+  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+  await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
+  await settled(page);
+
+  await openPage(page, "Move target");
+  await expect(editor(page).getByText("Beta moves")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Move source");
+  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+  await openPage(page, "Move target");
+  await expect(editor(page).getByText("Beta moves")).toBeVisible();
+});
+
+test("⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2)", async ({ page }) => {
+  await createPage(page, "Toggles");
+  await openPage(page, "Toggles");
+  await caretInLastLine(page);
+  for (const t of ["First toggle", "Second toggle"]) {
+    await page.keyboard.type("/Toggle list");
+    await expect(page.getByRole("option", { name: /Toggle List/i }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await page.keyboard.type(t);
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Enter");
+  }
+  const buttons = editor(page).locator(".bn-toggle-button");
+  await expect(buttons).toHaveCount(2);
+  const expanded = () => buttons.evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-expanded")));
+  await buttons.first().click();
+  expect(await expanded()).toEqual(["true", "false"]);
+  await editor(page).getByText("Second toggle").click();
+  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+  await expect.poll(expanded).toEqual(["true", "true"]);
+  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+  await expect.poll(expanded).toEqual(["false", "false"]);
+});
+
+test("Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3)", async ({ page }) => {
+  await createPage(page, "Block selection");
+  await openPage(page, "Block selection");
+  await caretInLastLine(page);
+  for (const t of ["Row one", "Row two", "Row three"]) {
+    await page.keyboard.type(t);
+    await page.keyboard.press("Enter");
+  }
+  await page.keyboard.type("Row four");
+  await settled(page);
+  const doc = page.locator(".bx-editor > .bx-doc").first();
+  // Ausgewählte Blöcke (IDs am Rahmen) als Text; markiert sind sie über eine Regel mit --selected.
+  const marked = () => doc.evaluate((d) => (d.getAttribute("data-block-selection") ?? "").split(" ").filter(Boolean)
+    .map((id) => (d.querySelector(`[data-id="${id}"] > .bn-block .bn-inline-content`) as HTMLElement | null)?.innerText.trim() ?? "?"));
+  const shade = async (text: string) => editor(page).locator(".bn-block", { hasText: text }).first().evaluate((b) => getComputedStyle(b).backgroundColor);
+
+  await editor(page).getByText("Row two").click();
+  await page.keyboard.press("Escape");
+  await expect(doc).toHaveAttribute("data-block-selection", /.+/);
+  await expect(doc).toBeFocused();
+  expect(await marked()).toEqual(["Row two"]);
+  expect(await shade("Row two")).not.toBe(await shade("Row three"));
+  await page.keyboard.press("ArrowUp");
+  expect(await marked()).toEqual(["Row one"]);
+  await page.keyboard.press("Shift+ArrowDown");
+  expect(await marked()).toEqual(["Row one", "Row two"]);
+
+  await page.keyboard.press("ControlOrMeta+d");
+  await expect(editor(page).getByText("Row one")).toHaveCount(2);
+  await expect(editor(page).getByText("Row two")).toHaveCount(2);
+  expect(await marked()).toEqual(["Row one", "Row two"]); // die Kopien sind ausgewählt
+
+  await page.keyboard.press("Backspace");
+  await expect(editor(page).getByText("Row one")).toHaveCount(1);
+  await expect(doc).not.toHaveAttribute("data-block-selection");
+
+  await editor(page).getByText("Row four").click();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Enter");
+  await expect(doc).not.toHaveAttribute("data-block-selection");
+  await page.keyboard.type(" done");
+  await expect(editor(page).getByText("Row four done")).toBeVisible();
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Block selection");
+  await expect(editor(page).getByText("Row one")).toHaveCount(1);
+  await expect(editor(page).getByText("Row four done")).toBeVisible();
+});
+
+test("Duplicate kopiert Unterseiten tief (BSD-207, Teil 3)", async ({ page }) => {
+  await createPage(page, "Deep copy");
+  await openPage(page, "Deep copy");
+  await caretInLastLine(page);
+  await page.keyboard.type("Nested plan");
+  await settled(page);
+  await blockMenu(page, "Nested plan");
+  await page.getByRole("menuitem", { name: "Turn into" }).hover();
+  await page.getByRole("menuitem", { name: "Page", exact: true }).click();
+  const links = editor(page).locator(".bx-pagelink-title");
+  await expect(links).toHaveText(["Nested plan"]);
+  await settled(page);
+
+  // Inhalt in die Unterseite schreiben, dann zurück und duplizieren
+  await links.first().click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Nested plan");
+  await caretInLastLine(page);
+  await page.keyboard.type("Inside the sub-page");
+  await settled(page);
+  await page.goBack();
+  await expect(page.getByLabel("Page title")).toHaveValue("Deep copy");
+  await blockMenu(page, "Nested plan");
+  await page.getByRole("menuitem", { name: /Duplicate/ }).click();
+  await expect(links).toHaveText(["Nested plan", "Nested plan (1)"]);
+  await links.nth(1).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Nested plan (1)");
+  await expect(editor(page).getByText("Inside the sub-page")).toBeVisible();
+});

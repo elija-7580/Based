@@ -98,4 +98,16 @@ export class ShellPageDirectory implements PageDirectory {
     const id = await this.client.command<string | undefined>({ op: "createPage", title });
     return typeof id === "string" ? id : undefined;
   };
+
+  /** BSD-207 „Move to“: letzter Sortierschlüssel der Zielseite – kurz deren Replik öffnen (geteilt, falls schon offen). */
+  lastChildKey = async (pageID: string): Promise<string | undefined> => {
+    const r = await this.client.openPage(pageID);
+    try {
+      const kids = r.store.children("b:" + pageID);
+      const last = kids[kids.length - 1];
+      return last === undefined ? undefined : r.store.blocks.get(last)?.sk;
+    } finally {
+      r.close();
+    }
+  };
 }

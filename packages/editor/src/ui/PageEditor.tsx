@@ -12,13 +12,17 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
   useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { createDatabase, createMeeting, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createDatabase, createMeeting, duplicatePages, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
-import { canTurnInto, duplicateBlocks, isCurrent, targetBlocks, TURN_INTO, turnInto, type ActionEditor } from "./blockActions.js";
+import {
+  canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
+  turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor,
+} from "./blockActions.js";
+import { MovePicker } from "./MovePicker.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
-import { EnvContext, storePageDirectory, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
+import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
 import { mentionItems } from "./mentions.js";
 import { PageOutline } from "./Outline.js";
@@ -57,6 +61,11 @@ export interface PageEditorProps {
   className?: string;
   /** BSD-226: Aufnahme, Wiedergabe und Zusammenfassung für Meeting-Blöcke (`/meet`). */
   meeting?: MeetingHost;
+  /**
+   * BSD-207: Unterseiten und Datenbanken (Blöcke mit eigenen Records) tief kopieren, Kopie direkt hinter dem Original.
+   * Ohne: `duplicatePages` auf dem Store des Editors (der muss dann alles darin kennen).
+   */
+  duplicatePages?: (ids: string[]) => Promise<unknown>;
 }
 
 interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages"> {
@@ -64,7 +73,12 @@ interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages">
   pages: PageDirectory;
   pageID: string;
   notify: (message: string) => void;
+  /** BSD-207: „Move to“ für Blöcke eines (ggf. eingebetteten) Editors öffnen. */
+  startMove: (req: MoveRequest) => void;
 }
+
+/** Offenes „Move to“: welche Blöcke aus welchem Editor. */
+interface MoveRequest { editor: ActionEditor; session: DocSession; ids: string[] }
 
 const memoryDocStores = new WeakMap<WorkspaceStore, YDocStore>();
 function defaultDocStore(store: WorkspaceStore): YDocStore {
@@ -97,14 +111,31 @@ export function PageEditor(props: PageEditorProps) {
   useEffect(() => () => {
     if (timer.current !== undefined) clearTimeout(timer.current);
   }, []);
+  const [move, setMove] = useState<MoveRequest | undefined>();
   const shared: Shared = {
-    ...rest, pageID, notify,
+    ...rest, pageID, notify, startMove: setMove,
     docStore: props.docStore ?? defaultDocStore(props.store),
     pages: props.pages ?? defaultDirectory(props.store),
   };
+  const pickTarget = async (req: MoveRequest, page: PageRef) => {
+    setMove(undefined);
+    let last: string | undefined;
+    try {
+      last = await shared.pages.lastChildKey?.(page.id);
+    } catch { /* ohne: was der Store kennt */ }
+    const n = moveBlocksToPage(req.editor, req.session, req.ids, page.id, last);
+    notify(n ? `Moved to ${page.title || "Untitled"}` : "Those blocks can’t be moved there.");
+  };
   return (
-    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer}>
+    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer} onKeyDown={(e) => {
+      // ⌘⌥T / Ctrl+Alt+T: alle Toggles der Seite auf- bzw. zuklappen (wie Notion).
+      if ((e.metaKey || e.ctrlKey) && e.altKey && !e.shiftKey && e.code === "KeyT") {
+        e.preventDefault();
+        if (container) toggleAll(container);
+      }
+    }}>
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
+      {move ? <MovePicker pages={shared.pages} selfID={move.session.rootID} moving={move.ids} onClose={() => setMove(undefined)} onPick={(p) => void pickTarget(move, p)} /> : null}
       {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
       {notice ? (
         <div className="bx-notice" role="status" data-testid="editor-notice">
@@ -182,25 +213,102 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     ),
   };
   const mentionOptions = { pages: shared.pages, people: shared.people ?? [], selfID: shared.pageID };
+  const actions = editor as unknown as ActionEditor;
+
+  /** ⌘D, Blockmenü, Blockauswahl: Textblöcke im Editor, Unterseiten/Datenbanken tief im Store. */
+  const duplicate = (blocks: readonly BlockLike[]) => {
+    const r = duplicateBlocks(actions, blocks);
+    if (r.records.length) {
+      session.flush();
+      const copy = shared.duplicatePages ? shared.duplicatePages(r.records) : Promise.resolve(duplicatePages(store, r.records));
+      copy.catch((e: unknown) => shared.notify("Couldn’t duplicate: " + (e instanceof Error ? e.message : String(e))));
+    }
+    if (r.skipped) shared.notify("Synced blocks and meetings can’t be duplicated.");
+    return r;
+  };
+
+  // Blockauswahl (Esc, wie Notion): markierte Blöcke, ↑/↓ wandern, ⇧↑/⇧↓ erweitern, Enter schreibt weiter,
+  // ⌫/Entf löschen, ⌘D dupliziert, ⌘⇧P „Move to“, Esc hebt auf. Der Fokus liegt solange auf dem Rahmen.
+  const [range, setRange] = useState<BlockRange | undefined>();
+  const docRef = useRef<HTMLDivElement>(null);
+  const sel = editor as unknown as SelectionEditor;
+  const selected = range ? rangeIDs(sel, range) : [];
+  const selectBlocks = (r: BlockRange | undefined) => {
+    setRange(r);
+    if (!r) return;
+    const ids = rangeIDs(sel, r);
+    try {
+      // Auch als Editor-Auswahl, damit Blockmenü-Aktionen (Turn into, Colors …) auf alle wirken.
+      if (ids.length) editor.setSelection(ids[0]!, ids[ids.length - 1]!);
+    } catch { /* Blöcke ohne Text: nur die Markierung */ }
+    docRef.current?.focus({ preventScroll: true });
+    globalThis.document?.querySelector(`[data-id="${CSS.escape(r.head)}"]`)?.scrollIntoView?.({ block: "nearest" });
+  };
+  const leaveSelection = (to?: string) => {
+    setRange(undefined);
+    if (to && editor.getBlock(to)) {
+      try {
+        editor.setTextCursorPosition(to, "end");
+      } catch { /* Block ohne Text */ }
+    }
+    editor.focus();
+  };
+  const onSelectionKey = (e: KeyboardEvent) => {
+    if (!range) return;
+    const mod = e.metaKey || e.ctrlKey;
+    const blocks = selected.map((id) => actions.getBlock(id)).filter((b): b is BlockLike => b !== undefined);
+    if (e.key === "Escape") leaveSelection();
+    else if (e.key === "ArrowUp" || e.key === "ArrowDown") selectBlocks(stepRange(sel, range, e.key === "ArrowUp" ? -1 : 1, e.shiftKey));
+    else if (e.key === "Enter") leaveSelection(range.head);
+    else if (editable && (e.key === "Backspace" || e.key === "Delete")) {
+      const before = editor.getPrevBlock(selected[0]!)?.id;
+      editor.removeBlocks(selected);
+      leaveSelection(before);
+    } else if (editable && mod && !e.shiftKey && e.key.toLowerCase() === "d") {
+      const r = duplicate(blocks);
+      if (r.inserted.length) selectBlocks({ anchor: r.inserted[0]!, head: r.inserted[r.inserted.length - 1]! });
+    } else if (editable && mod && e.shiftKey && e.key.toLowerCase() === "p") {
+      shared.startMove({ editor: actions, session, ids: selected });
+      setRange(undefined);
+    } else return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   return (
     <EnvContext.Provider value={env}>
-      <div className="bx-doc" onKeyDownCapture={(e) => {
+      <div className="bx-doc" ref={docRef} tabIndex={-1} data-block-selection={range ? selected.join(" ") : undefined} onKeyDownCapture={(e) => {
+        if (range && e.target === e.currentTarget) {
+          onSelectionKey(e);
+          return;
+        }
+        if (e.target !== editor.domElement) return; // eingebettete Editoren (Synced Block) haben ihren eigenen Rahmen
         if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt.current = Date.now();
         // ⌘D: Block (bzw. ausgewählte Blöcke) duplizieren, wie in Notion.
         if (editable && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "d") {
           e.preventDefault();
-          const a = editor as unknown as ActionEditor;
-          const r = duplicateBlocks(a, targetBlocks(a, editor.getTextCursorPosition().block.id));
-          if (r.skipped) shared.notify("Sub-pages, databases and synced blocks can’t be duplicated here yet.");
+          duplicate(targetBlocks(actions, caretBlockID(editor)));
         }
+        // Esc: Blockauswahl (nicht, solange ein Menü offen ist – das schließt Esc selbst).
+        if (e.key === "Escape" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.nativeEvent.isComposing && !globalThis.document?.querySelector(".bn-suggestion-menu")) {
+          const ids = targetBlocks(actions, caretBlockID(editor)).map((b) => b.id);
+          const first = ids[0], last = ids[ids.length - 1];
+          if (first && last) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectBlocks({ anchor: first, head: last });
+          }
+        }
+      }} onMouseDownCapture={() => {
+        if (range) setRange(undefined);
       }}>
+        {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }"}</style> : null}
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} notify={shared.notify} />} />} />
+          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} />} />} />
           <FormattingToolbarController formattingToolbar={() => (
             <FormattingToolbar>
               {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
@@ -210,6 +318,17 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
       </div>
     </EnvContext.Provider>
   );
+}
+
+/**
+ * Block an der Schreibmarke. Erst aus der DOM-Auswahl: direkt nach einem Klick hat ProseMirror die neue Auswahl
+ * (selectionchange) evtl. noch nicht übernommen, wenn die nächste Taste kommt.
+ */
+function caretBlockID(editor: BasedEditor): string {
+  const node = globalThis.getSelection?.()?.anchorNode;
+  const el = node instanceof Element ? node : node?.parentElement;
+  const id = el && editor.domElement?.contains(el) ? el.closest(".bn-block-outer")?.getAttribute("data-id") : undefined;
+  return id && editor.getBlock(id) ? id : editor.getTextCursorPosition().block.id;
 }
 
 // MARK: Slash-Menü
@@ -305,11 +424,12 @@ export function insertInlineEquation(editor: BasedEditor, expression = "") {
 
 // MARK: Block-Menü mit „Copy and sync“
 
-function BlockMenu(props: { session: DocSession; notify: (message: string) => void }) {
+function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void }) {
   return (
     <DragHandleMenu>
-      <TurnIntoItem />
-      <DuplicateItem notify={props.notify} />
+      <TurnIntoItem session={props.session} />
+      <DuplicateItem duplicate={props.duplicate} />
+      <MoveToItem session={props.session} startMove={props.startMove} />
       <BlockColorsItem>Colors</BlockColorsItem>
       <CopyAndSyncItem session={props.session} />
       <RemoveBlockItem>Delete</RemoveBlockItem>
@@ -318,7 +438,7 @@ function BlockMenu(props: { session: DocSession; notify: (message: string) => vo
 }
 
 /** BSD-207: „Duplicate“ (⌘D) im Blockmenü – wirkt auf die Auswahl, wenn der Block darin liegt. */
-function DuplicateItem(props: { notify: (message: string) => void }) {
+function DuplicateItem(props: { duplicate: (blocks: readonly BlockLike[]) => unknown }) {
   const Components = useComponentsContext()!;
   const editor = useBlockNoteEditor() as unknown as BasedEditor;
   const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
@@ -326,16 +446,31 @@ function DuplicateItem(props: { notify: (message: string) => void }) {
   return (
     <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
       const a = editor as unknown as ActionEditor;
-      const r = duplicateBlocks(a, targetBlocks(a, block.id));
-      if (r.skipped) props.notify("Sub-pages, databases and synced blocks can’t be duplicated here yet.");
+      props.duplicate(targetBlocks(a, block.id));
     }}>
       Duplicate <span className="bx-menu-key">⌘D</span>
     </Components.Generic.Menu.Item>
   );
 }
 
-/** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen. */
-function TurnIntoItem() {
+/** BSD-207: „Move to“ – öffnet die Seitensuche; wirkt auf die Auswahl, wenn der Block darin liegt. */
+function MoveToItem(props: { session: DocSession; startMove: (req: MoveRequest) => void }) {
+  const Components = useComponentsContext()!;
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  if (!block) return null;
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+      const a = editor as unknown as ActionEditor;
+      props.startMove({ editor: a, session: props.session, ids: targetBlocks(a, block.id).map((b) => b.id) });
+    }}>
+      Move to
+    </Components.Generic.Menu.Item>
+  );
+}
+
+/** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen, dazu „Page“. */
+function TurnIntoItem(props: { session: DocSession }) {
   const Components = useComponentsContext()!;
   const portalElement = usePortalElement();
   const editor = useBlockNoteEditor() as unknown as BasedEditor;
@@ -355,6 +490,9 @@ function TurnIntoItem() {
             {o.label}
           </Components.Generic.Menu.Item>
         ))}
+        <Components.Generic.Menu.Item key={TURN_INTO_PAGE.key} className="bn-menu-item" onClick={() => void turnIntoPage(a, props.session, current.id)}>
+          {TURN_INTO_PAGE.label}
+        </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
   );
