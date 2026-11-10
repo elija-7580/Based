@@ -1,5 +1,6 @@
 // Notion-Formeln, portiert aus BasedCore Query/Formula.swift (Lexer, Parser, Auswertung, absturzsicher: BSD-17).
 // Fehlermeldungen wörtlich wie in Swift. Verifiziert über fixtures/formulas/*.json (BSD-172).
+import { graphemes } from "../graphemes.js";
 import {
   addCalendar, asList, bool, compareValues, date, describe, EMPTY, formatMoment, fromJSDate, isEmptyValue,
   isoWeek, list, monthsBetween, num, parseDate, parseSwiftDouble, plainNumber, sameValue, startOfDay, str, toJSDate,
@@ -57,8 +58,7 @@ function formulaInt(d: number, fn: string): number {
 
 // MARK: Graphem-Hilfen (Swift zählt Characters)
 
-const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-const graphemes = (s: string) => [...segmenter.segment(s)].map((x) => x.segment);
+
 const isLetter = (c: string) => /^\p{L}/u.test(c);
 const isNumberChar = (c: string) => /^\p{N}/u.test(c);
 const isWhitespace = (c: string) => /^[\s\u0085\u2028\u2029]/u.test(c);
