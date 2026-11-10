@@ -11,12 +11,13 @@ import {
 } from "./blocks.js";
 import { inlineEquation, mentionInline } from "./inline.js";
 import { meetingBlock } from "./meeting.js";
+import { codeBlockSpec } from "./code.js";
 
 export function createBasedSchema() {
-  const { audio, bulletListItem, checkListItem, codeBlock, divider, file, image, numberedListItem, paragraph, quote, table, toggleListItem, video } = defaultBlockSpecs;
+  const { audio, bulletListItem, checkListItem, divider, file, image, numberedListItem, paragraph, quote, table, toggleListItem, video } = defaultBlockSpecs;
   return BlockNoteSchema.create({
     blockSpecs: {
-      paragraph, bulletListItem, numberedListItem, checkListItem, toggleListItem, quote, codeBlock, divider, table,
+      paragraph, bulletListItem, numberedListItem, checkListItem, toggleListItem, quote, codeBlock: codeBlockSpec, divider, table,
       image, video, audio, file,
       heading: createHeadingBlockSpec({ levels: [1, 2, 3, 4], allowToggleHeadings: true }),
       callout: calloutBlock(),
