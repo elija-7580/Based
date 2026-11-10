@@ -1,13 +1,13 @@
 // BSD-155: Zellen-Editoren für alle bearbeitbaren Property-Typen. Jede Änderung geht über eine
 // Store-Transaktion (setValue/setRelation/addOption); Text wird beim Schließen übernommen (wie Notion).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   addOption, pv, rowsOf, setRelation, setValue, titleOf, valueCase,
   type Block, type DateValue, type PropertySchema,
 } from "@based/core";
-import { useDB } from "../context.js";
+import { ShellSlots, useDB } from "../context.js";
 import {
-  editText, fromInputValue, parseTextInput, storedDate, storedFiles, storedIDs, toInputValue, withDate,
+  editText, fromInputValue, parseTextInput, storedDate, storedFiles, type StoredFile, storedIDs, toInputValue, withDate,
 } from "../logic/values.js";
 import { Icon, OptionPill, Popover, type Anchor } from "../ui.js";
 import { PlaceEditor } from "./PlaceEditor.js";
@@ -197,10 +197,32 @@ function ListEditor({ row, prop, anchor, onClose, kind }: CellEditorProps & { ki
 
 function FilesEditor({ row, prop, anchor, onClose }: CellEditorProps) {
   const { store } = useDB();
+  const host = useContext(ShellSlots).files;
   const files = storedFiles(row, prop);
   const [url, setURL] = useState("");
   const [name, setName] = useState("");
-  const save = (next: { name: string; url?: string }[]) => setValue(store, row.id, prop.id, next.length ? pv("files", next) : null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const input = useRef<HTMLInputElement>(null);
+  const save = (next: StoredFile[]) => setValue(store, row.id, prop.id, next.length ? pv("files", next) : null);
+  // BSD-208: hochladen → Asset-Speicher der Shell; im Wert wie Swift `{name, asset: {id, name, size, mime}}`.
+  const upload = async (list: FileList | null) => {
+    if (!host || !list?.length) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const added: StoredFile[] = [];
+      for (const f of [...list]) {
+        const id = await host.upload(f);
+        added.push({ name: f.name, asset: { id, name: f.name, size: f.size, ...(f.type ? { mime: f.type } : {}) } });
+      }
+      save([...storedFiles(store.blocks.get(row.id) ?? row, prop), ...added]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   const add = () => {
     const u = url.trim();
     if (!u) return;
@@ -218,6 +240,13 @@ function FilesEditor({ row, prop, anchor, onClose }: CellEditorProps) {
       <input className="dbui-input" placeholder="Paste a link" aria-label="File link" value={url} onChange={(e) => setURL(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
       <input className="dbui-input" placeholder="Name (optional)" aria-label="File name" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
       <button type="button" className="dbui-btn" onClick={add} disabled={!url.trim()}>Add link</button>
+      {host ? (
+        <>
+          <button type="button" className="dbui-btn" disabled={busy} onClick={() => input.current?.click()}>{busy ? "Uploading…" : "Upload file"}</button>
+          <input ref={input} type="file" multiple hidden aria-label="Upload file" onChange={(e) => void upload(e.target.files)} />
+        </>
+      ) : null}
+      {error ? <p role="alert" className="dbui-error">{error}</p> : null}
     </Popover>
   );
 }

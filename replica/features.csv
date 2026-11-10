@@ -115,7 +115,7 @@ Property: date (range / time),properties,must,yes,yes,,yes
 Property: checkbox,properties,must,yes,yes,,yes
 Property: url / email / phone,properties,must,yes,yes,,yes
 Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),partial: nur „Me“ oder frei getippte Kennung; keine Nutzerliste
-Property: files & media,properties,should,yes,yes,,partial: nur Links; Upload fehlt
+Property: files & media,properties,should,yes,yes,,"yes (BSD-208: Links und Upload in den Asset-Speicher, Wert wie Swift mit asset; Öffnen als Blob)"
 Property: created / edited time and by,properties,must,yes,yes,,yes
 Property: unique ID,properties,could,yes,yes,,yes
 Property: formula (Formula 2.0),properties,should,yes,partial,"Formula 2.0 core: arithmetic, text, dates, lists, if/ifs, prop(); not every builtin",yes

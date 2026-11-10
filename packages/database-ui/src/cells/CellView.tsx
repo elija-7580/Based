@@ -1,10 +1,10 @@
 // BSD-155: Anzeige einer Zelle für alle Property-Typen (Swift Views/Database/Cells.swift).
-import { memo, type ReactNode } from "react";
+import { memo, useContext, type ReactNode } from "react";
 import {
   cellText, formatDateCell, formatNumber, formatValue, plainText, titleOf, valueCase,
   type Block, type FormulaRun, type PropertySchema, type Value,
 } from "@based/core";
-import { useDB } from "../context.js";
+import { ShellSlots, useDB, type FileHost } from "../context.js";
 import { hrefOf, storedFiles, storedIDs } from "../logic/values.js";
 import { Icon, OptionPill } from "../ui.js";
 
@@ -51,7 +51,13 @@ function ComputedValue({ v, prop, wrap }: { v: Value; prop: PropertySchema; wrap
   return <span className={wrap ? "dbui-wrap" : "dbui-clip"}>{formatValue(engine, v, prop)}</span>;
 }
 
+/** BSD-208: hochgeladene Datei öffnen (Blob-URL aus dem Asset-Speicher der Shell) in einem neuen Fenster. */
+function openAsset(host: FileHost, id: string) {
+  void host.open(id).then((u) => globalThis.open?.(u, "_blank"), () => { /* nicht ladbar: nichts zu öffnen */ });
+}
+
 function CellViewInner({ row, prop, wrap, compact, onToggleCheckbox, onButton }: CellViewProps): ReactNode {
+  const fileHost = useContext(ShellSlots).files;
   const { store, engine, db, onOpenPage, locked } = useDB();
   const cls = wrap ? "dbui-wrap" : "dbui-clip";
   switch (prop.type) {
@@ -104,7 +110,9 @@ function CellViewInner({ row, prop, wrap, compact, onToggleCheckbox, onButton }:
         <span className={"dbui-pills" + (wrap ? " wrap" : "")}>
           {files.map((f, i) => f.url
             ? <a key={i} className="dbui-file dbui-link" href={hrefOf(f.url)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}><Icon name="file" size={12} />{f.name}</a>
-            : <span key={i} className="dbui-file"><Icon name="file" size={12} />{f.name}</span>)}
+            : f.asset && fileHost
+              ? <button key={i} type="button" className="dbui-file dbui-link" onClick={(e) => { e.stopPropagation(); openAsset(fileHost, f.asset!.id); }}><Icon name="file" size={12} />{f.name}</button>
+              : <span key={i} className="dbui-file"><Icon name="file" size={12} />{f.name}</span>)}
         </span>
       ) : null;
     }
