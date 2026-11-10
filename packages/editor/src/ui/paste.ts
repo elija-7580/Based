@@ -1,15 +1,31 @@
 // Einfügen: HTML geht an BlockNote (BSD-176, hat Vorrang), reiner Text, der wie Markdown aussieht, durch den
 // Markdown-Parser aus @based/core, alles andere bleibt Klartext. „Paste as plain text“ (⇧⌘V) ist immer Klartext.
 // Ein Einfügen = eine ProseMirror-Transaktion = ein Undo-Schritt.
-import { pasteKind } from "@based/core";
+import { ClipboardHTMLImporter, pasteKind } from "@based/core";
 import type { BasedEditor } from "../schema/schema.js";
-import { markdownToBlocks, singleParagraph } from "../mapping/imported.js";
+import type { BNBlock } from "../mapping/bn.js";
+import { importedToBlocks, markdownToBlocks, singleParagraph } from "../mapping/imported.js";
+
+/** Eine einzelne Web-Adresse (nichts sonst)? Dann bietet der Editor Link / Bookmark / Embed an. */
+export function singleURL(text: string): string | undefined {
+  const t = text.trim();
+  if (!/^https?:\/\/[^\s<>"]+$/i.test(t)) return undefined;
+  try {
+    return new URL(t).protocol.startsWith("http") ? t : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface PasteArgs {
   event: ClipboardEvent;
   defaultPasteHandler: (context?: { prioritizeMarkdownOverHTML?: boolean; plainTextAsMarkdown?: boolean }) => boolean | undefined;
   /** Die letzte Taste war ⇧⌘V / Ctrl+Shift+V. */
   plainOnly: boolean;
+  /** Eine nackte URL wurde als Link in einen leeren Absatz eingefügt: Auswahl Link/Bookmark/Embed anbieten. */
+  onURL?: (blockID: string, url: string) => void;
+  /** Gibt es diese Seite? (Notion-/Based-Links werden dann zur Erwähnung.) */
+  pageExists?: (id: string) => boolean;
 }
 
 /** Den Undo-Verlauf vor dem Einfügen abschließen (sonst verschmilzt es mit dem Tippen davor). */
@@ -31,7 +47,19 @@ function inCodeOrTable(editor: BasedEditor): boolean {
 
 /** Markdown-Text an der Schreibmarke einfügen. Gibt `false` zurück, wenn nichts Einfügbares herauskam. */
 export function insertMarkdown(editor: BasedEditor, markdown: string): boolean {
-  const blocks = markdownToBlocks(markdown);
+  return insertParsed(editor, markdownToBlocks(markdown));
+}
+
+/**
+ * BSD-211: HTML aus Notion, Google Docs und dem Web über den Kern-Importer (ClipboardHTMLImporter, Swift-Fixtures):
+ * Farben, Callouts, To-dos, Toggles, Tabellen, Code mit Sprache, Notion-Links als Seiten-Erwähnung.
+ */
+export function htmlToBlocks(html: string, pageExists: (id: string) => boolean = () => false, newID?: () => string): BNBlock[] {
+  return importedToBlocks(new ClipboardHTMLImporter(ClipboardHTMLImporter.pageResolver(pageExists)).parse(html), newID);
+}
+
+/** Geparste Blöcke an der Schreibmarke einfügen (ein Undo-Schritt). `false`, wenn nichts herauskam. */
+export function insertParsed(editor: BasedEditor, blocks: BNBlock[]): boolean {
   if (blocks.length === 0) return false;
   closeHistory(editor);
   const inline = singleParagraph(blocks);
@@ -69,9 +97,27 @@ export function handlePaste(editor: BasedEditor, args: PasteArgs): boolean {
   const text = data.getData("text/plain");
   const html = types.includes("text/html") ? data.getData("text/html") : "";
   const kind = pasteKind({ html, text, plainOnly: args.plainOnly, inCode: inCodeOrTable(editor) });
-  if (kind === "html") return args.defaultPasteHandler({ prioritizeMarkdownOverHTML: false, plainTextAsMarkdown: false }) ?? false;
+  if (kind === "html") {
+    if (ClipboardHTMLImporter.isStructured(html) && !inCodeOrTable(editor)) {
+      try {
+        if (insertParsed(editor, htmlToBlocks(html, args.pageExists))) return true;
+      } catch { /* unten: BlockNote */ }
+    }
+    return args.defaultPasteHandler({ prioritizeMarkdownOverHTML: false, plainTextAsMarkdown: false }) ?? false;
+  }
   if (kind === "markdown" && insertMarkdown(editor, text)) return true;
   if (text === "") return true;
+  const url = !args.plainOnly && args.onURL && kind === "plain" ? singleURL(text) : undefined;
+  if (url) {
+    const cur = editor.getTextCursorPosition().block;
+    const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0;
+    if (empty) {
+      closeHistory(editor);
+      editor.insertInlineContent([{ type: "link", href: url, content: url }] as never, { updateSelection: true });
+      args.onURL?.(cur.id, url);
+      return true;
+    }
+  }
   closeHistory(editor);
   editor.pasteText(text);
   return true;

@@ -721,3 +721,101 @@ test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) =
   await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("button", { name: "Remove" }).click();
   await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
 });
+
+test("Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209)", async ({ page }) => {
+  await createPage(page, "Code page");
+  await openPage(page, "Code page");
+  await caretInLastLine(page);
+  await page.keyboard.type("/Code block");
+  await expect(page.getByRole("option", { name: /Code Block/i }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("const answer = 42; // truth");
+  const code = editor(page).locator("[data-content-type=codeBlock]").first();
+  await code.locator("select").selectOption("javascript");
+  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+  await expect(code.locator(".bx-tok-number")).toHaveText(["42"]);
+  await expect(code.locator(".bx-tok-comment")).toHaveText(["// truth"]);
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Code page");
+  await expect(code.locator("select")).toHaveValue("javascript");
+  await expect(code.locator(".bx-tok-keyword")).toHaveText(["const"]);
+
+  // HTML: Vorschau im iframe ohne gleiche Origin
+  await createPage(page, "HTML page");
+  await openPage(page, "HTML page");
+  await caretInLastLine(page);
+  await page.keyboard.type("/Code block");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("<p id=\"x\">Hello preview</p>");
+  const html = editor(page).locator("[data-content-type=codeBlock]").first();
+  await html.locator("select").selectOption("html");
+  const frame = html.locator("iframe.bx-html-preview");
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(page.frameLocator("iframe.bx-html-preview").locator("#x")).toHaveText("Hello preview");
+  expect(await frame.evaluate((f) => (f as HTMLIFrameElement).contentDocument)).toBeNull();
+});
+
+test("URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211)", async ({ page, browserName }) => {
+  await createPage(page, "Paste URL");
+  await openPage(page, "Paste URL");
+  await caretInLastLine(page);
+  await paste(page, { "text/plain": "https://example.com/guide" });
+  const menu = page.getByRole("menu", { name: "Paste as" });
+  await expect(menu).toBeVisible();
+  await expect(editor(page).locator("a[href='https://example.com/guide']")).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveCount(0);
+  await expect(editor(page).locator("[data-bx=embed]")).toContainText("example.com");
+  await expect(editor(page).locator(".bn-inline-content a[href='https://example.com/guide']")).toHaveCount(0);
+
+  // Esc behält den Link, Weitertippen schließt das Menü ebenfalls
+  await caretInLastLine(page);
+  await paste(page, { "text/plain": "https://example.org" });
+  await expect(menu).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(editor(page).locator("a[href='https://example.org']")).toBeVisible();
+
+  // Copy as Markdown aus dem Blockmenü
+  await caretInLastLine(page);
+  await page.keyboard.type("Plain **words**");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("- item");
+  await settled(page);
+  if (browserName === "chromium") await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await blockMenu(page, "Plain words");
+  await page.getByRole("menuitem", { name: "Copy as Markdown" }).click();
+  const copied = await page.evaluate(async () => {
+    try {
+      return await navigator.clipboard.readText();
+    } catch {
+      return "";
+    }
+  });
+  // WebKit lässt Tests die Zwischenablage nicht lesen; Chromium mit Berechtigung schon.
+  if (browserName === "chromium") expect(copied).toBe("Plain **words**");
+});
+
+test("Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211)", async ({ page }) => {
+  await createPage(page, "Paste Notion");
+  await openPage(page, "Paste Notion");
+  await caretInLastLine(page);
+  const html = "<meta charset=\"utf-8\"><h2>Plan</h2><p>Some <span class=\"highlight-red\">red</span> text</p>"
+    + "<ul class=\"to-do-list\"><li><div class=\"checkbox checkbox-on\"></div><span>Done thing</span></li></ul>"
+    + "<aside><span class=\"icon\">🚀</span><div>Callout text</div></aside><pre><code class=\"language-swift\">let x = 1</code></pre>";
+  await paste(page, { "text/html": html, "text/plain": "Plan\nSome red text" });
+  await expect(editor(page).locator("h2", { hasText: "Plan" })).toBeVisible();
+  await expect(editor(page).locator("[data-content-type=checkListItem] input[type=checkbox]")).toBeChecked();
+  await expect(editor(page).locator("[data-content-type=callout]")).toContainText("Callout text");
+  await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("🚀");
+  await expect(editor(page).locator("[data-content-type=codeBlock] select")).toHaveValue("swift");
+  await expect(editor(page).locator("[data-content-type=codeBlock] .bx-tok-keyword")).toHaveText(["let"]);
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Paste Notion");
+  await expect(editor(page).locator("[data-content-type=callout]")).toContainText("Callout text");
+});
