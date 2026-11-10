@@ -316,3 +316,9 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-ai-action.primary { background: var(--button); color: var(--button-ink); }
 .bx-ai-status { margin: 0; display: flex; gap: var(--space-2); align-items: center; color: var(--muted); }
 .bx-ai-preview { white-space: pre-wrap; max-height: calc(var(--space-8) * 5); overflow: auto; padding: var(--space-2); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink-2); }
+
+/* BSD-209: eingebettete Inhalte (iframe) bekannter Anbieter */
+.bx-embed { margin: 0; display: grid; gap: var(--space-1); }
+.bx-embed-frame { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
+.bx-embed-caption { font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-embed-caption a { color: inherit; }

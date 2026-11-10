@@ -3,7 +3,7 @@
 // Callbacks aus dem EditorEnv.
 import { defaultProps, type BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
-import { containingPage, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
+import { containingPage, embedTarget, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
@@ -367,6 +367,18 @@ function EmbedView(props: { id: string; kind: string; url: string; editor: AnyEd
     return <InlineField value="" placeholder={`Paste a link (${props.kind})…`} onDone={(v) => v && props.editor.updateBlock(props.id, { props: { url: v.trim() } })} />;
   }
   const meta = env.store.blocks.get(props.id)?.props?.bookmark;
+  // BSD-209: bekannte Anbieter (YouTube, Vimeo, Loom, Figma, CodePen, Spotify, Google Maps) als eingebetteter Inhalt.
+  const target = props.kind === "embed" ? embedTarget(props.url) : undefined;
+  if (target) {
+    return (
+      <figure className="bx-embed" data-provider={target.provider}>
+        <iframe className="bx-embed-frame" src={target.src} title={`${target.provider} embed`} style={{ aspectRatio: String(target.aspect) }}
+          sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" allow="fullscreen; picture-in-picture; encrypted-media"
+          referrerPolicy="strict-origin-when-cross-origin" loading="lazy" />
+        <figcaption className="bx-muted bx-embed-caption"><a href={props.url} target="_blank" rel="noreferrer">{target.provider} · {props.url}</a></figcaption>
+      </figure>
+    );
+  }
   return (
     <a className="bx-embed-card" href={props.url} target="_blank" rel="noreferrer">
       <span className="bx-embed-kind">{props.kind}</span>
