@@ -123,11 +123,23 @@
 .bx-editor .bn-block-content[data-content-type="columnList"],
 .bx-editor .bn-block-content[data-content-type="column"] { padding: 0; min-height: var(--space-1); }
 .bx-columns-handle, .bx-column-handle { height: var(--space-1); width: 100%; }
-.bx-editor .bn-block-content[data-content-type="columnList"] + .bn-block-group {
+/* Der Inhalt eigener Blöcke steckt in BlockNotes .react-renderer – deshalb über :has am Block, nicht per „+“. */
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group {
   display: flex; gap: var(--space-6); margin-left: 0; padding-left: 0; border-left: 0;
 }
-.bx-editor .bn-block-content[data-content-type="columnList"] + .bn-block-group > .bn-block-outer { flex: 1 1 0; min-width: 0; }
-.bx-editor .bn-block-content[data-content-type="column"] + .bn-block-group { margin-left: 0; padding-left: 0; border-left: 0; }
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group > .bn-block-outer { flex: var(--bx-col, 1) 1 0; min-width: 0; }
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-block-group { margin-left: 0; padding-left: 0; border-left: 0; }
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-trailing-block { display: none; }
+/* Keine Verschachtelungs-Linie an Spalten und ihrem direkten Inhalt (sie sind Layout, keine Einrückung) */
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="columnList"]) > .bn-block-group > .bn-block-outer::before,
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="column"]) > .bn-block-group > .bn-block-outer::before { content: none; }
+/* BSD-210: Griff zum Ziehen der Spaltenbreite, mittig in der Lücke rechts der Spalte, sichtbar beim Überfahren */
+.bx-editor .bn-block-content[data-content-type="column"], .bx-editor .react-renderer:has(> .bn-block-content[data-content-type="column"]) { position: static; }
+.bx-column-resize {
+  position: absolute; top: 0; bottom: 0; right: calc(-1 * (var(--space-6) + var(--space-2)) / 2); width: var(--space-2); z-index: 30;
+  cursor: col-resize; border-radius: var(--radius-pill); touch-action: none;
+}
+.bx-column-resize:hover, .bx-column-resize:focus-visible { background: var(--line); }
 
 /* Ariakit-Akzent (Blau) durch Based-Flächen ersetzen: eine Aktion = Tinte, Auswahl = `selected`. Menüs und
    Popover hängen BlockNote außerhalb von .bx-editor an (Portale), daher global unter den bn-Klassen. */
@@ -236,3 +248,14 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-move-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx-move-path { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx-move-empty { padding: var(--space-1) var(--space-2); }
+
+/* BSD-210: Nummerierung je Ebene wie Notion/Swift: 1. → a. → i. → 1. … Oben zählt BlockNote (data-index, inkl. Start);
+   darunter ein CSS-Zähler je Liste, der nach jedem anderen Block neu beginnt. */
+.bx-editor .bn-block-group { counter-reset: bx-num; }
+.bx-editor .bn-block-group > .bn-block-outer:not(:has(> .bn-block > .bn-block-content[data-content-type="numberedListItem"])) { counter-reset: bx-num; }
+.bx-editor .bn-block-group > .bn-block-outer:has(> .bn-block > .bn-block-content[data-content-type="numberedListItem"]) { counter-increment: bx-num; }
+.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-alpha) "."; }
+.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-roman) "."; }
+.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, decimal) "."; }
+.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-alpha) "."; }
+.bx-editor .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"] ~ .bn-block-group > .bn-block-outer > .bn-block > .bn-block-content[data-content-type="numberedListItem"]::before { content: counter(bx-num, lower-roman) "."; }
