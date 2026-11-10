@@ -90,6 +90,7 @@ async function shots(page: Page, browserName: string, name: string) {
   if (!SHOTS || browserName !== "chromium") return;
   for (const theme of ["light", "dark"] as const) {
     await setTheme(page, theme);
+    await page.waitForTimeout(800); // Farbübergänge abwarten
     await page.screenshot({ path: `../../docs/design/screens/web-editor-${name}-${theme}.png` });
   }
   await setTheme(page, "light");
@@ -238,10 +239,17 @@ test("@ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar,
 
   // Datum mit Erinnerungs-Flagge
   await page.keyboard.type("due @tomor");
+  // Warten, bis das Menü zur ganzen Eingabe passt (vorher stehen Today und Tomorrow beide da).
+  await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Today" })).toHaveCount(0);
   await expect(page.locator(".bn-suggestion-menu-item", { hasText: "Tomorrow" }).first()).toBeVisible();
   await page.keyboard.press("Enter");
   const date = ed.locator(".bx-mention[data-kind=date]").first();
-  await expect(date).toBeVisible();
+  const tomorrow = await page.evaluate(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  });
+  await expect(date).toHaveText("@" + tomorrow);
   await date.click();
   await page.getByRole("dialog", { name: "Date options" }).getByLabel("Remind me").check();
   await expect(date).toHaveAttribute("data-remind", "true");

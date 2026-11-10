@@ -202,3 +202,11 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-outline-item:focus-visible { outline: 1px solid var(--muted); }
 @media (max-width: 52rem) { .bx-outline { display: none; } }
 @media print { .bx-outline, .bx-notice { display: none; } }
+
+/* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */
+.bx-editor .bn-editor:focus, .bx-editor .bn-editor:focus-visible { outline: none; }
+
+/* Astryx setzt in seiner Basisschicht Farbe und Schrift auf p und h1–h6 (aus dem Astryx-Theme, das nicht dunkel
+   wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */
+.bx-editor p, .bx-editor h1, .bx-editor h2, .bx-editor h3, .bx-editor h4, .bx-editor h5, .bx-editor h6 { color: inherit; font-family: inherit; }
+.bx-editor p.bn-inline-content { font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit; }
