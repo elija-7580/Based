@@ -258,10 +258,13 @@ export function insertMeeting(editor: BasedEditor, session: DocSession): string 
   const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
   if (empty) editor.replaceBlocks([cur], [block]);
   else editor.insertBlocks([block], cur, "after");
-  // Ein leerer Absatz danach, damit man unter dem Block weiterschreiben kann.
-  if (editor.document[editor.document.length - 1]?.id === id) {
+  // Schreibmarke in den Absatz danach (bei Bedarf angelegt): kein ausgewählter Block, man schreibt unter ihm weiter.
+  let next = editor.getNextBlock(id);
+  if (!next) {
     editor.insertBlocks([{ type: "paragraph" } as never], id, "after");
+    next = editor.getNextBlock(id);
   }
+  if (next) editor.setTextCursorPosition(next, "start");
   return id;
 }
 

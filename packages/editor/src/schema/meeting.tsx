@@ -26,6 +26,16 @@ function useHost(host: MeetingHost | undefined): MeetingHostState {
   return useSyncExternalStore(host ? host.subscribe : noSubscribe, host ? host.getState : idle);
 }
 
+/**
+ * Klicks in den Block (Knöpfe, Felder) sollen ihn nicht als Knoten im Seiten-Editor auswählen (blauer Rahmen). Nativ,
+ * weil ProseMirror selbst nativ auf mousedown hört; die eingebetteten Editoren liegen darunter und bekommen es vorher.
+ */
+const stopMouseDown = (el: HTMLDivElement | null) => {
+  if (!el || el.dataset.stopMouse) return;
+  el.dataset.stopMouse = "1";
+  el.addEventListener("mousedown", (e) => e.stopPropagation());
+};
+
 function TimeButton(props: { seconds: number; disabled: boolean; onPlay: (s: number) => void; label?: string }) {
   return (
     <button type="button" className="bx-meet-time" disabled={props.disabled} title={props.disabled ? "No recording yet" : "Play from here"}
@@ -81,7 +91,7 @@ function MeetingView(props: { id: string }) {
   ].filter((x) => x !== undefined);
 
   return (
-    <div className="bx-meet" contentEditable={false} data-testid="meeting-block" data-status={info.status} data-recording={recordingHere ? "true" : undefined}>
+    <div className="bx-meet" ref={stopMouseDown} contentEditable={false} data-testid="meeting-block" data-status={info.status} data-recording={recordingHere ? "true" : undefined}>
       <div className="bx-meet-head">
         <span className="bx-meet-icon" data-live={recordingHere && !hs.paused ? "true" : undefined} aria-hidden>●</span>
         <TitleField id={props.id} title={plainText(block.text)} editable={editable} />

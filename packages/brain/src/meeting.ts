@@ -283,10 +283,10 @@ export class MeetingRecorder {
     this.set({ error: undefined, warning: undefined });
     const base = info.duration ?? 0;
     const pending: AudioChunk[] = [];
-    let session: Session | undefined;
+    const box: { session?: Session } = {};
     const onChunk = (c: AudioChunk) => {
-      if (!session) pending.push(c);
-      else this.transcribeLive(session, c);
+      if (!box.session) pending.push(c);
+      else this.transcribeLive(box.session, c);
     };
     let capture: AudioCapture;
     try {
@@ -299,7 +299,7 @@ export class MeetingRecorder {
     const notes = findMeetingSection(store, meetingID, "notes");
     const skip = new Set((notes ? store.descendants(notes) : []).filter((id) => plainText(store.blocks.get(id)?.text).trim() !== ""));
     const s: Session = { store, meetingID, base, capture, skip, unobserve: () => undefined, live: Promise.resolve(), timer: undefined };
-    session = s;
+    box.session = s;
     this.session = s;
     s.unobserve = store.observe((c) => this.onStoreChange(s, c));
     const roles = capture.roles;

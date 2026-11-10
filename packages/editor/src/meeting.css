@@ -75,3 +75,6 @@ button.bx-meet-chip:disabled { cursor: default; }
 .bx-meet-speaker { font-weight: var(--type-ui-weight); color: var(--ink); }
 .bx-meet-para-text { color: var(--ink-2); line-height: var(--type-body-leading); user-select: text; }
 .bx-meet-para[data-partial="true"] .bx-meet-para-text { color: var(--muted); font-style: italic; }
+/* Eingebettete Editoren: deren oberste Blockgruppe ist keine Verschachtelung (sonst Einzug + Linie aus BlockNote). */
+.bx-meet-doc .bn-editor > .bn-block-group { margin-left: 0; }
+.bx-meet-doc .bn-editor > .bn-block-group > .bn-block-outer::before { content: none; }
