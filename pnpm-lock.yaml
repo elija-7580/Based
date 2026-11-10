@@ -51,6 +51,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@based/brain':
+        specifier: workspace:*
+        version: link:../../packages/brain
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core

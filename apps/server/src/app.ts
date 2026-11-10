@@ -12,6 +12,8 @@ import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
+import type { CodingSessions } from "@based/brain";
+import { registerCodingRoutes } from "./coding-routes.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
@@ -36,6 +38,10 @@ export interface AppOptions extends SyncServiceOptions {
   maxAssetBytes?: number;
   /** Sandboxen pro Lauf (BSD-161); ohne: keine /sandbox-Routen. */
   sandbox?: SandboxManager | undefined;
+  /** Coding-Agent-Sitzungen (BSD-223); ohne: keine /coding-Routen. */
+  coding?: CodingSessions | undefined;
+  /** Long-Poll-Grenze für /coding in ms (Tests kürzer). */
+  codingLongPollMs?: number;
 }
 
 export interface App {
@@ -204,6 +210,7 @@ export function createApp(opts: AppOptions): App {
   // MARK: Teilen (docs/sharing.md)
   registerShareRoutes(router, { share, sync, assets, log });
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
+  if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs);
 
   // MARK: Sync v1 (nur für sehr alte Apps)
   router.add("GET", "/sync/pull", ({ url }) =>
@@ -302,6 +309,7 @@ export function createApp(opts: AppOptions): App {
     async close() {
       if (gc) clearInterval(gc);
       if (opts.sandbox) await opts.sandbox.stopAll();
+      opts.coding?.closeAll();
       sync.close(); // offene Long-Polls antworten sofort
       pages.dispose();
       await collab.close();

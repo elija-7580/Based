@@ -2,12 +2,14 @@
 //   pnpm --filter @based/server start -- --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0]
 //   pnpm --filter @based/server start -- --stdio --db based.sqlite        (MCP für Desktop-Clients)
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
-// BASED_LOG_LEVEL. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
+// BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
+import { CodingSessions, DEFAULT_AGENTS } from "@based/brain";
+import { spawnAgent } from "@based/brain/acp-node";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
-import { createLogger, parseLogLevel } from "./log.js";
+import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { SyncService } from "./sync.js";
@@ -28,9 +30,13 @@ export interface Options {
   sandbox: "docker" | "local" | undefined;
   /** Ordner für Snapshot-Archive (Standard: `<db>.sandbox`). */
   sandboxDir: string | undefined;
+  /** BSD-223: Ordner, in denen Coding-Agenten laufen dürfen (leer = Coding-Agenten aus). */
+  codingRoots: string[];
+  /** BSD-223: pro Agent freigegebene Umgebungsvariablen (`claude=ANTHROPIC_API_KEY,gemini=GEMINI_API_KEY`). */
+  codingEnv: Record<string, string[]>;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -46,6 +52,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     maxAssetMB: env.BASED_MAX_ASSET_MB ? Number(env.BASED_MAX_ASSET_MB) : undefined,
     sandbox: undefined,
     sandboxDir: env.BASED_SANDBOX_DIR,
+    codingRoots: (env.BASED_CODING_ROOTS ?? "").split(":").filter((r) => r !== ""),
+    codingEnv: parseCodingEnv(env.BASED_CODING_ENV),
   };
   let sandbox = env.BASED_SANDBOX;
   const args = [...argv];
@@ -68,6 +76,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--max-asset-mb": o.maxAssetMB = Number(value(a)); break;
       case "--sandbox": sandbox = value(a); break;
       case "--sandbox-dir": o.sandboxDir = value(a); break;
+      case "--coding-root": o.codingRoots.push(value(a)); break;
       case "--stdio": o.stdio = true; break;
       default: throw new Error(`unknown option ${a}`);
     }
@@ -76,9 +85,30 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     if (sandbox !== "docker" && sandbox !== "local") throw new Error("--sandbox must be docker, local or off");
     o.sandbox = sandbox;
   }
+  if (o.codingRoots.some((r) => !r.startsWith("/"))) throw new Error("--coding-root must be an absolute path");
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
   if (o.maxAssetMB !== undefined && !(o.maxAssetMB > 0)) throw new Error("--max-asset-mb must be a positive number");
   return o;
+}
+
+/** `claude=ANTHROPIC_API_KEY,gemini=GEMINI_API_KEY` → { claude: [...], gemini: [...] } (nur Namen, nie Werte). */
+export function parseCodingEnv(raw: string | undefined): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const part of (raw ?? "").split(/[,;\s]+/)) {
+    const m = /^([A-Za-z0-9_-]+)=([A-Za-z_][A-Za-z0-9_]*)$/.exec(part);
+    if (m) (out[m[1]!] ??= []).push(m[2]!);
+  }
+  return out;
+}
+
+/** Coding-Agenten mit Standard-Definitionen; Prozesse über `@based/brain/acp-node`. */
+function codingSessions(opts: Options, log: Logger): CodingSessions {
+  return new CodingSessions({
+    agents: () => DEFAULT_AGENTS,
+    roots: opts.codingRoots,
+    connect: (agent, cwd, roots, permissions) =>
+      spawnAgent(agent, { cwd, allowedRoots: roots, permissions, approvedEnv: opts.codingEnv[agent.id] ?? [], onLog: (l) => log.debug("coding agent stderr", { agent: agent.id, bytes: l.length }) }),
+  });
 }
 
 /** Origin (scheme://host[:port]) von BASED_PUBLIC_URL, der einzige mit CORS-Zugriff. */
@@ -131,6 +161,7 @@ async function main() {
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
+    ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log) } : {}),
   });
   const { port } = await app.listen(opts.port, opts.host);
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });

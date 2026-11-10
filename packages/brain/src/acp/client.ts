@@ -111,8 +111,8 @@ export interface AcpClientOptions {
   /** Nur in diesen Ordnern darf der Agent über `fs/*` lesen und schreiben. Leer = nichts. */
   allowedRoots?: readonly string[];
   fs?: AcpFileSystem | undefined;
-  /** Regeln für `fs/write_text_file` (deny bzw. Plan-Modus blockiert das Schreiben). */
-  permissions?: Permissions | undefined;
+  /** Regeln für `fs/write_text_file` (deny bzw. Plan-Modus blockiert das Schreiben); Funktion = jeweils aktueller Stand. */
+  permissions?: Permissions | (() => Permissions) | undefined;
   clientVersion?: string;
 }
 
@@ -250,8 +250,9 @@ export class AcpClient {
         const path = await this.checkedPath(p.path);
         const content = s(p.content);
         if (!path || !this.o.fs || content === undefined) throw new RpcError(-32001, "Write not permitted");
-        if (this.o.permissions) {
-          const v = this.o.permissions.decide({ tool: "Edit", argument: path }, true);
+        const perms = typeof this.o.permissions === "function" ? this.o.permissions() : this.o.permissions;
+        if (perms) {
+          const v = perms.decide({ tool: "Edit", argument: path }, true);
           // „ask“ gilt hier als erlaubt: der Agent hat die Änderung selbst per request_permission erfragt.
           if (v.effect === "deny") throw new RpcError(-32001, `Write not permitted by the permission rules (${v.reason})`);
         }

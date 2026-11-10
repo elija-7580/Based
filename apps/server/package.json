@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@based/brain": "workspace:*",
     "@based/core": "workspace:*",
     "@based/design-tokens": "workspace:*",
     "@based/editor": "workspace:*",
