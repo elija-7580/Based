@@ -1,4 +1,7 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test as base, type Locator, type Page } from "@playwright/test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // Editor-Parität: Markdown einfügen → Blöcke, @/[[-Erwähnungen mit Backlinks, schwebende Gliederung, Synced Blocks
 // über zwei Seiten. Jeweils auch nach dem Neuladen. Screenshots (hell/dunkel) nur mit BASED_SCREENSHOTS=1 und nur
@@ -6,10 +9,23 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const SHOTS = process.env.BASED_SCREENSHOTS === "1";
 
+// Jeder Test in einem eigenen, dauerhaften Profil: WebKit hat OPFS nur dort (wie Shell- und Tab-Tests), und die
+// Tests laden neu.
+const test = base.extend<{ page: Page }>({
+  page: async ({ playwright, browserName, baseURL }, use) => {
+    const dir = mkdtempSync(join(tmpdir(), "based-editor-"));
+    const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: { width: 1280, height: 720 } });
+    try {
+      await use(ctx.pages()[0] ?? (await ctx.newPage()));
+    } finally {
+      await ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  },
+});
+
 async function fresh(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 }
 
@@ -82,6 +98,8 @@ async function shots(page: Page, browserName: string, name: string) {
 /** Warten, bis der Editor seine Änderungen an den Store-Worker geschickt hat. */
 const settled = (page: Page) => page.waitForTimeout(600);
 
+// Lange Abläufe mit Neuladen; WebKit braucht unter Linux deutlich länger als Chromium.
+test.describe.configure({ timeout: 120_000 });
 test.beforeEach(async ({ page }) => fresh(page));
 
 const MARKDOWN = [
@@ -128,7 +146,7 @@ test("Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach d
 
   const ed = editor(page);
   const check = async () => {
-    await expect(ed.locator("[data-content-type=heading][data-level='1']")).toHaveText("Launch plan");
+    await expect(ed.locator("[data-content-type=heading] h1")).toHaveText("Launch plan");
     const para = ed.locator("[data-content-type=paragraph]", { hasText: "Ship with" });
     await expect(para.locator("strong")).toHaveText("bold");
     await expect(para.locator("em")).toHaveText("care");
@@ -178,7 +196,7 @@ test("Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inlin
   await caretInLastLine(page);
   // HTML und Markdown-Text zugleich: HTML gewinnt.
   await paste(page, { "text/html": "<h2>From HTML</h2><p>Body</p>", "text/plain": "# From Markdown" });
-  await expect(ed.locator("[data-content-type=heading][data-level='2']")).toHaveText("From HTML");
+  await expect(ed.locator("[data-content-type=heading] h2")).toHaveText("From HTML");
   await expect(ed.getByText("From Markdown")).toHaveCount(0);
 
   // Als Klartext einfügen: Markdown-Zeichen bleiben stehen, keine Überschrift, keine Liste.
@@ -273,7 +291,6 @@ test("@ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar,
 });
 
 test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar", async ({ page, browserName }) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
   await createPage(page, "Long read");
   await openPage(page, "Long read");
   await caretInLastLine(page);
