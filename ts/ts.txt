@@ -21,10 +21,29 @@ packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[9
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
 packages/brain test: [2m      Tests [22m [1m[32m309 passed[39m[22m[90m (309)[39m
 packages/editor test: [2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
-apps/web test: [2m      Tests [22m [1m[32m97 passed[39m[22m[90m (97)[39m
+apps/web test: [2m      Tests [22m [1m[32m99 passed[39m[22m[90m (99)[39m
 apps/server test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
+  -  161 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  159 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.6s)
+  ✓  162 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
+
+
+  1) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ─────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
+
     Call Log:
     - Timeout 5000ms exceeded while waiting on the predicate
 
@@ -39,29 +58,10 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 
     Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
-  2) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
-
-    Error: expect(received).toBeLessThan(expected)
-
-    Expected: < 34
-    Received:   34
-
-      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
-      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
-    > 144 |   expect(r.p95).toBeLessThan(34);
-          |                 ^
-      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
-      146 | });
-      147 |
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
-
-    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
-
-  2 failed
+  1 failed
     [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
-    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   14 skipped
-  144 passed (7.5m)
+  147 passed (6.1m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
