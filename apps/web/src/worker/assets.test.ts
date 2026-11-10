@@ -5,6 +5,10 @@ import { openNodeDatabase } from "@based/sync/node";
 import { afterEach, describe, expect, it } from "vitest";
 import { assetNotice, assetsLabel, createAssetBridge } from "../assetBridge.js";
 import { StoreClient } from "./client.js";
+import { readFileSync } from "node:fs";
+import { assetIDsInStore, makeBlock, MemoryAssetSink } from "@based/core";
+import { MemoryAssetStore } from "./assets.js";
+import { prepareFiles, type ImportFile } from "./importer.js";
 import { StoreHost } from "./host.js";
 import type { Endpoint, Event, RequestMessage, StatusInfo } from "./protocol.js";
 
@@ -61,7 +65,7 @@ afterEach(() => {
   hosts = [];
 });
 
-function device(fetcher: typeof fetch) {
+function device(fetcher: typeof fetch, extra: Partial<ConstructorParameters<typeof StoreHost>[0]> = {}) {
   const toHost = new Set<Fn<RequestMessage>>();
   const toClient = new Set<Fn<Event>>();
   const statuses: StatusInfo[] = [];
@@ -80,6 +84,7 @@ function device(fetcher: typeof fetch) {
     fetch: fetcher,
     syncTiming: { intervalMs: 60_000, waitTimeoutSeconds: 1, pushDelayMs: 5 },
     assetTiming: { chunkSize: 400, backoff: { minMs: 20, maxMs: 40 } },
+    ...extra,
   });
   hosts.push(host);
   let queue = Promise.resolve();
@@ -191,5 +196,54 @@ describe("Dateien über den Store-Worker", () => {
     expect(assetsLabel({ uploads: 2, downloads: 1, failed: 1 })).toBe("2 files uploading · 1 file downloading · 1 file too large for the server");
     expect(assetNotice("missing")).toMatch(/hasn't been uploaded yet/);
     expect(assetNotice("something-else")).toMatch(/can't be loaded/);
+  });
+});
+
+// BSD-230: importierte Dateien gehen über den Sync (ein Speicher, ein Weg).
+function notionExport(): ImportFile[] {
+  const fx = JSON.parse(readFileSync(new URL("../../../../fixtures/import/notion-html.utc.json", import.meta.url), "utf8")) as { cases: { input: { files?: { path: string; text?: string; base64?: string }[] } }[] };
+  return fx.cases[0]!.input.files!.map((f) => ({ path: "Export/" + f.path, data: f.base64 !== undefined ? Uint8Array.from(Buffer.from(f.base64, "base64")) : new TextEncoder().encode(f.text ?? "") }));
+}
+const isHash = (id: string) => /^[0-9a-f]{64}$/.test(id);
+
+describe("Dateien aus Importen (BSD-230)", () => {
+  it("Import legt Dateien inhaltsadressiert ab und lädt sie hoch; Gerät B sieht das Bild", async () => {
+    const server = fakeServer();
+    const a = device(server.fetcher, { migrateDelayMs: 60_000 }), b = device(server.fetcher, { migrateDelayMs: 60_000 });
+    await a.client.init({ sync });
+    await b.client.init({ sync });
+    const payload = prepareFiles(notionExport(), { assets: new MemoryAssetSink() });
+    expect(payload.files?.length).toBeGreaterThan(0);
+    const summary = await a.client.commitImport(structuredClone(payload));
+    expect(summary.warnings.filter((w) => w.includes("couldn't be saved"))).toEqual([]);
+    const ids = [...assetIDsInStore(a.host.ws!.store)];
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.every(isHash)).toBe(true);
+    await expect.poll(() => ids.every((id) => server.blobs.has(id))).toBe(true);
+    const got = await b.client.assetGet(ids[0]!);
+    expect(got.ok).toBe(true);
+  });
+
+  it("Migration: alte Import-Dateien aus IndexedDB wandern in den Sync, Verweise werden umgeschrieben", async () => {
+    const server = fakeServer();
+    const imported = new MemoryAssetStore();
+    const data = png(300);
+    await imported.put("old-uuid-1", { data, name: "foto.png", mime: "image/png" });
+    const a = device(server.fetcher, { importedAssets: imported, migrateDelayMs: 60_000 });
+    const { homePageID } = await a.client.init({ sync });
+    const store = a.host.ws!.store;
+    store.transact("add", (tx) => {
+      tx.put({ kind: "block", data: makeBlock({ id: "img-1", type: "image", parent: "b:" + homePageID, sk: "zz", props: { asset: { id: "old-uuid-1", name: "foto.png", size: 300, mime: "image/png" } } }, store.now()) });
+      tx.put({ kind: "block", data: makeBlock({ id: "gone-1", type: "image", parent: "b:" + homePageID, sk: "zzz", props: { asset: { id: "missing-uuid", name: "x.png" } } }, store.now()) });
+    });
+    expect(await a.host.migrateImportedAssets()).toBe(1);
+    const hash = await sha256Hex(data);
+    expect(store.blocks.get("img-1")!.props!.asset!.id).toBe(hash);
+    expect(store.blocks.get("gone-1")!.props!.asset!.id).toBe("missing-uuid");
+    expect(await imported.has("old-uuid-1")).toBe(false);
+    const got = await a.client.assetGet(hash);
+    expect(got.ok && new Uint8Array(got.bytes)).toEqual(data);
+    await expect.poll(() => server.blobs.has(hash)).toBe(true);
+    expect(await a.host.migrateImportedAssets()).toBe(0);
   });
 });
