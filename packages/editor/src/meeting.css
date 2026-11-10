@@ -1,0 +1,80 @@
+/* BSD-226: Meeting-Block (/meet). Gruppe als Fläche (surface-raised, Radius 18), Bedienung als Pillen, Zeiten in Mono.
+   Die KI-Zusammenfassung trägt den Agent-Marker (Strich + Tag „Based“), sonst nirgends. */
+.bx-meet {
+  width: 100%; display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); cursor: default;
+}
+.bx-meet-head { display: flex; align-items: center; gap: var(--space-2); }
+.bx-meet-icon { color: var(--muted); font-size: var(--type-meta-size); line-height: 1; }
+.bx-meet-icon[data-live="true"] { color: var(--danger); }
+.bx-meet-title {
+  flex: 1; min-width: 0; border: 0; background: none; padding: 0; color: var(--ink); outline: none;
+  font-family: var(--font-ui); font-size: var(--type-section-size); font-weight: var(--type-section-weight); letter-spacing: var(--type-section-tracking);
+}
+.bx-meet-controls, .bx-meet-row, .bx-meet-status, .bx-meet-context, .bx-meet-legend, .bx-meet-jump { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.bx-meet-status { color: var(--muted); font-size: var(--type-description-size); gap: var(--space-3); }
+.bx-meet-status:empty { display: none; }
+.bx-meet-btn {
+  border: 1px solid var(--control-border); background: var(--bg); color: var(--ink); border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3); font: inherit; font-weight: var(--type-ui-weight); cursor: pointer;
+}
+.bx-meet-btn.is-primary { background: var(--button); color: var(--button-ink); border-color: var(--button); }
+.bx-meet-btn:disabled { opacity: 0.5; cursor: default; }
+.bx-meet-btn:not(:disabled):hover { box-shadow: var(--shadow-control); }
+.bx-meet-clock, .bx-meet-time { font-family: var(--font-mono); font-size: var(--type-data-size); font-variant-numeric: tabular-nums; }
+.bx-meet-clock { color: var(--ink); }
+.bx-meet-time {
+  border: 0; background: var(--bg); color: var(--ink-2); border-radius: var(--radius-xs); padding: 0 var(--space-1); cursor: pointer;
+}
+.bx-meet-time:disabled { background: none; color: var(--muted); cursor: default; }
+.bx-meet-time:not(:disabled):hover { color: var(--ink); background: var(--selected); }
+.bx-meet-muted { color: var(--muted); font-size: var(--type-description-size); }
+.bx-meet-hint { margin: 0; color: var(--muted); font-size: var(--type-description-size); line-height: var(--type-description-leading); }
+.bx-meet-label { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
+.bx-meet-error { color: var(--danger); }
+.bx-meet-check { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); font-size: var(--type-description-size); }
+.bx-meet-banner { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink-2); font-size: var(--type-description-size); }
+.bx-meet-playing { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--muted); font-family: var(--font-mono); font-size: var(--type-data-size); }
+.bx-meet-link { border: 0; background: none; padding: 0; font: inherit; color: var(--ink-2); cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); }
+.bx-meet-link:hover { color: var(--ink); }
+.bx-meet-chip {
+  display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
+  background: var(--bg); border: 0; color: var(--ink); font: inherit; font-size: var(--type-description-size);
+}
+button.bx-meet-chip { cursor: pointer; }
+button.bx-meet-chip:disabled { cursor: default; }
+.bx-meet-x { border: 0; background: none; padding: 0; color: var(--muted); font: inherit; cursor: pointer; }
+.bx-meet-x:hover { color: var(--ink); }
+.bx-meet-picker { display: grid; gap: var(--space-1); min-width: 16em; padding: var(--space-2); border-radius: var(--radius-md); background: var(--bg); box-shadow: var(--shadow-menu); }
+.bx-meet-note-field { min-width: 20em; }
+.bx-meet-name { width: 10em; }
+.bx-meet-select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--control-border); border-radius: var(--radius-pill); padding: 0 var(--space-2); }
+.bx-meet-tabs { display: flex; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-pill); background: var(--bg); align-self: flex-start; }
+.bx-meet-tab {
+  border: 0; background: none; color: var(--muted); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3);
+  font: inherit; font-weight: var(--type-ui-weight); cursor: pointer;
+}
+.bx-meet-tab[aria-selected="true"] { background: var(--surface-raised); color: var(--ink); }
+.bx-meet-body { display: flex; flex-direction: column; gap: var(--space-3); padding-top: var(--space-1); }
+.bx-meet-doc { border-radius: var(--radius-md); background: var(--bg); padding: var(--space-1) 0; cursor: text; }
+.bx-meet-doc .bx-synced-editor .bn-editor { padding-inline: var(--space-3); }
+.bx-meet-stamped { display: grid; gap: var(--space-1); }
+.bx-meet-stamp-row { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.bx-meet-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-meet-summary { position: relative; display: grid; gap: var(--space-1); padding-left: var(--space-3); border-left: var(--marker-width) solid var(--marker-strong); }
+.bx-meet-agent-tag {
+  justify-self: start; padding: 0 var(--space-2); border-radius: var(--radius-xs); background: var(--marker); color: var(--ink);
+  font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking);
+}
+.bx-meet-transcript { display: grid; gap: var(--space-1); max-height: 28em; overflow-y: auto; }
+.bx-meet-para { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
+.bx-meet-para[role="button"] { cursor: pointer; }
+.bx-meet-para[role="button"]:hover, .bx-meet-para[data-active="true"] { background: var(--bg); }
+.bx-meet-para-head { display: flex; align-items: center; gap: var(--space-2); }
+.bx-meet-speaker { font-weight: var(--type-ui-weight); color: var(--ink); }
+.bx-meet-para-text { color: var(--ink-2); line-height: var(--type-body-leading); user-select: text; }
+.bx-meet-para[data-partial="true"] .bx-meet-para-text { color: var(--muted); font-style: italic; }
+/* Eingebettete Editoren: deren oberste Blockgruppe ist keine Verschachtelung (sonst Einzug + Linie aus BlockNote). */
+.bx-meet-doc .bn-editor > .bn-block-group { margin-left: 0; }
+.bx-meet-doc .bn-editor > .bn-block-group > .bn-block-outer::before { content: none; }

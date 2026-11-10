@@ -1,6 +1,7 @@
 // BSD-154: Was die eigenen Blöcke vom Editor brauchen (Store, Callbacks der Shell), per React-Context.
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { isTrashed, keyBetween, plainText, type Block, type WorkspaceStore } from "@based/core";
+import type { MeetingHost } from "./meetingHost.js";
 
 export interface DatabaseRenderProps {
   /** Der Block `databaseInline` in der Seite. */
@@ -69,6 +70,8 @@ export interface EditorEnv {
   notify: (message: string) => void;
   /** Zeigt den Inhalt eines Synced Blocks (ein eingebetteter Editor auf dessen Original). */
   renderSynced: (rootID: string, opts?: { readOnly?: boolean }) => ReactNode;
+  /** BSD-226: Aufnahme/Wiedergabe/Zusammenfassung für Meeting-Blöcke; ohne: Block nur lesbar. */
+  meeting?: MeetingHost | undefined;
   /** Ausstehende Editor-Änderungen sofort schreiben (z. B. bevor eine neue Unterseite geöffnet wird). */
   flush: () => void;
 }

@@ -17,10 +17,11 @@ export interface BlockSource {
 }
 
 /** Kinder gehören nicht zum Dokument dieses Blocks. */
-export const BOUNDARY_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "syncedBlock", "databaseInline", "linkToPage"]);
+/** BSD-226: Abschnitte und Transkript eines Meetings zeigt der Meeting-Block selbst (Notizen als eigener Editor). */
+export const BOUNDARY_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "syncedBlock", "databaseInline", "linkToPage", "meeting"]);
 
 /** Bekannte Typen, die der Editor nur als Atom zeigt (Inhalt bleibt unverändert im Record). */
-const OPAQUE_KNOWN: ReadonlySet<string> = new Set(["meeting", "meetingSection", "transcript", "tableRow"]);
+const OPAQUE_KNOWN: ReadonlySet<string> = new Set(["meetingSection", "transcript", "tableRow"]);
 
 const LIST_COLOR = ["color"];
 /** Felder (in `props`), die der Editor je Typ besitzt; `text` siehe OWNS_TEXT. */
@@ -39,6 +40,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   column: ["ratio"],
   table: ["tableColumns", "tableHeaderRow", "tableHeaderColumn", "tableColumnWidths"],
   tableRow: ["cells", "cellColors"],
+  meeting: [],
 };
 
 export const OWNS_TEXT: ReadonlySet<string> = new Set([
@@ -126,6 +128,7 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
     case "syncedBlock": return atom(CUSTOM.syncedBlock, { source: p.syncSource ?? "" });
     case "databaseInline": return atom(CUSTOM.database, { databaseID: p.databaseID ?? "", viewID: p.viewIDs?.[0] ?? "" });
     case "columnList": return atom(CUSTOM.columnList);
+    case "meeting": return atom(CUSTOM.meeting);
     case "column": return atom(CUSTOM.column, { width: p.ratio ?? 0 });
     case "table": return projectTable(b, src ? tableRows(src, b.id) : []);
   }
@@ -213,6 +216,7 @@ export function extractOwned(bn: BNBlock): Owned {
       return { type: "databaseInline", props: { databaseID: nonEmpty(p.databaseID), viewIDs: view ? [view] : undefined } };
     }
     case CUSTOM.columnList: return { type: "columnList", props: {} };
+    case CUSTOM.meeting: return { type: "meeting", props: {} };
     case CUSTOM.column: {
       const w = Number(p.width);
       return { type: "column", props: { ratio: w > 0 ? w : undefined } };
