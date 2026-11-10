@@ -30,3 +30,10 @@ without a token unless it binds only to loopback.
 - Existing clients keep working as long as they already send the token.
 - The server must not be deployed publicly before this and the related security entries are done.
 - Follow-up: BSD-34 (router), with BSD-33 and BSD-35.
+
+## Note (2026-11-10, TS server)
+
+The TS router (`apps/server/src/router.ts`) implements this with three access kinds: `public`, `owner` (default)
+and `shared` (owner, device token or access-link secret; the caller's principal reaches the handler). A valid
+guest token on an owner route gets 403. Sharing roles from `docs/sharing.md` are checked in the handlers of the
+`shared` routes (`src/share.ts`).
