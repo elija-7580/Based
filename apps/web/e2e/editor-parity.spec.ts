@@ -338,7 +338,9 @@ test("Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro 
   await caretAtEnd(page, ed, "Paragraph 5.14 of the long read.");
   await page.keyboard.press("Enter");
   await page.keyboard.type("/table of cont");
-  await page.locator(".bn-suggestion-menu-item", { hasText: "Table of contents" }).first().click();
+  // Mit der Tastatur wählen: am Seitenende kann das Menü teils außerhalb des Sichtbereichs liegen.
+  await expect(page.locator(".bn-suggestion-menu-item[aria-selected=true]")).toContainText("Table of contents");
+  await page.keyboard.press("Enter");
   await expect(ed.locator(".bx-toc a")).toHaveText(["Opening", "Background", "Details", "Results", "Closing"]);
   await ed.locator(".bx-toc a", { hasText: "Background" }).click();
   await expect(ed.locator("[data-content-type=heading]", { hasText: "Background" })).toBeInViewport();
