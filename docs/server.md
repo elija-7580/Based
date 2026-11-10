@@ -70,6 +70,14 @@ Client-Code wiederverwendet. Eingehende Pushes werden als *remote* geloggt; `pul
   Swift-Clients nutzen v1 nur nach einem 404 auf v2, also nie gegen diesen Server.
 - Der Swift-Server legt beim Start eigene Records an (Agent-Brain-Datenbanken, Workspace-Record mit frischem
   Stempel); der TS-Server nicht. Er ändert beim Start nichts am Workspace.
+- **Workspace-Record beim ersten Sync (BSD-179):** Gegen den Standard-Record des Swift-Servers („My Workspace“,
+  Stempel = Startzeit, node `server`) verliert per Last-Writer-Wins der ältere Record eines Geräts – Name, Icon,
+  Favoriten, Home-Seite, Teamspaces. Der TS-Server legt keinen solchen Record an (frischer Server: Change-Log leer).
+  Übernimmt er eine Datei vom Swift-Server, steht der Record aber darin. Deshalb in `SyncService.push`: solange der
+  Workspace-Record der unberührte, vom Server selbst gestempelte Standard ist (node = `--node`, Standardname, keine
+  Favoriten/Teamspaces/Icon/Home-Seite), gewinnt der gepushte Record eines Geräts und bekommt einen frischen
+  Server-Stempel (so erreicht er auch Geräte, die den Standard schon geholt haben). Kein neues Feld auf dem Draht.
+  Der Swift-Server ist unverändert und hat den Fehler weiter. `test/fresh-server-workspace.test.ts`.
 
 ## MCP
 
