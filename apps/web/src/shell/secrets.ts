@@ -34,6 +34,13 @@ interface Sealed {
   data: ArrayBuffer;
 }
 
+interface SealedSecret {
+  v: 1;
+  iv: Uint8Array<ArrayBuffer>;
+  data: ArrayBuffer;
+}
+
+const SECRET_PREFIX = "secret:";
 const KEY = "key";
 const SYNC = "sync";
 /** Alter Klartext-Eintrag (bis zu dieser Fassung). */
@@ -78,6 +85,41 @@ export class SecretStore {
     const data = await this.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(c.token));
     const sealed: Sealed = { v: 1, url: c.url, iv, data };
     await this.kv.set(SYNC, sealed);
+  }
+
+  // MARK: weitere Geheimnisse (BSD-159: API-Schlüssel der KI-Anbieter, BYOK)
+
+  /**
+   * Ein benanntes Geheimnis lesen (z. B. `ai:anthropic`). `undefined`: nicht gesetzt oder nicht mehr entschlüsselbar
+   * (Schlüssel weg) – dann muss der Nutzer es neu eingeben.
+   */
+  async getSecret(name: string): Promise<string | undefined> {
+    const sealed = (await this.kv.get(SECRET_PREFIX + name)) as SealedSecret | undefined;
+    if (!sealed?.data) return undefined;
+    const key = await this.key(false);
+    if (!key) return undefined;
+    try {
+      return new TextDecoder().decode(await this.subtle.decrypt({ name: "AES-GCM", iv: sealed.iv }, key, sealed.data));
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Ein benanntes Geheimnis verschlüsselt ablegen; `undefined` oder leer löscht es. */
+  async setSecret(name: string, value: string | undefined): Promise<void> {
+    if (!value) {
+      await this.kv.delete(SECRET_PREFIX + name);
+      return;
+    }
+    const key = (await this.key(true))!;
+    const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+    const data = await this.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(value));
+    await this.kv.set(SECRET_PREFIX + name, { v: 1, iv, data } satisfies SealedSecret);
+  }
+
+  /** Ist ein Geheimnis abgelegt? (ohne es zu entschlüsseln) */
+  async hasSecret(name: string): Promise<boolean> {
+    return !!((await this.kv.get(SECRET_PREFIX + name)) as SealedSecret | undefined)?.data;
   }
 
   /**

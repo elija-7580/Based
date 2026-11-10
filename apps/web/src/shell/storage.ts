@@ -38,6 +38,8 @@ export const deviceNode = {
 
 let secrets: SecretStore | undefined;
 const secretStore = () => (secrets ??= new SecretStore(typeof indexedDB === "undefined" ? memoryKV() : indexedDBKV()));
+/** Die verschlüsselte Ablage (IndexedDB; ohne IndexedDB nur für diese Sitzung im Speicher – nie Klartext im localStorage). */
+export const secretVault = (): SecretStore => secretStore();
 let syncCache: SyncConfig | undefined;
 let syncWrite: Promise<void> = Promise.resolve();
 

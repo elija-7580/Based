@@ -78,6 +78,9 @@ importers:
       '@astryxdesign/theme-neutral':
         specifier: ^0.7.11
         version: 0.7.11(@astryxdesign/core@0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react@19.3.0)(react@19.3.1)
+      '@based/brain':
+        specifier: workspace:*
+        version: link:../../packages/brain
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core

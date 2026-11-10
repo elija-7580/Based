@@ -4,6 +4,8 @@
 import type { Block, DropZone, HistoryStats, HistoryVersion, Outline, RecordKeyString, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFormat, WorkspaceExportFormat } from "./interop.js";
+import type { ChatAction } from "./chat.js";
+import type { ChatInfo } from "@based/brain";
 
 export interface SyncConfig {
   url: string;
@@ -90,7 +92,9 @@ export type Request =
   | { type: "exportPage"; pageID: string; format: ExportFormat }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat }
   /** Versionsverlauf einer Seite (BSD-73). */
-  | { type: "history"; action: HistoryAction };
+  | { type: "history"; action: HistoryAction }
+  /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
+  | { type: "chat"; action: ChatAction };
 
 export type HistoryAction =
   | { op: "list"; pageID: string }
@@ -138,6 +142,8 @@ export type Event =
   | { type: "status"; status: StatusInfo }
   /** Die Gerätekennung hat sich geändert (Hauptthread speichert sie in localStorage). */
   | { type: "device"; node: string }
+  /** Die Chat-Liste hat sich geändert (lokal, anderer Tab oder Sync). */
+  | { type: "chats"; chats: ChatInfo[] }
   /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
   | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] };
 
