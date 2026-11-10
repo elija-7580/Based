@@ -1,7 +1,7 @@
 // BSD-155: Zustand einer Datenbank-Ansicht: Store, QueryEngine, Version (nur Änderungen der eigenen
 // Datenbank bzw. ihrer Relationsziele zählen – watchDatabase), Sperre und Rückrufe der Shell.
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { QueryEngine, watchDatabase, weekStartForLocale, type Block, type Database, type WorkspaceStore } from "@based/core";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { QueryEngine, watchDatabase, weekStartForLocale, type Block, type Database, type DatabaseView, type WorkspaceStore } from "@based/core";
 import { defaultIsAgentEdit } from "./logic/values.js";
 
 export interface DBContextValue {
@@ -19,6 +19,19 @@ export interface DBContextValue {
 }
 
 export const DBContext = createContext<DBContextValue | null>(null);
+
+/** Was die Shell für die Formular-Ansicht bekommt (gerendert im DBContext der Datenbank). */
+export interface FormRenderProps {
+  store: WorkspaceStore;
+  db: Database;
+  view: DatabaseView;
+  locked: boolean;
+  /** Anzahl der Antworten (Zeilen laut Filter der Ansicht). */
+  responses: number;
+}
+
+/** Steckplatz der Shell für Oberflächen aus ihrem Komponenten-Baukasten (Formular). */
+export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined }>({});
 
 export function useDB(): DBContextValue {
   const c = useContext(DBContext);

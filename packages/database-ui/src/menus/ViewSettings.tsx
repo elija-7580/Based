@@ -7,10 +7,13 @@ import {
   type DatabaseView,
 } from "@based/core";
 import { useDB } from "../context.js";
+import { openModeOf } from "../logic/peek.js";
+import { MAP_HEIGHTS } from "../map/geo.js";
+import { mapProperty } from "../layouts/Map.js";
 import { Icon, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
 
-export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline"];
-const LAYOUT_LABELS: Record<string, string> = { table: "Table", board: "Board", list: "List", gallery: "Gallery", chart: "Chart", calendar: "Calendar", timeline: "Timeline", dashboard: "Dashboard" };
+export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline", "form", "map"];
+const LAYOUT_LABELS: Record<string, string> = { table: "Table", board: "Board", list: "List", gallery: "Gallery", chart: "Chart", calendar: "Calendar", timeline: "Timeline", dashboard: "Dashboard", form: "Form", map: "Map" };
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (on: boolean) => void }) {
   return <label className="dbui-toggle"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />{label}</label>;
@@ -208,6 +211,29 @@ function DatesSection({ view }: { view: DatabaseView }) {
   );
 }
 
+/** Karte: nach welcher Place-Property, wie hoch (Swift/Notion `mapPropertyID`, `mapHeight`). */
+function MapSection({ view }: { view: DatabaseView }) {
+  const { store, db } = useDB();
+  const places = db.properties.filter((p) => p.type === "place");
+  const current = mapProperty(db, view);
+  return (
+    <section className="dbui-config-section" aria-label="Map">
+      <label className="dbui-field"><span className="dbui-field-label">Show map by</span>
+        <select className="dbui-select" aria-label="Map property" value={current?.id ?? ""} onChange={(e) => updateView(store, view.id, (v) => { v.mapPropertyID = e.target.value; }, "Map property")}>
+          {!current && <option value="">None</option>}
+          {places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </label>
+      <label className="dbui-field"><span className="dbui-field-label">Map height</span>
+        <select className="dbui-select" aria-label="Map height" value={view.mapHeight && MAP_HEIGHTS[view.mapHeight] ? view.mapHeight : "medium"} onChange={(e) => updateView(store, view.id, (v) => { v.mapHeight = e.target.value; }, "Map height")}>
+          <option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option><option value="extraLarge">Extra large</option>
+        </select>
+      </label>
+      {places.length === 0 && <p className="dbui-hint">Add a Place property to put pages on the map.</p>}
+    </section>
+  );
+}
+
 function DashboardSection({ view }: { view: DatabaseView }) {
   const { store } = useDB();
   const rows = view.dashboard?.rows ?? [];
@@ -257,6 +283,7 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
       {view.type === "dashboard" ? <DashboardSection view={view} /> : view.type === "chart" ? <ChartSection view={view} /> : (
         <>
           {(view.type === "calendar" || view.type === "timeline") && <DatesSection view={view} />}
+          {view.type === "map" && <MapSection view={view} />}
           {view.type !== "calendar" && <PropertiesSection view={view} />}
           {["table", "board", "list", "gallery", "timeline"].includes(view.type) && <GroupSection view={view} groups={groups} />}
           {(view.type === "board" || view.type === "gallery") && <CardSection view={view} />}
@@ -264,8 +291,8 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
             {view.type === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}
             <Toggle label="Show page icon" checked={view.showIcons !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showIcons; else v.showIcons = false; }, "Icons")} />
             <label className="dbui-field"><span className="dbui-field-label">Open pages in</span>
-              <select className="dbui-select" aria-label="Open pages in" value={view.openIn ?? "centerPeek"} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
-                <option value="centerPeek">Center peek</option><option value="sidePeek">Side peek</option><option value="fullPage">Full page</option>
+              <select className="dbui-select" aria-label="Open pages in" value={openModeOf(view)} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
+                <option value="sidePeek">Side peek</option><option value="centerPeek">Center peek</option><option value="fullPage">Full page</option>
               </select>
             </label>
           </section>

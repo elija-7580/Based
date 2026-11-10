@@ -1,6 +1,6 @@
 // BSD-155: kleine Bausteine der Datenbank-Oberfläche: Popover (mit Stapel, Escape, Klick außerhalb),
 // Menüeinträge, Icons (2-px-Strich, 24er-Raster, runde Enden), Options-Pillen.
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { optionTone } from "./logic/values.js";
 
@@ -47,6 +47,22 @@ export interface PopoverProps {
   role?: string;
 }
 
+/**
+ * Offenes Top-Layer-Element (modaler Dialog, Drawer), in dem der Anker liegt. Ein Popover am <body> läge darunter
+ * und wäre bei einem modalen Dialog nicht bedienbar – es wird deshalb dort hineingehängt und selbst ins Top Layer
+ * gehoben (Popover-API), damit weder Transform noch Overflow des Dialogs es verschieben oder abschneiden.
+ */
+function topLayerHost(anchor: Anchor): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  if (anchor instanceof HTMLElement) return anchor.closest<HTMLElement>("dialog[open], [popover]");
+  try {
+    const modal = document.querySelectorAll<HTMLElement>("dialog:modal");
+    return modal[modal.length - 1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const rectOf = (a: Anchor): DOMRect => (a instanceof HTMLElement ? a.getBoundingClientRect() : "width" in a ? a : new DOMRect(a.x, a.y, 0, 0));
 
 export function Popover({ anchor, onClose, children, label, className, matchWidth, cover, role = "dialog" }: PopoverProps) {
@@ -54,10 +70,12 @@ export function Popover({ anchor, onClose, children, label, className, matchWidt
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden", top: 0, left: 0 });
+  const host = useMemo(() => topLayerHost(anchor), [anchor]);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (host) try { el.showPopover(); } catch { /* schon offen oder nicht unterstützt */ }
     const r = rectOf(anchor);
     const w = el.offsetWidth, h = el.offsetHeight;
     const vw = window.innerWidth, vh = window.innerHeight, m = 8;
@@ -66,7 +84,7 @@ export function Popover({ anchor, onClose, children, label, className, matchWidt
     let left = r.left;
     if (left + w > vw - m) left = Math.max(m, vw - m - w);
     setStyle({ top, left, ...(matchWidth ? { minWidth: Math.max(r.width, 200) } : {}) });
-  }, [anchor, cover, matchWidth]);
+  }, [anchor, cover, matchWidth, host]);
 
   useEffect(() => {
     const el = ref.current;
@@ -83,11 +101,11 @@ export function Popover({ anchor, onClose, children, label, className, matchWidt
   }, [anchor]);
 
   return createPortal(
-    <div ref={ref} className={"dbui-popover" + (className ? " " + className : "")} style={style} role={role} aria-label={label}
+    <div ref={ref} className={"dbui-popover" + (className ? " " + className : "")} style={style} role={role} aria-label={label} popover={host ? "manual" : undefined}
       onMouseDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
       {children}
     </div>,
-    document.body,
+    host ?? document.body,
   );
 }
 
@@ -152,6 +170,9 @@ const PATHS: Record<string, string> = {
   hash: "M9 4L7 20M17 4l-2 16M4 9h16M3 15h16",
   person: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
   file: "M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7zM14 3v4h4",
+  form: "M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 8h6M9 12h6M9 16h3",
+  minus: "M5 12h14",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
   pin: "M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
 };
 
@@ -166,6 +187,7 @@ export function Icon({ name, size = 16, label }: { name: string; size?: number; 
 
 export const VIEW_ICONS: Record<string, string> = {
   table: "table", board: "board", list: "list", gallery: "gallery", chart: "chart", dashboard: "dashboard", calendar: "calendar", timeline: "timeline",
+  form: "form", map: "pin",
 };
 
 export const PROPERTY_ICONS: Record<string, string> = {

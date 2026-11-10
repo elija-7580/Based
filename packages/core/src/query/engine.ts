@@ -12,6 +12,16 @@ import {
 
 export const TITLE_PROPERTY_ID = "title";
 
+/**
+ * Beginn des letzten Tages eines Datums bzw. Zeitraums (lokaler Kalender). Mit Uhrzeit gehört ein Ende genau um
+ * 00:00 noch zum Vortag (wie `rowSpan` in calendar.ts); ein Ende vor dem Beginn zählt nicht.
+ */
+export function lastDayStart(d: DateValue): number {
+  const end = d.end !== undefined && d.end > d.start ? d.end : d.start;
+  const day = startOfDay(end);
+  return d.includeTime && end > d.start && end === day && day > startOfDay(d.start) ? addCalendar(day, "day", -1) : day;
+}
+
 export interface RowGroup {
   /** Option-ID, Person, "true"/"false", Datums-Schlüssel oder "" für die leere Gruppe. */
   id: string;
@@ -485,15 +495,17 @@ export class QueryEngine {
         const bounds = this.dateBounds(fv);
         if (!bounds) return true;
         const [lo, hi] = bounds;
-        const start = v.v.start, dayStart = startOfDay(start);
+        // Zeitraum (start + end): Das Ende zählt mit. Verglichen wird tageweise im lokalen Kalender; ohne Ende
+        // sind erster und letzter Tag gleich (dann wie in Swift, das nur `start` kennt).
+        const first = startOfDay(v.v.start), last = lastDayStart(v.v);
+        const overlaps = first < hi && last >= lo;
         switch (op) {
-          case "equals": return dayStart >= lo && dayStart < hi;
-          case "notEquals": return !(dayStart >= lo && dayStart < hi);
-          case "before": case "less": return dayStart < lo;
-          case "after": case "greater": return dayStart >= hi;
-          case "onOrBefore": case "lessOrEqual": return dayStart < hi;
-          case "onOrAfter": case "greaterOrEqual": return dayStart >= lo;
-          case "within": return start >= lo && start < hi;
+          case "equals": case "within": return overlaps;
+          case "notEquals": return !overlaps;
+          case "before": case "less": return last < lo; // ganz davor: endet vor dem Tag
+          case "after": case "greater": return first >= hi; // ganz danach: beginnt nach dem Tag
+          case "onOrBefore": case "lessOrEqual": return last < hi;
+          case "onOrAfter": case "greaterOrEqual": return first >= lo;
           default: return true;
         }
       }

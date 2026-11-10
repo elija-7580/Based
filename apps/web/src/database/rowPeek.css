@@ -1,0 +1,15 @@
+/* Peek einer Datenbankzeile (Inhalt der Astryx-Hülle): nur Based-Tokens. */
+/* Die Hülle (Astryx Drawer/Dialog) auf Based-Flächen: Seite deckend, schwebend mit shadow-float. */
+dialog:has(.row-peek-body) { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-float); }
+/* Inhaltsfläche der Hülle malt sonst die Fläche des neutralen Astryx-Themes (hell auch im Dunkelmodus). */
+dialog:has(.row-peek-body) > div { background: transparent; }
+.row-peek-body { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-2) var(--space-5) var(--space-8); min-width: 0; color: var(--ink); }
+.row-peek-title { margin: 0; color: var(--ink); }
+dialog:has(.row-peek-body) h2 { color: var(--ink); }
+.row-peek-nav { display: inline-flex; gap: var(--space-1); }
+.row-peek-position { font-family: var(--font-mono); font-size: var(--type-data-size); line-height: var(--type-data-leading); color: var(--muted); }
+.row-peek-content { min-width: 0; padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.row-peek-content .shell-editor { margin-inline: calc(-1 * var(--space-5)); }
+.row-peek-gone { padding: var(--space-6) var(--space-7); }
+.row-peek-body:focus { outline: none; }
+.row-peek-loading { min-height: var(--space-8); margin: 0; }

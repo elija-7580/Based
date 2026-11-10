@@ -30,14 +30,14 @@
   line-height: var(--type-ui-leading);
   font-variant-numeric: tabular-nums;
 }
-.dbui-popover { --dbui-tone-gray: var(--status-neutral); --dbui-tone-blue: var(--status-ready); --dbui-tone-pink: var(--status-review); --dbui-tone-orange: var(--status-blocked);
+.dbui-popover, .dbui-rowprops { --dbui-tone-gray: var(--status-neutral); --dbui-tone-blue: var(--status-ready); --dbui-tone-pink: var(--status-review); --dbui-tone-orange: var(--status-blocked);
   --dbui-tone-green: color-mix(in srgb, var(--synced) 22%, var(--bg)); --dbui-tone-red: color-mix(in srgb, var(--danger) 18%, var(--bg));
   --dbui-strong-gray: var(--muted); --dbui-strong-blue: color-mix(in srgb, var(--status-ready), var(--ink) 40%); --dbui-strong-pink: color-mix(in srgb, var(--status-review), var(--ink) 35%);
   --dbui-strong-orange: color-mix(in srgb, var(--status-blocked), var(--ink) 35%); --dbui-strong-green: var(--synced); --dbui-strong-red: var(--danger); }
-.dbui-root *, .dbui-popover * { box-sizing: border-box; }
-.dbui-root button, .dbui-popover button { font: inherit; color: inherit; cursor: pointer; }
-.dbui-root button:disabled, .dbui-popover button:disabled { cursor: default; opacity: 0.5; }
-:where(.dbui-root, .dbui-popover) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+.dbui-root *, .dbui-popover *, .dbui-rowprops * { box-sizing: border-box; }
+.dbui-root button, .dbui-popover button, .dbui-rowprops button { font: inherit; color: inherit; cursor: pointer; }
+.dbui-root button:disabled, .dbui-popover button:disabled, .dbui-rowprops button:disabled { cursor: default; opacity: 0.5; }
+:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
 .dbui-icon { flex: none; }
 
 /* Kopf: Titel, Tabs, Aktionen */
@@ -507,3 +507,49 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-tl-jump > span { overflow: hidden; text-overflow: ellipsis; }
 .dbui-tl-jump.after { margin-left: auto; right: var(--space-1); }
 .dbui-tl-jump:hover { background: var(--surface-raised); color: var(--ink); }
+
+/* Popover in einem Top-Layer-Element (Dialog/Drawer der Shell): selbst im Top Layer (ui.tsx topLayerHost). */
+.dbui-popover[popover] { inset: auto; margin: 0; border: 0; }
+
+/* Property-Liste einer Zeile (Peek) */
+.dbui-rowprops { display: flex; flex-direction: column; gap: var(--space-1); font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); color: var(--ink); }
+.dbui-rowprop { display: grid; grid-template-columns: calc(var(--space-8) * 2.5) minmax(0, 1fr); gap: var(--space-2); align-items: start; min-height: var(--space-7); }
+.dbui-rowprop-name { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); min-height: var(--space-7); min-width: 0; }
+.dbui-rowprop-value { min-width: 0; min-height: var(--space-7); display: flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); }
+.dbui-rowprop-value.editable { cursor: pointer; }
+.dbui-rowprop-value.editable:hover { background: var(--surface-raised); }
+.dbui-rowprop-value:focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+
+/* Place-Editor */
+.dbui-place-editor { width: calc(var(--space-8) * 6); gap: var(--space-2); padding: var(--space-3); }
+.dbui-place-coords { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+
+/* Karte (layouts/Map.tsx): Wasser = surface-soft, Land = Seite, Küsten/Gradnetz = Haarlinien; Pins in Tinte. */
+.dbui-map { flex: 1; min-height: 0; overflow: auto; padding: var(--space-3) var(--dbui-gutter) var(--space-5); }
+.dbui-map-stage { display: grid; grid-template-columns: minmax(0, 1fr) calc(var(--space-8) * 4.5); gap: var(--space-3); min-height: calc(var(--space-8) * 6); }
+.dbui-map-canvas { position: relative; overflow: hidden; border-radius: var(--radius-xl); background: var(--surface-soft); touch-action: none; cursor: grab; outline: none; user-select: none; }
+.dbui-map-canvas:active { cursor: grabbing; }
+.dbui-map-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--muted); }
+.dbui-map-svg { position: absolute; inset: 0; display: block; }
+.dbui-map-pin, .dbui-map-cluster { position: absolute; left: 0; top: 0; border: 0; padding: 0; background: none; color: var(--ink); }
+.dbui-map-pin { width: calc(var(--space-6)); height: calc(var(--space-6)); margin: calc(var(--space-6) * -1) 0 0 calc(var(--space-6) / -2); display: flex; align-items: flex-end; justify-content: center; }
+.dbui-map-pin .dbui-icon { fill: var(--bg); filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink) 30%, transparent)); }
+.dbui-map-pin.selected .dbui-icon, .dbui-map-pin:hover .dbui-icon { fill: var(--ink); color: var(--ink); }
+.dbui-root .dbui-map-cluster { min-width: var(--space-6); height: var(--space-6); margin: calc(var(--space-6) / -2) 0 0 calc(var(--space-6) / -2); padding: 0 var(--space-2); border-radius: var(--radius-pill);
+  background: var(--ink); color: var(--bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg) 70%, transparent); display: inline-flex; align-items: center; justify-content: center; }
+.dbui-root .dbui-map-cluster .dbui-data { color: var(--bg); font-weight: 600; }
+.dbui-map-controls { position: absolute; top: var(--space-2); right: var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-1);
+  background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); }
+.dbui-map-credit { position: absolute; left: var(--space-2); bottom: var(--space-1); font-size: var(--type-meta-size); color: var(--muted); pointer-events: none; }
+.dbui-map-card { position: absolute; left: var(--space-3); bottom: var(--space-6); width: min(calc(var(--space-8) * 5), calc(100% - var(--space-6))); background: var(--bg); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-float); padding: var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); cursor: auto; }
+.dbui-map-card-head { display: flex; align-items: center; gap: var(--space-1); }
+.dbui-map-card-body { box-shadow: none; border: 0; padding: var(--space-1) var(--space-2); }
+.dbui-spacer { flex: 1; }
+.dbui-map-side { min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); background: var(--surface-raised); border-radius: var(--radius-xl); padding: var(--space-3); overflow: auto; }
+.dbui-map-side-head { display: flex; align-items: center; gap: var(--space-2); }
+.dbui-map-side-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.dbui-map-side-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-2); }
+.dbui-map-side-row > .dbui-hint { grid-column: 1; margin: 0; }
+.dbui-map-side-row > .dbui-btn { grid-column: 2; grid-row: 1; }
+@media (max-width: 720px) { .dbui-map-stage { grid-template-columns: minmax(0, 1fr); } }
