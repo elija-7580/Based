@@ -30,6 +30,9 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
 | history | `history/history.json` | Versionsverlauf (BSD-73): Block-Kodierung (`/` maskiert) und 128-Bit-Hash byte-genau, Manifeste/Dedup beim Aufzeichnen, `versionBlocks`, Ausdünnen und Aufräumen, Wiederherstellen samt Undo (nur Fälle, in denen TS bewusst wie Swift bleibt; TS verschiebt zusätzlich statt zu löschen) |
 
+Bewusste Abweichungen (Swift-Fehler, die TS absichtlich nicht nachbildet, z. B. BSD-183) stehen nicht in den
+Fixtures, sondern in `packages/core/test/fixtures/deviations.ts` – mit Backlog-Verweis und erwartetem TS-Ergebnis.
+
 Format: `{"module": "…", "cases": [{"name", "input", "output"}], …Metadaten}`. Fehler als `{"error": "…"}`,
 berechnete Werte als `{"t": "<typ>", "v": …}`, Datum wie in Swift (Sekunden seit 2001-01-01).
 `*.utc.json` hängt von der Zeitzone ab (Kalendertage, Datumsgruppen, relative Datumsfilter) und gilt für UTC;

@@ -106,13 +106,13 @@ export class MarkdownImporter {
       if (trimmed === "") { i++; continue; }
       const indent = indentOf(raw);
       if (indent > base && out.length > 0) {
-        // Swift: `if indent > base, var last = out.popLast(), last.type.supportsChildren` – das Entnehmen bleibt
-        // auch bestehen, wenn der Block keine Kinder haben kann (der Block fällt dann weg).
-        const last = out.pop()!;
+        // BSD-183: bewusste Abweichung von Swift. Dort entnimmt `out.popLast()` den Vorgänger auch dann, wenn er
+        // keine Kinder haben kann (Code, Trenner, Gleichung …), und der Block fällt weg. Hier bleibt er stehen;
+        // die eingerückte Zeile wird darunter als eigener Block gelesen.
+        const last = out[out.length - 1]!;
         if (SUPPORTS_CHILDREN.has(last.type)) {
           const [kids, next] = childLines(i - 1, indent - 1);
           last.children.push(...this.parseLines(kids));
-          out.push(last);
           i = next;
           continue;
         }
