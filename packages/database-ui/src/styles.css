@@ -30,14 +30,14 @@
   line-height: var(--type-ui-leading);
   font-variant-numeric: tabular-nums;
 }
-.dbui-popover { --dbui-tone-gray: var(--status-neutral); --dbui-tone-blue: var(--status-ready); --dbui-tone-pink: var(--status-review); --dbui-tone-orange: var(--status-blocked);
+.dbui-popover, .dbui-rowprops { --dbui-tone-gray: var(--status-neutral); --dbui-tone-blue: var(--status-ready); --dbui-tone-pink: var(--status-review); --dbui-tone-orange: var(--status-blocked);
   --dbui-tone-green: color-mix(in srgb, var(--synced) 22%, var(--bg)); --dbui-tone-red: color-mix(in srgb, var(--danger) 18%, var(--bg));
   --dbui-strong-gray: var(--muted); --dbui-strong-blue: color-mix(in srgb, var(--status-ready), var(--ink) 40%); --dbui-strong-pink: color-mix(in srgb, var(--status-review), var(--ink) 35%);
   --dbui-strong-orange: color-mix(in srgb, var(--status-blocked), var(--ink) 35%); --dbui-strong-green: var(--synced); --dbui-strong-red: var(--danger); }
-.dbui-root *, .dbui-popover * { box-sizing: border-box; }
-.dbui-root button, .dbui-popover button { font: inherit; color: inherit; cursor: pointer; }
-.dbui-root button:disabled, .dbui-popover button:disabled { cursor: default; opacity: 0.5; }
-:where(.dbui-root, .dbui-popover) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+.dbui-root *, .dbui-popover *, .dbui-rowprops * { box-sizing: border-box; }
+.dbui-root button, .dbui-popover button, .dbui-rowprops button { font: inherit; color: inherit; cursor: pointer; }
+.dbui-root button:disabled, .dbui-popover button:disabled, .dbui-rowprops button:disabled { cursor: default; opacity: 0.5; }
+:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
 .dbui-icon { flex: none; }
 
 /* Kopf: Titel, Tabs, Aktionen */
@@ -507,3 +507,15 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-tl-jump > span { overflow: hidden; text-overflow: ellipsis; }
 .dbui-tl-jump.after { margin-left: auto; right: var(--space-1); }
 .dbui-tl-jump:hover { background: var(--surface-raised); color: var(--ink); }
+
+/* Popover in einem Top-Layer-Element (Dialog/Drawer der Shell): selbst im Top Layer (ui.tsx topLayerHost). */
+.dbui-popover[popover] { inset: auto; margin: 0; border: 0; }
+
+/* Property-Liste einer Zeile (Peek) */
+.dbui-rowprops { display: flex; flex-direction: column; gap: var(--space-1); font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); color: var(--ink); }
+.dbui-rowprop { display: grid; grid-template-columns: calc(var(--space-8) * 2.5) minmax(0, 1fr); gap: var(--space-2); align-items: start; min-height: var(--space-7); }
+.dbui-rowprop-name { display: flex; align-items: center; gap: var(--space-2); color: var(--muted); min-height: var(--space-7); min-width: 0; }
+.dbui-rowprop-value { min-width: 0; min-height: var(--space-7); display: flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); }
+.dbui-rowprop-value.editable { cursor: pointer; }
+.dbui-rowprop-value.editable:hover { background: var(--surface-raised); }
+.dbui-rowprop-value:focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }

@@ -1,18 +1,45 @@
 // BSD-155: Einstieg – eine Datenbank mit ihren Ansichten als Tabs, Filter-Chips, Sortierung, Suche,
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
 import { DBContext, useDatabaseContext, useDB } from "./context.js";
 import { countConditions, describeCondition, topConditions } from "./logic/filters.js";
+import { openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek, type OpenMode, type PeekState } from "./logic/peek.js";
 import { FilterEditor } from "./menus/FilterEditor.js";
 import { SortEditor } from "./menus/SortEditor.js";
 import { ViewSettings } from "./menus/ViewSettings.js";
 import { groupProperty, newRowValues } from "./layouts/shared.js";
 import { Icon, MenuItem, Popover, VIEW_ICONS, type Anchor } from "./ui.js";
 import { useQuery, ViewBody } from "./ViewBody.js";
+
+/** Was die Hülle eines Peeks (Drawer/Dialog der Shell) braucht. Gerendert wird im DBContext der Datenbank. */
+export interface PeekRenderProps {
+  store: WorkspaceStore;
+  rowID: string;
+  /** Die Zeile; `undefined`, wenn sie inzwischen gelöscht wurde. */
+  row: Block | undefined;
+  mode: Exclude<OpenMode, "fullPage">;
+  /** Stelle in der Ansicht (0-basiert, -1 = nicht mehr in der Ansicht) und Anzahl der Zeilen der Ansicht. */
+  index: number;
+  total: number;
+  onPrev: (() => void) | undefined;
+  onNext: (() => void) | undefined;
+  onClose: () => void;
+  /** „Open as full page“; `undefined`, wenn die Shell keine Seiten öffnen kann. */
+  onOpenFull: (() => void) | undefined;
+  locked: boolean;
+}
+
+/** Zeilen als Peek öffnen: Hülle der Shell, Speicher fürs Neuladen, Ausnahme (z. B. ⌘-Klick → neuer Tab). */
+export interface PeekOptions {
+  render: (p: PeekRenderProps) => ReactNode;
+  storage?: { get(): string | null; set(value: string | null): void } | undefined;
+  /** `true`: diese Zeile nicht als Peek, sondern direkt über `onOpenPage` öffnen. */
+  bypass?: (() => boolean) | undefined;
+}
 
 export interface DatabaseViewProps {
   store: WorkspaceStore;
@@ -36,6 +63,8 @@ export interface DatabaseViewProps {
   /** Höhe des Ganzen (Standard 100 % des Elternelements); die Ansicht scrollt darin. */
   height?: number | string | undefined;
   className?: string | undefined;
+  /** Zeilen als Side/Center Peek öffnen (je Ansicht „Open pages in“); ohne das öffnet alles über `onOpenPage`. */
+  peek?: PeekOptions | undefined;
 }
 
 function Tabs({ views, active, onSelect, blockID }: { views: View[]; active: View; onSelect: (id: string) => void; blockID: string }) {
@@ -51,7 +80,7 @@ function Tabs({ views, active, onSelect, blockID }: { views: View[]; active: Vie
       {!locked && <button type="button" className="dbui-icon-btn" aria-label="Add view" onClick={(e) => setAdd(e.currentTarget)}><Icon name="plus" size={14} /></button>}
       {add && (
         <Popover anchor={add} onClose={() => setAdd(null)} role="menu" label="Add view">
-          {["table", "board", "list", "gallery", "chart", "dashboard", "calendar", "timeline"].map((t) => (
+          {["table", "board", "list", "gallery", "chart", "dashboard", "calendar", "timeline", "form", "map"].map((t) => (
             <MenuItem key={t} icon={<Icon name={VIEW_ICONS[t] ?? "table"} />} testID={`add-view-${t}`} onClick={() => {
               const id = addView(store, blockID, t);
               setAdd(null);
@@ -83,6 +112,7 @@ function Toolbar({ view, search, setSearch, onNew }: { view: View; search: strin
   }, [gp, result.groups]);
   const live = store.views.get(view.id) ?? view;
   const showsRows = view.type !== "dashboard";
+  const isForm = view.type === "form";
   return (
     <div className="dbui-actions">
       {showsRows && chips.map(({ condition }) => (
@@ -101,7 +131,7 @@ function Toolbar({ view, search, setSearch, onNew }: { view: View; search: strin
         : <button type="button" className="dbui-icon-btn" aria-label="Search" onClick={() => setSearching(true)}><Icon name="search" size={14} /></button>)}
       {showsRows && <span className="dbui-data dbui-rowcount" aria-label="Pages in view">{result.rows.length.toLocaleString("en-US")}</span>}
       <button type="button" className="dbui-icon-btn" aria-label="View settings" onClick={(e) => setSettings(e.currentTarget)}><Icon name="settings" size={14} /></button>
-      {!locked && showsRows && <button type="button" className="dbui-chip primary" onClick={onNew}>New</button>}
+      {!locked && showsRows && !isForm && <button type="button" className="dbui-chip primary" onClick={onNew}>New</button>}
       {locked && <span className="dbui-hint" role="status">Locked</span>}
       {filter && <FilterEditor view={live} anchor={filter} onClose={() => setFilter(null)} />}
       {sort && <SortEditor view={live} anchor={sort} onClose={() => setSort(null)} />}
@@ -120,8 +150,44 @@ function Title() {
         onChange={(e) => { setText(e.target.value); setDatabaseTitle(store, db.id, e.target.value); }} />;
 }
 
-function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; viewID: string | undefined; onViewChange: ((id: string) => void) | undefined; showTitle: boolean }) {
-  const { store, db, version } = useDB();
+/** Offener Peek: Reihenfolge laut seiner Ansicht (nur gerechnet, solange er offen ist), Vor/Zurück, Kürzel. */
+function Peek({ state, view, search, options, onChange }: { state: PeekState; view: View; search: string; options: PeekOptions; onChange: (s: PeekState | undefined) => void }) {
+  const { store, locked } = useDB();
+  const outer = useContext(OuterOpenPage);
+  const result = useQuery(view, search);
+  const order = useMemo(() => rowOrder(result), [result]);
+  const last = useRef(-1);
+  const pos = peekPosition(order, state.rowID, last.current);
+  if (pos.index >= 0) last.current = pos.index;
+  const go = (id: string | undefined) => (id ? () => onChange({ rowID: id, viewID: state.viewID }) : undefined);
+  const onPrev = go(pos.prev), onNext = go(pos.next);
+  const nav = useRef({ onPrev, onNext });
+  nav.current = { onPrev, onNext };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const dir = peekShortcut(e);
+      if (!dir) return;
+      e.preventDefault();
+      e.stopPropagation();
+      (dir === "prev" ? nav.current.onPrev : nav.current.onNext)?.();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
+  const mode = openModeOf(view);
+  return <>{options.render({
+    store, rowID: state.rowID, row: store.blocks.get(state.rowID), mode: mode === "fullPage" ? "sidePeek" : mode, index: pos.index, total: pos.total,
+    onPrev, onNext, onClose: () => onChange(undefined), locked,
+    onOpenFull: outer ? () => { onChange(undefined); outer(state.rowID); } : undefined,
+  })}</>;
+}
+
+/** `onOpenPage` der Shell (im Kontext steckt die Variante, die Zeilen als Peek öffnet). */
+const OuterOpenPage = createContext<((rowID: string) => void) | undefined>(undefined);
+
+function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: { blockID: string; viewID: string | undefined; onViewChange: ((id: string) => void) | undefined; showTitle: boolean; peek: PeekOptions | undefined }) {
+  const ctx = useDB();
+  const { store, db, version } = ctx;
   const views = useMemo(() => {
     const list = viewsForBlock(store, blockID);
     return list.length ? list : [...store.views.values()].filter((v) => v.databaseID === db.id && v.widgetOf === undefined);
@@ -132,8 +198,36 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
   const [search, setSearch] = useState("");
   const [requestEdit, setRequestEdit] = useState<{ rowID: string } | undefined>(undefined);
   const select = useCallback((id: string) => { setSelected(id); onViewChange?.(id); }, [onViewChange]);
-  const { onOpenPage } = useDB();
+  const outerOpen = ctx.onOpenPage;
+
+  // Peek: Zustand hier, damit er Ansichtswechsel überlebt; gespeichert über `peek.storage` (Neuladen).
+  const [peek, setPeekState] = useState<PeekState | undefined>(undefined);
+  const storage = peekOptions?.storage;
+  const setPeek = useCallback((s: PeekState | undefined) => { setPeekState(s); storage?.set(serializePeek(s)); }, [storage]);
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !peekOptions || !active) return;
+    restored.current = true;
+    const s = restorePeek(parsePeek(storage?.get()), {
+      rowIDs: (id) => { const b = store.blocks.get(id); return !!b && b.parent === "d:" + db.id && b.trashedAt === undefined; },
+      viewIDs: views.map((v) => v.id), activeViewID: active.id,
+    });
+    if (s) setPeekState(s);
+    else storage?.set(null);
+  }, [peekOptions, storage, active, views, store, db.id]);
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const openRow = useCallback((rowID: string) => {
+    const view = activeRef.current;
+    const row = store.blocks.get(rowID);
+    const mode = openModeOf(view);
+    if (!peekOptions || !view || !row || row.parent !== "d:" + db.id || mode === "fullPage" || peekOptions.bypass?.()) { outerOpen?.(rowID); return; }
+    setPeek({ rowID, viewID: view.id });
+  }, [peekOptions, store, db.id, outerOpen, setPeek]);
+  const inner = useMemo(() => (peekOptions ? { ...ctx, onOpenPage: openRow } : ctx), [ctx, peekOptions, openRow]);
+  const onOpenPage = inner.onOpenPage;
   if (!active) return <div className="dbui-empty">This database has no views.</div>;
+  const peekView = peek ? views.find((v) => v.id === peek.viewID) ?? active : undefined;
   const onNew = () => {
     const values = newRowValues(db, active, groupProperty(db, active), null);
     // BSD-8: in Kalender und Timeline bekommt die neue Zeile heute als Datum (sonst landet sie unter „No date“).
@@ -147,7 +241,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
     else onOpenPage?.(id);
   };
   return (
-    <>
+    <DBContext.Provider value={inner}>
       <div className="dbui-head">
         {showTitle && <Title />}
         <div className="dbui-toolbar">
@@ -158,7 +252,12 @@ function Inner({ blockID, viewID, onViewChange, showTitle }: { blockID: string; 
       <div className="dbui-body" role="tabpanel" aria-label={active.name} data-view-type={active.type}>
         <ViewBody key={active.id} view={active} search={search} requestEdit={requestEdit} />
       </div>
-    </>
+      {peek && peekView && peekOptions && (
+        <OuterOpenPage.Provider value={outerOpen}>
+          <Peek state={peek} view={peekView} search={peekView.id === active.id ? search : ""} options={peekOptions} onChange={setPeek} />
+        </OuterOpenPage.Provider>
+      )}
+    </DBContext.Provider>
   );
 }
 
@@ -174,7 +273,7 @@ export function DatabaseView(props: DatabaseViewProps) {
   return (
     <DBContext.Provider value={ctx}>
       <div className={"dbui-root" + (props.className ? " " + props.className : "")} style={style} data-testid="database-view">
-        <Inner blockID={props.blockID ?? ctx.db.blockID} viewID={props.viewID} onViewChange={props.onViewChange} showTitle={props.showTitle !== false} />
+        <Inner blockID={props.blockID ?? ctx.db.blockID} viewID={props.viewID} onViewChange={props.onViewChange} showTitle={props.showTitle !== false} peek={props.peek} />
       </div>
     </DBContext.Provider>
   );

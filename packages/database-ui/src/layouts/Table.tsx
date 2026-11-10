@@ -3,7 +3,7 @@
 // Entf), Agent-Strich für von Agenten geänderte Zeilen.
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
+import { plainText,
   CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setValue, valueCase,
   visiblePropertyIDs, type Block, type DatabaseView, type PropertySchema, type QueryResult,
 } from "@based/core";
@@ -52,7 +52,7 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
           data-cell={`${row.id}:${col}`} aria-selected={col === activeCol} onClick={(e) => onCell(row, col, e.currentTarget)}>
           <CellView row={row} prop={p} wrap={wrap} onToggleCheckbox={() => onToggle(row, p)} />
           {p.type === "title" && onOpen && (
-            <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${row.text ? "" : "Untitled"}`.trim()}>
+            <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${plainText(row.text) || "Untitled"}`}>
               <Icon name="open" size={12} />Open
             </button>
           )}

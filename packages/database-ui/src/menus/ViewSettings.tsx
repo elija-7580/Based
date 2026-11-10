@@ -7,6 +7,7 @@ import {
   type DatabaseView,
 } from "@based/core";
 import { useDB } from "../context.js";
+import { openModeOf } from "../logic/peek.js";
 import { Icon, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
 
 export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline"];
@@ -264,8 +265,8 @@ export function ViewSettings({ view, anchor, onClose, groups, onDeleted }: {
             {view.type === "table" && <Toggle label="Wrap all content" checked={view.wrapCells === true} onChange={(on) => updateView(store, view.id, (v) => { if (on) v.wrapCells = true; else delete v.wrapCells; }, "Wrap cells")} />}
             <Toggle label="Show page icon" checked={view.showIcons !== false} onChange={(on) => updateView(store, view.id, (v) => { if (on) delete v.showIcons; else v.showIcons = false; }, "Icons")} />
             <label className="dbui-field"><span className="dbui-field-label">Open pages in</span>
-              <select className="dbui-select" aria-label="Open pages in" value={view.openIn ?? "centerPeek"} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
-                <option value="centerPeek">Center peek</option><option value="sidePeek">Side peek</option><option value="fullPage">Full page</option>
+              <select className="dbui-select" aria-label="Open pages in" value={openModeOf(view)} onChange={(e) => updateView(store, view.id, (v) => { v.openIn = e.target.value; }, "Open pages in")}>
+                <option value="sidePeek">Side peek</option><option value="centerPeek">Center peek</option><option value="fullPage">Full page</option>
               </select>
             </label>
           </section>
