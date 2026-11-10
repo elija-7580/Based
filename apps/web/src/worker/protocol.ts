@@ -160,6 +160,8 @@ export type Request =
   | { type: "syncNow" }
   /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */
   | { type: "commitImport"; payload: ImportPayload; parent?: string }
+  /** BSD-254: eine Datei eines laufenden Imports sofort ablegen (vorläufige ID → Hash; `commitImport` schreibt um). */
+  | { type: "importAsset"; assetID: string; name: string; mime?: string; bytes: Uint8Array }
   /** Exporte (Antwort: ExportFile). */
   | { type: "exportPage"; pageID: string; format: ExportFormat; html?: HTMLExportChoice }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat; html?: HTMLExportChoice }

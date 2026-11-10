@@ -44,6 +44,8 @@ export interface AppOptions extends SyncServiceOptions {
   codingLongPollMs?: number;
   /** Rechner der Agenten (CLI-Verlauf, Setup-Doctor); ohne: diese Routen fehlen. */
   codingHost?: CodingHost | undefined;
+  /** BSD-235: Adresse des Web-Clients; Access-Links bieten dann „Open in Based“ (Gast-Modus) an. */
+  webURL?: string | undefined;
 }
 
 export interface App {
@@ -220,7 +222,7 @@ export function createApp(opts: AppOptions): App {
   );
 
   // MARK: Teilen (docs/sharing.md)
-  registerShareRoutes(router, { share, sync, assets, log });
+  registerShareRoutes(router, { share, sync, assets, log, webURL: opts.webURL });
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 

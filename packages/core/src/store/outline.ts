@@ -8,6 +8,8 @@ import type { WorkspaceStore } from "./store.js";
 import { isPageLike, sectionOf } from "./pages.js";
 
 export const PRIVATE_SECTION = "private";
+/** BSD-235: Sektion für geteilte Seiten ohne bekannte Eltern (Gast-Modus). */
+export const SHARED_SECTION = "shared";
 
 export interface OutlineSection {
   /** `private` oder die Teamspace-ID. */
@@ -94,6 +96,29 @@ export function buildOutline(store: WorkspaceStore): Outline {
     }
   };
   visit("w", undefined, PRIVATE_SECTION);
+
+  // BSD-235: Seiten, deren Eltern dieses Gerät nicht kennt – im Gast-Modus die geteilten Seiten (der Server schickt
+  // nur den geteilten Bereich, ohne Workspace und ohne die Seiten darüber). Eigene Sektion „Shared with you“.
+  const orphans: string[] = [];
+  for (const b of store.blocks.values()) {
+    if (!isPageLike(b) || b.trashedAt !== undefined || nodes[b.id] || !b.parent.startsWith("b:")) continue;
+    if (store.blocks.has(b.parent.slice(2))) continue;
+    orphans.push(b.id);
+  }
+  if (orphans.length) {
+    orphans.sort((a, b) => titleOf(store, a).localeCompare(titleOf(store, b)) || (a < b ? -1 : 1));
+    sections.push({ id: SHARED_SECTION, name: "Shared with you" });
+    children[sectionKey(SHARED_SECTION)] = [];
+    for (const id of orphans) {
+      const b = store.blocks.get(id)!;
+      const node: OutlineNode = { kind: b.type === "databasePage" ? "database" : "page", section: SHARED_SECTION };
+      const icon = iconText(b);
+      if (icon) node.icon = icon;
+      nodes[id] = node;
+      push(sectionKey(SHARED_SECTION), id);
+      visit("b:" + id, id, SHARED_SECTION);
+    }
+  }
 
   const trash: TrashEntry[] = [];
   for (const b of store.blocks.values()) {

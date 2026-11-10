@@ -10,16 +10,47 @@ import {
   loadArchive,
   preparedImportToWire,
   prepareImport,
+  MemoryAssetSink,
   type ArchiveReadResult,
-  type MemoryAssetSink,
+  type AssetRef,
+  type ByteSource,
   type PreparedImportWire,
 } from "@based/core";
 
-export interface ImportFile {
+export type ImportFile = {
   /** Relativer Pfad („Export/Seite.html“) oder nur der Dateiname. */
   path: string;
-  data: Uint8Array;
+} & (
+  | { data: Uint8Array; source?: undefined }
+  /** BSD-254: die Datei wird erst beim Lesen geladen (im Worker: der gewählte `File` per FileReaderSync). */
+  | { source: ByteSource; data?: undefined }
+);
+
+/** Eine Datei, die sofort an den Store-Worker geht (BSD-254), statt bis zum Ende im Ergebnis zu liegen. */
+export interface StreamedAsset { id: string; name: string; mime?: string; data: Uint8Array }
+
+/**
+ * BSD-254: Asset-Sammler, der jede Datei sofort weiterreicht und nichts behält – ein großer Export liegt so nie ganz
+ * im Speicher (Bilder, PDFs, Videos gehen einzeln an den Store-Worker, der sie im Asset-Speicher ablegt).
+ */
+export class StreamingAssetSink extends MemoryAssetSink {
+  count = 0;
+  constructor(private readonly emit: (f: StreamedAsset) => void) {
+    super();
+  }
+  override importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef {
+    const ref = super.importData(data, name, mime);
+    this.files.delete(ref.id);
+    this.emitRef(ref, data);
+    return ref;
+  }
+  emitRef(ref: AssetRef, data: Uint8Array) {
+    this.count += 1;
+    this.emit({ id: ref.id, name: ref.name, ...(ref.mime ? { mime: ref.mime } : {}), data });
+  }
 }
+
+const fileSize = (f: ImportFile) => (f.data ? f.data.length : f.source.size);
 
 export interface PreparedArchive {
   name: string;
@@ -66,14 +97,17 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
   for (const f of files) {
     const name = f.path.split("/").at(-1) ?? f.path;
     const lower = name.toLowerCase();
-    if (lower.endsWith(".jsonl") || lower.endsWith(".based.zip") || (lower.endsWith(".zip") && isArchive(f.data))) {
-      if (isArchive(f.data)) {
-        const loaded = loadArchive(f.data);
+    const raw = f.data ?? f.source;
+    if (lower.endsWith(".jsonl") || lower.endsWith(".based.zip") || (lower.endsWith(".zip") && isArchive(raw))) {
+      if (isArchive(raw)) {
+        // Based-Archive werden (noch) ganz gelesen; Notion-Exporte unten nicht.
+        const loaded = loadArchive(f.data ?? f.source.read(0, f.source.size));
         out.archives.push({ name, read: loaded.read });
         if (opts.assets) {
           // Dateien des Archivs behalten ihre IDs (die Records zeigen schon darauf).
           for (const a of loaded.assets) {
             if (a.data.length > maxBytes) out.notes.push(`Skipped “${a.ref.name}” (${formatBytes(a.data.length)}): larger than the ${formatBytes(maxBytes)} limit for attached files`);
+            else if (opts.assets instanceof StreamingAssetSink) opts.assets.emitRef({ ...a.ref, size: a.data.length }, a.data);
             else opts.assets.files.set(a.ref.id, { ref: { ...a.ref, size: a.data.length }, data: a.data });
           }
         } else archiveAssets += loaded.assets.length;
@@ -83,7 +117,11 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
       }
       if (lower.endsWith(".jsonl")) { out.notes.push(`Skipped ${name} (not a Based archive)`); continue; }
     }
-    tree.add(f.path, f.data);
+    if (f.data) tree.add(f.path, f.data);
+    else {
+      const source = f.source;
+      tree.addLazy(f.path, { size: fileSize(f), load: () => source.read(0, source.size), source });
+    }
     const root = f.path.replace(/^\/+/, "").split("/")[0]!;
     if (root && !roots.includes(root)) roots.push(root);
   }
@@ -109,7 +147,7 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
       if (out.archives.length === 0) out.notes.push("Nothing to import in the chosen files.");
     }
   }
-  out.assets = opts.assets?.files.size ?? 0;
+  out.assets = opts.assets instanceof StreamingAssetSink ? opts.assets.count : opts.assets?.files.size ?? 0;
   if (opts.assets && opts.assets.files.size > 0) {
     out.files = [...opts.assets.files].map(([id, f]) => ({ id, name: f.ref.name, ...(f.ref.mime ? { mime: f.ref.mime } : {}), data: f.data }));
   }

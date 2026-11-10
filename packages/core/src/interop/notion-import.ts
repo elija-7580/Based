@@ -62,9 +62,10 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
     const p = normalizePath(src.path);
     const ext = extname(p).toLowerCase();
     const exists = src.files.exists(p);
-    const data = src.files.isFile(p) ? src.files.read(p) : undefined;
-    if (data && (ext === "zip" || (ext === "" && isZip(data)))) {
-      const r = extractZip(data, { limits: opts.zipLimits, isCancelled: opts.isCancelled, progress: (f) => progress((i + f * 0.5) / sources.length) });
+    // BSD-254: das ZIP nicht ganz laden – als Quelle (im Worker: die gewählte Datei) lesen
+    const zip = src.files.isFile(p) ? src.files.source(p) : undefined;
+    if (zip && (ext === "zip" || (ext === "" && isZip(zip.read(0, Math.min(4, zip.size)))))) {
+      const r = extractZip(zip, { limits: opts.zipLimits, isCancelled: opts.isCancelled, progress: (f) => progress((i + f * 0.5) / sources.length) });
       out.notes.push(`Unpacked ${basename(p)}: ${r.count} files`);
       for (const s of r.skipped) out.notes.push(`Skipped ${s}`);
       const hasHTML = containsExt(r.files, "", ["html", "htm"]);
@@ -279,12 +280,16 @@ class MarkdownNotionImporter {
   private asset(src: string, dir: string): { url?: string; asset?: AssetRef } {
     if (src.includes("://")) return { url: src };
     const u = joinPath(dir, src);
-    const data = this.files.isFile(u) ? this.files.read(u) : undefined;
-    if (!data) {
+    if (!this.files.isFile(u)) {
       if (this.opts.warnMissingFiles && looksLikeLocalFile(src)) this.warn(`Missing file “${u}” — it isn't in the import`);
       return { url: src };
     }
     if (!this.opts.assets) return { url: src };
+    const data = this.files.read(u);
+    if (!data) {
+      this.warn(`Couldn't read file “${u}”`);
+      return { url: src };
+    }
     try {
       const ref = this.opts.assets.importData(data, basename(u), mimeFor(extname(u)));
       this.report.assets += 1;

@@ -155,7 +155,7 @@ export function makeBlock(x: NewBlock, now: number): Block {
   return cleanBlock(b);
 }
 
-interface Pending { name: string; mime: string | undefined; data: Uint8Array }
+interface Pending { name: string; mime: string | undefined; data?: Uint8Array; load?: () => Uint8Array | undefined }
 
 /** `ImportBuilder` als reine Daten (`toWire`/`fromWire`). */
 export interface ImportBuilderWire {
@@ -307,13 +307,29 @@ export class ImportBuilder {
     return ref;
   }
 
+  /** BSD-254: wie `asset`, aber die Bytes werden erst in `resolveAssets` gelesen. */
+  assetLazy(key: string, size: number, load: () => Uint8Array | undefined, name: string, mime?: string): AssetRef {
+    const known = this.assetByPath.get(key);
+    if (known) return known;
+    const ref: AssetRef = { id: "pending-" + makeRecordID(), name, size };
+    const m = mime ?? mimeFor(extensionOf(name));
+    if (m !== undefined) ref.mime = m;
+    this.pendingAssets.set(ref.id, { name, mime: m, load });
+    this.assetByPath.set(key, ref);
+    return ref;
+  }
+
   /** Kopiert die Dateien in den Asset-Speicher und ersetzt alle Platzhalter. Ohne Speicher entfallen die Verweise. */
   resolveAssets(sink: AssetSink | undefined): number {
     if (this.pendingAssets.size === 0) return 0;
     const map = new Map<string, AssetRef>();
     if (sink) {
       for (const [id, f] of this.pendingAssets) {
-        try { map.set(id, sink.importData(f.data, f.name, f.mime)); } catch (e) {
+        try {
+          const data = f.data ?? f.load?.();
+          if (data === undefined) throw new Error("unreadable");
+          map.set(id, sink.importData(data, f.name, f.mime));
+        } catch (e) {
           this.warnings.push(e instanceof AssetRejected ? e.message : `Couldn't copy file ${f.name}`);
         }
       }
@@ -364,7 +380,7 @@ export class ImportBuilder {
   toWire(): ImportBuilderWire {
     return {
       blocks: this.blocks, databases: this.databases, views: this.views, roots: this.roots, complete: [...this.complete],
-      warnings: this.warnings, notes: this.notes, pendingAssets: [...this.pendingAssets], storedAssets: this.storedAssets, createdBy: this.createdBy,
+      warnings: this.warnings, notes: this.notes, pendingAssets: [...this.pendingAssets].map(([id, f]): [string, Pending] => [id, { name: f.name, mime: f.mime, data: f.data ?? f.load?.() ?? new Uint8Array(0) }]), storedAssets: this.storedAssets, createdBy: this.createdBy,
     };
   }
 
