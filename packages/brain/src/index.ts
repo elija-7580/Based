@@ -24,3 +24,4 @@ export * from "./mcp/catalog.js";
 export * from "./mcp/connections.js";
 // BSD-223: Coding-Agenten (ACP) – Client, Sitzung als ChatEngine, Freigabe-Inbox.
 export * from "./acp/index.js";
+export * from "./routing.js";
