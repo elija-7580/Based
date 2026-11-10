@@ -104,8 +104,6 @@ test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen",
   await page.keyboard.press("ArrowDown");
   await expect(menu.getByRole("menuitem", { name: /Find in page/ })).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(menu.getByRole("menuitem", { name: "Open in new window" })).toBeFocused();
-  await page.keyboard.press("ArrowDown");
   await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(menu).toBeHidden();
