@@ -5,7 +5,7 @@ import {
   addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
-import { DBContext, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps } from "./context.js";
+import { DBContext, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps, type RowActions } from "./context.js";
 import { countConditions, describeCondition, topConditions } from "./logic/filters.js";
 import { openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek, type OpenMode, type PeekState } from "./logic/peek.js";
 import { FilterEditor } from "./menus/FilterEditor.js";
@@ -58,6 +58,8 @@ export interface DatabaseViewProps {
   files?: FileHost | undefined;
   /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
   weekStart?: number | undefined;
+  /** BSD-213: Sammelaktionen der Shell für ausgewählte Zeilen (in Tabs öffnen, Links kopieren). */
+  rowActions?: RowActions | undefined;
   /** Nur lesen (zusätzlich zur Sperre der Datenbank). */
   readOnly?: boolean | undefined;
   /** Titel der Datenbank über den Tabs zeigen (Standard: ja). */
@@ -318,7 +320,7 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: 
  */
 export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
-  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart });
+  const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart, rowActions: props.rowActions });
   const style = { height: props.height ?? "100%" };
   const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files }), [props.renderForm, props.files]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;

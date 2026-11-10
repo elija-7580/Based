@@ -16,6 +16,13 @@ export interface DBContextValue {
   isAgentEdit: (row: Block) => boolean;
   /** Erster Wochentag für Kalender/Timeline (0 = Sonntag … 6 = Samstag): Einstellung der Shell, sonst Locale. */
   weekStart: number;
+  /** BSD-213: Sammelaktionen der Shell für ausgewählte Zeilen (Tabs, Links); fehlen sie, gibt es die Knöpfe nicht. */
+  rowActions: RowActions | undefined;
+}
+
+export interface RowActions {
+  openInTabs?: ((rowIDs: string[]) => void) | undefined;
+  copyLinks?: ((rowIDs: string[]) => void) | undefined;
 }
 
 export const DBContext = createContext<DBContextValue | null>(null);
@@ -63,6 +70,7 @@ export interface ContextOptions {
   onOpenPage?: ((rowID: string) => void) | undefined;
   isAgentEdit?: ((row: Block) => boolean) | undefined;
   weekStart?: number | undefined;
+  rowActions?: RowActions | undefined;
 }
 
 /** Baut den Kontext für eine Datenbank; `undefined`, wenn es sie (noch) nicht gibt. */
@@ -72,9 +80,9 @@ export function useDatabaseContext(store: WorkspaceStore, databaseID: string, op
   // Neu rechnen nur bei betroffenen Änderungen: der Memo der Engine wird pro Version einmal geleert.
   useMemo(() => engine.reset(), [engine, version]);
   const db = store.databases.get(databaseID);
-  const { readOnly, onOpenPage, isAgentEdit } = opts;
+  const { readOnly, onOpenPage, isAgentEdit, rowActions } = opts;
   const weekStart = opts.weekStart !== undefined && opts.weekStart >= 0 && opts.weekStart <= 6 ? Math.floor(opts.weekStart) : weekStartForLocale();
   return useMemo(() => db && {
-    store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit, weekStart,
-  }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit, weekStart]);
+    store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit, weekStart, rowActions,
+  }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit, weekStart, rowActions]);
 }

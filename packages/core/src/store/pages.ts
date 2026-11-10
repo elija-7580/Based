@@ -293,6 +293,13 @@ export function renameTeamspace(store: WorkspaceStore, id: string, name: string)
   }));
 }
 
+/** BSD-205: Workspace umbenennen (Einstellungen → General); leer bleibt beim alten Namen. Ein Undo-Schritt. */
+export function renameWorkspace(store: WorkspaceStore, name: string) {
+  const n = name.trim();
+  if (n === "" || store.workspace.name === n) return;
+  store.transact("Rename workspace", (tx) => updateWorkspace(store, tx, (w) => { w.name = n; }));
+}
+
 /** Icon eines Teamspaces setzen (Emoji) oder mit `undefined` entfernen. */
 export function setTeamspaceIcon(store: WorkspaceStore, id: string, icon: string | undefined) {
   const cur = (store.workspace.teamspaces ?? []).find((t) => t.id === id);

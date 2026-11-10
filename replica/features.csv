@@ -140,7 +140,7 @@ Export page as Markdown,export,must,yes,yes,,yes
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
 Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)"
 Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, F6 (BSD-204/238); ⇧⌘U fehlt; im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab"
-Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Rest „Not available yet“"
+Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Workspace-Name, Wochenbeginn (BSD-205), Rest „Not available yet“"
 iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil)
 iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil)
 iPad layout,mobile,could,yes,partial,runs; layout not tuned,no (Phase 5 mobil)
@@ -166,12 +166,12 @@ E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no
 MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,"partial: Einstellungen → Connections (Katalog GitHub/Linear + eigene Streamable-HTTP-Server, Token verschlüsselt, an/aus, für Agenten), Werkzeuge mcp__<name>__<tool> im Chat und für den Hauptagenten mit Freigabe (BSD-222); OAuth-Anmeldung (Notion, Slack, Drive, Sentry) und stdio-Server (Desktop) fehlen"
 Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-first equivalents for billing/people,"partial: 17 Seiten, Registry für Abschnitte; viele Seiten noch „Not available yet“"
 Export all workspace content,app,should,yes,yes,Markdown + CSV tree,yes
-Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug,"partial: alle Views virtualisiert, Test mit 10 000 Zeilen; keine Messung mit 50 000"
+Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug,"yes (BSD-215, Linux-Container): 50 000 Zeilen laden 1,4 s, Sync einspielen 1,1 s, Abfrage mit Filter/Sortierung/Gruppen 0,3 s, aus dem Cache 0,02 ms, SQLite laden 0,5 s; Web: Tabelle öffnen 0,9 s (Chromium)/2,1 s (WebKit), Zelle ändern 0,1–0,2 s; Tests mit Grenzwerten"
 UI test suite,app,should,n/a,yes,XCUITest macOS + iOS,n/a
 Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import,no
 AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or floating on narrow windows; full-page chat; history,"yes (Pass 30: ⌘J-Panel mit ziehbarer Breite, Vollseite #chat)"
 Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete","yes: ⇧-Klick Bereich, ⇧⌥-Klick/⇧Leertaste einzeln; Favorit, Duplizieren, Verschieben, Papierkorb (BSD-203; ⌘-Klick bleibt neuer Tab)"
-Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete",no
+Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete","yes: Tabelle – Kästchen, ⇧-Klick Bereich, alle wählen; in Tabs öffnen, Links kopieren, duplizieren, löschen (je ein Undo-Schritt, BSD-213); Board/Liste noch ohne"
 Peek navigation (prev/next row),databases,should,yes,yes,⌃⇧↑/↓ in side/center peek; open in new tab,yes (Pass 30: ⌃⇧↑/↓ und Knöpfe in Ansichts-Reihenfolge)
 Import HTML export,import,should,yes,yes,"lossless NotionHTMLImporter: page header, all blocks, colors, columns, tables, database property types/colors/relations; unknown markup kept as HTML block",yes
 Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcript view, inline permission prompts, shift+tab modes, SwiftTerm terminal (macOS)","partial: #coding zeigt das Transkript wie der Chat (Thinking, Werkzeuge mit Diff, Plan, Verbrauch), Freigaben oben, Modus-Auswahl, Stopp (BSD-223); Slash-Befehle, @Dateien, ⇧Tab und echtes Terminal fehlen"

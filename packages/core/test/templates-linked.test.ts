@@ -60,3 +60,38 @@ describe("Verknüpfte Ansichten (BSD-212)", () => {
     expect(createLinkedView(store, "missing", "b:p2")).toBeUndefined();
   });
 });
+
+describe("Workspace umbenennen (BSD-205)", () => {
+  it("setzt den Namen, ignoriert Leeres, ein Undo-Schritt", async () => {
+    const { renameWorkspace } = await import("../src/index.js");
+    const { store } = setup();
+    const before = store.workspace.name;
+    renameWorkspace(store, "  Acme  ");
+    expect(store.workspace.name).toBe("Acme");
+    renameWorkspace(store, "   ");
+    expect(store.workspace.name).toBe("Acme");
+    store.undo();
+    expect(store.workspace.name).toBe(before);
+  });
+});
+
+describe("Zeilen-Sammelaktionen (BSD-213)", () => {
+  it("duplicateRows: Kopien unter den Originalen, ein Undo-Schritt; deleteRows ebenso", async () => {
+    const { addRow, deleteRows, duplicateRows } = { ...(await import("../src/index.js")), ...(await import("../src/index.js")).dbops };
+    const { store, db } = setup();
+    const a = addRow(store, db, { title: "A" })!;
+    const b = addRow(store, db, { title: "B" })!;
+    const before = store.children("d:" + db).length;
+    const copies = duplicateRows(store, [a, b]);
+    expect(copies).toHaveLength(2);
+    const order = store.children("d:" + db).map((id) => plainText(store.blocks.get(id)!.text));
+    expect(order.slice(-4)).toEqual(["A", "A", "B", "B"]);
+    store.undo();
+    expect(store.children("d:" + db).length).toBe(before);
+    deleteRows(store, [a, b]);
+    expect(store.blocks.get(a)!.trashedAt).toBeDefined();
+    store.undo();
+    expect(store.blocks.get(a)!.trashedAt).toBeUndefined();
+    expect(store.blocks.get(b)!.trashedAt).toBeUndefined();
+  });
+});

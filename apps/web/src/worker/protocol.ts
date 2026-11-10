@@ -84,12 +84,15 @@ export type Command =
   /** Teamspaces: anlegen (Antwort: ID), umbenennen, Icon (Emoji oder keins), löschen (Seiten wandern nach Private). */
   | { op: "createTeamspace"; name: string; icon?: string }
   | { op: "renameTeamspace"; id: string; name: string }
+  | { op: "renameWorkspace"; name: string }
   | { op: "setTeamspaceIcon"; id: string; icon?: string }
   | { op: "deleteTeamspace"; id: string }
   | { op: "undo" }
   | { op: "redo" }
   /** Testdaten: `count` Seiten mit je einem Absatz (E2E, Messungen). */
-  | { op: "seed"; count: number; prefix?: string };
+  | { op: "seed"; count: number; prefix?: string }
+  /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen. */
+  | { op: "seedDatabase"; count: number };
 
 export interface QuickFindHit {
   pageID: string;

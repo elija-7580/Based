@@ -27,7 +27,7 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "notifications", group: "account", title: "My notifications", summary: "Where Based tells you that an agent needs you.", missing: ["Push notifications", "Agent approvals in the Inbox", "Email digests"] },
   { id: "my-connections", group: "account", title: "My connections", summary: "Accounts and tools connected for you.", missing: ["Connected accounts", "Slack notifications"] },
   { id: "language", group: "account", title: "Language & region", summary: "Language, week start, dates and time.", missing: ["App language", "Start week on Monday", "Timezone", "Date and time format"] },
-  { id: "workspace", group: "workspace", title: "General", summary: "What is in this workspace, and how to take it with you.", missing: ["Workspace name and icon", "Clear undo history", "Reset workspace"] },
+  { id: "workspace", group: "workspace", title: "General", summary: "What is in this workspace, and how to take it with you.", missing: ["Workspace icon", "Clear undo history", "Reset workspace"] },
   { id: "people", group: "workspace", title: "People", summary: "Members and guests of this workspace.", missing: ["Members", "Invitations", "Guests"] },
   { id: "teamspaces", group: "workspace", title: "Teamspaces", summary: "Shared areas of the workspace.", missing: ["Default teamspace", "Who may create teamspaces"] },
   { id: "security", group: "workspace", title: "Security", summary: "Access to the app and to your data.", missing: ["App lock (Face ID / Touch ID)", "Export and guest rules", "Agent approval rules"] },

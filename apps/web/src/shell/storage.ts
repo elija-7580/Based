@@ -120,3 +120,20 @@ export const collapsedSections = {
   get: (): Set<string> => new Set(read<string[]>("based.collapsed", [])),
   set: (s: ReadonlySet<string>) => write("based.collapsed", [...s]),
 };
+
+// BSD-205: Wochenbeginn (Einstellungen → Language & region), pro Gerät; `undefined` = aus der Sprache des Systems.
+const weekStartListeners = new Set<() => void>();
+export const weekStartPref = {
+  get: (): number | undefined => {
+    const v = read<unknown>("based.weekStart", undefined);
+    return typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 6 ? v : undefined;
+  },
+  set: (day: number | undefined) => {
+    write("based.weekStart", day);
+    weekStartListeners.forEach((fn) => fn());
+  },
+  subscribe: (fn: () => void) => {
+    weekStartListeners.add(fn);
+    return () => weekStartListeners.delete(fn);
+  },
+};

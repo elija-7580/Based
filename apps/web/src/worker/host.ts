@@ -31,6 +31,7 @@ import {
   PRIVATE_SECTION,
   recordKey,
   renamePage,
+  renameWorkspace,
   restorePages,
   SearchIndex,
   setFavorite,
@@ -305,11 +306,13 @@ export class StoreHost {
       case "duplicate": return duplicatePages(store, c.ids);
       case "createTeamspace": return createTeamspace(store, c.name, c.icon);
       case "renameTeamspace": return renameTeamspace(store, c.id, c.name);
+      case "renameWorkspace": return renameWorkspace(store, c.name);
       case "setTeamspaceIcon": return setTeamspaceIcon(store, c.id, c.icon);
       case "deleteTeamspace": return deleteTeamspace(store, c.id);
       case "undo": return store.undo().name;
       case "redo": return store.redo().name;
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
+      case "seedDatabase": return this.seedDatabase(c.count);
     }
   }
 
@@ -364,6 +367,21 @@ export class StoreHost {
       }
     }, { undoable: false });
     return count;
+  }
+
+  /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen in einem Schritt; liefert die Seiten-ID. */
+  private seedDatabase(count: number): string {
+    const store = this.store;
+    const made = createDatabase(store, { parent: "w", title: `Big ${count}`, sampleRows: 0, undoable: false });
+    const db = store.databases.get(made.databaseID)!;
+    const keys = keysBetween(count, undefined, undefined);
+    store.transact("Seed rows", (tx) => {
+      const now = store.now();
+      for (let i = 0; i < count; i++) {
+        tx.put({ kind: "block", data: { id: crypto.randomUUID().toUpperCase(), type: "page", parent: "d:" + db.id, sk: keys[i]!, text: `Row ${i + 1}`, createdAt: now, updatedAt: now } });
+      }
+    }, { undoable: false });
+    return made.blockID;
   }
 
   // MARK: Änderungen → UI
