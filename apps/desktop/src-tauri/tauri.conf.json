@@ -53,7 +53,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYzRUZDMzVGNUNCQUY4NjkKUldScCtMcGNYOFB2OHdQRE9hQ2N3TGZndEw3eGFGMVBlQmdheWx1dEVUK002Z2dRK2pyekhHWkIK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYxQTU3NkVBOTUxMDRBQjgKUldTNFNoQ1Y2bmFsWVNuWTNTY3J0RWdjMUhVSUJRQ3JvNHZScFZnMW5PZG9NRkRBdTNlZGRSbFMK",
       "endpoints": [
         "https://github.com/elija-7580/Based/releases/download/next-latest/latest.json"
       ]

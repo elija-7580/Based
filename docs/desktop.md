@@ -49,7 +49,7 @@ signiert sind. Dafür braucht GitHub Actions **ein** Repository-Secret:
 | `TAURI_SIGNING_PRIVATE_KEY` | der komplette Inhalt der Schlüsseldatei (eine Zeile, beginnt mit `dW50cnVzdGVk…`) | github.com/elija-7580/Based → **Settings → Secrets and variables → Actions → New repository secret** |
 
 - Der Schlüssel hat **kein Passwort**; ein Secret `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` ist nicht nötig.
-- Der private Schlüssel liegt **nicht** im Repo. Er wurde beim Einrichten erzeugt und separat übergeben; nach dem
+- Der private Schlüssel liegt **nicht** im Repo. Aktuelles Paar: neu erzeugt am 10.11.2026 (das erste ging verloren) und Elija als Datei übergeben; nach dem
   Anlegen des Secrets zusätzlich sicher aufbewahren (z. B. Passwortverwaltung). Geht er verloren, kann keine
   installierte Kopie mehr automatisch aktualisiert werden – dann neues Paar erzeugen
   (`pnpm --filter @based/desktop exec tauri signer generate --ci -p "" -w <datei>`), den neuen öffentlichen Schlüssel
