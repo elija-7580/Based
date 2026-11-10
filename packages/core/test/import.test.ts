@@ -6,7 +6,7 @@ import type { WorkspaceStore as Store } from "../src/index.js";
 import {
   commitPreparedImport, extractZip, ImportCancelled, ImportFiles, importNotionItems, loadArchive, MemoryAssetSink, MemoryPersistence,
   planWorkspaceExport, prepareImport, readZipEntries, topLevelPages, WorkspaceStore, writeArchivePackage, writeExportZip, ZipError, importArchiveRecords,
-  preparedImportFromWire, preparedImportToWire,
+  preparedImportFromWire, preparedImportToWire, encodeCSV, guardCSVFormula,
 } from "../src/index.js";
 
 const enc = new TextEncoder();
@@ -63,8 +63,34 @@ describe("ZIP", () => {
     expect(() => readZipEntries(enc.encode("not a zip at all, definitely"))).toThrow(/not a ZIP/);
     const bad = sample.slice();
     bad[40] = bad[40]! ^ 0xff; // Bytes in a.md (gespeichert) → CRC passt nicht
-    expect(() => extractZip(bad)).toThrow(ZipError);
+    // BSD-82: nur der beschädigte Eintrag fehlt, der Rest kommt an.
+    const r = extractZip(bad);
+    expect(r.skipped.some((x) => x.startsWith("a.md — damaged (checksum mismatch)"))).toBe(true);
+    expect(r.files.isFile("a.md")).toBe(false);
+    expect(r.files.isFile("dir/b.txt")).toBe(true);
     expect(() => extractZip(sample, { isCancelled: () => true })).toThrow(ImportCancelled);
+  });
+
+  it("Zip-Bombe mit gelogener Größe: kleine Angabe, großer Inhalt – wird als beschädigt übersprungen", () => {
+    const big = zipSync({ "zeros.bin": [new Uint8Array(3_000_000), { level: 9 }], "ok.txt": enc.encode("fine") });
+    // entpackte Größe im zentralen Verzeichnis auf 10 Bytes lügen
+    const liar = patchCentral(big, "zeros.bin", (v, at) => v.setUint32(at + 24, 10, true));
+    const r = extractZip(liar);
+    expect(r.files.isFile("zeros.bin")).toBe(false);
+    expect(r.skipped.some((x) => x.startsWith("zeros.bin — damaged"))).toBe(true);
+    expect(r.files.readText("ok.txt")).toBe("fine");
+  });
+
+  it("CSV-Export: Formeln werden entschärft, Zahlen nicht (BSD-82)", () => {
+    expect(guardCSVFormula("=HYPERLINK(\"x\")")).toBe("'=HYPERLINK(\"x\")");
+    expect(guardCSVFormula("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(guardCSVFormula("+cmd")).toBe("'+cmd");
+    expect(guardCSVFormula("-5")).toBe("-5");
+    expect(guardCSVFormula("+3,5")).toBe("+3,5");
+    expect(guardCSVFormula("-1e3")).toBe("-1e3");
+    expect(guardCSVFormula("Plain")).toBe("Plain");
+    expect(encodeCSV([["=1+1", "a,b"]], { guardFormulas: true })).toBe("'=1+1,\"a,b\"\n");
+    expect(encodeCSV([["=1+1"]])).toBe("=1+1\n");
   });
 });
 

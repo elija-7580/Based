@@ -266,7 +266,17 @@ function extractInto(bytes: Uint8Array, files: ImportFiles, prefix: string, dept
     }
     state.total += entry.uncompressedSize;
     if (state.total > limits.maxTotalBytes) throw new ZipError("limit", `more than ${limits.maxTotalBytes} bytes in total`);
-    const data = zipEntryData(bytes, entry);
+    let data: Uint8Array;
+    try {
+      data = zipEntryData(bytes, entry);
+    } catch (e) {
+      // BSD-82: ein beschädigter Eintrag kostet nur diese Datei, nicht den ganzen Import.
+      if (e instanceof ZipError && (e.kind === "corrupt" || e.kind === "checksum" || e.kind === "unsupported")) {
+        skipped.push(`${rel} — damaged (${e.kind === "checksum" ? "checksum mismatch" : e.kind === "unsupported" ? "unsupported" : "unreadable"})`);
+        continue;
+      }
+      throw e;
+    }
     done += entry.uncompressedSize;
     if (depth === 0) opts.progress?.(done / totalBytes);
     count += 1;

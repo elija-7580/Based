@@ -251,6 +251,6 @@ export class MarkdownExporter {
         return cellText(this.store, val);
       }));
     }
-    return encodeCSV(table);
+    return encodeCSV(table, { guardFormulas: true });
   }
 }
