@@ -17,52 +17,52 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1528 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1529)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
+packages/core test: [2m      Tests [22m [1m[32m1546 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1547)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m54 passed[39m[22m[90m (54)[39m
 packages/sync test: [2m      Tests [22m [1m[32m41 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (44)[39m
 packages/brain test: [2m      Tests [22m [1m[32m366 passed[39m[22m[90m (366)[39m
-packages/editor test: [2m      Tests [22m [1m[32m62 passed[39m[22m[90m (62)[39m
-apps/web test: [2m      Tests [22m [1m[32m122 passed[39m[22m[90m (122)[39m
-apps/server test: [2m      Tests [22m [1m[32m84 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (85)[39m
+packages/editor test: [2m      Tests [22m [1m[32m63 passed[39m[22m[90m (63)[39m
+apps/web test: [2m      Tests [22m [1m[32m133 passed[39m[22m[90m (133)[39m
+apps/server test: [2m      Tests [22m [1m[32m87 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (88)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:74:67
 
     Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
 
-  3) [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+  3) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ─────────────
 
-    Error: expect(locator).toBeFocused() failed
+    Error: expect(received).toEqual(expected) // deep equality
 
-    Locator:  getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
-    Expected: focused
-    Received: inactive
-    Timeout:  5000ms
+    - Expected  - 1
+    + Received  + 0
 
-    Call log:
-      - Expect "toBeFocused" getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' }) with timeout 5000ms
-      - waiting for getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
-        14 × locator resolved to <button type="button" role="menuitem" class="menu-item">…</button>
-           - unexpected value "inactive"
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-      72 |   await expect(menu.getByRole("menuitem", { name: "Copy link" })).toBeFocused();
-      73 |   await page.keyboard.press("ArrowDown");
-    > 74 |   await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
-         |                                                                   ^
-      75 |   await page.keyboard.press("Enter");
-      76 |   await expect(menu).toBeHidden();
-      77 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
-        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:74:67
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-webkit/error-context.md
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
   3 failed
     [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-    [chromium] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
-    [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+    [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
   14 skipped
-  223 passed (9.2m)
+  237 passed (10.7m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
