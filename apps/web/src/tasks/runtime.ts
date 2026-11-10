@@ -4,11 +4,12 @@
 // Haken für Tests/E2E (`globalThis.__basedTasks`): Scripted-Planer (Regeln) und Skripte für Unteragenten statt echter
 // Modelle – deterministisch, ohne Netz.
 import {
-  AgentRunner, ModelEngine, RulesPlannerEngine, ScriptedEngine, TaskRunner,
-  type AgentRunBackend, type ChatEngine, type PlanningContext, type ScriptStep, type TaskBackend, type TaskView, type ToolHost,
+  AgentRunner, combineToolHosts, ModelEngine, RulesPlannerEngine, ScriptedEngine, TaskRunner,
+  type AgentData, type AgentRunBackend, type ChatEngine, type PlanningContext, type ScriptStep, type TaskBackend, type TaskView, type ToolHost,
 } from "@based/brain";
 import { aiConfig, splitModelRef, type AiConfig } from "../chat/aiConfig.js";
 import type { StoreClient } from "../worker/client.js";
+import { mcpRuntime } from "../chat/mcp.js";
 import type { ToolCatalog } from "../worker/chat.js";
 
 export function clientTaskBackend(client: StoreClient): TaskBackend {
@@ -150,8 +151,14 @@ export class TasksRuntime {
 
   private async agentEngine(req: { model?: string | undefined; policy: Parameters<ConstructorParameters<typeof AgentRunner>[0]["engine"]>[0]["policy"] }): Promise<ChatEngine | undefined> {
     if (this.agentOverride) return this.agentOverride(req);
-    const tools = this.toolHost();
+    const base = this.toolHost();
     await this.catalog?.catch(() => undefined);
+    // BSD-222: Werkzeuge der MCP-Connections, die für Agenten freigegeben sind (und für den Hauptagenten erlaubt).
+    const mcp = mcpRuntime(this.client);
+    await mcp.ready();
+    const main = await this.client.agents<AgentData>({ op: "main" }).catch(() => undefined);
+    const extra = mcp.tools(main ? { agent: main } : { agent: { v: 1, kind: "main", permissions: { mode: "askEdits", rules: "" } } });
+    const tools = extra ? combineToolHosts(base, extra) : base;
     return this.modelEngine(req.model, { tools, policy: req.policy });
   }
 
