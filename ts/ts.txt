@@ -21,47 +21,47 @@ packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[9
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
 packages/brain test: [2m      Tests [22m [1m[32m309 passed[39m[22m[90m (309)[39m
 packages/editor test: [2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
-apps/web test: [2m      Tests [22m [1m[32m93 passed[39m[22m[90m (93)[39m
+apps/web test: [2m      Tests [22m [1m[32m97 passed[39m[22m[90m (97)[39m
 apps/server test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  155 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.4s)
-  ✓  156 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.2s)
-  ✓  157 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.9s)
-  ✓  158 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-  1) [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ─────────────────────────────
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
-    Error: expect(locator).toHaveCount(expected) failed
+  2) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
 
-    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
-    Expected: 0
-    Received: 1
-    Timeout:  5000ms
+    Error: expect(received).toBeLessThan(expected)
 
-    Call log:
-      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
-      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
-        14 × locator resolved to 1 element
-           - unexpected value "1"
+    Expected: < 34
+    Received:   34
 
+      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
+      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
+    > 144 |   expect(r.p95).toBeLessThan(34);
+          |                 ^
+      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
+      146 | });
+      147 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
 
-      161 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-      162 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
-    > 163 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
-          |                                                                            ^
-      164 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
-      165 |   } finally {
-      166 |     await ctx.close();
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:163:76
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
 
-    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
-
-  1 failed
-    [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ──────────────────────────────
+  2 failed
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   14 skipped
-  143 passed (6.0m)
+  144 passed (7.5m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
