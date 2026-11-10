@@ -75,9 +75,6 @@ importers:
       '@astryxdesign/core':
         specifier: ^0.7.11
         version: 0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@astryxdesign/theme-neutral':
-        specifier: ^0.7.11
-        version: 0.7.11(@astryxdesign/core@0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react@19.3.0)(react@19.3.1)
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -96,6 +93,12 @@ importers:
       '@based/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@fontsource/literata':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/schibsted-grotesk':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@stylexjs/stylex':
         specifier: ^0.19.1
         version: 0.19.1
@@ -255,12 +258,24 @@ importers:
 
   packages/ui:
     devDependencies:
+      '@astryxdesign/core':
+        specifier: ^0.7.11
+        version: 0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@stylexjs/stylex':
+        specifier: ^0.19.1
+        version: 0.19.1
       '@types/react':
         specifier: ^19.2.0
         version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.2.0
+        version: 19.3.0(@types/react@19.3.0)
       react:
         specifier: ^19.2.0
         version: 19.3.1
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.3.1(react@19.3.1)
 
 packages:
 
@@ -311,12 +326,6 @@ packages:
       '@stylexjs/stylex': ^0.19.0
       react: '>=19.0.0'
       react-dom: '>=19.0.0'
-
-  '@astryxdesign/theme-neutral@0.7.11':
-    resolution: {integrity: sha512-zjI+6g/tv6TAY6i5gk2/x8zrf/Gn/io2TGXnd6IhRkhGdIhkb+zdL2bHOf4F8S5bjonHqdDiKzQ2P2AZEDyO/A==}
-    peerDependencies:
-      '@astryxdesign/core': 0.7.11
-      react: '>=19'
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1075,6 +1084,12 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource/literata@5.3.0':
+    resolution: {integrity: sha512-9JGMT5+YfBK49thoMq9ASaMRJErHT4V4QuMhAEwKHRLreOsIMP2xP6ZRLhPJ0e6YlET+kjWTJuN7LAxt9/gWGQ==}
+
+  '@fontsource/schibsted-grotesk@5.3.0':
+    resolution: {integrity: sha512-9k+Fd2eg7umKxI2JV2HtDcOkXEM0iJx0u4Iu1b+QHikVU8Sl/MtozJ/mtZfsltR6xnVGSQjpcxXQeJPW0KGpIA==}
 
   '@formatjs/fast-memoize@3.1.7':
     resolution: {integrity: sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA==}
@@ -2302,15 +2317,6 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.70.0:
-    resolution: {integrity: sha512-gCTPPN1MlQUBtUgdsUv+0CAUj+X8hifRUiRBw4E5v7lvDIOIpx0EZezdGQMSimS8pKA6esvullJub4GYr0mCHA==}
-    peerDependencies:
-      '@types/react': '*'
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -3126,14 +3132,6 @@ snapshots:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
 
-  '@astryxdesign/theme-neutral@0.7.11(@astryxdesign/core@0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react@19.3.0)(react@19.3.1)':
-    dependencies:
-      '@astryxdesign/core': 0.7.11(@stylexjs/stylex@0.19.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      lucide-react: 1.70.0(@types/react@19.3.0)(react@19.3.1)
-      react: 19.3.1
-    transitivePeerDependencies:
-      - '@types/react'
-
   '@babel/code-frame@7.29.7':
     dependencies:
       '@babel/helper-validator-identifier': 7.29.7
@@ -3854,6 +3852,10 @@ snapshots:
       tabbable: 6.5.1
 
   '@floating-ui/utils@0.2.12': {}
+
+  '@fontsource/literata@5.3.0': {}
+
+  '@fontsource/schibsted-grotesk@5.3.0': {}
 
   '@formatjs/fast-memoize@3.1.7': {}
 
@@ -5154,12 +5156,6 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
-
-  lucide-react@1.70.0(@types/react@19.3.0)(react@19.3.1):
-    dependencies:
-      react: 19.3.1
-    optionalDependencies:
-      '@types/react': 19.3.0
 
   magic-string@0.30.21:
     dependencies:

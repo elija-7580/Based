@@ -162,6 +162,7 @@ test("Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsse
   await page.reload();
   await ready(page);
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
   await expect(page.getByLabel("Server URL")).toHaveValue("http://127.0.0.1:9");
   await expect(page.getByLabel("Token")).toHaveValue("legacy-secret-token");
   const stored = await page.evaluate(async () => {

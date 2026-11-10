@@ -1,10 +1,10 @@
 // BSD-153: Start der Web-Shell. Der Store läuft in einem Dedicated Worker (SQLite-WASM auf OPFS); die UI spricht mit
 // ihm über StoreClient. Mehrere Browser-Tabs: nur ein Tab startet den Worker, die anderen reden über ihn
 // (worker/leader.ts). Gerätekennung im localStorage, Sync-Server verschlüsselt in IndexedDB (shell/secrets.ts).
-import { StrictMode } from "react";
+import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
-import { applyAppearance, loadAppearance } from "./appearance.js";
+import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { startDesktop } from "./desktop.js";
 import { History } from "./shell/router.js";
 import { deviceNode, recentPages, syncConfig } from "./shell/storage.js";
@@ -16,17 +16,18 @@ import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
 import "@astryxdesign/core/reset.css";
 import "@astryxdesign/core/astryx.css";
 import { Theme } from "@astryxdesign/core/theme";
-import { astryxTheme } from "./astryxTheme.js";
+import { astryxThemes } from "./astryxTheme.js";
 import "./styles.css";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { connectAssets } from "./assetBridge.js";
 import { ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
+import { registerSettingsSection } from "./screens/settings/registry.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
-applyAppearance(loadAppearance());
+applyAppearance(appearanceStore.get());
 // BSD-164: in der Tauri-Hülle Titelleiste und Updates (im Browser ohne Wirkung).
 void startDesktop().catch(() => undefined);
 
@@ -62,15 +63,27 @@ void client
   .catch(() => undefined);
 
 // Für E2E-Tests und Messungen (Playwright): Zugriff auf Client, Verlauf und Tab-Verbindung.
-(globalThis as { __based?: unknown }).__based = { client, history, link };
+(globalThis as { __based?: unknown }).__based = { client, history, link, registerSettingsSection };
+
+/**
+ * Astryx folgt dem Appearance-Umschalter: Hell/Dunkel über `mode` (Astryx setzt damit selbst `data-theme` am
+ * Wurzelelement – derselbe Wert wie applyAppearance), Dichte über das Theme. Stil Bold wirkt über die
+ * Schrift-Variablen aus tokens.css; Marker und Calm berühren Astryx nicht (der Marker ist kein Theme-Wert).
+ */
+function Root() {
+  const appearance = useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get);
+  const [, bump] = useState(0);
+  useEffect(() => (appearance.theme === "system" ? onSystemThemeChange(() => bump((n) => n + 1)) : undefined), [appearance.theme]);
+  return (
+    <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
+      <App client={client} history={history} />
+    </Theme>
+  );
+}
 
 const root = document.getElementById("root");
 if (!root) throw new Error("#root fehlt");
 // Sync-Server erst aus IndexedDB lesen (wenige ms), damit die Einstellungen ihn beim ersten Zeichnen kennen.
 void syncConfig.load().finally(() => {
-  createRoot(root).render(<StrictMode>
-      <Theme theme={astryxTheme}>
-        <App client={client} history={history} />
-      </Theme>
-    </StrictMode>);
+  createRoot(root).render(<StrictMode><Root /></StrictMode>);
 });
