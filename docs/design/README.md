@@ -88,8 +88,11 @@ Web-Ansicht — offene Architekturfrage.
 
 ## Muster
 
-- **Home:** Begrüßung, Hauptagent (Nachricht + Composer), „Based is working on“, „This week“, „Pick up
-  again“ — Listen, keine Karten. Agent-Details (Modell, Laufzeit, Rechte) nur mit „Show agent details“.
+- **Home (Mockup v10):** Kopf (Today/Week/Month, Kosten in Mono, Server-Status), Begrüßung mit einem Satz aus
+  echten Ereignissen, Zeitbogen (links erledigt grau, Scheitel „Needs you“ mit dunklem Rahmen, rechts geplant
+  gestrichelt, innerer Ring = laufende Agenten mit Marker), Auftragskarte direkt über dem Composer, die nach dem
+  Plan ins Ziel fliegt. Agent-Details (Modell, Laufzeit) nur mit „Show agent details“. Agent- und Projekt-Detail
+  als eigene Seiten (`#agent-<id>`, `#project-<id>`).
 - **Seite:** Breadcrumb, Titel, Metazeile, Randspalte für Agent-Notizen, Text max. 720 px.
 - **Datenbank:** Ansichten als Tabs (Table/Board/…), Filter-Chips, Tabelle mit Haarlinien, Mono für IDs/Zeiten.
 - **Graph:** Projekte gefüllt in Tinte, Seiten als Ringe, Agent-Änderungen im Marker.

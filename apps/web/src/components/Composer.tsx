@@ -63,9 +63,11 @@ export interface ComposerProps {
   inputID?: string;
   /** Der Entwurf hat sich geändert (Agent Brain: Skill-Chips, sensible Stellen). */
   onDraftChange?: (text: string) => void;
+  /** Unsichtbares Label des Felds (Standard „Ask Based“). */
+  label?: string;
 }
 
-export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange }: ComposerProps) {
+export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange, label = "Ask Based" }: ComposerProps) {
   const [open, setOpen] = useState<Menu["key"] | null>(null);
   const [pickedState, setPicked] = useState<Record<Menu["key"], string>>({ agent: "Main", compute: "Auto", permission: "Ask before edits" });
   const picked = { ...pickedState, ...pickedProp };
@@ -111,7 +113,7 @@ export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled
   return (
     <div className="composer" ref={ref}>
       <form className="composer-field" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-        <label htmlFor={inputID} className="sr-only">Ask Based</label>
+        <label htmlFor={inputID} className="sr-only">{label}</label>
         {live ? (
           <textarea
             id={inputID}

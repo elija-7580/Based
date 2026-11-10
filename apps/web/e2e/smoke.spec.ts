@@ -12,17 +12,13 @@ test.beforeEach(async ({ page }) => {
 test("Shell mit Seitenleiste und Home", async ({ page }) => {
   await expect(page.getByTestId("based-root")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Elija");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Good (morning|afternoon|evening|night)/);
   await expect(page.getByRole("button", { name: "Home" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toBeVisible();
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   await expect(page.getByTestId("page-content")).toContainText("This is your workspace");
   await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveAttribute("aria-selected", "true");
-  // „Pick up again“ auf Home zeigt die zuletzt geöffnete Seite
-  await page.getByRole("button", { name: "Home" }).click();
-  await page.getByRole("button", { name: /Welcome to Based/ }).click();
-  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
 });
 
 test("Composer-Picker öffnen ein Menü und übernehmen die Wahl", async ({ page }) => {
@@ -58,10 +54,10 @@ test("Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute", async ({ 
   await expect(html).not.toHaveAttribute("data-calm", /.*/);
 });
 
-test("Show agent details blendet Modell und Laufzeit auf Home ein", async ({ page }) => {
-  await expect(page.getByText("sonnet")).toHaveCount(0);
+test("Show agent details blendet Planer und Laufzeit auf Home ein", async ({ page }) => {
+  await expect(page.getByText(/^planner /)).toHaveCount(0);
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("switch", { name: "Show agent details" }).click();
   await page.getByRole("button", { name: "Home" }).click();
-  await expect(page.getByText(/Main · sonnet · 9m/)).toBeVisible();
+  await expect(page.getByText(/^planner auto · /)).toBeVisible();
 });
