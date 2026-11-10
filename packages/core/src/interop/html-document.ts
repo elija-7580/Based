@@ -11,7 +11,7 @@ export const PRINT_CSS = "@page { margin: 18mm 16mm; }\n@media print {\n  html, 
 export interface HTMLDocumentOptions {
   /** Stylesheet statt `EXPORT_CSS` (z. B. aus den Design-Tokens der App erzeugt). */
   css?: string | undefined;
-  /** Druck-Regeln anhängen (`PRINT_CSS`). */
+  /** Druck-Regeln anhängen (`PRINT_CSS`) und keine Skripte von fremden Servern einbinden (MathJax, Mermaid). */
   print?: boolean | undefined;
 }
 
@@ -38,12 +38,12 @@ export function exportHTMLPage(exporter: HTMLExporter, id: string, opts: HTMLDoc
 <meta name="generator" content="Based">
 <title>${t}</title>
 <style>${(opts.css ?? EXPORT_CSS).replace(/<\/(style)/gi, "<\\/$1")}${opts.print ? "\n" + PRINT_CSS : ""}</style>
-${usesMath ? "<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js\" async></script>" : ""}
+${usesMath && !opts.print ? "<script src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js\" async></script>" : ""}
 </head>
 <body>
 <article class="page">
 ${body}</article>
-${usesMermaid ? "<script type=\"module\">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'; mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', securityLevel: 'strict' });</script>" : ""}
+${usesMermaid && !opts.print ? "<script type=\"module\">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'; mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', securityLevel: 'strict' });</script>" : ""}
 </body>
 </html>
 `;

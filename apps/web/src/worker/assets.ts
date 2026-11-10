@@ -10,9 +10,14 @@ export interface StoredAsset {
   mime?: string;
 }
 
+/**
+ * Die ganze Schnittstelle zum Dateispeicher (absichtlich klein, damit eine andere Ablage – z. B. ein OPFS-Blob-Speicher
+ * im Worker – sie ersetzen kann). Schlüssel ist die Asset-ID aus den Records (`props.asset.id`, wie Swift `AssetRef.id`).
+ */
 export interface AssetStore {
   put(id: string, asset: StoredAsset): Promise<void>;
   get(id: string): Promise<StoredAsset | undefined>;
+  has(id: string): Promise<boolean>;
 }
 
 export class MemoryAssetStore implements AssetStore {
@@ -22,6 +27,9 @@ export class MemoryAssetStore implements AssetStore {
   }
   async get(id: string): Promise<StoredAsset | undefined> {
     return this.files.get(id);
+  }
+  async has(id: string): Promise<boolean> {
+    return this.files.has(id);
   }
 }
 
@@ -85,6 +93,11 @@ export class IDBAssetStore implements AssetStore {
     const out: StoredAsset = { data: new Uint8Array(v.data), name: v.name };
     if (v.mime) out.mime = v.mime;
     return out;
+  }
+
+  async has(id: string): Promise<boolean> {
+    const db = await this.conn();
+    return (await done(db.transaction(STORE, "readonly").objectStore(STORE).count(id))) > 0;
   }
 }
 

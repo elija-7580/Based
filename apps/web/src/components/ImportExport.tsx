@@ -1,7 +1,12 @@
 // Import- und Export-Dialoge. Import: Dateien, Ordner oder ZIP (Notion-HTML-Export, Markdown/CSV, Based-Archiv) im
 // Import-Worker vorbereiten – mit Fortschritt und Abbrechen –, dann im Store-Worker schreiben und berichten.
-// Export: Seite als Markdown/HTML, Workspace als ZIP (Markdown oder HTML mit assets/) oder Based-Archiv, als Download.
+// Export: Seite als Markdown, HTML (eigenständige Datei oder ZIP mit Unterseiten/assets) oder PDF (Druckansicht);
+// Workspace als ZIP (Markdown oder HTML mit assets/) oder Based-Archiv, als Download.
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
+import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { exportStylesheet } from "../shell/exportCss.js";
+import { printHTML } from "../shell/print.js";
 import type { StoreClient } from "../worker/client.js";
 import { ImportCancelledError, prepareInWorker, readFiles, type PreparingImport } from "../worker/importClient.js";
 import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "../worker/interop.js";
@@ -50,6 +55,7 @@ function summaryLine(s: ImportSummary): string {
   if (s.pages) parts.push(count(s.pages, "page"));
   if (s.databases) parts.push(count(s.databases, "database"));
   if (s.rows) parts.push(count(s.rows, "row"));
+  if (s.assets) parts.push(count(s.assets, "attached file"));
   if (s.archiveRecords) parts.push(count(s.archiveRecords, "record") + " from an archive");
   return parts.length ? `Imported ${parts.join(", ")}.` : "Nothing new to import.";
 }
@@ -162,20 +168,24 @@ function ImportReport({ summary, onClose, onMore, onOpenPage }: { summary: Impor
   );
 }
 
-const PAGE_FORMATS: { value: ExportFormat; label: string; hint: string }[] = [
+type PageFormat = ExportFormat | "pdf";
+const PAGE_FORMATS: { value: PageFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "A .md file (databases as .csv)" },
-  { value: "html", label: "HTML", hint: "A standalone web page" },
+  { value: "html", label: "HTML", hint: "A standalone web page you can open anywhere" },
+  { value: "pdf", label: "PDF", hint: "Opens the print dialog — choose “Save as PDF” there" },
 ];
 const WORKSPACE_FORMATS: { value: WorkspaceExportFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "ZIP with .md and .csv files, sub-pages in folders, assets/" },
-  { value: "html", label: "HTML", hint: "ZIP with web pages, sub-pages in folders, assets/" },
+  { value: "html", label: "HTML", hint: "ZIP with web pages, sub-pages in folders, images and files in assets/" },
   { value: "archive", label: "Based archive", hint: "Everything, lossless — import it into Based again" },
 ];
 
 /** Export-Dialog: mit `pageID` die Seite, sonst der ganze Workspace. */
 export function ExportDialog({ client, pageID, onClose }: { client: StoreClient; pageID?: string; onClose: () => void }) {
   const formats = pageID ? PAGE_FORMATS : WORKSPACE_FORMATS;
-  const [format, setFormat] = useState<WorkspaceExportFormat>("markdown");
+  const [format, setFormat] = useState<WorkspaceExportFormat | "pdf">("markdown");
+  const [subpages, setSubpages] = useState(false);
+  const [images, setImages] = useState<"embed" | "folder">("embed");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | undefined>();
   const labelID = useId();
@@ -183,7 +193,15 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
     setBusy(true);
     setResult(undefined);
     try {
-      const file = pageID ? await client.exportPage(pageID, format as ExportFormat) : await client.exportWorkspace(format);
+      if (pageID && format === "pdf") {
+        const doc = await client.printPage(pageID, exportStylesheet());
+        await printHTML(doc.html, doc.title);
+        setResult({ ok: true, text: `Sent “${doc.title}” to the print dialog.${doc.missing ? ` ${doc.missing} image${doc.missing === 1 ? " is" : "s are"} missing on this device.` : ""}` });
+        return;
+      }
+      // HTML: Stylesheet aus den Tokens; eine Seite bettet Bilder ein (oder legt sie in assets/), der Workspace legt sie in assets/.
+      const html = format === "html" ? { css: exportStylesheet(), ...(pageID ? { subpages, images } : {}) } : undefined;
+      const file = pageID ? await client.exportPage(pageID, format as ExportFormat, html) : await client.exportWorkspace(format as WorkspaceExportFormat, html);
       download(file);
       setResult({ ok: true, text: file.summary });
     } catch (e) {
@@ -192,12 +210,13 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
       setBusy(false);
     }
   };
+  const zip = subpages || images === "folder";
   return (
     <Dialog title={pageID ? "Export page" : "Export workspace"} onClose={onClose} busy={busy}>
       <div id={labelID} className="t-meta">Format</div>
       <div role="radiogroup" aria-labelledby={labelID} className="dialog-options">
         {formats.map((f) => (
-          <button key={f.value} type="button" role="radio" aria-checked={format === f.value} className="option" aria-selected={format === f.value} onClick={() => setFormat(f.value)}>
+          <button key={f.value} type="button" role="radio" aria-checked={format === f.value} className="option" aria-selected={format === f.value} onClick={() => { setFormat(f.value); setResult(undefined); }}>
             <span className="grow">
               <strong>{f.label}</strong>
               <span className="t-desc" style={{ display: "block" }}>{f.hint}</span>
@@ -205,10 +224,20 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
           </button>
         ))}
       </div>
-      {result ? <p role={result.ok ? "status" : "alert"} className={result.ok ? "t-desc" : "dialog-error"}>{result.text}</p> : null}
+      {pageID && format === "html" ? (
+        <div className="export-options" data-testid="html-export-options">
+          <CheckboxInput label="Include sub-pages" description="Each sub-page becomes its own file, in a folder next to this page." value={subpages} onChange={setSubpages} />
+          <SegmentedControl label="Images" value={images} onChange={(v) => setImages(v === "folder" ? "folder" : "embed")}>
+            <SegmentedControlItem value="embed" label="Embedded in the page" />
+            <SegmentedControlItem value="folder" label="In an assets folder" />
+          </SegmentedControl>
+          <p className="t-desc">{zip ? "You get a ZIP with the page" + (subpages ? ", its sub-pages" : "") + (images === "folder" ? " and an assets folder." : ".") : "You get one .html file. Attached files that can't be embedded (PDF, video) come along in a ZIP."}</p>
+        </div>
+      ) : null}
+      {result ? <p role={result.ok ? "status" : "alert"} className={result.ok ? "t-desc" : "dialog-error"} data-testid="export-result">{result.text}</p> : null}
       <div className="dialog-actions">
         <button type="button" className="btn ghost" onClick={onClose}>{result?.ok ? "Done" : "Cancel"}</button>
-        <button type="button" className="btn primary" disabled={busy} onClick={() => void run()}>{busy ? "Exporting…" : "Export"}</button>
+        <button type="button" className="btn primary" disabled={busy} onClick={() => void run()}>{busy ? (format === "pdf" ? "Preparing…" : "Exporting…") : format === "pdf" ? "Print…" : "Export"}</button>
       </div>
     </Dialog>
   );

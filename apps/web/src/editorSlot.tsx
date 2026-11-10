@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { Equation } from "./equation.js";
 import { slots, type PageEditorProps } from "./slots.js";
+import { assetURLResolver, IDBAssetStore } from "./worker/assets.js";
+
+// Bilder und Anhänge aus dem Asset-Speicher (`based-asset:<id>` → Blob-URL); andere URLs bleiben.
+const resolveFileUrl = assetURLResolver(new IDBAssetStore());
 
 function useRootTheme(): "light" | "dark" {
   const read = (): "light" | "dark" => (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
@@ -26,7 +30,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
   return (
     <div className="shell-editor">
-      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} />
+      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation} resolveFileUrl={resolveFileUrl} />
     </div>
   );
 }

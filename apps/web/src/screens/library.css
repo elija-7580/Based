@@ -1,0 +1,34 @@
+/* Library: Kopf, Filterleiste, Auswahl-Leiste, virtualisierte Tabelle. Nur Tokens. */
+.lib { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; padding: var(--space-6) var(--space-6) 0; gap: var(--space-3); }
+.lib-head { display: flex; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; }
+.lib-head .t-desc { color: var(--muted); }
+.lib-toolbar { flex: none; }
+.lib-bulk { flex: none; background: var(--surface-raised); border-radius: var(--radius-lg); padding-inline: var(--space-2); }
+.lib-nocheck { display: inline-block; width: var(--icon-sm); height: var(--icon-sm); }
+
+.lib-table { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.lib-row {
+  display: grid; grid-template-columns: var(--space-6) var(--space-5) minmax(0, 3fr) calc(var(--space-8) + var(--space-6)) minmax(0, 1.4fr) calc(var(--space-8) + var(--space-5)) calc(var(--space-8) + var(--space-5));
+  align-items: center; gap: var(--space-3); height: 100%; padding: 0 var(--space-3); border-radius: var(--radius-md); min-width: 0;
+}
+.lib-columns { flex: none; height: var(--space-6); color: var(--muted); border-bottom: 1px solid var(--line); border-radius: 0; }
+.lib-list { flex: 1; min-height: 0; }
+.lib-list .lib-row { border-bottom: 1px solid var(--line); border-radius: 0; cursor: default; }
+.lib-list .lib-row:hover { background: var(--surface-soft); }
+.lib-list .lib-row.selected { background: var(--selected); }
+.lib-check { display: inline-flex; align-items: center; justify-content: center; }
+.lib-icon { display: inline-flex; justify-content: center; color: var(--muted); }
+.lib-title { display: flex; align-items: center; gap: var(--space-2); min-width: 0; font-weight: var(--type-meta-weight); color: var(--ink); }
+.lib-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.lib-title:hover .lib-title-text { text-decoration: underline; text-underline-offset: 3px; }
+.lib-fav { display: inline-flex; color: var(--muted); flex: none; }
+.lib-kind, .lib-location { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-date { color: var(--muted); white-space: nowrap; text-align: right; }
+.lib-columns .lib-date { text-align: right; }
+.lib-empty { padding: var(--space-7) var(--space-3); display: flex; justify-content: center; }
+
+@media (max-width: 900px) {
+  .lib { padding: var(--space-4) var(--space-3) 0; }
+  .lib-row { grid-template-columns: var(--space-6) var(--space-5) minmax(0, 1fr) calc(var(--space-8) + var(--space-5)); }
+  .lib-kind, .lib-location, .lib-date:last-child { display: none; }
+}

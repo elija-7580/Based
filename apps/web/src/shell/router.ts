@@ -4,6 +4,7 @@
 export type Route =
   | { name: "home" }
   | { name: "graph" }
+  | { name: "library" }
   | { name: "settings" }
   | { name: "trash" }
   | { name: "page"; id: string };
@@ -12,6 +13,7 @@ export function routeToHash(r: Route): string {
   switch (r.name) {
     case "home": return "home";
     case "graph": return "graph";
+    case "library": return "library";
     case "settings": return "appearance";
     case "trash": return "trash";
     case "page": return "page-" + r.id;
@@ -23,6 +25,7 @@ export function routeFromHash(hash: string): Route {
   if (h.startsWith("page-") && h.length > 5) return { name: "page", id: decodeURIComponent(h.slice(5)) };
   switch (h) {
     case "graph": return { name: "graph" };
+    case "library": return { name: "library" };
     case "appearance": case "settings": return { name: "settings" };
     case "trash": return { name: "trash" };
     default: return { name: "home" };

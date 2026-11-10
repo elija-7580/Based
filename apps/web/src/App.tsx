@@ -7,6 +7,7 @@ import { Sidebar } from "./components/Sidebar.js";
 import { TabBar } from "./components/TabBar.js";
 import { Graph } from "./screens/Graph.js";
 import { Home } from "./screens/Home.js";
+import { Library } from "./screens/Library.js";
 import { PageView } from "./screens/PageView.js";
 import { Settings } from "./screens/Settings.js";
 import { Trash } from "./screens/Trash.js";
@@ -105,8 +106,10 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} />;
   } else if (route.name === "trash") {
     screen = <Trash client={client} state={state} onOpenPage={openPage} />;
+  } else if (route.name === "library") {
+    screen = <Library client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "graph") {
-    screen = <Graph />;
+    screen = <Graph client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "settings") {
     screen = <Settings value={appearance} onChange={setAppearance} client={client} status={state.status} />;
   } else {

@@ -1,15 +1,25 @@
 // BSD-153: die Seitenleiste als flache Zeilenliste (für die virtualisierte Liste). Nur Struktur und Auf/Zu-Zustand;
 // Titel kommen beim Rendern aus der Titel-Tabelle, damit Tippen die Liste nicht neu aufbaut.
-import { sectionKey, type Outline } from "@based/core";
+import { PRIVATE_SECTION, sectionKey, type Outline } from "@based/core";
 
 export type SidebarRow =
-  | { kind: "header"; key: string; label: string; section?: string; collapsed: boolean }
+  /** Abschnittskopf: Favorites, Teamspaces (mit „+“ für einen neuen Teamspace) oder Private (mit „+“ für eine Seite). */
+  | { kind: "header"; key: string; label: string; group: string; section?: string; collapsed: boolean }
+  /** Ein Teamspace unter „Teamspaces“: auf-/zuklappbar, seine Seiten darunter (Tiefe 1). */
+  | { kind: "teamspace"; key: string; id: string; name: string; icon?: string; collapsed: boolean; count: number }
   | { kind: "page"; key: string; id: string; depth: number; hasChildren: boolean; expanded: boolean; database: boolean }
-  | { kind: "empty"; key: string; depth: number; parent: string };
+  | { kind: "empty"; key: string; depth: number; parent: string }
+  /** „Create a teamspace“, solange es keinen gibt. */
+  | { kind: "action"; key: string; action: "createTeamspace"; label: string };
 
 export const FAVORITES = "favorites";
+export const TEAMSPACES = "teamspaces";
 
-/** Zeilen in Anzeigereihenfolge: Favoriten, Teamspaces, Private. Unterseiten nur unter aufgeklappten Seiten. */
+/**
+ * Zeilen in Anzeigereihenfolge: Favorites, Teamspaces (je Teamspace eine Zeile mit seinen Seiten), Private.
+ * Unterseiten nur unter aufgeklappten Seiten. `collapsed` enthält zugeklappte Abschnitte (`favorites`, `teamspaces`,
+ * `private`) und zugeklappte Teamspaces (ihre ID).
+ */
 export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, collapsed: ReadonlySet<string> = new Set()): SidebarRow[] {
   const rows: SidebarRow[] = [];
   const pages = (ids: readonly string[], depth: number, scope: string, path: Set<string>) => {
@@ -32,14 +42,26 @@ export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, 
   };
   if (outline.favorites.length > 0) {
     const c = collapsed.has(FAVORITES);
-    rows.push({ kind: "header", key: "h/" + FAVORITES, label: "Favorites", collapsed: c });
+    rows.push({ kind: "header", key: "h/" + FAVORITES, label: "Favorites", group: FAVORITES, collapsed: c });
     if (!c) pages(outline.favorites, 0, "fav", new Set());
   }
-  for (const s of outline.sections) {
-    const c = collapsed.has(s.id);
-    rows.push({ kind: "header", key: "h/" + s.id, label: s.name, section: s.id, collapsed: c });
-    if (!c) pages(outline.children[sectionKey(s.id)] ?? [], 0, "s:" + s.id, new Set());
+  const teamspaces = outline.sections.filter((s) => s.id !== PRIVATE_SECTION);
+  const tc = collapsed.has(TEAMSPACES);
+  rows.push({ kind: "header", key: "h/" + TEAMSPACES, label: "Teamspaces", group: TEAMSPACES, collapsed: tc });
+  if (!tc) {
+    if (teamspaces.length === 0) rows.push({ kind: "action", key: "a/createTeamspace", action: "createTeamspace", label: "Create a teamspace" });
+    for (const s of teamspaces) {
+      const c = collapsed.has(s.id);
+      const kids = outline.children[sectionKey(s.id)] ?? [];
+      const row: SidebarRow = { kind: "teamspace", key: "ts/" + s.id, id: s.id, name: s.name, collapsed: c, count: kids.length };
+      if (s.icon) row.icon = s.icon;
+      rows.push(row);
+      if (!c) pages(kids, 1, "s:" + s.id, new Set());
+    }
   }
+  const pc = collapsed.has(PRIVATE_SECTION);
+  rows.push({ kind: "header", key: "h/" + PRIVATE_SECTION, label: "Private", group: PRIVATE_SECTION, section: PRIVATE_SECTION, collapsed: pc });
+  if (!pc) pages(outline.children[sectionKey(PRIVATE_SECTION)] ?? [], 0, "s:" + PRIVATE_SECTION, new Set());
   return rows;
 }
 
