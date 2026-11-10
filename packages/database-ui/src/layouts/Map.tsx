@@ -1,7 +1,7 @@
 // Karten-Ansicht (Notion „Map“): Zeilen mit Place-Property als Pins, nahe Pins als Cluster, Auswahl zeigt die
 // Zeilenkarte, daneben „No location“. Ganz offline: eigene Web-Mercator-Projektion (map/geo.ts), Basiskarte aus
 // Natural-Earth-Küstenlinien im Repo (map/land.ts) plus Gradnetz – keine Kacheln, kein Geocoder.
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { plainText, propertyOf, type Block, type Database, type DatabaseView, type PropertySchema, type QueryResult } from "@based/core";
 import { CellEditor } from "../cells/CellEditor.js";
 import { CellView } from "../cells/CellView.js";
@@ -37,37 +37,68 @@ function useSize(ref: React.RefObject<HTMLElement | null>): Size | undefined {
   return size;
 }
 
-const Graticule = memo(function Graticule({ vp, size }: { vp: Viewport; size: Size }) {
-  const step = graticuleStep(vp.zoom);
-  const tl = unproject({ x: vp.cx - size.width / 2 / worldSize(vp.zoom), y: Math.max(0, vp.cy - size.height / 2 / worldSize(vp.zoom)) });
-  const br = unproject({ x: vp.cx + size.width / 2 / worldSize(vp.zoom), y: Math.min(1, vp.cy + size.height / 2 / worldSize(vp.zoom)) });
-  const lines: string[] = [];
-  for (let lon = Math.ceil(tl.lon / step) * step; lon <= br.lon && lines.length < 400; lon += step) {
-    const x = toScreen(project({ lon, lat: 0 }), vp, size).x;
-    lines.push(`M${x.toFixed(1)} 0V${size.height}`);
-  }
-  for (let lat = Math.ceil(br.lat / step) * step; lat <= tl.lat && lines.length < 800; lat += step) {
-    const y = toScreen(project({ lon: 0, lat }), vp, size).y;
-    lines.push(`M0 ${y.toFixed(1)}H${size.width}`);
-  }
-  return <path className="dbui-map-grid" d={lines.join("")} />;
-});
+/** Linien des Gradnetzes in Bildschirmkoordinaten. */
+function graticuleLines(vp: Viewport, size: Size): { x: number[]; y: number[] } {
+  const step = graticuleStep(vp.zoom), w = worldSize(vp.zoom);
+  const tl = unproject({ x: vp.cx - size.width / 2 / w, y: Math.max(0, vp.cy - size.height / 2 / w) });
+  const br = unproject({ x: vp.cx + size.width / 2 / w, y: Math.min(1, vp.cy + size.height / 2 / w) });
+  const x: number[] = [], y: number[] = [];
+  for (let lon = Math.ceil(tl.lon / step) * step; lon <= br.lon && x.length < 400; lon += step) x.push(toScreen(project({ lon, lat: 0 }), vp, size).x);
+  for (let lat = Math.ceil(br.lat / step) * step; lat <= tl.lat && y.length < 400; lat += step) y.push(toScreen(project({ lon: 0, lat }), vp, size).y);
+  return { x, y };
+}
 
+let landShape: Path2D | undefined;
+
+/**
+ * Basiskarte auf <canvas>: Land als ein Path2D in Weltkoordinaten (einmal gebaut), pro Bild nur Transformation und
+ * Füllen – auch bei 5.000 Pins und schnellem Ziehen flüssig. Farben aus den Based-Tokens am Element.
+ */
 function Basemap({ vp, size }: { vp: Viewport; size: Size }) {
-  const w = worldSize(vp.zoom);
-  const tx = size.width / 2 - vp.cx * w, ty = size.height / 2 - vp.cy * w;
-  // Welt dreimal nebeneinander, damit es beim Verschieben über die Datumsgrenze keine Lücke gibt.
-  const first = Math.floor(-tx / w);
-  const copies = [first - 1, first, first + 1, first + 2].filter((k) => tx + (k + 1) * w > 0 && tx + k * w < size.width);
-  return (
-    <svg className="dbui-map-svg" width={size.width} height={size.height} aria-hidden>
-      <rect className="dbui-map-water" width={size.width} height={size.height} />
-      <g transform={`translate(${tx} ${ty}) scale(${w})`}>
-        {copies.map((k) => <path key={k} className="dbui-map-land" d={land()} transform={`translate(${k} 0)`} vectorEffect="non-scaling-stroke" />)}
-      </g>
-      <Graticule vp={vp} size={size} />
-    </svg>
-  );
+  const ref = useRef<HTMLCanvasElement>(null);
+  const [theme, setTheme] = useState(0);
+  useEffect(() => {
+    const o = new MutationObserver(() => setTheme((n) => n + 1));
+    o.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "style", "class"] });
+    return () => o.disconnect();
+  }, []);
+  useLayoutEffect(() => {
+    const c = ref.current, ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(size.width * dpr) || c.height !== Math.round(size.height * dpr)) {
+      c.width = Math.round(size.width * dpr);
+      c.height = Math.round(size.height * dpr);
+    }
+    const css = getComputedStyle(c);
+    const token = (n: string) => css.getPropertyValue(n).trim();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = token("--surface-soft");
+    ctx.fillRect(0, 0, size.width, size.height);
+    landShape ??= new Path2D(land());
+    const w = worldSize(vp.zoom);
+    const tx = size.width / 2 - vp.cx * w, ty = size.height / 2 - vp.cy * w;
+    const first = Math.floor(-tx / w);
+    ctx.fillStyle = token("--bg");
+    ctx.strokeStyle = token("--line");
+    for (let k = first - 1; k <= first + 2; k++) {
+      if (tx + (k + 1) * w <= 0 || tx + k * w >= size.width) continue;
+      ctx.setTransform(dpr * w, 0, 0, dpr * w, dpr * (tx + k * w), dpr * ty);
+      ctx.fill(landShape);
+      ctx.lineWidth = 1 / w;
+      ctx.stroke(landShape);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const g = graticuleLines(vp, size);
+    ctx.beginPath();
+    for (const x of g.x) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, size.height); }
+    for (const y of g.y) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(size.width, Math.round(y) + 0.5); }
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }, [vp, size, theme]);
+  return <canvas ref={ref} className="dbui-map-svg" style={{ width: size.width, height: size.height }} aria-hidden data-testid="map-basemap" />;
 }
 
 function SelectedCard({ rows, view, onClose, onFocus }: { rows: LocatedRow[]; view: DatabaseView; onClose: () => void; onFocus: (r: LocatedRow) => void }) {

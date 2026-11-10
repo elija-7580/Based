@@ -12,3 +12,4 @@ dialog:has(.row-peek-body) h2 { color: var(--ink); }
 .row-peek-content .shell-editor { margin-inline: calc(-1 * var(--space-5)); }
 .row-peek-gone { padding: var(--space-6) var(--space-7); }
 .row-peek-body:focus { outline: none; }
+.row-peek-loading { min-height: var(--space-8); margin: 0; }

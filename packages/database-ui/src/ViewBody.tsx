@@ -1,6 +1,6 @@
 // BSD-155: Inhalt einer Ansicht je Layout. Die Abfrage (Filter, Suche, Sortierung, Gruppen) läuft im Kern
 // und nur neu, wenn sich die Datenbank (Version), die Ansicht oder die Suche ändert.
-import { useContext, useMemo } from "react";
+import { memo, useContext, useMemo } from "react";
 import type { DatabaseView, QueryResult } from "@based/core";
 import { ShellSlots, useDB } from "./context.js";
 import { BoardLayout } from "./layouts/Board.js";
@@ -19,7 +19,7 @@ export function useQuery(view: DatabaseView, search: string): QueryResult {
   return useMemo(() => engine.run(view, search), [engine, version, view, search]);
 }
 
-export function ViewBody({ view, search, compact, requestEdit }: { view: DatabaseView; search: string; compact?: boolean; requestEdit?: { rowID: string } | undefined }) {
+export const ViewBody = memo(function ViewBody({ view, search, compact, requestEdit }: { view: DatabaseView; search: string; compact?: boolean; requestEdit?: { rowID: string } | undefined }) {
   const result = useQuery(view, search);
   const { renderForm } = useContext(ShellSlots);
   const { store, db, locked } = useDB();
@@ -37,4 +37,4 @@ export function ViewBody({ view, search, compact, requestEdit }: { view: Databas
     default:
       return <EmptyState>This layout (“{view.type}”) isn’t available here yet ({result.rows.length} pages).</EmptyState>;
   }
-}
+});

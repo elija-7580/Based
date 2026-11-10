@@ -531,9 +531,6 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-map-canvas:active { cursor: grabbing; }
 .dbui-map-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--muted); }
 .dbui-map-svg { position: absolute; inset: 0; display: block; }
-.dbui-map-water { fill: var(--surface-soft); }
-.dbui-map-land { fill: var(--bg); stroke: var(--line); stroke-width: 1px; }
-.dbui-map-grid { fill: none; stroke: var(--line); stroke-width: 1px; opacity: 0.6; }
 .dbui-map-pin, .dbui-map-cluster { position: absolute; left: 0; top: 0; border: 0; padding: 0; background: none; color: var(--ink); }
 .dbui-map-pin { width: calc(var(--space-6)); height: calc(var(--space-6)); margin: calc(var(--space-6) * -1) 0 0 calc(var(--space-6) / -2); display: flex; align-items: flex-end; justify-content: center; }
 .dbui-map-pin .dbui-icon { fill: var(--bg); filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--ink) 30%, transparent)); }

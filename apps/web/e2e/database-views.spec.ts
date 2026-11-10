@@ -20,6 +20,8 @@ interface SeedSpec {
   views: SeedView[];
   /** Zusätzlich so viele einfache Zeilen (für Lasttests). */
   bulk?: number;
+  /** Lasttest: jede Zusatzzeile bekommt in dieser Place-Property einen Ort (pseudozufällig, Europa). */
+  bulkPlace?: string;
 }
 
 /** Datenbank über die Seiten-Replik anlegen (wie es Editor und Ansichten tun) und öffnen. */
@@ -49,7 +51,14 @@ async function seedDatabase(page: Page, spec: SeedSpec): Promise<string> {
       s.views.forEach((v, i) => tx.put({ kind: "view", data: { id: v.id, databaseID: dbID, blockID, name: v.name, type: v.type, sortKey: "a" + i, createdAt: now, updatedAt: now, stamp: db.stamp, ...(v.extra ?? {}) } }));
       tx.put({ kind: "block", data: { ...block, props: { ...block.props, viewIDs: s.views.map((v) => v.id) } } });
       const rows = [...s.rows];
-      for (let i = 0; i < (s.bulk ?? 0); i++) rows.push({ title: "Row " + String(i + 1).padStart(4, "0"), values: s.rows[i % Math.max(1, s.rows.length)]?.values ?? {} });
+      for (let i = 0; i < (s.bulk ?? 0); i++) {
+        const values: Record<string, unknown> = { ...(s.rows[i % Math.max(1, s.rows.length)]?.values ?? {}) };
+        if (s.bulkPlace) {
+          const r = (k: number) => ((Math.sin(i * 12.9898 + k * 78.233) * 43758.5453) % 1 + 1) % 1;
+          values[s.bulkPlace] = { place: { _0: JSON.stringify({ lat: Math.round((36 + r(1) * 24) * 1e4) / 1e4, lon: Math.round((-9 + r(2) * 38) * 1e4) / 1e4 }) } };
+        }
+        rows.push({ title: "Row " + String(i + 1).padStart(4, "0"), values });
+      }
       rows.forEach((r, i) => tx.put({ kind: "block", data: { id: r.id ?? crypto.randomUUID(), type: "page", parent: "d:" + dbID, sk: sk(i), text: r.title, values: r.values ?? {}, createdAt: now, updatedAt: now } }));
     });
     return blockID;
@@ -113,7 +122,6 @@ test("Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Cente
 
 async function peekScenario(page: Page, browserName: string) {
   test.setTimeout(120_000);
-  page.on("pageerror", (e) => console.log("pageerror:", e.message));
   await seedDatabase(page, {
     title: "Tasks",
     properties: [title, status, { id: "n", name: "Points", type: "number" }, { id: "note", name: "Note", type: "text" }],
@@ -361,4 +369,87 @@ test("Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort
   await expect(map).toContainText("5 on map");
   await expect(page.getByTestId("map-no-location")).not.toContainText("Nowhere yet");
   expect(external).toEqual([]);
+});
+
+// 5.000 Zeilen: Karte (Pins/Cluster, Ziehen, Zoomen), Peek (Blättern) und Formular (Absenden) dürfen nicht ruckeln.
+test("5.000 Zeilen: Karte, Peek und Formular bleiben flüssig", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "Zeitmessung nur in Chromium");
+  test.setTimeout(180_000);
+  await seedDatabase(page, {
+    title: "Big",
+    properties: [title, { id: "where", name: "Where", type: "place" }, status, { id: "n", name: "N", type: "number" }],
+    rows: [{ title: "First", values: { st: pv("status", "todo"), n: pv("number", 1) } }],
+    bulk: 5000, bulkPlace: "where",
+    views: [
+      { id: "v-map", name: "Map", type: "map", extra: { mapPropertyID: "where" } },
+      { id: "v-list", name: "List", type: "list", extra: { sorts: [{ propertyID: "title", ascending: false }] } },
+      { id: "v-form", name: "Form", type: "form", extra: { properties: [{ id: "title", visible: true }, { id: "n", visible: true }, { id: "st", visible: true }] } },
+    ],
+  });
+  await expect(page.getByLabel("Pages in view")).toHaveText("5,001");
+  // Lange Aufgaben (> 50 ms) mitschreiben.
+  await page.evaluate(() => {
+    const w = globalThis as unknown as { __long: number[] };
+    w.__long = [];
+    new PerformanceObserver((l) => { for (const e of l.getEntries()) w.__long.push(e.duration); }).observe({ type: "longtask", buffered: false });
+  });
+  const longTasks = () => page.evaluate(() => { const w = globalThis as unknown as { __long: number[] }; const l = w.__long; w.__long = []; return l; });
+  const report: Record<string, unknown> = {};
+
+  // Karte
+  const map = page.getByTestId("map-view");
+  await expect(map).toBeVisible();
+  await expect(map).toContainText("5,000 on map");
+  report.mapOpen = await longTasks();
+  const canvas = page.getByRole("application", { name: "Map of Where" });
+  const box = (await canvas.boundingBox())!;
+  const t0 = Date.now();
+  // Erst warten, bis der Worker die 5.000 gesäten Zeilen bestätigt hat (das Echo rechnet die Ansicht einmal neu).
+  await page.waitForTimeout(3000);
+  report.idleBeforePan = await longTasks();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 6, box.y + box.height / 2 + 2);
+  report.firstMove = await longTasks();
+  for (let i = 2; i <= 30; i++) await page.mouse.move(box.x + box.width / 2 + i * 6, box.y + box.height / 2 + i * 2);
+  await page.mouse.up();
+  report.mapPanLong = await longTasks();
+  for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, -120); await page.waitForTimeout(16); }
+  report.mapPanZoomMs = Date.now() - t0;
+  report.mapDom = { pins: await map.getByTestId("map-pin").count(), clusters: await map.getByTestId("map-cluster").count(), zoom: await canvas.getAttribute("data-zoom") };
+  report.mapPanZoomLong = await longTasks();
+  await map.getByTestId("map-cluster").first().click();
+  report.mapClusterLong = await longTasks();
+
+  // Peek: 20 × blättern
+  await page.getByRole("tab", { name: "List" }).click();
+  await page.getByRole("button", { name: "Row 5000", exact: true }).click();
+  await expect(page.getByTestId("row-peek-position")).toHaveText("1 of 5,001");
+  await longTasks();
+  const t1 = Date.now();
+  for (let i = 0; i < 20; i++) await page.keyboard.press("Control+Shift+ArrowDown");
+  await expect(page.getByTestId("row-peek-position")).toHaveText("21 of 5,001");
+  report.peekStepMs = (Date.now() - t1) / 20;
+  report.peekLong = await longTasks();
+  await page.getByRole("button", { name: "Close" }).first().click();
+
+  // Formular: absenden
+  await page.getByRole("tab", { name: "Form" }).click();
+  const form = page.getByTestId("form-view");
+  await form.getByRole("radio", { name: "Fill out" }).click();
+  await form.getByRole("textbox", { name: /Name/ }).fill("Load test");
+  await longTasks();
+  const t2 = Date.now();
+  await form.getByRole("button", { name: "Submit" }).click();
+  await expect(form.getByText("Response submitted")).toBeVisible();
+  report.formSubmitMs = Date.now() - t2;
+  report.formLong = await longTasks();
+  await expect(form.getByText("5,002 responses")).toBeVisible();
+
+  console.log("perf 5000:", JSON.stringify(report));
+  const worst = (k: string) => Math.max(0, ...(report[k] as number[]));
+  expect(worst("mapPanZoomLong")).toBeLessThan(150);
+  expect(worst("peekLong")).toBeLessThan(150);
+  expect(report.peekStepMs as number).toBeLessThan(250);
+  expect(report.formSubmitMs as number).toBeLessThan(1500);
 });

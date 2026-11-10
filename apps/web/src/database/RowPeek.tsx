@@ -37,7 +37,22 @@ function Title({ p }: { p: Props }) {
   );
 }
 
+/**
+ * Beim schnellen Blättern (⌃⇧↑/↓ gehalten) den Editor erst einhängen, wenn man kurz auf einer Seite bleibt: Titel
+ * und Properties wechseln sofort, der Editoraufbau (BlockNote) bremst das Blättern sonst spürbar.
+ */
+function useSettledRow(rowID: string, delay = 180): string {
+  const [settled, setSettled] = useState(rowID);
+  useEffect(() => {
+    if (settled === rowID) return;
+    const t = setTimeout(() => setSettled(rowID), delay);
+    return () => clearTimeout(t);
+  }, [rowID, settled, delay]);
+  return settled;
+}
+
 function Body({ p }: { p: Props }) {
+  const settled = useSettledRow(p.rowID);
   if (!p.row || p.row.trashedAt !== undefined) return <p className="t-desc row-peek-gone" role="status">This page was deleted.</p>;
   const Editor = slots.PageEditor;
   const readOnly = p.readOnly || p.locked;
@@ -47,9 +62,11 @@ function Body({ p }: { p: Props }) {
         <Title p={p} />
         <RowProperties rowID={p.rowID} />
         <div className="row-peek-content" data-testid="row-peek-content">
-          {Editor
-            ? <Editor key={p.rowID} store={p.store} pageID={p.rowID} readOnly={readOnly} onOpenPage={p.onOpenPage} />
-            : <BlockView key={p.rowID} store={p.store} pageID={p.rowID} readOnly={readOnly} onOpenPage={p.onOpenPage} />}
+          {settled !== p.rowID
+            ? <p className="t-desc row-peek-loading" aria-busy="true">Opening…</p>
+            : Editor
+              ? <Editor key={p.rowID} store={p.store} pageID={p.rowID} readOnly={readOnly} onOpenPage={p.onOpenPage} />
+              : <BlockView key={p.rowID} store={p.store} pageID={p.rowID} readOnly={readOnly} onOpenPage={p.onOpenPage} />}
         </div>
       </div>
     </InPeek.Provider>
