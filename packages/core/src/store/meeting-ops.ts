@@ -337,12 +337,12 @@ const NOTE_TYPES = new Set(["text", "heading1", "heading2", "heading3", "heading
  * Notizen dieses Meetings unter `ids`, die noch keine Zeit tragen, nicht leer sind und nach `since` (Swift-Datum)
  * angelegt wurden – die stempelt der Aufnahmedienst mit der aktuellen Aufnahmezeit.
  */
-export function unstampedNotes(store: WorkspaceStore, meeting: string, ids: Iterable<string>, since: number): string[] {
+export function unstampedNotes(store: WorkspaceStore, meeting: string, ids: Iterable<string>, since: number, skip?: ReadonlySet<string>): string[] {
   const out: string[] = [];
   for (const id of ids) {
     const b = store.blocks.get(id);
     if (!b || b.trashedAt !== undefined || b.props?.meetingTime !== undefined || !NOTE_TYPES.has(b.type)) continue;
-    if (b.createdAt < since || plainText(b.text).trim() === "") continue;
+    if (skip?.has(id) || b.createdAt < since || plainText(b.text).trim() === "") continue;
     if (meetingContaining(store, id) !== meeting) continue;
     const notes = findMeetingSection(store, meeting, "notes");
     if (!notes || !isUnder(store, id, notes)) continue;
