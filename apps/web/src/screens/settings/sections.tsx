@@ -15,6 +15,7 @@ import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { deviceNode, syncConfig } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
+import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
 
 type ChoiceKey = "theme" | "style" | "marker" | "density";
@@ -244,5 +245,7 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection });
   registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection });
   registerSettingsSection({ id: "diagnostics", page: "diagnostics", title: "This device", order: 10, component: DiagnosticsSection });
+  // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.
+  registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
   registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection });
 }
