@@ -508,8 +508,22 @@ export function decodeInlineMarkdown(s: string, resolveLink: (target: string) =>
 
 // MARK: CSV (RFC 4180)
 
-export function encodeCSV(rows: string[][]): string {
-  return rows.map((row) => row.map((f) => (/[,"\n\r]/.test(f) ? "\"" + f.replaceAll("\"", "\"\"") + "\"" : f)).join(",")).join("\n") + "\n";
+export function encodeCSV(rows: string[][], opts: { guardFormulas?: boolean } = {}): string {
+  const cell = (raw: string) => {
+    const f = opts.guardFormulas ? guardCSVFormula(raw) : raw;
+    return /[,"\n\r]/.test(f) ? "\"" + f.replaceAll("\"", "\"\"") + "\"" : f;
+  };
+  return rows.map((row) => row.map(cell).join(",")).join("\n") + "\n";
+}
+
+/**
+ * BSD-82: Formel-Injection beim CSV-Export verhindern – Zellen, die Tabellenprogramme als Formel lesen würden
+ * (`= + - @`, Tab, CR am Anfang), bekommen ein `'` davor. Reine Zahlen („-5“, „+3,5“) bleiben, wie sie sind.
+ */
+export function guardCSVFormula(cell: string): string {
+  if (!/^[=+\-@\t\r]/.test(cell)) return cell;
+  if (/^[+-]?(\d+([.,]\d+)*|[.,]\d+)([eE][+-]?\d+)?%?$/.test(cell)) return cell;
+  return "'" + cell;
 }
 
 export function decodeCSV(text: string): string[][] {
