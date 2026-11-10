@@ -136,7 +136,7 @@
 .bn-root .bn-suggestion-menu-item[aria-selected="true"],
 .bn-root .bn-ak-tab[aria-selected="true"] { color: var(--ink); background-color: var(--selected); }
 .bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
-.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--muted); }
+.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--marker-strong); }
 .bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
 
 /* Erwähnungen: Icon + Titel, Papierkorb/gelöscht markiert; Datum mit Erinnerungs-Feld */

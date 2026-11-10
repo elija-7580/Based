@@ -14,7 +14,7 @@
 .brain-chip-label { padding-right: var(--space-1); }
 .brain-chip-remove { padding: 0 var(--space-2) 0 var(--space-1); color: var(--muted); }
 .brain-chip-label:hover, .brain-chip-remove:hover, .brain-chip-add:hover { background: var(--selected); }
-.brain-chip-label:focus-visible, .brain-chip-remove:focus-visible, .brain-chip-add:focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+.brain-chip-label:focus-visible, .brain-chip-remove:focus-visible, .brain-chip-add:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .brain-chip-add { border: 1px dashed var(--control-border); color: var(--muted); }
 
 .brain-sensitive { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--muted); }

@@ -55,7 +55,7 @@
 .arc-card.ring::before { content: ""; position: absolute; left: 0; top: var(--space-2); bottom: var(--space-2); width: var(--marker-width); border-radius: var(--radius-pill); background: var(--marker-strong); }
 .arc-card.ring:hover { box-shadow: var(--shadow-float); }
 .arc-card.ring[data-status="needsYou"] { box-shadow: 0 0 0 1.5px var(--ink); }
-.arc-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.arc-card:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .pulse { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--marker-strong); flex: none; animation: home-pulse 1.6s var(--ease-out) infinite; }
 .pulse.needs { background: var(--ink); animation: none; }
 .meter { height: 3px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }

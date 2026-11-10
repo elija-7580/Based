@@ -4,6 +4,8 @@
 // - Updates: beim Start still prüfen, über „Check for Updates…“ im App-Menü auch mit Antwort, wenn alles aktuell ist.
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
+import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
+
 /** Läuft die Seite in der Tauri-Hülle? (Tauri 2 setzt `__TAURI_INTERNALS__` vor dem ersten Skript.) */
 export function isTauri(g: object = globalThis): boolean {
   return "__TAURI_INTERNALS__" in g;
@@ -47,7 +49,22 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
     await relaunch();
   } catch (e) {
     // Ohne Netz oder ohne signiertes Release still bleiben; nur auf ausdrückliche Nachfrage melden.
-    if (opts.interactive) await dialog.message(`Could not check for updates: ${e instanceof Error ? e.message : String(e)}`, { title: "Update failed", kind: "error" });
+    if (!opts.interactive) return;
+    const message = e instanceof Error ? e.message : String(e);
+    if (isMissingUpdateManifest(message)) {
+      // Noch kein signiertes Update-Paket (Secret fehlt): wenigstens sagen, ob eine neuere DMG bereitliegt.
+      const { getVersion } = await import("@tauri-apps/api/app");
+      const current = await getVersion();
+      const found = await checkReleasesFallback(current);
+      const text = found.kind === "newer"
+        ? `Based Next ${found.version} is available (you have ${current}). Automatic install isn’t set up yet — download the new DMG from ${DOWNLOAD_PAGE}`
+        : found.kind === "current"
+          ? `You’re on the newest version of Based Next (${current}).`
+          : `Automatic updates aren’t set up yet. The newest DMG is always at ${DOWNLOAD_PAGE}`;
+      await dialog.message(text, { title: found.kind === "newer" ? "Update available" : "Updates", kind: "info" });
+      return;
+    }
+    await dialog.message(`Could not check for updates: ${message}`, { title: "Update failed", kind: "error" });
   } finally {
     checking = false;
   }

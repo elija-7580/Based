@@ -70,3 +70,19 @@ test("„/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten n
   const db = (await page.locator(".shell-database.full").boundingBox())!;
   expect(db.width).toBeGreaterThan(panel.width * 0.85);
 });
+
+test("Fokusrahmen per Tastatur in der Highlight-Farbe (Marker)", async ({ page }) => {
+  await ready(page);
+  await page.getByRole("button", { name: "Home" }).focus();
+  await page.keyboard.press("Tab");
+  const [outline, marker] = await page.evaluate(() => {
+    const el = document.activeElement as HTMLElement;
+    const probe = document.createElement("i");
+    probe.style.color = "var(--marker-strong)";
+    document.body.append(probe);
+    const m = getComputedStyle(probe).color;
+    probe.remove();
+    return [getComputedStyle(el).outlineColor, m];
+  });
+  expect(outline).toBe(marker);
+});

@@ -37,7 +37,7 @@
 .dbui-root *, .dbui-popover *, .dbui-rowprops * { box-sizing: border-box; }
 .dbui-root button, .dbui-popover button, .dbui-rowprops button { font: inherit; color: inherit; cursor: pointer; }
 .dbui-root button:disabled, .dbui-popover button:disabled, .dbui-rowprops button:disabled { cursor: default; opacity: 0.5; }
-:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
 .dbui-icon { flex: none; }
 
 /* Kopf: Titel, Tabs, Aktionen */
@@ -518,7 +518,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-rowprop-value { min-width: 0; min-height: var(--space-7); display: flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); }
 .dbui-rowprop-value.editable { cursor: pointer; }
 .dbui-rowprop-value.editable:hover { background: var(--surface-raised); }
-.dbui-rowprop-value:focus-visible { outline: 2px solid var(--muted); outline-offset: 1px; }
+.dbui-rowprop-value:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
 
 /* Place-Editor */
 .dbui-place-editor { width: calc(var(--space-8) * 6); gap: var(--space-2); padding: var(--space-3); }
