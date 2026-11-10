@@ -41,6 +41,8 @@ import {
   trashPages,
   trashedPages,
   createDatabase,
+  createMeeting,
+  meetingTitleFor,
   dbops,
   plainText,
   MemoryHistoryStorage,
@@ -285,6 +287,11 @@ export class StoreHost {
         if (c.section && c.section !== PRIVATE_SECTION) opts.section = { kind: "teamspace", id: c.section };
         if (c.after) opts.position = { kind: "after", id: c.after };
         const id = createPage(store, opts);
+        return store.blocks.has(id) ? id : undefined;
+      }
+      case "createMeetingPage": {
+        const id = createPage(store, { title: meetingTitleFor(new Date()) });
+        createMeeting(store, { parent: "b:" + id });
         return store.blocks.has(id) ? id : undefined;
       }
       case "createDatabase": {

@@ -69,6 +69,8 @@ export type AssetGetResult =
 export type Command =
   | { op: "createPage"; parent?: string; section?: string; title?: string; after?: string }
   | { op: "createDatabase"; parent?: string; title?: string }
+  /** BSD-256: neue Seite „Meeting …“ mit einem Meeting-Block darin (⌘N → Meeting notes). */
+  | { op: "createMeetingPage" }
   | { op: "rename"; id: string; title: string }
   | { op: "trash"; ids: string[] }
   | { op: "restore"; ids: string[] }

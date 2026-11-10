@@ -168,7 +168,7 @@ Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-fir
 Export all workspace content,app,should,yes,yes,Markdown + CSV tree,yes
 Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug,"yes (BSD-215, Linux-Container): 50 000 Zeilen laden 1,4 s, Sync einspielen 1,1 s, Abfrage mit Filter/Sortierung/Gruppen 0,3 s, aus dem Cache 0,02 ms, SQLite laden 0,5 s; Web: Tabelle öffnen 0,9 s (Chromium)/2,1 s (WebKit), Zelle ändern 0,1–0,2 s; Tests mit Grenzwerten"
 UI test suite,app,should,n/a,yes,XCUITest macOS + iOS,n/a
-Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import,no
+Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import,"partial (BSD-204/256): Page, AI chat, Meeting notes, Database, Import; Ziffern 1–9 wählen direkt; Agent session fehlt"
 AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or floating on narrow windows; full-page chat; history,"yes (Pass 30: ⌘J-Panel mit ziehbarer Breite, Vollseite #chat)"
 Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete","yes: ⇧-Klick Bereich, ⇧⌥-Klick/⇧Leertaste einzeln; Favorit, Duplizieren, Verschieben, Papierkorb (BSD-203; ⌘-Klick bleibt neuer Tab)"
 Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete","yes: Tabelle – Kästchen, ⇧-Klick Bereich, alle wählen; in Tabs öffnen, Links kopieren, duplizieren, löschen (je ein Undo-Schritt, BSD-213); Board/Liste noch ohne"
