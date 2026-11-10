@@ -19,6 +19,7 @@ import { Settings } from "./screens/Settings.js";
 import { Trash } from "./screens/Trash.js";
 import { tasksRuntime } from "./tasks/runtime.js";
 import { TasksScreen } from "./tasks/TasksScreen.js";
+import { CodingScreen } from "./coding/CodingScreen.js";
 import "./tasks/AgentSettingsSection.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
@@ -136,6 +137,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "tasks") {
     screen = <TasksScreen client={client} state={state} />;
+  } else if (route.name === "coding") {
+    screen = <CodingScreen />;
   } else if (route.name === "agent") {
     screen = <AgentDetailScreen key={route.id} client={client} state={state} runID={route.id} onNavigate={navigate} onOpenPage={openPage} />;
   } else if (route.name === "project") {

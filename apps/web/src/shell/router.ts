@@ -11,6 +11,8 @@ export type Route =
   | { name: "chat" }
   /** Aufträge des Hauptagenten (BSD-195). */
   | { name: "tasks" }
+  /** Coding-Agenten auf dem Server (BSD-223). */
+  | { name: "coding" }
   /** Agent-Detail (ein Lauf) und Projekt-Detail der Startseite (BSD-133). */
   | { name: "agent"; id: string }
   | { name: "project"; id: string }
@@ -25,6 +27,7 @@ export function routeToHash(r: Route): string {
     case "trash": return "trash";
     case "chat": return "chat";
     case "tasks": return "tasks";
+    case "coding": return "coding";
     case "agent": return "agent-" + r.id;
     case "project": return "project-" + r.id;
     case "page": return "page-" + r.id;
@@ -44,6 +47,7 @@ export function routeFromHash(hash: string): Route {
     case "trash": return { name: "trash" };
     case "chat": return { name: "chat" };
     case "tasks": return { name: "tasks" };
+    case "coding": return { name: "coding" };
     default: return { name: "home" };
   }
 }

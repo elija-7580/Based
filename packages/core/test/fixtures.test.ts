@@ -68,14 +68,14 @@ for (const f of files) {
   }
   const deviations = DEVIATIONS[f.file] ?? {};
   describe(f.file, () => {
-    it.each(f.cases.map((c, i) => [i, c.name, c] as const))("#%i %s", (_i, _name, c) => {
+    it.each(f.cases.map((c, i) => [i, c.name, c] as const))("#%i %s", async (_i, _name, c) => {
       const dev = deviations[c.name];
       // Bewusste Abweichung: Swift-Ergebnis muss sich vom TS-Ergebnis unterscheiden, sonst ist der Eintrag veraltet.
       if (dev) {
         expect(dev.output(c.output), `${dev.reason}: Abweichung ist gegenstandslos`).not.toEqual(c.output);
         t.deviations = (t.deviations ?? 0) + 1;
       }
-      expect(port(c.input, f.meta)).toEqual(dev ? dev.output(c.output) : c.output);
+      expect(await port(c.input, f.meta)).toEqual(dev ? dev.output(c.output) : c.output);
       t.passed += 1;
     });
   });

@@ -159,7 +159,10 @@ Sitzungen laufen nur in diesen Ordnern; der Agent darf über `fs/*` nur im Sitzu
 (Symlinks aufgelöst). Agenten: Standardliste aus `@based/brain` (`DEFAULT_AGENTS`: Claude Code, Codex, Gemini CLI,
 OpenCode), gestartet mit gefilterter Umgebung (Allowlist, BSD-33; `BASED_*` und Geheimnis-Namen nie). Für einen
 Agenten freigegebene Variablen: `BASED_CODING_ENV="claude=ANTHROPIC_API_KEY,gemini=GEMINI_API_KEY"`. Token auf der
-Kommandozeile eines Agenten werden abgelehnt. Alle Routen nur mit Owner-Token:
+Kommandozeile eines Agenten werden abgelehnt. Eigene oder geänderte Agenten: `--coding-agents agents.json`
+(bzw. `BASED_CODING_AGENTS`), eine Liste wie `[{"id":"mine","name":"Mein Agent","command":"my-acp","args":["--acp"]},
+{"id":"gemini","enabled":false}]` – gleiche `id` ändert einen Standard-Agenten. Im Web-Client: Seitenleiste → Coding
+(`#coding`). Alle Routen nur mit Owner-Token:
 
 | Route | Zweck |
 |---|---|
