@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { exportStylesheet } from "../shell/exportCss.js";
 import { printHTML } from "../shell/print.js";
 import type { StoreClient } from "../worker/client.js";
+import { CopyReport, NotionImport } from "./NotionImport.js";
 import { ImportCancelledError, prepareInWorker, readFiles, type PreparingImport } from "../worker/importClient.js";
 import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "../worker/interop.js";
 
@@ -65,7 +66,9 @@ type Phase =
   | { k: "reading" }
   | { k: "preparing"; fraction: number }
   | { k: "writing" }
-  | { k: "done"; summary: ImportSummary }
+  | { k: "done"; summary: ImportSummary; report?: string }
+  /** BSD-217: direkt aus Notion über die API. */
+  | { k: "notion" }
   | { k: "error"; message: string };
 
 /** Import-Dialog. `onOpenPage` (optional) bietet an, die erste importierte Seite zu öffnen. */
@@ -106,10 +109,11 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
     }
   };
 
-  const busy = phase.k === "reading" || phase.k === "preparing" || phase.k === "writing";
+  const [notionBusy, setNotionBusy] = useState(false);
+  const busy = phase.k === "reading" || phase.k === "preparing" || phase.k === "writing" || (phase.k === "notion" && notionBusy);
   const fraction = phase.k === "preparing" ? phase.fraction : phase.k === "writing" ? 1 : 0;
   return (
-    <Dialog title="Import" onClose={onClose} busy={busy}>
+    <Dialog title={phase.k === "notion" ? "Import from Notion" : "Import"} onClose={onClose} busy={busy}>
       <input ref={files} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Choose files to import"
         accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.jsonl" onChange={(e) => void start(e.target.files)} />
       <input ref={folder} type="file" className="sr-only" tabIndex={-1} aria-label="Choose a folder to import"
@@ -121,6 +125,13 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
             Importing the same Notion export again updates those pages and keeps what you changed in Based.
           </p>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}
+          <button type="button" className="import-source" onClick={() => setPhase({ k: "notion" })}>
+            <span className="grow">
+              <strong>Connect Notion directly</strong>
+              <span className="t-desc">Keeps database views, layouts and page structure. Uses a Notion integration token.</span>
+            </span>
+            <span aria-hidden="true" className="import-source-arrow">→</span>
+          </button>
           <div className="dialog-actions">
             <button type="button" className="btn ghost" onClick={onClose}>Close</button>
             <button type="button" className="btn" onClick={() => folder.current?.click()}>Choose folder…</button>
@@ -128,7 +139,11 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
           </div>
         </>
       ) : null}
-      {busy ? (
+      {phase.k === "notion" ? (
+        <NotionImport client={client} onBack={() => setPhase({ k: "pick" })} onBusy={setNotionBusy}
+          onDone={(summary, report) => setPhase({ k: "done", summary, report })} />
+      ) : null}
+      {busy && phase.k !== "notion" ? (
         <>
           <p className="t-desc" aria-live="polite">{phase.k === "reading" ? "Reading files…" : phase.k === "writing" ? "Adding to your workspace…" : "Preparing import…"}</p>
           <div className="progress" role="progressbar" aria-label="Import progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(fraction * 100)}>
@@ -139,12 +154,12 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
           </div>
         </>
       ) : null}
-      {phase.k === "done" ? <ImportReport summary={phase.summary} onClose={onClose} onMore={() => setPhase({ k: "pick" })} onOpenPage={onOpenPage} /> : null}
+      {phase.k === "done" ? <ImportReport summary={phase.summary} report={phase.report} onClose={onClose} onMore={() => setPhase({ k: "pick" })} onOpenPage={onOpenPage} /> : null}
     </Dialog>
   );
 }
 
-function ImportReport({ summary, onClose, onMore, onOpenPage }: { summary: ImportSummary; onClose: () => void; onMore: () => void; onOpenPage?: ((id: string) => void) | undefined }) {
+function ImportReport({ summary, report, onClose, onMore, onOpenPage }: { summary: ImportSummary; report?: string | undefined; onClose: () => void; onMore: () => void; onOpenPage?: ((id: string) => void) | undefined }) {
   const shown = summary.warnings.slice(0, 50);
   const first = summary.rootIDs[0];
   return (
@@ -160,6 +175,7 @@ function ImportReport({ summary, onClose, onMore, onOpenPage }: { summary: Impor
         </div>
       ) : null}
       <div className="dialog-actions">
+        {report ? <CopyReport report={report} /> : null}
         <button type="button" className="btn ghost" onClick={onMore}>Import more…</button>
         {first && onOpenPage ? <button type="button" className="btn" onClick={() => { onClose(); onOpenPage(first); }}>Open</button> : null}
         <button type="button" className="btn primary" onClick={onClose}>Done</button>

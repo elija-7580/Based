@@ -72,8 +72,8 @@ export class NotionWorkspaceImport {
   }
 
   /** Prüft ein Token; liefert Name und Workspace der Integration. */
-  static async verify(token: string, transport: NotionTransport): Promise<string> {
-    const me = await new NotionClient(token, transport).get("users/me");
+  static async verify(token: string, transport: NotionTransport, client?: NotionClientOptions): Promise<string> {
+    const me = await new NotionClient(token, transport, client).get("users/me");
     const o = me && typeof me === "object" && !Array.isArray(me) ? me : {};
     const name = typeof o.name === "string" ? o.name : "Integration";
     const bot = o.bot && typeof o.bot === "object" && !Array.isArray(o.bot) ? o.bot : {};

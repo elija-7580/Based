@@ -23,6 +23,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_http::init())
         .menu(|app| {
             let name = app.package_info().name.clone();
             let about = AboutMetadata { name: Some(name.clone()), ..Default::default() };
