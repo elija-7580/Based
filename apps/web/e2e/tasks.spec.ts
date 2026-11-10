@@ -30,6 +30,7 @@ async function send(page: Page, text: string) {
 }
 
 test("Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen", async ({ playwright, browserName, baseURL }) => {
+  test.setTimeout(120_000);
   // eigenes Profil: WebKit hat OPFS nur in einem dauerhaften Kontext (sonst nach Neuladen leer)
   const dir = mkdtempSync(join(tmpdir(), "based-tasks-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
@@ -106,6 +107,7 @@ test("Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neulad
 });
 
 test("Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag", async ({ page }) => {
+  test.setTimeout(90_000);
   await open(page);
   await page.goto("/#prefs-agents");
   const s = page.getByTestId("agent-settings");

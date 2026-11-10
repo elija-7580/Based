@@ -11,7 +11,7 @@ import type { StoredChatEvent } from "../events.js";
 import type { ToolCall } from "../messages.js";
 import { mayContinue, spentThisMonth } from "./budget.js";
 import { mainArgument, Permissions } from "./permissions.js";
-import { isRunFinished, MAIN_AGENT_ID, type AgentData, type ProjectData, type Rec, type RunData, type ScheduleData } from "./records.js";
+import { fromMs, isRunFinished, MAIN_AGENT_ID, toMs, type AgentData, type ProjectData, type Rec, type RunData, type ScheduleData } from "./records.js";
 import type { NewRun, RunPatch } from "./store.js";
 
 export interface AgentRunBackend {
@@ -95,6 +95,15 @@ export class AgentRunner {
       const r = runs.find((x) => x.id === id);
       if (!r || r.data.status === "cancelled") this.cancel(id);
     }
+    // Läufe, deren Prozess weg ist (App geschlossen/neu geladen): nicht blind wiederholen (Werkzeuge sind nicht
+    // idempotent), sondern als unterbrochen melden.
+    for (const r of runs) {
+      if ((r.data.status !== "running" && r.data.status !== "needsYou") || this.running.has(r.id)) continue;
+      const lease = r.data.lease;
+      if (!lease || lease.owner === this.owner || toMs(lease.until) < this.now()) {
+        await this.o.backend.updateRun(r.id, { status: "failed", result: "Interrupted — Based was closed while this ran.", lease: null });
+      }
+    }
     const queued = runs.filter((r) => r.data.status === "queued").sort((a, b) => a.data.startedAt - b.data.startedAt);
     const free = (this.o.concurrency ?? 2) - this.running.size;
     for (const r of queued.slice(0, Math.max(0, free))) void this.start(r.id);
@@ -127,6 +136,8 @@ export class AgentRunner {
     const abort = new AbortController();
     this.running.set(runID, abort);
     this.o.onChange?.();
+    // Lease erneuern, solange der Lauf lebt (sonst hielte ein anderer Tab ihn nach 5 min für unterbrochen)
+    const renew = setInterval(() => void b.updateRun(runID, { lease: { owner: this.owner, until: fromMs(this.now()) + 300 } }).catch(() => undefined), 60_000);
     try {
       const run = (await b.runs()).find((r) => r.id === runID);
       if (!run) return;
@@ -177,6 +188,7 @@ export class AgentRunner {
     } catch (e) {
       await b.updateRun(runID, { status: "failed", result: e instanceof Error ? e.message : String(e), lease: null }).catch(() => undefined);
     } finally {
+      clearInterval(renew);
       this.running.delete(runID);
       for (const a of this.approvals.filter((x) => x.runID === runID)) a.resolve(false);
       this.approvals = this.approvals.filter((x) => x.runID !== runID);
