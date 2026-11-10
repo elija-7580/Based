@@ -255,6 +255,23 @@ test("@ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar,
   await expect(date).toHaveAttribute("data-remind", "true");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Date options" })).toHaveCount(0);
+  // BSD-210: Datumswähler – Tag, Bereich, Uhrzeit (die Erinnerung bleibt)
+  const dateDialog = page.getByRole("dialog", { name: "Date options" });
+  const options = async () => {
+    if (!(await dateDialog.isVisible())) await date.click();
+    await expect(dateDialog).toBeVisible();
+    return dateDialog;
+  };
+  await (await options()).getByLabel("Start day").fill("2026-12-24");
+  await expect(date).toContainText("2026");
+  await expect(date).toContainText("24");
+  await (await options()).getByLabel("End date").check();
+  await (await options()).getByLabel("End day").fill("2026-12-26");
+  await expect(date).toContainText("→");
+  await (await options()).getByLabel("Include time").check();
+  await expect((await options()).getByLabel("Start time")).toBeVisible();
+  await expect(date).toHaveAttribute("data-remind", "true");
+  await page.keyboard.press("Escape");
 
   // [[ sucht nur Seiten; „New page“ legt eine an und erwähnt sie
   await caretAtEnd(page, ed, "See");

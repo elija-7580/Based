@@ -104,8 +104,8 @@ export type { RestoreOptions, RestoreResult } from "./history/restore.js";
 // Editor-Parität: Einfügen (Markdown-Erkennung), Datums-Erwähnungen, Gliederung, Backlinks, Synced Blocks.
 export { hasInlineMarkdown, isMarkdownBlockLine, looksLikeMarkdown, pasteKind } from "./editor/paste.js";
 export type { PasteInput, PasteKind } from "./editor/paste.js";
-export { dateMentionValue, dateSuggestions, parseTypedDate } from "./editor/date-mention.js";
-export type { DateSuggestion } from "./editor/date-mention.js";
+export { dateMentionValue, dateParts, dateSuggestions, parseTypedDate, withDateParts } from "./editor/date-mention.js";
+export type { DateMentionValue, DateParts, DateSuggestion } from "./editor/date-mention.js";
 export { activeHeadingIndex, headingOutline, withDepth } from "./editor/headings.js";
 export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";

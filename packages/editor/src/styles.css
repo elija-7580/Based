@@ -166,6 +166,9 @@
   border: 1px solid var(--line); box-shadow: var(--shadow-menu); color: var(--ink); font-family: var(--font-ui); cursor: default;
 }
 .bx-date-remind { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.bx-date-picker { display: grid; gap: var(--space-2); }
+.bx-date-row { display: flex; gap: var(--space-2); }
+.bx-date-row .bx-field { width: auto; min-width: 0; flex: 1 1 auto; padding-block: var(--space-1); }
 
 /* Synced Block: Aktionen in der Beschriftung, Hinweis bei Original im Papierkorb */
 .bx-synced-label { display: flex; align-items: center; gap: var(--space-2); }
