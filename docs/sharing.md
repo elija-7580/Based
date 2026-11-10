@@ -91,6 +91,11 @@ server stays the reference until it is switched off.
 - **Access links** (`/s/<secret>`) open a read-only rendering in the browser; to edit, the secret is used as the
   token in Based (Settings → Sync & server). **Invites** show a form (no JavaScript); joining shows the device token
   once, with the server URL to connect with.
+- **Guest mode (BSD-235, part 1):** with `--web-url` / `BASED_WEB_URL` (address of the web client), the read-only
+  page of an access link shows "Open in Based" linking to `<web-url>/#/share/<share URL>` – the link travels in the
+  fragment, which browsers never send to a server. `GET /share/v1/resolve?path=/s/…|/p/…` (owner) returns
+  `{kind, linkID, pageID, rootPageID, role, title}`. Pages whose parent the device doesn't know (a guest only syncs the
+  shared area) appear in the sidebar under "Shared with you". The web client's guest boot is part 2.
 - Link URLs are built by the client from the server URL it is connected to (`path` in the API answer); the TS
   server needs no `BASED_PUBLIC_URL` for that. Universal Links (`apple-app-site-association`) are not served yet.
 

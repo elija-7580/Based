@@ -1,7 +1,7 @@
 // BSD-153: Seitenverwaltung (Seitenleiste, Papierkorb, Favoriten) und Seitenleisten-Struktur.
 import { describe, expect, it } from "vitest";
 import {
-  MemoryPersistence, WorkspaceStore, buildOutline, createPage, createTeamspace, deleteForever, dropPages, emptyTrash, keyOf,
+  MemoryPersistence, PRIVATE_SECTION, SHARED_SECTION, WorkspaceStore, buildOutline, createPage, createTeamspace, deleteForever, dropPages, emptyTrash, keyOf,
   movePages, pageAncestors, pageTitles, renamePage, restorePages, sectionKey, setFavorite, trashPages, trashedPages, type WireRecord,
 } from "../src/index.js";
 
@@ -125,5 +125,18 @@ describe("Seiten", () => {
     expect(o.nodes.row).toBeUndefined();
     expect(pageAncestors(s, "row")).toEqual(["a", "dbp"]);
     expect(pageAncestors(s, "sub")).toEqual(["a"]);
+  });
+});
+
+describe("BSD-235: geteilte Seiten ohne bekannte Eltern (Gast-Modus)", () => {
+  it("landen in „Shared with you“ samt Unterseiten; ohne solche Seiten gibt es die Sektion nicht", () => {
+    const { s } = make([blk("P", "w", "a0"), blk("S", "b:UNBEKANNT", "a0", "page", { text: "Wiki" }), blk("U", "b:S", "a0", "page", { text: "Sub" })]);
+    const o = buildOutline(s);
+    expect(o.sections.map((x) => x.id)).toContain(SHARED_SECTION);
+    expect(o.children[sectionKey(SHARED_SECTION)]).toEqual(["S"]);
+    expect(o.nodes.U?.parent).toBe("S");
+    expect(o.children[sectionKey(PRIVATE_SECTION)]).toEqual(["P"]);
+    const { s: own } = make([blk("P", "w", "a0")]);
+    expect(buildOutline(own).sections.map((x) => x.id)).not.toContain(SHARED_SECTION);
   });
 });

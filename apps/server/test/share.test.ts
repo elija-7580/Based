@@ -274,3 +274,40 @@ describe("Fremde Embeds auf veröffentlichten Seiten (BSD-236)", () => {
     expect((await post(`${app.url}/share/v1/links/${body.id}/embeds`, { allow: false })).body).toMatchObject({ allowEmbeds: false });
   });
 });
+
+describe("Gast-Modus (BSD-235)", () => {
+  it("Access-Link mit Web-Client: „Open in Based“ mit dem Link im Fragment; ohne Web-Client keine Leiste", async () => {
+    const { app, shared } = await setup();
+    const access = await createLink(app.url, shared, "access", "edit");
+    expect((await text(`${app.url}${access.body.path}`)).body).not.toContain("data-based-open");
+    const web = await startApp({ webURL: "https://web.example/" });
+    apps.push(web);
+    const page = web.pages.create({ title: "Shared", markdown: "Hi" });
+    const link = await createLink(web.url, page, "access", "edit");
+    const r = await text(`${web.url}${link.body.path}`);
+    const href = /href="([^"]+)" data-based-open/.exec(r.body)?.[1]?.replace(/&amp;/g, "&");
+    expect(href).toBeDefined();
+    expect(href!.startsWith("https://web.example/#/share/")).toBe(true);
+    const shareURL = decodeURIComponent(href!.slice("https://web.example/#/share/".length));
+    expect(shareURL).toBe(`${web.url.replace("127.0.0.1", "127.0.0.1")}${link.body.path}`);
+    expect(r.body).toContain("Open in Based to edit");
+  });
+
+  it("/share/v1/resolve: Seite hinter /s/… und /p/… (nur Besitzer); unbekannt oder widerrufen → 404", async () => {
+    const { app, shared, sub } = await setup();
+    const access = await createLink(app.url, shared, "access", "comment");
+    const r = await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(access.body.path!)}`);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ kind: "access", pageID: shared, rootPageID: shared, role: "comment", title: "Team Wiki" });
+    const deep = await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(`${app.url}${access.body.path}/${sub}`)}`);
+    expect(deep.body).toMatchObject({ pageID: sub, rootPageID: shared });
+    const pub = await createLink(app.url, shared, "publish", "view");
+    expect((await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(pub.body.path!)}`)).body).toMatchObject({ kind: "publish", pageID: shared });
+    // Gäste dürfen nicht nachschlagen
+    const secret = access.body.path!.split("/").pop()!;
+    expect((await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(access.body.path!)}`, bearer(secret))).status).toBe(403);
+    expect((await get(`${app.url}/share/v1/resolve?path=/s/bdl_unknown`)).status).toBe(404);
+    await post(`${app.url}/share/v1/links/${access.body.id}/revoke`, {});
+    expect((await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(access.body.path!)}`)).status).toBe(404);
+  });
+});
