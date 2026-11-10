@@ -152,6 +152,17 @@ noch fehlt; der Treiber für Claude Code im Container ist nicht gebaut. Docker s
 gemocktem Prozess); die lokale Variante läuft in den Tests mit echtem `tar`. Die Docker-Engine-API (statt CLI) ist
 nicht umgesetzt.
 
+## Betrieb und Härtung (BSD-75)
+
+- Long-Poll (`/sync/v2/wait`, `/coding/…`) ist ereignisgesteuert: jede gespeicherte Änderung weckt die Wartenden,
+  kein Abfragen, kein blockierter Thread. Grenzen: höchstens 16 offene waits je Client (Owner bzw. geteilter
+  Principal) und 1024 insgesamt (`maxWaitsPerClient`, `maxWaits`); darüber `429` mit `Retry-After: 5` (der
+  Sync-Client wartet dann mit Backoff).
+- Logs: JSONL auf stderr, nur Methode, Pfad ohne Query, Status, Dauer, Zähler – keine Titel, Texte, Tokens, Bodies.
+- Docker: `deploy/server-ts.Dockerfile` + `deploy/docker-compose.ts.yml` – läuft als Nutzer `node`, Dateisystem
+  schreibgeschützt bis auf `/data` und `/tmp`, `cap_drop: ALL`, `no-new-privileges`, `HEALTHCHECK` auf `/health`,
+  Backup-Dienst (`deploy/backup.sh`: täglich `sqlite3 .backup`, 7 Tage).
+
 ## Coding-Agenten (BSD-223)
 
 Aus, solange der Server ohne `--coding-root <ordner>` (wiederholbar; oder `BASED_CODING_ROOTS=/a:/b`) startet.

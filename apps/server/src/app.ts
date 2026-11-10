@@ -18,7 +18,7 @@ import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
 import { principalOf, registerShareRoutes } from "./share-routes.js";
-import { BadRequest, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
+import { BadRequest, WaitLimit, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
 export interface AppOptions extends SyncServiceOptions {
   token: string;
@@ -125,7 +125,7 @@ export function createApp(opts: AppOptions): App {
       if (rejected.length > 0) log.info("share: rejected records from a shared principal", { count: rejected.length });
       return json(reply);
     }), { bodyLimit: LARGE_BODY_LIMIT, access: "shared" });
-  router.add("GET", "/sync/v2/wait", async ({ url, signal }) => {
+  router.add("GET", "/sync/v2/wait", async ({ url, signal, caller }) => {
     let after: number, timeout: number;
     try {
       after = intParam(url, "after", 0);
@@ -136,7 +136,17 @@ export function createApp(opts: AppOptions): App {
       if (e instanceof BadRequest) return error(e.message, 400);
       throw e;
     }
-    return json({ seq: await sync.wait(after, timeout, signal) });
+    // BSD-75: Grenze je Client (Owner bzw. geteilter Principal); darüber 429 mit Retry-After statt offener Verbindung.
+    const client = caller?.kind === "shared" ? "shared:" + JSON.stringify(caller.principal).slice(0, 200) : "owner";
+    try {
+      return json({ seq: await sync.wait(after, timeout, signal, client) });
+    } catch (e) {
+      if (e instanceof WaitLimit) {
+        log.warning("long-poll limit", { scope: e.scope, waiting: sync.waiting });
+        return { status: 429, json: { error: e.message }, headers: { "Retry-After": "5" } };
+      }
+      throw e;
+    }
   }, { access: "shared" });
 
   // MARK: Assets (BSD-78, docs/sync-protocol.md „Assets“): inhaltsadressierte Blobs, Schlüssel = SHA-256

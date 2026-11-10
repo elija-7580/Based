@@ -102,12 +102,27 @@ export interface SyncServiceOptions {
   node?: string;
   /** Uhr für Tombstone-GC (ms seit 1970); für Tests austauschbar. */
   nowMillis?: () => number;
+  /** BSD-75: höchstens so viele offene Long-Polls je Client (Standard 16) … */
+  maxWaitsPerClient?: number;
+  /** … und insgesamt (Standard 1024). Darüber: `WaitLimit` (HTTP 429 mit Retry-After). */
+  maxWaits?: number;
+}
+
+/** BSD-75: zu viele offene Long-Polls (je Client oder gesamt). */
+export class WaitLimit extends Error {
+  constructor(readonly scope: "client" | "server") {
+    super(scope === "client" ? "too many open waits for this client" : "too many open waits");
+    this.name = "WaitLimit";
+  }
 }
 
 export class SyncService {
   readonly store: WorkspaceStore;
   readonly persistence: SqlitePersistence;
   private readonly waiters = new Set<() => void>();
+  private readonly perClient = new Map<string, number>();
+  private readonly maxWaitsPerClient: number;
+  private readonly maxWaits: number;
   private readonly unobserve: () => void;
   private readonly nowMillis: () => number;
   private closed = false;
@@ -117,6 +132,8 @@ export class SyncService {
     this.store = ws.store;
     this.persistence = ws.persistence;
     this.nowMillis = opts.nowMillis ?? Date.now;
+    this.maxWaitsPerClient = opts.maxWaitsPerClient ?? 16;
+    this.maxWaits = opts.maxWaits ?? 1024;
     // Jede gespeicherte Änderung (Push, MCP, …) weckt wartende Long-Polls – ohne Abfrageschleife.
     this.unobserve = this.store.observe(() => this.wake());
   }
@@ -204,13 +221,20 @@ export class SyncService {
    * Long-Poll: antwortet, sobald es eine Änderung nach `after` gibt, spätestens nach `timeoutSeconds` (1…55).
    * Ereignisgesteuert (Store-Beobachter), kein Abfragen. `signal` bricht ab (Verbindung geschlossen).
    */
-  wait(after: number, timeoutSeconds = 25, signal?: AbortSignal): Promise<number> {
+  wait(after: number, timeoutSeconds = 25, signal?: AbortSignal, client = "anonymous"): Promise<number> {
     const timeout = Math.min(Math.max(timeoutSeconds, 1), MAX_WAIT_SECONDS) * 1000;
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (this.seq > after || signal?.aborted || this.closed) return resolve(this.seq);
+      // BSD-75: Grenzen je Client und gesamt (ein Client mit vielen Tabs/Fehlern blockiert sonst alle).
+      const mine = this.perClient.get(client) ?? 0;
+      if (mine >= this.maxWaitsPerClient) return reject(new WaitLimit("client"));
+      if (this.waiters.size >= this.maxWaits) return reject(new WaitLimit("server"));
+      this.perClient.set(client, mine + 1);
       const done = () => {
         if (this.seq <= after && !signal?.aborted && !timedOut && !this.closed) return; // noch nichts Neues: weiter warten
         this.waiters.delete(done);
+        const n = (this.perClient.get(client) ?? 1) - 1;
+        if (n <= 0) this.perClient.delete(client); else this.perClient.set(client, n);
         clearTimeout(timer);
         signal?.removeEventListener("abort", onAbort);
         resolve(this.seq);

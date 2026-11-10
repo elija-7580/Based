@@ -1,0 +1,44 @@
+# TS-based-server (ADR 0011) mit Härtung (BSD-75): nicht root, schreibgeschütztes Dateisystem außer /data und /tmp,
+# keine zusätzlichen Rechte, Health-Check, tägliches Backup (sqlite3 .backup, 7 Tage, Skript deploy/backup.sh).
+#   docker compose -f docker-compose.ts.yml up -d --build
+services:
+  based:
+    build:
+      context: ..
+      dockerfile: deploy/server-ts.Dockerfile
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    environment:
+      BASED_TOKEN: ${BASED_TOKEN:?set a long random token}
+      BASED_PUBLIC_URL: https://${BASED_DOMAIN}
+      BASED_LOG_LEVEL: info
+      TZ: Europe/Vienna
+    volumes:
+      - based-data:/data
+    ports:
+      - "127.0.0.1:8787:8787"
+  backup:
+    image: alpine:3.20
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - based-data:/data:ro
+      - based-backup:/backup
+      - ./backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    environment:
+      BASED_DOMAIN: ${BASED_DOMAIN:?e.g. based.example.com}
+volumes:
+  based-data:
+  based-backup:
+  caddy-data:
