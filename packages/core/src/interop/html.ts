@@ -23,9 +23,8 @@ export const trimNewlines = (s: string) => trimSet(s, NL);
 export const trimSpaces = (s: string) => trimSet(s, /[\p{Zs}\t]/u);
 export const isBlank = (s: string) => trimWS(s).length === 0;
 
-const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-/** Swift `Character`s (Graphem-Cluster). */
-export const graphemes = (s: string) => Array.from(segmenter.segment(s), (x) => x.segment);
+/** Swift `Character`s (Graphem-Cluster); robust gegen große Texte, siehe ../graphemes.ts. */
+export { graphemes } from "../graphemes.js";
 
 export class HTMLNode {
   tag: string;

@@ -12,6 +12,7 @@
 import type { Block, Database, PropertyValue, RichText, WireRecord } from "../model/records.js";
 import { placeDisplay, richPlain } from "../query/engine.js";
 import { fromJSDate } from "../query/value.js";
+import { graphemes } from "../graphemes.js";
 import type { RecordKeyString, StoreChange, WorkspaceStore } from "../store/store.js";
 
 export interface SearchHit {
@@ -55,8 +56,7 @@ export interface SearchDelta {
   deletions: RecordKeyString[];
 }
 
-const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-const graphemes = (s: string) => [...segmenter.segment(s)].map((x) => x.segment);
+
 
 /** Groß/klein und Akzente falten (Swift `folding([.caseInsensitive, .diacriticInsensitive])`). */
 export function fold(s: string): string {

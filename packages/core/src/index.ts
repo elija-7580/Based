@@ -140,3 +140,4 @@ export { NotionWorkspaceImport, NotionClient, NotionAPIError, fetchTransport, no
 export type { NotionTransport, NotionResponse, NotionImportOptions as NotionAPIImportOptions, NotionSnapshot, NotionRoot, NotionAPIErrorKind } from "./interop/notion-api/index.js";
 // BSD-230: Datei-Verweise auf den synchronisierten Speicher umschreiben.
 export { assetIDsInStore, remapAssetRefs, remapStoreAssets } from "./interop/asset-ids.js";
+export { graphemes, firstGrapheme, graphemeCount } from "./graphemes.js";
