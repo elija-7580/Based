@@ -218,3 +218,6 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
   background: var(--bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
 }
 .bn-root .bn-ak-toolbar::-webkit-scrollbar { display: none; }
+
+/* Tastenkürzel rechts im Blockmenü (BSD-207). */
+.bn-root .bx-menu-key { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-family: var(--font-mono); font-size: var(--type-meta-size); }

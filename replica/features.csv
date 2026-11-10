@@ -68,14 +68,14 @@ Bold / italic / underline / strikethrough / code,editor,must,yes,yes,,yes
 Links in text (⌘K),editor,must,yes,yes,,yes
 Text color and background color,editor,must,yes,yes,,yes
 Block color,editor,should,yes,yes,,yes
-Turn into (any block type),editor,must,yes,yes,,"partial: Blocktyp-Auswahl der Formatleiste nur für Standardblöcke; eigene Blöcke (Callout, Gleichung u. a.) und Eintrag im Blockmenü fehlen"
+Turn into (any block type),editor,must,yes,yes,,partial: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout; Gleichung/Medien nicht
 Turn into page,editor,should,yes,yes,,no
-Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"partial: Delete, Colors, Copy and sync; Duplicate, Move to und Turn into fehlen"
+Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"partial: Turn into, Duplicate (⌘D), Colors, Copy and sync, Delete; Move to fehlt"
 Drag handle to reorder blocks,editor,must,yes,yes,,yes
 Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns",no
 Multi-block selection (Esc / shift),editor,should,yes,yes,,partial: Auswahl über mehrere Blöcke per Maus/Shift; Esc-Blockauswahl und Sammelaktionen fehlen
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
-Duplicate block (⌘D),editor,should,yes,yes,,no
+Duplicate block (⌘D),editor,should,yes,yes,,yes (10.11.: Blockmenü und ⌘D; Unterseiten/Datenbanken/Synced Blocks noch nicht)
 Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes
 Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,no
 Undo / redo for text and structure,editor,must,yes,yes,,yes
@@ -197,7 +197,7 @@ Claude-Code-style console (slash commands / @files / diffs / status line),agents
 CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml updated for Swift 6.2 container, both packages, typecheck, cache (BSD-22); still needs one manual copy to .github/workflows (BSD-13)",yes
 Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice",no
 Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a
-Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library",no
+Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)"
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: im Browser über den Browser-Verlauf; in der Desktop-Hülle keine eigene Behandlung, ⌘←/⌘→ und Verlaufsmenü fehlen"
 Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())"
 Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,no

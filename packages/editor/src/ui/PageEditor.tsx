@@ -10,12 +10,13 @@ import { BlockNoteView } from "@blocknote/ariakit";
 import {
   BlockColorsItem, DragHandleMenu, FormattingToolbar, FormattingToolbarController, getDefaultReactSlashMenuItems,
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
-  useBlockNoteEditor, useComponentsContext, useExtensionState, type DefaultReactSuggestionItem,
+  useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
 import { createDatabase, createMeeting, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
+import { canTurnInto, duplicateBlocks, isCurrent, targetBlocks, TURN_INTO, turnInto, type ActionEditor } from "./blockActions.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
@@ -186,13 +187,20 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     <EnvContext.Provider value={env}>
       <div className="bx-doc" onKeyDownCapture={(e) => {
         if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt.current = Date.now();
+        // ⌘D: Block (bzw. ausgewählte Blöcke) duplizieren, wie in Notion.
+        if (editable && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "d") {
+          e.preventDefault();
+          const a = editor as unknown as ActionEditor;
+          const r = duplicateBlocks(a, targetBlocks(a, editor.getTextCursorPosition().block.id));
+          if (r.skipped) shared.notify("Sub-pages, databases and synced blocks can’t be duplicated here yet.");
+        }
       }}>
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} />} />} />
+          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} notify={shared.notify} />} />} />
           <FormattingToolbarController formattingToolbar={() => (
             <FormattingToolbar>
               {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
@@ -297,13 +305,58 @@ export function insertInlineEquation(editor: BasedEditor, expression = "") {
 
 // MARK: Block-Menü mit „Copy and sync“
 
-function BlockMenu(props: { session: DocSession }) {
+function BlockMenu(props: { session: DocSession; notify: (message: string) => void }) {
   return (
     <DragHandleMenu>
-      <RemoveBlockItem>Delete</RemoveBlockItem>
+      <TurnIntoItem />
+      <DuplicateItem notify={props.notify} />
       <BlockColorsItem>Colors</BlockColorsItem>
       <CopyAndSyncItem session={props.session} />
+      <RemoveBlockItem>Delete</RemoveBlockItem>
     </DragHandleMenu>
+  );
+}
+
+/** BSD-207: „Duplicate“ (⌘D) im Blockmenü – wirkt auf die Auswahl, wenn der Block darin liegt. */
+function DuplicateItem(props: { notify: (message: string) => void }) {
+  const Components = useComponentsContext()!;
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  if (!block) return null;
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+      const a = editor as unknown as ActionEditor;
+      const r = duplicateBlocks(a, targetBlocks(a, block.id));
+      if (r.skipped) props.notify("Sub-pages, databases and synced blocks can’t be duplicated here yet.");
+    }}>
+      Duplicate <span className="bx-menu-key">⌘D</span>
+    </Components.Generic.Menu.Item>
+  );
+}
+
+/** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen. */
+function TurnIntoItem() {
+  const Components = useComponentsContext()!;
+  const portalElement = usePortalElement();
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  const a = editor as unknown as ActionEditor;
+  const current = block ? a.getBlock(block.id) : undefined;
+  if (!current || !canTurnInto(current)) return null;
+  return (
+    <Components.Generic.Menu.Root position="right" sub={true} portalElement={portalElement}>
+      <Components.Generic.Menu.Trigger sub={true}>
+        <Components.Generic.Menu.Item className="bn-menu-item" subTrigger={true}>Turn into</Components.Generic.Menu.Item>
+      </Components.Generic.Menu.Trigger>
+      <Components.Generic.Menu.Dropdown sub={true} className="bn-menu-dropdown">
+        {TURN_INTO.map((o) => (
+          <Components.Generic.Menu.Item key={o.key} className="bn-menu-item" checked={isCurrent(current, o)}
+            onClick={() => turnInto(a, targetBlocks(a, current.id), o)}>
+            {o.label}
+          </Components.Generic.Menu.Item>
+        ))}
+      </Components.Generic.Menu.Dropdown>
+    </Components.Generic.Menu.Root>
   );
 }
 

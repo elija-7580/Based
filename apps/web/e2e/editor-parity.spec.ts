@@ -456,3 +456,31 @@ test("Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinw
   await expect(mirror).not.toHaveAttribute("data-trashed", "true");
   expect(errors).toEqual([]);
 });
+
+test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => {
+  await createPage(page, "Block actions");
+  await openPage(page, "Block actions");
+  await caretInLastLine(page);
+  await page.keyboard.type("Launch plan");
+  await settled(page);
+
+  const block = editor(page).locator(".bn-block-content", { hasText: "Launch plan" }).first();
+  await block.hover();
+  await page.locator(".bn-side-menu [draggable=true]").first().click();
+  await page.getByRole("menuitem", { name: "Turn into" }).hover();
+  await page.getByRole("menuitem", { name: "Heading 2" }).click();
+  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toBeVisible();
+
+  await block.hover();
+  await page.locator(".bn-side-menu [draggable=true]").first().click();
+  await page.getByRole("menuitem", { name: /Duplicate/ }).click();
+  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(2);
+
+  // ⌘D in der Kopie dupliziert noch einmal
+  await editor(page).locator("h2", { hasText: "Launch plan" }).nth(1).click();
+  await page.keyboard.press("ControlOrMeta+d");
+  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
+  await settled(page);
+  await page.reload();
+  await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
+});
