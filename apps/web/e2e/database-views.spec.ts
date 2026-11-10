@@ -67,8 +67,10 @@ async function fresh(page: Page) {
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 }
 
+/** Wie Einstellungen → Darstellung (appearance.ts) bei gleichem System-Modus: Astryx folgt dem System (Theme „system“). */
 async function setTheme(page: Page, theme: "light" | "dark") {
-  await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
+  await page.emulateMedia({ colorScheme: theme });
+  await page.evaluate((t) => { document.documentElement.dataset.theme = t; document.documentElement.style.colorScheme = t; }, theme);
 }
 
 async function shots(page: Page, name: string) {
@@ -197,3 +199,90 @@ async function peekScenario(page: Page, browserName: string) {
   await expect(page.getByLabel("Page title")).toHaveValue("Alpha");
   await expect(peek).toHaveCount(0);
 }
+
+test("Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da", async ({ page }) => {
+  await seedDatabase(page, {
+    title: "Feedback",
+    properties: [title, { id: "mail", name: "Email", type: "email" }, { id: "n", name: "Rating", type: "number" }, status, { id: "note", name: "Comments", type: "text" }],
+    rows: [],
+    views: [
+      { id: "v-form", name: "Feedback form", type: "form", extra: { properties: [{ id: "title", visible: true }, { id: "mail", visible: true }, { id: "n", visible: true }, { id: "st", visible: true }] } },
+      { id: "v-table", name: "Responses", type: "table" },
+    ],
+  });
+  const form = page.getByTestId("form-view");
+  await expect(form).toHaveAttribute("data-mode", "edit");
+
+  // Bearbeiten: Email Pflicht, Hilfetext, Comments als Frage hinzufügen, Formular-Titel.
+  const mail = form.getByRole("region", { name: "Question Email" });
+  await mail.getByRole("switch", { name: "Required" }).check();
+  await mail.getByLabel("Help text").fill("We only use it to reply");
+  await form.getByLabel("Form title").fill("Tell us what you think");
+  await form.getByRole("combobox", { name: "Add a question" }).click();
+  await page.getByRole("option", { name: /Comments/ }).click();
+  await expect(form.getByRole("region", { name: "Question Comments" })).toBeVisible();
+  await shots(page, "web-db-form-edit");
+
+  // Ausfüllen
+  await form.getByRole("radio", { name: "Fill out" }).click();
+  await expect(form).toHaveAttribute("data-mode", "fill");
+  await expect(form.getByRole("heading", { name: "Tell us what you think" })).toBeVisible();
+  await expect(form.getByText("We only use it to reply")).toBeVisible();
+  await form.getByRole("textbox", { name: /Rating/ }).fill("great");
+  await form.getByRole("button", { name: "Submit" }).click();
+  await expect(form.getByText("This question is required")).toHaveCount(2); // Name, Email
+  await expect(form.getByText("Enter a number")).toBeVisible();
+  await shots(page, "web-db-form-errors");
+
+  await form.getByRole("textbox", { name: /Name/ }).fill("Ada Lovelace");
+  await form.getByRole("textbox", { name: /Email/ }).fill("ada@example");
+  await form.getByRole("textbox", { name: /Rating/ }).fill("5");
+  await form.getByRole("button", { name: "Submit" }).click();
+  await expect(form.getByText("Enter an email address")).toBeVisible();
+  await form.getByRole("textbox", { name: /Email/ }).fill("ada@example.com");
+  await form.getByRole("combobox", { name: /Status/ }).click();
+  await page.getByRole("option", { name: "Doing" }).click();
+  await form.getByRole("button", { name: "Submit" }).click();
+  await expect(form.getByText("Response submitted")).toBeVisible();
+  await expect(form.getByText("1 response", { exact: true })).toBeVisible();
+  await expect(form.getByRole("textbox", { name: /Name/ })).toHaveValue("");
+  await shots(page, "web-db-form");
+
+  // Die Zeile steht in der Tabelle.
+  await page.getByRole("tab", { name: "Responses" }).click();
+  const row = page.getByRole("row", { name: /Ada Lovelace/ });
+  await expect(row).toBeVisible();
+  await expect(row).toContainText("ada@example.com");
+  await expect(row).toContainText("Doing");
+  await expect(row).toContainText("5");
+});
+
+test("Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar", async ({ page }) => {
+  const now = new Date();
+  const ymd = (offset: number) => { const d = new Date(now); d.setDate(d.getDate() + offset); return [d.getFullYear(), d.getMonth() + 1, d.getDate()] as const; };
+  const at = (offset: number, h = 0, m = 0) => { const [y, mo, d] = ymd(offset); return swift(page, y, mo, d, h, m); };
+  const range = async (from: number, to: number) => pv("date", { start: await at(from), end: await at(to), includeTime: false });
+  const filter = (op: string, value: unknown) => ({ combinator: "and", items: [{ condition: { _0: { id: "c1", propertyID: "when", op, value } } }] });
+  await seedDatabase(page, {
+    title: "Trips",
+    properties: [title, { id: "when", name: "When", type: "date" }],
+    rows: [
+      { title: "Ends in window", values: { when: await range(-20, -2) } },
+      { title: "Runs through today", values: { when: await range(-3, 3) } },
+      { title: "Long ago", values: { when: await range(-60, -40) } },
+      { title: "Ends at midnight", values: { when: pv("date", { start: await at(-1, 20), end: await at(0), includeTime: true }) } },
+    ],
+    views: [
+      { id: "v-week", name: "Past week", type: "table", extra: { filter: filter("within", { relative: { _0: "pastWeek" } }) } },
+      { id: "v-before", name: "Before today", type: "table", extra: { filter: filter("before", { relative: { _0: "today" } }) } },
+      { id: "v-today", name: "Today", type: "table", extra: { filter: filter("equals", { relative: { _0: "today" } }) } },
+    ],
+  });
+  const names = () => page.getByRole("grid").getByRole("gridcell").filter({ hasText: /Ends|Runs|Long/ }).allTextContents();
+  await expect(page.getByTestId("filter-chip")).toHaveText("When is within Past week");
+  await expect.poll(async () => (await names()).map((t) => t.replace(/Open$/, "")).sort()).toEqual(["Ends at midnight", "Ends in window", "Runs through today"]);
+  await page.getByRole("tab", { name: "Before today" }).click();
+  await expect.poll(async () => (await names()).map((t) => t.replace(/Open$/, "")).sort()).toEqual(["Ends at midnight", "Ends in window", "Long ago"]);
+  await page.getByRole("tab", { name: "Today", exact: true }).click();
+  await expect.poll(async () => (await names()).map((t) => t.replace(/Open$/, "")).sort()).toEqual(["Runs through today"]);
+});

@@ -10,8 +10,8 @@ import { useDB } from "../context.js";
 import { openModeOf } from "../logic/peek.js";
 import { Icon, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
 
-export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline"];
-const LAYOUT_LABELS: Record<string, string> = { table: "Table", board: "Board", list: "List", gallery: "Gallery", chart: "Chart", calendar: "Calendar", timeline: "Timeline", dashboard: "Dashboard" };
+export const LAYOUTS = ["table", "board", "list", "gallery", "chart", "calendar", "timeline", "form", "map"];
+const LAYOUT_LABELS: Record<string, string> = { table: "Table", board: "Board", list: "List", gallery: "Gallery", chart: "Chart", calendar: "Calendar", timeline: "Timeline", dashboard: "Dashboard", form: "Form", map: "Map" };
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (on: boolean) => void }) {
   return <label className="dbui-toggle"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />{label}</label>;

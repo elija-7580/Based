@@ -5,7 +5,7 @@ import {
   addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
-import { DBContext, useDatabaseContext, useDB } from "./context.js";
+import { DBContext, ShellSlots, useDatabaseContext, useDB, type FormRenderProps } from "./context.js";
 import { countConditions, describeCondition, topConditions } from "./logic/filters.js";
 import { openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek, type OpenMode, type PeekState } from "./logic/peek.js";
 import { FilterEditor } from "./menus/FilterEditor.js";
@@ -63,6 +63,8 @@ export interface DatabaseViewProps {
   /** Höhe des Ganzen (Standard 100 % des Elternelements); die Ansicht scrollt darin. */
   height?: number | string | undefined;
   className?: string | undefined;
+  /** Formular-Ansicht aus dem Komponenten-Baukasten der Shell (Astryx); ohne das ein Hinweis. */
+  renderForm?: ((p: FormRenderProps) => ReactNode) | undefined;
   /** Zeilen als Side/Center Peek öffnen (je Ansicht „Open pages in“); ohne das öffnet alles über `onOpenPage`. */
   peek?: PeekOptions | undefined;
 }
@@ -269,12 +271,15 @@ export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
   const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart });
   const style = { height: props.height ?? "100%" };
+  const slots = useMemo(() => ({ renderForm: props.renderForm }), [props.renderForm]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (
     <DBContext.Provider value={ctx}>
+      <ShellSlots.Provider value={slots}>
       <div className={"dbui-root" + (props.className ? " " + props.className : "")} style={style} data-testid="database-view">
         <Inner blockID={props.blockID ?? ctx.db.blockID} viewID={props.viewID} onViewChange={props.onViewChange} showTitle={props.showTitle !== false} peek={props.peek} />
       </div>
+      </ShellSlots.Provider>
     </DBContext.Provider>
   );
 }

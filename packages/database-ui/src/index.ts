@@ -8,6 +8,11 @@ export { RowProperties } from "./RowProperties.js";
 export { OPEN_MODE_LABELS, openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek } from "./logic/peek.js";
 export type { OpenMode, PeekPosition, PeekState } from "./logic/peek.js";
 export { ViewBody, useQuery } from "./ViewBody.js";
-export { DBContext, useDatabaseContext, useDatabaseVersion, useDB } from "./context.js";
-export type { DBContextValue } from "./context.js";
+export { DBContext, ShellSlots, useDatabaseContext, useDatabaseVersion, useDB } from "./context.js";
+export type { DBContextValue, FormRenderProps } from "./context.js";
+export {
+  FORM_TYPES, answersToRow, formConfig, formDescription, formQuestions, formTitle, hiddenFormProperties, isBlank, parseFormDate, placeRaw,
+  setFormDescription, setFormTitle, setQuestionDescription, setQuestionRequired, submitForm, validateAnswer, validateForm,
+} from "./logic/form.js";
+export type { FormAnswer, FormAnswers, FormConfig, FormQuestion, FormQuestionConfig, PlaceAnswer, SubmitResult } from "./logic/form.js";
 export { defaultIsAgentEdit } from "./logic/values.js";
