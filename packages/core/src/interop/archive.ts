@@ -4,6 +4,7 @@
 //   v2 `.based.zip`: `workspace.jsonl` (Kopf `"version": 2`, `"assets": n`) und jede referenzierte Datei als
 //   `assets/<asset-id>/<name>` (gespeichert, nicht komprimiert).
 // Import mit Herkunft „import“: Stempel bleiben, kein Undo, wird aber wie eine lokale Änderung an den Sync gemeldet.
+import type { ByteSource } from "./files.js";
 import { canonicalStringify } from "../json.js";
 import { compareStamps, ZERO_STAMP, type Stamp } from "../hlc.js";
 import type { BlockProps, Workspace, WireRecord } from "../model/records.js";
@@ -116,11 +117,13 @@ export function writeArchivePackage(store: WorkspaceStore, readAsset: (ref: Asse
 }
 
 /** Ein Archiv (v1 Text oder v2 ZIP) erkennen. */
-export function isArchive(bytes: Uint8Array): boolean {
-  if (isZip(bytes)) {
-    try { return readZipEntries(bytes).some((e) => e.path === PACKAGE_RECORDS); } catch { return false; }
+export function isArchive(input: Uint8Array | ByteSource): boolean {
+  // BSD-254: auch für eine Quelle – gelesen werden nur der Anfang bzw. das ZIP-Verzeichnis
+  const head = input instanceof Uint8Array ? input.subarray(0, 400) : input.read(0, Math.min(400, input.size));
+  if (isZip(head)) {
+    try { return readZipEntries(input).some((e) => e.path === PACKAGE_RECORDS); } catch { return false; }
   }
-  return new TextDecoder().decode(bytes.subarray(0, 400)).includes(`"${ARCHIVE_FORMAT}"`);
+  return new TextDecoder().decode(head).includes(`"${ARCHIVE_FORMAT}"`);
 }
 
 export interface ArchiveReadResult {

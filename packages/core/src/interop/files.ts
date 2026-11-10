@@ -35,8 +35,50 @@ export function stripExtension(path: string): string {
 /** Swift `localizedStandardCompare` für Pfade (Finder-Reihenfolge). */
 export const comparePaths = (a: string, b: string) => localizedStandardCompare(a, b);
 
+/**
+ * BSD-254: Bytes, die nicht im Speicher liegen müssen – eine Datei (`Blob` im Worker, gelesen per FileReaderSync)
+ * oder ein Bereich darin. `read` liefert genau `length` Bytes ab `offset` (oder wirft).
+ */
+export interface ByteSource {
+  readonly size: number;
+  read(offset: number, length: number): Uint8Array;
+}
+
+/** Quelle über einem Puffer (ohne Kopie). */
+export function bytesSource(bytes: Uint8Array): ByteSource {
+  return {
+    size: bytes.length,
+    read: (offset, length) => {
+      if (offset < 0 || offset + length > bytes.length) throw new RangeError("read past end");
+      return bytes.subarray(offset, offset + length);
+    },
+  };
+}
+
+/** Bereich einer Quelle als eigene Quelle (gespeicherte ZIPs in ZIPs, ohne sie zu lesen). */
+export function subSource(src: ByteSource, start: number, size: number): ByteSource {
+  return {
+    size,
+    read: (offset, length) => {
+      if (offset < 0 || offset + length > size) throw new RangeError("read past end");
+      return src.read(start + offset, length);
+    },
+  };
+}
+
+/** Eine Datei, die erst beim Lesen geladen wird (BSD-254). `load` darf `undefined` liefern (unlesbar). */
+export interface LazyFile {
+  size: number;
+  load(): Uint8Array | undefined;
+  /** Rohe Bytes als Quelle (z. B. für ein ZIP im Baum, ohne es ganz zu laden). */
+  source?: ByteSource;
+}
+
+/** Bis zu dieser Größe behält der Baum gelesene Dateien (HTML/CSV werden mehrfach gelesen), größere jedes Mal neu. */
+const LAZY_CACHE_BYTES = 1 << 20;
+
 export class ImportFiles {
-  private readonly files = new Map<string, Uint8Array>();
+  private readonly files = new Map<string, Uint8Array | LazyFile>();
   private readonly dirs = new Set<string>([""]);
 
   constructor(entries: Iterable<readonly [string, Uint8Array]> = []) {
@@ -48,6 +90,14 @@ export class ImportFiles {
     const p = normalizePath(path);
     if (p === "") return;
     this.files.set(p, data);
+    this.addDirectory(dirname(p));
+  }
+
+  /** BSD-254: Datei, die erst beim Lesen geladen wird. */
+  addLazy(path: string, file: LazyFile) {
+    const p = normalizePath(path);
+    if (p === "") return;
+    this.files.set(p, file);
     this.addDirectory(dirname(p));
   }
 
@@ -70,8 +120,27 @@ export class ImportFiles {
   isFile(path: string) { return this.files.has(normalizePath(path)); }
   isDirectory(path: string) { return this.dirs.has(normalizePath(path)); }
   exists(path: string) { const p = normalizePath(path); return this.files.has(p) || this.dirs.has(p); }
-  read(path: string): Uint8Array | undefined { return this.files.get(normalizePath(path)); }
-  size(path: string): number | undefined { return this.read(path)?.length; }
+  read(path: string): Uint8Array | undefined {
+    const p = normalizePath(path);
+    const f = this.files.get(p);
+    if (f === undefined || f instanceof Uint8Array) return f;
+    const data = f.load();
+    if (data !== undefined && data.length <= LAZY_CACHE_BYTES) this.files.set(p, data);
+    return data;
+  }
+  size(path: string): number | undefined {
+    const f = this.files.get(normalizePath(path));
+    return f === undefined ? undefined : f instanceof Uint8Array ? f.length : f.size;
+  }
+  /** Rohe Bytes als Quelle, ohne sie zu laden (wenn die Datei das kann); sonst über die gelesenen Bytes. */
+  source(path: string): ByteSource | undefined {
+    const f = this.files.get(normalizePath(path));
+    if (f === undefined) return undefined;
+    if (f instanceof Uint8Array) return bytesSource(f);
+    if (f.source) return f.source;
+    const data = this.read(path);
+    return data === undefined ? undefined : bytesSource(data);
+  }
 
   /** UTF-8, ungültige Bytes ersetzt (Swift `String(decoding:as:)`). */
   readText(path: string): string | undefined {
@@ -115,6 +184,9 @@ export class ImportFiles {
   mount(prefix: string, other: ImportFiles) {
     this.addDirectory(prefix);
     for (const d of other.dirs) if (d !== "") this.addDirectory(joinPath(prefix, d));
-    for (const [p, data] of other.files) this.add(joinPath(prefix, p), data);
+    for (const [p, data] of other.files) {
+      if (data instanceof Uint8Array) this.add(joinPath(prefix, p), data);
+      else this.addLazy(joinPath(prefix, p), data);
+    }
   }
 }

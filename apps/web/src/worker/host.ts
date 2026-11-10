@@ -186,6 +186,7 @@ export class StoreHost {
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
+        case "importAsset": reply(await this.importAsset(msg.assetID, msg.bytes, msg.name, msg.mime)); break;
         case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.exportAssets(), msg.html)); break;
         case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.exportAssets(), msg.html)); break;
         case "printPage": reply(await printPage(this.store, msg.pageID, this.exportAssets(), msg.css)); break;
@@ -849,8 +850,19 @@ export class StoreHost {
    * BSD-230: Import schreiben – Dateien zuerst in den synchronisierten Speicher (SHA-256), dann die Verweise der
    * Records auf den Hash umschreiben. Was sich nicht ablegen lässt, fehlt und steht im Bericht.
    */
+  /** BSD-254: Dateien laufender Importe, schon abgelegt (vorläufige ID → Hash). */
+  private importedAssetIDs = new Map<string, string>();
+
+  private async importAsset(id: string, bytes: Uint8Array, name: string, mime?: string): Promise<boolean> {
+    if (!this.assets) throw new Error("not initialised");
+    const ref = await this.assets.add(bytes, name, mime);
+    this.importedAssetIDs.set(id, ref.id);
+    return true;
+  }
+
   private async commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
-    const map = new Map<string, string>();
+    const map = new Map<string, string>(this.importedAssetIDs);
+    this.importedAssetIDs.clear();
     let failed = 0;
     for (const f of payload.files ?? []) {
       try {

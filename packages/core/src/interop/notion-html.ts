@@ -700,8 +700,9 @@ export class NotionHTMLImporter {
     if (src.includes("://") || src.startsWith("data:") || src.startsWith("mailto:")) return { url: src };
     const decoded = removingPercentEncoding(src) ?? src;
     const u = joinPath(ctx.dir, decoded);
-    const data = this.files.isFile(u) ? this.files.read(u) : undefined;
-    if (data) return { asset: this.builder.asset(u, data, basename(u)) };
+    // BSD-254: erst beim Übernehmen in den Asset-Speicher lesen (große Exporte liegen so nie ganz im Speicher)
+    const size = this.files.isFile(u) ? this.files.size(u) : undefined;
+    if (size !== undefined) return { asset: this.builder.assetLazy(u, size, () => this.files.read(u), basename(u)) };
     // Verweis auf eine Datei, die im Export fehlt: melden statt still einen toten Pfad zu behalten.
     if (this.warnMissingFiles && looksLikeLocalFile(decoded) && !/\.(html?|md|csv)$/i.test(decoded.split(/[?#]/)[0]!)) {
       const w = `Missing file “${u}” — it isn't in the export`;
