@@ -1,7 +1,7 @@
 // Agent Brain im Chat: ChatController + echter ChatHost/BrainHost auf einem In-Memory-Store (ohne Worker, ohne DOM).
 import { createPage, MemoryPersistence, WorkspaceStore, attachSearchIndex, type JSONValue } from "@based/core";
 import { ScriptedEngine, WorkspaceTools, type ChatMeta, type StoredChatEvent } from "@based/brain";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatController, type ChatBackend } from "../chat/controller.js";
 import { BrainHost } from "../worker/brain.js";
 import { ChatHost, type ChatLoaded, type ToolCatalog } from "../worker/chat.js";
@@ -66,8 +66,8 @@ describe("Agent Brain in the chat", () => {
     brainHost.brain.saveSkill({ name: "weekly-review", description: "Reflect on the past week and plan priorities for next week.", body: "List wins. Pick three priorities." });
     brainHost.brain.saveSkill({ name: "weekly-newsletter", description: "Write the weekly newsletter email for subscribers.", body: "Greeting, links, sign-off." });
     brain.setDraft("Help me do my weekly review and plan priorities");
-    await new Promise((r) => setTimeout(r, 10));
-    expect(brain.getState().chips.map((x) => x.name)).toEqual(["weekly-review"]);
+    // Routing läuft asynchron (Debounce); unter Last reichen feste 10 ms nicht.
+    await vi.waitFor(() => expect(brain.getState().chips.map((x) => x.name)).toEqual(["weekly-review"]), { timeout: 2000 });
     const alt = brain.alternatives().find((a) => a.name === "weekly-newsletter")!;
     brain.swapChip(brain.getState().chips[0]!.id, alt);
     expect(brain.getState().chips.map((x) => x.name)).toEqual(["weekly-newsletter"]);
