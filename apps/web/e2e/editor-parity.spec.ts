@@ -819,3 +819,39 @@ test("Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211)", asy
   await openPage(page, "Paste Notion");
   await expect(editor(page).locator("[data-content-type=callout]")).toContainText("Callout text");
 });
+
+const PDF = Buffer.from("%PDF-1.1\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n");
+
+test("Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208)", async ({ page }) => {
+  await createPage(page, "Uploads");
+  await openPage(page, "Uploads");
+  await caretInLastLine(page);
+  await page.keyboard.type("/PDF");
+  await expect(page.getByRole("option", { name: /PDF/ }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await editor(page).locator("input[type=file][aria-label='Upload PDF']").setInputFiles({ name: "plan.pdf", mimeType: "application/pdf", buffer: PDF });
+  const pdf = editor(page).locator("object.bx-pdf-frame");
+  await expect(pdf).toHaveAttribute("data", /^blob:/);
+
+  for (const [cmd, file, mime, tag] of [
+    ["/Video", "clip.mp4", "video/mp4", "video"],
+    ["/Audio", "sound.mp3", "audio/mpeg", "audio"],
+    ["/File", "notes.txt", "text/plain", ".bn-file-name-with-icon"],
+  ] as const) {
+    await caretInLastLine(page);
+    await page.keyboard.type(cmd);
+    await expect(page.getByRole("option").first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await page.locator("input[type='file']").last().setInputFiles({ name: file, mimeType: mime, buffer: Buffer.from("based-test-" + file) });
+    if (tag.startsWith(".")) await expect(editor(page).locator(tag, { hasText: file })).toBeVisible();
+    else await expect(editor(page).locator(tag).last()).toHaveAttribute("src", /^blob:/);
+  }
+  await settled(page);
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Uploads");
+  await expect(pdf).toHaveAttribute("data", /^blob:/);
+  await expect(editor(page).locator("video").last()).toHaveAttribute("src", /^blob:/);
+  await expect(editor(page).locator("audio").last()).toHaveAttribute("src", /^blob:/);
+  await expect(editor(page).locator(".bn-file-name-with-icon", { hasText: "notes.txt" })).toBeVisible();
+});

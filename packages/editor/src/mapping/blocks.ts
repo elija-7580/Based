@@ -33,7 +33,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   code: ["language"],
   equation: ["expression"],
   image: ["url", "asset", "caption"], video: ["url", "asset", "caption"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
-  pdf: ["url"], embed: ["url"], bookmark: ["url"],
+  pdf: ["url", "asset"], embed: ["url"], bookmark: ["url"],
   linkToPage: ["linkTarget"],
   syncedBlock: ["syncSource"],
   databaseInline: ["databaseID", "viewIDs"],
@@ -119,7 +119,8 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
         name: p.asset?.name ?? "",
         caption: plainText(p.caption),
       });
-    case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, { kind: b.type, url: p.url ?? "" });
+    // BSD-208: hochgeladene PDFs liegen wie Dateien als `asset` vor (Swift), im Editor als based-asset:-URL.
+    case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, { kind: b.type, url: p.url ?? (b.type === "pdf" && p.asset ? ASSET_URL_PREFIX + p.asset.id : "") });
     case "tableOfContents": return atom(CUSTOM.toc);
     case "breadcrumb": return atom(CUSTOM.breadcrumb);
     case "button": return atom(CUSTOM.button);
@@ -203,7 +204,9 @@ export function extractOwned(bn: BNBlock): Owned {
     }
     case CUSTOM.embed: {
       const kind = str(p.kind);
-      return { type: kind === "pdf" || kind === "bookmark" ? kind : "embed", props: { url: nonEmpty(p.url) } };
+      const url = str(p.url);
+      if (kind === "pdf" && url.startsWith(ASSET_URL_PREFIX)) return { type: "pdf", props: { asset: { id: url.slice(ASSET_URL_PREFIX.length), name: "" } } };
+      return { type: kind === "pdf" || kind === "bookmark" ? kind : "embed", props: { url: nonEmpty(url) } };
     }
     case CUSTOM.toc: return { type: "tableOfContents", props: {} };
     case CUSTOM.breadcrumb: return { type: "breadcrumb", props: {} };
