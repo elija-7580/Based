@@ -36,10 +36,10 @@ import {
   type WireRecord,
   type WorkspaceStore,
 } from "@based/core";
-import { SyncClient, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
+import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
 import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
 import { PageHistory } from "./history.js";
-import type { Command, Event, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, Event, HistoryAction, InitResult, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -50,6 +50,8 @@ export interface OpenedWorkspace {
   note?: string;
   /** Ablage des Versionsverlaufs (history.sqlite); ohne: im Speicher. */
   history?: HistoryStorage;
+  /** Ablage der Dateien (BSD-78; OPFS); ohne: im Speicher. */
+  assets?: AssetBlobStore;
 }
 
 export interface HostOptions {
@@ -59,6 +61,8 @@ export interface HostOptions {
   online?: () => boolean;
   /** Sync-Takt (Tests: kurz). */
   syncTiming?: { intervalMs?: number; waitTimeoutSeconds?: number; pushDelayMs?: number };
+  /** Datei-Übertragung (Tests: kleine Stücke, kurze Wartezeiten). */
+  assetTiming?: { chunkSize?: number; backoff?: { minMs: number; maxMs: number } };
   /** Aufschub für Quick Find, damit neuere Eingaben ältere abbrechen (Tests: synchron über 0). */
   defer?: (fn: () => void) => void;
 }
@@ -69,6 +73,8 @@ export class StoreHost {
   ws: OpenedWorkspace | undefined;
   private device: string | undefined;
   private sync: SyncClient | undefined;
+  /** Dateien (BSD-78): lokaler Blob-Speicher + Upload-Warteschlange. */
+  assets: AssetSync | undefined;
   private syncState: SyncState = "starting";
   private syncDetail: string | undefined;
   private signatures = new Map<string, string>();
@@ -113,6 +119,14 @@ export class StoreHost {
         case "exportPage": reply(exportPage(this.store, msg.pageID, msg.format)); break;
         case "exportWorkspace": reply(exportWorkspace(this.store, msg.format)); break;
         case "history": reply(this.historyAction(msg.action)); break;
+        case "assetPut": reply(await this.assetPut(msg.bytes, msg.name, msg.mime)); break;
+        // Nicht abwarten: ein Download darf die Nachrichten-Schlange des Workers nicht aufhalten.
+        case "assetGet":
+          void this.assetGet(msg.asset).then(
+            (r) => this.opts.post({ type: "reply", id: msg.id, ok: true, result: r }),
+            (e: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) }),
+          );
+          break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
@@ -139,6 +153,11 @@ export class StoreHost {
     const created = store.blocks.size === 0 && !sync?.url && !store.isReadOnly;
     if (created) homePageID = this.createWelcome();
     store.observe((c) => this.onChange(c));
+    this.assets = new AssetSync(this.ws.assets ?? new MemoryAssetBlobStore(), this.ws.persistence, {
+      ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),
+      ...(this.opts.assetTiming ?? {}),
+      onStatus: () => this.postStatus(),
+    });
     this.startHistory();
     store.onWriteFailureChanged = () => this.postStatus();
     this.rebuildTracking();
@@ -470,6 +489,7 @@ export class StoreHost {
     this.sync = undefined;
     const ws = this.ws;
     if (!ws) return;
+    this.assets?.configure(cfg?.url ? { baseURL: cfg.url, token: cfg.token } : undefined);
     if (!cfg?.url) {
       this.syncState = ws.persistent ? "local" : "memory";
       this.syncDetail = ws.note;
@@ -483,13 +503,38 @@ export class StoreHost {
       token: cfg.token,
       ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),
       onStatus: (s) => this.onSyncStatus(s),
+      // Dateien vor den Records, die sie nennen (soweit das Netz mitspielt).
+      beforePush: async () => {
+        await this.assets?.flush();
+      },
     });
     this.sync = sync;
     sync.start(this.opts.syncTiming);
     this.postStatus();
   }
 
+  // MARK: Dateien (BSD-78)
+
+  async assetPut(bytes: ArrayBuffer, name: string, mime?: string): Promise<AssetInfo> {
+    if (!this.assets) throw new Error("not initialised");
+    if (this.store.isReadOnly) throw new Error("read-only: " + (this.store.writeFailure?.message ?? ""));
+    return this.assets.add(new Uint8Array(bytes), name, mime);
+  }
+
+  async assetGet(id: string): Promise<AssetGetResult> {
+    if (!this.assets) throw new Error("not initialised");
+    try {
+      const bytes = await this.assets.get(id);
+      // Kopie: der Blob-Speicher behält seine Bytes (im Speicher-Fall dieselbe Instanz).
+      return { ok: true, bytes: bytes.slice().buffer };
+    } catch (e) {
+      if (e instanceof AssetError) return { ok: false, code: e.code, message: e.message };
+      throw e;
+    }
+  }
+
   stop() {
+    this.assets?.stop();
     this.sync?.stop();
     if (this.historyTimer) clearInterval(this.historyTimer);
   }
@@ -521,6 +566,11 @@ export class StoreHost {
     }
     const s: StatusInfo = { state, persistent: this.ws?.persistent ?? false, canUndo: store?.canUndo ?? false, canRedo: store?.canRedo ?? false };
     if (detail) s.detail = detail;
+    const a = this.assets?.status();
+    if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {
+      s.assets = { uploads: a.pending, downloads: a.downloading, failed: a.failed };
+      if (a.pending > 0 && a.lastError) s.assets.paused = a.lastError;
+    }
     return s;
   }
 

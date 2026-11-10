@@ -9,6 +9,7 @@ import { Icon, type IconName } from "../icons.js";
 import type { Route } from "../shell/router.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages } from "../shell/storage.js";
+import { assetsLabel } from "../assetBridge.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 
@@ -207,9 +208,10 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         renderRow={renderRow}
         revealIndex={reveal}
       />
-      <div className="synced t-meta" data-testid="sync-status" data-state={status.state} title={status.detail ?? SYNC_LABEL[status.state]}>
+      <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
         <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
         {SYNC_LABEL[status.state]}
+        {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
       </div>
       {menu ? (
         <PageMenu

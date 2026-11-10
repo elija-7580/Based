@@ -19,6 +19,7 @@ import { Theme } from "@astryxdesign/core/theme";
 import { astryxTheme } from "./astryxTheme.js";
 import "./styles.css";
 import { ShellDatabaseView } from "./databaseSlot.js";
+import { connectAssets } from "./assetBridge.js";
 import { ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 
@@ -45,6 +46,7 @@ const link = new StoreLink({
 const client = new StoreClient(link);
 link.onReconnect = () => void client.resync();
 client.onDevice = deviceNode.set;
+connectAssets(client);
 addEventListener("pagehide", (e: PageTransitionEvent) => {
   // nicht beim Wechsel in den Back-Forward-Cache: dann kommt der Tab ggf. zurück
   if (!e.persisted) link.leave();

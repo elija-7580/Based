@@ -15,5 +15,5 @@ export type { SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "
 // BSD-73: Versionsverlauf in einer eigenen Datei (history.sqlite, Format wie Swift)
 export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";
 // BSD-78: Dateien als inhaltsadressierte Blobs über den Server-Sync
-export { ASSET_HASH, ASSET_QUEUE_KEY, AssetError, AssetSync, DEFAULT_ASSET_CHUNK, MemoryAssetBlobStore, isAssetHash, mimeForName, sha256Hex } from "./assets.js";
+export { ASSET_HASH, ASSET_QUEUE_KEY, AssetError, AssetSync, DEFAULT_ASSET_CHUNK, MemoryAssetBlobStore, isAssetHash, safeBlobType, sha256Hex } from "./assets.js";
 export type { AssetBlobStore, AssetErrorCode, AssetMetaStore, AssetServer, AssetSyncOptions, AssetSyncStatus, QueuedUpload, StoredAsset } from "./assets.js";

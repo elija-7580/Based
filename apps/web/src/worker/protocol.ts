@@ -32,7 +32,33 @@ export interface StatusInfo {
   persistent: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  /** Dateien (BSD-78): nur gesetzt, wenn etwas aussteht oder gescheitert ist. */
+  assets?: AssetsInfo;
 }
+
+/** Stand der Datei-Übertragung für die Sync-Anzeige. */
+export interface AssetsInfo {
+  /** Noch hochzuladen. */
+  uploads: number;
+  downloads: number;
+  /** Endgültig abgelehnt (zu groß für den Server). */
+  failed: number;
+  /** Warum Uploads gerade warten (`offline`, `unauthorized`, `unsupported` …). */
+  paused?: string;
+}
+
+/** Referenz auf eine gespeicherte Datei (wie `AssetRef`; `id` = SHA-256 der Bytes). */
+export interface AssetInfo {
+  id: string;
+  name: string;
+  size: number;
+  mime?: string;
+}
+
+/** Antwort auf `assetGet`: die Bytes, oder warum sie (noch) nicht da sind. */
+export type AssetGetResult =
+  | { ok: true; bytes: ArrayBuffer }
+  | { ok: false; code: string; message: string };
 
 export type Command =
   | { op: "createPage"; parent?: string; section?: string; title?: string; after?: string }
@@ -90,7 +116,11 @@ export type Request =
   | { type: "exportPage"; pageID: string; format: ExportFormat }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat }
   /** Versionsverlauf einer Seite (BSD-73). */
-  | { type: "history"; action: HistoryAction };
+  | { type: "history"; action: HistoryAction }
+  /** Datei speichern und zum Hochladen vormerken (Antwort: AssetInfo). */
+  | { type: "assetPut"; name: string; mime?: string; bytes: ArrayBuffer }
+  /** Bytes einer Datei: lokal oder vom Sync-Server (Antwort: AssetGetResult). */
+  | { type: "assetGet"; asset: string };
 
 export type HistoryAction =
   | { op: "list"; pageID: string }

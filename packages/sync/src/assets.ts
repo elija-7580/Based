@@ -443,25 +443,29 @@ export class AssetSync {
   }
 }
 
-/** MIME-Typ aus der Dateiendung (wie Swift `FileAssetStore.mime`), für Blob-URLs. */
-export function mimeForName(name: string): string | undefined {
-  const ext = name.includes(".") ? name.slice(name.lastIndexOf(".") + 1).toLowerCase() : "";
-  switch (ext) {
-    case "png": return "image/png";
-    case "jpg": case "jpeg": return "image/jpeg";
-    case "gif": return "image/gif";
-    case "webp": return "image/webp";
-    case "heic": return "image/heic";
-    case "svg": return "image/svg+xml";
-    case "pdf": return "application/pdf";
-    case "mp4": case "m4v": return "video/mp4";
-    case "mov": return "video/quicktime";
-    case "mp3": return "audio/mpeg";
-    case "m4a": return "audio/mp4";
-    case "wav": return "audio/wav";
-    case "txt": case "md": return "text/plain";
-    case "csv": return "text/csv";
-    case "zip": return "application/zip";
-    default: return undefined;
+/**
+ * MIME-Typ für eine Blob-URL, aus den ersten Bytes erkannt. Nur Typen, die ein Browser gefahrlos anzeigen kann
+ * (Rasterbilder, PDF, Audio, Video); alles andere – auch HTML und SVG, die in einer Blob-URL Skripte im Namen der
+ * App ausführen könnten – ist `application/octet-stream` und wird damit heruntergeladen statt angezeigt.
+ */
+export function safeBlobType(bytes: Uint8Array): string {
+  const at = (offset: number, ...sig: number[]) => sig.every((b, i) => bytes[offset + i] === b);
+  const ascii = (offset: number, text: string) => at(offset, ...[...text].map((c) => c.charCodeAt(0)));
+  if (at(0, 0x89, 0x50, 0x4e, 0x47)) return "image/png";
+  if (at(0, 0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (ascii(0, "GIF8")) return "image/gif";
+  if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image/webp";
+  if (ascii(0, "RIFF") && ascii(8, "WAVE")) return "audio/wav";
+  if (ascii(0, "%PDF-")) return "application/pdf";
+  if (ascii(0, "ID3") || at(0, 0xff, 0xfb)) return "audio/mpeg";
+  if (ascii(0, "OggS")) return "audio/ogg";
+  if (at(0, 0x1a, 0x45, 0xdf, 0xa3)) return "video/webm";
+  if (ascii(4, "ftyp")) {
+    if (ascii(8, "avif")) return "image/avif";
+    if (ascii(8, "heic") || ascii(8, "heix") || ascii(8, "mif1")) return "image/heic";
+    if (ascii(8, "M4A ")) return "audio/mp4";
+    if (ascii(8, "qt  ")) return "video/quicktime";
+    return "video/mp4";
   }
+  return "application/octet-stream";
 }

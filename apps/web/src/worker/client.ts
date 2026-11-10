@@ -12,7 +12,7 @@ import {
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "./interop.js";
-import type { Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -183,6 +183,16 @@ export class StoreClient {
 
   exportWorkspace(format: WorkspaceExportFormat): Promise<ExportFile> {
     return this.request<ExportFile>({ type: "exportWorkspace", format });
+  }
+
+  /** Datei speichern (BSD-78): liegt danach auf diesem Gerät und wird zum Sync-Server hochgeladen. */
+  assetPut(name: string, bytes: ArrayBuffer, mime?: string): Promise<AssetInfo> {
+    return this.request<AssetInfo>(mime ? { type: "assetPut", name, mime, bytes } : { type: "assetPut", name, bytes });
+  }
+
+  /** Bytes einer Datei: lokal, sonst vom Sync-Server geholt. */
+  assetGet(id: string): Promise<AssetGetResult> {
+    return this.request<AssetGetResult>({ type: "assetGet", asset: id });
   }
 
   /** Replik einer Seite öffnen; mehrfaches Öffnen teilt dieselbe Replik (Referenzzählung). */
