@@ -97,3 +97,11 @@ server stays the reference until it is switched off.
 In the web client: **Share** in the page header (`apps/web/src/components/Share.tsx`, HTTP in `@based/sync`
 `ShareAPI`): Publish / Copy link / Unpublish, access links and invites with a role, revoke, roles of people.
 Without a connected sync server the panel says so and offers the way to Settings.
+
+## Fremde Embeds auf veröffentlichten Seiten (BSD-236)
+
+Standard: Embed-Blöcke erscheinen auf `/p/<id>` als Link-Karte; die CSP lässt keine fremden Rahmen zu
+(`frame-src 'self'`). Opt-in im Share-Panel („Allow embeds on this published page“, `POST /share/v1/links/<id>/embeds
+{allow}`; nur Publish-Links, volle Rechte): Embeds werden als `<iframe sandbox="allow-scripts allow-same-origin
+allow-popups allow-presentation">` gezeigt, und `frame-src` nennt genau die https-Origins der Embeds dieser Seite.
+Gespeichert als `allowEmbeds` am Link (fehlt bei alten Daten = aus).

@@ -18,6 +18,35 @@ const SECURITY_HEADERS = {
   "Cache-Control": "no-store",
 };
 
+/**
+ * BSD-236: CSP einer veröffentlichten Seite mit erlaubten Embeds – nur die https-Hosts der Embeds dieser Seite in
+ * `frame-src` (die Rahmen selbst tragen `sandbox`). Ohne Hosts bleibt es bei `PAGE_CSP`.
+ */
+export function pageCSP(embedHosts: readonly string[] = []): string {
+  if (embedHosts.length === 0) return PAGE_CSP;
+  return PAGE_CSP.replace("frame-src 'self'", `frame-src 'self' ${[...new Set(embedHosts)].sort().join(" ")}`);
+}
+
+/** https-Origins der Embed-Blöcke unter `pageID` (ohne Unterseiten, ohne Papierkorb). */
+export function embedHosts(store: WorkspaceStore, pageID: string): string[] {
+  const out = new Set<string>();
+  const walk = (parent: string) => {
+    for (const id of store.children(parent)) {
+      const b = store.blocks.get(id);
+      if (!b || b.trashedAt !== undefined || isPageLike(b)) continue;
+      if (b.type === "embed" && typeof b.props?.url === "string") {
+        try {
+          const u = new URL(b.props.url);
+          if (u.protocol === "https:") out.add(u.origin);
+        } catch { /* keine URL */ }
+      }
+      walk("b:" + id);
+    }
+  };
+  walk("b:" + pageID);
+  return [...out];
+}
+
 export function htmlResponse(html: string, status = 200, csp = PAGE_CSP): RouteResult {
   return { status, html, headers: { "Content-Security-Policy": csp, ...SECURITY_HEADERS } };
 }
@@ -59,6 +88,11 @@ function inArea(share: ShareService, link: SharingLink, target: string): boolean
  * Links auf Seiten außerhalb des Bereichs werden zu reinem Text.
  */
 export function renderSharedPage(share: ShareService, link: SharingLink, target: string, base: string): string | undefined {
+  return renderShared(share, link, target, base)?.html;
+}
+
+/** Wie `renderSharedPage`, dazu die CSP (BSD-236: fremde Embeds nur mit Opt-in des Publish-Links). */
+export function renderShared(share: ShareService, link: SharingLink, target: string, base: string): { html: string; csp: string } | undefined {
   const store: WorkspaceStore = share.store;
   const b = store.blocks.get(target);
   if (!b || !isPageLike(b) && b.type !== "databaseInline" || !inArea(share, link, target)) return undefined;
@@ -66,8 +100,10 @@ export function renderSharedPage(share: ShareService, link: SharingLink, target:
     pageLink: (id) => (inArea(share, link, id) && isPageLike(store.blocks.get(id)) ? { title: titleOf(store, id), url: `${base}/${encodeURIComponent(id)}` } : undefined),
     assetLink: (a) => `${base}/asset/${encodeURIComponent(a.id)}`,
     htmlBlockURL: (id) => `${base}/${encodeURIComponent(target)}/html/${encodeURIComponent(id)}`,
+    embeds: link.allowEmbeds === true ? "frame" : "link",
   });
-  return exportHTMLPage(exporter, target, { css: exportStylesheet(), offline: true });
+  const html = exportHTMLPage(exporter, target, { css: exportStylesheet(), offline: true });
+  return { html, csp: link.allowEmbeds === true ? pageCSP(embedHosts(store, target)) : PAGE_CSP };
 }
 
 /** Quelltext eines HTML-Blocks im Bereich des Links (Code-Block mit Sprache „html“). */

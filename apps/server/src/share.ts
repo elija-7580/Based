@@ -60,6 +60,8 @@ export interface SharingLink {
   /** Einladungen: wie viele noch beitreten dürfen (fehlt = unbegrenzt). */
   usesLeft?: number;
   lastUsed?: SwiftDate;
+  /** BSD-236: Veröffentlichung zeigt fremde Embeds (iframes) – Opt-in je Seite; fehlt = nein. */
+  allowEmbeds?: boolean;
 }
 
 export interface ShareState {
@@ -263,6 +265,17 @@ export class ShareService {
     }
   }
 
+  /** BSD-236: fremde Embeds auf einer veröffentlichten Seite erlauben (nur Publish-Links, volle Rechte). */
+  setLinkEmbeds(id: string, allow: boolean, by: SharePrincipal) {
+    const l = this.state.links.find((x) => x.id === id);
+    if (!l) throw new ShareError(404, "Not found.");
+    if (l.kind !== "publish") throw new ShareError(400, "Only published pages can show embeds.");
+    if (!canShare(this.rolePage(by, l.pageID)) && by.kind !== "owner") throw new ShareError(403, "Needs full access.");
+    if (allow) l.allowEmbeds = true; else delete l.allowEmbeds;
+    this.save();
+    return l;
+  }
+
   /** Einladung angenommen: neuer Nutzer mit der Rolle des Links und einem Geräte-Token (nur jetzt sichtbar). */
   acceptInvite(secret: string, name: string): { user: ShareUser; token: string; pageID: string } {
     const clean = name.trim();
@@ -421,6 +434,6 @@ export function linkJSON(l: SharingLink, active: boolean) {
     createdAt: new Date(fromSwiftDate(l.createdAt)).toISOString(),
     ...(l.expiresAt !== undefined ? { expiresAt: new Date(fromSwiftDate(l.expiresAt)).toISOString() } : {}),
     ...(l.usesLeft !== undefined ? { usesLeft: l.usesLeft } : {}),
-    ...(l.kind === "publish" ? { path: `/p/${l.id}` } : {}),
+    ...(l.kind === "publish" ? { path: `/p/${l.id}`, allowEmbeds: l.allowEmbeds === true } : {}),
   };
 }

@@ -238,3 +238,39 @@ describe("Publish to web", () => {
     expect(r.body).toContain("Welcome to the wiki");
   });
 });
+
+describe("Fremde Embeds auf veröffentlichten Seiten (BSD-236)", () => {
+  it("Standard: Link-Karte und keine fremden Rahmen in der CSP; Opt-in: Rahmen mit sandbox, nur die Hosts dieser Seite", async () => {
+    const { app, shared } = await setup();
+    app.share.store.transact("embed", (tx) => {
+      tx.put({ kind: "block", data: { id: "emb-1", type: "embed", parent: "b:" + shared, sk: "zz", props: { url: "https://www.youtube.com/embed/abc" }, createdAt: 0, updatedAt: 0 } });
+      tx.put({ kind: "block", data: { id: "emb-2", type: "embed", parent: "b:" + shared, sk: "zzz", props: { url: "http://insecure.example/x" }, createdAt: 0, updatedAt: 0 } });
+    });
+    const { body } = await createLink(app.url, shared, "publish", "view");
+    expect(body.allowEmbeds).toBe(false);
+    let page = await text(`${app.url}/p/${body.id}`);
+    expect(page.body).not.toContain("<iframe class=\"embed\"");
+    expect(page.body).toContain("embed-link");
+    expect(page.headers.get("content-security-policy")).toContain("frame-src 'self';");
+
+    const on = await post(`${app.url}/share/v1/links/${body.id}/embeds`, { allow: true });
+    expect(on.body).toMatchObject({ allowEmbeds: true });
+    page = await text(`${app.url}/p/${body.id}`);
+    expect(page.body).toContain('<iframe class="embed" src="https://www.youtube.com/embed/abc" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"');
+    expect(page.headers.get("content-security-policy")).toContain("frame-src 'self' https://www.youtube.com;");
+    expect(page.headers.get("content-security-policy")).not.toContain("insecure.example");
+
+    // Opt-in überlebt einen Neustart des Dienstes (gespeichert im Link); alte Daten ohne Feld = aus.
+    const raw = JSON.parse(app.share.persistence.meta(META_KEY)!) as { links: { id: string; allowEmbeds?: boolean }[] };
+    expect(raw.links.find((l) => l.id === body.id)?.allowEmbeds).toBe(true);
+    delete raw.links.find((l) => l.id === body.id)!.allowEmbeds;
+    app.share.persistence.setMeta(META_KEY, JSON.stringify(raw));
+    const { ShareService } = await import("../src/share.js");
+    expect(ShareService.load(app.share.persistence).links.find((l) => l.id === body.id)?.allowEmbeds).toBeUndefined();
+
+    expect((await post(`${app.url}/share/v1/links/${body.id}/embeds`, { allow: "yes" })).status).toBe(400);
+    const access = await createLink(app.url, shared, "access", "view");
+    expect((await post(`${app.url}/share/v1/links/${access.body.id}/embeds`, { allow: true })).status).toBe(400);
+    expect((await post(`${app.url}/share/v1/links/${body.id}/embeds`, { allow: false })).body).toMatchObject({ allowEmbeds: false });
+  });
+});
