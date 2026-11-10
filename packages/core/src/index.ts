@@ -108,6 +108,8 @@ export { dateMentionValue, dateParts, dateSuggestions, parseTypedDate, withDateP
 export type { DateMentionValue, DateParts, DateSuggestion } from "./editor/date-mention.js";
 export { activeHeadingIndex, headingOutline, withDepth } from "./editor/headings.js";
 export type { HeadingSource, OutlineHeading } from "./editor/headings.js";
+export { countWords, findInText, foldWithMap, pageTextStats, textStats } from "./editor/text-stats.js";
+export type { TextMatch, TextStats } from "./editor/text-stats.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
 export type { EmojiEntry } from "./editor/emoji.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";

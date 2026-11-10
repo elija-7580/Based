@@ -299,6 +299,13 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
       // Leertaste öffnet die Zeile (Peek bzw. Seite), wie in Notion.
       case " ": if (onOpenPage && !e.metaKey && !e.ctrlKey) { e.preventDefault(); onOpenPage(active.rowID); } break;
       case "Escape": setActive(null); break;
+      // BSD-238: ⇧F10 / Menütaste öffnet das Zeilenmenü der aktiven Zeile.
+      case "F10": case "ContextMenu": {
+        if (e.key === "F10" && !e.shiftKey) break;
+        const handle = gridRef.current?.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(active.rowID)}"] .dbui-row-handle`);
+        if (handle) { e.preventDefault(); handle.click(); }
+        break;
+      }
       case "Backspace": case "Delete": {
         const p = props[active.col];
         if (p && !locked && isEditable(p.type)) { e.preventDefault(); setValue(store, active.rowID, p.id, null); }

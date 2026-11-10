@@ -238,6 +238,19 @@ button.row:hover, a.row:hover { background: var(--bg); }
 [data-material="glass"] .qf { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
 .qf-field { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--line); color: var(--muted); }
 .qf-field input { flex: 1; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--size-body); outline: none; min-height: var(--space-6); }
+.qf-filters { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--line); }
+.qf-chip {
+  display: inline-flex; align-items: center; gap: var(--space-1); min-height: calc(var(--space-5) + var(--space-1)); padding: 0 var(--space-3);
+  border: 0; border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--muted); font: inherit;
+  font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.qf-chip:hover { color: var(--ink); background: var(--selected); }
+.qf-chip[aria-pressed="true"], .qf-chip[data-active] { background: var(--button); color: var(--button-ink); }
+.qf-select { position: relative; padding-right: var(--space-2); }
+.qf-select select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; outline: none; padding: 0; }
+.qf-select:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.qf-select select option { color: var(--ink); background: var(--bg); }
 .qf-head { padding: var(--space-3) var(--space-4) var(--space-1); }
 .qf-head:empty { display: none; }
 .qf-list { list-style: none; margin: 0; padding: var(--space-1) var(--space-2) var(--space-2); overflow-y: auto; }
@@ -502,3 +515,30 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .cover-link { display: flex; gap: var(--space-1); padding: 0 var(--space-3); }
 .page-icon-img { width: calc(var(--size-title) * 1.6); height: calc(var(--size-title) * 1.6); object-fit: cover; border-radius: var(--radius-md); display: block; }
 .page-head-actions { display: flex; gap: var(--space-1); }
+/* BSD-206: Suchen in der Seite (⌘F) – schwebt oben rechts über dem Inhalt, ohne ihn zu verschieben. */
+.find-bar {
+  position: sticky; top: calc(var(--space-8) + var(--space-1)); z-index: 6; align-self: flex-end; flex: none;
+  height: var(--space-7); margin: 0 var(--space-5) calc(-1 * var(--space-7)) 0;
+  display: flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2) 0 var(--space-3);
+  background: var(--bg); color: var(--muted); border-radius: var(--radius-pill); box-shadow: var(--shadow-float);
+  animation: rise-in var(--duration) var(--ease-out);
+}
+[data-material="glass"] .find-bar { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-float), var(--chrome-edge); }
+.find-bar input { width: calc(var(--space-8) * 3); border: 0; background: transparent; color: var(--ink); font: inherit; font-size: var(--type-description-size); outline: none; margin-left: var(--space-1); }
+.find-count { min-width: calc(var(--space-8) + var(--space-2)); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; margin-right: var(--space-1); }
+.find-bar .flip { display: inline-flex; transform: rotate(180deg); }
+.find-bar .icon-btn.ghost { border-radius: var(--radius-pill); }
+::highlight(based-find) { background-color: var(--marker); color: var(--ink); }
+::highlight(based-find-current) { background-color: var(--ink); color: var(--bg); }
+.menu-kbd { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-family: inherit; }
+
+/* BSD-244: Hinweis beim Wischen (Zurück/Vor) – folgt dem Finger, nur Deckkraft und Position. */
+.main { position: relative; }
+.swipe-hint { position: absolute; inset: 0; pointer-events: none; z-index: 8; --swipe: 0; }
+.swipe-hint > span {
+  position: absolute; top: 50%; width: var(--space-7); height: var(--space-7); margin-top: calc(var(--space-7) / -2);
+  display: none; align-items: center; justify-content: center; border-radius: var(--radius-pill);
+  background: var(--button); color: var(--button-ink); box-shadow: var(--shadow-float); opacity: var(--swipe);
+}
+.swipe-hint[data-side="back"] .swipe-back { display: inline-flex; left: 0; transform: translateX(calc(var(--swipe) * var(--space-6) - var(--space-3))) scale(calc(0.7 + var(--swipe) * 0.3)); }
+.swipe-hint[data-side="forward"] .swipe-forward { display: inline-flex; right: var(--space-3); transform: translateX(calc(var(--space-3) - var(--swipe) * var(--space-6))) scale(calc(0.7 + var(--swipe) * 0.3)); }

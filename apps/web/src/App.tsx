@@ -1,7 +1,8 @@
 // BSD-153: die Shell auf echten Daten – Seitenleiste (Struktur aus dem Store-Worker), Quick Find, Seiten, Papierkorb,
 // Einstellungen. Home ist die Startseite nach Mockup v10 (Zeitbogen, Auftragskarten; BSD-162/197) mit Agent- und
 // Projekt-Detail (BSD-133).
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { AgentDetailScreen } from "./home/AgentDetail.js";
@@ -21,9 +22,11 @@ import { tasksRuntime } from "./tasks/runtime.js";
 import { TasksScreen } from "./tasks/TasksScreen.js";
 import { CodingScreen } from "./coding/CodingScreen.js";
 import "./tasks/AgentSettingsSection.js";
+import { installHistoryGestures } from "./shell/historyGestures.js";
+import { Icon } from "./icons.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
-import { matchShortcut } from "./shell/shortcuts.js";
+import { FIND_EVENT, matchShortcut } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -60,6 +63,14 @@ export function App({ client, history }: { client: StoreClient; history: History
   const navigate = useCallback((r: Route) => (wantsNewTab() ? void history.openTab(r, { background: true }) : history.navigate(r)), [history]);
   const openPage = useCallback((id: string) => navigate({ name: "page", id }), [navigate]);
   useEffect(() => installNewTabIntent(), []);
+  // BSD-244: Maustasten 4/5, ⌘←/⌘→ und Wischen; der Hinweis am Rand folgt dem Finger ohne React-Render.
+  const swipeHint = useRef<HTMLDivElement>(null);
+  useEffect(() => installHistoryGestures(window, history, (p) => {
+    const el = swipeHint.current;
+    if (!el) return;
+    el.style.setProperty("--swipe", String(Math.abs(p)));
+    el.dataset.side = p > 0 ? "back" : p < 0 ? "forward" : "";
+  }), [history]);
 
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
@@ -90,9 +101,17 @@ export function App({ client, history }: { client: StoreClient; history: History
       }
       const a = matchShortcut(e);
       if (!a) return;
+      if (a.kind === "find" || a.kind === "findStep") {
+        // BSD-206: nur auf Seiten; die Seite hört selbst zu (PageView). Sonst bleibt ⌘F beim Browser.
+        if (history.route.name !== "page") return;
+        const ev = new CustomEvent(FIND_EVENT, { detail: a, cancelable: true });
+        if (!window.dispatchEvent(ev)) e.preventDefault();
+        return;
+      }
       e.preventDefault();
       switch (a.kind) {
-        case "quickFind": setPalette(false); setQuickFind((v) => !v); break;
+        // Sofort zeichnen, damit das Suchfeld den Fokus hat, bevor die nächste Taste kommt (schnelles Tippen nach ⌘K).
+        case "quickFind": flushSync(() => { setPalette(false); setQuickFind((v) => !v); }); break;
         case "palette": setQuickFind(false); setPalette((v) => !v); break;
         case "newPage": void newPage(); break;
         case "settings": history.navigate({ name: "settings" }); break;
@@ -166,11 +185,15 @@ export function App({ client, history }: { client: StoreClient; history: History
       <main className="main">
         <TabBar history={history} titles={state.titles} />
         <div className="panel">{screen}</div>
+        <div ref={swipeHint} className="swipe-hint" aria-hidden="true" data-side="">
+          <span className="swipe-back"><Icon name="back" size={18} /></span>
+          <span className="swipe-forward"><Icon name="forward" size={18} /></span>
+        </div>
       </main>
       <ChatDock client={client} history={history} route={route} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
-      {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}
+      {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}
     </div>
   );
 }

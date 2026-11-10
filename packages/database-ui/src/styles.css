@@ -573,3 +573,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
   padding: var(--space-1) var(--space-2); background: var(--surface-raised); border-radius: var(--radius-md); margin-bottom: var(--space-1);
 }
 .dbui-chip.danger { color: var(--danger); }
+
+/* BSD-238: Fokusrahmen um die ganze Karte bzw. Zeile (wie Notion), nicht nur um den Titel. */
+.dbui-card:has(.dbui-card-open:focus-visible), .dbui-list-row:has(.dbui-list-title:focus-visible) { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
+.dbui-card-open:focus-visible, .dbui-list-title:focus-visible { outline: none; }

@@ -16,7 +16,7 @@ import type { ImportPayload } from "./importer.js";
 import type { ExportFile, ExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
 import type { AgentAction } from "./agents.js";
-import type { JSONValue } from "@based/core";
+import type { JSONValue, SearchFilters, SearchSort } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
 import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
@@ -140,8 +140,12 @@ export class StoreClient {
   }
 
   /** Quick Find. Eine neuere Suche bricht die vorige ab (`undefined`). */
-  async search(query: string, limit?: number): Promise<SearchResult | undefined> {
+  async search(query: string, limit?: number, opts: { filters?: SearchFilters; sort?: SearchSort } = {}): Promise<SearchResult | undefined> {
     const req: Request = limit === undefined ? { type: "search", query } : { type: "search", query, limit };
+    if (req.type === "search") {
+      if (opts.filters && Object.keys(opts.filters).length) req.filters = opts.filters;
+      if (opts.sort && opts.sort !== "bestMatch") req.sort = opts.sort;
+    }
     const id = this.nextID;
     this.lastSearch = id;
     try {

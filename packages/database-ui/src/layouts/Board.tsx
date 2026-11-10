@@ -6,6 +6,7 @@ import { moveRowToGroup, setGroupHidden, type Block, type DatabaseView, type Pro
 import { CellEditor } from "../cells/CellEditor.js";
 import { useDB } from "../context.js";
 import { Icon, OptionPill, type Anchor } from "../ui.js";
+import { cardKeys } from "../cardKeys.js";
 import { CardBody, cardProperties, EmptyState, groupProperty, RowMenu, useAddRow } from "./shared.js";
 
 const CARD_ESTIMATE = 72;
@@ -122,7 +123,7 @@ export function BoardLayout({ view, result }: { view: DatabaseView; result: Quer
   const editRow = editing ? store.blocks.get(editing.rowID) : undefined;
   const title = db.properties.find((p) => p.type === "title") ?? { id: "title", name: "Name", type: "title" };
   return (
-    <div className="dbui-board" data-testid="board">
+    <div className="dbui-board" data-testid="board" onKeyDown={cardKeys}>
       {result.groups.map((g) => <Column key={g.id} group={g} gp={gp} view={view} props={props} onMenu={onMenu} onEditTitle={onEditTitle} />)}
       {hiddenNames.length > 0 && (
         <section className="dbui-board-hidden" aria-label="Hidden groups">
