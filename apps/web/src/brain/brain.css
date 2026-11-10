@@ -30,8 +30,14 @@
 .brain-cite:hover { color: var(--ink); }
 .brain-source { color: inherit; }
 
-/* Ziel eines Zitat-Sprungs: kurz hinterlegt. */
-.brain-cite-target { background: var(--selected); border-radius: var(--radius-sm); transition: background var(--duration) var(--ease-out); }
+/* Ziel eines Zitat-Sprungs: eine Fläche über dem Block, kurz sichtbar. */
+.brain-cite-flash {
+  position: fixed; pointer-events: none; z-index: 5; border-radius: var(--radius-sm); background: var(--selected); mix-blend-mode: multiply;
+  animation: brain-cite-fade var(--duration) var(--ease-out) 1.8s forwards;
+}
+[data-theme="dark"] .brain-cite-flash { mix-blend-mode: screen; }
+@keyframes brain-cite-fade { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .brain-cite-flash { animation: none; } }
 
 /* Einstellungen */
 .brain-settings { display: flex; flex-direction: column; gap: var(--space-4); }
