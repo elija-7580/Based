@@ -12,7 +12,7 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
   useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { createDatabase, createMeeting, duplicatePages, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
@@ -21,7 +21,7 @@ import {
   applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
   turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor, type URLChoice,
 } from "./blockActions.js";
-import { MovePicker } from "./MovePicker.js";
+import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "./MovePicker.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
@@ -67,6 +67,11 @@ export interface PageEditorProps {
    * Ohne: `duplicatePages` auf dem Store des Editors (der muss dann alles darin kennen).
    */
   duplicatePages?: (ids: string[]) => Promise<unknown>;
+  /**
+   * BSD-212: Datenbanken für „Linked view of database“ (alle im Workspace) und das Nachladen der gewählten in den
+   * Store. Ohne: die Datenbanken, die der Store des Editors kennt.
+   */
+  databases?: DatabaseSource;
 }
 
 interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages"> {
@@ -76,6 +81,26 @@ interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages">
   notify: (message: string) => void;
   /** BSD-207: „Move to“ für Blöcke eines (ggf. eingebetteten) Editors öffnen. */
   startMove: (req: MoveRequest) => void;
+  /** BSD-212: Auswahl „Linked view of database“ für einen (ggf. eingebetteten) Editor öffnen. */
+  startLink: (req: LinkRequest) => void;
+}
+
+/** Offene Auswahl „Linked view of database“: in welchen Editor. */
+interface LinkRequest { editor: BasedEditor; session: DocSession }
+
+const databaseSources = new WeakMap<WorkspaceStore, DatabaseSource>();
+function defaultDatabases(store: WorkspaceStore): DatabaseSource {
+  let d = databaseSources.get(store);
+  if (!d) {
+    d = {
+      list: (q) => Promise.resolve([...store.databases.values()]
+        .map((db) => ({ id: db.id, title: plainText(db.title) || "Untitled" }))
+        .filter((db) => db.title.toLowerCase().includes(q.trim().toLowerCase()))
+        .sort((a, b) => a.title.localeCompare(b.title))),
+    };
+    databaseSources.set(store, d);
+  }
+  return d;
 }
 
 /** Offenes „Move to“: welche Blöcke aus welchem Editor. */
@@ -113,8 +138,9 @@ export function PageEditor(props: PageEditorProps) {
     if (timer.current !== undefined) clearTimeout(timer.current);
   }, []);
   const [move, setMove] = useState<MoveRequest | undefined>();
+  const [link, setLink] = useState<LinkRequest | undefined>();
   const shared: Shared = {
-    ...rest, pageID, notify, startMove: setMove,
+    ...rest, pageID, notify, startMove: setMove, startLink: setLink,
     docStore: props.docStore ?? defaultDocStore(props.store),
     pages: props.pages ?? defaultDirectory(props.store),
   };
@@ -127,6 +153,17 @@ export function PageEditor(props: PageEditorProps) {
     const n = moveBlocksToPage(req.editor, req.session, req.ids, page.id, last);
     notify(n ? `Moved to ${page.title || "Untitled"}` : "Those blocks can’t be moved there.");
   };
+  const databases = props.databases ?? defaultDatabases(props.store);
+  const pickDatabase = async (req: LinkRequest, db: DatabaseRef) => {
+    setLink(undefined);
+    let ok = req.session.store.databases.has(db.id);
+    if (!ok && databases.include) {
+      try {
+        ok = await databases.include(db.id);
+      } catch { /* unten gemeldet */ }
+    }
+    if (!ok || !insertLinkedView(req.editor, req.session, db.id)) notify("Couldn’t link that database.");
+  };
   return (
     <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer} onKeyDown={(e) => {
       // ⌘⌥T / Ctrl+Alt+T: alle Toggles der Seite auf- bzw. zuklappen (wie Notion).
@@ -136,6 +173,7 @@ export function PageEditor(props: PageEditorProps) {
       }
     }}>
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
+      {link ? <DatabasePicker source={databases} onClose={() => setLink(undefined)} onPick={(d) => void pickDatabase(link, d)} /> : null}
       {move ? <MovePicker pages={shared.pages} selfID={move.session.rootID} moving={move.ids} onClose={() => setMove(undefined)} onPick={(p) => void pickTarget(move, p)} /> : null}
       {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
       {notice ? (
@@ -394,6 +432,7 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Link to page", subtext: "Link to an existing page.", aliases: ["link"], group: "Basic blocks", onItemClick: () => insert({ type: CUSTOM.linkToPage } as never) },
     { title: "Synced block", subtext: "Sync content across pages.", aliases: ["sync"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.syncedBlock } as never) },
     { title: "Database – Inline", subtext: "Add a database view to this page.", aliases: ["table view", "database"], group: "Database", onItemClick: () => insertInlineDatabase(editor, session) },
+    { title: "Linked view of database", subtext: "Show an existing database on this page.", aliases: ["linked", "linked database", "view"], group: "Database", onItemClick: () => shared.startLink({ editor, session }) },
     { title: "Block equation", subtext: "Display a standalone math equation.", aliases: ["math", "tex", "latex", "equation"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.equation } as never) },
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
@@ -452,6 +491,29 @@ export function insertInlineDatabase(editor: BasedEditor, session: DocSession): 
   const made = session.quietly(() => createDatabase(session.store, { parent: "b:" + session.rootID, inline: true, blockID: id, undoable: false }));
   const cur = editor.getTextCursorPosition().block;
   const block = { id, type: CUSTOM.database, props: { databaseID: made.databaseID, viewID: made.viewID } } as never;
+  const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
+  if (empty) editor.replaceBlocks([cur], [block]);
+  else editor.insertBlocks([block], cur, "after");
+  let next = editor.getNextBlock(id);
+  if (!next) {
+    editor.insertBlocks([{ type: "paragraph" } as never], id, "after");
+    next = editor.getNextBlock(id);
+  }
+  if (next) editor.setTextCursorPosition(next, "start");
+  return id;
+}
+
+/**
+ * BSD-212: „Linked view of database“ – neue Ansicht der gewählten Datenbank still in den Store (die Datenbank muss
+ * dort schon sein), dann der Block mit derselben ID ins Dokument (wie insertInlineDatabase).
+ */
+export function insertLinkedView(editor: BasedEditor, session: DocSession, databaseID: string): string | undefined {
+  session.flush();
+  const id = globalThis.crypto.randomUUID().toUpperCase();
+  const made = session.quietly(() => createLinkedView(session.store, databaseID, "b:" + session.rootID, "table", { blockID: id, undoable: false }));
+  if (!made) return undefined;
+  const cur = editor.getTextCursorPosition().block;
+  const block = { id, type: CUSTOM.database, props: { databaseID, viewID: made.viewID } } as never;
   const empty = cur.type === "paragraph" && Array.isArray(cur.content) && cur.content.length === 0 && cur.children.length === 0;
   if (empty) editor.replaceBlocks([cur], [block]);
   else editor.insertBlocks([block], cur, "after");

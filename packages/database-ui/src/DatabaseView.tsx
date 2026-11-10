@@ -2,7 +2,7 @@
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  addRow, addRowOnDay, addView, calendarDateProperty, calendarEndProperty, plainText, today, setDatabaseTitle, viewsForBlock,
+  addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
 import { DBContext, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps } from "./context.js";
@@ -97,8 +97,49 @@ function Tabs({ views, active, onSelect, blockID }: { views: View[]; active: Vie
   );
 }
 
-function Toolbar({ view, search, setSearch, onNew }: { view: View; search: string; setSearch: (s: string) => void; onNew: () => void }) {
+/**
+ * BSD-212: Vorlagen am „New“-Knopf (wie Notion): neue Seite aus einer Vorlage oder leer, Vorlage anlegen, bearbeiten
+ * (öffnet sie wie eine Zeile), als Standard setzen, löschen. Vorlagen sind Zeilen mit `isTemplate` (nie in Ansichten).
+ */
+function TemplateMenu({ anchor, onClose, onNew }: { anchor: Anchor; onClose: () => void; onNew: (template: string) => void }) {
+  const { store, db, onOpenPage } = useDB();
+  const [editing, setEditing] = useState<string | null>(null);
+  const templates = dbops.templatesOf(store, db.id);
+  const def = db.defaultTemplateID && templates.some((t) => t.id === db.defaultTemplateID) ? db.defaultTemplateID : undefined;
+  const open = (id: string) => { onClose(); onOpenPage?.(id); };
+  const tpl = editing ? templates.find((t) => t.id === editing) : undefined;
+  if (tpl) {
+    const name = plainText(tpl.text) || "Untitled";
+    return (
+      <Popover anchor={anchor} onClose={onClose} className="dbui-property-menu" label={`Template ${name}`} role="menu">
+        <MenuItem icon={<Icon name="chevronLeft" size={14} />} onClick={() => setEditing(null)}>{name}</MenuItem>
+        <div className="dbui-menu-sep" role="separator" />
+        <MenuItem onClick={() => open(tpl.id)}>Edit template</MenuItem>
+        {def === tpl.id
+          ? <MenuItem onClick={() => { dbops.setDefaultTemplate(store, db.id, undefined); setEditing(null); }}>Remove as default</MenuItem>
+          : <MenuItem onClick={() => { dbops.setDefaultTemplate(store, db.id, tpl.id); setEditing(null); }}>Set as default</MenuItem>}
+        <MenuItem danger onClick={() => { dbops.deleteTemplate(store, db.id, tpl.id); setEditing(null); }}>Delete template</MenuItem>
+      </Popover>
+    );
+  }
+  return (
+    <Popover anchor={anchor} onClose={onClose} className="dbui-property-menu" label="Templates" role="menu">
+      <MenuItem selected={!def} hint={!def ? "Default" : undefined} onClick={() => { onClose(); onNew(""); }}>Empty page</MenuItem>
+      {templates.map((t) => (
+        <div key={t.id} className="dbui-template-row">
+          <MenuItem selected={def === t.id} hint={def === t.id ? "Default" : undefined} testID="template-item" onClick={() => { onClose(); onNew(t.id); }}>{plainText(t.text) || "Untitled"}</MenuItem>
+          <button type="button" className="dbui-icon-btn" aria-label={`Template options for ${plainText(t.text) || "Untitled"}`} onClick={() => setEditing(t.id)}><Icon name="more" size={14} /></button>
+        </div>
+      ))}
+      <div className="dbui-menu-sep" role="separator" />
+      <MenuItem icon={<Icon name="plus" size={14} />} onClick={() => { const id = addTemplate(store, db.id); if (id) open(id); }}>New template</MenuItem>
+    </Popover>
+  );
+}
+
+function Toolbar({ view, search, setSearch, onNew }: { view: View; search: string; setSearch: (s: string) => void; onNew: (template?: string) => void }) {
   const { store, db, locked } = useDB();
+  const [templates, setTemplates] = useState<Anchor | null>(null);
   const [filter, setFilter] = useState<Anchor | null>(null);
   const [sort, setSort] = useState<Anchor | null>(null);
   const [settings, setSettings] = useState<Anchor | null>(null);
@@ -135,7 +176,13 @@ function Toolbar({ view, search, setSearch, onNew }: { view: View; search: strin
         : <button type="button" className="dbui-icon-btn" aria-label="Search" onClick={() => setSearching(true)}><Icon name="search" size={14} /></button>)}
       {showsRows && <span className="dbui-data dbui-rowcount" aria-label="Pages in view">{result.rows.length.toLocaleString("en-US")}</span>}
       <button type="button" className="dbui-icon-btn" aria-label="View settings" onClick={(e) => setSettings(e.currentTarget)}><Icon name="settings" size={14} /></button>
-      {!locked && showsRows && !isForm && <button type="button" className="dbui-chip primary" onClick={onNew}>New</button>}
+      {!locked && showsRows && !isForm && (
+        <span className="dbui-split">
+          <button type="button" className="dbui-chip primary" onClick={() => onNew()}>New</button>
+          <button type="button" className="dbui-chip primary dbui-split-more" aria-label="New page templates" aria-haspopup="menu" onClick={(e) => setTemplates(e.currentTarget)}><Icon name="chevronDown" size={14} /></button>
+        </span>
+      )}
+      {templates && <TemplateMenu anchor={templates} onClose={() => setTemplates(null)} onNew={onNew} />}
       {locked && <span className="dbui-hint" role="status">Locked</span>}
       {filter && <FilterEditor view={live} anchor={filter} onClose={() => setFilter(null)} />}
       {sort && <SortEditor view={live} anchor={sort} onClose={() => setSort(null)} />}
@@ -232,16 +279,16 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: 
   const onOpenPage = inner.onOpenPage;
   if (!active) return <div className="dbui-empty">This database has no views.</div>;
   const peekView = peek ? views.find((v) => v.id === peek.viewID) ?? active : undefined;
-  const onNew = () => {
+  const onNew = (template?: string) => {
     const values = newRowValues(db, active, groupProperty(db, active), null);
     // BSD-8: in Kalender und Timeline bekommt die neue Zeile heute als Datum (sonst landet sie unter „No date“).
     const dateProp = active.type === "calendar" || active.type === "timeline" ? calendarDateProperty(db, active) : undefined;
     const endProp = calendarEndProperty(db, active);
     const id = dateProp?.type === "date" && (!endProp || endProp.type === "date")
-      ? addRowOnDay(store, db.id, { dateID: dateProp.id, ...(endProp && endProp.id !== dateProp.id ? { endID: endProp.id } : {}) }, today(), { values })
-      : addRow(store, db.id, { values });
+      ? addRowOnDay(store, db.id, { dateID: dateProp.id, ...(endProp && endProp.id !== dateProp.id ? { endID: endProp.id } : {}) }, today(), { values, ...(template !== undefined ? { template } : {}) })
+      : addRow(store, db.id, { values, ...(template !== undefined ? { template } : {}) });
     if (!id) return;
-    if (active.type === "table") setRequestEdit({ rowID: id });
+    if (active.type === "table" && !template) setRequestEdit({ rowID: id });
     else onOpenPage?.(id);
   };
   return (

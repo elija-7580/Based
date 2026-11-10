@@ -45,12 +45,16 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   const renderEquation = (p: EquationRenderProps) => <Equation expression={p.expression} displayMode={p.displayMode} />;
   const files = assets();
   const loadSynced = useMemo(() => (client ? (source: string) => client.includeSynced(pageID, source) : undefined), [client, pageID]);
+  const databases = useMemo(() => (client ? {
+    list: async (q: string) => (await client.listDatabases(q)).map((d) => ({ id: d.id, title: d.title, path: d.path })),
+    include: (id: string) => client.includeDatabase(pageID, id),
+  } : undefined), [client, pageID]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   return (
     <div className="shell-editor">
       <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>
