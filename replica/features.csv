@@ -2,9 +2,9 @@ feature,area,priority,original,clone,notes,ts
 Create / rename / delete pages,pages,must,yes,yes,,yes
 Nested subpages (page inside page),pages,must,yes,yes,,yes
 Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
-Page icon (uploaded image),pages,could,yes,yes,,no
-Page cover (gallery / color / gradient),pages,should,yes,yes,,no
-Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,no
+Page icon (uploaded image),pages,could,yes,yes,,"yes (BSD-201): Upload image im Icon-Menü, gespeichert wie Swift PageIcon.asset"
+Page cover (gallery / color / gradient),pages,should,yes,yes,,"partial (BSD-201): Farbe (Töne mit Token), Swift-Verläufe werden angezeigt; Galerie und Verlaufs-Auswahl fehlen (Designfrage: Farben)"
+Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition durch Ziehen, Remove"
 Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
 Small text,pages,should,yes,yes,,yes (BSD-201)
 Full width,pages,should,yes,yes,,yes (BSD-201)
