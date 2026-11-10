@@ -6,6 +6,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
+import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
@@ -23,9 +24,13 @@ export interface Options {
   assetsDir: string | undefined;
   /** Größte Datei in MiB. */
   maxAssetMB: number | undefined;
+  /** Sandbox pro Lauf: docker, local oder aus (Standard). */
+  sandbox: "docker" | "local" | undefined;
+  /** Ordner für Snapshot-Archive (Standard: `<db>.sandbox`). */
+  sandboxDir: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -39,7 +44,10 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     publicURL: env.BASED_PUBLIC_URL,
     assetsDir: env.BASED_ASSETS_DIR,
     maxAssetMB: env.BASED_MAX_ASSET_MB ? Number(env.BASED_MAX_ASSET_MB) : undefined,
+    sandbox: undefined,
+    sandboxDir: env.BASED_SANDBOX_DIR,
   };
+  let sandbox = env.BASED_SANDBOX;
   const args = [...argv];
   const value = (name: string) => {
     const v = args.shift();
@@ -58,9 +66,15 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--public-url": o.publicURL = value(a); break;
       case "--assets": o.assetsDir = value(a); break;
       case "--max-asset-mb": o.maxAssetMB = Number(value(a)); break;
+      case "--sandbox": sandbox = value(a); break;
+      case "--sandbox-dir": o.sandboxDir = value(a); break;
       case "--stdio": o.stdio = true; break;
       default: throw new Error(`unknown option ${a}`);
     }
+  }
+  if (sandbox !== undefined && sandbox !== "" && sandbox !== "off") {
+    if (sandbox !== "docker" && sandbox !== "local") throw new Error("--sandbox must be docker, local or off");
+    o.sandbox = sandbox;
   }
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
   if (o.maxAssetMB !== undefined && !(o.maxAssetMB > 0)) throw new Error("--max-asset-mb must be a positive number");
@@ -76,6 +90,11 @@ export function allowedOrigin(publicURL: string | undefined): string | undefined
   } catch {
     return undefined;
   }
+}
+
+function sandboxManager(opts: Options): SandboxManager {
+  const snapshotDirectory = opts.sandboxDir ?? opts.db.replace(/(\.sqlite)?$/, ".sandbox");
+  return new SandboxManager(opts.sandbox === "docker" ? new DockerSandboxProvider({ snapshotDirectory }) : new LocalSandboxProvider({ snapshotDirectory }));
 }
 
 async function main() {
@@ -111,6 +130,7 @@ async function main() {
     log,
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
+    ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
   });
   const { port } = await app.listen(opts.port, opts.host);
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
