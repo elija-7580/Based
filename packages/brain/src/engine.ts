@@ -113,7 +113,7 @@ export async function executeTool(host: ToolHost, call: ToolCall, policy: ToolPo
 
 // MARK: Kanal (Callback → AsyncIterable, eine Quelle, Reihenfolge bleibt)
 
-class EventChannel<T> implements AsyncIterable<T> {
+export class EventChannel<T> implements AsyncIterable<T> {
   private queue: T[] = [];
   private waiter: (() => void) | undefined;
   private ended = false;

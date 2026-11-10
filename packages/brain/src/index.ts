@@ -22,3 +22,5 @@ export * from "./agentbrain/index.js";
 // BSD-222: Connections (Records, Katalog) ohne SDK; Client und ToolHost über `@based/brain/mcp`.
 export * from "./mcp/catalog.js";
 export * from "./mcp/connections.js";
+// BSD-223: Coding-Agenten (ACP) – Client, Sitzung als ChatEngine, Freigabe-Inbox.
+export * from "./acp/index.js";

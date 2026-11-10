@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./home": "./src/home/index.ts",
-    "./mcp": "./src/mcp/index.ts"
+    "./mcp": "./src/mcp/index.ts",
+    "./acp-node": "./src/acp/stdio.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",
