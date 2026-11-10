@@ -2,6 +2,7 @@
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { isTrashed, keyBetween, plainText, type Block, type WorkspaceStore } from "@based/core";
 import type { MeetingHost } from "./meetingHost.js";
+import type { DatabaseSource } from "./MovePicker.js";
 
 export interface DatabaseRenderProps {
   /** Der Block `databaseInline` in der Seite. */
@@ -77,6 +78,8 @@ export interface EditorEnv {
   renderSynced: (rootID: string, opts?: { readOnly?: boolean }) => ReactNode;
   /** BSD-226: Aufnahme/Wiedergabe/Zusammenfassung für Meeting-Blöcke; ohne: Block nur lesbar. */
   meeting?: MeetingHost | undefined;
+  /** BSD-210: Datenbanken des Workspaces (Button „Add page to“); `include` holt eine in den Store des Editors. */
+  databases: DatabaseSource;
   /** Ausstehende Editor-Änderungen sofort schreiben (z. B. bevor eine neue Unterseite geöffnet wird). */
   flush: () => void;
 }

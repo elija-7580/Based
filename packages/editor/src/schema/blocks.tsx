@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as R
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { columnFractions, resizeColumns } from "../ui/columns.js";
+import { ButtonBlockView, type CaretEditor } from "../ui/ButtonBlock.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { scrollToHeading } from "../ui/Outline.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
@@ -442,16 +443,9 @@ export const breadcrumbBlock = createReactBlockSpec(
   { render: () => <Atom kind="breadcrumb"><BreadcrumbView /></Atom> },
 );
 
-function ButtonView(props: { id: string }) {
-  const env = useEnv();
-  useStoreRevision(env.store);
-  const label = env.store.blocks.get(props.id)?.props?.buttonLabel ?? "Button";
-  return <span className="bx-button" title="Button actions run in the app">{label}</span>;
-}
-
 export const buttonBlock = createReactBlockSpec(
   { type: CUSTOM.button, propSchema: {}, content: "none" },
-  { render: ({ block }) => <Atom kind="button"><ButtonView id={block.id} /></Atom> },
+  { render: ({ block, editor }) => <Atom kind="button"><ButtonBlockView id={block.id} editor={editor as unknown as CaretEditor} /></Atom> },
 );
 
 // MARK: Spalten (Kinder liegen nebeneinander, siehe styles.css)

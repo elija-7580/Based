@@ -135,3 +135,57 @@ export function DatabasePicker(props: { source: DatabaseSource; onPick: (db: Dat
     </div>
   );
 }
+
+/** BSD-210: eine Seite als Ziel wählen (Button „Open page“), Bedienung wie „Move to“. */
+export function PageTargetPicker(props: { pages: PageDirectory; onPick: (page: PageRef) => void; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PageRef[]>([]);
+  const [active, setActive] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+  const { pages } = props;
+  useEffect(() => {
+    let live = true;
+    void pages.search(query).then((r) => {
+      if (!live) return;
+      setResults(r.filter((p) => !p.trashed && !p.missing && p.kind !== "database").slice(0, 8));
+      setActive(0);
+    });
+    return () => {
+      live = false;
+    };
+  }, [pages, query]);
+  useEffect(() => input.current?.focus(), []);
+  return (
+    <div className="bx-move-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="bx-move" role="dialog" aria-label="Choose a page" data-testid="page-target-picker">
+        <input ref={input} className="bx-field" placeholder="Open which page…" aria-label="Find a page"
+          value={query} onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Escape") props.onClose();
+            else if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, results.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+            else if (e.key === "Enter") {
+              e.preventDefault();
+              const hit = results[active];
+              if (hit) props.onPick(hit);
+            }
+          }} />
+        <ul className="bx-picker-list" role="listbox" aria-label="Pages">
+          {results.map((p, i) => (
+            <li key={p.id} role="option" aria-selected={i === active}>
+              <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(p)}>
+                <span className="bx-move-icon" aria-hidden="true">{isEmojiIcon(p.icon) ? p.icon : "📄"}</span>
+                <span className="bx-move-text">
+                  <span className="bx-move-title">{p.title || "Untitled"}</span>
+                  {p.path ? <span className="bx-move-path">{p.path}</span> : null}
+                </span>
+              </button>
+            </li>
+          ))}
+          {results.length === 0 ? <li className="bx-muted bx-move-empty">No matching page.</li> : null}
+        </ul>
+      </div>
+    </div>
+  );
+}
