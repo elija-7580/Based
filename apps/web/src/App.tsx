@@ -1,8 +1,11 @@
 // BSD-153: die Shell auf echten Daten – Seitenleiste (Struktur aus dem Store-Worker), Quick Find, Seiten, Papierkorb,
-// Einstellungen. Home behält vorerst die Demo-Abschnitte (src/data.ts), „Pick up again“ ist echt.
+// Einstellungen. Home ist die Startseite nach Mockup v10 (Zeitbogen, Auftragskarten; BSD-162/197) mit Agent- und
+// Projekt-Detail (BSD-133).
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { appearanceStore, applyAppearance, onSystemThemeChange } from "./appearance.js";
 import { ChatDock, ChatPage } from "./chat/ChatDock.js";
+import { AgentDetailScreen } from "./home/AgentDetail.js";
+import { ProjectDetailScreen } from "./home/ProjectDetail.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { TabBar } from "./components/TabBar.js";
@@ -112,6 +115,10 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "tasks") {
     screen = <TasksScreen client={client} state={state} />;
+  } else if (route.name === "agent") {
+    screen = <AgentDetailScreen key={route.id} client={client} state={state} runID={route.id} onNavigate={navigate} onOpenPage={openPage} />;
+  } else if (route.name === "project") {
+    screen = <ProjectDetailScreen key={route.id} client={client} state={state} projectID={route.id} showDetails={appearance.agentDetails} onNavigate={navigate} onOpenPage={openPage} />;
   } else if (route.name === "library") {
     screen = <Library client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "graph") {
@@ -119,7 +126,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "settings") {
     screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
   } else {
-    screen = <Home showDetails={appearance.agentDetails} recent={recent} state={state} onOpenPage={openPage} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
+    screen = <Home client={client} showDetails={appearance.agentDetails} state={state} onOpenPage={openPage} onNavigate={navigate} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
   }
 
   return (

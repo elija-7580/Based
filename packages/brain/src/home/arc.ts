@@ -138,24 +138,27 @@ export interface RingResult {
 }
 
 /**
- * Belegung des inneren Rings: Karten gleichmäßig auf dem oberen Halbkreis verteilt (stabil in der gegebenen
- * Reihenfolge), höchstens so viele, wie ohne Überdeckung passen; der Rest wird gezählt.
+ * Belegung des inneren Rings: Karten symmetrisch um den Scheitel des Rings, so eng wie möglich (stabil in der
+ * gegebenen Reihenfolge), höchstens so viele, wie ohne Überdeckung passen; der Rest wird gezählt.
  */
 export function ringLayout(ids: readonly string[], g: ArcGeometry, size: Size, blocked: readonly Box[] = [], gap = 8): RingResult {
   for (let n = Math.min(ids.length, 8); n > 0; n--) {
-    const placed = ringSlots(n, g, size).map((p, i) => ({ id: ids[i]!, t: p.t, box: p.box }));
-    const fits = placed.every((p, i) =>
-      p.box.x - p.box.w / 2 >= 0 && p.box.x + p.box.w / 2 <= g.width &&
-      !blocked.some((o) => overlaps(o, p.box, gap)) &&
-      placed.every((q, j) => j === i || !overlaps(p.box, q.box, gap)));
-    if (fits) return { placed, overflow: ids.slice(n) };
+    for (let half = n === 1 ? 0 : 0.04; half <= 0.4001; half += 0.02) {
+      const placed = ringSlots(n, g, size, half).map((p, i) => ({ id: ids[i]!, t: p.t, box: p.box }));
+      const fits = placed.every((p, i) =>
+        p.box.x - p.box.w / 2 >= 0 && p.box.x + p.box.w / 2 <= g.width &&
+        !blocked.some((o) => overlaps(o, p.box, gap)) &&
+        placed.every((q, j) => j === i || !overlaps(p.box, q.box, gap)));
+      if (fits) return { placed, overflow: ids.slice(n) };
+    }
   }
   return { placed: [], overflow: [...ids] };
 }
 
-/** `n` Plätze auf dem inneren Ring: eine Karte oben, zwei links/rechts, mehr verteilt zwischen 0.12 und 0.88. */
-export function ringSlots(n: number, g: ArcGeometry, size: Size): { t: number; box: Box }[] {
-  const ts = n === 1 ? [0.5] : Array.from({ length: n }, (_, i) => 0.14 + (0.72 * i) / (n - 1));
+/** `n` Plätze auf dem inneren Ring, gleichmäßig zwischen 0.5 − half und 0.5 + half (eine Karte: bei 0.5 − half). */
+export function ringSlots(n: number, g: ArcGeometry, size: Size, half = 0): { t: number; box: Box }[] {
+  // eine Karte: oben; ist dort kein Platz, etwas nach links
+  const ts = n === 1 ? [0.5 - half] : Array.from({ length: n }, (_, i) => 0.5 - half + (2 * half * i) / (n - 1));
   return ts.map((t) => {
     const p = arcPoint(g, t, g.innerR);
     return { t, box: { x: p.x, y: p.y, w: size.w, h: size.h } };
@@ -171,7 +174,7 @@ export interface Tick {
 }
 
 /** Zeitmarken: Enden, Viertel und „now“ („−6 h … now … +6 h“, „−3 d“, „−15 d“). */
-export function arcTicks(g: ArcGeometry, frame: Frame): Tick[] {
+export function arcTicks(g: ArcGeometry, frame: Frame, endOffset = 30): Tick[] {
   const span = FRAME_SPAN_MS[frame];
   const unit = frame === "today" ? HOUR : DAY;
   const suffix = frame === "today" ? " h" : " d";
@@ -183,7 +186,7 @@ export function arcTicks(g: ArcGeometry, frame: Frame): Tick[] {
     const ms = (t - 0.5) * 2 * span;
     const at = arcPoint(g, t, g.r + 22);
     // Enden: Beschriftung unter dem Bogenende statt daneben
-    const end = t === 0 || t === 1 ? { x: arcPoint(g, t).x, y: g.cy + 30 } : at;
+    const end = t === 0 || t === 1 ? { x: arcPoint(g, t).x, y: g.cy + endOffset } : at;
     return { t, label: t === 0.5 ? "now" : fmt(ms), at: end, now: t === 0.5 };
   });
 }

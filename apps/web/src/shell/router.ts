@@ -11,6 +11,9 @@ export type Route =
   | { name: "chat" }
   /** Aufträge des Hauptagenten (BSD-195). */
   | { name: "tasks" }
+  /** Agent-Detail (ein Lauf) und Projekt-Detail der Startseite (BSD-133). */
+  | { name: "agent"; id: string }
+  | { name: "project"; id: string }
   | { name: "page"; id: string };
 
 export function routeToHash(r: Route): string {
@@ -22,6 +25,8 @@ export function routeToHash(r: Route): string {
     case "trash": return "trash";
     case "chat": return "chat";
     case "tasks": return "tasks";
+    case "agent": return "agent-" + r.id;
+    case "project": return "project-" + r.id;
     case "page": return "page-" + r.id;
   }
 }
@@ -29,6 +34,8 @@ export function routeToHash(r: Route): string {
 export function routeFromHash(hash: string): Route {
   const h = hash.replace(/^#\/?/, "");
   if (h.startsWith("page-") && h.length > 5) return { name: "page", id: decodeURIComponent(h.slice(5)) };
+  if (h.startsWith("agent-") && h.length > 6) return { name: "agent", id: decodeURIComponent(h.slice(6)) };
+  if (h.startsWith("project-") && h.length > 8) return { name: "project", id: decodeURIComponent(h.slice(8)) };
   if (h.startsWith("prefs-") && h.length > 6) return { name: "settings", page: decodeURIComponent(h.slice(6)) };
   switch (h) {
     case "graph": return { name: "graph" };

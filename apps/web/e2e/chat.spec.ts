@@ -134,10 +134,12 @@ test("Fehler mit Retry", async ({ page }) => {
   await expect(panel(page).getByRole("button", { name: "Retry" })).toHaveCount(0);
 });
 
-test("Vollseite und zurück ins Panel; Composer auf Home fragt im Panel", async ({ page }) => {
+// Seit Mockup v10 (BSD-197) wird der Composer auf Home zur Auftragskarte (home.spec.ts); gefragt wird im Panel.
+test("Vollseite und zurück ins Panel", async ({ page }) => {
   await useScript(page, [{ text: "Answer from Home." }]);
-  await page.getByLabel("Ask Based").first().fill("Asked on Home");
-  await page.getByLabel("Ask Based").first().press("Enter");
+  await page.keyboard.press(`${mod}+j`);
+  await input(page).fill("Asked on Home");
+  await input(page).press("Enter");
   await expect(panel(page).getByText("Answer from Home.")).toBeVisible();
   await panel(page).getByRole("button", { name: "Open as page" }).click();
   const full = page.getByTestId("chat-page");

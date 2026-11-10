@@ -93,6 +93,10 @@ describe("Zeitbogen: Geometrie", () => {
     expect(three.placed[0]!.box.x).toBeLessThan(three.placed[2]!.box.x);
     const many = ringLayout(Array.from({ length: 12 }, (_, i) => "r" + i), g, RING);
     expect(many.placed.length).toBeLessThan(12);
+    // Scheitel belegt: die eine Karte weicht seitlich aus statt zu verschwinden
+    const top = ringLayout(["a"], g, RING, [{ ...arcPoint(g, 0.5, g.innerR), w: 40, h: 40 }]);
+    expect(top.placed).toHaveLength(1);
+    expect(top.placed[0]!.t).toBeLessThan(0.5);
     expect(many.placed.length + many.overflow.length).toBe(12);
     for (const a of many.placed) for (const b of many.placed) if (a !== b) expect(overlaps(a.box, b.box, 8)).toBe(false);
   });

@@ -499,7 +499,7 @@ export interface LiveEntry {
 export function liveEntries(run: Rec<RunData>, task: TaskView | undefined): LiveEntry[] {
   const out: LiveEntry[] = [];
   for (const l of task?.data.log ?? []) {
-    const [verb, ...rest] = l.text.split(/[:\s]/);
+    const [verb] = l.text.split(/[:\s]/);
     out.push({ atMs: toMs(l.at), verb: verb ?? "", text: l.text.slice((verb ?? "").length).replace(/^:\s*/, "").trim() });
   }
   out.push({ atMs: toMs(run.data.startedAt), verb: "Started", text: run.data.instructions ? run.data.instructions.slice(0, 160) : run.data.title });

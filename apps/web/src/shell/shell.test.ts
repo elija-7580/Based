@@ -51,7 +51,7 @@ describe("Seitenleisten-Zeilen", () => {
 
 describe("Routen und Verlauf", () => {
   it("Hash hin und zurück", () => {
-    const rs: Route[] = [{ name: "home" }, { name: "graph" }, { name: "library" }, { name: "settings" }, { name: "trash" }, { name: "page", id: "ABC-1" }];
+    const rs: Route[] = [{ name: "home" }, { name: "graph" }, { name: "library" }, { name: "settings" }, { name: "trash" }, { name: "page", id: "ABC-1" }, { name: "agent", id: "run-1" }, { name: "project", id: "p-1" }];
     for (const r of rs) expect(routeFromHash("#" + routeToHash(r))).toEqual(r);
     expect(routeFromHash("#lecture")).toEqual({ name: "home" });
   });
