@@ -52,3 +52,27 @@ test("⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs", async (
   await page.keyboard.press("ControlOrMeta+9");
   await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
 });
+
+test("Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen", async ({ page }) => {
+  await ready(page);
+  await page.keyboard.press("ControlOrMeta+Alt+n");
+  const editor = page.locator(".bn-editor[contenteditable='true']");
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await page.keyboard.type("Hello");
+  // WebKit-Testprofile haben kein OPFS („Not saved“); dort zeigt nur das Menü die Zeit.
+  await expect(page.getByTestId("page-edited")).toHaveText(/Edited just now|Not saved/);
+
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const menu = page.getByRole("menu", { name: "Page menu" });
+  for (const name of ["Copy link", "Duplicate", "Move to…", "Add to Favorites", "Export…", "Version history", "Move to Trash"]) {
+    await expect(menu.getByRole("menuitem", { name })).toBeVisible();
+  }
+  await expect(menu.getByTestId("page-menu-edited")).toHaveText("Edited just now");
+  await expect(menu.getByRole("menuitem", { name: "Copy link" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(menu).toBeHidden();
+  await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+});
