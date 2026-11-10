@@ -34,6 +34,11 @@ export interface BlockConverter {
 export interface YDocStore {
   load(rootID: string): Uint8Array | undefined;
   save(rootID: string, state: Uint8Array): void;
+  /**
+   * BSD-220: Zustand vorab (asynchron) holen, z. B. aus dem Store-Worker; danach liefert `load` ihn synchron. Der
+   * Editor wartet darauf, bevor er die Sitzung öffnet. Fehler gelten als „kein Zustand“ (die Records sind die Quelle).
+   */
+  prepare?(rootID: string): Promise<void>;
 }
 
 export class MemoryYDocStore implements YDocStore {
@@ -81,7 +86,7 @@ export class DocSession {
   constructor(readonly store: WorkspaceStore, readonly rootID: string, private readonly opts: DocSessionOptions) {
     this.doc = opts.doc ?? new Y.Doc();
     this.fragment = this.doc.getXmlFragment(FRAGMENT);
-    const saved = opts.docStore?.load(rootID);
+    const saved = readable(opts.docStore?.load(rootID));
     if (saved) Y.applyUpdate(this.doc, saved, LOAD_ORIGIN);
     // Migration (erstes Öffnen) und Nachziehen von Änderungen, die ohne offenen Editor passiert sind.
     this.reconcile();
@@ -222,6 +227,17 @@ export class DocSession {
     this.unobserve();
     this.fragment.unobserveDeep(this.onY);
     this.doc.off("update", this.onUpdate);
+  }
+}
+
+/** Ein gespeicherter Zustand, den Yjs lesen kann; kaputte Bytes (abgebrochenes Schreiben) zählen als „keiner“. */
+function readable(state: Uint8Array | undefined): Uint8Array | undefined {
+  if (!state || state.length === 0) return undefined;
+  try {
+    Y.decodeUpdate(state);
+    return state;
+  } catch {
+    return undefined;
   }
 }
 

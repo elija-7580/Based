@@ -44,8 +44,8 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
         await new Promise((r) => setTimeout(r, delay));
       }
     }
-    // Platz für based.sqlite, history.sqlite (BSD-73), ihre Journale und eine Sicherung.
-    if (pool!.getCapacity() < 10) await pool!.reserveMinimumCapacity(10);
+    // Platz für based.sqlite, history.sqlite (BSD-73), ydocs.sqlite (BSD-220), ihre Journale und eine Sicherung.
+    if (pool!.getCapacity() < 14) await pool!.reserveMinimumCapacity(14);
     db = new pool!.OpfsSAHPoolDb(file);
   } else {
     db = new sqlite3.oo1.DB(":memory:", "c");

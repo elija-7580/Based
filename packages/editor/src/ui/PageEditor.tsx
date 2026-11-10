@@ -191,9 +191,20 @@ function DocEditor(props: { rootID: string; ancestors: readonly string[]; shared
   const { store, docStore } = props.shared;
   const [session, setSession] = useState<DocSession>();
   useEffect(() => {
-    const s = acquireSession(store, props.rootID, { converter: sharedConverter(), docStore });
-    setSession(s);
-    return () => releaseSession(s);
+    let s: DocSession | undefined;
+    let cancelled = false;
+    const open = () => {
+      if (cancelled) return;
+      s = acquireSession(store, props.rootID, { converter: sharedConverter(), docStore });
+      setSession(s);
+    };
+    // BSD-220: gespeicherten Y-Zustand erst holen (Store-Worker), dann öffnen; ohne `prepare` sofort.
+    if (docStore.prepare) void docStore.prepare(props.rootID).catch(() => undefined).then(open);
+    else open();
+    return () => {
+      cancelled = true;
+      if (s) releaseSession(s);
+    };
   }, [store, props.rootID, docStore]);
   if (!session || session.store !== store || session.rootID !== props.rootID) return null;
   return <BoundEditor key={props.rootID} session={session} ancestors={props.ancestors} shared={props.shared} readOnly={props.readOnly === true} />;
