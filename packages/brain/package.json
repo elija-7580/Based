@@ -1,0 +1,21 @@
+{
+  "name": "@based/brain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BSD-159: KI-Fundament – ein ChatEvent-Strom für alle Engines (ADR 0005), Anbieter, Werkzeuge, Transkripte. Reines TS, kein DOM.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@based/core": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5"
+  }
+}

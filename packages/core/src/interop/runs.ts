@@ -69,3 +69,45 @@ export function toRichText(runs: Run[]): RichText {
     return o;
   });
 }
+
+/**
+ * BSD-74: Textstellen ersetzen, ohne die Formatierung zu plätten (Swift-Plan `RichText.replacingOccurrences(of:with:)`).
+ * Gesucht wird im reinen Text; der Ersatz bekommt die Formatierung der Stelle, an der der Treffer beginnt, alles
+ * davor und danach (fett, kursiv, Links, Erwähnungen, Formeln) bleibt, wie es ist. Treffer, die eine Erwähnung oder
+ * Formel schneiden, werden nicht ersetzt (die würde sonst zerstört). `all: false` ersetzt nur den ersten Treffer.
+ */
+export function replaceInRichText(text: RichText | undefined, find: string, replacement: string, opts: { all?: boolean } = {}): { text: RichText; count: number } {
+  const runs = runsOf(text);
+  if (find === "" || runs.length === 0) return { text: text ?? "", count: 0 };
+  const whole = plain(runs);
+  // Bereiche atomarer Läufe (dort darf kein Treffer hineinreichen).
+  const atoms: [number, number][] = [];
+  let pos = 0;
+  for (const r of runs) {
+    if (isAtomic(r)) atoms.push([pos, pos + r.t.length]);
+    pos += r.t.length;
+  }
+  const marksAt = (at: number): Marks => {
+    let p = 0;
+    for (const r of runs) {
+      if (at < p + r.t.length) return r.m;
+      p += r.t.length;
+    }
+    return PLAIN;
+  };
+  const out: Run[] = [];
+  let from = 0, count = 0;
+  for (let i = whole.indexOf(find); i >= 0; i = whole.indexOf(find, i + 1)) {
+    if (i < from) continue;
+    const end = i + find.length;
+    if (atoms.some(([a, b]) => i < b && end > a)) continue;
+    out.push(...slice(runs, from, i));
+    if (replacement !== "") out.push({ t: replacement, m: marksAt(i) });
+    from = end;
+    count += 1;
+    if (opts.all === false) break;
+  }
+  if (count === 0) return { text: text ?? "", count: 0 };
+  out.push(...slice(runs, from, whole.length));
+  return { text: toRichText(normalize(out)), count };
+}

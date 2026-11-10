@@ -143,6 +143,19 @@ importers:
         specifier: ^6.0.5
         version: 6.4.6(@types/node@22.20.5)(jiti@2.7.0)(tsx@4.23.15)
 
+  packages/brain:
+    dependencies:
+      '@based/core':
+        specifier: workspace:*
+        version: link:../core
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+
   packages/core:
     dependencies:
       fflate:
