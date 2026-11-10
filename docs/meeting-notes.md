@@ -54,6 +54,22 @@ language can be fixed per meeting.
 **Permissions**: microphone (macOS + iOS) and *System Audio Recording* (macOS 14.2+, asked on first recording).
 On iPhone the other side of a call can't be captured (iOS doesn't allow it) — use speaker mode or record on the Mac.
 
+## Based Next (web / Tauri)
+
+`/meet` inserts the same block (records byte-compatible with the Swift format). Logic: `packages/core`
+(`model/meeting.ts`, `store/meeting-ops.ts` — chunks, timestamps, `[m:ss]` citations, summary blocks),
+`packages/brain/src/meeting.ts` (`MeetingRecorder`, `Transcriber` interface, summary prompt over the configured
+engine), view: `packages/editor/src/schema/meeting.tsx`, browser capture/playback: `apps/web/src/meeting/`.
+
+- Records the microphone (`getUserMedia` + `MediaRecorder`); tab/system audio as a second track (*Others*) only
+  where the browser shares audio via `getDisplayMedia` (Chromium). Tracks are stored as assets (BSD-78).
+- Notes typed while recording get the recording time; transcript lines, stamped notes and summary citations play
+  from there.
+- The summary runs only when you click *Generate summary* (engine from Settings → Agents & AI).
+- **No transcription yet**: the Swift app transcribes on the device (Parakeet), and there is no provider request
+  format for audio in the Swift code to port. The `Transcriber` interface is ready; tests use a fixed transcript.
+  No speaker separation (diarization) and no voice profiles in the web app.
+
 ## Other systems (planned)
 
 Windows (WASAPI process loopback), Linux (PipeWire monitor) and Android capture in the Tauri shell with
