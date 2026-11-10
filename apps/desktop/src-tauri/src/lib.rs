@@ -75,19 +75,26 @@ pub fn run() {
             Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu])
         })
         .on_menu_event(|app, event| {
-            let Some(window) = app.get_webview_window("main") else { return };
+            // BSD-202: Seiten können in eigenen Fenstern liegen – das Menü wirkt auf das Fenster vorn.
+            let front = app.webview_windows().into_values().find(|w| w.is_focused().unwrap_or(false));
+            let Some(window) = front.or_else(|| app.get_webview_window("main")) else { return };
             if event.id() == CHECK_UPDATES {
-                let _ = window.emit("desktop://check-updates", ());
+                let _ = app.emit_to("main", "desktop://check-updates", ());
             } else if event.id() == CLOSE_TAB {
-                let _ = window.emit("desktop://close-tab", ());
+                let _ = app.emit_to(window.label(), "desktop://close-tab", ());
             } else if event.id() == CLOSE_WINDOW {
-                let _ = window.hide();
+                if window.label() == "main" {
+                    let _ = window.hide();
+                } else {
+                    let _ = window.close();
+                }
             }
         })
-        // Roter Knopf: auf dem Mac nur ausblenden, die App (und offene Tabs) bleiben; Beenden über ⌘Q.
+        // Roter Knopf: auf dem Mac blendet er das Hauptfenster nur aus, die App (und offene Tabs) bleiben; Beenden
+        // über ⌘Q. Seitenfenster (BSD-202) schließen normal.
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                if cfg!(target_os = "macos") {
+                if cfg!(target_os = "macos") && window.label() == "main" {
                     api.prevent_close();
                     let _ = window.hide();
                 }

@@ -74,10 +74,44 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
 export async function startDesktop(onCloseTab?: () => void) {
   if (!isTauri()) return;
   applyDesktopShell();
-  const { listen } = await import("@tauri-apps/api/event");
-  await listen("desktop://check-updates", () => void checkForUpdates({ interactive: true }));
+  // BSD-202: Ereignisse nur für dieses Fenster (lib.rs schickt sie an das Fenster vorn), nicht an alle.
+  const { getCurrentWebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+  const win = getCurrentWebviewWindow();
+  const main = win.label === "main";
+  if (main) await win.listen("desktop://check-updates", () => void checkForUpdates({ interactive: true }));
   // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
-  if (onCloseTab) await listen("desktop://close-tab", () => onCloseTab());
-  // Start nicht bremsen: erst prüfen, wenn das Fenster steht.
-  setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+  if (onCloseTab) await win.listen("desktop://close-tab", () => onCloseTab());
+  // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
+  if (main) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+}
+
+/** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */
+export function pageWindowURL(href: string, hash: string): string {
+  const url = new URL(href);
+  url.searchParams.set("window", "page");
+  url.hash = hash;
+  return url.toString();
+}
+
+/** Läuft diese Seite als eigenes Seitenfenster (keine Tabs aus dem Speicher laden oder speichern)? */
+export function isPageWindow(search: string = globalThis.location?.search ?? ""): boolean {
+  return new URLSearchParams(search).get("window") === "page";
+}
+
+/**
+ * BSD-202: Seite in eigenem Fenster öffnen. In der Hülle ein neues Tauri-Fenster (gleiche Titelleiste wie das
+ * Hauptfenster), im Browser ein neuer Browser-Tab/-Fenster.
+ */
+export async function openPageWindow(hash: string, title: string): Promise<void> {
+  const url = pageWindowURL(globalThis.location.href, hash);
+  if (!isTauri()) {
+    globalThis.open(url, "_blank", "noopener");
+    return;
+  }
+  const [{ WebviewWindow }, { LogicalPosition }] = await Promise.all([import("@tauri-apps/api/webviewWindow"), import("@tauri-apps/api/dpi")]);
+  const label = "page-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  new WebviewWindow(label, {
+    url, title: title || "Based Next", width: 1000, height: 760, minWidth: 600, minHeight: 400,
+    titleBarStyle: "overlay", hiddenTitle: true, trafficLightPosition: new LogicalPosition(18, 22), dragDropEnabled: false,
+  });
 }

@@ -10,7 +10,8 @@ import markDark from "../../../../docs/design/logo/based-mark-small-on-dark.svg?
 import { Icon, type IconName } from "../icons.js";
 import { MoveDialog } from "./MoveDialog.js";
 import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./TeamspaceDialog.js";
-import type { Route } from "../shell/router.js";
+import { routeToHash, type Route } from "../shell/router.js";
+import { openPageWindow } from "../desktop.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages } from "../shell/storage.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
@@ -413,6 +414,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
           onAdd={() => void addInside(menu.id)}
           onMove={() => setMoving([menu.id])}
           onDuplicate={() => void client.command({ op: "duplicate", ids: [menu.id] })}
+          onOpenWindow={() => void openPageWindow(routeToHash({ name: "page", id: menu.id }), titles.get(menu.id) ?? "")}
           quickMoves={(outline?.nodes[menu.id]?.parent === undefined ? outline?.sections ?? [] : []).filter((x) => x.id !== menuSection).map((x) => ({ id: x.id, label: `Move to ${x.name}` }))}
           onQuickMove={(section) => void client.command({ op: "moveToSection", ids: [menu.id], section })}
           onTrash={() => {
@@ -628,7 +630,7 @@ function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, 
   );
 }
 
-function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, quickMoves, onQuickMove }: {
+function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, quickMoves, onQuickMove }: {
   menu: Menu;
   favorite: boolean;
   canNest: boolean;
@@ -639,6 +641,8 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   onTrash: () => void;
   onMove: () => void;
   onDuplicate: () => void;
+  /** BSD-202: in eigenem Fenster (Hülle) bzw. neuem Browser-Fenster. */
+  onOpenWindow: () => void;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];
   onQuickMove: (section: string) => void;
@@ -675,6 +679,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}
+      {item("Open in new window", "expand", onOpenWindow)}
       {item("Move to…", "move", onMove)}
       {quickMoves.slice(0, 4).map((q) => <span key={q.id} style={{ display: "contents" }}>{item(q.label, q.id === PRIVATE ? "lock" : "teamspace", () => onQuickMove(q.id))}</span>)}
       {item("Move to Trash", "trash", onTrash)}

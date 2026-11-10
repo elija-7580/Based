@@ -80,6 +80,10 @@ schreiben kann oder die Datei für andere Programme (Swift-App, Backups) sichtba
   Select All), **Window** (Minimieren, Zoomen, Vollbild, Schließen) – nur Standardeinträge, in `src-tauri/src/lib.rs`.
 - Alle anderen ⌘-Kürzel (⌘K, ⌘P, ⌘N, …) belegt kein Menü; sie kommen unverändert in der Web-App an.
 - Glas (`data-material="glass"`) gilt wie in Safari, weil der WebView sich als Mac meldet.
+- Seitenfenster (BSD-202): „Open in new window“ (Seitenmenü •••, Rechtsklick in der Seitenleiste) öffnet ein Tauri-Fenster
+  `page-*` mit `?window=page#page-<id>` – eigener Verlauf, die Tabs des Hauptfensters bleiben unberührt. Menü-Befehle
+  (⌘W „Close Tab“, ⇧⌘W „Close Window“) wirken auf das Fenster vorn; der rote Knopf blendet nur das Hauptfenster aus,
+  Seitenfenster schließen. Rechte: `capabilities/default.json` gilt für `main` und `page-*`. Im Browser: neues Fenster.
 
 ## Lokal bauen
 

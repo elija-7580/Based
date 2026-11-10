@@ -87,7 +87,9 @@ const TABS_KEY = "based.tabs";
  * Tabs im Browser: sessionStorage gehört zu genau diesem Browser-Tab (überlebt Neuladen, mehrere Browser-Tabs kommen
  * sich nicht in die Quere); localStorage hält den letzten Stand für ein neues Fenster.
  */
-export function browserTabsStorage(): TabsStorage {
+export function browserTabsStorage(opts: { shared?: boolean } = {}): TabsStorage {
+  // BSD-202: ein Seitenfenster (`shared: false`) merkt sich seine Tabs nur für sich (sessionStorage), nie fürs nächste Fenster.
+  const shared = opts.shared ?? true;
   const get = (s: () => Storage | undefined) => {
     try {
       const raw = s()?.getItem(TABS_KEY);
@@ -106,10 +108,10 @@ export function browserTabsStorage(): TabsStorage {
   const session = () => globalThis.sessionStorage;
   const local = () => globalThis.localStorage;
   return {
-    load: () => get(session) ?? get(local),
+    load: () => get(session) ?? (shared ? get(local) : undefined),
     save(v) {
       put(session, v);
-      put(local, v);
+      if (shared) put(local, v);
     },
   };
 }

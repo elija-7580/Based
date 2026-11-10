@@ -5,7 +5,7 @@ import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { startDesktop } from "./desktop.js";
+import { isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, recentPages, startPage, syncConfig } from "./shell/storage.js";
 import { StoreClient } from "./worker/client.js";
@@ -52,7 +52,8 @@ addEventListener("pagehide", (e: PageTransitionEvent) => {
   if (!e.persisted) link.leave();
 });
 // Startseite: selbst gewählte Seite (Einstellungen → My settings → Start page) oder Home.
-const history = new History(window, browserTabsStorage(), () => {
+// BSD-202: ein eigenes Seitenfenster hat nur seinen eigenen Verlauf (die Tabs des Hauptfensters bleiben unberührt).
+const history = new History(window, browserTabsStorage({ shared: !isPageWindow() }), () => {
   const id = startPage.get();
   return id ? { name: "page", id } : { name: "home" };
 });
