@@ -13,7 +13,7 @@ import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
 import type { CodingSessions } from "@based/brain";
-import { registerCodingRoutes } from "./coding-routes.js";
+import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
@@ -42,6 +42,8 @@ export interface AppOptions extends SyncServiceOptions {
   coding?: CodingSessions | undefined;
   /** Long-Poll-Grenze für /coding in ms (Tests kürzer). */
   codingLongPollMs?: number;
+  /** Rechner der Agenten (CLI-Verlauf, Setup-Doctor); ohne: diese Routen fehlen. */
+  codingHost?: CodingHost | undefined;
 }
 
 export interface App {
@@ -210,7 +212,7 @@ export function createApp(opts: AppOptions): App {
   // MARK: Teilen (docs/sharing.md)
   registerShareRoutes(router, { share, sync, assets, log });
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
-  if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs);
+  if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
   // MARK: Sync v1 (nur für sehr alte Apps)
   router.add("GET", "/sync/pull", ({ url }) =>

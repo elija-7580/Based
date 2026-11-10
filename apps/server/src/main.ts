@@ -5,6 +5,7 @@
 // BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
 import { CodingSessions, DEFAULT_AGENTS } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
+import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
@@ -161,7 +162,7 @@ async function main() {
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
-    ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log) } : {}),
+    ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),
   });
   const { port } = await app.listen(opts.port, opts.host);
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
