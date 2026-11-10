@@ -4,6 +4,8 @@
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { isTrashed } from "../query/engine.js";
 import type { Block, Workspace } from "../model/records.js";
+import { canonicalStringify } from "../json.js";
+import { valuesMatchingSchema } from "./database-ops.js";
 import { keyOf, type Tx, type WorkspaceStore } from "./store.js";
 
 /** Seitenleisten-Abschnitt einer Seite oben: ein Teamspace oder „Private“. */
@@ -171,8 +173,16 @@ export function restorePages(store: WorkspaceStore, ids: string[]) {
         orphaned = !owner || !store.blocks.has(owner) || isTrashed(store, owner);
       }
       const key = orphaned ? sortKeys(store, "w", { kind: "end" }, 1)[0]! : b.sk;
+      // Eine Zeile kehrt in ihre Datenbank zurück: Werte weglassen, die das Schema nicht mehr erlaubt (BSD-122).
+      const db = !orphaned && b.parent.startsWith("d:") ? store.databases.get(b.parent.slice(2)) : undefined;
+      const fitted = db && b.values ? valuesMatchingSchema(b.values, db) : undefined;
+      const changed = fitted !== undefined && canonicalStringify(fitted) !== canonicalStringify(b.values);
       tx.update(id, (x) => {
         delete x.trashedAt;
+        if (changed) {
+          if (Object.keys(fitted!).length === 0) delete x.values;
+          else x.values = fitted!;
+        }
         if (orphaned) {
           x.parent = "w";
           x.sk = key;
