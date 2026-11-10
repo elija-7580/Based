@@ -114,6 +114,24 @@ test("Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil", async ({ 
   expect(await css(page, card, "background-color")).toBe(token("surface-raised", "dark"));
 });
 
+// Regression (Hauptlauf, 10. 11.): Mit dem alten <Theme mode="system"> erbten Seitentitel und Wortmarke die
+// Astryx-Textfarbe nach dem Systemschema – bei hellem System fast schwarz auf dunklem Grund.
+for (const [theme, os] of [["dark", "light"], ["light", "dark"]] as const) {
+  test(`Seitentitel und Wortmarke in Tinte: Theme ${theme} bei System ${os}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: os });
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await page.goto("/");
+    await ready(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    expect(await css(page, ".wordmark", "color")).toBe(token("ink", theme));
+    await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+    const title = page.getByLabel("Page title");
+    await expect(title).toHaveValue("Welcome to Based");
+    expect(await title.evaluate((el) => getComputedStyle(el).color)).toBe(token("ink", theme));
+    expect(await page.locator("div[data-astryx-theme]").first().evaluate((el) => getComputedStyle(el).color)).toBe(token("ink", theme));
+  });
+}
+
 test("Theme „System“ folgt dem Betriebssystem", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/#appearance");

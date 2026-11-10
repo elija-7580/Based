@@ -9,6 +9,8 @@ async function open(page: Page, hash = "appearance") {
 }
 
 const nav = (page: Page) => page.getByRole("navigation", { name: "Settings pages" });
+/** Zeile der Navigation (Astryx setzt aria-current und den „Not yet“-Hinweis an das Listenelement, nicht an den Button). */
+const navRow = (page: Page, name: string) => nav(page).getByRole("listitem").filter({ has: page.getByRole("button", { name, exact: true }) });
 
 test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen", async ({ page }) => {
   await open(page);
@@ -20,7 +22,7 @@ test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adres
   await nav(page).getByRole("button", { name: "Sync & server" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sync & server" })).toBeVisible();
   await expect(page).toHaveURL(/#prefs-sync$/);
-  await expect(nav(page).getByRole("button", { name: "Sync & server" })).toHaveAttribute("aria-current", "true");
+  await expect(navRow(page, "Sync & server")).toHaveAttribute("aria-current", "true");
   await page.reload();
   await expect(page.getByTestId("settings-page")).toHaveAttribute("data-page", "sync");
 
@@ -38,7 +40,7 @@ test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", 
   await expect(missing.getByText("Agents and the main agent")).toBeVisible();
   const content = page.getByTestId("settings-page");
   for (const role of ["switch", "checkbox", "textbox", "radio", "button"] as const) await expect(content.getByRole(role)).toHaveCount(0);
-  await expect(nav(page).getByRole("button", { name: "Agents & AI" })).toContainText("Not yet");
+  await expect(navRow(page, "Agents & AI")).toContainText("Not yet");
 
   await nav(page).getByRole("button", { name: "Connections", exact: true }).click();
   await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toBeVisible();
@@ -47,11 +49,11 @@ test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", 
 
 test("Sync-Formular prüft die Adresse, bevor es verbindet", async ({ page }) => {
   await open(page, "prefs-sync");
-  const connect = page.getByRole("button", { name: "Connect" });
+  const connect = page.getByRole("button", { name: "Connect", exact: true });
   await expect(connect).toBeDisabled();
   await page.getByLabel("Server URL").fill("based.example.com");
   await connect.click();
-  await expect(page.getByText(/doesn't look like an address/)).toBeVisible();
+  await expect(page.getByTestId("settings-section-sync-server").getByText(/doesn't look like an address/)).toBeVisible();
   await expect(page.getByTestId("sync-status")).toHaveText(/On this device|Not saved/);
   await page.getByLabel("Server URL").fill("http://127.0.0.1:9/");
   await page.getByLabel("Token").fill("secret");
@@ -111,10 +113,10 @@ test("Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.ts
   await expect(page.getByTestId("settings-section-test-keys")).toContainText("Registered by another area");
   await expect(page.getByRole("heading", { level: 2, name: "API keys" })).toBeVisible();
   await expect(page.getByTestId("settings-missing").getByText("API keys for AI providers")).toHaveCount(0);
-  await expect(nav(page).getByRole("button", { name: "Agents & AI" })).not.toContainText("Not yet");
+  await expect(navRow(page, "Agents & AI")).not.toContainText("Not yet");
   await page.evaluate(() => (globalThis as unknown as { __off: () => void }).__off());
   await expect(page.getByTestId("settings-section-test-keys")).toHaveCount(0);
-  await expect(nav(page).getByRole("button", { name: "Agents & AI" })).toContainText("Not yet");
+  await expect(navRow(page, "Agents & AI")).toContainText("Not yet");
 });
 
 for (const theme of ["light", "dark"] as const) {
