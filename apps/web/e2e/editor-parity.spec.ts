@@ -722,6 +722,64 @@ test("Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210)", async ({ page }) =
   await expect(editor(page).getByRole("button", { name: "Icon" })).toHaveText("💡");
 });
 
+test("Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210)", async ({ page, browserName }) => {
+  await command(page, { op: "createDatabase", title: "Tasks" });
+  await createPage(page, "Buttons");
+  await openPage(page, "Buttons");
+  // Button 1: Insert blocks mit Vorlage
+  await caretInLastLine(page);
+  await page.keyboard.type("/Button");
+  await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  const setup = page.getByRole("group", { name: "Button settings" });
+  await expect(setup).toBeVisible();
+  await setup.getByLabel("Button name").fill("Add checklist");
+  await expect(setup.getByLabel("Step 1", { exact: true })).toHaveValue("insertBlocks");
+  const template = setup.locator(".bx-btn-template .bn-editor").first();
+  await template.locator(".bn-block-content").first().click();
+  await page.keyboard.type("Template item");
+  await setup.getByRole("button", { name: "Done" }).click();
+  await expect(setup).toHaveCount(0);
+  await editor(page).getByRole("button", { name: "Add checklist" }).click();
+  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(1);
+  await editor(page).getByRole("button", { name: "Add checklist" }).click();
+  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
+
+  // Button 2: Add page to Tasks → Rückfrage → öffnen
+  await caretInLastLine(page);
+  await page.keyboard.type("/Button");
+  await expect(page.getByRole("option", { name: /^Button/ }).first()).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(setup).toBeVisible();
+  await setup.getByLabel("Button name").fill("New task");
+  await setup.getByLabel("Step 1", { exact: true }).selectOption("addPage");
+  await setup.getByRole("button", { name: "Choose a database…" }).click();
+  const dbPicker = page.getByTestId("database-link-picker");
+  await dbPicker.getByLabel("Find a database").fill("Tasks");
+  await dbPicker.getByRole("option", { name: /Tasks/ }).first().click();
+  await expect(setup.getByRole("button", { name: "Tasks" })).toBeVisible();
+  await setup.getByLabel("Page name").fill("From button");
+  await setup.getByLabel("Page name").blur();
+  await setup.getByLabel("Add step").selectOption("confirm");
+  await setup.getByLabel("Message").fill("Open it?");
+  await setup.getByLabel("Message").blur();
+  await setup.getByLabel("Add step").selectOption("openAdded");
+  await expect(setup.getByLabel("Step 3", { exact: true })).toHaveValue("openAdded");
+  if (SHOTS && browserName === "chromium") await shots(page, browserName, "button-setup");
+  await setup.getByRole("button", { name: "Done" }).click();
+  await settled(page);
+
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Buttons");
+  await expect(editor(page).locator(".bn-block-content", { hasText: "Template item" })).toHaveCount(2);
+  await editor(page).getByRole("button", { name: "New task" }).click();
+  const confirm = page.getByRole("alertdialog", { name: "Confirm" });
+  await expect(confirm).toContainText("Open it?");
+  await confirm.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("From button");
+});
+
 test("Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209)", async ({ page }) => {
   await createPage(page, "Code page");
   await openPage(page, "Code page");

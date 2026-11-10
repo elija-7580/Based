@@ -46,4 +46,22 @@ describe("Mapping", () => {
     void (null as unknown as Block);
     void canonicalStringify;
   });
+
+  it("BSD-210: Kinder eines Buttons sind seine Vorlage, nicht Teil der Seite; alte Y-Stände mit Kindern verlieren nichts", async () => {
+    const { MemoryPersistence, WorkspaceStore } = await import("@based/core");
+    const mk = (id: string, type: string, parent: string, sk: string, text?: string) => ({ kind: "block" as const, data: { id, type, parent, sk, createdAt: 0, updatedAt: 0, ...(text ? { text } : {}) } as Block });
+    const store = new WorkspaceStore({ persistence: new MemoryPersistence([mk("p", "page", "w", "a0"), mk("b", "button", "b:p", "a0"), mk("t", "text", "b:b", "a0", "Vorlage")]), node: "n" });
+    const doc = projectDoc(store, "p");
+    expect(doc).toHaveLength(1);
+    expect(doc[0]!.children).toEqual([]);
+    expect(docBlockIDs(store, "p").has("t")).toBe(false);
+    // Ein alter Y-Stand hatte die Vorlage noch verschachtelt im Seitendokument: sie bleibt beim Button.
+    const old = [{ ...doc[0]!, children: [{ id: "t", type: "paragraph", props: {}, content: [{ type: "text", text: "Vorlage", styles: {} }], children: [] }] }];
+    const ch = materializeDoc(store, "p", old as never, { now: 1 });
+    expect(ch.removeBlocks).toEqual([]);
+    expect(ch.puts.find((b) => b.id === "t")?.parent ?? "b:b").toBe("b:b");
+    // Ohne Kinder im Dokument wird die Vorlage nicht gelöscht.
+    expect(materializeDoc(store, "p", doc, { now: 1 }).removeBlocks).toEqual([]);
+    expect(projectDoc(store, "b").map((b) => b.id)).toEqual(["t"]);
+  });
 });

@@ -322,3 +322,34 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-embed-frame { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-raised); }
 .bx-embed-caption { font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bx-embed-caption a { color: inherit; }
+
+/* BSD-210: Button-Block – Pille zum Ausführen, „Edit“ beim Überfahren, Einrichtung als Gruppe darunter */
+.bx-btn { display: grid; gap: var(--space-2); width: 100%; }
+.bx-btn-row { display: flex; align-items: center; gap: var(--space-2); }
+.bx-btn-run { border: 0; font: inherit; font-family: var(--font-ui); font-weight: var(--type-ui-weight); cursor: pointer; }
+.bx-btn-run:hover:not(:disabled) { background: var(--selected); }
+.bx-btn-run:disabled { cursor: default; }
+.bx-btn-edit, .bx-btn-remove, .bx-btn-target {
+  background: none; border: 0; font: inherit; font-family: var(--font-ui); color: var(--muted); cursor: pointer;
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
+}
+.bx-btn-edit:hover, .bx-btn-remove:hover, .bx-btn-target:hover { background: var(--surface-raised); color: var(--ink); }
+.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.bx-btn:hover .bx-btn-row .bx-btn-edit, .bx-btn-row .bx-btn-edit:focus-visible, .bx-btn[data-editing] .bx-btn-row .bx-btn-edit { opacity: 1; }
+.bx-btn-confirm { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); background: var(--surface-raised); }
+.bx-btn-confirm > span { flex: 1; min-width: 0; }
+.bx-btn-confirm .bx-button { border: 0; cursor: pointer; background: var(--button); color: var(--button-ink); }
+.bx-btn-setup { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--surface-raised); }
+.bx-btn-setup .bx-field { background: var(--bg); }
+.bx-btn-field { display: grid; gap: var(--space-1); }
+.bx-btn-caption { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
+.bx-btn-steps { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); }
+.bx-btn-step { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.bx-btn-step .bx-field { width: auto; flex: 1 1 10rem; min-width: 0; }
+.bx-btn-step .bx-btn-kind { flex: 0 1 12rem; }
+.bx-btn-target { color: var(--ink); background: var(--bg); }
+.bx-btn-actions { display: flex; justify-content: space-between; gap: var(--space-2); }
+.bx-btn-actions .bx-btn-add { width: auto; }
+.bx-btn-actions .bx-button { border: 0; cursor: pointer; }
+.bx-btn-template { display: grid; gap: var(--space-1); }
+.bx-btn-template .bx-synced-editor { background: var(--bg); border-radius: var(--radius-md); padding-block: var(--space-1); }

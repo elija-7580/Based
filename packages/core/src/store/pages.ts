@@ -340,7 +340,7 @@ const appendText = (text: Block["text"], suffix: string): Block["text"] => {
 
 /** Kopie eines Blocks mit allem darin (neue IDs). Datenbank-Container bekommen eine eigene Datenbank, Ansichten und
  * Zeilen (Swift `copySubtree`). */
-function copyTree(store: WorkspaceStore, tx: Tx, src: Block, parent: string, sk: string, titleSuffix?: string): string {
+export function copyTree(store: WorkspaceStore, tx: Tx, src: Block, parent: string, sk: string, titleSuffix?: string): string {
   const copy = structuredClone(src);
   copy.id = newID();
   copy.parent = parent;

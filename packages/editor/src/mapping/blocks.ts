@@ -18,7 +18,8 @@ export interface BlockSource {
 
 /** Kinder gehören nicht zum Dokument dieses Blocks. */
 /** BSD-226: Abschnitte und Transkript eines Meetings zeigt der Meeting-Block selbst (Notizen als eigener Editor). */
-export const BOUNDARY_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "syncedBlock", "databaseInline", "linkToPage", "meeting"]);
+/** BSD-210: Die Kinder eines Buttons sind seine Vorlage („Insert blocks“), bearbeitet in der Einrichtung des Buttons. */
+export const BOUNDARY_TYPES: ReadonlySet<string> = new Set(["page", "databasePage", "syncedBlock", "databaseInline", "linkToPage", "meeting", "button"]);
 
 /** Bekannte Typen, die der Editor nur als Atom zeigt (Inhalt bleibt unverändert im Record). */
 const OPAQUE_KNOWN: ReadonlySet<string> = new Set(["meetingSection", "transcript", "tableRow"]);

@@ -15,6 +15,7 @@ import {
 import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
+import { freshButtons } from "./ButtonBlock.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
@@ -305,6 +306,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     editable,
     notify: shared.notify,
     meeting: shared.meeting,
+    databases: shared.databases ?? defaultDatabases(store),
     flush: () => session.flush(),
     renderSynced: (root, opts) => (
       <div className="bx-synced-editor">
@@ -504,6 +506,11 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
     { title: "HTML", subtext: "HTML code with a live preview (sandboxed, offline).", aliases: ["html", "web"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "html" } } as never) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
+    { title: "Button", subtext: "Run steps with one click: insert blocks, add a page, open a link.", aliases: ["button", "action", "automation"], group: "Advanced blocks", onItemClick: () => {
+      const id = globalThis.crypto.randomUUID().toUpperCase();
+      freshButtons.add(id);
+      insert({ id, type: CUSTOM.button } as never);
+    } },
     { title: "Breadcrumb", subtext: "Show where this page sits.", aliases: ["path"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.breadcrumb } as never) },
     { title: "2 columns", subtext: "Two columns side by side.", aliases: ["columns", "layout"], group: "Advanced blocks", onItemClick: () => insert(columns(2) as never) },
     { title: "3 columns", subtext: "Three columns side by side.", aliases: ["columns", "layout"], group: "Advanced blocks", onItemClick: () => insert(columns(3) as never) },
