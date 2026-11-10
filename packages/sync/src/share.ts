@@ -20,6 +20,8 @@ export interface ShareLinkInfo {
   expiresAt?: string;
   /** Publish: `/p/<id>`; beim Anlegen eines Access-/Invite-Links: `/s/<geheimnis>` (nur in dieser Antwort). */
   path?: string;
+  /** BSD-236 (Publish): fremde Embeds werden als Rahmen gezeigt (Opt-in); sonst als Link-Karte. */
+  allowEmbeds?: boolean;
 }
 
 export interface SharePerson {
@@ -90,6 +92,11 @@ export class ShareAPI {
   /** Veröffentlichen; eine schon veröffentlichte Seite behält ihren Link. */
   publish(pageID: string): Promise<ShareLinkInfo> {
     return this.createLink(pageID, "publish", "view");
+  }
+
+  /** BSD-236: fremde Embeds auf einer veröffentlichten Seite erlauben oder wieder verbieten. */
+  setEmbeds(linkID: string, allow: boolean): Promise<ShareLinkInfo> {
+    return this.request("POST", `/share/v1/links/${encodeURIComponent(linkID)}/embeds`, { allow });
   }
 
   async revoke(linkID: string): Promise<void> {

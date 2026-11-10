@@ -100,7 +100,10 @@ Assets-Ordner mitnehmen. `test/assets.test.ts`.
 
 `src/mcp.ts` mit `@modelcontextprotocol/sdk` (Protokollversionen laut SDK). Werkzeuge: `based_guide`, `search`,
 `read_page`, `list_pages`, `create_page`, `append_markdown`, `replace_page_content`, `update_page`, `trash_page`,
-`restore_page`, `list_trash`. Ressourcen `based://docs/<topic>` (overview, markdown, safety) und
+`restore_page`, `list_trash`; Datenbanken (BSD-221): `list_databases`, `database_schema`, `query_database` (Suche
+in allen Zellen, Sortierung nach Property, Seiten), `add_row` / `update_row` (Properties per Name, Werte als Text;
+neue Select-Optionen werden angelegt, ungültige Werte werden vorher abgelehnt – keine halb angelegten Zeilen).
+Noch nicht im TS-Server: Projekte, Runs, Inbox, Hauptagent, Skills als Prompts, Berechtigungsregeln. Ressourcen `based://docs/<topic>` (overview, markdown, safety) und
 `based://page/<id>` (Liste: die ersten 500 Seiten). Seiten kommen als Markdown (`MarkdownExporter` aus
 `@based/core`), Links auf Seiten als `based://page/<id>`; Markdown wird mit `MarkdownImporter` zu Blöcken, Links
 auf `based://page/<id>` werden Erwähnungen. Änderungen sind lokale Änderungen des Servers und erreichen Geräte per
@@ -151,6 +154,17 @@ nur, was ein frischer Scan meldet. Owner-Routen `/sandbox/runs[/<run>]`, `…/sn
 noch fehlt; der Treiber für Claude Code im Container ist nicht gebaut. Docker selbst ist ungeprüft (Tests mit
 gemocktem Prozess); die lokale Variante läuft in den Tests mit echtem `tar`. Die Docker-Engine-API (statt CLI) ist
 nicht umgesetzt.
+
+## Betrieb und Härtung (BSD-75)
+
+- Long-Poll (`/sync/v2/wait`, `/coding/…`) ist ereignisgesteuert: jede gespeicherte Änderung weckt die Wartenden,
+  kein Abfragen, kein blockierter Thread. Grenzen: höchstens 16 offene waits je Client (Owner bzw. geteilter
+  Principal) und 1024 insgesamt (`maxWaitsPerClient`, `maxWaits`); darüber `429` mit `Retry-After: 5` (der
+  Sync-Client wartet dann mit Backoff).
+- Logs: JSONL auf stderr, nur Methode, Pfad ohne Query, Status, Dauer, Zähler – keine Titel, Texte, Tokens, Bodies.
+- Docker: `deploy/server-ts.Dockerfile` + `deploy/docker-compose.ts.yml` – läuft als Nutzer `node`, Dateisystem
+  schreibgeschützt bis auf `/data` und `/tmp`, `cap_drop: ALL`, `no-new-privileges`, `HEALTHCHECK` auf `/health`,
+  Backup-Dienst (`deploy/backup.sh`: täglich `sqlite3 .backup`, 7 Tage).
 
 ## Coding-Agenten (BSD-223)
 

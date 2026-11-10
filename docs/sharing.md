@@ -97,3 +97,11 @@ server stays the reference until it is switched off.
 In the web client: **Share** in the page header (`apps/web/src/components/Share.tsx`, HTTP in `@based/sync`
 `ShareAPI`): Publish / Copy link / Unpublish, access links and invites with a role, revoke, roles of people.
 Without a connected sync server the panel says so and offers the way to Settings.
+
+## Embeds on published pages (BSD-236)
+
+By default, embed blocks on `/p/<id>` render as link cards and the CSP allows no foreign frames (`frame-src 'self'`).
+Opt-in per page in the share panel ("Allow embeds on this published page", `POST /share/v1/links/<id>/embeds
+{allow}`; publish links only, full access needed): embeds render as `<iframe sandbox="allow-scripts
+allow-same-origin allow-popups allow-presentation">`, and `frame-src` lists exactly the https origins of this page's
+embeds. Stored as `allowEmbeds` on the link (missing in older data = off).

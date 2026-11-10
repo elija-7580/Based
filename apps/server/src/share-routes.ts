@@ -15,7 +15,7 @@ import type { AssetStore } from "./assets.js";
 import { ASSET_HASH } from "./assets.js";
 import type { Logger } from "./log.js";
 import type { SyncService } from "./sync.js";
-import { htmlBlockResponse, htmlBlockSource, htmlResponse, invitePage, joinedPage, linkGone, notPublished, renderSharedPage } from "./publish.js";
+import { htmlBlockResponse, htmlBlockSource, htmlResponse, invitePage, joinedPage, linkGone, notPublished, renderShared, renderSharedPage } from "./publish.js";
 import { error, json, type Caller, type RouteContext, type RouteResult, type Router } from "./router.js";
 import { isRole, linkJSON, OWNER, ShareError, type LinkKind, type SharePrincipal, type ShareService, type SharingLink } from "./share.js";
 
@@ -70,8 +70,8 @@ export function registerShareRoutes(router: Router, { share, sync, assets, log, 
   const published = (id: string, target: string | undefined) => {
     const link = share.publishedLink(id);
     if (!link) return notPublished();
-    const html = renderSharedPage(share, link, target ?? link.pageID, `/p/${encodeURIComponent(link.id)}`);
-    return html === undefined ? notPublished() : htmlResponse(html);
+    const r = renderShared(share, link, target ?? link.pageID, `/p/${encodeURIComponent(link.id)}`);
+    return r === undefined ? notPublished() : htmlResponse(r.html, 200, r.csp);
   };
   router.add("GET", "/p/:id", ({ params }) => published(params.id!, undefined), { access: "public" });
   router.add("GET", "/p/:id/:page", ({ params }) => published(params.id!, params.page), { access: "public" });
@@ -184,6 +184,14 @@ export function registerShareRoutes(router: Router, { share, sync, assets, log, 
     const path = kind === "publish" ? `/p/${created.link.id}` : created.secret ? `/s/${created.secret}` : undefined;
     return json({ ...linkJSON(created.link, true), ...(path ? { path } : {}), ...(created.secret && kind !== "publish" ? { secret: created.secret } : {}) });
   }), { access: "shared", bodyLimit: 4096 });
+  // BSD-236: fremde Embeds auf der veröffentlichten Seite erlauben / verbieten.
+  router.add("POST", "/share/v1/links/:id/embeds", (ctx) => guarded(() => {
+    const b = body(ctx);
+    if (typeof b.allow !== "boolean") return error("allow (true|false)", 400);
+    const l = share.setLinkEmbeds(ctx.params.id!, b.allow, principalOf(ctx.caller));
+    log.info("share: embeds", { allow: b.allow });
+    return json(linkJSON(l, share.isActive(l)));
+  }), { access: "shared", bodyLimit: 1024 });
   router.add("POST", "/share/v1/links/:id/revoke", ({ caller, params }) => guarded(() => {
     share.revokeLink(params.id!, principalOf(caller));
     log.info("share: link revoked");

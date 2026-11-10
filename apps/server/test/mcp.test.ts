@@ -39,7 +39,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["append_markdown", "based_guide", "create_page", "list_pages", "list_trash", "read_page", "replace_page_content", "restore_page", "search", "trash_page", "update_page"].sort(),
+      ["add_row", "append_markdown", "based_guide", "create_page", "database_schema", "list_databases", "list_pages", "list_trash", "query_database", "read_page", "replace_page_content", "restore_page", "search", "trash_page", "update_page", "update_row"].sort(),
     );
   });
 
@@ -138,4 +138,47 @@ describe("MCP über stdio", () => {
     const after = openWorkspace(openNodeDatabase(db));
     expect([...after.store.blocks.values()].map((b) => b.text)).toContain("Über stdio");
   }, 30_000);
+});
+
+describe("MCP: Datenbanken (BSD-221)", () => {
+  it("auflisten, Schema, abfragen, Zeile anlegen und ändern – Werte als Text, Properties per Name", async () => {
+    const { app, call } = await httpClient();
+    const { createDatabase, addProperty } = await import("@based/core");
+    const store = app.pages.store;
+    const created = createDatabase(store, { parent: "w", title: "Tasks" });
+    const dbID = created.databaseID;
+    addProperty(store, dbID, "Status", "select");
+    addProperty(store, dbID, "Points", "number");
+    addProperty(store, dbID, "Due", "date");
+
+    const list = textOf(await call("list_databases"));
+    expect(list).toContain(`Tasks (id: ${dbID})`);
+    expect(list).toContain("Points: number");
+    expect(textOf(await call("database_schema", { id: dbID }))).toContain("| Due | date | YYYY-MM-DD or YYYY-MM-DD HH:mm |");
+
+    const added = textOf(await call("add_row", { id: dbID, values: { Name: "Write docs", Status: "Doing", Points: "3", Due: "2026-11-12" } }));
+    const rowID = /Added row ([0-9a-f-]{36})/.exec(added)![1]!;
+    expect(store.databases.get(dbID)!.properties.find((p) => p.name === "Status")!.options!.map((o) => o.name)).toContain("Doing");
+    await call("add_row", { id: dbID, values: { Name: "Fix bug", Points: "8" } });
+
+    let rows = textOf(await call("query_database", { id: dbID, sort: "Points", descending: true }));
+    expect(rows.split("\n")[0]).toContain("[Fix bug]");
+    expect(rows).toContain(`[Write docs](based://page/${rowID}) — `);
+    expect(rows).toContain("Status: Doing");
+    expect(textOf(await call("query_database", { id: dbID, search: "doing" })).split("\n")).toHaveLength(1);
+
+    await call("update_row", { id: rowID, values: { Points: "5", Status: "" } });
+    rows = textOf(await call("query_database", { id: dbID, search: "write" }));
+    expect(rows).toContain("Points: 5");
+    expect(rows).not.toContain("Status:");
+
+    // Fehler als Antwort, nichts halb geschrieben
+    const before = textOf(await call("query_database", { id: dbID })).split("\n").length;
+    const bad = await call("add_row", { id: dbID, values: { Name: "X", Points: "lots" } });
+    expect(bad.isError).toBe(true);
+    expect(textOf(bad)).toContain("isn't a valid number");
+    expect(textOf(await call("query_database", { id: dbID })).split("\n").length).toBe(before);
+    expect((await call("update_row", { id: rowID, values: { Nope: "1" } })).isError).toBe(true);
+    expect((await call("query_database", { id: "missing" })).isError).toBe(true);
+  });
 });

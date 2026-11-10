@@ -2,6 +2,7 @@
 // widerrufen, Rollen von Personen ändern. Teilen läuft über den verbundenen Sync-Server; ohne Server ein ehrlicher
 // Hinweis. Logik und HTTP in @based/sync (ShareAPI), hier nur die Ansicht (Astryx).
 import { Banner } from "@astryxdesign/core/Banner";
+import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Link } from "@astryxdesign/core/Link";
 import { List, ListItem } from "@astryxdesign/core/List";
@@ -113,6 +114,9 @@ function SharePanel({ pageID, title, onNavigate, onClose }: Props & { onClose: (
                   <Link href={publishedURL} target="_blank">Open</Link>
                   <BasedButton label="Unpublish" variant="danger" disabled={busy} onClick={() => void act(() => api.revoke(published.id))} />
                 </HStack>
+                <CheckboxInput label="Allow embeds on this published page" description="Shows embedded videos, maps and other sites in a sandboxed frame. Off: they appear as links, and the page loads nothing from other sites."
+                  value={published.allowEmbeds === true} isDisabled={busy} data-testid="share-allow-embeds"
+                  onChange={(v) => void act(async () => { await api.setEmbeds(published.id, v); })} />
               </>
             ) : (
               <>
