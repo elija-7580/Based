@@ -78,20 +78,55 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
   const image = cover && "asset" in cover ? { asset: cover.asset._0 } : cover && "url" in cover ? { url: cover.url._0 } : undefined;
   const url = useImageURL(image);
   const [picker, setPicker] = useState(false);
-  const [drag, setDrag] = useState<{ y: number; start: number; pos: number } | undefined>();
-  const [live, setLive] = useState<number | undefined>();
+  // Wie Notion: „Reposition“ schaltet in einen Modus; im Modus das Bild ziehen, dann „Save position“ oder „Cancel“.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<number | undefined>();
+  const drag = useRef<{ y: number; pos: number; id: number } | undefined>(undefined);
+  useEffect(() => {
+    if (!editing) return;
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.preventDefault(); setEditing(false); setDraft(undefined); }
+      else if (e.key === "Enter") { e.preventDefault(); save(); }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  });
   if (!cover) return null;
-  const pos = live ?? position;
+  const pos = draft ?? position;
+  const save = () => { if (draft !== undefined) setCoverPosition(store, pageID, draft); setEditing(false); setDraft(undefined); };
+  const cancel = () => { setEditing(false); setDraft(undefined); };
   return (
     <div className="page-cover" data-testid="page-cover" style={image ? undefined : { background: coverBackground(cover) }}
-      data-repositioning={drag ? "" : undefined}
-      onPointerMove={(e) => { if (drag) setLive(Math.min(1, Math.max(0, drag.pos - (e.clientY - drag.y) / Math.max(1, e.currentTarget.clientHeight)))); }}
-      onPointerUp={() => { if (drag) { setCoverPosition(store, pageID, live ?? drag.pos); setDrag(undefined); setLive(undefined); } }}>
+      data-repositioning={editing ? "" : undefined}
+      onPointerDown={(e) => {
+        if (!editing || e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { y: e.clientY, pos, id: e.pointerId };
+      }}
+      onPointerMove={(e) => {
+        const d = drag.current;
+        if (!d || d.id !== e.pointerId) return;
+        // Bild folgt dem Zeiger: nach unten ziehen zeigt mehr vom oberen Bildteil.
+        setDraft(Math.min(1, Math.max(0, d.pos - (e.clientY - d.y) / Math.max(1, e.currentTarget.clientHeight))));
+      }}
+      onPointerUp={(e) => { if (drag.current?.id === e.pointerId) drag.current = undefined; }}
+      onPointerCancel={() => { drag.current = undefined; }}>
       {image && url ? <img src={url} alt="" draggable={false} style={{ objectPosition: `center ${(pos * 100).toFixed(1)}%` }} /> : null}
+      {editing ? <div className="page-cover-hint t-meta" aria-live="polite">Drag image to reposition</div> : null}
       {!readOnly ? (
-        <div className="page-cover-actions">
-          <button type="button" className="btn" onClick={() => setPicker((o) => !o)}>Change cover</button>
-          {image ? <button type="button" className="btn" onPointerDown={(e) => { e.currentTarget.parentElement!.parentElement!.setPointerCapture(e.pointerId); setDrag({ y: e.clientY, start: Date.now(), pos }); }}>Reposition</button> : null}
+        <div className="page-cover-actions" data-visible={editing ? "" : undefined}>
+          {editing ? (
+            <>
+              <button type="button" className="btn" onClick={save}>Save position</button>
+              <button type="button" className="btn ghost" onClick={cancel}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="btn" onClick={() => setPicker((o) => !o)}>Change cover</button>
+              {image ? <button type="button" className="btn" onClick={() => { setPicker(false); setEditing(true); }}>Reposition</button> : null}
+            </>
+          )}
         </div>
       ) : null}
       {picker ? <CoverPicker store={store} pageID={pageID} hasCover onClose={() => setPicker(false)} /> : null}

@@ -29,14 +29,31 @@ test("Cover: Farbe, Bild hochladen, verschieben, entfernen", async ({ page }) =>
   await expect(img).toBeVisible();
   await expect(img).toHaveAttribute("style", /center 50/);
 
+  // Wie Notion: Klick auf „Reposition“ → Bild ziehen → Cancel verwirft, Save position speichert.
+  const dragCover = async () => {
+    const c = (await cover.boundingBox())!;
+    await page.mouse.move(c.x + c.width / 3, c.y + c.height / 3);
+    await page.mouse.down();
+    await page.mouse.move(c.x + c.width / 3, c.y + c.height / 3 + 60, { steps: 5 });
+    await page.mouse.up();
+  };
   await cover.hover();
-  const btn = cover.getByRole("button", { name: "Reposition" });
-  const b = (await btn.boundingBox())!;
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2 + 60, { steps: 5 });
-  await page.mouse.up();
+  await cover.getByRole("button", { name: "Reposition" }).click();
+  await expect(cover.getByText("Drag image to reposition")).toBeVisible();
+  await dragCover();
   await expect(img).not.toHaveAttribute("style", /center 50/);
+  await cover.getByRole("button", { name: "Cancel" }).click();
+  await expect(img).toHaveAttribute("style", /center 50/);
+
+  await cover.hover();
+  await cover.getByRole("button", { name: "Reposition" }).click();
+  await dragCover();
+  await cover.getByRole("button", { name: "Save position" }).click();
+  await expect(cover.getByText("Drag image to reposition")).toHaveCount(0);
+  await expect(img).not.toHaveAttribute("style", /center 50/);
+  const saved = await img.getAttribute("style");
+  await page.keyboard.press("Escape");
+  await expect(img).toHaveAttribute("style", saved!);
 
   await cover.hover();
   await cover.getByRole("button", { name: "Change cover" }).click();
