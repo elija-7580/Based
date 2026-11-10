@@ -132,7 +132,7 @@ const WeekRow = memo(function WeekRow({ first, top, height, lanes, focusMonth, t
   );
 });
 
-function useHeight(ref: React.RefObject<HTMLElement>): number {
+function useHeight(ref: React.RefObject<HTMLElement | null>): number {
   const [h, setH] = useState(0);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -148,7 +148,7 @@ function useHeight(ref: React.RefObject<HTMLElement>): number {
 interface ViewProps {
   v: ViewSpans; todayDay: number; weekStart: number; a: EntryActions; drag: DateDrag | null;
   onCreate: (day: number) => void; onMore: (day: number, el: HTMLElement) => void;
-  scrollRef: React.RefObject<HTMLDivElement>;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
   /** Kopfzeile (Titel und Blättern) – je Modus. */
   header: (title: string, prev: () => void, next: () => void, goToday: () => void) => React.ReactNode;
 }
