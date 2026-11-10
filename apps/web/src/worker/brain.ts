@@ -48,16 +48,22 @@ export class BrainHost {
   private indexDirty = new Set<string>();
   private router: { revision: number; router: SkillRouter } | undefined;
   private repairQueued = false;
+  /** Gibt es (oder gab es) einen Brain? Ohne wird nach Änderungen nichts geprüft (große Workspaces, Importe). */
+  private active = false;
   readonly tools: BrainTools;
 
   constructor(private readonly store: WorkspaceStore) {
     this.brain = new AgentBrain(store);
-    if (this.brain.exists) this.brain.protect();
+    if (this.brain.exists) {
+      this.brain.protect();
+      this.active = true;
+    }
     this.tools = new BrainTools(store, this.brain, () => this.semantic());
   }
 
   handle(a: BrainAction): unknown {
     const b = this.brain;
+    if (a.op === "ensure" || a.op === "saveSkill" || a.op === "importSkills" || a.op === "saveMemory") this.active = true;
     switch (a.op) {
       case "status": {
         const ids = b.find();
@@ -172,15 +178,14 @@ export class BrainHost {
   }
 
   noteChange(change: StoreChange) {
-    if (this.index) {
-      for (const key of change.keys) {
-        const { kind, id } = parseKey(key);
-        if (kind !== "block") continue;
-        const page = containingPage(this.store, id) ?? id;
-        this.indexDirty.add(page);
-      }
+    for (const key of change.keys) {
+      const { kind, id } = parseKey(key);
+      if (kind !== "block") continue;
+      if (this.index) this.indexDirty.add(containingPage(this.store, id) ?? id);
+      // Ein Brain kommt über Sync oder Import dazu.
+      if (!this.active && (this.store.blocks.get(id)?.props as { brain?: string } | undefined)?.brain) this.active = true;
     }
-    if (!this.repairQueued) {
+    if (this.active && !this.repairQueued) {
       this.repairQueued = true;
       queueMicrotask(() => {
         this.repairQueued = false;
