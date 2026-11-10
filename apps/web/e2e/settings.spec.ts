@@ -32,15 +32,21 @@ test("Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adres
 });
 
 test("Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter", async ({ page }) => {
-  await open(page, "prefs-agents");
-  await expect(page.getByRole("heading", { level: 1, name: "Agents & AI" })).toBeVisible();
+  await open(page, "prefs-people");
+  await expect(page.getByRole("heading", { level: 1, name: "People" })).toBeVisible();
   const missing = page.getByTestId("settings-missing");
   await expect(missing.getByRole("heading", { name: "Not available yet" })).toBeVisible();
-  await expect(missing.getByText("API keys for AI providers")).toBeVisible();
-  await expect(missing.getByText("Agents and the main agent")).toBeVisible();
+  await expect(missing.getByText("Members", { exact: true })).toBeVisible();
+  await expect(missing.getByText("Invitations")).toBeVisible();
   const content = page.getByTestId("settings-page");
   for (const role of ["switch", "checkbox", "textbox", "radio", "button"] as const) await expect(content.getByRole(role)).toHaveCount(0);
-  await expect(navRow(page, "Agents & AI")).toContainText("Not yet");
+  await expect(navRow(page, "People")).toContainText("Not yet");
+
+  // Agents & AI hat seit BSD-159 einen echten Abschnitt (Modelle und Schlüssel); der Rest bleibt ehrlich offen.
+  await nav(page).getByRole("button", { name: "Agents & AI", exact: true }).click();
+  await expect(page.getByTestId("settings-section-ai-providers")).toBeVisible();
+  await expect(page.getByTestId("settings-missing").getByText("API keys for AI providers")).toHaveCount(0);
+  await expect(page.getByTestId("settings-missing").getByText("Agents and the main agent")).toBeVisible();
 
   await nav(page).getByRole("button", { name: "Connections", exact: true }).click();
   await expect(page.getByTestId("settings-missing").getByText("MCP connections")).toBeVisible();
@@ -101,22 +107,22 @@ test("Account und Diagnostics zeigen echten Gerätezustand", async ({ page }) =>
 });
 
 test("Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen", async ({ page }) => {
-  await open(page, "prefs-agents");
-  await expect(page.getByTestId("settings-missing").getByText("API keys for AI providers")).toBeVisible();
+  await open(page, "prefs-people");
+  await expect(page.getByTestId("settings-missing").getByText("Members", { exact: true })).toBeVisible();
   // Die Registry ist für Tests am __based-Objekt erreichbar (main.tsx).
   await page.evaluate(() => {
     const based = (globalThis as unknown as { __based: { registerSettingsSection(s: unknown): () => void } }).__based;
     (globalThis as unknown as { __off: () => void }).__off = based.registerSettingsSection({
-      id: "test-keys", page: "agents", title: "API keys", provides: ["API keys for AI providers"], component: () => "Registered by another area",
+      id: "test-keys", page: "people", title: "Members list", provides: ["Members"], component: () => "Registered by another area",
     });
   });
   await expect(page.getByTestId("settings-section-test-keys")).toContainText("Registered by another area");
-  await expect(page.getByRole("heading", { level: 2, name: "API keys" })).toBeVisible();
-  await expect(page.getByTestId("settings-missing").getByText("API keys for AI providers")).toHaveCount(0);
-  await expect(navRow(page, "Agents & AI")).not.toContainText("Not yet");
+  await expect(page.getByRole("heading", { level: 2, name: "Members list" })).toBeVisible();
+  await expect(page.getByTestId("settings-missing").getByText("Members", { exact: true })).toHaveCount(0);
+  await expect(navRow(page, "People")).not.toContainText("Not yet");
   await page.evaluate(() => (globalThis as unknown as { __off: () => void }).__off());
   await expect(page.getByTestId("settings-section-test-keys")).toHaveCount(0);
-  await expect(navRow(page, "Agents & AI")).toContainText("Not yet");
+  await expect(navRow(page, "People")).toContainText("Not yet");
 });
 
 for (const theme of ["light", "dark"] as const) {

@@ -186,6 +186,7 @@ test("Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Spe
   const md = "# Hike\n\nUp the hill.\n\n![Summit](images/summit.png)\n";
   const data = zip([{ path: "Notes/Hike.md", data: Buffer.from(md) }, { path: "Notes/images/summit.png", data: PNG }]);
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
   await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: data });

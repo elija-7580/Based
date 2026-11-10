@@ -91,9 +91,10 @@ async function deviceOn(browser: Browser, baseURL: string): Promise<Page> {
 async function connect(page: Page, opts: { dark?: boolean } = {}) {
   await page.getByRole("button", { name: "Settings" }).click();
   if (opts.dark) await page.getByRole("radio", { name: "Dark" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
   await page.getByLabel("Server URL").fill(serverURL);
   await page.getByLabel("Token").fill(TOKEN);
-  await page.getByRole("button", { name: "Connect" }).click();
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "synced", { timeout: 20_000 });
 }
 
