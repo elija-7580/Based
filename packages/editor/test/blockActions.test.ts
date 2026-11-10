@@ -6,7 +6,7 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { MemoryPersistence, plainText, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { CUSTOM } from "../src/mapping/bn.js";
 import { basedSchema, createConverter, type BasedEditor } from "../src/schema/schema.js";
-import { canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, toggleAll, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
+import { canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, rangeIDs, stepRange, toggleAll, type SelectionEditor, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
 import { DocSession } from "../src/yjs/session.js";
 
 const converter = createConverter();
@@ -70,7 +70,7 @@ describe("Blockaktionen", () => {
     expect(plainText(s.blocks.get("b")?.text)).toBe("Zwei");
   });
 
-  it("Unterseiten (eigene Records) werden nicht flach kopiert", async () => {
+  it("Unterseiten (eigene Records) werden nicht flach kopiert, sondern dem Store zum tiefen Kopieren gemeldet", async () => {
     const s = store();
     const session = new DocSession(s, "p", { converter, debounceMs: 0 });
     const ed = mount(session);
@@ -80,7 +80,7 @@ describe("Blockaktionen", () => {
     expect(sub.type).toBe(CUSTOM.page);
     expect(isDuplicable(sub)).toBe(false);
     const r = duplicateBlocks(a, [a.getBlock("a")!, sub]);
-    expect(r).toMatchObject({ skipped: 1 });
+    expect(r).toMatchObject({ skipped: 0, records: ["sub"] });
     expect(r.inserted).toHaveLength(1);
   });
 
@@ -179,5 +179,28 @@ describe("Blockaktionen", () => {
     expect(toggleAll(root)).toBe("closed");
     expect(all()).toEqual(["false", "false", "false"]);
     expect(toggleAll(document.createElement("div"))).toBe("none");
+  });
+
+  it("Blockauswahl: ↑/↓ in Lese-Reihenfolge, ⇧ erweitert unter Geschwistern", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const e = ed as unknown as SelectionEditor;
+    let r = { anchor: "a", head: "a" };
+    r = stepRange(e, r, 1, false);
+    expect(r).toEqual({ anchor: "b", head: "b" });
+    r = stepRange(e, r, 1, false); // ins Kind hinein
+    expect(r).toEqual({ anchor: "c", head: "c" });
+    r = stepRange(e, r, -1, false);
+    expect(r.head).toBe("b");
+    r = stepRange(e, r, 1, true); // ⇧↓: nächstes Geschwister (Unterseite), nicht das Kind
+    expect(rangeIDs(e, r)).toEqual(["b", "sub"]);
+    r = stepRange(e, r, 1, true); // am Rand bleibt es
+    expect(rangeIDs(e, r)).toEqual(["b", "sub"]);
+    r = stepRange(e, { anchor: "sub", head: "sub" }, -1, true);
+    r = stepRange(e, r, -1, true);
+    expect(rangeIDs(e, r)).toEqual(["a", "b", "sub"]);
+    expect(rangeIDs(e, { anchor: "weg", head: "a" })).toEqual([]);
   });
 });
