@@ -5,6 +5,7 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
+import { Databases } from "./databases.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -13,6 +14,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
+- Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
 
 export const GUIDE: Record<string, string> = {
@@ -59,6 +61,46 @@ const offset = z.number().int().min(0).optional().describe("Skip this many items
 export function createMcpServer(pages: Pages): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;
+  const dbs = new Databases(pages.store);
+  const values = z.record(z.string(), z.string()).describe("Property name → plain text value (empty string clears; options by name; multi-select comma-separated; dates YYYY-MM-DD)");
+
+  // MARK: Datenbanken (BSD-221)
+  server.registerTool(
+    "list_databases",
+    { description: "Databases with ids, row counts and property schemas", inputSchema: { limit, offset }, annotations: { readOnlyHint: true } },
+    guarded(({ limit: n, offset: o }: { limit?: number | undefined; offset?: number | undefined }) => text(paged(dbs.list(), n ?? 50, o ?? 0))),
+  );
+  server.registerTool(
+    "database_schema",
+    { description: "Properties of a database with types and allowed values", inputSchema: { id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ id }: { id: string }) => text(dbs.schema(id))),
+  );
+  server.registerTool(
+    "query_database",
+    {
+      description: "Rows of a database with property values as text. Optional text search across all cells and sort by a property name.",
+      inputSchema: { id: z.string(), search: z.string().optional(), sort: z.string().optional(), descending: z.boolean().optional(), limit, offset },
+      annotations: { readOnlyHint: true },
+    },
+    guarded((a: { id: string; search?: string | undefined; sort?: string | undefined; descending?: boolean | undefined; limit?: number | undefined; offset?: number | undefined }) =>
+      text(paged(dbs.query(a.id, { search: a.search, sort: a.sort, descending: a.descending }), a.limit ?? 50, a.offset ?? 0))),
+  );
+  server.registerTool(
+    "add_row",
+    { description: "Add a row to a database; set properties by name with plain strings. Returns the row id.", inputSchema: { id: z.string(), values } },
+    guarded(({ id, values: v }: { id: string; values: Record<string, string> }) => {
+      const rowID = dbs.addRow(id, v);
+      return text(`Added row ${rowID} (${PAGE_URI}${rowID}).`);
+    }),
+  );
+  server.registerTool(
+    "update_row",
+    { description: "Change properties of a database row by name with plain strings", inputSchema: { id: z.string().describe("Row id"), values } },
+    guarded(({ id, values: v }: { id: string; values: Record<string, string> }) => {
+      dbs.updateRow(id, v);
+      return text(`Updated row ${id}.`);
+    }),
+  );
 
   server.registerTool(
     "based_guide",

@@ -100,7 +100,10 @@ Assets-Ordner mitnehmen. `test/assets.test.ts`.
 
 `src/mcp.ts` mit `@modelcontextprotocol/sdk` (Protokollversionen laut SDK). Werkzeuge: `based_guide`, `search`,
 `read_page`, `list_pages`, `create_page`, `append_markdown`, `replace_page_content`, `update_page`, `trash_page`,
-`restore_page`, `list_trash`. Ressourcen `based://docs/<topic>` (overview, markdown, safety) und
+`restore_page`, `list_trash`; Datenbanken (BSD-221): `list_databases`, `database_schema`, `query_database` (Suche
+in allen Zellen, Sortierung nach Property, Seiten), `add_row` / `update_row` (Properties per Name, Werte als Text;
+neue Select-Optionen werden angelegt, ungültige Werte werden vorher abgelehnt – keine halb angelegten Zeilen).
+Noch nicht im TS-Server: Projekte, Runs, Inbox, Hauptagent, Skills als Prompts, Berechtigungsregeln. Ressourcen `based://docs/<topic>` (overview, markdown, safety) und
 `based://page/<id>` (Liste: die ersten 500 Seiten). Seiten kommen als Markdown (`MarkdownExporter` aus
 `@based/core`), Links auf Seiten als `based://page/<id>`; Markdown wird mit `MarkdownImporter` zu Blöcken, Links
 auf `based://page/<id>` werden Erwähnungen. Änderungen sind lokale Änderungen des Servers und erreichen Geräte per
