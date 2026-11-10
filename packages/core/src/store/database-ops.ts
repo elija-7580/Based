@@ -537,6 +537,19 @@ export function duplicateRow(store: WorkspaceStore, rowID: string): string | und
   });
 }
 
+/** BSD-213: mehrere Zeilen duplizieren (je Kopie direkt unter dem Original), ein Undo-Schritt. */
+export function duplicateRows(store: WorkspaceStore, rowIDs: readonly string[]): string[] {
+  const rows = rowIDs.map((id) => store.blocks.get(id)).filter((r): r is Block => !!r && r.parent.startsWith("d:"));
+  if (!rows.length) return [];
+  return store.transact(rows.length === 1 ? "Duplicate" : `Duplicate ${rows.length} pages`, (tx) => rows.map((row) => {
+    const databaseID = row.parent.slice(2);
+    const id = copySubtree(store, tx, row, row.parent, sortKeyIn(store, row.parent, { after: row.id }));
+    assignUniqueID(store, tx, databaseID, id);
+    linkMirrors(store, id, tx);
+    return id;
+  }));
+}
+
 /** Zeile umsortieren (Board-Karte, Tabellenzeile ohne Sortierung). */
 export function moveRow(store: WorkspaceStore, rowID: string, position: InsertPosition) {
   const row = store.blocks.get(rowID);

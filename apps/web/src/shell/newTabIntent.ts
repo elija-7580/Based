@@ -67,3 +67,14 @@ export function installNewTabIntent(win: Window = window): () => void {
     win.removeEventListener("auxclick", onAux, true);
   };
 }
+
+/** BSD-213: `fn` so ausführen, als käme es per ⌘-Klick (Seiten öffnen sich in Hintergrund-Tabs). */
+export function asNewTabs(fn: () => void) {
+  const before = intent;
+  intent = true;
+  try {
+    fn();
+  } finally {
+    intent = before;
+  }
+}
