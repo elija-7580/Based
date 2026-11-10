@@ -15,3 +15,4 @@ export * from "./legacy.js";
 export * from "./queue.js";
 export { AnthropicProvider, AnthropicStream, ANTHROPIC_FALLBACK_MODELS, type AnthropicOptions } from "./providers/anthropic.js";
 export { OpenAIProvider, OpenAIStream, OLLAMA_BASE_URL, type OpenAIOptions, type TokenField } from "./providers/openai.js";
+export * from "./agents/index.js";

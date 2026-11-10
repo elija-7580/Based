@@ -47,6 +47,8 @@ export interface ToolPolicy {
   mode: PermissionMode;
   /** Fragt den Nutzer (Karte im Chat). Fehlt sie, werden fragepflichtige Aufrufe abgelehnt. */
   approve?: ((call: ToolCall) => Promise<boolean>) | undefined;
+  /** BSD-160: Regeln (allow/ask/deny) vor dem Modus; `undefined` = keine Regel greift. */
+  rules?: ((call: ToolCall) => "allow" | "ask" | "deny" | undefined) | undefined;
 }
 
 /** Tool-Ausgabe im Ereignis (Transkript): vollständig bis 64 kB, darüber gekürzt (BSD-77; Auslagern als Asset fehlt noch). */
@@ -72,7 +74,9 @@ function raceAbort<T>(p: Promise<T>, signal: AbortSignal): Promise<T> {
 export async function executeTool(host: ToolHost, call: ToolCall, policy: ToolPolicy, signal: AbortSignal, emit: (e: ChatEvent) => void): Promise<ToolResult> {
   const known = host.specs.some((s) => s.name === call.name);
   if (!known) return { text: `Unknown tool ${call.name}`, isError: true };
-  const needsAsk = policy.mode === "ask" || (policy.mode === "askEdits" && host.isWrite(call.name));
+  const verdict = policy.rules?.(call);
+  if (verdict === "deny") return { text: "A permission rule blocks this action.", isError: true };
+  const needsAsk = verdict === "ask" || (verdict !== "allow" && (policy.mode === "ask" || (policy.mode === "askEdits" && host.isWrite(call.name))));
   if (needsAsk) {
     if (!policy.approve) return { text: "This action needs the user's approval, and nobody can be asked right now.", isError: true };
     emit({ type: "permissionRequest", id: call.id, name: call.name });
