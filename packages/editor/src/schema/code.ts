@@ -40,7 +40,14 @@ for (const l of CODE_LANGUAGES) languages[l.id] = { name: l.name, ...(l.aliases 
 /** Sprachen mit Vorschau unter dem Code (Mermaid folgt, braucht eine gebündelte Bibliothek). */
 const PREVIEW_LANGUAGES: ReadonlySet<string> = new Set(["html"]);
 
-export const codeBlockSpec = createCodeBlockSpec({ defaultLanguage: "text", indentLineWithTab: true, supportedLanguages: languages });
+/**
+ * BlockNote wirft beim Zeichnen, wenn die gespeicherte Sprache nicht in der Liste steht („ts“ aus Markdown, Sprachen
+ * aus Swift/Notion). Die Liste meldet deshalb jede Sprache als bekannt; im Menü stehen nur die eigenen, die
+ * gespeicherte bleibt unverändert (und wird über den Hervorheber trotzdem erkannt).
+ */
+const anyLanguage = new Proxy(languages, { has: () => true });
+
+export const codeBlockSpec = createCodeBlockSpec({ defaultLanguage: "text", indentLineWithTab: true, supportedLanguages: anyLanguage });
 
 /** Dekorationen für alle Codeblöcke im Dokument. */
 export function syntaxDecorations(doc: PMNode): DecorationSet {

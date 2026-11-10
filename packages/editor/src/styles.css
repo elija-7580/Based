@@ -290,3 +290,11 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-html-preview-wrap { display: grid; gap: var(--space-1); margin-top: var(--space-3); white-space: normal; font-family: var(--font-ui); }
 .bx-html-preview-label { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
 .bx-html-preview { display: block; width: 100%; min-height: calc(var(--space-8) * 3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
+
+/* BSD-211: Auswahl nach dem Einfügen einer URL (Link / Bookmark / Embed) */
+.bx-url-menu {
+  position: fixed; z-index: 45; display: grid; gap: var(--space-1); min-width: calc(var(--space-8) * 4); margin-top: var(--space-1); padding: var(--space-2);
+  border-radius: var(--radius-lg); background: var(--bg); border: 1px solid var(--line); box-shadow: var(--shadow-menu); font-family: var(--font-ui); font-size: var(--type-ui-size);
+}
+.bx-url-item { display: flex; justify-content: space-between; gap: var(--space-4); background: none; border: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
+.bx-url-item[data-active="true"], .bx-url-item:hover { background: var(--surface-raised); }

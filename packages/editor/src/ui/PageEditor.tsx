@@ -18,8 +18,8 @@ import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
-  canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
-  turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor,
+  applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
+  turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor, type URLChoice,
 } from "./blockActions.js";
 import { MovePicker } from "./MovePicker.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
@@ -169,6 +169,13 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
   const { store } = shared;
   const editorRef = useRef<BasedEditor | null>(null);
   const plainPasteAt = useRef(0);
+  // BSD-211: nach dem Einfügen einer nackten URL – Link (Standard), Bookmark oder Embed.
+  const [urlMenu, setURLMenu] = useState<{ blockID: string; url: string; x: number; y: number; active: number } | undefined>();
+  const onURLRef = useRef<(blockID: string, url: string) => void>(() => {});
+  onURLRef.current = (blockID, url) => {
+    const rect = globalThis.getSelection?.()?.rangeCount ? globalThis.getSelection()!.getRangeAt(0).getBoundingClientRect() : undefined;
+    setURLMenu({ blockID, url, x: rect?.left ?? 0, y: rect?.bottom ?? 0, active: 0 });
+  };
   const sharedRef = useRef(shared);
   sharedRef.current = shared;
   const ancestorsRef = useRef(props.ancestors);
@@ -186,7 +193,8 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
         const plainOnly = Date.now() - plainPasteAt.current < PLAIN_PASTE_WINDOW_MS;
         plainPasteAt.current = 0;
         if (!plainOnly && pasteSynced(ed, session, event, ancestorsRef.current, sharedRef.current)) return true;
-        return handlePaste(ed, { event, defaultPasteHandler, plainOnly });
+        return handlePaste(ed, { event, defaultPasteHandler, plainOnly, onURL: (blockID, url) => onURLRef.current(blockID, url),
+          pageExists: (id) => { const p = sharedRef.current.pages.get(id); return p !== undefined && !p.missing; } });
       },
     });
     return BlockNoteEditor.create(options) as unknown as BasedEditor;
@@ -255,6 +263,11 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     }
     editor.focus();
   };
+  const chooseURL = (choice: URLChoice) => {
+    if (urlMenu) applyURLChoice(actions, urlMenu.blockID, urlMenu.url, choice);
+    setURLMenu(undefined);
+    editor.focus();
+  };
   const onSelectionKey = (e: KeyboardEvent) => {
     if (!range) return;
     const mod = e.metaKey || e.ctrlKey;
@@ -285,6 +298,26 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           return;
         }
         if (e.target !== editor.domElement) return; // eingebettete Editoren (Synced Block) haben ihren eigenen Rahmen
+        if (urlMenu) {
+          // Menü nach URL-Einfügen: Pfeile/Enter wählen, Esc und jede andere Taste schließen (getippt wird weiter).
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const n = URL_CHOICES.length;
+            setURLMenu({ ...urlMenu, active: (urlMenu.active + (e.key === "ArrowDown" ? 1 : n - 1)) % n });
+            return;
+          }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            chooseURL(URL_CHOICES[urlMenu.active]!.choice);
+            return;
+          }
+          if (!["Shift", "Meta", "Control", "Alt"].includes(e.key)) setURLMenu(undefined);
+          if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+        }
         if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt.current = Date.now();
         // ⌘D: Block (bzw. ausgewählte Blöcke) duplizieren, wie in Notion.
         if (editable && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "d") {
@@ -304,6 +337,15 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
       }} onMouseDownCapture={() => {
         if (range) setRange(undefined);
       }}>
+        {urlMenu ? (
+          <div className="bx-url-menu" role="menu" aria-label="Paste as" style={{ left: urlMenu.x, top: urlMenu.y }} onMouseDown={(e) => e.preventDefault()}>
+            {URL_CHOICES.map((c, i) => (
+              <button key={c.choice} type="button" role="menuitem" className="bx-url-item" data-active={i === urlMenu.active} onClick={() => chooseURL(c.choice)}>
+                <span>{c.label}</span><span className="bx-muted">{c.hint}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }"}</style> : null}
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
@@ -435,6 +477,7 @@ function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly Bl
       <TurnIntoItem session={props.session} />
       <DuplicateItem duplicate={props.duplicate} />
       <MoveToItem session={props.session} startMove={props.startMove} />
+      <CopyMarkdownItem session={props.session} />
       <BlockColorsItem>Colors</BlockColorsItem>
       <CopyAndSyncItem session={props.session} />
       <RemoveBlockItem>Delete</RemoveBlockItem>
@@ -457,6 +500,33 @@ function DuplicateItem(props: { duplicate: (blocks: readonly BlockLike[]) => unk
     </Components.Generic.Menu.Item>
   );
 }
+
+/** BSD-211: „Copy as Markdown“ – Blöcke (bzw. Auswahl) über den Markdown-Exporter des Kerns in die Zwischenablage. */
+function CopyMarkdownItem(props: { session: DocSession }) {
+  const Components = useComponentsContext()!;
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  if (!block) return null;
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+      const a = editor as unknown as ActionEditor;
+      const md = blocksAsMarkdown(props.session, targetBlocks(a, block.id).map((b) => b.id));
+      lastMarkdownCopy = md;
+      void globalThis.navigator?.clipboard?.writeText(md).catch(() => { /* ohne Berechtigung: lastMarkdownCopy */ });
+    }}>
+      Copy as Markdown
+    </Components.Generic.Menu.Item>
+  );
+}
+
+/** Zuletzt mit „Copy as Markdown“ kopiert (für Tests und Umgebungen ohne Zwischenablage-Recht). */
+export let lastMarkdownCopy = "";
+
+const URL_CHOICES: readonly { choice: URLChoice; label: string; hint: string }[] = [
+  { choice: "link", label: "Link", hint: "Keep as text link" },
+  { choice: "bookmark", label: "Bookmark", hint: "Card with the address" },
+  { choice: "embed", label: "Embed", hint: "Embed the page" },
+];
 
 /** BSD-207: „Move to“ – öffnet die Seitensuche; wirkt auf die Auswahl, wenn der Block darin liegt. */
 function MoveToItem(props: { session: DocSession; startMove: (req: MoveRequest) => void }) {

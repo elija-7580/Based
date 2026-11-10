@@ -1,7 +1,7 @@
 // BSD-207: Blockaktionen wie in Notion – Duplicate (⌘D), Turn into (auch „Page“), Move to und alle Toggles auf/zu.
 // Reine Funktionen über die BlockNote-API (und den Store der Sitzung), damit sie ohne Oberfläche testbar sind; das
 // Blockmenü (PageEditor.tsx) ruft nur diese auf.
-import { isDescendant, keysBetween, plainText, type WorkspaceStore } from "@based/core";
+import { isDescendant, keysBetween, MarkdownExporter, plainText, type Block, type WorkspaceStore } from "@based/core";
 import { CUSTOM } from "../mapping/bn.js";
 
 /** Minimal, was hier von BlockNote gebraucht wird (BasedEditor erfüllt das). */
@@ -241,4 +241,30 @@ export function stepRange(editor: SelectionEditor, r: BlockRange, dir: -1 | 1, e
   const i = flat.indexOf(r.head);
   const next = i >= 0 ? flat[i + dir] : undefined;
   return next ? { anchor: next, head: next } : { anchor: r.head, head: r.head };
+}
+
+// MARK: Copy as Markdown, URL als Bookmark/Embed
+
+/** „Copy as Markdown“: die Blöcke (mit Kindern) über den Markdown-Exporter des Kerns (Callout, Gleichung, Unterseite …). */
+export function blocksAsMarkdown(session: ActionSession, blockIDs: readonly string[]): string {
+  session.flush();
+  const recs = blockIDs.map((id) => session.store.blocks.get(id)).filter((b): b is Block => b !== undefined);
+  return new MarkdownExporter(session.store).exportBlocks(recs, 0).replace(/^\n+|\n+$/g, "");
+}
+
+export type URLChoice = "link" | "bookmark" | "embed";
+
+/**
+ * Nach dem Einfügen einer nackten URL in einen leeren Absatz: „bookmark“/„embed“ ersetzt den Absatz durch den
+ * Block (ein Undo-Schritt), „link“ lässt ihn. Nur, solange der Absatz noch genau die URL enthält.
+ */
+export function applyURLChoice(editor: ActionEditor, blockID: string, url: string, choice: URLChoice): boolean {
+  if (choice === "link") return false;
+  const b = editor.getBlock(blockID);
+  if (!b || b.type !== "paragraph" || !Array.isArray(b.content)) return false;
+  const text = (b.content as { type?: string; content?: unknown; text?: string }[]).map((c) =>
+    c.type === "link" && Array.isArray(c.content) ? (c.content as { text?: string }[]).map((x) => x.text ?? "").join("") : c.text ?? "").join("");
+  if (text.trim() !== url) return false;
+  editor.replaceBlocks([blockID], [{ type: CUSTOM.embed, props: { kind: choice, url } }]);
+  return true;
 }

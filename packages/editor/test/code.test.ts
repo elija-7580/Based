@@ -14,6 +14,7 @@ describe("Codeblock", () => {
     editor.replaceBlocks(editor.document, [
       { type: "codeBlock", props: { language: "javascript" }, content: "const x = 1; // one" } as never,
       { type: "codeBlock", props: { language: "text" }, content: "const y = 2" } as never,
+      { type: "codeBlock", props: { language: "ts" }, content: "" } as never, // unbekannt im Menü: zeichnet trotzdem
     ]);
     const tok = (cls: string) => [...div.querySelectorAll(".bx-tok-" + cls)].map((e) => e.textContent);
     expect(tok("keyword")).toEqual(["const"]);
@@ -22,6 +23,7 @@ describe("Codeblock", () => {
     const doc = editor.prosemirrorState.doc;
     expect(syntaxDecorations(doc).find().length).toBe(3);
     expect(editor.document[0]?.props).toMatchObject({ language: "javascript" });
+    expect(editor.document[2]?.props).toMatchObject({ language: "ts" });
     editor.unmount();
   });
 
