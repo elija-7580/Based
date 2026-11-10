@@ -59,7 +59,13 @@ const isStamp = (v: unknown): v is Stamp =>
  * Push-Body streng dekodieren (wie Swift `SyncPush`: ein Server verwirft nie still, was ein Client schickte).
  * Ein Record, der nicht passt, macht den ganzen Push ungültig (400) – der Client versucht es dann erneut.
  */
-export function decodePush(body: unknown): { records: WireRecord[]; deletions: RecordKeyString[]; stamps: Map<RecordKeyString, Stamp> } {
+export interface DecodedPush {
+  records: WireRecord[];
+  deletions: RecordKeyString[];
+  stamps: Map<RecordKeyString, Stamp>;
+}
+
+export function decodePush(body: unknown): DecodedPush {
   if (typeof body !== "object" || body === null || Array.isArray(body)) throw new BadRequest("bad push: body must be an object");
   const b = body as { records?: unknown; deletions?: unknown };
   if (!Array.isArray(b.records)) throw new BadRequest("bad push: records must be an array");
@@ -137,7 +143,11 @@ export class SyncService {
 
   /** Push zusammenführen (Last-Writer-Wins). Ungestempelte Löschungen stempelt der Server beim Empfang. */
   push(body: unknown): PushReply {
-    const p = decodePush(body);
+    return this.pushDecoded(decodePush(body));
+  }
+
+  /** Push nach dem Dekodieren (Teilen: die Freigabeprüfung filtert dazwischen). */
+  pushDecoded(p: DecodedPush): PushReply {
     for (const k of p.deletions) if (!p.stamps.has(k)) p.stamps.set(k, this.store.clock.now());
     this.adoptDeviceWorkspace(p.records);
     const merge = this.store.applyRemote(p.records, p.deletions, p.stamps);

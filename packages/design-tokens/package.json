@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./astryx": "./src/astryx.ts",
     "./tokens.css": "./tokens.css",
-    "./tokens.json": "./tokens.json"
+    "./tokens.json": "./tokens.json",
+    "./export-css": "./src/export-css.ts"
   },
   "scripts": {
     "css": "node scripts/build-css.ts",

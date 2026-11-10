@@ -8,8 +8,11 @@ import type { Logger } from "./log.js";
 export const DEFAULT_BODY_LIMIT = 1 << 20; // 1 MiB
 export const LARGE_BODY_LIMIT = 32 << 20; // 32 MiB: Sync-Pushes, MCP-Aufrufe mit Seiteninhalt
 
-/** Wer eine Route aufrufen darf. */
-export type RouteAccess = "public" | "owner";
+/** Wer eine Route aufrufen darf: niemand Bestimmtes, nur der Owner, oder Owner und geteilte Principals (docs/sharing.md). */
+export type RouteAccess = "public" | "owner" | "shared";
+
+/** Wer anfragt. `owner` = BASED_TOKEN; sonst ein geteilter Principal (Gerät eines Gasts, Access-Link). */
+export type Caller<P> = { kind: "owner" } | { kind: "shared"; principal: P };
 
 export interface RouteContext {
   req: IncomingMessage;
@@ -21,10 +24,12 @@ export interface RouteContext {
   params: Record<string, string>;
   /** Wird ausgelöst, wenn der Client die Verbindung schließt. */
   signal: AbortSignal;
+  /** Wer anfragt (bei öffentlichen Routen: Owner, wenn der Owner-Token mitkam, sonst undefined). */
+  caller: Caller<unknown> | undefined;
 }
 
 /** Antwort eines Handlers; `undefined` = der Handler hat selbst geantwortet (MCP-Transport). */
-export type RouteResult = { status: number; json?: unknown; text?: string; headers?: Record<string, string> } | undefined;
+export type RouteResult = { status: number; json?: unknown; text?: string; html?: string; body?: Buffer; headers?: Record<string, string> } | undefined;
 
 /** Passt `path` auf das Muster (`/a/:name/b`)? Gibt die Parameter zurück. Ohne `:` nur exakter Vergleich. */
 export function matchPath(pattern: string, path: string): Record<string, string> | undefined {
@@ -96,6 +101,8 @@ export interface RouterConfig {
   /** Einziger Origin mit CORS-Headern (aus BASED_PUBLIC_URL); undefined = kein Cross-Origin-Zugriff. */
   allowedOrigin?: string | undefined;
   log: Logger;
+  /** Geteilte Principals aus einem Token (Geräte-Token `bdu_…`, Link-Geheimnis `bdl_…`); ohne: nur der Owner. */
+  sharedPrincipal?: ((token: string) => unknown) | undefined;
 }
 
 export class Router {
@@ -147,7 +154,7 @@ export class Router {
       return {
         status: 204,
         headers: {
-          "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Authorization, Content-Type, Range, Mcp-Session-Id, Mcp-Protocol-Version",
         },
       };
@@ -158,9 +165,17 @@ export class Router {
     if (!route) {
       return { status: 405, json: { error: "method not allowed" }, headers: { Allow: [...new Set(candidates.map((r) => r.method))].sort().join(", ") } };
     }
-    if (route.access === "owner") {
-      const token = bearer(req);
-      if (!token || !tokenEquals(token, this.config.token)) return error("unauthorized", 401);
+    const token = bearer(req);
+    let caller: Caller<unknown> | undefined;
+    if (token && tokenEquals(token, this.config.token)) caller = { kind: "owner" };
+    else if (token && route.access !== "public") {
+      const principal = this.config.sharedPrincipal?.(token);
+      if (principal !== undefined) caller = { kind: "shared", principal };
+    }
+    if (route.access !== "public") {
+      if (!caller) return error("unauthorized", 401);
+      // Ein gültiger Gast-Token reicht nicht für Owner-Routen (MCP, Assets-GC, Sandbox …).
+      if (route.access === "owner" && caller.kind !== "owner") return error("forbidden", 403);
     }
     let body: Buffer;
     try {
@@ -172,7 +187,7 @@ export class Router {
       }
       throw e;
     }
-    return route.handler({ req, res, url, body, signal, params: matchPath(route.path, path) ?? {} });
+    return route.handler({ req, res, url, body, signal, caller, params: matchPath(route.path, path) ?? {} });
   }
 }
 
@@ -185,6 +200,12 @@ function send(res: ServerResponse, r: NonNullable<RouteResult>, head = false) {
     const data = JSON.stringify(r.json);
     res.writeHead(r.status, { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) });
     res.end(data);
+  } else if (r.html !== undefined) {
+    res.writeHead(r.status, { "Content-Type": "text/html; charset=utf-8", "Content-Length": Buffer.byteLength(r.html) });
+    res.end(r.html);
+  } else if (r.body !== undefined) {
+    res.writeHead(r.status, { "Content-Length": r.body.length });
+    res.end(r.body);
   } else if (r.text !== undefined) {
     res.writeHead(r.status, { "Content-Type": "text/plain; charset=utf-8", "Content-Length": Buffer.byteLength(r.text) });
     res.end(r.text);

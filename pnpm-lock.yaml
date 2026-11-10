@@ -38,6 +38,9 @@ importers:
       '@based/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@based/design-tokens':
+        specifier: workspace:*
+        version: link:../../packages/design-tokens
       '@based/sync':
         specifier: workspace:*
         version: link:../../packages/sync
