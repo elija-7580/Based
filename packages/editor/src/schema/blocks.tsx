@@ -4,7 +4,7 @@
 import { defaultProps, type BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
 import { containingPage, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
-import { useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { columnFractions, resizeColumns } from "../ui/columns.js";
@@ -299,9 +299,69 @@ export const databaseBlock = createReactBlockSpec(
 
 // MARK: Einbettungen (PDF, Embed, Lesezeichen)
 
+/** BSD-208: PDF aus dem Asset-Speicher (oder per Link) im Block anzeigen; leer: Datei wählen oder Link einfügen. */
+function PdfView(props: { id: string; url: string; editor: AnyEditor }) {
+  const env = useEnv();
+  const { editor } = props;
+  const [src, setSrc] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    let live = true;
+    setSrc(undefined);
+    if (!props.url) return;
+    const resolve = editor.resolveFileUrl as ((u: string) => Promise<string>) | undefined;
+    Promise.resolve(resolve ? resolve(props.url) : props.url).then((u) => live && setSrc(u), () => live && setError("This PDF can't be loaded right now."));
+    return () => {
+      live = false;
+    };
+  }, [props.url, editor]);
+  const upload = editor.uploadFile as ((f: File, blockId?: string) => Promise<string | Record<string, unknown>>) | undefined;
+  const pick = async (file: File | undefined) => {
+    if (!file || !upload) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const r = await upload(file, props.id);
+      const url = typeof r === "string" ? r : String((r as { props?: { url?: string } }).props?.url ?? "");
+      if (url) editor.updateBlock(props.id, { props: { url } });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!props.url) {
+    if (!env.editable) return <span className="bx-muted">Empty PDF</span>;
+    return (
+      <div className="bx-pdf-empty">
+        {upload ? (
+          <>
+            <button type="button" className="bx-button" disabled={busy} onClick={() => input.current?.click()}>{busy ? "Uploading…" : "Upload PDF"}</button>
+            <input ref={input} type="file" accept="application/pdf,.pdf" hidden aria-label="Upload PDF" onChange={(e) => void pick(e.target.files?.[0])} />
+          </>
+        ) : null}
+        <InlineField value="" placeholder="…or paste a link to a PDF" onDone={(v) => v && editor.updateBlock(props.id, { props: { url: v.trim() } })} />
+        {error ? <span className="bx-muted" role="alert">{error}</span> : null}
+      </div>
+    );
+  }
+  return (
+    <div className="bx-pdf">
+      {src ? (
+        <object className="bx-pdf-frame" data={src} type="application/pdf" aria-label="PDF">
+          <a href={src} target="_blank" rel="noreferrer">Open PDF</a>
+        </object>
+      ) : <span className="bx-muted">{error ?? "Loading PDF…"}</span>}
+    </div>
+  );
+}
+
 function EmbedView(props: { id: string; kind: string; url: string; editor: AnyEditor }) {
   const env = useEnv();
   useStoreRevision(env.store);
+  if (props.kind === "pdf") return <PdfView id={props.id} url={props.url} editor={props.editor} />;
   if (!props.url) {
     if (!props.editor.isEditable) return <span className="bx-muted">Empty {props.kind}</span>;
     return <InlineField value="" placeholder={`Paste a link (${props.kind})…`} onDone={(v) => v && props.editor.updateBlock(props.id, { props: { url: v.trim() } })} />;
