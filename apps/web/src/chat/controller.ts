@@ -271,6 +271,36 @@ export class ChatController {
     return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(base) ? "local" : "external";
   }
 
+  /**
+   * BSD-225: Text für den Editor („Ask AI“) – ein Turn ohne Werkzeuge mit der Test-Engine (falls gesetzt) oder dem
+   * eingestellten Modell. Liefert den Text der letzten Antwort; ohne Modell oder bei Fehler: Ausnahme.
+   */
+  /** Gibt es etwas, das antworten kann (Test-Engine oder eingestelltes Modell)? */
+  canWrite(): boolean {
+    return !!this.override || !!this.o.config?.activeModel();
+  }
+
+  async write(system: string, prompt: string, signal: AbortSignal): Promise<string> {
+    const tools: ToolHost = { specs: [], isWrite: () => false, call: async () => ({ text: "No tools here.", isError: true }) };
+    const policy: ToolPolicy = { mode: "ask" };
+    const engine = this.override ? await this.override({ tools, policy }) : undefined;
+    if (!engine) {
+      if (this.override) throw new Error("No model is set up.");
+      const cfg = this.o.config;
+      const choice = cfg?.activeModel();
+      if (!cfg || !choice) throw new Error("No model is set up. Add a provider and a model in Settings → Agents & AI.");
+      const provider = await cfg.provider(choice, this.o.fetch);
+      const r = await provider.stream([{ role: "system", content: system }, { role: "user", content: prompt }], { model: choice.model, tools: [], maxTokens: 2048, signal });
+      return r.message.content;
+    }
+    let text = "";
+    for await (const e of runTurn(engine, { prompt, system }, signal)) {
+      if (e.type === "text") text = (e as Extract<ChatEvent, { type: "text" }>).text;
+      else if (e.type === "failed") throw new Error((e as Extract<ChatEvent, { type: "failed" }>).message);
+    }
+    return text;
+  }
+
   /** Ein einzelner Modellaufruf ohne Werkzeuge (Memory-Vorschläge). Ohne Modell: Fehler. */
   private async complete(system: string, prompt: string, wrap?: (p: AIProvider) => AIProvider): Promise<string> {
     const cfg = this.o.config;
