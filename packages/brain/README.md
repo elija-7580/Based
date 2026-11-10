@@ -57,3 +57,11 @@ Aktionen: `answer`, `create_page`, `create_task`, `file_to_project`, `spawn_agen
 `id`, `reason`, `confidence`. `parsePlan` prüft, `assess` ordnet Sicherheitsstufen zu (`auto`/`propose`/`ask`/`deny`
 nach Modus, Regeln, Budget, Sicherheit), `executePlan` setzt in einer Transaktion um. `RulesPlannerEngine` ist der
 Scripted-Planer für Tests, Golden-Set (`test/fixtures/golden-plans.json`) und E2E (`__basedTasks.useRules()`).
+
+### Startseite (`@based/brain/home`, BSD-162/197/133)
+
+Reine Funktionen für die Startseite (keine Uhr, kein DOM): `arcGeometry`/`placeSide`/`ringLayout`/`arcTicks`
+(Zeitbogen: Lage je Karte aus der Zeit, Kollisionen, Ring-Belegung), `taskCard` (Auftrag → Kartenzustand, Knöpfe,
+Flugziel), `composerTask` (welche Karte am Composer steht, Haltezeit für Undo), `homeModel` (erledigt / Needs you /
+geplant / läuft, Kosten im Zeitrahmen), `greetingSentence`, `agentDetail`, `projectDetail`, `runTimeline`,
+`projectTimeline`. Die Ansicht liegt in `apps/web/src/home` und `apps/web/src/screens/Home.tsx`.
