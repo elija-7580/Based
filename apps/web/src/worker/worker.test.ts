@@ -6,6 +6,7 @@ import { openNodeDatabase } from "@based/sync/node";
 import { afterEach, describe, expect, it } from "vitest";
 import { StoreClient } from "./client.js";
 import { StoreHost } from "./host.js";
+import { WorkerYDocStore } from "./ydocStore.js";
 import type { Endpoint, Event, RequestMessage } from "./protocol.js";
 
 type Fn<T> = (e: { data: T }) => void;
@@ -269,5 +270,19 @@ describe("Versionsverlauf", () => {
     await client.command({ op: "trash", ids: [id] });
     await client.command({ op: "emptyTrash" });
     expect(host.history!.history.versions(id)).toEqual([]);
+  });
+
+  it("BSD-220: Y-Zustände speichern und laden (über den Worker, Reihenfolge Speichern → Laden)", async () => {
+    const { client } = setup();
+    await client.init({});
+    const docs = new WorkerYDocStore(client);
+    await docs.prepare("P");
+    expect(docs.load("P")).toBeUndefined();
+    docs.save("P", new Uint8Array([1, 2, 3]));
+    await docs.prepare("P");
+    expect([...docs.load("P")!]).toEqual([1, 2, 3]);
+    // load gibt den Zustand einmal heraus (die Sitzung hält ihn danach selbst)
+    expect(docs.load("P")).toBeUndefined();
+    expect(await client.ydocLoad("Q")).toBeUndefined();
   });
 });

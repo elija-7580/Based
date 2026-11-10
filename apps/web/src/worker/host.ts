@@ -56,7 +56,7 @@ import {
   remapAssetRefs,
   remapStoreAssets,
 } from "@based/core";
-import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
+import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage, type ImportSummary } from "./interop.js";
 import type { ImportPayload } from "./importer.js";
@@ -77,6 +77,8 @@ export interface OpenedWorkspace {
   history?: HistoryStorage;
   /** Ablage der Dateien (BSD-78; OPFS); ohne: im Speicher. */
   assets?: AssetBlobStore;
+  /** BSD-220: Y-Zustände der Editor-Dokumente (ydocs.sqlite); ohne: im Speicher. */
+  ydocs?: YDocStorage;
 }
 
 export interface HostOptions {
@@ -151,6 +153,13 @@ export class StoreHost {
     return (this.agentHost ??= new AgentHost(this.store));
   }
 
+  private memoryYDocs: YDocStorage | undefined;
+  /** BSD-220: Y-Zustände (ein Cache neben den Records; fehlt die Datei, im Speicher bis zum Neuladen). */
+  get ydocs(): YDocStorage {
+    if (!this.ws) throw new Error("not initialised");
+    return this.ws.ydocs ?? (this.memoryYDocs ??= new MemoryYDocStorage());
+  }
+
   private get brain(): BrainHost {
     return (this.brainHost ??= new BrainHost(this.store));
   }
@@ -193,6 +202,8 @@ export class StoreHost {
         case "chat": reply(this.chat.handle(msg.action)); break;
         case "agents": reply(this.agents.handle(msg.action)); break;
         case "brain": reply(this.brain.handle(msg.action)); break;
+        case "ydocLoad": reply(this.ydocs.get(msg.rootID) ?? null); break;
+        case "ydocSave": this.ydocs.put(msg.rootID, msg.state); reply(true); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });

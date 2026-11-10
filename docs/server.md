@@ -133,10 +133,15 @@ Nachricht (Provider-Option `token`), unbekannte Seiten werden abgewiesen. Speich
   Verteilen), Y-Änderungen der Geräte vor dem Materialisieren; beim Laden wird nach dem Nachziehen gespeichert.
 - Ein Update, das nicht zum Schema passt, wird protokolliert (ohne Inhalt) und ändert keine Records.
 
-Offen (Teil 2): Geräte mit `/collab` schreiben ihre Text-Records nur lokal (kein Push, der Server materialisiert),
+**Web-Client, Y-Zustände (BSD-220 Teil 2):** Der Store-Worker legt den Y-Zustand jeder Dokument-Wurzel in
+`ydocs.sqlite` neben dem Workspace ab (Tabelle `ydocs(root, state, updated)`, nie gesynct; eigene Datei wie
+`history.sqlite`, damit `based.sqlite` für die Swift-App auf v3 bleibt). Der Editor holt den Zustand vor dem Öffnen
+(`YDocStore.prepare`, Protokoll `ydocLoad`/`ydocSave`); fehlt er oder ist er kaputt, baut die `DocSession` ihn aus
+den Records neu – die Records bleiben die Quelle.
+
+Offen (Teil 3): Geräte mit `/collab` schreiben ihre Text-Records nur lokal (kein Push, der Server materialisiert),
 sonst kann ein Record-Push, der vor dem Y-Update desselben Geräts ankommt, als Diff noch einmal eingefügt werden;
-Web-Client: Y-Zustände dauerhaft (Worker-SQLite), Provider an `/collab` mit Token aus dem verschlüsselten Speicher,
-Abstammungs-Regel oben. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
+Web-Client: Provider an `/collab` mit Token aus dem verschlüsselten Speicher, Abstammungs-Regel oben. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
 
 ## Sandbox pro Lauf (BSD-161)
 
