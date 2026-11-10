@@ -16,52 +16,52 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1493 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1494)[39m
+packages/core test: [2m      Tests [22m [1m[32m1495 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1496)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
-packages/brain test: [2m      Tests [22m [1m[32m326 passed[39m[22m[90m (326)[39m
-packages/editor test: [2m      Tests [22m [1m[32m59 passed[39m[22m[90m (59)[39m
+packages/brain test: [2m      Tests [22m [1m[32m362 passed[39m[22m[90m (362)[39m
+packages/editor test: [2m      Tests [22m [1m[32m60 passed[39m[22m[90m (60)[39m
 apps/web test: [2m      Tests [22m [1m[32m105 passed[39m[22m[90m (105)[39m
-apps/server test: [2m      Tests [22m [1m[32m67 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (68)[39m
+apps/server test: [2m      Tests [22m [1m[32m75 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (76)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-      524 |   await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:521:59
+  ✓  162 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (2.5s)
+  ✓  163 [webkit] › e2e/shell-parity.spec.ts:70:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (6.2s)
+  ✓  164 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (6.9s)
+  ✓  166 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (4.9s)
+  ✓  165 [webkit] › e2e/shell-parity.spec.ts:108:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (9.2s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 12, 12, 22, 23, 35
+  ✓  167 [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (3.2s)
+  ✓  168 [webkit] › e2e/shell-parity.spec.ts:167:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (3.8s)
+  ✓  170 [webkit] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (3.2s)
+[webkit] Seitenleiste 5.000 Seiten: {"count":179,"p50":16,"p95":22,"max":38,"maxRows":26,"total":160128}
+  ✓  169 [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (5.6s)
+  ✓  171 [webkit] › e2e/shell-parity.spec.ts:203:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (3.9s)
+  ✓  172 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (5.6s)
+  ✓  174 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (3.8s)
+  ✓  173 [webkit] › e2e/shell-parity.spec.ts:238:1 › Graph bleibt mit 5.000 Seiten bedienbar (6.9s)
+  ✓  175 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home (1.5s)
+(node:18697) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  177 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.2s)
+  ✓  178 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (4.4s)
+  ✓  179 [webkit] › e2e/smoke.spec.ts:57:1 › Show agent details blendet Planer und Laufzeit auf Home ein (2.6s)
+  ✓  180 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (5.6s)
+  ✓  176 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (15.4s)
+  ✓  181 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (9.2s)
+  ✓  183 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.9s)
+  ✓  182 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (12.0s)
+  ✓  184 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (2.9s)
+  ✓  186 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.4s)
+  ✓  185 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (3.4s)
+  -  188 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  189 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  187 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.3s)
+  ✓  190 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (956ms)
+  ✓  191 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.2s)
+  ✓  192 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.0s)
+  ✓  193 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.6s)
+  ✓  194 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.6s)
 
-    Error Context: test-results/editor-parity-Blockmenü-Mo-3d38a-into-→-Page-BSD-207-Teil-2--chromium/error-context.md
-
-  2) [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ─────────────────────────────
-
-    Error: expect(locator).toHaveCount(expected) failed
-
-    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
-    Expected: 0
-    Received: 1
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
-      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
-        14 × locator resolved to 1 element
-           - unexpected value "1"
-
-
-      161 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-      162 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
-    > 163 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
-          |                                                                            ^
-      164 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
-      165 |   } finally {
-      166 |     await ctx.close();
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:163:76
-
-    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
-
-  2 failed
-    [chromium] › e2e/editor-parity.spec.ts:495:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) 
-    [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ──────────────────────────────
   14 skipped
-  172 passed (8.3m)
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
-Exit status 1
+  180 passed (6.2m)
