@@ -84,9 +84,12 @@ export const storedString = (row: Block, p: PropertySchema, kind: string): strin
   const c = valueCase(row.values?.[p.id]);
   return c?.[0] === kind && typeof c[1] === "string" ? c[1] : undefined;
 };
-export const storedFiles = (row: Block, p: PropertySchema): { name: string; url?: string }[] => {
+/** Eine Datei der Files-&-Media-Property: Link (`url`) oder hochgeladen (`asset`, wie Swift). */
+export interface StoredFile { name: string; url?: string; asset?: { id: string; name: string; size?: number; mime?: string } }
+
+export const storedFiles = (row: Block, p: PropertySchema): StoredFile[] => {
   const c = valueCase(row.values?.[p.id]);
-  return c?.[0] === "files" && Array.isArray(c[1]) ? (c[1] as { name: string; url?: string }[]) : [];
+  return c?.[0] === "files" && Array.isArray(c[1]) ? (c[1] as StoredFile[]) : [];
 };
 
 /** Ton (CSS-Klasse) für eine Options-Farbe; nur Token-Flächen, kein Marker (der bedeutet „Agent“). */

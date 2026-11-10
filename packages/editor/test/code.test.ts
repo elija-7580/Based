@@ -36,3 +36,15 @@ describe("Codeblock", () => {
     expect(f.getAttribute("sandbox")).toBe("allow-scripts");
   });
 });
+
+describe("PDF-Block (BSD-208)", () => {
+  it("hochgeladenes PDF: asset im Record, based-asset:-URL im Editor, hin und zurück", async () => {
+    const { projectBlock, extractOwned } = await import("../src/mapping/blocks.js");
+    const rec = { id: "f", type: "pdf", parent: "b:p", sk: "a0", createdAt: 0, updatedAt: 0, props: { asset: { id: "abc", name: "" } } } as never;
+    const bn = projectBlock(rec);
+    expect(bn.props).toMatchObject({ kind: "pdf", url: "based-asset:abc" });
+    expect(extractOwned(bn)).toMatchObject({ type: "pdf", props: { asset: { id: "abc" } } });
+    const linked = projectBlock({ ...(rec as object), props: { url: "https://x.test/a.pdf" } } as never);
+    expect(extractOwned(linked)).toMatchObject({ type: "pdf", props: { url: "https://x.test/a.pdf" } });
+  });
+});
