@@ -1,80 +1,10 @@
-✔ Test startTargetFollowsThePreference() passed after 11.328 seconds.
-✔ Test chunksFollowBlocksAndSplitLongText() passed after 11.328 seconds.
-✔ Test indexPersistsAndResetsWhenTheModelChanges() passed after 11.328 seconds.
-✔ Test indexIsBuiltOncePerRevision() passed after 11.328 seconds.
-✔ Test reciprocalRankFusionRewardsAgreement() passed after 11.328 seconds.
-✔ Test childrenOfARemotelyDeletedParentAreFound() passed after 11.328 seconds.
-✔ Test orphansFromARemoteBatchLandInTheTrash() passed after 11.328 seconds.
-✔ Suite UserPreferencesTests passed after 11.336 seconds.
-✔ Suite OrphanRescueTests passed after 11.336 seconds.
-✔ Test indexerOnlyReembedsChangedPagesAndDropsDeletedOnes() passed after 11.328 seconds.
-✔ Test derivedValuesFollowTheResult() passed after 11.328 seconds.
-✔ Test keystrokesOutsideALargeDatabaseNeverRecompute() passed after 11.328 seconds.
-✔ Test locallyEditedViewIsAMiss() passed after 11.328 seconds.
-✔ Test selfRelationDropsTheWholeDatabase() passed after 11.328 seconds.
-✔ Test rowEditDropsOnlyThatRowsFormulas() passed after 11.328 seconds.
-✔ Test undoAndRemoteChangesBumpTheDatabase() passed after 11.328 seconds.
-✔ Test rowEditInTheDatabaseRecomputes() passed after 11.328 seconds.
-✔ Test editInReferencedDatabaseRecomputesRollup() passed after 11.328 seconds.
-✔ Test repairShowsChildrenHiddenEarlier() passed after 11.328 seconds.
-✔ Test remoteStaysNonLocal() passed after 11.328 seconds.
-✔ Test containerTypesKeepTheirChildren() passed after 11.328 seconds.
-✔ Test typingOutsideTheDatabaseKeepsResults() passed after 11.328 seconds.
-✔ Test importIntoReadOnlyStoreThrows() passed after 11.328 seconds.
-✔ Test compressionRoundTrip() passed after 11.328 seconds.
-✔ Test pruneThinsOldVersionsAndGarbageCollects() passed after 11.328 seconds.
-✔ Test restoreBringsBackDeletedAndRemovesAddedBlocks() passed after 11.328 seconds.
-✔ Test childrenBecomeSiblingsBelowTheBlock(_:) with 3 test cases passed after 11.328 seconds.
-✔ Test databaseRowSearchUsesCurrentTitles() passed after 11.328 seconds.
-✔ Test unchangedBlocksAreSharedAndNoOpSnapshotsSkipped() passed after 11.328 seconds.
-✔ Test importIsLoggedLocalWithoutUndoOrRestamp() passed after 11.328 seconds.
-✔ Test markdownExportShowsTheCurrentTitle() passed after 11.328 seconds.
-✔ Test missingTargetsKeepTheStoredText() passed after 11.328 seconds.
-✔ Test searchFindsTheNewTitleNotTheOld() passed after 11.328 seconds.
-✔ Test plainTextSkipsMentionWork() passed after 11.328 seconds.
-✔ Test reloadWhenChangedElsewhere() passed after 11.328 seconds.
-✔ Test renamingTheTargetLeavesTheStoredTextAlone() passed after 11.328 seconds.
-✔ Test noReloadWhenOnlyTheDisplayDiffers() passed after 11.328 seconds.
-✔ Test dateFallsOnDay() passed after 11.327 seconds.
-✔ Test findsMentionsAndRowRemindersOfTheDay() passed after 11.327 seconds.
-✔ Test cancellationStopsBuildAndScan() passed after 11.329 seconds.
-✔ Suite QueryCacheInvalidationTests passed after 11.337 seconds.
-✔ Test conversionLossMatrix() passed after 11.328 seconds.
-✔ Test relationToTextUsesTitles() passed after 11.327 seconds.
-✔ Test selectToStatusKeepsOptionsAndValues() passed after 11.328 seconds.
-✔ Test textToStatusUsesDefaultsAndKeepsOtherValues() passed after 11.327 seconds.
-✔ Test typeChangeIsOneUndoStep() passed after 11.327 seconds.
-✔ Test emptyPropertyToStatusGetsDefaults() passed after 11.327 seconds.
-✔ Test statusBackToSelectKeepsOptions() passed after 11.327 seconds.
-✔ Test multiSelectToStatusKeepsFirstValue() passed after 11.327 seconds.
-✔ Test unknownBlockInStoreIsKeptAndNotTurnedInto() passed after 11.327 seconds.
-✔ Test reloadOnceWhenAMentionDisplaysDifferently() passed after 11.328 seconds.
-✔ Test unknownBlockTypeRoundTrips() passed after 11.327 seconds.
-✔ Test unknownFilterOperatorAndValueRoundTrip() passed after 11.327 seconds.
-✔ Test damagedKnownPropertyValueStillFails() passed after 11.327 seconds.
-✔ Test archiveRoundTripKeepsUnknownContent() passed after 11.327 seconds.
-✔ Test unknownColoursFormatsAndStepsSurviveAnEdit() passed after 11.327 seconds.
-✔ Test oldRecordsReadUnchanged() passed after 11.327 seconds.
-✔ Test databaseViewWorkspaceKeepUnknownFieldsAndTypes() passed after 11.327 seconds.
-✔ Test everyStoredPropertyHasACodingKey() passed after 11.327 seconds.
-✔ Test openEnumsOfferOnlyKnownValues() passed after 11.327 seconds.
-✔ Test unknownViewConfigurationSurvivesAnEdit() passed after 11.327 seconds.
-✔ Test unknownPropertyValueKindSurvivesATitleEdit() passed after 11.327 seconds.
-✔ Test everyKnownPropertyValueRoundTrips() passed after 11.327 seconds.
-✔ Test pageMetadataIsNotStructuralButTheSidebarSectionIs() passed after 11.327 seconds.
-✔ Test remoteChangesAndReloadUpdateTheIndexes() passed after 11.327 seconds.
-✔ Test randomOperationsKeepIndexesEqualToAFullScan() passed after 11.327 seconds.
-✔ Test typingDoesNotInvalidateTheSubpageCache() passed after 11.327 seconds.
-✔ Suite ImportOriginTests passed after 11.338 seconds.
-✔ Suite TurnIntoChildrenTests passed after 11.338 seconds.
-✔ Test unknownBlockFieldsSurviveAnEdit() passed after 11.327 seconds.
-✔ Suite VersionHistoryTests passed after 11.338 seconds.
-✔ Suite DueItemsTests passed after 11.338 seconds.
-✔ Suite SearchCorpusTests passed after 11.338 seconds.
-✔ Suite MentionTextTests passed after 11.338 seconds.
-✔ Suite PageIndexTests passed after 11.337 seconds.
-✔ Suite PropertyConversionTests passed after 11.338 seconds.
-✔ Suite ForwardCompatibilityTests passed after 11.338 seconds.
-✔ Test hybridSearchFindsPagesByMeaningAndRelatedPages() passed after 11.330 seconds.
-✔ Suite SemanticSearchTests passed after 11.339 seconds.
-✔ Test run with 325 tests in 67 suites passed after 11.340 seconds.
+Test Suite 'debug.xctest' passed at 2026-11-10 23:40:06.702
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'All tests' passed at 2026-11-10 23:40:06.702
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+◇ Test failedBackgroundWriteMakesStoreReadOnlyAndRetrySavesEverything() started.
+◇ Test failedWriteRollsBackAndBlocks() started.
+✔ Test rejectsOtherFiles() passed after 0.052 seconds.
+✔ Test plainAndBrokenCode() passed after 0.052 seconds.
+✔ Test githubAlertsBecomeCallouts() passed after 0.051 seconds.
+✔ Test pythonAndBlockComments() passed aft
