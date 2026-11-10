@@ -6,6 +6,7 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { MemoryPersistence, plainText, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { projectDoc } from "../src/mapping/blocks.js";
 import { basedSchema, createConverter, type BasedEditor } from "../src/schema/schema.js";
+import * as Y from "yjs";
 import { DocSession, MemoryYDocStore } from "../src/yjs/session.js";
 import { corpusStore } from "./helpers.js";
 
@@ -183,6 +184,28 @@ describe("DocSession", () => {
     const s2 = new DocSession(store, "p", { converter, docStore: docs, debounceMs: 0 });
     const blocks = converter.fromFragment(s2.fragment);
     expect(blocks.map((b) => (b.content as { text: string }[] | undefined)?.[0]?.text)).toEqual(["Alpha geschlossen", "Beta 2", "Toggle"]);
+    s2.close();
+  });
+
+  it("BSD-220: kaputter gespeicherter Zustand zählt als keiner (Aufbau aus den Records)", () => {
+    const store = smallStore();
+    const docs = new MemoryYDocStore();
+    docs.save("p", new Uint8Array([0xff, 0x01, 0x02]));
+    const s = new DocSession(store, "p", { converter, docStore: docs, debounceMs: 0 });
+    expect(converter.fromFragment(s.fragment).map((b) => b.id)).toEqual(["a", "b", "c"]);
+    s.close();
+  });
+
+  it("BSD-220: wiederhergestellter Zustand behält die Y-Identität (keine Doppelung beim Zusammenführen)", () => {
+    const store = smallStore();
+    const docs = new MemoryYDocStore();
+    const s1 = new DocSession(store, "p", { converter, docStore: docs, debounceMs: 0 });
+    const before = Y.encodeStateVector(s1.doc);
+    s1.close();
+    const s2 = new DocSession(store, "p", { converter, docStore: docs, debounceMs: 0 });
+    // Nichts Neues entstanden: der Server/ein anderes Gerät mit demselben Stand bekäme ein leeres Delta.
+    expect(Y.encodeStateVector(s2.doc)).toEqual(before);
+    expect(converter.fromFragment(s2.fragment).length).toBe(3);
     s2.close();
   });
 

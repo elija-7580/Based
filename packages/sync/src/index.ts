@@ -20,3 +20,6 @@ export type { AssetBlobStore, AssetErrorCode, AssetMetaStore, AssetServer, Asset
 // Teilen über den Server (docs/sharing.md)
 export { LINK_ROLES, SHARE_ROLE_LABEL, ShareAPI, ShareAPIError, publishedLink, shareErrorMessage, shareURL } from "./share.js";
 export type { PageAccess, ShareLinkInfo, ShareLinkKind, SharePerson, ShareRole } from "./share.js";
+// BSD-220: Y-Zustände der Editor-Dokumente in einer eigenen Datei (ydocs.sqlite, nie gesynct)
+export { MemoryYDocStorage, SqliteYDocStorage, YDOCS_SCHEMA } from "./ydocs.js";
+export type { YDocStorage } from "./ydocs.js";

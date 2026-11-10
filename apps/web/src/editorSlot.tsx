@@ -14,16 +14,19 @@ import { editorAI } from "./editorAI.js";
 import { ShellPageDirectory } from "./shell/pageDirectory.js";
 import { slots, type PageEditorProps } from "./slots.js";
 import type { StoreClient } from "./worker/client.js";
+import { WorkerYDocStore } from "./worker/ydocStore.js";
 
 let shellClient: StoreClient | undefined;
 let directory: ShellPageDirectory | undefined;
 let meeting: MeetingHost | undefined;
+let docStore: WorkerYDocStore | undefined;
 
 /** Der Editor-Steckplatz braucht den Store-Client (Seitensuche, Backlinks). Einmal beim Start setzen (main.tsx). */
 export function connectEditor(client: StoreClient) {
   shellClient = client;
   directory = new ShellPageDirectory(client);
   meeting = createMeetingHost(client);
+  docStore = new WorkerYDocStore(client);
 }
 
 function useRootTheme(): "light" | "dark" {
@@ -58,7 +61,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   return (
     <div className="shell-editor">
       <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>

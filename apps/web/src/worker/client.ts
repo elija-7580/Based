@@ -307,6 +307,15 @@ export class StoreClient {
   }
 
   /** Datei speichern (BSD-78): liegt danach auf diesem Gerät und wird zum Sync-Server hochgeladen. */
+  /** BSD-220: gespeicherter Y-Zustand einer Dokument-Wurzel (Editor). */
+  async ydocLoad(rootID: string): Promise<Uint8Array | undefined> {
+    return (await this.request<Uint8Array | null>({ type: "ydocLoad", rootID })) ?? undefined;
+  }
+
+  ydocSave(rootID: string, state: Uint8Array): Promise<boolean> {
+    return this.request<boolean>({ type: "ydocSave", rootID, state });
+  }
+
   assetPut(name: string, bytes: ArrayBuffer, mime?: string): Promise<AssetInfo> {
     return this.request<AssetInfo>(mime ? { type: "assetPut", name, mime, bytes } : { type: "assetPut", name, bytes });
   }

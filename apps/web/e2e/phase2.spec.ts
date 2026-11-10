@@ -36,6 +36,18 @@ test("Editor und Datenbank in der Shell, nach dem Neuladen noch da", async ({ pl
     await expect(page.getByRole("treeitem", { name: "Untitled database" })).toBeVisible();
     await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
     await expect(page.getByText("Geschrieben im neuen Editor")).toBeVisible();
+
+    // BSD-220: der Y-Zustand liegt jetzt in ydocs.sqlite; Weiterschreiben und erneutes Laden doppelt nichts.
+    await page.getByText("Geschrieben im neuen Editor").click();
+    await page.keyboard.press("End");
+    await page.keyboard.type(" und weiter");
+    await expect(page.getByText("Geschrieben im neuen Editor und weiter")).toBeVisible();
+    await page.waitForTimeout(800); // Store (~120 ms) und Y-Zustand (~400 ms) schreiben gesammelt
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+    await expect(page.getByText("Geschrieben im neuen Editor und weiter")).toHaveCount(1);
+    await expect(page.getByText("Pages you delete wait in the Trash")).toHaveCount(1);
   } finally {
     await ctx.close();
     rmSync(dir, { recursive: true, force: true });

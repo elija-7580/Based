@@ -188,7 +188,11 @@ export type Request =
   /** Aufträge, Runs, Projekte, Zeitpläne des Hauptagenten (BSD-195/196/160, worker/agents.ts). */
   | { type: "agents"; action: AgentAction }
   /** Agent Brain: Skills, Memories, Skill-Router, Zitate, lokaler Index (BSD-163/198, worker/brain.ts). */
-  | { type: "brain"; action: BrainAction };
+  | { type: "brain"; action: BrainAction }
+  /** BSD-220: gespeicherter Y-Zustand einer Dokument-Wurzel (Antwort: Uint8Array | null). */
+  | { type: "ydocLoad"; rootID: string }
+  /** BSD-220: Y-Zustand einer Dokument-Wurzel speichern (Antwort: true). */
+  | { type: "ydocSave"; rootID: string; state: Uint8Array };
 
 export interface GraphResult {
   graph: PageGraph;
