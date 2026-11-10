@@ -11,6 +11,7 @@ import type { Block, BlockProps, Database, DatabaseView, PropertySchema, Propert
 import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { FIRST_KEY } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
+import { firstGrapheme } from "../graphemes.js";
 import { type AssetRef, type ImportBuilder, looksLikeLocalFile, makeBlock } from "./builder.js";
 import { notionColor } from "./clipboard.js";
 import { basename, comparePaths, dirname, extname, type ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
@@ -34,7 +35,7 @@ export function cleanTitle(name: string): string {
 /** Erstes Zeichen als Emoji-Icon, wenn es kein Markup ist (Swift `PageIcon.importedEmoji`, BSD-35). */
 export function importedEmoji(raw: string): string | undefined {
   const t = trimWS(raw);
-  const first = new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(t)[Symbol.iterator]().next().value?.segment;
+  const first = firstGrapheme(t);
   if (first === undefined || first.includes("<") || first.includes(">") || first.includes("&")) return undefined;
   return first;
 }

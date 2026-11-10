@@ -5,6 +5,7 @@ import { isEmptyValue, longDate, plainNumber, toJSDate } from "../query/value.js
 import type { WorkspaceStore } from "../store/store.js";
 import { encodeCSV, encodeInlineMarkdown } from "./markdown.js";
 import { plain, runsOf } from "./runs.js";
+import { graphemes } from "../graphemes.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
 export type PageLink = (id: string) => { title: string; url: string } | undefined;
@@ -23,7 +24,7 @@ export function encodeURLPath(s: string, extraDisallowed = ""): string {
 /** Dateiname aus einem Titel (Swift `MarkdownExporter.fileName`). */
 export function markdownFileName(title: string): string {
   const s = title.split(/[/\\:?*"<>|\n]/).join(" ").replace(/^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu, "");
-  return s === "" ? "Untitled" : [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(s)].slice(0, 120).map((x) => x.segment).join("");
+  return s === "" ? "Untitled" : graphemes(s.slice(0, 1024)).slice(0, 120).join("");
 }
 
 const contentBlocks = (store: WorkspaceStore, id: string): Block[] =>
