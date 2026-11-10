@@ -1,0 +1,18 @@
+/* BSD-195/196/160: Auftragsliste (#tasks). Marker nur für „ein Agent arbeitet“ (Strich links), „Needs you“ = dunkler
+   Rahmen, erledigt = leiser. Nur Tokens (ADR 0009). */
+.task-list { list-style: none; margin: 0; padding: 0; }
+.task-card { position: relative; list-style: none; }
+.task-card::before {
+  content: ""; position: absolute; left: 0; top: var(--space-4); bottom: var(--space-4); width: var(--marker-width);
+  border-radius: var(--radius-pill); background: transparent; transition: background var(--duration-fast) var(--ease-out);
+}
+.task-card[data-working]::before { background: var(--marker); }
+.task-card[data-state="question"] > *, .task-card[data-state="proposal"] > * { box-shadow: 0 0 0 1.5px var(--ink); border-radius: var(--radius-lg); }
+.task-card[data-state="done"] .task-input, .task-card[data-state="undone"] .task-input, .task-card[data-state="filed"] .task-input { color: var(--muted); }
+.task-input { white-space: pre-wrap; overflow-wrap: anywhere; }
+.task-plan { list-style: none; margin: 0; padding: 0; }
+.task-answer {
+  white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--marker) 22%, transparent);
+}
+.task-error { color: var(--danger); }

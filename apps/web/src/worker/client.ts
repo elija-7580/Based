@@ -14,7 +14,8 @@ import {
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFile, ExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
-import type { ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
+import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
+import type { AgentAction } from "./agents.js";
 import type { JSONValue } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
 import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
@@ -27,6 +28,8 @@ export interface ShellState {
   error?: string;
   /** Chats, zuletzt geänderte zuerst (`undefined`: noch nicht geladen). */
   chats?: readonly ChatInfo[];
+  /** Aufträge, Runs, Projekte, Zeitpläne (`undefined`: noch nicht geladen). */
+  agents?: AgentSnapshot;
 }
 
 const INITIAL: ShellState = { ready: false, outline: undefined, titles: new Map(), status: { state: "starting", persistent: false, canUndo: false, canRedo: false } };
@@ -102,6 +105,7 @@ export class StoreClient {
       case "status": this.set({ status: ev.status }); return;
       case "device": this.onDevice?.(ev.node); return;
       case "chats": this.set({ chats: ev.chats }); return;
+      case "agents": this.set({ agents: ev.snapshot }); return;
       case "pageChanges": this.replicas.get(ev.pageID)?.receive(ev.upserts, ev.deletions); return;
     }
   };
@@ -195,6 +199,20 @@ export class StoreClient {
     const r = await this.request<SyncedRecords>({ type: "includeSynced", pageID, source });
     if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
     return r.found;
+  }
+
+  // MARK: Agenten (BSD-195/196/160)
+
+  /** Eine Anfrage an die Agenten-Records im Worker (worker/agents.ts). */
+  agents<T>(action: AgentAction): Promise<T> {
+    return this.request<T>({ type: "agents", action });
+  }
+
+  /** Stand laden; danach hält der Worker ihn über `agents`-Ereignisse aktuell. */
+  async agentSnapshot(): Promise<AgentSnapshot> {
+    const snapshot = await this.agents<AgentSnapshot>({ op: "snapshot" });
+    this.set({ agents: snapshot });
+    return snapshot;
   }
 
   // MARK: Chats (BSD-159)

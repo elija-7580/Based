@@ -37,11 +37,12 @@ const pageID = { type: "string", description: "Page id (UUID)" } as const;
 const limitSchema = { type: "integer", minimum: 1, maximum: 500, description: "Max items (default 50)" } as const;
 const offsetSchema = { type: "integer", minimum: 0, description: "Skip this many items" } as const;
 
-function putMarkdownBlocks(store: WorkspaceStore, tx: Tx, items: MarkdownBlock[], parent: string, keys: string[]) {
+/** Markdown-Blöcke in einer Transaktion schreiben; `firstID` = ID des ersten Blocks (Idempotenz im Ausführer). */
+export function putMarkdownBlocks(store: WorkspaceStore, tx: Tx, items: MarkdownBlock[], parent: string, keys: string[], firstID?: string) {
   items.forEach((item, i) => {
     const props: BlockProps = { ...item.props };
     if (item.type === "table" && props.tableColumns === undefined) props.tableColumns = 2;
-    const id = makeRecordID();
+    const id = i === 0 && firstID ? firstID : makeRecordID();
     tx.put({ kind: "block", data: makeBlock({ id, type: item.type, parent, sk: keys[i]!, text: toRichText(item.text), props, createdBy: store.userID }, store.now()) });
     if (item.children.length > 0) putMarkdownBlocks(store, tx, item.children, "b:" + id, sortKeys(store, "b:" + id, { kind: "end" }, item.children.length));
   });

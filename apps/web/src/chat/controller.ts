@@ -56,6 +56,8 @@ export interface ChatControllerOptions {
   /** Gespeichert wird höchstens so oft (ms) während eines Turns; das Ende immer sofort. */
   saveEveryMs?: number;
   fetch?: typeof globalThis.fetch;
+  /** BSD-160: nach jedem Turn (gespeichert) – z. B. als Run-Record mit Verbrauch. */
+  onTurnEnd?: (turn: { chatID: string; prompt: string; events: readonly StoredChatEvent[] }) => void;
 }
 
 export class ChatController {
@@ -282,6 +284,7 @@ export class ChatController {
     timer = undefined;
     show();
     await save();
+    if (engine) this.o.onTurnEnd?.({ chatID: id, prompt: text, events: turn });
   }
 }
 
