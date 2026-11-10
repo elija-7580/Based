@@ -33,6 +33,11 @@ export interface ImportPayload {
   notes: string[];
   /** Bilder und Anhänge, die in den Asset-Speicher gehen. */
   assets: number;
+  /**
+   * BSD-230: die Dateien selbst (vorläufige ID → Bytes). Der Store-Worker legt sie inhaltsadressiert über den Sync ab
+   * (BSD-78) und schreibt die Verweise auf den SHA-256 um – so sehen andere Geräte importierte Bilder auch.
+   */
+  files?: { id: string; name: string; mime?: string; data: Uint8Array }[];
 }
 
 export interface PrepareOptions {
@@ -105,6 +110,9 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
     }
   }
   out.assets = opts.assets?.files.size ?? 0;
+  if (opts.assets && opts.assets.files.size > 0) {
+    out.files = [...opts.assets.files].map(([id, f]) => ({ id, name: f.ref.name, ...(f.ref.mime ? { mime: f.ref.mime } : {}), data: f.data }));
+  }
   progress(1);
   return out;
 }

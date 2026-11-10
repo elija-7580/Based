@@ -46,7 +46,7 @@ export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink
 export type { AssetRef, AssetSink, ImportBuilderOptions, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
 export { cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns } from "./interop/notion-html.js";
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
-export { decodeCSV, decodeInlineMarkdown, encodeCSV, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
+export { decodeCSV, decodeInlineMarkdown, encodeCSV, guardCSVFormula, encodeInlineMarkdown, escapeMarkdown, formatDateValue as formatDateMention, MarkdownImporter, tableCells } from "./interop/markdown.js";
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
 export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
@@ -135,3 +135,5 @@ export type { CreateMeetingOptions } from "./store/meeting-ops.js";
 export { NotionWorkspaceImport, NotionClient, NotionAPIError, fetchTransport, notionTarget, parseNotionTargets, NotionCrawler, mapNotionSnapshot,
   convertNotionFormula, readableNotionFormula, emptySnapshot, notionFileKey, defaultNotionImportOptions } from "./interop/notion-api/index.js";
 export type { NotionTransport, NotionResponse, NotionImportOptions as NotionAPIImportOptions, NotionSnapshot, NotionRoot, NotionAPIErrorKind } from "./interop/notion-api/index.js";
+// BSD-230: Datei-Verweise auf den synchronisierten Speicher umschreiben.
+export { assetIDsInStore, remapAssetRefs, remapStoreAssets } from "./interop/asset-ids.js";

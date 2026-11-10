@@ -52,10 +52,14 @@ import {
   type StoreChange,
   type WireRecord,
   type WorkspaceStore,
+  assetIDsInStore,
+  remapAssetRefs,
+  remapStoreAssets,
 } from "@based/core";
 import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
-import { commitImportPayload, exportPage, exportWorkspace, printPage } from "./interop.js";
+import { commitImportPayload, exportPage, exportWorkspace, printPage, type ImportSummary } from "./interop.js";
+import type { ImportPayload } from "./importer.js";
 import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
@@ -87,6 +91,8 @@ export interface HostOptions {
   /** Dateien aus Importen (IndexedDB, Schlüssel = Asset-ID der Records). Anzeige und Exporte lesen hier zuerst, dann im
    *  Blob-Speicher des Syncs (BSD-78). Ohne: nur der Blob-Speicher. */
   importedAssets?: AssetStore;
+  /** BSD-230: Verzögerung der Migration alter Import-Dateien nach dem Start (Tests: 0). */
+  migrateDelayMs?: number;
   /** Aufschub für Quick Find, damit neuere Eingaben ältere abbrechen (Tests: synchron über 0). */
   defer?: (fn: () => void) => void;
 }
@@ -169,7 +175,7 @@ export class StoreHost {
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
-        case "commitImport": reply(commitImportPayload(this.store, msg.payload, msg.parent)); break;
+        case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
         case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.exportAssets(), msg.html)); break;
         case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.exportAssets(), msg.html)); break;
         case "printPage": reply(await printPage(this.store, msg.pageID, this.exportAssets(), msg.css)); break;
@@ -226,6 +232,8 @@ export class StoreHost {
     this.syncState = this.ws.persistent ? "local" : "memory";
     this.syncDetail = this.ws.note;
     this.startSync(sync);
+    // BSD-230: alte Import-Dateien in den synchronisierten Speicher (im Leerlauf, Fehler nur im Log).
+    setTimeout(() => { void this.migrateImportedAssets().catch(() => undefined); }, this.opts.migrateDelayMs ?? 2000);
     const out: InitResult = { node: store.clock.node, persistent: this.ws.persistent, created };
     if (homePageID) out.homePageID = homePageID;
     return out;
@@ -799,6 +807,50 @@ export class StoreHost {
 
   // MARK: Dateien (BSD-78)
 
+  /**
+   * BSD-230: Import schreiben – Dateien zuerst in den synchronisierten Speicher (SHA-256), dann die Verweise der
+   * Records auf den Hash umschreiben. Was sich nicht ablegen lässt, fehlt und steht im Bericht.
+   */
+  private async commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
+    const map = new Map<string, string>();
+    let failed = 0;
+    for (const f of payload.files ?? []) {
+      try {
+        if (!this.assets) throw new Error("not initialised");
+        const ref = await this.assets.add(f.data, f.name, f.mime);
+        map.set(f.id, ref.id);
+      } catch {
+        failed += 1;
+      }
+    }
+    const rest: ImportPayload = { ...payload, notion: remapAssetRefs(payload.notion, map), archives: payload.archives.map((a) => ({ ...a, read: remapAssetRefs(a.read, map) })) };
+    delete rest.files;
+    const summary = commitImportPayload(this.store, rest, parent);
+    if (failed > 0) summary.warnings.push(`${failed} attached file${failed === 1 ? "" : "s"} couldn't be saved (storage full or blocked) and will show as missing.`);
+    return summary;
+  }
+
+  /**
+   * BSD-230: Dateien früherer Importe lagen nur in IndexedDB dieses Geräts. Einmalig in den synchronisierten Speicher
+   * übernehmen (hashen, hochladen), Verweise umschreiben, dann aus IndexedDB löschen. Läuft nach dem Start im Leerlauf.
+   */
+  async migrateImportedAssets(): Promise<number> {
+    const imported = this.opts.importedAssets;
+    if (!imported || !this.assets || !this.ws || this.store.isReadOnly) return 0;
+    const map = new Map<string, string>();
+    for (const id of assetIDsInStore(this.store)) {
+      if (/^[0-9a-f]{64}$/.test(id)) continue;
+      const a = await imported.get(id).catch(() => undefined);
+      if (!a) continue;
+      const ref = await this.assets.add(a.data, a.name, a.mime);
+      map.set(id, ref.id);
+    }
+    if (map.size === 0) return 0;
+    remapStoreAssets(this.store, map);
+    for (const id of map.keys()) await imported.delete?.(id).catch(() => undefined);
+    return map.size;
+  }
+
   async assetPut(bytes: ArrayBuffer, name: string, mime?: string): Promise<AssetInfo> {
     if (!this.assets) throw new Error("not initialised");
     if (this.store.isReadOnly) throw new Error("read-only: " + (this.store.writeFailure?.message ?? ""));
@@ -808,7 +860,8 @@ export class StoreHost {
   /** Dateien für Exporte: zuerst aus Importen, dann lokal aus dem Blob-Speicher des Syncs (ohne Netz). */
   private exportAssets(): AssetStore {
     const imported = this.opts.importedAssets;
-    const blobs = this.ws?.assets;
+    // BSD-230: der Blob-Speicher des Syncs (auch ohne OPFS, dann im Speicher).
+    const blobs = this.assets?.blobs ?? this.ws?.assets;
     return {
       put: (id, asset) => (imported ? imported.put(id, asset) : Promise.reject(new Error("no asset store"))),
       has: async (id) => ((await imported?.has(id).catch(() => false)) ?? false) || ((await blobs?.has(id).catch(() => false)) ?? false),
