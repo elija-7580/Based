@@ -203,18 +203,47 @@ export function createDatabase(store: WorkspaceStore, opts: { parent: string; ti
 }
 
 /** „Linked view of database“: ein Block, der eine bestehende Datenbank mit eigenen Ansichten zeigt. */
-export function createLinkedView(store: WorkspaceStore, databaseID: string, parent: string, type = "table"): string | undefined {
+export function createLinkedView(store: WorkspaceStore, databaseID: string, parent: string, type = "table", opts: { blockID?: string; position?: InsertPosition; undoable?: boolean } = {}): { blockID: string; viewID: string } | undefined {
   if (!store.databases.has(databaseID)) return undefined;
   return store.transact("Linked view", (tx) => {
-    const blockID = newID();
+    const blockID = opts.blockID ?? newID();
     const view = newView(store, databaseID, blockID, defaultViewName(type), type, keyBetween(undefined, undefined));
     tx.put({ kind: "view", data: view });
-    const b = newBlock(store, { type: "databaseInline", parent, sk: sortKeyIn(store, parent) });
+    const b = newBlock(store, { type: "databaseInline", parent, sk: sortKeyIn(store, parent, opts.position) });
     b.id = blockID;
     b.props = { databaseID, viewIDs: [view.id] };
     tx.put({ kind: "block", data: b });
-    return blockID;
-  });
+    return { blockID, viewID: view.id };
+  }, { undoable: opts.undoable ?? true });
+}
+
+/**
+ * BSD-212: Datenbanken, die Blöcke aus `ids` nur verknüpft zeigen (Datenbank gehört einem anderen Block). Eine
+ * Seiten-Replik braucht für sie den Datenbank-Record und die Zeilen.
+ */
+export function linkedDatabases(store: WorkspaceStore, ids: Iterable<string>): Set<string> {
+  const out = new Set<string>();
+  for (const id of ids) {
+    const db = store.blocks.get(id)?.props?.databaseID;
+    if (typeof db === "string" && store.databases.has(db) && store.databases.get(db)!.blockID !== id) out.add(db);
+  }
+  return out;
+}
+
+/** Datenbank, in deren Zeilen (auch verschachtelt) `id` liegt – nur über Blöcke, ohne die Besitzer-Seite. */
+export function enclosingDatabases(store: WorkspaceStore, id: string): string[] {
+  const out: string[] = [];
+  let p = store.blocks.get(id)?.parent;
+  for (let n = 0; p && n < 10_000 && p !== "w"; n++) {
+    let next: string | undefined;
+    if (p.startsWith("d:")) {
+      out.push(p.slice(2));
+      next = store.databases.get(p.slice(2))?.blockID;
+    } else if (p.startsWith("b:")) next = p.slice(2);
+    if (!next) break;
+    p = store.blocks.get(next)?.parent;
+  }
+  return out;
 }
 
 export function setDatabaseTitle(store: WorkspaceStore, databaseID: string, title: RichText) {
@@ -428,6 +457,41 @@ export function addTemplate(store: WorkspaceStore, databaseID: string, title: Ri
     tx.put({ kind: "block", data: b });
     updDB(tx, store, databaseID, (d) => { d.templateIDs = [...(d.templateIDs ?? []), b.id]; });
     return b.id;
+  });
+}
+
+/** Vorlagen einer Datenbank in der gespeicherten Reihenfolge (ohne Papierkorb und fremde IDs). */
+export function templatesOf(store: WorkspaceStore, databaseID: string): Block[] {
+  const db = store.databases.get(databaseID);
+  if (!db) return [];
+  const listed = (db.templateIDs ?? []).map((id) => store.blocks.get(id));
+  const out = listed.filter((b): b is Block => !!b && b.parent === "d:" + databaseID && b.props?.isTemplate === true && b.trashedAt === undefined);
+  // Vorlagen, die nur über das Flag bekannt sind (z. B. aus einem Import), hinten anhängen.
+  for (const id of store.children("d:" + databaseID)) {
+    const b = store.blocks.get(id);
+    if (b?.props?.isTemplate === true && b.trashedAt === undefined && !out.includes(b)) out.push(b);
+  }
+  return out;
+}
+
+/** BSD-212: Standardvorlage für „New“ setzen (`undefined` = leere Seite). */
+export function setDefaultTemplate(store: WorkspaceStore, databaseID: string, templateID: string | undefined) {
+  if (!store.databases.has(databaseID)) return;
+  store.transact("Default template", (tx) => updDB(tx, store, databaseID, (d) => {
+    if (templateID) d.defaultTemplateID = templateID;
+    else delete d.defaultTemplateID;
+  }));
+}
+
+/** BSD-212: Vorlage löschen (in den Papierkorb wie eine Zeile); sie fällt aus der Liste und als Standard weg. */
+export function deleteTemplate(store: WorkspaceStore, databaseID: string, templateID: string) {
+  if (!store.databases.has(databaseID)) return;
+  store.transact("Delete template", (tx) => {
+    updDB(tx, store, databaseID, (d) => {
+      if (d.templateIDs) d.templateIDs = d.templateIDs.filter((x) => x !== templateID);
+      if (d.defaultTemplateID === templateID) delete d.defaultTemplateID;
+    });
+    if (store.blocks.has(templateID)) tx.update(templateID, (b) => { b.trashedAt = store.now(); });
   });
 }
 

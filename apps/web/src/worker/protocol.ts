@@ -130,6 +130,16 @@ export interface SyncedRecords {
   records: WireRecord[];
 }
 
+/** BSD-212: eine Datenbank für die Auswahl „Linked view of database“. */
+export interface DatabaseInfo {
+  id: string;
+  title: string;
+  /** Liegt inline auf einer Seite (sonst eigene Datenbankseite). */
+  inline: boolean;
+  /** Pfad über dem Datenbank-Block. */
+  path?: string;
+}
+
 export type Request =
   | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string }
   | { type: "command"; command: Command }
@@ -166,6 +176,10 @@ export type Request =
   | { type: "backlinks"; pageID: string }
   /** Ein Synced-Block-Original (von einer anderen Seite) in die Replik von `pageID` aufnehmen (Antwort: SyncedRecords). */
   | { type: "includeSynced"; pageID: string; source: string }
+  /** BSD-212: Datenbank (Record + Zeilen) für eine verknüpfte Ansicht in die Replik von `pageID` (Antwort: SyncedRecords). */
+  | { type: "includeDatabase"; pageID: string; databaseID: string }
+  /** BSD-212: Datenbanken nach Titel (Antwort: DatabaseInfo[]). */
+  | { type: "listDatabases"; query: string }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
   | { type: "chat"; action: ChatAction }
   /** Aufträge, Runs, Projekte, Zeitpläne des Hauptagenten (BSD-195/196/160, worker/agents.ts). */

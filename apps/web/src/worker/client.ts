@@ -18,7 +18,7 @@ import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } f
 import type { AgentAction } from "./agents.js";
 import type { JSONValue } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
-import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -199,6 +199,18 @@ export class StoreClient {
     const r = await this.request<SyncedRecords>({ type: "includeSynced", pageID, source });
     if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
     return r.found;
+  }
+
+  /** BSD-212: Datenbank für „Linked view of database“ in die Replik von `pageID` holen. */
+  async includeDatabase(pageID: string, databaseID: string): Promise<boolean> {
+    const r = await this.request<SyncedRecords>({ type: "includeDatabase", pageID, databaseID });
+    if (r.records.length) this.replicas.get(pageID)?.receive(r.records, []);
+    return r.found;
+  }
+
+  /** BSD-212: Datenbanken nach Titel (Auswahl „Linked view of database“). */
+  listDatabases(query: string): Promise<DatabaseInfo[]> {
+    return this.request({ type: "listDatabases", query });
   }
 
   // MARK: Agenten (BSD-195/196/160)
