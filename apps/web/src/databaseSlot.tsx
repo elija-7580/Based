@@ -2,7 +2,8 @@
 // der Shell (showTitle aus), Inline-Datenbanken im Editor mit Titel und begrenzter Höhe.
 // Zeilen öffnen je Ansicht als Side Peek, Center Peek oder ganze Seite (database/RowPeek.tsx); die Formular-Ansicht
 // kommt aus Astryx-Formkomponenten (database/FormView.tsx).
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useSyncExternalStore } from "react";
+import { weekStartPref } from "./shell/storage.js";
 import { plainText } from "@based/core";
 import { DatabaseView, type FormRenderProps, type PeekOptions } from "@based/database-ui";
 import "@based/database-ui/styles.css";
@@ -26,6 +27,8 @@ const renderForm = (p: FormRenderProps) => <FormView {...p} />;
 
 export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpenPage }: DatabaseViewProps) {
   const fullPage = store.blocks.get(blockID)?.type === "databasePage";
+  // BSD-205: Wochenbeginn aus Einstellungen → Language & region (sonst aus der Sprache des Systems).
+  const weekStart = useSyncExternalStore(weekStartPref.subscribe, weekStartPref.get);
   const nested = useContext(InPeek);
   const peek = useMemo<PeekOptions | undefined>(() => (nested ? undefined : {
     storage: peekStorage(blockID),
@@ -38,7 +41,7 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
   }, []);
   return (
     <div className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} files={files} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} />
     </div>
   );
 }

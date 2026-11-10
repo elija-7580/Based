@@ -60,3 +60,17 @@ describe("Verknüpfte Ansichten (BSD-212)", () => {
     expect(createLinkedView(store, "missing", "b:p2")).toBeUndefined();
   });
 });
+
+describe("Workspace umbenennen (BSD-205)", () => {
+  it("setzt den Namen, ignoriert Leeres, ein Undo-Schritt", async () => {
+    const { renameWorkspace } = await import("../src/index.js");
+    const { store } = setup();
+    const before = store.workspace.name;
+    renameWorkspace(store, "  Acme  ");
+    expect(store.workspace.name).toBe("Acme");
+    renameWorkspace(store, "   ");
+    expect(store.workspace.name).toBe("Acme");
+    store.undo();
+    expect(store.workspace.name).toBe(before);
+  });
+});

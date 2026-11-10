@@ -82,6 +82,7 @@ export type Command =
   /** Teamspaces: anlegen (Antwort: ID), umbenennen, Icon (Emoji oder keins), löschen (Seiten wandern nach Private). */
   | { op: "createTeamspace"; name: string; icon?: string }
   | { op: "renameTeamspace"; id: string; name: string }
+  | { op: "renameWorkspace"; name: string }
   | { op: "setTeamspaceIcon"; id: string; icon?: string }
   | { op: "deleteTeamspace"; id: string }
   | { op: "undo" }
