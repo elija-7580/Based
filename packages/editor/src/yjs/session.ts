@@ -68,6 +68,15 @@ export interface DocSessionOptions {
    * gespeicherter Zustand ist dann schon angewandt; `docStore` bleibt meist leer.
    */
   doc?: Y.Doc;
+  /**
+   * BSD-220 Teil 3: Das Y.Doc wird über `/collab` abgeglichen (Gerät, nicht Server). Dann ist das Y.Doc die Quelle:
+   * - beim Öffnen werden die Records aus dem Y.Doc abgeleitet (kein Abgleich Records → Y.Doc – der Y-Stand vom Server
+   *   kann neuer sein als die lokalen Records, ein Diff würde ihn zurückdrehen);
+   * - Records, die per Sync ankommen („remote“), werden nicht ins Y.Doc übernommen: der Server bringt sie selbst
+   *   über Yjs (seine DocSession übernimmt Records von außen);
+   * - Editor-Änderungen werden „derived“ geschrieben (gespeichert, nicht gepusht – der Server materialisiert sie).
+   */
+  collab?: boolean;
 }
 
 export class DocSession {
@@ -82,14 +91,23 @@ export class DocSession {
   private readonly onY: (events: Y.YEvent<Y.AbstractType<unknown>>[], tx: Y.Transaction) => void;
   private readonly onUpdate: () => void;
   private closed = false;
+  /** BSD-220: das Y.Doc wird über /collab abgeglichen (siehe `DocSessionOptions.collab`). */
+  readonly collab: boolean;
 
   constructor(readonly store: WorkspaceStore, readonly rootID: string, private readonly opts: DocSessionOptions) {
+    this.collab = opts.collab === true;
     this.doc = opts.doc ?? new Y.Doc();
     this.fragment = this.doc.getXmlFragment(FRAGMENT);
     const saved = readable(opts.docStore?.load(rootID));
     if (saved) Y.applyUpdate(this.doc, saved, LOAD_ORIGIN);
-    // Migration (erstes Öffnen) und Nachziehen von Änderungen, die ohne offenen Editor passiert sind.
-    this.reconcile();
+    if (opts.collab) {
+      // Records aus dem Y.Doc ableiten (Stand vom Server oder vom letzten Mal).
+      this.dirty = this.fragment.length > 0;
+      this.flush();
+    } else {
+      // Migration (erstes Öffnen) und Nachziehen von Änderungen, die ohne offenen Editor passiert sind.
+      this.reconcile();
+    }
     this.onY = (_events, tx) => {
       if (tx.origin === STORE_ORIGIN || tx.origin === LOAD_ORIGIN) return;
       this.markDirty();
@@ -101,6 +119,17 @@ export class DocSession {
       if (this.writing || this.closed) return;
       const ids = change.keys.filter((k) => k.startsWith("block:")).map((k) => k.slice(6));
       if (!ids.some((id) => this.isRelevant(id))) return;
+      if (this.opts.collab) {
+        // Ein Record vom Server kann älter sein als das Y.Doc (er materialisiert nach 120 ms, Yjs ist schneller):
+        // nicht übernehmen, sondern die Records wieder aus dem Y.Doc ableiten.
+        if (change.origin === "remote") {
+          this.markDirty();
+          return;
+        }
+        // Lokale Änderung (Shell, Agent): erst alle anderen Records auf den Y-Stand bringen, sonst dreht der
+        // Abgleich unten Blöcke auf einen älteren Record zurück.
+        this.dirty = true;
+      }
       // Erst eigene, noch nicht geschriebene Änderungen sichern (ohne die gerade geänderten Records anzufassen),
       // dann den Store ins Y.Doc übernehmen.
       this.guarded(() => {
@@ -167,7 +196,7 @@ export class DocSession {
     if (!isEmptyChange(changes)) {
       this.writing = true;
       try {
-        applyDocChanges(this.store, changes);
+        applyDocChanges(this.store, changes, "Edit", this.opts.collab === true);
       } finally {
         this.writing = false;
       }

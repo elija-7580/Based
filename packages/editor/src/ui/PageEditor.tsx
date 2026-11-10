@@ -23,6 +23,7 @@ import {
 } from "./blockActions.js";
 import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "./MovePicker.js";
 import { acquireSession, releaseSession, type DocSession, type YDocStore } from "../yjs/session.js";
+import type { CollabHandle, CollabSource } from "../yjs/collab.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
 import { mentionItems } from "./mentions.js";
@@ -53,6 +54,8 @@ export interface PageEditorProps {
   outline?: boolean;
   /** Ablage der Y-Zustände; ohne: im Speicher (pro Store). */
   docStore?: YDocStore;
+  /** BSD-220: Echtzeit-Text über `/collab` (Seiten-Wurzeln); ohne: nur Records + Sync. */
+  collab?: CollabSource;
   /** Standard: bearbeitbar, solange der Store nicht schreibgeschützt ist. */
   editable?: boolean;
   /** `based-asset:<id>`- und andere URLs für Medien auflösen. */
@@ -188,24 +191,42 @@ export function PageEditor(props: PageEditorProps) {
 
 /** Ein Editor auf einer Dokument-Wurzel (Seite oder Synced-Block-Original). */
 function DocEditor(props: { rootID: string; ancestors: readonly string[]; shared: Shared; readOnly?: boolean }) {
-  const { store, docStore } = props.shared;
+  const { store, docStore, collab } = props.shared;
   const [session, setSession] = useState<DocSession>();
   useEffect(() => {
     let s: DocSession | undefined;
+    let handle: CollabHandle | undefined;
     let cancelled = false;
     const open = () => {
-      if (cancelled) return;
-      s = acquireSession(store, props.rootID, { converter: sharedConverter(), docStore });
+      if (cancelled) {
+        handle?.release();
+        return;
+      }
+      const opts = handle
+        // Echtzeit-Text: der Binder hat den gespeicherten Stand schon geprüft und angewandt; hier nur speichern.
+        ? { converter: sharedConverter(), doc: handle.doc, collab: true, docStore: { load: () => undefined, save: (id: string, st: Uint8Array) => docStore.save(id, st) } }
+        : { converter: sharedConverter(), docStore };
+      s = acquireSession(store, props.rootID, opts);
+      // Lief schon eine Sitzung (anderer Editor auf derselben Wurzel), bleibt es bei deren Modus.
+      if (handle && s.doc !== handle.doc) {
+        handle.release();
+        handle = undefined;
+      }
       setSession(s);
     };
-    // BSD-220: gespeicherten Y-Zustand erst holen (Store-Worker), dann öffnen; ohne `prepare` sofort.
-    if (docStore.prepare) void docStore.prepare(props.rootID).catch(() => undefined).then(open);
+    // BSD-220: erst /collab (falls an), sonst den gespeicherten Y-Zustand holen (Store-Worker); dann öffnen.
+    const start = async () => {
+      if (collab) handle = await collab.open(props.rootID).catch(() => undefined);
+      if (!handle && docStore.prepare) await docStore.prepare(props.rootID).catch(() => undefined);
+    };
+    if (collab || docStore.prepare) void start().then(open);
     else open();
     return () => {
       cancelled = true;
       if (s) releaseSession(s);
+      handle?.release();
     };
-  }, [store, props.rootID, docStore]);
+  }, [store, props.rootID, docStore, collab]);
   if (!session || session.store !== store || session.rootID !== props.rootID) return null;
   return <BoundEditor key={props.rootID} session={session} ancestors={props.ancestors} shared={props.shared} readOnly={props.readOnly === true} />;
 }
@@ -341,7 +362,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
 
   return (
     <EnvContext.Provider value={env}>
-      <div className="bx-doc" ref={docRef} tabIndex={-1} data-block-selection={range ? selected.join(" ") : undefined} onKeyDownCapture={(e) => {
+      <div className="bx-doc" ref={docRef} tabIndex={-1} data-collab={session.collab ? "" : undefined} data-block-selection={range ? selected.join(" ") : undefined} onKeyDownCapture={(e) => {
         if (range && e.target === e.currentTarget) {
           onSelectionKey(e);
           return;

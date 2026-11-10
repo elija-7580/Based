@@ -32,6 +32,8 @@ interface Sealed {
   url: string;
   iv: Uint8Array<ArrayBuffer>;
   data: ArrayBuffer;
+  /** BSD-220: Echtzeit-Text (kein Geheimnis, deshalb im Klartext; ältere Einträge haben es nicht = aus). */
+  collab?: boolean;
 }
 
 interface SealedSecret {
@@ -65,13 +67,14 @@ export class SecretStore {
     const sealed = (await this.kv.get(SYNC)) as Sealed | undefined;
     if (!sealed?.url) return undefined;
     const key = await this.key(false);
-    if (!key) return { url: sealed.url, token: "" };
+    const extra = sealed.collab ? { collab: true } : {};
+    if (!key) return { url: sealed.url, token: "", ...extra };
     try {
       const plain = await this.subtle.decrypt({ name: "AES-GCM", iv: sealed.iv }, key, sealed.data);
-      return { url: sealed.url, token: new TextDecoder().decode(plain) };
+      return { url: sealed.url, token: new TextDecoder().decode(plain), ...extra };
     } catch {
       // Schlüssel weg/anders (Profil teilweise zurückgesetzt): Server behalten, Token neu eingeben lassen
-      return { url: sealed.url, token: "" };
+      return { url: sealed.url, token: "", ...extra };
     }
   }
 
@@ -84,6 +87,7 @@ export class SecretStore {
     const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
     const data = await this.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(c.token));
     const sealed: Sealed = { v: 1, url: c.url, iv, data };
+    if (c.collab) sealed.collab = true;
     await this.kv.set(SYNC, sealed);
   }
 

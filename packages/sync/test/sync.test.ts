@@ -291,6 +291,42 @@ describe("Sync v2", () => {
     expect(server.store.blocks.has("b1")).toBe(true);
   });
 
+  it("BSD-220: abgeleitete Änderungen (Echtzeit-Text) werden gespeichert, nicht gepusht, beim Voll-Pull behalten", async () => {
+    const server = new FakeServer();
+    const a = device(), b = device();
+    createPage(a.store, "p1");
+    await client(a, server).syncNow();
+    await client(b, server).syncNow();
+    deleteForever(a.store, "p1");
+    createPage(a.store, "p2");
+    await client(a, server).syncNow();
+    server.compactTombstones();
+    b.store.transact("Edit", (tx) => tx.put(block("y1", "w", "aus dem Y.Doc")), { derived: true });
+    expect(b.persistence.changes(0, 100).find((e) => e.key === "block:y1")).toMatchObject({ local: false, derived: true });
+    expect(b.persistence.derivedKeys()).toEqual(["block:y1"]);
+    const r = await client(b, server).syncOnce();
+    expect(r.pushed).toBe(0);
+    expect(r.fullPull).toBe(true);
+    expect(server.store.blocks.has("y1")).toBe(false);
+    expect([...b.store.blocks.keys()].sort()).toEqual(["p2", "y1"]);
+    // Kommt der Record vom Server (dort aus dem Y.Doc materialisiert), ist er nicht mehr abgeleitet.
+    server.store.transact("Edit", (tx) => tx.put(block("y1", "w", "aus dem Y.Doc")));
+    await client(b, server).syncOnce();
+    expect(b.persistence.derivedKeys()).toEqual([]);
+  });
+
+  it("BSD-220: promoteDerived pusht abgeleitete Änderungen doch (Echtzeit-Text aus)", async () => {
+    const server = new FakeServer();
+    const a = device();
+    await client(a, server).syncNow();
+    a.store.transact("Edit", (tx) => tx.put(block("y2", "w", "offline")), { derived: true });
+    expect((await client(a, server).syncOnce()).pushed).toBe(0);
+    expect(a.persistence.promoteDerived()).toBe(1);
+    expect(a.persistence.derivedKeys()).toEqual([]);
+    expect((await client(a, server).syncOnce()).pushed).toBe(1);
+    expect(server.store.blocks.get("y2")?.text).toBe("offline");
+  });
+
   it("Push 1,5 s nach einer lokalen Änderung, Long-Poll holt Fremdänderungen", async () => {
     const server = new FakeServer();
     const a = device(), b = device();

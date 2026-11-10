@@ -67,17 +67,28 @@ function SyncSection({ client, state }: SettingsSectionProps) {
   const [url, setURL] = useState(saved?.url ?? "");
   const [token, setToken] = useState(saved?.token ?? "");
   const [connected, setConnected] = useState(!!saved);
+  const [collab, setCollab] = useState(saved?.collab === true);
   const [error, setError] = useState<string | undefined>();
+  // BSD-220: Echtzeit-Text (Beta). Gilt für Seiten, die danach geöffnet werden.
+  const changeCollab = (on: boolean) => {
+    setCollab(on);
+    const cur = syncConfig.get();
+    if (!cur) return;
+    const next = { url: cur.url, token: cur.token, ...(on ? { collab: true } : {}) };
+    syncConfig.set(next);
+    void syncConfig.flush().then(() => client.setSync(next));
+  };
   const connect = () => {
     const r = validateSyncForm({ url, token });
     if (!r.ok) return setError(r.error);
     setError(undefined);
     setURL(r.config.url);
     setToken(r.config.token);
-    syncConfig.set(r.config);
+    const config = collab ? { ...r.config, collab: true } : r.config;
+    syncConfig.set(config);
     setConnected(true);
     // erst gespeichert, dann verbunden: der Status in der Seitenleiste heißt dann auch „übersteht Neuladen“
-    void syncConfig.flush().then(() => client.setSync(r.config));
+    void syncConfig.flush().then(() => client.setSync(config));
   };
   const disconnect = () => {
     syncConfig.set(undefined);
@@ -103,6 +114,8 @@ function SyncSection({ client, state }: SettingsSectionProps) {
               <BasedButton label="Connect" variant="primary" type="submit" disabled={!url.trim()} />
             )}
           </HStack>
+          <Switch label="Real-time text (beta)" description="Merge edits to the same paragraph from your devices instead of keeping only the latest. Applies to pages you open next."
+            value={collab} onChange={changeCollab} labelPosition="start" labelSpacing="spread" width="100%" />
         </VStack>
       </form>
     </Group>

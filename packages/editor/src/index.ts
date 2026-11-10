@@ -25,6 +25,8 @@ export { assignSortKeys } from "./mapping/sortkeys.js";
 // Yjs
 export { DocSession, FRAGMENT, LOAD_ORIGIN, MemoryYDocStore, STORE_ORIGIN, acquireSession, releaseSession } from "./yjs/session.js";
 export type { BlockConverter, DocSessionOptions, YDocStore } from "./yjs/session.js";
+export { COLLAB_META_MAP, COLLAB_META_ORIGIN, CollabBinder, collabDocName, fromServer } from "./yjs/collab.js";
+export type { CollabBinderOptions, CollabConnection, CollabHandle, CollabSource } from "./yjs/collab.js";
 export { syncChildren } from "./yjs/xmldiff.js";
 export { basedSchema, createConverter, sharedConverter } from "./schema/schema.js";
 export type { BasedEditor, BasedSchema } from "./schema/schema.js";

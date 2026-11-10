@@ -398,7 +398,7 @@ export class PageReplica {
     this.pageID = data.pageID;
     this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records) });
     this.unobserve = this.store.observe((c) => {
-      if (c.origin !== "local" && c.origin !== "undo" && c.origin !== "redo") return;
+      if (c.origin !== "local" && c.origin !== "undo" && c.origin !== "redo" && c.origin !== "derived") return;
       const upserts: WireRecord[] = [];
       const deletions: RecordKeyString[] = [];
       for (const key of c.keys) {
@@ -414,7 +414,9 @@ export class PageReplica {
           else this.inflight.set(key, n);
         }
       };
-      this.client.request({ type: "applyLocal", pageID: this.pageID, upserts, deletions }).then(
+      const req: Request = { type: "applyLocal", pageID: this.pageID, upserts, deletions };
+      if (c.origin === "derived") req.derived = true;
+      this.client.request(req).then(
         () => {
           this.lastError = undefined;
           done();

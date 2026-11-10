@@ -191,12 +191,13 @@ function materializeRows(tableID: string, own: Owned, prevTable: Block | undefin
 }
 
 /** Änderungen in einer Store-Transaktion schreiben (ein Schritt, nicht im Store-Undo: Undo macht Yjs). */
-export function applyDocChanges(store: WorkspaceStore, changes: DocChanges, name = "Edit"): void {
+/** `derived` (BSD-220): Änderungen aus einem /collab-Y.Doc – gespeichert, nicht gepusht. */
+export function applyDocChanges(store: WorkspaceStore, changes: DocChanges, name = "Edit", derived = false): void {
   if (isEmptyChange(changes)) return;
   store.transact(name, (tx) => {
     for (const b of changes.puts) tx.put({ kind: "block", data: b });
     for (const id of changes.removeViews) tx.remove(keyOf("view", id));
     for (const id of changes.removeDatabases) tx.remove(keyOf("database", id));
     for (const id of changes.removeBlocks) tx.remove(keyOf("block", id));
-  }, { undoable: false });
+  }, derived ? { undoable: false, derived: true } : { undoable: false });
 }

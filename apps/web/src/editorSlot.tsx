@@ -13,11 +13,15 @@ import { ShellPageDirectory } from "./shell/pageDirectory.js";
 import { slots, type PageEditorProps } from "./slots.js";
 import type { StoreClient } from "./worker/client.js";
 import { WorkerYDocStore } from "./worker/ydocStore.js";
+import { createCollab, pageCollab } from "./collab.js";
+import { syncConfig } from "./shell/storage.js";
+import type { CollabBinder } from "@based/editor";
 
 let shellClient: StoreClient | undefined;
 let directory: ShellPageDirectory | undefined;
 let meeting: MeetingHost | undefined;
 let docStore: WorkerYDocStore | undefined;
+let collab: CollabBinder | undefined;
 
 /** Der Editor-Steckplatz braucht den Store-Client (Seitensuche, Backlinks). Einmal beim Start setzen (main.tsx). */
 export function connectEditor(client: StoreClient) {
@@ -25,6 +29,7 @@ export function connectEditor(client: StoreClient) {
   directory = new ShellPageDirectory(client);
   meeting = createMeetingHost(client);
   docStore = new WorkerYDocStore(client);
+  collab = createCollab(docStore, () => syncConfig.get());
 }
 
 function useRootTheme(): "light" | "dark" {
@@ -52,12 +57,15 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
     list: async (q: string) => (await client.listDatabases(q)).map((d) => ({ id: d.id, title: d.title, path: d.path })),
     include: (id: string) => client.includeDatabase(pageID, id),
   } : undefined), [client, pageID]);
+  // BSD-220: Echtzeit-Text nur, wenn eingeschaltet (beim Öffnen der Seite entschieden).
+  const collabOn = syncConfig.get()?.collab === true;
+  const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID) : undefined), [pageID, collabOn]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   return (
     <div className="shell-editor">
       <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
-        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})}
+        {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
     </div>

@@ -50,7 +50,7 @@ let syncWrite: Promise<void> = Promise.resolve();
 export const syncConfig = {
   get: (): SyncConfig | undefined => syncCache,
   set: (c: SyncConfig | undefined) => {
-    const value = c?.url ? { url: c.url, token: c.token } : undefined;
+    const value: SyncConfig | undefined = c?.url ? { url: c.url, token: c.token, ...(c.collab ? { collab: true } : {}) } : undefined;
     syncCache = value;
     syncWrite = syncWrite.then(() => secretStore().setSync(value)).catch(() => undefined);
   },
