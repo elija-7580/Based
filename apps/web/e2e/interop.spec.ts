@@ -78,6 +78,7 @@ test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen"
 
 test("Import eines Notion-HTML-Exports (ZIP) legt die Seiten an", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Import…" }).click();
   const dialog = page.getByRole("dialog", { name: "Import" });
   await expect(dialog).toBeVisible();
@@ -110,6 +111,7 @@ test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) 
   await dialog.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
   await page.getByRole("button", { name: "Export workspace…" }).click();
   const ws = page.getByRole("dialog", { name: "Export workspace" });
   await ws.getByRole("radio", { name: /Based archive/ }).click();

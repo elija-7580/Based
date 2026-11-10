@@ -1,7 +1,7 @@
 // BSD-153: die Shell auf echten Daten – Seitenleiste (Struktur aus dem Store-Worker), Quick Find, Seiten, Papierkorb,
 // Einstellungen. Home behält vorerst die Demo-Abschnitte (src/data.ts), „Pick up again“ ist echt.
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { applyAppearance, loadAppearance, saveAppearance, type Appearance } from "./appearance.js";
+import { appearanceStore, applyAppearance, onSystemThemeChange } from "./appearance.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { TabBar } from "./components/TabBar.js";
@@ -15,20 +15,14 @@ import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
-const BOLD_FONTS = "https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap";
-
-/** Bold-Schriften nur laden, wenn der Stil sie braucht. */
+/** Bold-Schriften nur laden, wenn der Stil sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
 function ensureBoldFonts() {
-  if (document.getElementById("based-bold-fonts")) return;
-  const link = document.createElement("link");
-  link.id = "based-bold-fonts";
-  link.rel = "stylesheet";
-  link.href = BOLD_FONTS;
-  document.head.appendChild(link);
+  void import("./boldFonts.js").catch(() => undefined);
 }
 
 export function App({ client, history }: { client: StoreClient; history: History }) {
-  const [appearance, setAppearance] = useState<Appearance>(loadAppearance);
+  const appearance = useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get);
+  const setAppearance = appearanceStore.set;
   const state = useSyncExternalStore(client.subscribe, client.getState);
   const route = useSyncExternalStore(history.subscribe, () => history.route);
   const [quickFind, setQuickFind] = useState(false);
@@ -36,8 +30,8 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   useEffect(() => {
     applyAppearance(appearance);
-    saveAppearance(appearance);
     if (appearance.style === "bold") ensureBoldFonts();
+    return appearance.theme === "system" ? onSystemThemeChange(() => applyAppearance(appearance)) : undefined;
   }, [appearance]);
 
   useEffect(() => recentPages.subscribe(setRecent), []);
@@ -108,7 +102,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "graph") {
     screen = <Graph />;
   } else if (route.name === "settings") {
-    screen = <Settings value={appearance} onChange={setAppearance} client={client} status={state.status} />;
+    screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
   } else {
     screen = <Home showDetails={appearance.agentDetails} recent={recent} state={state} onOpenPage={openPage} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
   }

@@ -1,10 +1,10 @@
-// BSD-153: Navigation über schlichte Hash-Namen (#home, #graph, #appearance, #trash, #page-<id>; die claude.ai-
+// BSD-153: Navigation über schlichte Hash-Namen (#home, #graph, #appearance, #prefs-<seite>, #trash, #page-<id>; die claude.ai-
 // Vorschau kennt nur #name, „settings“ ist dort reserviert) mit eigenem Verlauf für Vor/Zurück.
 
 export type Route =
   | { name: "home" }
   | { name: "graph" }
-  | { name: "settings" }
+  | { name: "settings"; page?: string }
   | { name: "trash" }
   | { name: "page"; id: string };
 
@@ -12,7 +12,7 @@ export function routeToHash(r: Route): string {
   switch (r.name) {
     case "home": return "home";
     case "graph": return "graph";
-    case "settings": return "appearance";
+    case "settings": return r.page ? "prefs-" + r.page : "appearance";
     case "trash": return "trash";
     case "page": return "page-" + r.id;
   }
@@ -21,6 +21,7 @@ export function routeToHash(r: Route): string {
 export function routeFromHash(hash: string): Route {
   const h = hash.replace(/^#\/?/, "");
   if (h.startsWith("page-") && h.length > 5) return { name: "page", id: decodeURIComponent(h.slice(5)) };
+  if (h.startsWith("prefs-") && h.length > 6) return { name: "settings", page: decodeURIComponent(h.slice(6)) };
   switch (h) {
     case "graph": return { name: "graph" };
     case "appearance": case "settings": return { name: "settings" };

@@ -170,6 +170,7 @@ test("Neuladen behält Daten (OPFS)", async ({ playwright, browserName, baseURL 
 
 test("Sync-Server in den Einstellungen: Status in der Seitenleiste", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
   await page.getByLabel("Server URL").fill("http://127.0.0.1:9");
   await page.getByLabel("Token").fill("secret");
   await page.getByRole("button", { name: "Connect" }).click();
