@@ -279,6 +279,11 @@ export class StoreClient {
   }
 
   /** Vorbereiteten Import (Import-Worker) im Store schreiben. */
+  /** BSD-254: eine Datei eines laufenden Imports ablegen (vor `commitImport`). */
+  importAsset(a: { id: string; name: string; mime?: string; data: Uint8Array }): Promise<boolean> {
+    return this.request<boolean>(a.mime ? { type: "importAsset", assetID: a.id, name: a.name, mime: a.mime, bytes: a.data } : { type: "importAsset", assetID: a.id, name: a.name, bytes: a.data });
+  }
+
   commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
     return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
   }

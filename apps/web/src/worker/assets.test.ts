@@ -8,7 +8,7 @@ import { StoreClient } from "./client.js";
 import { readFileSync } from "node:fs";
 import { assetIDsInStore, makeBlock, MemoryAssetSink } from "@based/core";
 import { MemoryAssetStore } from "./assets.js";
-import { prepareFiles, type ImportFile } from "./importer.js";
+import { prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
 import { StoreHost } from "./host.js";
 import type { Endpoint, Event, RequestMessage, StatusInfo } from "./protocol.js";
 
@@ -222,6 +222,22 @@ describe("Dateien aus Importen (BSD-230)", () => {
     await expect.poll(() => ids.every((id) => server.blobs.has(id))).toBe(true);
     const got = await b.client.assetGet(ids[0]!);
     expect(got.ok).toBe(true);
+  });
+
+  it("BSD-254: Dateien einzeln vor dem Schreiben abgelegt (importAsset), commitImport schreibt die Verweise um", async () => {
+    const server = fakeServer();
+    const a = device(server.fetcher, { migrateDelayMs: 60_000 });
+    await a.client.init({ sync });
+    const sent: Promise<boolean>[] = [];
+    const payload = prepareFiles(notionExport(), { assets: new StreamingAssetSink((f) => sent.push(a.client.importAsset({ ...f, data: f.data.slice() }))) });
+    expect(payload.files).toBeUndefined();
+    expect(payload.assets).toBeGreaterThan(0);
+    expect(await Promise.all(sent)).toEqual(sent.map(() => true));
+    await a.client.commitImport(structuredClone(payload));
+    const ids = [...assetIDsInStore(a.host.ws!.store)];
+    expect(ids.length).toBe(payload.assets);
+    expect(ids.every(isHash)).toBe(true);
+    await expect.poll(() => ids.every((id) => server.blobs.has(id))).toBe(true);
   });
 
   it("Migration: alte Import-Dateien aus IndexedDB wandern in den Sync, Verweise werden umgeschrieben", async () => {

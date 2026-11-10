@@ -159,7 +159,7 @@ describe("Import", () => {
         postMessage: (m: ImportWorkerRequest) => {
           if (!respond) return;
           setTimeout(() => {
-            const payload = prepareFiles(m.files, { progress: (f) => fns.forEach((fn) => fn({ data: { type: "progress", fraction: f } })) });
+            const payload = prepareFiles(m.files.map((f) => ({ path: f.path, data: f.data! })), { progress: (f) => fns.forEach((fn) => fn({ data: { type: "progress", fraction: f } })) });
             fns.forEach((fn) => fn({ data: { type: "done", payload } }));
           });
         },

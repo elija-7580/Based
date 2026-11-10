@@ -197,3 +197,27 @@ describe("Export und Archiv", () => {
     expect(dst.canUndo).toBe(false);
   });
 });
+
+describe("BSD-254: ZIP aus einer Quelle (ohne alles zu laden)", () => {
+  it("große Einträge bleiben in der Quelle, gespeicherte innere ZIPs werden als Bereich gelesen", async () => {
+    const { bytesSource, extractZip, writeZip, ZIP_EAGER_BYTES } = await import("../src/index.js");
+    const big = new Uint8Array(ZIP_EAGER_BYTES * 4).map((_, i) => (i * 31) & 0xff);
+    const inner = writeZip([{ path: "Page.html", data: new TextEncoder().encode("<p>hi</p>") }, { path: "img.png", data: big, compress: false }]);
+    const outer = writeZip([{ path: "Export-Part-1.zip", data: inner, compress: false }, { path: "top.png", data: big, compress: false }]);
+    const base = bytesSource(outer);
+    let read = 0, largest = 0;
+    const counting = { size: base.size, read: (o: number, l: number) => { read += l; largest = Math.max(largest, l); return base.read(o, l); } };
+    const r = extractZip(counting);
+    expect(r.files.isFile("Export-Part-1/Page.html")).toBe(true);
+    expect(r.files.size("Export-Part-1/img.png")).toBe(big.length);
+    const before = read;
+    expect(r.files.read("Export-Part-1/img.png")).toEqual(big); // erst jetzt erneut aus der Quelle
+    expect(read).toBeGreaterThan(before);
+    expect(r.files.read("top.png")).toEqual(big);
+    // gleiches Ergebnis wie aus dem Puffer
+    const plain = extractZip(outer);
+    expect(plain.count).toBe(r.count);
+    expect(plain.files.walk("").sort()).toEqual(r.files.walk("").sort());
+    expect(largest).toBeLessThan(inner.length); // das innere ZIP wird nie ganz gelesen
+  });
+});

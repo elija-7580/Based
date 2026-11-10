@@ -3,7 +3,7 @@
 // fflate (MIT). Robust gegen feindliche Archive: Grenzen für Anzahl, Einzel- und Gesamtgröße und Kompressionsrate,
 // Pfade ohne „..“, verschlüsselte oder unbekannte Einträge werden übersprungen und gemeldet, Abbruch zwischen Einträgen.
 import { inflateSync, zipSync, type Zippable } from "fflate";
-import { ImportFiles, extname, joinPath, stripExtension } from "./files.js";
+import { ImportFiles, bytesSource, extname, joinPath, stripExtension, subSource, type ByteSource } from "./files.js";
 
 export type ZipErrorKind = "notAZip" | "corrupt" | "unsupported" | "checksum" | "limit" | "cancelled";
 
@@ -112,35 +112,44 @@ function decodeName(bytes: Uint8Array): string {
   }
 }
 
-/** Einträge aus dem zentralen Verzeichnis. */
-export function readZipEntries(bytes: Uint8Array): ZipEntry[] {
-  const size = bytes.length;
+const asSource = (input: Uint8Array | ByteSource): ByteSource => (input instanceof Uint8Array ? bytesSource(input) : input);
+const sig = (b: Uint8Array, i: number, c: number, d: number) => b[i] === 0x50 && b[i + 1] === 0x4b && b[i + 2] === c && b[i + 3] === d;
+
+/**
+ * Einträge aus dem zentralen Verzeichnis. BSD-254: auch aus einer Quelle (Datei im Worker) – gelesen werden nur das
+ * Ende (EOCD, ZIP64) und das Verzeichnis selbst.
+ */
+export function readZipEntries(input: Uint8Array | ByteSource): ZipEntry[] {
+  const src = asSource(input);
+  const size = src.size;
   if (size < 22) throw new ZipError("notAZip");
   const tailStart = Math.max(0, size - (22 + 65_535 + 20));
+  const tail = src.read(tailStart, size - tailStart);
   let eocd = -1;
-  for (let i = size - 22; i >= tailStart; i--) {
-    if (bytes[i] === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 5 && bytes[i + 3] === 6) { eocd = i; break; }
+  for (let i = tail.length - 22; i >= 0; i--) {
+    if (sig(tail, i, 5, 6)) { eocd = i; break; }
   }
   if (eocd < 0) throw new ZipError("notAZip");
-  const r = new Reader(bytes, eocd + 4);
+  const r = new Reader(tail, eocd + 4);
   r.u16(); r.u16(); r.u16();
   let total = r.u16();
   let cdSize = r.u32();
   let cdOffset = r.u32();
   if (total === 0xffff || cdSize === 0xffffffff || cdOffset === 0xffffffff) {
     const loc = eocd - 20;
-    if (loc < 0 || bytes[loc] !== 0x50 || bytes[loc + 1] !== 0x4b || bytes[loc + 2] !== 6 || bytes[loc + 3] !== 7) throw new ZipError("corrupt", "missing ZIP64 locator");
-    const off = new Reader(bytes, loc + 8).u64();
+    if (loc < 0 || !sig(tail, loc, 6, 7)) throw new ZipError("corrupt", "missing ZIP64 locator");
+    const off = new Reader(tail, loc + 8).u64();
     if (off + 56 > size) throw new ZipError("corrupt", "read past end");
-    if (bytes[off] !== 0x50 || bytes[off + 1] !== 0x4b || bytes[off + 2] !== 6 || bytes[off + 3] !== 6) throw new ZipError("corrupt", "bad ZIP64 record");
-    const z = new Reader(bytes, off + 24);
+    const rec = src.read(off, 56);
+    if (!sig(rec, 0, 6, 6)) throw new ZipError("corrupt", "bad ZIP64 record");
+    const z = new Reader(rec, 24);
     z.u64();
     total = z.u64();
     cdSize = z.u64();
     cdOffset = z.u64();
   }
   if (cdOffset > size || cdSize > size - cdOffset) throw new ZipError("corrupt", "central directory out of range");
-  const p = new Reader(bytes.subarray(cdOffset, cdOffset + cdSize));
+  const p = new Reader(src.read(cdOffset, cdSize));
   const out: ZipEntry[] = [];
   while (p.remaining >= 46) {
     if (p.u32() !== 0x02014b50) break;
@@ -178,16 +187,25 @@ export function readZipEntries(bytes: Uint8Array): ZipEntry[] {
   return out;
 }
 
-/** Entpackte Bytes eines Eintrags (CRC geprüft). */
-export function zipEntryData(bytes: Uint8Array, entry: ZipEntry): Uint8Array {
-  if (isEncryptedEntry(entry)) throw new ZipError("unsupported", `encrypted entry ${entry.path}`);
+/** Wo die gepackten Bytes eines Eintrags beginnen (nach dem lokalen Kopf). */
+export function zipEntryStart(input: Uint8Array | ByteSource, entry: ZipEntry): number {
+  const src = asSource(input);
   const h = entry.localHeaderOffset;
-  if (h + 30 > bytes.length) throw new ZipError("corrupt", "read past end");
-  if (bytes[h] !== 0x50 || bytes[h + 1] !== 0x4b || bytes[h + 2] !== 3 || bytes[h + 3] !== 4) throw new ZipError("corrupt", `bad local header for ${entry.path}`);
-  const r = new Reader(bytes, h + 26);
+  if (h + 30 > src.size) throw new ZipError("corrupt", "read past end");
+  const head = src.read(h, 30);
+  if (!sig(head, 0, 3, 4)) throw new ZipError("corrupt", `bad local header for ${entry.path}`);
+  const r = new Reader(head, 26);
   const start = h + 30 + r.u16() + r.u16();
-  if (start + entry.compressedSize > bytes.length) throw new ZipError("corrupt", "read past end");
-  const raw = bytes.subarray(start, start + entry.compressedSize);
+  if (start + entry.compressedSize > src.size) throw new ZipError("corrupt", "read past end");
+  return start;
+}
+
+/** Entpackte Bytes eines Eintrags (CRC geprüft). BSD-254: auch aus einer Quelle – gelesen wird nur dieser Eintrag. */
+export function zipEntryData(input: Uint8Array | ByteSource, entry: ZipEntry): Uint8Array {
+  if (isEncryptedEntry(entry)) throw new ZipError("unsupported", `encrypted entry ${entry.path}`);
+  const src = asSource(input);
+  const start = zipEntryStart(src, entry);
+  const raw = src.read(start, entry.compressedSize);
   let out: Uint8Array;
   switch (entry.method) {
     case 0: out = raw; break;
@@ -235,16 +253,22 @@ export interface ExtractResult {
  * `.DS_Store`, verschlüsselte und unbekannt komprimierte Einträge werden übersprungen und in `skipped` gemeldet;
  * Grenzüberschreitungen (`ZipError` „limit“), kaputte Archive und Abbruch (`ImportCancelled`) brechen ab.
  */
-export function extractZip(bytes: Uint8Array, opts: ExtractOptions = {}): ExtractResult {
+export function extractZip(input: Uint8Array | ByteSource, opts: ExtractOptions = {}): ExtractResult {
   const limits = { ...DEFAULT_ZIP_LIMITS, ...opts.limits };
   const state = { entries: 0, total: 0 };
   const files = new ImportFiles();
   const skipped: string[] = [];
-  const count = extractInto(bytes, files, "", 0, limits, state, skipped, opts);
+  const count = extractInto(asSource(input), files, "", 0, limits, state, skipped, opts);
   return { files, count, skipped };
 }
 
-function extractInto(bytes: Uint8Array, files: ImportFiles, prefix: string, depth: number, limits: ZipLimits,
+/**
+ * BSD-254: Einträge bis zu dieser Größe behält der Baum entpackt; größere (Bilder, PDFs, Videos) werden geprüft und
+ * wieder verworfen und erst beim Lesen erneut aus der Quelle entpackt. So liegt ein großer Export nie ganz im Speicher.
+ */
+export const ZIP_EAGER_BYTES = 256 << 10;
+
+function extractInto(bytes: ByteSource, files: ImportFiles, prefix: string, depth: number, limits: ZipLimits,
                      state: { entries: number; total: number }, skipped: string[], opts: ExtractOptions): number {
   const entries = readZipEntries(bytes);
   state.entries += entries.length;
@@ -266,6 +290,28 @@ function extractInto(bytes: Uint8Array, files: ImportFiles, prefix: string, dept
     }
     state.total += entry.uncompressedSize;
     if (state.total > limits.maxTotalBytes) throw new ZipError("limit", `more than ${limits.maxTotalBytes} bytes in total`);
+    // BSD-254: ungepackt gespeicherte innere ZIPs (Notion-Teile, oft Hunderte MB) nicht erst ganz lesen: als Bereich
+    // der äußeren Quelle auspacken (ihre Einträge haben eigene Prüfsummen).
+    const nested = (opts.expandNested ?? true) && depth < limits.maxDepth && extname(rel).toLowerCase() === "zip";
+    if (nested && entry.method === 0 && entry.compressedSize >= 4) {
+      let start = -1;
+      try {
+        start = zipEntryStart(bytes, entry);
+      } catch {
+        // unten als beschädigt gemeldet
+      }
+      if (start >= 0 && isZip(bytes.read(start, 4))) {
+        done += entry.uncompressedSize;
+        if (depth === 0) opts.progress?.(done / totalBytes);
+        try {
+          count += 1 + extractInto(subSource(bytes, start, entry.compressedSize), files, stripExtension(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
+        } catch (e) {
+          if (!(e instanceof ZipError) || (e.kind !== "corrupt" && e.kind !== "notAZip")) throw e;
+          skipped.push(`${rel} — damaged (unreadable)`);
+        }
+        continue;
+      }
+    }
     let data: Uint8Array;
     try {
       data = zipEntryData(bytes, entry);
@@ -280,12 +326,26 @@ function extractInto(bytes: Uint8Array, files: ImportFiles, prefix: string, dept
     done += entry.uncompressedSize;
     if (depth === 0) opts.progress?.(done / totalBytes);
     count += 1;
-    if ((opts.expandNested ?? true) && depth < limits.maxDepth && extname(rel).toLowerCase() === "zip" && isZip(data)) {
+    if (nested && isZip(data)) {
       // Wie Swift: die innere .zip zählt mit und wird durch ihren Ordner ersetzt.
-      count += extractInto(data, files, stripExtension(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
+      count += extractInto(bytesSource(data), files, stripExtension(dest), depth + 1, limits, state, skipped, { ...opts, progress: () => {} });
       continue;
     }
-    files.add(dest, data);
+    if (data.length <= ZIP_EAGER_BYTES) files.add(dest, data);
+    else {
+      const src = bytes, e = entry;
+      files.addLazy(dest, {
+        size: data.length,
+        load: () => {
+          try {
+            return zipEntryData(src, e);
+          } catch {
+            return undefined;
+          }
+        },
+        ...(entry.method === 0 ? { source: subSource(src, zipEntryStart(src, entry), entry.compressedSize) } : {}),
+      });
+    }
   }
   return count;
 }

@@ -40,8 +40,9 @@ export { PRIVATE_SECTION, SHARED_SECTION, buildOutline, iconText, pageAncestors,
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
 // BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
 export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFingerprint, IMPORT_FINGERPRINT_KEY, notionIDInName, notionUUID, versionHash } from "./interop/importids.js";
-export { ImportFiles, basename, dirname, extname, joinPath, normalizePath, stripExtension } from "./interop/files.js";
-export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData } from "./interop/zip.js";
+export { ImportFiles, basename, bytesSource, dirname, extname, joinPath, normalizePath, stripExtension, subSource } from "./interop/files.js";
+export type { ByteSource, LazyFile } from "./interop/files.js";
+export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZIP_EAGER_BYTES, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData, zipEntryStart } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
 export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink, MemoryAssetSink, formatBytes, looksLikeLocalFile, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
 export type { AssetRef, AssetSink, ImportBuilderOptions, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";

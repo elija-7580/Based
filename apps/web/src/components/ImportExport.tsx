@@ -87,7 +87,7 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
       const read = await readFiles(Array.from(list));
       if (!alive.current) return;
       setPhase({ k: "preparing", fraction: 0 });
-      const job = prepareInWorker(read, (fraction) => alive.current && setPhase({ k: "preparing", fraction }));
+      const job = prepareInWorker(read, (fraction) => alive.current && setPhase({ k: "preparing", fraction }), undefined, (a) => client.importAsset(a));
       running.current = job;
       const payload = await job.result;
       running.current = undefined;
