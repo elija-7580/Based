@@ -86,3 +86,10 @@ export function dropZone(offsetY: number, height: number, canNest: boolean): "be
   if (!canNest) return f < 0.5 ? "before" : "after";
   return f < 0.25 ? "before" : f > 0.75 ? "after" : "inside";
 }
+
+/** BSD-203: Seiten zwischen `from` und `to` (beide eingeschlossen) in Anzeige-Reihenfolge; leer, wenn eine fehlt. */
+export function pickRange(order: readonly string[], from: string, to: string): string[] {
+  const a = order.indexOf(from), b = order.indexOf(to);
+  if (a < 0 || b < 0) return [];
+  return order.slice(Math.min(a, b), Math.max(a, b) + 1);
+}

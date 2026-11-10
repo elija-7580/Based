@@ -480,3 +480,12 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page-font[data-font="serif"] .page-font-sample { font-family: ui-serif, "New York", Georgia, serif; }
 .page-font[data-font="mono"] .page-font-sample { font-family: var(--font-mono); }
 .menu-check { margin-left: auto; color: var(--ink); }
+
+/* BSD-203: Mehrfachauswahl in der Seitenleiste und Hover-Peek der eingeklappten Seitenleiste */
+.tree-row.picked { background: var(--selected); }
+.sidebar-peek-zone { position: fixed; left: 0; top: 0; bottom: 0; width: var(--space-3); z-index: 30; }
+.sidebar.peek {
+  position: fixed; left: var(--space-2); top: var(--space-8); bottom: var(--space-4); z-index: 32; height: auto;
+  background: var(--canvas); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); overflow: auto;
+}
+.sidebar.peek .sidebar-resize { display: none; }
