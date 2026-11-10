@@ -20,19 +20,17 @@ packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1512 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1513)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
-packages/brain test: [2m      Tests [22m [1m[32m362 passed[39m[22m[90m (362)[39m
+packages/brain test: [2m      Tests [22m [1m[32m366 passed[39m[22m[90m (366)[39m
 packages/editor test: [2m      Tests [22m [1m[32m60 passed[39m[22m[90m (60)[39m
-apps/web test: [2m      Tests [22m [1m[32m114 passed[39m[22m[90m (114)[39m
+apps/web test: [2m      Tests [22m [1m[32m116 passed[39m[22m[90m (116)[39m
 apps/server test: [2m      Tests [22m [1m[32m81 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (82)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  209 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
-  ✓  210 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.3s)
-  ✓  211 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.2s)
-  ✓  212 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
 
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
 
-  1) [chromium] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+  3) [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
 
     Error: expect(locator).toBeFocused() failed
 
@@ -57,12 +55,14 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
       77 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
         at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:74:67
 
-    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-webkit/error-context.md
 
-  1 failed
+  3 failed
     [chromium] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
+    [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
   14 skipped
-  197 passed (8.1m)
+  203 passed (10.1m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
