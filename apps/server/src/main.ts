@@ -19,9 +19,13 @@ export interface Options {
   node: string;
   stdio: boolean;
   publicURL: string | undefined;
+  /** Ordner für Dateien (Standard: neben der Datenbank). */
+  assetsDir: string | undefined;
+  /** Größte Datei in MiB. */
+  maxAssetMB: number | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -33,6 +37,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     node: env.BASED_NODE ?? "server",
     stdio: false,
     publicURL: env.BASED_PUBLIC_URL,
+    assetsDir: env.BASED_ASSETS_DIR,
+    maxAssetMB: env.BASED_MAX_ASSET_MB ? Number(env.BASED_MAX_ASSET_MB) : undefined,
   };
   const args = [...argv];
   const value = (name: string) => {
@@ -50,11 +56,14 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--token": o.token = value(a); break;
       case "--node": o.node = value(a); break;
       case "--public-url": o.publicURL = value(a); break;
+      case "--assets": o.assetsDir = value(a); break;
+      case "--max-asset-mb": o.maxAssetMB = Number(value(a)); break;
       case "--stdio": o.stdio = true; break;
       default: throw new Error(`unknown option ${a}`);
     }
   }
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
+  if (o.maxAssetMB !== undefined && !(o.maxAssetMB > 0)) throw new Error("--max-asset-mb must be a positive number");
   return o;
 }
 
@@ -98,7 +107,11 @@ async function main() {
   }
   if (opts.token.length < 16) log.warning("token is shorter than 16 characters");
 
-  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL), log });
+  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
+    log,
+    ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
+    ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
+  });
   const { port } = await app.listen(opts.port, opts.host);
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
 

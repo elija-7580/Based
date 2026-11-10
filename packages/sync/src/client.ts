@@ -45,6 +45,11 @@ export interface SyncClientOptions {
   pageSize?: number;
   onStatus?: (status: string) => void;
   log?: SyncLog;
+  /**
+   * Läuft vor dem Push jeder Runde (BSD-78: Dateien hochladen, bevor die Records ankommen, die sie nennen).
+   * Ein Fehler hier hält die Runde nicht auf.
+   */
+  beforePush?: () => Promise<void>;
 }
 
 export interface SyncRoundResult {
@@ -169,6 +174,12 @@ export class SyncClient {
   async syncOnce(): Promise<SyncRoundResult> {
     const result: SyncRoundResult = { pushed: 0, received: 0, fullPull: false };
     const log = this.opts.log;
+
+    try {
+      await this.opts.beforePush?.();
+    } catch {
+      log?.("warning", "Sync: step before push failed");
+    }
 
     // Push: jede lokale Änderung nach `pushed`.
     let pushed = this.persistence.metaInt(PUSHED_KEY);
