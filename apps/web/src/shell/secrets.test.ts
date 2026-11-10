@@ -77,4 +77,12 @@ describe("Token-Speicher", () => {
     syncConfig.set(undefined);
     expect(await syncConfig.load()).toBeUndefined();
   });
+
+  it("syncConfig.flush: danach liegt der Wert im Speicher, ein frischer Leser findet ihn", async () => {
+    const kv = memoryKV();
+    syncConfig._use(new SecretStore(kv));
+    syncConfig.set({ url: "https://flush", token: "t" });
+    await syncConfig.flush();
+    expect(await new SecretStore(kv).getSync()).toEqual({ url: "https://flush", token: "t" });
+  });
 });

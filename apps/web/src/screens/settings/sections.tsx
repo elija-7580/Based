@@ -73,12 +73,13 @@ function SyncSection({ client, state }: SettingsSectionProps) {
     setToken(r.config.token);
     syncConfig.set(r.config);
     setConnected(true);
-    void client.setSync(r.config);
+    // erst gespeichert, dann verbunden: der Status in der Seitenleiste heißt dann auch „übersteht Neuladen“
+    void syncConfig.flush().then(() => client.setSync(r.config));
   };
   const disconnect = () => {
     syncConfig.set(undefined);
     setConnected(false);
-    void client.setSync(undefined);
+    void syncConfig.flush().then(() => client.setSync(undefined));
   };
   return (
     <Group>

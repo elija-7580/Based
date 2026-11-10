@@ -52,6 +52,9 @@ export const syncConfig = {
     syncCache = value;
     syncWrite = syncWrite.then(() => secretStore().setSync(value)).catch(() => undefined);
   },
+  /** Wartet, bis die letzte Änderung verschlüsselt in IndexedDB liegt (vor dem Verbinden: sonst kann ein schnelles
+   *  Neuladen sie verlieren). */
+  flush: (): Promise<void> => syncWrite,
   /** Aus IndexedDB lesen (beim Start und wenn dieser Tab den Store übernimmt – ein anderer Tab kann ihn geändert haben). */
   async load(): Promise<SyncConfig | undefined> {
     try {
