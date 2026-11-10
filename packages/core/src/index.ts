@@ -129,3 +129,7 @@ export {
   setSegmentSpeaker, stampNote, stampedNotes, transcriptChunks, unstampedNotes, updateMeeting,
 } from "./store/meeting-ops.js";
 export type { CreateMeetingOptions } from "./store/meeting-ops.js";
+// BSD-217: Import über die Notion-API.
+export { NotionWorkspaceImport, NotionClient, NotionAPIError, fetchTransport, notionTarget, parseNotionTargets, NotionCrawler, mapNotionSnapshot,
+  convertNotionFormula, readableNotionFormula, emptySnapshot, notionFileKey, defaultNotionImportOptions } from "./interop/notion-api/index.js";
+export type { NotionTransport, NotionResponse, NotionImportOptions as NotionAPIImportOptions, NotionSnapshot, NotionRoot, NotionAPIErrorKind } from "./interop/notion-api/index.js";
