@@ -1,14 +1,14 @@
 feature,area,priority,original,clone,notes,ts
 Create / rename / delete pages,pages,must,yes,yes,,yes
 Nested subpages (page inside page),pages,must,yes,yes,,yes
-Page icon (emoji),pages,must,yes,yes,,"partial: Icon wird in Seitenleiste und Seitenlinks angezeigt, lässt sich aber nicht setzen oder ändern (kein Picker)"
+Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
 Page icon (uploaded image),pages,could,yes,yes,,no
 Page cover (gallery / color / gradient),pages,should,yes,yes,,no
 Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,no
-Page font (default / serif / mono),pages,should,yes,yes,,no
-Small text,pages,should,yes,yes,,no
-Full width,pages,should,yes,yes,,no
-Lock page,pages,should,yes,yes,,no
+Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
+Small text,pages,should,yes,yes,,yes (BSD-201)
+Full width,pages,should,yes,yes,,yes (BSD-201)
+Lock page,pages,should,yes,yes,,"yes (BSD-201: Editor, Titel und Datenbank schreibgeschützt, Unlock-Knopf)"
 Duplicate page,pages,must,yes,yes,,"yes (Pass 30: Seitenmenü Duplicate, Library-Bulk)"
 Move page to another page,pages,must,yes,yes,,"yes (Pass 30: Move-to-Dialog, Ziehen, Teamspaces)"
 Trash with restore and delete forever,pages,must,yes,yes,,yes
@@ -43,9 +43,9 @@ Code block with language + syntax highlight,blocks,must,yes,yes,language picker 
 Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network,yes
 Inline equation,blocks,should,yes,partial,inline TeX kept as monospace chip,yes
 Image block (upload / link) with caption,blocks,must,yes,yes,,partial: Upload über BSD-78 (Datei-Blöcke im Editor); Bild-Picker-Feinschliff offen
-Video / audio blocks,blocks,should,yes,yes,,partial: nur per Link; Upload fehlt
-File block,blocks,should,yes,yes,,partial: nur per Link; Upload fehlt
-PDF block,blocks,could,yes,yes,,"partial: nur Link-Karte; keine PDF-Anzeige, kein Upload"
+Video / audio blocks,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, Anzeige offline, E2E)"
+File block,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, offline, E2E)"
+PDF block,blocks,could,yes,yes,,"yes (BSD-208: Upload oder Link, Anzeige im Block; Record wie Swift mit asset)"
 Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,partial: Karte mit URL bzw. importiertem Titel; kein Abruf von Titel/Vorschau
 Embed (web),blocks,could,yes,yes,,partial: nur Link-Karte; kein eingebetteter Inhalt
 Table of contents,blocks,should,yes,yes,,yes
@@ -115,7 +115,7 @@ Property: date (range / time),properties,must,yes,yes,,yes
 Property: checkbox,properties,must,yes,yes,,yes
 Property: url / email / phone,properties,must,yes,yes,,yes
 Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),partial: nur „Me“ oder frei getippte Kennung; keine Nutzerliste
-Property: files & media,properties,should,yes,yes,,partial: nur Links; Upload fehlt
+Property: files & media,properties,should,yes,yes,,"yes (BSD-208: Links und Upload in den Asset-Speicher, Wert wie Swift mit asset; Öffnen als Blob)"
 Property: created / edited time and by,properties,must,yes,yes,,yes
 Property: unique ID,properties,could,yes,yes,,yes
 Property: formula (Formula 2.0),properties,should,yes,partial,"Formula 2.0 core: arithmetic, text, dates, lists, if/ifs, prop(); not every builtin",yes
