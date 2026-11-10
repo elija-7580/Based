@@ -1,10 +1,11 @@
 // BSD-159: der eine ChatController der App und der Haken für Tests/E2E (`globalThis.__basedChat`): eine
 // ScriptedEngine statt eines echten Anbieters einsetzen – deterministisch, ohne Netz.
-import { chatTitleFrom, MAIN_AGENT_ID, ScriptedEngine, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
+import { chatTitleFrom, combineToolHosts, MAIN_AGENT_ID, ScriptedEngine, type ChatEvent, type ScriptStep, type StoredChatEvent } from "@based/brain";
 import type { StoreClient } from "../worker/client.js";
 import { aiConfig } from "./aiConfig.js";
 import { installBrain } from "../brain/setup.js";
 import { ChatController } from "./controller.js";
+import { mcpRuntime } from "./mcp.js";
 
 let shared: ChatController | undefined;
 
@@ -55,6 +56,21 @@ export function chatController(client: StoreClient): ChatController {
     shared = new ChatController({ backend: client, config: aiConfig(), onTurnEnd: (t) => void recordChatRun(client, t).catch(() => undefined) });
     // Agent Brain: Skills, Privacy-Redact, Memories, Zitate (BSD-163/198/199).
     installBrain(client, shared);
+    // BSD-222: Werkzeuge der MCP-Connections neben denen des Workspaces und des Agent Brain; vor dem Turn kurz auf
+    // laufende Verbindungsaufbauten warten (höchstens 4 s), damit frisch eingerichtete Server schon mitmachen.
+    const mcp = mcpRuntime(client);
+    const brain = shared.hooks;
+    shared.hooks = {
+      ...brain,
+      prepare: async (text, ctx) => {
+        await mcp.ready();
+        return brain.prepare?.(text, ctx);
+      },
+      tools: () => {
+        const a = brain.tools?.(), b = mcp.tools();
+        return a && b ? combineToolHosts(a, b) : (a ?? b);
+      },
+    };
     let last: string | undefined;
     shared.subscribe(() => {
       const id = shared!.getState().chatID;
