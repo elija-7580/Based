@@ -50,6 +50,10 @@ Schalter aus Einstellungen → My settings:
 | Stil Bold | über `--font-ui`, `--font-head`, `--size-title`, `--weight-title` aus tokens.css |
 | Marker, Calm | keine – der Marker ist kein Theme-Wert |
 
+Wichtig: `<Theme>` färbt seinen Wrapper mit `--color-text-primary`, und alles mit `color: inherit` erbt das. Läuft
+`mode` nicht mit dem Umschalter (früher: Standard `system`), stehen Seitentitel und Wortmarke bei abweichendem
+Systemschema fast schwarz auf Dunkel. `theme.spec.ts` prüft Titel und Wortmarke in beiden Kombinationen.
+
 Nicht aus Based-Tokens (es gibt keine): Diagrammfarben (`--color-data-*`) und Syntaxfarben von `CodeBlock` – Astryx-Standard.
 
 Schriften für Stil Bold (Schibsted Grotesk, Literata) sind lokal gebündelt: `@fontsource/schibsted-grotesk` und
