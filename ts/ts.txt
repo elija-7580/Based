@@ -23,43 +23,43 @@ packages/editor test: [2m      Tests [22m [1m[32m25 passed[39m[22m[90m (2
 apps/web test: [2m      Tests [22m [1m[32m45 passed[39m[22m[90m (45)[39m
 apps/server test: [2m      Tests [22m [1m[32m34 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (35)[39m
 --- e2e
-  ✓  34 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (18.8s)
-  ✓  36 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (8.6s)
-  ✓  37 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.3s)
-  ✓  38 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (4.0s)
+  ✓  26 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen (8.3s)
+  ✓  28 [webkit] › e2e/smoke.spec.ts:28:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl (2.8s)
+  ✓  29 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um (5.9s)
+  ✓  30 [webkit] › e2e/smoke.spec.ts:34:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute (4.9s)
+[webkit] Quick Find (Hin und zurück zum Worker, ms): 11, 13, 18, 18, 36
+  ✓  31 [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms (3.8s)
+  ✓  32 [webkit] › e2e/smoke.spec.ts:61:1 › Show agent details blendet Modell und Laufzeit auf Home ein (3.0s)
+[webkit] Seitenleiste 5.000 Seiten: {"count":179,"p50":27,"p95":49,"max":100,"maxRows":29,"total":160064}
+  ✘  33 [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln (8.5s)
+  ✓  34 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.2s)
+  ✓  35 [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) (7.1s)
+  ✓  37 [webkit] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (4.0s)
+  ✓  36 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (13.1s)
+  ✓  38 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (1.3s)
 
 
-  1) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ─────────────
+  1) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
 
-    Error: expect(received).toEqual(expected) // deep equality
+    Error: expect(received).toBeLessThan(expected)
 
-    - Expected  - 1
-    + Received  + 0
+    Expected: < 34
+    Received:   49
 
-      Array [
-        "Beta",
-    -   "Alpha",
-        "Welcome to Based",
-        "Beta",
-      ]
+      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
+      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
+    > 144 |   expect(r.p95).toBeLessThan(34);
+          |                 ^
+      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
+      146 | });
+      147 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
-      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
-    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
-         |                            ^
-      90 | });
-      91 |
-      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
-
-    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
 
   1 failed
-    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
-  37 passed (2.0m)
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
+  37 passed (1.6m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
