@@ -19,16 +19,16 @@ packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1479 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1480)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
-packages/editor test: [2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
 packages/brain test: [2m      Tests [22m [1m[32m309 passed[39m[22m[90m (309)[39m
-apps/web test: [2m      Tests [22m [1m[32m91 passed[39m[22m[90m (91)[39m
+packages/editor test: [2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
+apps/web test: [2m      Tests [22m [1m[32m93 passed[39m[22m[90m (93)[39m
 apps/server test: [2m      Tests [22m [1m[32m63 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (64)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  149 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.0s)
-  ✓  150 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.7s)
-  ✓  151 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.6s)
-  ✓  152 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.8s)
+  ✓  155 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.4s)
+  ✓  156 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.2s)
+  ✓  157 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.9s)
+  ✓  158 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
 
 
   1) [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ─────────────────────────────
@@ -61,7 +61,7 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
   1 failed
     [webkit] › e2e/shell.spec.ts:148:1 › Neuladen behält Daten (OPFS) ──────────────────────────────
   14 skipped
-  137 passed (7.3m)
+  143 passed (6.0m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
