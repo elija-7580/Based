@@ -1,7 +1,8 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server (nur Owner). Die Logik liegt in `@based/brain`
 // (`CodingSessions`); hier nur HTTP. Ereignisse und Freigabe-Inbox per Long-Poll (wie /sync/pull), damit jedes Gerät
 // mitlesen und Freigaben beantworten kann. Aus, solange der Server ohne `--coding-root` startet.
-import { CodingError, type CodingSessions } from "@based/brain";
+import { agentStatus, CodingError, unapprovedKeys, type CodingSessions } from "@based/brain";
+import { claudeLoggedIn, probeTools, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
 import type { Logger } from "./log.js";
 import { error, json, type RouteResult, type Router } from "./router.js";
 
@@ -33,7 +34,21 @@ function waitParam(url: URL, max: number): number {
   return Number.isFinite(raw) && raw > 0 ? Math.min(raw, max) : 0;
 }
 
-export function registerCodingRoutes(router: Router, coding: CodingSessions, log: Logger, longPollMs = CODING_LONG_POLL_MS) {
+/** Rechner, auf dem die Agenten laufen: Home (CLI-Verlauf, Logins), Umgebung, freigegebene Variablen je Agent. */
+export interface CodingHost {
+  home: string;
+  env: Readonly<Record<string, string | undefined>>;
+  approvedEnv: Readonly<Record<string, readonly string[]>>;
+}
+
+/** Nur freigegebene Variablen eines Agenten (für die Login-Prüfung). */
+function approvedValues(host: CodingHost, agentId: string): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {};
+  for (const k of host.approvedEnv[agentId] ?? []) out[k] = host.env[k];
+  return out;
+}
+
+export function registerCodingRoutes(router: Router, coding: CodingSessions, log: Logger, longPollMs = CODING_LONG_POLL_MS, host?: CodingHost) {
   router.add("GET", "/coding/agents", () =>
     json({ agents: coding.agents().map((a) => ({ id: a.id, name: a.name, icon: a.icon, note: a.note })) }));
 
@@ -94,4 +109,39 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
     if (b.optionId !== null && optionId === undefined) return error("optionId (string or null to cancel) is required", 400);
     return coding.answer(params.id!, optionId) ? json({ ok: true }) : error("permission request not found (already answered?)", 404);
   }));
+
+  if (!host) return;
+
+  // MARK: CLI-Verlauf (~/.claude/projects, ~/.codex/sessions), nur lesend
+  router.add("GET", "/coding/history", async ({ url }) => {
+    const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit") ?? 400) || 400), 2000);
+    return json({ sessions: await scanCliSessions(host.home, limit) });
+  });
+  router.add("GET", "/coding/history/:tool/:id", async ({ params }) => {
+    const found = (await scanCliSessions(host.home, 100_000)).find((x) => x.tool === params.tool && x.id === params.id);
+    if (!found) return error("conversation not found", 404);
+    return json({ session: found, events: await readCliTranscript(found) });
+  });
+
+  // MARK: Setup-Doctor
+  router.add("GET", "/coding/doctor", async () => {
+    const tools = await probeTools(host.env);
+    const loggedIn = await claudeLoggedIn(host.home, approvedValues(host, "claude"));
+    const found = new Set<string>();
+    for (const a of coding.agents()) if (await which(a.command, host.env)) found.add(a.command);
+    const agents = coding.agents().map((a) => agentStatus(a, tools, {
+      claudeLoggedIn: loggedIn,
+      unapprovedKeys: (id) => unapprovedKeys(id, host.env, host.approvedEnv[id] ?? []),
+      found: (c) => found.has(c),
+      approveHint: (id, names) => `BASED_CODING_ENV="${id}=${[...(host.approvedEnv[id] ?? []), ...names].join(",")}" (restart the server)`,
+    }));
+    return json({ tools, agents });
+  });
+  router.add("POST", "/coding/doctor/:agent/test", async ({ params }) => {
+    const agent = coding.agents().find((a) => a.id === params.agent);
+    if (!agent) return error("unknown or disabled agent", 404);
+    const r = await testAgent(agent, { cwd: host.home, baseEnv: host.env, approvedEnv: host.approvedEnv[agent.id] ?? [] });
+    log.info("coding agent test", { agent: agent.id, ok: r.ok });
+    return json(r);
+  });
 }

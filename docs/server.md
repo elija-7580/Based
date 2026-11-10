@@ -171,6 +171,8 @@ Kommandozeile eines Agenten werden abgelehnt. Alle Routen nur mit Owner-Token:
 | `POST /coding/sessions/:id/cancel`, `DELETE /coding/sessions/:id` | Turn stoppen bzw. Sitzung beenden |
 | `GET /coding/inbox?since=V&wait=ms` | offene Freigaben (Long-Poll auf die Version) |
 | `POST /coding/inbox/:id` `{optionId}` | Freigabe beantworten (`null` = abbrechen) |
+| `GET /coding/history`, `GET /coding/history/:tool/:id` | CLI-Verlauf des Server-Rechners (`~/.claude/projects`, `~/.codex/sessions`, nur lesend; Transkript als ChatEvents) |
+| `GET /coding/doctor`, `POST /coding/doctor/:agent/test` | Setup-Doctor: CLIs (Pfad, Version), Login, Befehl zum Beheben; Test = Agent starten + ACP-Handshake |
 
 Modus und Regeln entscheiden zuerst (Bash/Edit/Read …, wie im Chat); nur „ask“ landet in der Inbox.
 

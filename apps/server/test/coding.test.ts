@@ -1,7 +1,7 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server – anlegen, Prompt, Ereignisse per Long-Poll, Freigabe
 // aus der Inbox von einem anderen „Gerät“, Abbruch, Agentenwechsel, Grenzen (Ordner, nur Owner). Gegen den
 // Fake-ACP-Agenten aus packages/brain/test/fixtures.
-import { mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +18,7 @@ const off: AgentDefinition = { ...fake, id: "off", enabled: false };
 const apps: { close(): Promise<void> }[] = [];
 afterEach(async () => { for (const a of apps.splice(0)) await a.close(); });
 
-async function setup() {
+async function setup(host?: { home: string; env: Record<string, string | undefined>; approvedEnv: Record<string, string[]> }) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "coding-")));
   writeFileSync(join(root, "a.txt"), "old\n");
   const coding = new CodingSessions({
@@ -26,7 +26,7 @@ async function setup() {
     roots: [root],
     connect: (agent, cwd, roots, permissions) => spawnAgent(agent, { cwd, allowedRoots: roots, permissions, baseEnv: { PATH: process.env.PATH } }),
   });
-  const app = await startApp({ coding, codingLongPollMs: 2_000 });
+  const app = await startApp({ coding, codingLongPollMs: 2_000, ...(host ? { codingHost: host } : {}) });
   apps.push(app);
   return { app, root, url: app.url };
 }
@@ -149,5 +149,31 @@ describe("/coding", () => {
     expect(parseOptions(["--coding-root", "/srv/code"], { BASED_CODING_ROOTS: "/a:/b" }).codingRoots).toEqual(["/a", "/b", "/srv/code"]);
     expect(() => parseOptions(["--coding-root", "rel"], {})).toThrow(/absolute/);
     expect(parseCodingEnv("claude=ANTHROPIC_API_KEY, gemini=GEMINI_API_KEY bad=1x")).toEqual({ claude: ["ANTHROPIC_API_KEY"], gemini: ["GEMINI_API_KEY"] });
+  });
+
+  it("CLI-Verlauf und Setup-Doctor (nur mit Host)", async () => {
+    const home = mkdtempSync(join(tmpdir(), "home-"));
+    mkdirSync(join(home, ".claude", "projects", "-p"), { recursive: true });
+    writeFileSync(join(home, ".claude", "projects", "-p", "c1.jsonl"), [
+      JSON.stringify({ type: "user", sessionId: "c1", cwd: "/p", timestamp: "2026-11-01T10:00:00Z", message: { role: "user", content: "hi" } }),
+      JSON.stringify({ type: "assistant", timestamp: "2026-11-01T10:00:01Z", message: { role: "assistant", content: [{ type: "text", text: "hello" }] } }),
+    ].join("\n"));
+    const bin = mkdtempSync(join(tmpdir(), "bin-"));
+    writeFileSync(join(bin, "codex"), "#!/bin/sh\necho 0.1\n");
+    chmodSync(join(bin, "codex"), 0o755);
+    const { url } = await setup({ home, env: { PATH: `${bin}:${process.env.PATH}`, ANTHROPIC_API_KEY: "sk-x" }, approvedEnv: {} });
+    const h = await get(`${url}/coding/history`);
+    expect(h.body!.sessions).toMatchObject([{ tool: "claude", id: "c1", title: "hi", cwd: "/p" }]);
+    const t = await get(`${url}/coding/history/claude/c1`);
+    expect((t.body!.events as { type: string }[]).map((e) => e.type)).toEqual(["userMessage", "text", "result"]);
+    expect((await get(`${url}/coding/history/claude/nope`)).status).toBe(404);
+    const d = await get(`${url}/coding/doctor`);
+    expect((d.body!.tools as { id: string; path?: string }[]).find((x) => x.id === "codex")!.path).toBe(join(bin, "codex"));
+    expect(d.body!.agents).toEqual([expect.objectContaining({ id: "fake", state: "ready" })]);
+    const test = await post(`${url}/coding/doctor/fake/test`, {});
+    expect(test.body).toEqual({ ok: true, message: "fake answered the ACP handshake." });
+    expect((await post(`${url}/coding/doctor/nope/test`, {})).status).toBe(404);
+    const plain = await setup();
+    expect((await get(`${plain.url}/coding/doctor`)).status).toBe(404);
   });
 });
