@@ -17,18 +17,18 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1516 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1517)[39m
+packages/core test: [2m      Tests [22m [1m[32m1528 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1529)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
-packages/sync test: [2m      Tests [22m [1m[32m39 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (42)[39m
+packages/sync test: [2m      Tests [22m [1m[32m41 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (44)[39m
 packages/brain test: [2m      Tests [22m [1m[32m366 passed[39m[22m[90m (366)[39m
 packages/editor test: [2m      Tests [22m [1m[32m62 passed[39m[22m[90m (62)[39m
-apps/web test: [2m      Tests [22m [1m[32m117 passed[39m[22m[90m (117)[39m
-apps/server test: [2m      Tests [22m [1m[32m81 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (82)[39m
+apps/web test: [2m      Tests [22m [1m[32m122 passed[39m[22m[90m (122)[39m
+apps/server test: [2m      Tests [22m [1m[32m84 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (85)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:252:22
+        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:74:67
 
-    Error Context: test-results/editor-parity--und-erwähne-8255a-ichtbar-Papierkorb-markiert-webkit/error-context.md
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
 
   3) [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
 
@@ -58,11 +58,11 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
     Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-webkit/error-context.md
 
   3 failed
+    [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
     [chromium] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
-    [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
     [webkit] › e2e/shortcuts.spec.ts:56:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
   14 skipped
-  211 passed (8.8m)
+  223 passed (9.2m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
