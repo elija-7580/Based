@@ -49,9 +49,17 @@ export interface AssetBridgeOptions {
   createObjectURL?: (blob: Blob) => string;
 }
 
+/** Medien-Elemente der Blöcke mit dieser URL (BlockNote schreibt die Block-Props als `data-url` an den Block). */
 const mediaElements = (url: string): Element[] => {
   if (typeof document === "undefined") return [];
-  return [...document.querySelectorAll("img, video, audio, a")].filter((el) => el.getAttribute("src") === url || el.getAttribute("href") === url);
+  const out: Element[] = [];
+  for (const block of document.querySelectorAll("[data-url]")) {
+    if (block.getAttribute("data-url") !== url) continue;
+    const media = block.querySelectorAll("img, video, audio");
+    if (media.length > 0) out.push(...media);
+    else out.push(block);
+  }
+  return out;
 };
 
 export function createAssetBridge(client: StoreClient, opts: AssetBridgeOptions = {}): AssetBridge {
@@ -84,8 +92,12 @@ export function createAssetBridge(client: StoreClient, opts: AssetBridgeOptions 
       if (!RETRY.has(r.code)) throw new Error(r.message);
       await new Promise((res) => setTimeout(res, delay));
       delay = Math.min(delay * 2, retry.maxMs);
-      // Niemand zeigt die Datei mehr (Seite geschlossen): aufhören.
-      if (elements(url).length === 0) throw new Error(r.message);
+      // Niemand zeigt die Datei mehr (Seite geschlossen): aufhören, ohne abzulehnen – wer sie später zeigt,
+      // beginnt neu. (Ablehnen würde einen Block treffen, der genau jetzt erscheint.)
+      if (elements(url).length === 0) {
+        pending.delete(id);
+        return new Promise<string>(() => undefined);
+      }
     }
   }
 
@@ -103,7 +115,7 @@ export function createAssetBridge(client: StoreClient, opts: AssetBridgeOptions 
       if (known) return Promise.resolve(known);
       let p = pending.get(id);
       if (!p) {
-        p = load(url, id).finally(() => pending.delete(id));
+        p = load(url, id).finally(() => pending.get(id) === p && pending.delete(id));
         pending.set(id, p);
       }
       return p;

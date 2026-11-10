@@ -79,6 +79,16 @@ Client-Code wiederverwendet. Eingehende Pushes werden als *remote* geloggt; `pul
   Server-Stempel (so erreicht er auch Geräte, die den Standard schon geholt haben). Kein neues Feld auf dem Draht.
   Der Swift-Server ist unverändert und hat den Fehler weiter. `test/fresh-server-workspace.test.ts`.
 
+## Dateien (Assets, BSD-78)
+
+`src/assets.ts`, Protokoll in `docs/sync-protocol.md` („Assets“). Blobs liegen als Dateien neben der Datenbank:
+`<db>.assets/<ersten 2 Hex>/<sha256>`, angefangene Uploads in `partial/`, Vormerkungen der GC in
+`unreferenced.json` (`--assets <dir>` / `BASED_ASSETS_DIR`, Grenze `--max-asset-mb` / `BASED_MAX_ASSET_MB`,
+Standard 100). Die SQLite-Datei bleibt unverändert (gleiches Format wie Swift). Der Router kennt dafür Pfadmuster
+(`/sync/v2/asset/:hash`), `PUT` und `HEAD`; Auth und Body-Grenze (8 MiB je Stück) wie bei jeder Route, ins Log kommt
+das Muster statt des Pfads. Aufräumen (`App.collectAssets`) läuft mit der Tombstone-GC. Backups müssen den
+Assets-Ordner mitnehmen. `test/assets.test.ts`.
+
 ## MCP
 
 `src/mcp.ts` mit `@modelcontextprotocol/sdk` (Protokollversionen laut SDK). Werkzeuge: `based_guide`, `search`,
