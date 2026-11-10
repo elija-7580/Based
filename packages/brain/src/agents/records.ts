@@ -69,6 +69,8 @@ export interface ProjectData {
   permissions?: string;
   budgetEUR?: number;
   createdAt: number;
+  /** BSD-222: erlaubte MCP-Connections im Projekt (IDs); `undefined` = keine Einschränkung. */
+  connections?: string[];
   [key: string]: unknown;
 }
 
@@ -85,6 +87,8 @@ export interface AgentData {
   permissions: { mode: PermissionMode; rules: string };
   /** Eingebundenes Abo (Claude/ChatGPT über CLI): nur Angaben, keine Schätzung. */
   subscription?: { name: string; share?: number };
+  /** BSD-222: erlaubte MCP-Connections (IDs); `undefined` = alle, die für Agenten freigegeben sind. */
+  connections?: string[];
   [key: string]: unknown;
 }
 
@@ -111,7 +115,10 @@ export interface Rec<T> {
   updatedAt: number;
 }
 
-const FIELD: Record<string, string> = { [RUN_TYPE]: "run", [PROJECT_TYPE]: "project", [AGENT_TYPE]: "agent", [SCHEDULE_TYPE]: "schedule", agentTask: "task" };
+/** BSD-222: MCP-Connection (Konfiguration, ohne Geheimnis), siehe mcp/connections.ts. */
+export const CONNECTION_TYPE = "mcpConnection";
+
+const FIELD: Record<string, string> = { [RUN_TYPE]: "run", [PROJECT_TYPE]: "project", [AGENT_TYPE]: "agent", [SCHEDULE_TYPE]: "schedule", agentTask: "task", [CONNECTION_TYPE]: "connection" };
 
 /** Daten aus einem Block lesen (Feld je Typ). */
 export function dataOf<T>(b: Block | undefined, type: string): T | undefined {
