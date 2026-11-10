@@ -1,5 +1,5 @@
-packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -16,28 +16,28 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1486 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1487)[39m
+packages/core test: [2m      Tests [22m [1m[32m1490 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1491)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m51 passed[39m[22m[90m (51)[39m
 packages/sync test: [2m      Tests [22m [1m[32m35 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (38)[39m
-packages/brain test: [2m      Tests [22m [1m[32m318 passed[39m[22m[90m (318)[39m
+packages/brain test: [2m      Tests [22m [1m[32m326 passed[39m[22m[90m (326)[39m
 packages/editor test: [2m      Tests [22m [1m[32m45 passed[39m[22m[90m (45)[39m
-apps/web test: [2m      Tests [22m [1m[32m102 passed[39m[22m[90m (102)[39m
+apps/web test: [2m      Tests [22m [1m[32m105 passed[39m[22m[90m (105)[39m
 apps/server test: [2m      Tests [22m [1m[32m67 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (68)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  166 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (16.5s)
-  ✓  167 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (6.0s)
-  -  169 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  170 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  168 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (4.8s)
-  ✓  171 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.0s)
-  ✓  172 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.4s)
-  ✓  173 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.8s)
-  ✓  174 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.4s)
-  ✓  175 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.9s)
-  ✓  176 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.6s)
-  ✓  177 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.8s)
-  ✓  178 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.8s)
+  ✓  171 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.9s)
+  ✓  170 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (16.6s)
+  ✓  172 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.8s)
+  ✓  173 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.9s)
+  -  175 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  176 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  174 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.2s)
+  ✓  177 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.9s)
+  ✓  178 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.5s)
+  ✓  179 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.0s)
+  ✓  180 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.6s)
+  ✓  181 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.5s)
+  ✓  182 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.7s)
 
 
   1) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
@@ -45,7 +45,7 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
     Error: expect(received).toBeLessThan(expected)
 
     Expected: < 34
-    Received:   34
+    Received:   36
 
       142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
       143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
@@ -61,7 +61,7 @@ apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
   1 failed
     [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   14 skipped
-  163 passed (8.5m)
+  167 passed (8.7m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
