@@ -1,0 +1,13 @@
+/* BSD-223: Coding-Agenten (#coding). Nur Tokens. */
+.coding { padding: var(--space-6); width: 100%; box-sizing: border-box; }
+.coding-split { width: 100%; }
+.coding-side { flex: 0 0 calc(var(--sidebar-width) + var(--space-5)); min-width: 0; }
+.coding-main { flex: 1 1 auto; min-width: 0; }
+.coding-console { min-height: calc(var(--space-8) * 6); max-height: 60vh; overflow: auto; border-radius: var(--radius-md); border: 1px solid var(--line); }
+.coding-mono { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.coding-ask { box-shadow: 0 0 0 1.5px var(--ink); }
+@media (max-width: 760px) {
+  .coding-split { flex-direction: column; }
+  .coding-side { flex-basis: auto; width: 100%; }
+}
+.coding-composer > :first-child { flex: 1 1 auto; min-width: 0; }
