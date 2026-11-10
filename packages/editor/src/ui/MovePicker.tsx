@@ -67,3 +67,71 @@ export function MovePicker(props: MovePickerProps) {
     </div>
   );
 }
+
+/** BSD-212: eine Datenbank für „Linked view of database“. */
+export interface DatabaseRef {
+  id: string;
+  title: string;
+  /** Pfad über dem Datenbank-Block. */
+  path?: string | undefined;
+}
+
+/** Alle Datenbanken des Workspaces (Auswahl für verknüpfte Ansichten); `include` holt eine in den Store des Editors. */
+export interface DatabaseSource {
+  list(query: string): Promise<DatabaseRef[]>;
+  include?: ((databaseID: string) => Promise<boolean>) | undefined;
+}
+
+/** BSD-212: „Linked view of database“ – Datenbank suchen und wählen, Bedienung wie „Move to“. */
+export function DatabasePicker(props: { source: DatabaseSource; onPick: (db: DatabaseRef) => void; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<DatabaseRef[]>([]);
+  const [active, setActive] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+  const { source } = props;
+  useEffect(() => {
+    let live = true;
+    void source.list(query).then((r) => {
+      if (!live) return;
+      setResults(r.slice(0, 8));
+      setActive(0);
+    });
+    return () => {
+      live = false;
+    };
+  }, [source, query]);
+  useEffect(() => input.current?.focus(), []);
+  return (
+    <div className="bx-move-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="bx-move" role="dialog" aria-label="Linked view of database" data-testid="database-link-picker">
+        <input ref={input} className="bx-field" placeholder="Link to a database…" aria-label="Find a database"
+          value={query} onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Escape") props.onClose();
+            else if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, results.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+            else if (e.key === "Enter") {
+              e.preventDefault();
+              const hit = results[active];
+              if (hit) props.onPick(hit);
+            }
+          }} />
+        <ul className="bx-picker-list" role="listbox" aria-label="Databases">
+          {results.map((d, i) => (
+            <li key={d.id} role="option" aria-selected={i === active}>
+              <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(d)}>
+                <span className="bx-move-icon" aria-hidden="true">▦</span>
+                <span className="bx-move-text">
+                  <span className="bx-move-title">{d.title || "Untitled"}</span>
+                  {d.path ? <span className="bx-move-path">{d.path}</span> : null}
+                </span>
+              </button>
+            </li>
+          ))}
+          {results.length === 0 ? <li className="bx-muted bx-move-empty">No matching database.</li> : null}
+        </ul>
+      </div>
+    </div>
+  );
+}

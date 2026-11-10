@@ -2,10 +2,12 @@
 // Einstellungen. Home ist die Startseite nach Mockup v10 (Zeitbogen, Auftragskarten; BSD-162/197) mit Agent- und
 // Projekt-Detail (BSD-133).
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { appearanceStore, applyAppearance, onSystemThemeChange } from "./appearance.js";
+import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { AgentDetailScreen } from "./home/AgentDetail.js";
 import { ProjectDetailScreen } from "./home/ProjectDetail.js";
+import { ImportDialog } from "./components/ImportExport.js";
+import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { TabBar } from "./components/TabBar.js";
@@ -20,6 +22,8 @@ import { TasksScreen } from "./tasks/TasksScreen.js";
 import { CodingScreen } from "./coding/CodingScreen.js";
 import "./tasks/AgentSettingsSection.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
+import { cycleRegion } from "./shell/regions.js";
+import { matchShortcut } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -57,38 +61,6 @@ export function App({ client, history }: { client: StoreClient; history: History
   const openPage = useCallback((id: string) => navigate({ name: "page", id }), [navigate]);
   useEffect(() => installNewTabIntent(), []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey; // ⌘ auf Apple, Strg sonst
-      if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setQuickFind((v) => !v);
-      } else if (mod && e.key === ",") {
-        e.preventDefault();
-        history.navigate({ name: "settings" });
-      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "t") {
-        // ⌘T/⌘W: im normalen Browser-Tab behält der Browser sie meist für sich; in der App (Tauri, PWA) und in Tests
-        // kommen sie an. Sonst: + in der Tab-Leiste, ⌘-Klick, Mittelklick.
-        e.preventDefault();
-        history.openTab();
-      } else if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "w") {
-        // Auch der letzte Tab: dann öffnet die Startseite, die App bleibt offen.
-        e.preventDefault();
-        history.close();
-      } else if (mod && e.shiftKey && (e.code === "BracketLeft" || e.code === "BracketRight")) {
-        e.preventDefault();
-        history.cycle(e.code === "BracketRight" ? 1 : -1);
-      } else if (mod && e.key === "[") {
-        e.preventDefault();
-        history.back();
-      } else if (mod && e.key === "]") {
-        e.preventDefault();
-        history.forward();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [history]);
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
     const id = await client.command<string | undefined>({ op: "createPage", ...opts });
@@ -100,6 +72,54 @@ export function App({ client, history }: { client: StoreClient; history: History
     const id = await client.command<string | undefined>({ op: "createDatabase", title: "Untitled database" });
     if (id) openPage(id);
   }, [client, openPage]);
+
+  // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).
+  const [palette, setPalette] = useState(false);
+  const [importing, setImporting] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "F6" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        // BSD-238: Bereiche per Tastatur (Seitenleiste → Kopfzeile → Seite).
+        if (cycleRegion(document, e.shiftKey ? -1 : 1)) e.preventDefault();
+        return;
+      }
+      const a = matchShortcut(e);
+      if (!a) return;
+      e.preventDefault();
+      switch (a.kind) {
+        case "quickFind": setPalette(false); setQuickFind((v) => !v); break;
+        case "palette": setQuickFind(false); setPalette((v) => !v); break;
+        case "newPage": void newPage(); break;
+        case "settings": history.navigate({ name: "settings" }); break;
+        case "toggleTheme": {
+          const cur = appearanceStore.get();
+          setAppearance({ ...cur, theme: effectiveTheme(cur) === "dark" ? "light" : "dark" });
+          break;
+        }
+        // ⌘T/⌘W: auch der letzte Tab – dann öffnet die Startseite, die App bleibt offen.
+        case "newTab": history.openTab(); break;
+        case "closeTab": history.close(); break;
+        case "cycleTab": history.cycle(a.delta); break;
+        case "tab": {
+          const tabs = history.tabs;
+          const t = a.index < 0 ? tabs[tabs.length - 1] : tabs[a.index];
+          if (t) history.activate(t.id);
+          break;
+        }
+        case "back": history.back(); break;
+        case "forward": history.forward(); break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [history, newPage, setAppearance]);
+
+  const commands: PaletteCommand[] = [
+    { id: "page", title: "New page", hint: "⌥⌘N", icon: "page", keywords: "document note", run: () => void newPage() },
+    { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
+    { id: "chat", title: "New chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) },
+    { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting(true) },
+  ];
 
   let screen;
   if (state.error) {
@@ -141,6 +161,8 @@ export function App({ client, history }: { client: StoreClient; history: History
         <div className="panel">{screen}</div>
       </main>
       <ChatDock client={client} history={history} route={route} />
+      {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
+      {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}
     </div>
   );

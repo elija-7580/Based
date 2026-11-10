@@ -1,6 +1,6 @@
 // Editor-Parität im Store-Worker: Seiten-Angaben und Seitensuche fürs @-Menü, Backlinks, und Synced-Originale von
 // anderen Seiten in der Seiten-Replik (beim Öffnen, nach dem Einfügen einer Kopie und über `includeSynced`).
-import { keyBetween, type Block } from "@based/core";
+import { dbops, keyBetween, type Block } from "@based/core";
 import { openWorkspace } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { afterEach, describe, expect, it } from "vitest";
@@ -97,5 +97,38 @@ describe("Worker: Synced Blocks über Seiten", () => {
     expect(r.records.map((x) => x.data.id)).toEqual(expect.arrayContaining(["orig", "k1", src]));
     expect(host.includeSynced(other, "missing")).toEqual({ found: false, records: [] });
     expect(host.includeSynced(src, "orig")).toEqual({ found: false, records: [] }); // Seite nicht offen
+  });
+});
+
+describe("Worker: verknüpfte Datenbank-Ansichten (BSD-212)", () => {
+  it("listDatabases, includeDatabase und openPage bringen Datenbank und Zeilen fremder Seiten mit; Änderungen kommen an", async () => {
+    const { host, store, page, sent } = await setup();
+    const src = page("Source");
+    const other = page("Other");
+    const made = dbops.createDatabase(store, { parent: "b:" + src, inline: true, title: "Tasks", sampleRows: 2 });
+    const rows = store.children("d:" + made.databaseID);
+    expect(host.listDatabases("task").map((d) => d.title)).toEqual(["Tasks"]);
+    expect(host.listDatabases("task")[0]).toMatchObject({ inline: true, path: "Source" });
+    expect(host.listDatabases("zzz")).toEqual([]);
+
+    host.openPage(other);
+    const r = host.includeDatabase(other, made.databaseID);
+    expect(r.found).toBe(true);
+    expect(r.records.map((x) => x.data.id)).toEqual(expect.arrayContaining([made.databaseID, ...rows]));
+    expect(host.includeDatabase(other, "missing")).toEqual({ found: false, records: [] });
+
+    // Verknüpfte Ansicht auf „Other“ (wie aus dem Editor), dann Zeilenänderung an der Quelle → kommt in der Replik an
+    const linked = dbops.createLinkedView(store, made.databaseID, "b:" + other)!;
+    host.flush();
+    sent.length = 0;
+    store.transact("edit", (tx) => tx.update(rows[0]!, (b) => { b.text = "renamed"; }));
+    host.flush();
+    const changed = sent.flatMap((e) => (e.type === "pageChanges" && e.pageID === other ? e.upserts : []));
+    expect(changed.map((x) => x.data.id)).toContain(rows[0]);
+
+    // Neu geöffnet: Datenbank, Zeilen und die eigene Ansicht der Verknüpfung sind dabei
+    const opened = host.openPage(other);
+    const ids = opened.records.map((x) => x.data.id);
+    expect(ids).toEqual(expect.arrayContaining([made.databaseID, ...rows, linked.blockID, linked.viewID]));
   });
 });

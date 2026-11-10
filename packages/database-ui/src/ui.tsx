@@ -92,21 +92,43 @@ export function Popover({ anchor, onClose, children, label, className, matchWidt
     listen();
     const entry: StackEntry = { el, anchor: anchor instanceof HTMLElement ? anchor : null, close: () => closeRef.current() };
     stack.push(entry);
-    const auto = el.querySelector<HTMLElement>("[data-autofocus]") ?? el.querySelector<HTMLElement>("input, textarea, select");
-    auto?.focus();
+    // BSD-238: Fokus ins Popover (Feld, sonst erster Menüeintrag), beim Schließen zurück an den Auslöser.
+    const auto = el.querySelector<HTMLElement>("[data-autofocus]") ?? el.querySelector<HTMLElement>("input, textarea, select") ?? el.querySelector<HTMLElement>("[role=menuitem]:not(:disabled)");
+    auto?.focus({ preventScroll: true });
+    // Beim ersten Rendern ist das Popover noch unsichtbar (Position folgt im Layout-Effekt): dann im nächsten Frame.
+    const retry = auto && document.activeElement !== auto ? requestAnimationFrame(() => { if (auto.isConnected && !el.contains(document.activeElement)) auto.focus({ preventScroll: true }); }) : undefined;
     return () => {
+      if (retry !== undefined) cancelAnimationFrame(retry);
       const i = stack.indexOf(entry);
       if (i >= 0) stack.splice(i, 1);
+      const back = entry.anchor as HTMLElement | null;
+      const active = document.activeElement;
+      if (back?.isConnected && (!active || active === document.body || el.contains(active) || !active.isConnected)) back.focus({ preventScroll: true });
     };
   }, [anchor]);
 
   return createPortal(
     <div ref={ref} className={"dbui-popover" + (className ? " " + className : "")} style={style} role={role} aria-label={label} popover={host ? "manual" : undefined}
-      onMouseDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      onMouseDown={(e) => e.stopPropagation()} onKeyDown={(e) => { e.stopPropagation(); menuKeys(e); }}>
       {children}
     </div>,
     host ?? document.body,
   );
+}
+
+/** BSD-238: ↑/↓/Home/End wandern zwischen Menüeinträgen (nicht in Feldern, dort bewegen sie die Schreibmarke). */
+export function menuKeys(e: { key: string; target: EventTarget; currentTarget: HTMLElement; preventDefault(): void; altKey: boolean; metaKey: boolean; ctrlKey: boolean }) {
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) || e.altKey || e.metaKey || e.ctrlKey) return;
+  const t = e.target as HTMLElement;
+  if (t.closest("input, textarea, select, [contenteditable='true']") && t.getAttribute("role") !== "menuitem") return;
+  const items = [...e.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]:not(:disabled)")];
+  if (!items.length) return;
+  const i = items.indexOf(t.closest<HTMLElement>("[role=menuitem]") ?? t);
+  const next = e.key === "Home" ? 0 : e.key === "End" ? items.length - 1
+    : i < 0 ? (e.key === "ArrowDown" ? 0 : items.length - 1)
+    : (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+  e.preventDefault();
+  items[next]!.focus();
 }
 
 /** Zustand für ein Popover an einem Element: `[anchor, open(el), close]`. */

@@ -231,8 +231,22 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
     if (id) setPendingEdit(id);
   };
 
+  /** BSD-238: erste Zelle, wenn das Raster per Tastatur den Fokus bekommt und noch keine Zelle aktiv ist. */
+  const firstCell = (): Active | null => {
+    const n = nextRowIndex(items, -1, 1);
+    const it = n >= 0 ? items[n] : undefined;
+    return it?.kind === "row" ? { rowID: it.row.id, col: 0 } : null;
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (!active || editing) return;
+    if (editing) return;
+    if (!active) {
+      if (e.target === e.currentTarget && ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        setActive(firstCell());
+      }
+      return;
+    }
     const i = rowIndex(active.rowID);
     const move = (rowIdx: number, col: number) => {
       const it = items[rowIdx];
@@ -246,6 +260,18 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
       case "ArrowRight": e.preventDefault(); setActive({ ...active, col: Math.min(props.length - 1, active.col + 1) }); break;
       case "ArrowLeft": e.preventDefault(); setActive({ ...active, col: Math.max(0, active.col - 1) }); break;
       case "Enter": e.preventDefault(); beginEdit(active.rowID, active.col); break;
+      // BSD-238: Tab/⇧Tab wandern durch die Zellen (am Rand weiter in die nächste Zeile, am Ende raus aus dem Raster).
+      case "Tab": {
+        if (e.metaKey || e.ctrlKey || e.altKey) break;
+        const dir = e.shiftKey ? -1 : 1;
+        const col = active.col + dir;
+        if (col >= 0 && col < props.length) { e.preventDefault(); setActive({ ...active, col }); break; }
+        const n = nextRowIndex(items, i, dir);
+        if (n >= 0) { e.preventDefault(); move(n, dir > 0 ? 0 : props.length - 1); } else setActive(null);
+        break;
+      }
+      // Leertaste öffnet die Zeile (Peek bzw. Seite), wie in Notion.
+      case " ": if (onOpenPage && !e.metaKey && !e.ctrlKey) { e.preventDefault(); onOpenPage(active.rowID); } break;
       case "Escape": setActive(null); break;
       case "Backspace": case "Delete": {
         const p = props[active.col];
@@ -277,7 +303,7 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   return (
     <div className="dbui-scroll" ref={scrollRef} data-testid="table-scroll">
       <div className="dbui-table" role="grid" aria-label={view.name} aria-rowcount={result.rows.length + 1} aria-colcount={props.length}
-        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
+        tabIndex={0} ref={gridRef} onKeyDown={onKeyDown} onFocus={(e) => { if (e.target === e.currentTarget && !active && !editing) setActive(firstCell()); }} style={{ width: total, height: virtualizer.getTotalSize() + ROW_HEIGHT }}>
         <div className="dbui-thead" role="row" style={{ width: total }}>
           <div className="dbui-gutter" />
           {props.map((p, i) => <HeaderCell key={p.id} p={p} width={widths[i]!} view={view} onResize={resize(p.id)} />)}

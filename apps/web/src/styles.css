@@ -225,6 +225,9 @@ button.row:hover, a.row:hover { background: var(--bg); }
 [data-material="glass"] .menu { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
 .menu-item { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-md); background: transparent; text-align: left; }
 .menu-item:hover, .menu-item:focus-visible { background: var(--surface-raised); outline: none; }
+.menu-item.danger { color: var(--danger); }
+.menu-sep { height: 1px; background: var(--line); margin: var(--space-1) 0; }
+.menu-foot { margin: 0; padding: var(--space-1) var(--space-3); color: var(--muted); }
 
 /* Quick Find */
 .qf-backdrop { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--ink) 16%, transparent); display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; animation: fade-in var(--duration-fast) var(--ease-out); }
@@ -243,6 +246,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-item .tile { width: var(--space-6); height: var(--space-6); background: var(--surface-raised); }
 .qf-item[aria-selected="true"] .tile { background: var(--bg); }
 .qf-item .grow { flex: 1; min-width: 0; }
+.qf-item .qf-key { color: var(--muted); }
 .qf-snippet { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qf-none { padding: var(--space-3); }
 @keyframes fade-in { from { opacity: 0; } }

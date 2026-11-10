@@ -40,6 +40,8 @@ import {
   trashPages,
   trashedPages,
   createDatabase,
+  dbops,
+  plainText,
   MemoryHistoryStorage,
   VersionHistory,
   type Block,
@@ -62,7 +64,7 @@ import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
-import type { AssetGetResult, AssetInfo, Command, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -121,7 +123,7 @@ export class StoreHost {
   private links: LinkIndex | undefined;
   private linksDirty = new Set<RecordKeyString>();
   /** Je offener Seite: Synced-Originale von anderen Seiten (samt Inhalt) und deren Vorfahren, die die Replik mitführt. */
-  private syncedDeps = new Map<string, { roots: Set<string>; ancestors: Set<string> }>();
+  private syncedDeps = new Map<string, { roots: Set<string>; ancestors: Set<string>; databases: Set<string> }>();
   private syncedDirty = new Set<string>();
   private lastStatus = "";
   /** Versionsverlauf (BSD-73). */
@@ -168,6 +170,8 @@ export class StoreHost {
         case "findPages": reply(this.findPages(msg.query, msg.limit ?? 8)); break;
         case "backlinks": reply(this.backlinks(msg.pageID)); break;
         case "includeSynced": reply(this.includeSynced(msg.pageID, msg.source)); break;
+        case "includeDatabase": reply(this.includeDatabase(msg.pageID, msg.databaseID)); break;
+        case "listDatabases": reply(this.listDatabases(msg.query)); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -383,7 +387,7 @@ export class StoreHost {
         if (!keys.has(key) && !this.belongsTo(key, pageID)) continue;
         this.notePageChange(pageID, key);
         // Eine Synced-Kopie ist dazugekommen oder zeigt woandershin: die Replik braucht das Original.
-        if (kind === "block" && store.blocks.get(id)?.props?.syncSource) this.syncedDirty.add(pageID);
+        if (kind === "block" && (store.blocks.get(id)?.props?.syncSource || store.blocks.get(id)?.props?.databaseID)) this.syncedDirty.add(pageID);
       }
     }
     this.chatHost?.noteChange(change);
@@ -455,13 +459,18 @@ export class StoreHost {
   private belongsTo(key: RecordKeyString, pageID: string): boolean {
     const store = this.store;
     const { kind, id } = parseKey(key);
+    const deps = this.syncedDeps.get(pageID);
+    // BSD-212: verknüpfte Datenbanken (Record und Zeilen samt Inhalt).
+    if (deps?.databases.size) {
+      if (kind === "database" && deps.databases.has(id)) return true;
+      if (kind === "block" && dbops.enclosingDatabases(store, id).some((d) => deps.databases.has(d))) return true;
+    }
     let blockID: string | undefined;
     if (kind === "block") blockID = id;
     else if (kind === "database") blockID = store.databases.get(id)?.blockID;
     else if (kind === "view") blockID = store.views.get(id)?.blockID;
     if (!blockID) return false;
     if (blockID === pageID || isDescendant(store, blockID, pageID)) return true;
-    const deps = this.syncedDeps.get(pageID);
     if (!deps) return false;
     if (deps.roots.has(blockID)) return true;
     if (kind === "block" && deps.ancestors.has(blockID)) return true;
@@ -508,12 +517,68 @@ export class StoreHost {
     const next = syncedDependencies(store, pageID, (id) => subtree(store, id));
     const newRoots = [...next.roots].filter((r) => !deps.roots.has(r));
     const newAncestors = [...next.ancestors].filter((a) => !deps.ancestors.has(a));
-    if (newRoots.length === 0 && newAncestors.length === 0) return;
+    const newDatabases = [...this.linkedOf(pageID, next.roots)].filter((d) => !deps.databases.has(d));
+    if (newRoots.length === 0 && newAncestors.length === 0 && newDatabases.length === 0) return;
     for (const r of newRoots) deps.roots.add(r);
     for (const a of newAncestors) deps.ancestors.add(a);
-    const records = this.syncedRecords(newRoots, newAncestors);
+    for (const d of newDatabases) deps.databases.add(d);
+    const records = [...this.syncedRecords(newRoots, newAncestors), ...this.databaseRecords(newDatabases)];
     for (const r of records) keys.add(recordKey(r));
     if (records.length) this.opts.post({ type: "pageChanges", pageID, upserts: records, deletions: [] });
+  }
+
+  /** BSD-212: Datenbanken, die die Seite (samt Synced-Originalen) nur verknüpft zeigt. */
+  private linkedOf(pageID: string, roots: Iterable<string>): Set<string> {
+    const store = this.store;
+    const ids = [pageID, ...subtree(store, pageID)];
+    for (const r of roots) ids.push(r, ...subtree(store, r));
+    return dbops.linkedDatabases(store, ids);
+  }
+
+  /** Datenbank-Records samt Zeilen (mit Inhalt) für verknüpfte Ansichten. */
+  private databaseRecords(databaseIDs: Iterable<string>): WireRecord[] {
+    const store = this.store;
+    const out: WireRecord[] = [];
+    for (const d of databaseIDs) {
+      const db = store.databases.get(d);
+      if (!db) continue;
+      out.push({ kind: "database", data: db });
+      const ids: string[] = [];
+      for (const row of store.children("d:" + d)) ids.push(row, ...subtree(store, row));
+      out.push(...this.recordsFor(ids));
+    }
+    return out;
+  }
+
+  /** „Linked view of database“ auf einer offenen Seite: die Datenbank vorab in die Replik holen. */
+  includeDatabase(pageID: string, databaseID: string): SyncedRecords {
+    const keys = this.openPages.get(pageID);
+    const deps = this.syncedDeps.get(pageID);
+    if (!keys || !deps || !this.store.databases.has(databaseID)) return { found: false, records: [] };
+    if (deps.databases.has(databaseID)) return { found: true, records: [] };
+    deps.databases.add(databaseID);
+    const records = this.databaseRecords([databaseID]);
+    for (const r of records) keys.add(recordKey(r));
+    return { found: true, records };
+  }
+
+  /** Alle Datenbanken (ohne Papierkorb) für die Auswahl „Linked view of database“, nach Titel gefiltert. */
+  listDatabases(query: string, limit = 20): DatabaseInfo[] {
+    const store = this.store;
+    const q = query.trim().toLowerCase();
+    const out: DatabaseInfo[] = [];
+    for (const db of store.databases.values()) {
+      const owner = store.blocks.get(db.blockID);
+      if (!owner || isTrashed(store, db.blockID)) continue;
+      const title = plainText(db.title) || "Untitled";
+      if (q && !title.toLowerCase().includes(q)) continue;
+      const info: DatabaseInfo = { id: db.id, title, inline: owner.type === "databaseInline" };
+      const path = pageAncestors(store, db.blockID).map((id) => titleOf(store, id)).join(" / ");
+      if (path) info.path = path;
+      out.push(info);
+    }
+    out.sort((a, b) => a.title.localeCompare(b.title));
+    return out.slice(0, limit);
   }
 
   /** „Paste synced block“ auf einer Seite, die das Original noch nicht kennt: Original in die Replik aufnehmen. */
@@ -564,7 +629,7 @@ export class StoreHost {
     const records: WireRecord[] = [{ kind: "workspace", data: store.workspace }];
     const keys = new Set<RecordKeyString>();
     const page = store.blocks.get(pageID);
-    const deps = { roots: new Set<string>(), ancestors: new Set<string>() };
+    const deps = { roots: new Set<string>(), ancestors: new Set<string>(), databases: new Set<string>() };
     if (page) {
       records.push(...this.recordsFor([pageID, ...subtree(store, pageID)]));
       // Synced-Kopien zeigen den Inhalt eines Originals, das auf einer anderen Seite liegen kann.
@@ -572,6 +637,8 @@ export class StoreHost {
       deps.roots = d.roots;
       deps.ancestors = d.ancestors;
       records.push(...this.syncedRecords(d.roots, d.ancestors));
+      deps.databases = this.linkedOf(pageID, d.roots);
+      records.push(...this.databaseRecords(deps.databases));
       for (const r of records) if (r.kind !== "workspace") keys.add(recordKey(r));
     }
     this.openPages.set(pageID, keys);

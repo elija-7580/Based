@@ -88,7 +88,7 @@ Word / character count,editor,could,yes,yes,,no
 Placeholders per block type,editor,should,yes,yes,,yes
 Database inline,databases,must,yes,yes,,yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an)
 Database full page,databases,must,yes,yes,,yes
-Linked database view,databases,should,yes,yes,,partial: Kern (createLinkedView) und Anzeige vorhanden; keine Bedienung zum Anlegen
+Linked database view,databases,should,yes,yes,,"yes: /Linked view of database wählt eine Datenbank (auch von anderen Seiten), eigene Ansicht, bleibt live (BSD-212)"
 Table view,databases,must,yes,yes,,yes
 Board view (group by select/status),databases,must,yes,yes,,yes
 List view,databases,should,yes,yes,,yes
@@ -106,7 +106,7 @@ Sub-groups,databases,could,yes,no,,no
 Column calculations,databases,should,yes,yes,,yes
 Property visibility and order per view,databases,must,yes,yes,,yes
 Row opens as page (side peek / center / full),databases,must,yes,yes,,yes (Pass 30: Side/Center Peek/Full page pro Ansicht)
-Database templates,databases,should,yes,yes,,"partial: Kern (addTemplate, Standardvorlage in addRow) vorhanden; keine Bedienung zum Anlegen/Auswählen"
+Database templates,databases,should,yes,yes,,"yes: New ▾ – aus Vorlage oder leer, Vorlage anlegen/bearbeiten/als Standard/löschen (BSD-212)"
 Sub-items and dependencies,databases,could,yes,no,,no
 Property: title / text / number,properties,must,yes,yes,,yes
 Property: select / multi-select,properties,must,yes,yes,,yes
@@ -139,7 +139,7 @@ Import Markdown files,import,must,yes,yes,,yes
 Export page as Markdown,export,must,yes,yes,,yes
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
 Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)"
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K, ⌘,, ⌘\, ⌘T/⌘W, ⌘[ ⌘], ⇧⌘[ ⇧⌘]; ⌘N, ⌘P, ⇧⌘L, ⌘J, ⌘1–9 fehlen"
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, F6 (BSD-204/238); ⇧⌘U fehlt; im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab"
 Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Rest „Not available yet“"
 iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil)
 iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil)
