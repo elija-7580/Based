@@ -6,7 +6,8 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { MemoryPersistence, plainText, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { CUSTOM } from "../src/mapping/bn.js";
 import { basedSchema, createConverter, type BasedEditor } from "../src/schema/schema.js";
-import { canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, rangeIDs, stepRange, toggleAll, type SelectionEditor, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
+import { singleURL } from "../src/ui/paste.js";
+import { applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, rangeIDs, stepRange, toggleAll, type SelectionEditor, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
 import { DocSession } from "../src/yjs/session.js";
 
 const converter = createConverter();
@@ -202,5 +203,33 @@ describe("Blockaktionen", () => {
     r = stepRange(e, r, -1, true);
     expect(rangeIDs(e, r)).toEqual(["a", "b", "sub"]);
     expect(rangeIDs(e, { anchor: "weg", head: "a" })).toEqual([]);
+  });
+
+  it("Copy as Markdown nutzt den Exporter des Kerns, mit Kindern", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    mount(session);
+    await tick();
+    expect(blocksAsMarkdown(session, ["a", "b"])).toBe("Eins\n\n- Zwei\n    Kind");
+  });
+
+  it("URL einfügen: nur nackte http(s)-Adressen; Bookmark ersetzt den Absatz", async () => {
+    expect(singleURL(" https://example.com/a?b=1 ")).toBe("https://example.com/a?b=1");
+    expect(singleURL("see https://example.com")).toBeUndefined();
+    expect(singleURL("javascript:alert(1)")).toBeUndefined();
+    expect(singleURL("ftp://x")).toBeUndefined();
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const a = ed as unknown as ActionEditor;
+    const [p] = (ed as unknown as { insertBlocks(b: unknown[], r: string, w: string): { id: string }[] }).insertBlocks(
+      [{ type: "paragraph", content: [{ type: "link", href: "https://example.com", content: "https://example.com" }] }], "a", "after");
+    expect(applyURLChoice(a, p!.id, "https://example.com", "link")).toBe(false);
+    expect(applyURLChoice(a, "a", "https://example.com", "bookmark")).toBe(false); // anderer Text
+    expect(applyURLChoice(a, p!.id, "https://example.com", "bookmark")).toBe(true);
+    session.flush();
+    const rec = [...s.blocks.values()].find((b) => b.type === "bookmark" || b.type === "embed");
+    expect(rec).toBeDefined();
   });
 });

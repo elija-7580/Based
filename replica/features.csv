@@ -79,9 +79,9 @@ Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, B
 Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes
 Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,yes (BSD-207: ⌘⌥T / Ctrl+Alt+T)
 Undo / redo for text and structure,editor,must,yes,yes,,yes
-Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30: Markdown-Erkennung + Kern-Parser, HTML hat Vorrang, ⇧⌘V Klartext)"
-Paste URL as bookmark / mention / link,editor,could,yes,yes,,partial: URL über markiertem Text wird Link; Auswahl Bookmark/Mention/Embed fehlt
-Copy blocks as Markdown,editor,should,yes,yes,,"partial: BlockNote legt Markdown als Klartext in die Zwischenablage; Markdown-Export des Kerns (eigene Blöcke) nicht angebunden, kein Menüpunkt"
+Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30 Markdown; BSD-211: strukturiertes HTML aus Notion/Google Docs/Web über den Kern-Importer, Fixtures auch durch den Editor-Pfad)"
+Paste URL as bookmark / mention / link,editor,could,yes,yes,,yes (BSD-211: nackte URL in leeren Absatz → Menü Link / Bookmark / Embed; Seiten-Erwähnung über Notion-/Based-Links)
+Copy blocks as Markdown,editor,should,yes,yes,,"yes (BSD-211: Blockmenü „Copy as Markdown“ über den Markdown-Exporter des Kerns, mit Kindern und eigenen Blöcken)"
 Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search",no
 Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)"
 Word / character count,editor,could,yes,yes,,no

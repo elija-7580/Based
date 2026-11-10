@@ -8,7 +8,7 @@ export { EmojiPicker } from "./ui/EmojiPicker.js";
 export type { EmojiPickerProps } from "./ui/EmojiPicker.js";
 export { isOutlineHidden, PageOutline, scrollToHeading, setOutlineHidden } from "./ui/Outline.js";
 export { mentionItems } from "./ui/mentions.js";
-export { handlePaste, insertMarkdown } from "./ui/paste.js";
+export { handlePaste, htmlToBlocks, insertMarkdown, insertParsed } from "./ui/paste.js";
 export { importedToBlocks, markdownToBlocks, singleParagraph } from "./mapping/imported.js";
 
 // Reine Abbildung Records ⇄ BlockNote
