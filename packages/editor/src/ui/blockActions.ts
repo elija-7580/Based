@@ -32,9 +32,12 @@ export interface ActionSession {
 
 /**
  * Blöcke, die auf eigene Records zeigen (Unterseite, Datenbank, Synced Block, Meeting): eine flache Kopie würde
- * einen zweiten Verweis bzw. eine leere Hülle erzeugen. Die werden (noch) nicht dupliziert.
+ * einen zweiten Verweis bzw. eine leere Hülle erzeugen. Unterseiten und Datenbanken kopiert der Store tief
+ * (`RECORD_COPIES`, über die Shell: duplicatePages), Synced Blocks und Meetings werden nicht dupliziert.
  */
 const NOT_DUPLICABLE: ReadonlySet<string> = new Set([CUSTOM.page, CUSTOM.database, CUSTOM.syncedBlock, CUSTOM.meeting]);
+/** Diese Blöcke werden als Records tief kopiert (mit Inhalt, Zeilen, Ansichten). */
+const RECORD_COPIES: ReadonlySet<string> = new Set([CUSTOM.page, CUSTOM.database]);
 
 export function isDuplicable(b: BlockLike): boolean {
   return !NOT_DUPLICABLE.has(b.type) && b.children.every(isDuplicable);
@@ -56,17 +59,23 @@ export function targetBlocks(editor: ActionEditor, blockID: string): BlockLike[]
   return b ? [b] : [];
 }
 
-export interface DuplicateResult { inserted: string[]; skipped: number }
+/**
+ * `inserted`: Kopien im Dokument; `records`: Unterseiten/Datenbanken, die der Store tief kopieren soll (die Shell
+ * legt die Kopie direkt hinter das Original); `skipped`: nicht kopierbar (Synced Block, Meeting, oder darin).
+ */
+export interface DuplicateResult { inserted: string[]; records: string[]; skipped: number }
 
 /** Dupliziert die Blöcke direkt hinter den letzten; die Schreibmarke landet in der ersten Kopie. */
 export function duplicateBlocks(editor: ActionEditor, blocks: readonly BlockLike[]): DuplicateResult {
   const ok = blocks.filter(isDuplicable);
+  const records = blocks.filter((b) => RECORD_COPIES.has(b.type)).map((b) => b.id);
+  const skipped = blocks.length - ok.length - records.length;
   const last = blocks[blocks.length - 1];
-  if (!ok.length || !last) return { inserted: [], skipped: blocks.length };
+  if (!ok.length || !last) return { inserted: [], records, skipped };
   const inserted = editor.insertBlocks(ok.map(withoutIDs), last.id, "after").map((b) => b.id);
   const first = inserted[0];
   if (first && editor.getBlock(first)?.content !== undefined) editor.setTextCursorPosition(first, "end");
-  return { inserted, skipped: blocks.length - ok.length };
+  return { inserted, records, skipped };
 }
 
 export interface TurnIntoOption { key: string; label: string; type: string; props?: Record<string, unknown> }
@@ -184,4 +193,52 @@ export function toggleAll(root: ParentNode): "opened" | "closed" | "none" {
   const open = buttons.some((b) => b.getAttribute("aria-expanded") !== "true");
   for (const b of buttons) if ((b.getAttribute("aria-expanded") === "true") !== open) b.click();
   return open ? "opened" : "closed";
+}
+
+// MARK: Blockauswahl (Esc)
+
+/** Was die Blockauswahl vom Editor braucht. */
+export interface SelectionEditor {
+  readonly document: BlockLike[];
+  getParentBlock(id: string): BlockLike | undefined;
+}
+
+/** Ausgewählte Blöcke als Spanne unter Geschwistern: `anchor` bleibt, `head` wandert mit ⇧↑/⇧↓. */
+export interface BlockRange { anchor: string; head: string }
+
+const siblingsOf = (editor: SelectionEditor, id: string): BlockLike[] => editor.getParentBlock(id)?.children ?? editor.document;
+
+/** Die IDs der Spanne in Dokument-Reihenfolge (leer, wenn der Anker nicht mehr existiert). */
+export function rangeIDs(editor: SelectionEditor, r: BlockRange): string[] {
+  const sib = siblingsOf(editor, r.anchor);
+  const a = sib.findIndex((b) => b.id === r.anchor);
+  if (a < 0) return [];
+  const h = sib.findIndex((b) => b.id === r.head);
+  if (h < 0) return [r.anchor];
+  return sib.slice(Math.min(a, h), Math.max(a, h) + 1).map((b) => b.id);
+}
+
+function flatIDs(blocks: readonly BlockLike[], out: string[] = []): string[] {
+  for (const b of blocks) {
+    out.push(b.id);
+    flatIDs(b.children, out);
+  }
+  return out;
+}
+
+/**
+ * ↑/↓ in der Blockauswahl: ohne ⇧ zum vorigen/nächsten Block in Lese-Reihenfolge (auch in Kinder hinein), mit ⇧
+ * die Spanne unter den Geschwistern des Ankers erweitern bzw. verkleinern. Am Rand bleibt die Auswahl.
+ */
+export function stepRange(editor: SelectionEditor, r: BlockRange, dir: -1 | 1, extend: boolean): BlockRange {
+  if (extend) {
+    const sib = siblingsOf(editor, r.anchor);
+    const h = sib.findIndex((b) => b.id === r.head);
+    const next = sib[h + dir];
+    return h >= 0 && next ? { anchor: r.anchor, head: next.id } : r;
+  }
+  const flat = flatIDs(editor.document);
+  const i = flat.indexOf(r.head);
+  const next = i >= 0 ? flat[i + dir] : undefined;
+  return next ? { anchor: next, head: next } : { anchor: r.head, head: r.head };
 }
