@@ -267,6 +267,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
     { name: "Search", icon: "search", active: false, key: "⌘K", go: onQuickFind },
     { name: "Chat", icon: "chat", active: route.name === "chat", key: "⌘J", go: () => onNavigate({ name: "chat" }) },
     { name: "Tasks", icon: "agent", active: route.name === "tasks", go: () => onNavigate({ name: "tasks" }) },
+    { name: "Coding", icon: "terminal", active: route.name === "coding", go: () => onNavigate({ name: "coding" }) },
     { name: "Graph", icon: "graph", active: route.name === "graph", go: () => onNavigate({ name: "graph" }) },
   ];
   // Fuß wie in der Swift-App: Library · Trash · Settings

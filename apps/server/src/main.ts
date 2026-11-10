@@ -3,7 +3,8 @@
 //   pnpm --filter @based/server start -- --stdio --db based.sqlite        (MCP für Desktop-Clients)
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
 // BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
-import { CodingSessions, DEFAULT_AGENTS } from "@based/brain";
+import { readFileSync } from "node:fs";
+import { CodingSessions, DEFAULT_AGENTS, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -35,9 +36,11 @@ export interface Options {
   codingRoots: string[];
   /** BSD-223: pro Agent freigegebene Umgebungsvariablen (`claude=ANTHROPIC_API_KEY,gemini=GEMINI_API_KEY`). */
   codingEnv: Record<string, string[]>;
+  /** BSD-223: JSON-Datei mit eigenen bzw. geänderten Agenten (Liste von AgentDefinition-Teilen, nach `id` gemischt). */
+  codingAgents: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -55,6 +58,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     sandboxDir: env.BASED_SANDBOX_DIR,
     codingRoots: (env.BASED_CODING_ROOTS ?? "").split(":").filter((r) => r !== ""),
     codingEnv: parseCodingEnv(env.BASED_CODING_ENV),
+    codingAgents: env.BASED_CODING_AGENTS,
   };
   let sandbox = env.BASED_SANDBOX;
   const args = [...argv];
@@ -78,6 +82,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--sandbox": sandbox = value(a); break;
       case "--sandbox-dir": o.sandboxDir = value(a); break;
       case "--coding-root": o.codingRoots.push(value(a)); break;
+      case "--coding-agents": o.codingAgents = value(a); break;
       case "--stdio": o.stdio = true; break;
       default: throw new Error(`unknown option ${a}`);
     }
@@ -102,10 +107,37 @@ export function parseCodingEnv(raw: string | undefined): Record<string, string[]
   return out;
 }
 
-/** Coding-Agenten mit Standard-Definitionen; Prozesse über `@based/brain/acp-node`. */
+/** Standard-Agenten, mit einer Liste aus der Datei gemischt (gleiche `id` ändert, neue kommen dazu). */
+export function mergeAgents(defaults: readonly AgentDefinition[], extra: unknown): AgentDefinition[] {
+  const out = defaults.map((a) => ({ ...a }));
+  if (!Array.isArray(extra)) throw new Error("--coding-agents: expected a JSON array of agents");
+  for (const raw of extra as Record<string, unknown>[]) {
+    const id = typeof raw?.id === "string" ? raw.id : "";
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error("--coding-agents: every agent needs an id (letters, digits, - and _)");
+    const strings = (v: unknown) => (Array.isArray(v) && v.every((x) => typeof x === "string") ? (v as string[]) : undefined);
+    const env = raw.env && typeof raw.env === "object" ? Object.fromEntries(Object.entries(raw.env as Record<string, unknown>).filter(([, v]) => typeof v === "string")) as Record<string, string> : undefined;
+    const prev = out.find((a) => a.id === id);
+    const next: AgentDefinition = {
+      id,
+      name: typeof raw.name === "string" ? raw.name : prev?.name ?? id,
+      command: typeof raw.command === "string" ? raw.command : prev?.command ?? "",
+      args: strings(raw.args) ?? prev?.args ?? [],
+      env: env ?? prev?.env ?? {},
+      icon: typeof raw.icon === "string" ? raw.icon : prev?.icon ?? "terminal",
+      enabled: typeof raw.enabled === "boolean" ? raw.enabled : prev?.enabled ?? true,
+      note: typeof raw.note === "string" ? raw.note : prev?.note ?? "",
+    };
+    if (!next.command) throw new Error(`--coding-agents: agent ${id} needs a command`);
+    if (prev) Object.assign(prev, next); else out.push(next);
+  }
+  return out;
+}
+
+/** Coding-Agenten (Standard plus `--coding-agents`); Prozesse über `@based/brain/acp-node`. */
 function codingSessions(opts: Options, log: Logger): CodingSessions {
+  const agents = opts.codingAgents ? mergeAgents(DEFAULT_AGENTS, JSON.parse(readFileSync(opts.codingAgents, "utf8")) as unknown) : [...DEFAULT_AGENTS];
   return new CodingSessions({
-    agents: () => DEFAULT_AGENTS,
+    agents: () => agents,
     roots: opts.codingRoots,
     connect: (agent, cwd, roots, permissions) =>
       spawnAgent(agent, { cwd, allowedRoots: roots, permissions, approvedEnv: opts.codingEnv[agent.id] ?? [], onLog: (l) => log.debug("coding agent stderr", { agent: agent.id, bytes: l.length }) }),

@@ -6,10 +6,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import { CodingSessions, type AgentDefinition } from "@based/brain";
+import { CodingAPIError, CodingClient, CodingSessions, codingErrorMessage, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
-import { auth, get, post, startApp } from "./helpers.js";
-import { parseCodingEnv, parseOptions } from "../src/main.js";
+import { auth, get, post, startApp, TOKEN } from "./helpers.js";
+import { mergeAgents, parseCodingEnv, parseOptions } from "../src/main.js";
 
 const FAKE = fileURLToPath(new URL("../../../packages/brain/test/fixtures/fake-acp-agent.mjs", import.meta.url));
 const fake: AgentDefinition = { id: "fake", name: "Fake Agent", command: process.execPath, args: [FAKE], env: {}, icon: "🤖", enabled: true, note: "" };
@@ -149,6 +149,11 @@ describe("/coding", () => {
     expect(parseOptions(["--coding-root", "/srv/code"], { BASED_CODING_ROOTS: "/a:/b" }).codingRoots).toEqual(["/a", "/b", "/srv/code"]);
     expect(() => parseOptions(["--coding-root", "rel"], {})).toThrow(/absolute/);
     expect(parseCodingEnv("claude=ANTHROPIC_API_KEY, gemini=GEMINI_API_KEY bad=1x")).toEqual({ claude: ["ANTHROPIC_API_KEY"], gemini: ["GEMINI_API_KEY"] });
+    expect(parseOptions(["--coding-agents", "/x.json"], {}).codingAgents).toBe("/x.json");
+    const merged = mergeAgents([fake, off], [{ id: "off", enabled: true }, { id: "mine", command: "my-acp", args: ["--acp"] }]);
+    expect(merged.map((a) => [a.id, a.enabled, a.command])).toEqual([["fake", true, process.execPath], ["off", true, process.execPath], ["mine", true, "my-acp"]]);
+    expect(() => mergeAgents([], [{ id: "x" }])).toThrow(/command/);
+    expect(() => mergeAgents([], {})).toThrow(/array/);
   });
 
   it("CLI-Verlauf und Setup-Doctor (nur mit Host)", async () => {
@@ -175,5 +180,37 @@ describe("/coding", () => {
     expect((await post(`${url}/coding/doctor/nope/test`, {})).status).toBe(404);
     const plain = await setup();
     expect((await get(`${plain.url}/coding/doctor`)).status).toBe(404);
+  });
+
+  it("CodingClient spricht alle Routen (Sitzung, Long-Poll, Inbox, Modus, Schließen)", async () => {
+    const { url, root } = await setup();
+    const c = new CodingClient({ url: url + "/", token: TOKEN });
+    expect((await c.agents()).map((a) => a.id)).toEqual(["fake"]);
+    const s = await c.create({ agent: "fake", cwd: root });
+    expect(s.state).toBe("idle");
+    const inbox0 = await c.inbox();
+    const waiting = c.inbox(inbox0.version, 2000);
+    await c.prompt(s.id, `edit ${root}/a.txt`);
+    const item = (await waiting).items[0]!;
+    await c.answer(item.id, "yes");
+    let since = 0, done = false;
+    for (let i = 0; i < 20 && !done; i++) {
+      const r = await c.events(s.id, since, 1000);
+      since = r.next;
+      done = r.events.some((e) => e.type === "result");
+    }
+    expect(done).toBe(true);
+    expect((await c.setMode(s.id, "plan")).mode).toBe("plan");
+    expect((await c.sessions()).map((x) => x.id)).toEqual([s.id]);
+    await c.close(s.id);
+    expect((await c.session(s.id)).state).toBe("closed");
+    const failed = await c.create({ agent: "fake", cwd: "/etc" }).catch((e: unknown) => e);
+    expect(failed).toBeInstanceOf(CodingAPIError);
+    expect(codingErrorMessage(failed)).toBe("cwd is outside the allowed folders");
+    const plain = await startApp();
+    apps.push(plain);
+    const none = await new CodingClient({ url: plain.url, token: TOKEN }).agents().catch((e: unknown) => e);
+    expect(codingErrorMessage(none)).toMatch(/--coding-root/);
+    expect(codingErrorMessage(await new CodingClient({ url, token: "wrong" }).agents().catch((e: unknown) => e))).toMatch(/token/);
   });
 });
