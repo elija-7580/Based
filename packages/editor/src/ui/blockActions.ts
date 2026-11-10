@@ -1,5 +1,7 @@
-// BSD-207: Blockaktionen wie in Notion – Duplicate (⌘D) und Turn into. Reine Funktionen über die BlockNote-API,
-// damit sie ohne Oberfläche testbar sind; das Blockmenü (PageEditor.tsx) ruft nur diese auf.
+// BSD-207: Blockaktionen wie in Notion – Duplicate (⌘D), Turn into (auch „Page“), Move to und alle Toggles auf/zu.
+// Reine Funktionen über die BlockNote-API (und den Store der Sitzung), damit sie ohne Oberfläche testbar sind; das
+// Blockmenü (PageEditor.tsx) ruft nur diese auf.
+import { isDescendant, keysBetween, plainText, type WorkspaceStore } from "@based/core";
 import { CUSTOM } from "../mapping/bn.js";
 
 /** Minimal, was hier von BlockNote gebraucht wird (BasedEditor erfüllt das). */
@@ -16,6 +18,16 @@ export interface ActionEditor {
   updateBlock(id: string, update: unknown): unknown;
   getSelection(): { blocks: BlockLike[] } | undefined;
   setTextCursorPosition(id: string, placement: "start" | "end"): void;
+  removeBlocks(ids: string[]): unknown;
+  replaceBlocks(remove: string[], insert: unknown[]): unknown;
+}
+
+/** Was Move to / Turn into page von der Dokument-Sitzung brauchen (DocSession erfüllt das). */
+export interface ActionSession {
+  readonly store: WorkspaceStore;
+  readonly rootID: string;
+  flush(): unknown;
+  quietly<T>(fn: () => T): T;
 }
 
 /**
@@ -81,6 +93,9 @@ export function canTurnInto(b: BlockLike): boolean {
   return TEXT_TYPES.has(b.type) && Array.isArray(b.content);
 }
 
+/** „Turn into → Page“: kein Blocktyp, sondern eine Unterseite mit dem Text als Titel (eigene Aktion, siehe turnIntoPage). */
+export const TURN_INTO_PAGE: TurnIntoOption = { key: "page", label: "Page", type: CUSTOM.page };
+
 /** Ist `b` schon genau dieses Ziel? (Für das Häkchen im Menü.) */
 export function isCurrent(b: BlockLike, o: TurnIntoOption): boolean {
   if (b.type !== o.type) return false;
@@ -96,4 +111,77 @@ export function turnInto(editor: ActionEditor, blocks: readonly BlockLike[], o: 
     n++;
   }
   return n;
+}
+
+const newID = () => globalThis.crypto.randomUUID().toUpperCase();
+
+/**
+ * „Turn into → Page“ (wie Notion): der Block wird zu einer Unterseite an derselben Stelle; sein Text wird der Titel,
+ * seine Kinder werden der Inhalt der Seite. Die Records entstehen still im Store, der Austausch im Dokument ist ein
+ * Undo-Schritt im Editor (wie „Copy and sync“). Gibt die ID der neuen Seite zurück.
+ */
+export function turnIntoPage(editor: ActionEditor, session: ActionSession, blockID: string): string | undefined {
+  const bn = editor.getBlock(blockID);
+  if (!bn || !canTurnInto(bn)) return undefined;
+  session.flush();
+  const { store } = session;
+  const rec = store.blocks.get(blockID);
+  if (!rec) return undefined;
+  const pageID = newID();
+  const kids = store.children("b:" + blockID);
+  session.quietly(() => store.transact("Turn into page", (tx) => {
+    const now = store.now();
+    const title = plainText(rec.text);
+    tx.put({ kind: "block", data: { id: pageID, type: "page", parent: rec.parent, sk: rec.sk, createdAt: now, updatedAt: now, ...(title ? { text: title } : {}), ...(store.userID != null ? { createdBy: store.userID } : {}) } });
+    for (const k of kids) tx.update(k, (b) => { b.parent = "b:" + pageID; });
+  }, { undoable: false }));
+  editor.replaceBlocks([blockID], [{ id: pageID, type: CUSTOM.page }]);
+  return pageID;
+}
+
+/** Ziele für „Move to“: Seiten und Zeilen (keine Datenbanken), nicht die eigene Seite und nichts, was bewegt wird. */
+export function moveTargetAllowed(kind: string | undefined, id: string, selfID: string, moving: readonly string[]): boolean {
+  return kind !== "database" && id !== selfID && !moving.includes(id);
+}
+
+/**
+ * „Move to“: Blöcke mit allem darin ans Ende einer anderen Seite. `lastKey` ist der Sortierschlüssel des letzten
+ * Kinds der Zielseite (die Seiten-Replik kennt die Zielseite meist nicht); ohne: was der Store kennt.
+ * Records still umhängen, dann die Blöcke aus dem Dokument nehmen – ein Undo-Schritt im Editor (Undo holt sie zurück).
+ * Gibt die Zahl der bewegten Blöcke zurück.
+ */
+export function moveBlocksToPage(editor: ActionEditor, session: ActionSession, blockIDs: readonly string[], targetID: string, lastKey?: string): number {
+  if (targetID === session.rootID) return 0;
+  session.flush();
+  const { store } = session;
+  const set = new Set(blockIDs);
+  const moving = blockIDs.filter((id) => store.blocks.has(id) && editor.getBlock(id) !== undefined && id !== targetID
+    && !isDescendant(store, targetID, id) && !blockIDs.some((o) => o !== id && set.has(o) && isDescendant(store, id, o)));
+  if (moving.length === 0) return 0;
+  const parent = "b:" + targetID;
+  const known = store.children(parent).filter((id) => !set.has(id)).map((id) => store.blocks.get(id)?.sk).filter((k): k is string => k !== undefined);
+  let after = lastKey;
+  for (const k of known) if (after === undefined || k > after) after = k;
+  const keys = keysBetween(moving.length, after, undefined);
+  session.quietly(() => store.transact(moving.length === 1 ? "Move block" : `Move ${moving.length} blocks`, (tx) => {
+    moving.forEach((id, i) => tx.update(id, (b) => {
+      b.parent = parent;
+      b.sk = keys[i]!;
+    }));
+  }, { undoable: false }));
+  editor.removeBlocks(moving);
+  return moving.length;
+}
+
+/**
+ * ⌘⌥T: alle Toggles im Bereich auf- oder zuklappen (wie Notion: ist einer zu, gehen alle auf, sonst alle zu).
+ * BlockNote hält den Zustand in seiner Toggle-Ansicht (Knopf mit aria-expanded) – deshalb über die Knöpfe.
+ * Gibt zurück, was passiert ist.
+ */
+export function toggleAll(root: ParentNode): "opened" | "closed" | "none" {
+  const buttons = [...root.querySelectorAll<HTMLButtonElement>(".bn-toggle-button")];
+  if (buttons.length === 0) return "none";
+  const open = buttons.some((b) => b.getAttribute("aria-expanded") !== "true");
+  for (const b of buttons) if ((b.getAttribute("aria-expanded") === "true") !== open) b.click();
+  return open ? "opened" : "closed";
 }

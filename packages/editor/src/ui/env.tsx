@@ -50,6 +50,11 @@ export interface PageDirectory {
   search(query: string): Promise<PageRef[]>;
   /** „New page“ aus dem @-Menü: legt eine Seite an und gibt ihre ID zurück. Fehlt: kein solcher Eintrag. */
   create?: ((title: string) => Promise<string | undefined>) | undefined;
+  /**
+   * BSD-207 „Move to“: Sortierschlüssel des letzten Blocks auf einer Seite, damit bewegte Blöcke am Ende landen
+   * (die Seiten-Replik kennt die Zielseite nicht). Fehlt: was der Store des Editors kennt.
+   */
+  lastChildKey?: ((pageID: string) => Promise<string | undefined>) | undefined;
 }
 
 export interface EditorEnv {

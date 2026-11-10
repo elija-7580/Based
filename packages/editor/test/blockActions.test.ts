@@ -6,7 +6,7 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { MemoryPersistence, plainText, WorkspaceStore, type Block, type WireRecord } from "@based/core";
 import { CUSTOM } from "../src/mapping/bn.js";
 import { basedSchema, createConverter, type BasedEditor } from "../src/schema/schema.js";
-import { canTurnInto, duplicateBlocks, isDuplicable, TURN_INTO, turnInto, type ActionEditor } from "../src/ui/blockActions.js";
+import { canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, toggleAll, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
 import { DocSession } from "../src/yjs/session.js";
 
 const converter = createConverter();
@@ -23,6 +23,8 @@ function store() {
       blk("b", "bulletedList", "b:p", "a1", { text: "Zwei" }),
       blk("c", "text", "b:b", "a0", { text: "Kind" }),
       blk("sub", "page", "b:p", "a2", { text: "Unterseite" }),
+      blk("q", "page", "w", "a1", { text: "Ziel" }),
+      blk("q1", "text", "b:q", "a5", { text: "Schon da" }),
     ]),
     node: "t", now: () => (t += 1),
   });
@@ -98,5 +100,84 @@ describe("Blockaktionen", () => {
     expect(s.blocks.get("b")?.type).toBe("callout");
     expect(plainText(s.blocks.get("b")?.text)).toBe("Zwei");
     expect(canTurnInto(a.getBlock("sub")!)).toBe(false);
+  });
+
+  it("Turn into → Page: Text wird Titel, Kinder werden Inhalt der Unterseite, an derselben Stelle", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const a = ed as unknown as ActionEditor;
+    const pageID = turnIntoPage(a, session, "b")!;
+    expect(pageID).toBeTruthy();
+    session.flush();
+    const page = s.blocks.get(pageID)!;
+    expect(page.type).toBe("page");
+    expect(page.text).toBe("Zwei");
+    expect(page.parent).toBe("b:p");
+    expect(s.children("b:" + pageID)).toEqual(["c"]);
+    expect(s.blocks.get("b")).toBeUndefined();
+    expect(s.children("b:p").filter((id) => !s.blocks.get(id)?.trashedAt)).toEqual(["a", pageID, "sub"]);
+    expect(a.getBlock(pageID)?.type).toBe(CUSTOM.page);
+    // Keine Seite aus einer Unterseite oder Nicht-Text
+    expect(turnIntoPage(a, session, "sub")).toBeUndefined();
+  });
+
+  it("Move to: Block mit Kindern ans Ende der Zielseite; Undo im Editor holt ihn zurück", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const target = new DocSession(s, "q", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const a = ed as unknown as ActionEditor;
+    expect(moveBlocksToPage(a, session, ["b"], "q")).toBe(1);
+    session.flush();
+    expect(s.blocks.get("b")?.parent).toBe("b:q");
+    expect(s.children("b:q")).toEqual(["q1", "b"]);
+    expect(s.blocks.get("c")?.parent).toBe("b:b");
+    expect(a.getBlock("b")).toBeUndefined();
+    // Die offene Sitzung der Zielseite zieht nach
+    expect(target.blocks().map((b) => b.id)).toEqual(["q1", "b"]);
+    // Sortierschlüssel von außen (Replik kennt die Zielseite nicht): landet dahinter
+    expect(moveBlocksToPage(a, session, ["a"], "q", "a9")).toBe(1);
+    expect(s.blocks.get("a")!.sk > "a9").toBe(true);
+    (ed as unknown as { undo(): void }).undo();
+    await tick();
+    session.flush();
+    expect(s.blocks.get("a")?.parent).toBe("b:p");
+    expect(a.getBlock("a")).toBeDefined();
+    target.close();
+  });
+
+  it("Move to lehnt die eigene Seite und eine bewegte Unterseite als Ziel ab", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const a = ed as unknown as ActionEditor;
+    expect(moveBlocksToPage(a, session, ["a"], "p")).toBe(0);
+    expect(moveBlocksToPage(a, session, ["sub"], "sub")).toBe(0);
+    expect(moveTargetAllowed("database", "x", "p", [])).toBe(false);
+    expect(moveTargetAllowed("page", "p", "p", [])).toBe(false);
+    expect(moveTargetAllowed("page", "sub", "p", ["sub"])).toBe(false);
+    expect(moveTargetAllowed("row", "r", "p", ["a"])).toBe(true);
+  });
+
+  it("toggleAll: ist einer zu, gehen alle auf; sonst alle zu", () => {
+    const root = document.createElement("div");
+    const states = [true, false, true];
+    for (const open of states) {
+      const b = document.createElement("button");
+      b.className = "bn-toggle-button";
+      b.setAttribute("aria-expanded", String(open));
+      b.addEventListener("click", () => b.setAttribute("aria-expanded", String(b.getAttribute("aria-expanded") !== "true")));
+      root.appendChild(b);
+    }
+    const all = () => [...root.querySelectorAll("button")].map((b) => b.getAttribute("aria-expanded"));
+    expect(toggleAll(root)).toBe("opened");
+    expect(all()).toEqual(["true", "true", "true"]);
+    expect(toggleAll(root)).toBe("closed");
+    expect(all()).toEqual(["false", "false", "false"]);
+    expect(toggleAll(document.createElement("div"))).toBe("none");
   });
 });

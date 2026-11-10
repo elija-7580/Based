@@ -484,3 +484,77 @@ test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => 
   await page.reload();
   await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
 });
+
+/** Blockmenü am Block mit diesem Text öffnen. */
+async function blockMenu(page: Page, text: string) {
+  const block = editor(page).locator(".bn-block-content", { hasText: text }).first();
+  await block.hover();
+  await page.locator(".bn-side-menu [draggable=true]").first().click();
+}
+
+test("Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2)", async ({ page }) => {
+  await createPage(page, "Move target");
+  await createPage(page, "Move source");
+  await openPage(page, "Move source");
+  await caretInLastLine(page);
+  await page.keyboard.type("Alpha stays");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Beta moves");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Gamma becomes a page");
+  await settled(page);
+
+  await blockMenu(page, "Beta moves");
+  await page.getByRole("menuitem", { name: "Move to" }).click();
+  const picker = page.getByTestId("block-move");
+  await expect(picker).toBeVisible();
+  await picker.getByLabel("Find a page").fill("Move target");
+  await expect(picker.getByRole("option", { name: /Move target/ })).toBeVisible();
+  await expect(picker.getByRole("option", { name: /Move source/ })).toHaveCount(0);
+  await page.keyboard.press("Enter");
+  await expect(picker).toHaveCount(0);
+  await expect(page.getByTestId("editor-notice")).toContainText("Moved to Move target");
+  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+  await expect(editor(page).getByText("Alpha stays")).toBeVisible();
+
+  await blockMenu(page, "Gamma becomes a page");
+  await page.getByRole("menuitem", { name: "Turn into" }).hover();
+  await page.getByRole("menuitem", { name: "Page", exact: true }).click();
+  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+  await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
+  await settled(page);
+
+  await openPage(page, "Move target");
+  await expect(editor(page).getByText("Beta moves")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await openPage(page, "Move source");
+  await expect(editor(page).getByText("Beta moves")).toHaveCount(0);
+  await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
+  await openPage(page, "Move target");
+  await expect(editor(page).getByText("Beta moves")).toBeVisible();
+});
+
+test("⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2)", async ({ page }) => {
+  await createPage(page, "Toggles");
+  await openPage(page, "Toggles");
+  await caretInLastLine(page);
+  for (const t of ["First toggle", "Second toggle"]) {
+    await page.keyboard.type("/Toggle list");
+    await expect(page.getByRole("option", { name: /Toggle List/i }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await page.keyboard.type(t);
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Enter");
+  }
+  const buttons = editor(page).locator(".bn-toggle-button");
+  await expect(buttons).toHaveCount(2);
+  const expanded = () => buttons.evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-expanded")));
+  await buttons.first().click();
+  expect(await expanded()).toEqual(["true", "false"]);
+  await editor(page).getByText("Second toggle").click();
+  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+  await expect.poll(expanded).toEqual(["true", "true"]);
+  await page.keyboard.press("ControlOrMeta+Alt+KeyT");
+  await expect.poll(expanded).toEqual(["false", "false"]);
+});
