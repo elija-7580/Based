@@ -4,6 +4,7 @@
 export type Route =
   | { name: "home" }
   | { name: "graph" }
+  | { name: "library" }
   | { name: "settings"; page?: string }
   | { name: "trash" }
   /** Vollseiten-Chat (BSD-159). */
@@ -14,6 +15,7 @@ export function routeToHash(r: Route): string {
   switch (r.name) {
     case "home": return "home";
     case "graph": return "graph";
+    case "library": return "library";
     case "settings": return r.page ? "prefs-" + r.page : "appearance";
     case "trash": return "trash";
     case "chat": return "chat";
@@ -27,6 +29,7 @@ export function routeFromHash(hash: string): Route {
   if (h.startsWith("prefs-") && h.length > 6) return { name: "settings", page: decodeURIComponent(h.slice(6)) };
   switch (h) {
     case "graph": return { name: "graph" };
+    case "library": return { name: "library" };
     case "appearance": case "settings": return { name: "settings" };
     case "trash": return { name: "trash" };
     case "chat": return { name: "chat" };

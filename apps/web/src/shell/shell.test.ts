@@ -18,15 +18,27 @@ describe("Seitenleisten-Zeilen", () => {
   it("zugeklappt: Abschnitte und oberste Seiten", () => {
     const { o, a, b, d } = outline();
     const rows = flattenSidebar(o, new Set());
-    expect(rows.map((r) => (r.kind === "header" ? "#" + r.label : r.kind === "page" ? r.id : "-"))).toEqual(["#Favorites", b, "#Team", d, "#Private", a]);
+    expect(rows.map((r) => (r.kind === "header" ? "#" + r.label : r.kind === "teamspace" ? "ts:" + r.name : r.kind === "page" ? r.id : "-")))
+      .toEqual(["#Favorites", b, "#Teamspaces", "ts:Team", d, "#Private", a]);
+    // Seiten eines Teamspaces sind unter ihm eingerückt
+    expect(rows.find((r) => r.kind === "page" && r.id === d)).toMatchObject({ depth: 1 });
+    expect(rows.find((r) => r.kind === "teamspace")).toMatchObject({ count: 1, collapsed: false });
   });
 
   it("aufgeklappt bis zur leeren Seite; Abschnitte zuklappbar", () => {
     const { o, a, b, c, t } = outline();
     const rows = flattenSidebar(o, new Set([a, b, c]), new Set(["favorites", t]));
-    expect(rows.map((r) => r.key)).toEqual(["h/favorites", "h/" + t, "h/private", "s:private/" + a, `s:private/${a}/${b}`, `s:private/${a}/${b}/${c}`, `s:private/${a}/${b}/${c}/empty`]);
-    expect(rowIndexOf(rows, c)).toBe(5);
+    expect(rows.map((r) => r.key)).toEqual(["h/favorites", "h/teamspaces", "ts/" + t, "h/private", "s:private/" + a, `s:private/${a}/${b}`, `s:private/${a}/${b}/${c}`, `s:private/${a}/${b}/${c}/empty`]);
+    expect(rowIndexOf(rows, c)).toBe(6);
     expect(ancestorsInOutline(o, c)).toEqual([a, b]);
+  });
+
+  it("ohne Teamspaces: Angebot, einen anzulegen; „Teamspaces“ und „Private“ zuklappbar", () => {
+    const s = new WorkspaceStore({ persistence: new MemoryPersistence(), node: "n" });
+    const a = createPage(s, { title: "A" });
+    const o = buildOutline(s);
+    expect(flattenSidebar(o, new Set()).map((r) => r.key)).toEqual(["h/teamspaces", "a/createTeamspace", "h/private", "s:private/" + a]);
+    expect(flattenSidebar(o, new Set(), new Set(["teamspaces", "private"])).map((r) => r.key)).toEqual(["h/teamspaces", "h/private"]);
   });
 
   it("Ablagezonen", () => {
@@ -39,7 +51,7 @@ describe("Seitenleisten-Zeilen", () => {
 
 describe("Routen und Verlauf", () => {
   it("Hash hin und zurück", () => {
-    const rs: Route[] = [{ name: "home" }, { name: "graph" }, { name: "settings" }, { name: "trash" }, { name: "page", id: "ABC-1" }];
+    const rs: Route[] = [{ name: "home" }, { name: "graph" }, { name: "library" }, { name: "settings" }, { name: "trash" }, { name: "page", id: "ABC-1" }];
     for (const r of rs) expect(routeFromHash("#" + routeToHash(r))).toEqual(r);
     expect(routeFromHash("#lecture")).toEqual({ name: "home" });
   });

@@ -11,7 +11,7 @@ import type { Block, BlockProps, Database, DatabaseView, PropertySchema, Propert
 import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { FIRST_KEY } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
-import { type AssetRef, type ImportBuilder, makeBlock } from "./builder.js";
+import { type AssetRef, type ImportBuilder, looksLikeLocalFile, makeBlock } from "./builder.js";
 import { notionColor } from "./clipboard.js";
 import { basename, comparePaths, dirname, extname, type ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { collapse, HTMLNode, parseHTML, trimSpaces, trimWS } from "./html.js";
@@ -138,9 +138,12 @@ export interface NotionHTMLOptions {
   progress?: ((fraction: number) => void) | undefined;
   /** Abbruch zwischen zwei Seiten (wirft `ImportCancelled`). */
   isCancelled?: (() => boolean) | undefined;
+  /** Verweise auf Dateien, die im Export fehlen, als Warnung melden (die Swift-App meldet sie nicht). */
+  warnMissingFiles?: boolean | undefined;
 }
 
 export class NotionHTMLImporter {
+  private readonly warnMissingFiles: boolean;
   progress: ((fraction: number) => void) | undefined;
   isCancelled: (() => boolean) | undefined;
 
@@ -159,6 +162,7 @@ export class NotionHTMLImporter {
   private dataURIs = 0;
 
   constructor(readonly builder: ImportBuilder, readonly files: ImportFiles, opts: NotionHTMLOptions = {}) {
+    this.warnMissingFiles = opts.warnMissingFiles === true;
     this.progress = opts.progress;
     this.isCancelled = opts.isCancelled;
   }
@@ -697,6 +701,11 @@ export class NotionHTMLImporter {
     const u = joinPath(ctx.dir, decoded);
     const data = this.files.isFile(u) ? this.files.read(u) : undefined;
     if (data) return { asset: this.builder.asset(u, data, basename(u)) };
+    // Verweis auf eine Datei, die im Export fehlt: melden statt still einen toten Pfad zu behalten.
+    if (this.warnMissingFiles && looksLikeLocalFile(decoded) && !/\.(html?|md|csv)$/i.test(decoded.split(/[?#]/)[0]!)) {
+      const w = `Missing file “${u}” — it isn't in the export`;
+      if (!this.builder.warnings.includes(w)) this.builder.warnings.push(w);
+    }
     return { url: src };
   }
 

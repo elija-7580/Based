@@ -1,0 +1,20 @@
+/* Seitenleiste: Teamspace-Zeilen, „Create a teamspace“, Fuß (Library · Trash · Settings); „Move to…“-Liste. Nur Tokens. */
+.tree-teamspace { font-weight: var(--weight-heading); color: var(--ink); }
+.tree-teamspace .tree-icon { color: var(--ink-2); }
+.tree-create { width: 100%; border: 0; background: transparent; color: var(--muted); text-align: left; gap: var(--space-2); }
+.tree-create:hover { color: var(--ink); }
+.sidebar-footer { flex: none; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.sidebar-footer .nav-item { min-height: var(--space-6); }
+.sidebar .synced { margin-top: 0; padding-block: var(--space-2); }
+
+.move-list { display: flex; flex-direction: column; gap: var(--space-3); max-height: 46vh; overflow-y: auto; }
+.move-tile {
+  width: var(--space-6); height: var(--space-6); flex: none; border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink-2);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Export-Dialog: Optionen für HTML */
+.export-options { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; background: var(--surface-raised); border-radius: var(--radius-xl); padding: var(--space-4); }
+.export-options .t-desc { color: var(--muted); }
+/* Menü einer Zeile offen: Aktionen sichtbar lassen, auch wenn der Zeiger ins Menü wandert */
+.tree-row:has([aria-expanded="true"]) .tree-actions { display: inline-flex; }

@@ -2,12 +2,16 @@
 // Markdown/CSV, Based-Archiv (.based.zip, .jsonl). Ergebnis ist strukturiert klonbar und wird im Store-Worker
 // geschrieben (`commitImportPayload`); dort greift der Reimport-Schutz des Kerns.
 import {
+  DEFAULT_MAX_ASSET_BYTES,
+  formatBytes,
   ImportFiles,
   isArchive,
+  LimitedAssetSink,
   loadArchive,
   preparedImportToWire,
   prepareImport,
   type ArchiveReadResult,
+  type MemoryAssetSink,
   type PreparedImportWire,
 } from "@based/core";
 
@@ -27,22 +31,33 @@ export interface ImportPayload {
   archives: PreparedArchive[];
   /** Hinweise für den Bericht (übersprungene Einträge, nicht übernommene Dateien). */
   notes: string[];
+  /** Bilder und Anhänge, die in den Asset-Speicher gehen. */
+  assets: number;
 }
 
 export interface PrepareOptions {
   progress?: (fraction: number) => void;
   isCancelled?: () => boolean;
+  /**
+   * Sammelt Bilder und Anhänge (aus dem ZIP/Ordner und aus Based-Archiven); der Aufrufer legt `assets.files` danach im
+   * Asset-Speicher ab. Ohne: Dateien entfallen, nur externe URLs bleiben.
+   */
+  assets?: MemoryAssetSink;
+  /** Größenlimit je Datei (Standard 100 MB); größere werden übersprungen und gemeldet. */
+  maxAssetBytes?: number;
 }
 
 const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
 /** Quellen aus den gewählten Dateien: ein Dateibaum, je oberster Eintrag eine Quelle (Ordner oder Datei). */
 export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): ImportPayload {
-  const out: ImportPayload = { notion: undefined, archives: [], notes: [] };
+  const out: ImportPayload = { notion: undefined, archives: [], notes: [], assets: 0 };
   const progress = opts.progress ?? (() => {});
   const tree = new ImportFiles();
   const roots: string[] = [];
   let archiveAssets = 0;
+  const maxBytes = opts.maxAssetBytes ?? DEFAULT_MAX_ASSET_BYTES;
+  const sink = opts.assets ? new LimitedAssetSink(opts.assets, maxBytes) : undefined;
   for (const f of files) {
     const name = f.path.split("/").at(-1) ?? f.path;
     const lower = name.toLowerCase();
@@ -50,7 +65,13 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
       if (isArchive(f.data)) {
         const loaded = loadArchive(f.data);
         out.archives.push({ name, read: loaded.read });
-        archiveAssets += loaded.assets.length;
+        if (opts.assets) {
+          // Dateien des Archivs behalten ihre IDs (die Records zeigen schon darauf).
+          for (const a of loaded.assets) {
+            if (a.data.length > maxBytes) out.notes.push(`Skipped “${a.ref.name}” (${formatBytes(a.data.length)}): larger than the ${formatBytes(maxBytes)} limit for attached files`);
+            else opts.assets.files.set(a.ref.id, { ref: { ...a.ref, size: a.data.length }, data: a.data });
+          }
+        } else archiveAssets += loaded.assets.length;
         for (const fail of loaded.assetFailures) out.notes.push(`Skipped ${fail}`);
         if (loaded.read.skipped > 0) out.notes.push(`${name}: skipped ${plural(loaded.read.skipped, "unreadable line")}`);
         continue;
@@ -61,19 +82,21 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
     const root = f.path.replace(/^\/+/, "").split("/")[0]!;
     if (root && !roots.includes(root)) roots.push(root);
   }
-  if (archiveAssets > 0) out.notes.push(`${plural(archiveAssets, "attached file")} from the archive not imported — file storage isn't available in the browser yet.`);
+  if (archiveAssets > 0) out.notes.push(`${plural(archiveAssets, "attached file")} from the archive not imported — file storage isn't available in this browser.`);
   progress(0.05);
   if (roots.length > 0) {
     const prepared = prepareImport(roots.map((path) => ({ files: tree, path })), {
       progress: (f) => progress(0.05 + f * 0.9),
       isCancelled: opts.isCancelled,
       userID: null,
+      assets: sink,
+      warnMissingFiles: sink !== undefined,
     });
     // Ohne Dateispeicher im Browser: Bilder und Anhänge entfallen (nur externe URLs bleiben) – nicht mitschicken.
     const pending = prepared.builder?.pendingAssets.size ?? 0;
     if (pending > 0) {
       prepared.builder!.resolveAssets(undefined);
-      prepared.notes.push(`${plural(pending, "image or attachment", "images or attachments")} not imported — file storage isn't available in the browser yet.`);
+      prepared.notes.push(`${plural(pending, "image or attachment", "images or attachments")} not imported — file storage isn't available in this browser.`);
     }
     if (prepared.builder?.isEmpty === false || (prepared.markdown && prepared.markdown.records.length > 0)) out.notion = preparedImportToWire(prepared);
     else {
@@ -81,6 +104,7 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
       if (out.archives.length === 0) out.notes.push("Nothing to import in the chosen files.");
     }
   }
+  out.assets = opts.assets?.files.size ?? 0;
   progress(1);
   return out;
 }

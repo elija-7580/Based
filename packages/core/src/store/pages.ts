@@ -261,10 +261,166 @@ export function setFavorite(store: WorkspaceStore, ids: string[], on: boolean) {
   store.transact(on ? "Add to Favorites" : "Remove from Favorites", (tx) => updateWorkspace(store, tx, (w) => { w.favorites = next; }));
 }
 
-export function createTeamspace(store: WorkspaceStore, name: string): string {
+/** Neuer Teamspace (Swift `createTeamspace(name:icon:)`); das Icon ist ein Emoji wie bei Seiten. */
+export function createTeamspace(store: WorkspaceStore, name: string, icon?: string): string {
   const id = newID();
   store.transact("New teamspace", (tx) => updateWorkspace(store, tx, (w) => {
-    w.teamspaces = [...(w.teamspaces ?? []), { id, name: name || "New teamspace", createdAt: store.now() }];
+    const t: NonNullable<Workspace["teamspaces"]>[number] = { id, name: name.trim() || "New teamspace", createdAt: store.now() };
+    if (icon) t.icon = icon;
+    w.teamspaces = [...(w.teamspaces ?? []), t];
   }));
   return id;
+}
+
+/** Teamspace umbenennen (leerer Name ändert nichts). */
+export function renameTeamspace(store: WorkspaceStore, id: string, name: string) {
+  const n = name.trim();
+  const cur = (store.workspace.teamspaces ?? []).find((t) => t.id === id);
+  if (!cur || n === "" || cur.name === n) return;
+  store.transact("Rename teamspace", (tx) => updateWorkspace(store, tx, (w) => {
+    const t = w.teamspaces?.find((x) => x.id === id);
+    if (t) t.name = n;
+  }));
+}
+
+/** Icon eines Teamspaces setzen (Emoji) oder mit `undefined` entfernen. */
+export function setTeamspaceIcon(store: WorkspaceStore, id: string, icon: string | undefined) {
+  const cur = (store.workspace.teamspaces ?? []).find((t) => t.id === id);
+  if (!cur || (cur.icon ?? undefined) === (icon || undefined)) return;
+  store.transact("Change teamspace icon", (tx) => updateWorkspace(store, tx, (w) => {
+    const t = w.teamspaces?.find((x) => x.id === id);
+    if (!t) return;
+    if (icon) t.icon = icon;
+    else delete t.icon;
+  }));
+}
+
+/** Teamspace löschen: seine Seiten wandern nach Private (Swift `deleteTeamspace`). Ein Schritt. */
+export function deleteTeamspace(store: WorkspaceStore, id: string) {
+  if (!(store.workspace.teamspaces ?? []).some((t) => t.id === id)) return;
+  store.transact("Delete teamspace", (tx) => {
+    for (const kid of store.children("w")) {
+      if (store.blocks.get(kid)?.props?.teamspace !== id) continue;
+      tx.update(kid, (b) => {
+        if (!b.props) return;
+        delete b.props.teamspace;
+        if (Object.keys(b.props).length === 0) delete b.props;
+      });
+    }
+    updateWorkspace(store, tx, (w) => {
+      w.teamspaces = (w.teamspaces ?? []).filter((t) => t.id !== id);
+      if (w.teamspaces.length === 0) delete w.teamspaces;
+    });
+  });
+}
+
+// MARK: Duplizieren
+
+const appendText = (text: Block["text"], suffix: string): Block["text"] => {
+  if (text === undefined || text === "" || (Array.isArray(text) && text.length === 0)) return text;
+  return typeof text === "string" ? text + suffix : [...text, { t: suffix }];
+};
+
+/** Kopie eines Blocks mit allem darin (neue IDs). Datenbank-Container bekommen eine eigene Datenbank, Ansichten und
+ * Zeilen (Swift `copySubtree`). */
+function copyTree(store: WorkspaceStore, tx: Tx, src: Block, parent: string, sk: string, titleSuffix?: string): string {
+  const copy = structuredClone(src);
+  copy.id = newID();
+  copy.parent = parent;
+  copy.sk = sk;
+  copy.createdAt = store.now();
+  if (store.userID != null) copy.createdBy = store.userID;
+  else delete copy.createdBy;
+  delete copy.trashedAt;
+  if (titleSuffix) {
+    const t = appendText(src.text, titleSuffix);
+    if (t !== undefined) copy.text = t;
+  }
+  const copyViews = (databaseID: string | undefined): string[] => {
+    const ids: string[] = [];
+    const views = [...store.views.values()].filter((v) => v.blockID === src.id).sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
+    for (const v of views) {
+      const nv = structuredClone(v);
+      nv.id = newID();
+      nv.blockID = copy.id;
+      if (databaseID) nv.databaseID = databaseID;
+      tx.put({ kind: "view", data: nv });
+      ids.push(nv.id);
+    }
+    return ids;
+  };
+  const dbID = src.props?.databaseID;
+  const db = dbID ? store.databases.get(dbID) : undefined;
+  if (dbID && db && db.blockID === src.id) {
+    const ndb = structuredClone(db);
+    ndb.id = newID();
+    ndb.blockID = copy.id;
+    // Relationen der Kopie sind einseitig (die Spiegel gehören dem Original); Selbst-Relationen zeigen auf die Kopie.
+    const selfRelations = new Set(db.properties.filter((p) => p.relation?.databaseID === dbID).map((p) => p.id));
+    for (const p of ndb.properties) {
+      if (!p.relation) continue;
+      if (selfRelations.has(p.id)) {
+        p.relation.databaseID = ndb.id;
+        if (p.relation.syncedPropertyID && !selfRelations.has(p.relation.syncedPropertyID)) delete p.relation.syncedPropertyID;
+      } else delete p.relation.syncedPropertyID;
+    }
+    const rowMap = new Map<string, string>();
+    copy.props = { ...(copy.props ?? {}), databaseID: ndb.id };
+    const viewIDs = copyViews(ndb.id);
+    if (src.props?.viewIDs) copy.props.viewIDs = viewIDs;
+    tx.put({ kind: "database", data: ndb });
+    tx.put({ kind: "block", data: copy });
+    for (const rid of store.children("d:" + dbID)) {
+      const r = store.blocks.get(rid);
+      if (r && r.trashedAt === undefined) rowMap.set(rid, copyTree(store, tx, r, "d:" + ndb.id, r.sk));
+    }
+    if (selfRelations.size) {
+      for (const nid of rowMap.values()) {
+        tx.update(nid, (b) => {
+          for (const pid of selfRelations) {
+            const ids = (b.values?.[pid] as { relation?: { _0?: string[] } } | undefined)?.relation?._0;
+            if (!ids || !b.values) continue;
+            const mapped = ids.map((x) => rowMap.get(x)).filter((x): x is string => x !== undefined);
+            if (mapped.length) b.values[pid] = { relation: { _0: mapped } } as NonNullable<Block["values"]>[string];
+            else delete b.values[pid];
+          }
+        });
+      }
+    }
+    if (ndb.templateIDs || ndb.defaultTemplateID) {
+      const fixed = structuredClone(ndb);
+      if (fixed.templateIDs) fixed.templateIDs = fixed.templateIDs.map((x) => rowMap.get(x)).filter((x): x is string => x !== undefined);
+      const def = fixed.defaultTemplateID ? rowMap.get(fixed.defaultTemplateID) : undefined;
+      if (def) fixed.defaultTemplateID = def;
+      else delete fixed.defaultTemplateID;
+      tx.put({ kind: "database", data: fixed });
+    }
+  } else {
+    if ((src.type === "databaseInline" || src.type === "databasePage") && src.props?.viewIDs) {
+      copy.props = { ...(copy.props ?? {}), viewIDs: copyViews(undefined) };
+    }
+    tx.put({ kind: "block", data: copy });
+  }
+  for (const kid of store.children("b:" + src.id)) {
+    const k = store.blocks.get(kid);
+    if (k && k.trashedAt === undefined) copyTree(store, tx, k, "b:" + copy.id, k.sk);
+  }
+  return copy.id;
+}
+
+/** Seiten direkt hinter ihrem Original duplizieren, mit allem darin (Swift `duplicatePages`); Titel bekommt „ (1)“. */
+export function duplicatePages(store: WorkspaceStore, ids: string[]): string[] {
+  const set = new Set(ids);
+  const roots = [...set].filter((id) => store.blocks.has(id) && ![...set].some((o) => o !== id && isDescendant(store, id, o)));
+  if (roots.length === 0) return [];
+  return store.transact(roots.length === 1 ? "Duplicate" : `Duplicate ${roots.length} pages`, (tx) => {
+    const out: string[] = [];
+    for (const id of roots) {
+      const src = store.blocks.get(id);
+      if (!src) continue;
+      const sk = sortKeys(store, src.parent, { kind: "after", id }, 1)[0]!;
+      out.push(copyTree(store, tx, src, src.parent, sk, isPageLike(src) ? " (1)" : undefined));
+    }
+    return out;
+  });
 }

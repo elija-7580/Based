@@ -26,8 +26,15 @@ export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
 export type { HTMLExporterOptions } from "./interop/export.js";
 export { relationLimitViolations, setRelation } from "./store/relations.js";
-export { PRIVATE, createPage, createTeamspace, deleteForever, dropPages, emptyTrash, insertPage, isDescendant, isPageLike, movePages, renamePage, restorePages, sameSection, sectionOf, setFavorite, sortKeys, subtree, trashPages, trashedPages } from "./store/pages.js";
+export { PRIVATE, createPage, createTeamspace, deleteForever, deleteTeamspace, duplicatePages, renameTeamspace, setTeamspaceIcon, dropPages, emptyTrash, insertPage, isDescendant, isPageLike, movePages, renamePage, restorePages, sameSection, sectionOf, setFavorite, sortKeys, subtree, trashPages, trashedPages } from "./store/pages.js";
 export type { CreatePageOptions, DropZone, InsertPosition, PageDestination, SectionID } from "./store/pages.js";
+// Library, Seitengraph (Shell-Parität)
+export { LIBRARY_KINDS, duplicateTitleKeys, filterLibrary, libraryItems, titleKey } from "./store/library.js";
+export type { LibraryItem, LibraryKind, LibraryQuery, LibrarySort } from "./store/library.js";
+export { GRAPH_EDGE_KINDS, buildPageGraph, filterGraph, graphAdjacency } from "./graph/page-graph.js";
+export type { GraphEdge, GraphEdgeKind, GraphFilter, GraphNode, GraphNodeKind, PageGraph } from "./graph/page-graph.js";
+export { ForceLayout, hashID, layoutBounds, nodeAtPoint } from "./graph/layout.js";
+export type { LayoutOptions, Point } from "./graph/layout.js";
 export { PRIVATE_SECTION, buildOutline, iconText, pageAncestors, pageTitles, sectionKey, structureSignature } from "./store/outline.js";
 export type { Outline, OutlineNode, OutlineSection, TrashEntry } from "./store/outline.js";
 // BSD-156: Import und Export (Notion-HTML, Markdown/CSV, Workspace-Archiv, ZIP)
@@ -35,7 +42,7 @@ export { ImportIDs, changedSinceImport, contentFingerprint, derivedID, importFin
 export { ImportFiles, basename, dirname, extname, joinPath, normalizePath, stripExtension } from "./interop/files.js";
 export { DEFAULT_ZIP_LIMITS, ImportCancelled, ZipError, crc32, extractZip, isZip, readZipEntries, sanitizedZipPath, writeZip, zipEntryData } from "./interop/zip.js";
 export type { ExtractOptions, ExtractResult, ZipEntry, ZipErrorKind, ZipLimits, ZipWriteEntry } from "./interop/zip.js";
-export { ImportBuilder, MemoryAssetSink, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
+export { AssetRejected, DEFAULT_MAX_ASSET_BYTES, ImportBuilder, LimitedAssetSink, MemoryAssetSink, formatBytes, looksLikeLocalFile, cleanBlock, commitImport, emptyReport, makeBlock, makeRecordID, mimeFor } from "./interop/builder.js";
 export type { AssetRef, AssetSink, ImportBuilderOptions, ImportBuilderWire, ImportReport, NewBlock } from "./interop/builder.js";
 export { cleanTitle, columnRatio, importedEmoji, NotionHTMLImporter, parseNotionNumber, rowType, svgType, trimRuns } from "./interop/notion-html.js";
 export type { NotionHTMLOptions } from "./interop/notion-html.js";
@@ -46,9 +53,12 @@ export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportW
 export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
 export { toRichText, runsOf, replaceInRichText } from "./interop/runs.js";
-export { EXPORT_CSS, exportHTMLPage } from "./interop/html-document.js";
+export { EXPORT_CSS, PRINT_CSS, exportHTMLPage } from "./interop/html-document.js";
+export type { HTMLDocumentOptions } from "./interop/html-document.js";
+export { base64Encode, embeddableImageType, exportAssetRefs, exportPageHTML, exportWorkspaceHTML, printPageHTML } from "./interop/html-export.js";
+export type { HTMLExportOptions, HTMLExportResult } from "./interop/html-export.js";
 export { ASSETS_FOLDER, defaultHTMLPageLink, encodeExportPath, exportSummary, planWorkspaceExport, relativeExportPath, subpages, topLevelPages, uniqueExportName, writeExportZip } from "./interop/workspace-export.js";
-export type { ExportFormat, ExportPlan, ExportReport } from "./interop/workspace-export.js";
+export type { ExportFormat, ExportPlan, ExportPlanOptions, ExportReport } from "./interop/workspace-export.js";
 export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, archiveAssetRefs, archiveEntryPath,
   assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
 export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";

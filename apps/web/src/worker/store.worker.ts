@@ -3,6 +3,7 @@
 // Fenster, Datei schon in einem anderen Tab offen), läuft der Workspace im Speicher und der Status sagt es.
 import { openWorkspace, SqliteHistoryStorage } from "@based/sync";
 import { openWasmDatabase } from "@based/sync/wasm";
+import { IDBAssetStore } from "./assets.js";
 import { StoreHost } from "./host.js";
 import { openOpfsAssets } from "./opfsAssets.js";
 import type { Event, RequestMessage } from "./protocol.js";
@@ -12,6 +13,7 @@ declare const self: DedicatedWorkerGlobalScope;
 const host = new StoreHost({
   post: (e: Event) => self.postMessage(e),
   online: () => self.navigator.onLine,
+  importedAssets: new IDBAssetStore(),
   async open({ device, opfs }) {
     if (opfs) {
       try {

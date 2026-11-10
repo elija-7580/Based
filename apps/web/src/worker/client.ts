@@ -5,17 +5,19 @@
 import {
   recordKey,
   WorkspaceStore,
+  type GraphFilter,
+  type LibraryItem,
   type Outline,
   type Persistence,
   type RecordKeyString,
   type WireRecord,
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
-import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "./interop.js";
+import type { ExportFile, ExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
 import type { JSONValue } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
-import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
 export interface ShellState {
   ready: boolean;
@@ -246,12 +248,27 @@ export class StoreClient {
     return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
   }
 
-  exportPage(pageID: string, format: ExportFormat): Promise<ExportFile> {
-    return this.request<ExportFile>({ type: "exportPage", pageID, format });
+  exportPage(pageID: string, format: ExportFormat, html?: HTMLExportChoice): Promise<ExportFile> {
+    return this.request<ExportFile>({ type: "exportPage", pageID, format, ...(html ? { html } : {}) });
   }
 
-  exportWorkspace(format: WorkspaceExportFormat): Promise<ExportFile> {
-    return this.request<ExportFile>({ type: "exportWorkspace", format });
+  exportWorkspace(format: WorkspaceExportFormat, html?: HTMLExportChoice): Promise<ExportFile> {
+    return this.request<ExportFile>({ type: "exportWorkspace", format, ...(html ? { html } : {}) });
+  }
+
+  /** Druckansicht einer Seite (HTML mit eingebetteten Bildern und Druck-Regeln). */
+  printPage(pageID: string, css?: string): Promise<PrintDocument> {
+    return this.request<PrintDocument>({ type: "printPage", pageID, ...(css ? { css } : {}) });
+  }
+
+  /** Alle Einträge für die Library (Seiten, Datenbanken, Zeilen). */
+  library(): Promise<LibraryItem[]> {
+    return this.request<LibraryItem[]>({ type: "library" });
+  }
+
+  /** Seitengraph, im Worker gebaut und zugeschnitten. */
+  graph(filter?: GraphFilter): Promise<GraphResult> {
+    return this.request<GraphResult>({ type: "graph", ...(filter ? { filter } : {}) });
   }
 
   /** Datei speichern (BSD-78): liegt danach auf diesem Gerät und wird zum Sync-Server hochgeladen. */

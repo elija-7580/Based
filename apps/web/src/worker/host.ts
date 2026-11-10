@@ -4,8 +4,16 @@
 // (die Worker-Datei `store.worker.ts` verbindet ihn nur mit `self`).
 import {
   buildOutline,
+  buildPageGraph,
   createPage,
+  createTeamspace,
   deleteForever,
+  deleteTeamspace,
+  duplicatePages,
+  filterGraph,
+  libraryItems,
+  renameTeamspace,
+  setTeamspaceIcon,
   dropPages,
   emptyTrash,
   insertPage,
@@ -35,17 +43,20 @@ import {
   MemoryHistoryStorage,
   VersionHistory,
   type Block,
+  type GraphFilter,
   type HistoryStorage,
+  type PageGraph,
   type RecordKeyString,
   type StoreChange,
   type WireRecord,
   type WorkspaceStore,
 } from "@based/core";
 import { AssetError, AssetSync, MemoryAssetBlobStore, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence } from "@based/sync";
-import { commitImportPayload, exportPage, exportWorkspace } from "./interop.js";
+import type { AssetStore, StoredAsset } from "./assets.js";
+import { commitImportPayload, exportPage, exportWorkspace, printPage } from "./interop.js";
 import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
-import type { AssetGetResult, AssetInfo, Command, Event, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
+import type { AssetGetResult, AssetInfo, Command, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
   store: WorkspaceStore;
@@ -69,6 +80,9 @@ export interface HostOptions {
   syncTiming?: { intervalMs?: number; waitTimeoutSeconds?: number; pushDelayMs?: number };
   /** Datei-Übertragung (Tests: kleine Stücke, kurze Wartezeiten). */
   assetTiming?: { chunkSize?: number; backoff?: { minMs: number; maxMs: number } };
+  /** Dateien aus Importen (IndexedDB, Schlüssel = Asset-ID der Records). Anzeige und Exporte lesen hier zuerst, dann im
+   *  Blob-Speicher des Syncs (BSD-78). Ohne: nur der Blob-Speicher. */
+  importedAssets?: AssetStore;
   /** Aufschub für Quick Find, damit neuere Eingaben ältere abbrechen (Tests: synchron über 0). */
   defer?: (fn: () => void) => void;
 }
@@ -138,8 +152,11 @@ export class StoreHost {
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(commitImportPayload(this.store, msg.payload, msg.parent)); break;
-        case "exportPage": reply(exportPage(this.store, msg.pageID, msg.format)); break;
-        case "exportWorkspace": reply(exportWorkspace(this.store, msg.format)); break;
+        case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.exportAssets(), msg.html)); break;
+        case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.exportAssets(), msg.html)); break;
+        case "printPage": reply(await printPage(this.store, msg.pageID, this.exportAssets(), msg.css)); break;
+        case "library": reply(libraryItems(this.store)); break;
+        case "graph": reply(this.graph(msg.filter)); break;
         case "history": reply(this.historyAction(msg.action)); break;
         case "assetPut": reply(await this.assetPut(msg.bytes, msg.name, msg.mime)); break;
         // Nicht abwarten: ein Download darf die Nachrichten-Schlange des Workers nicht aufhalten.
@@ -245,10 +262,29 @@ export class StoreHost {
       case "moveToSection":
         return movePages(store, c.ids, { kind: "top", section: c.section === PRIVATE_SECTION ? { kind: "private" } : { kind: "teamspace", id: c.section } });
       case "favorite": return setFavorite(store, c.ids, c.on);
+      case "moveInto": return movePages(store, c.ids, { kind: "page", id: c.parent });
+      case "duplicate": return duplicatePages(store, c.ids);
+      case "createTeamspace": return createTeamspace(store, c.name, c.icon);
+      case "renameTeamspace": return renameTeamspace(store, c.id, c.name);
+      case "setTeamspaceIcon": return setTeamspaceIcon(store, c.id, c.icon);
+      case "deleteTeamspace": return deleteTeamspace(store, c.id);
       case "undo": return store.undo().name;
       case "redo": return store.redo().name;
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
     }
+  }
+
+  // MARK: Seitengraph
+
+  private graphCache: { revision: number; graph: PageGraph } | undefined;
+
+  /** Graph des aktuellen Stands (je Revision einmal gebaut), zugeschnitten nach `filter`. */
+  graph(filter: GraphFilter = {}): GraphResult {
+    const t0 = performance.now();
+    const store = this.store;
+    if (this.graphCache?.revision !== store.revision) this.graphCache = { revision: store.revision, graph: buildPageGraph(store) };
+    const all = this.graphCache.graph;
+    return { graph: filterGraph(all, filter), totalNodes: all.nodes.length, totalEdges: all.edges.length, took: performance.now() - t0 };
   }
 
   // MARK: Versionsverlauf (BSD-73)
@@ -682,8 +718,27 @@ export class StoreHost {
     return this.assets.add(new Uint8Array(bytes), name, mime);
   }
 
+  /** Dateien für Exporte: zuerst aus Importen, dann lokal aus dem Blob-Speicher des Syncs (ohne Netz). */
+  private exportAssets(): AssetStore {
+    const imported = this.opts.importedAssets;
+    const blobs = this.ws?.assets;
+    return {
+      put: (id, asset) => (imported ? imported.put(id, asset) : Promise.reject(new Error("no asset store"))),
+      has: async (id) => ((await imported?.has(id).catch(() => false)) ?? false) || ((await blobs?.has(id).catch(() => false)) ?? false),
+      get: async (id): Promise<StoredAsset | undefined> => {
+        const a = await imported?.get(id).catch(() => undefined);
+        if (a) return a;
+        const bytes = await blobs?.get(id).catch(() => undefined);
+        return bytes ? { data: bytes, name: id } : undefined;
+      },
+    };
+  }
+
   async assetGet(id: string): Promise<AssetGetResult> {
     if (!this.assets) throw new Error("not initialised");
+    // Aus einem Import (nur auf diesem Gerät, BSD-78 überträgt sie noch nicht).
+    const imported = await this.opts.importedAssets?.get(id).catch(() => undefined);
+    if (imported) return { ok: true, bytes: imported.data.slice().buffer };
     try {
       const bytes = await this.assets.get(id);
       // Kopie: der Blob-Speicher behält seine Bytes (im Speicher-Fall dieselbe Instanz).

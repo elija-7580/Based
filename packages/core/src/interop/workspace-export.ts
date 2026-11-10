@@ -86,8 +86,18 @@ export const defaultHTMLPageLink = (store: WorkspaceStore) => (id: string) => {
   return { title: t, url: encodeURLPath(markdownFileName(t) + ".html") };
 };
 
+export interface ExportPlanOptions {
+  /** Unterseiten mit exportieren (Standard: ja). Ohne: nur `pages` selbst; Links auf Unterseiten zeigen auf ihren Namen. */
+  subpages?: boolean | undefined;
+  /** HTML: eigenes Stylesheet und Druck-Regeln (siehe `exportHTMLPage`). */
+  css?: string | undefined;
+  print?: boolean | undefined;
+  /** Datei einbetten statt nach `assets/` zu legen: liefert eine `data:`-URL oder `undefined` (dann `assets/`). */
+  embedAsset?: ((ref: AssetRef, page: string) => string | undefined) | undefined;
+}
+
 /** Rendert `pages` und ihre Unterseiten (rekursiv) in einen Plan (Swift `WorkspaceExporter.plan`). */
-export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], format: ExportFormat): ExportPlan {
+export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], format: ExportFormat, opts: ExportPlanOptions = {}): ExportPlan {
   // Durchgang 1: ein eindeutiger Pfad je Seite, damit Links stimmen.
   const paths = new Map<string, string>();
   const order: string[] = [];
@@ -102,7 +112,7 @@ export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], forma
     const base = uniqueExportName(markdownFileName(titleOf(store, page.id)), set);
     paths.set(page.id, join(dir, base + "." + ext));
     order.push(page.id);
-    const kids = subpages(store, page.id);
+    const kids = opts.subpages === false ? [] : subpages(store, page.id);
     if (kids.length === 0) return;
     const sub = join(dir, base);
     directories.push(sub);
@@ -138,10 +148,10 @@ export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], forma
       if (to === undefined) return { title: t, url: encodeExportPath(markdownFileName(t) + (format === "html" ? ".html" : ".md")) };
       return { title: t, url: encodeExportPath(relativeExportPath(dir, to)) };
     };
-    const assetLink = (ref: AssetRef) => encodeExportPath(relativeExportPath(dir, assetPath(ref, titleOf(store, id))));
+    const assetLink = (ref: AssetRef) => opts.embedAsset?.(ref, titleOf(store, id)) ?? encodeExportPath(relativeExportPath(dir, assetPath(ref, titleOf(store, id))));
     let text: string;
     if (format === "html") {
-      text = exportHTMLPage(new HTMLExporter(store, { pageLink, assetLink }), id);
+      text = exportHTMLPage(new HTMLExporter(store, { pageLink, assetLink }), id, { css: opts.css, print: opts.print });
     } else {
       const e = new MarkdownExporter(store, { pageLink, assetLink });
       if (page.type === "databasePage" || page.type === "databaseInline") {
