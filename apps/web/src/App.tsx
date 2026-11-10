@@ -20,6 +20,7 @@ import { TasksScreen } from "./tasks/TasksScreen.js";
 import { CodingScreen } from "./coding/CodingScreen.js";
 import "./tasks/AgentSettingsSection.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
+import { cycleRegion } from "./shell/regions.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
@@ -84,6 +85,9 @@ export function App({ client, history }: { client: StoreClient; history: History
       } else if (mod && e.key === "]") {
         e.preventDefault();
         history.forward();
+      } else if (e.key === "F6" && !mod && !e.altKey) {
+        // BSD-238: Bereiche per Tastatur (Seitenleiste → Kopfzeile → Seite).
+        if (cycleRegion(document, e.shiftKey ? -1 : 1)) e.preventDefault();
       }
     };
     window.addEventListener("keydown", onKey);
