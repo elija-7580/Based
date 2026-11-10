@@ -18,6 +18,11 @@ export interface HTMLExporterOptions {
   headingOffset?: number;
   /** Veröffentlichte Seiten: HTML-Blöcke laden von dieser URL statt `srcdoc`. */
   htmlBlockURL?: (id: string) => string;
+  /**
+   * BSD-236: Embeds als Rahmen (`"frame"`, mit `sandbox`) oder als Link-Karte (`"link"`). Ohne: Rahmen wie bisher
+   * (Datei-Export). Veröffentlichte Seiten zeigen fremde Rahmen nur nach Opt-in.
+   */
+  embeds?: "frame" | "link";
 }
 
 export const escapeText = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -40,12 +45,14 @@ export class HTMLExporter {
   readonly assetLink: (a: AssetRef) => string;
   readonly headingOffset: number;
   readonly htmlBlockURL: ((id: string) => string) | undefined;
+  readonly embeds: "frame" | "link" | undefined;
   private engine: QueryEngine | undefined;
 
   constructor(readonly store: WorkspaceStore, opts: HTMLExporterOptions = {}) {
     this.pageLink = opts.pageLink ?? (() => undefined);
     this.assetLink = opts.assetLink ?? ((a) => "assets/" + a.name);
     this.headingOffset = opts.headingOffset ?? 1;
+    this.embeds = opts.embeds;
     this.htmlBlockURL = opts.htmlBlockURL;
   }
 
@@ -143,8 +150,14 @@ export class HTMLExporter {
         const src = p.url ?? (p.asset ? this.assetLink(p.asset) : "");
         return `<figure><${b.type} controls src="${escapeAttribute(sanitizeURL(src))}"></${b.type}>${this.caption(p, true)}</figure>\n`;
       }
-      case "embed":
-        return `<figure><iframe class="embed" src="${escapeAttribute(sanitizeURL(p.url ?? ""))}" loading="lazy"></iframe>${this.caption(p, true)}</figure>\n`;
+      case "embed": {
+        const url = sanitizeURL(p.url ?? "");
+        if (this.embeds === "link") {
+          return `<a class="bookmark embed-link" href="${escapeAttribute(url)}" rel="noopener noreferrer"><span class="bookmark-title">${escapeText(p.caption !== undefined ? plain(runsOf(p.caption)) || url : url)}</span><span class="bookmark-url">${escapeText(url)}</span></a>\n`;
+        }
+        const sandbox = this.embeds === "frame" ? ` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" referrerpolicy="no-referrer"` : "";
+        return `<figure><iframe class="embed" src="${escapeAttribute(url)}" loading="lazy"${sandbox}></iframe>${this.caption(p, true)}</figure>\n`;
+      }
       case "file": case "pdf": case "bookmark": {
         const url = p.url ?? (p.asset ? this.assetLink(p.asset) : "");
         const label = p.bookmark?.title ?? (p.caption !== undefined ? plain(runsOf(p.caption)) : undefined) ?? p.asset?.name ?? url;
