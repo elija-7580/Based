@@ -139,9 +139,26 @@ Nachricht (Provider-Option `token`), unbekannte Seiten werden abgewiesen. Speich
 (`YDocStore.prepare`, Protokoll `ydocLoad`/`ydocSave`); fehlt er oder ist er kaputt, baut die `DocSession` ihn aus
 den Records neu – die Records bleiben die Quelle.
 
-Offen (Teil 3): Geräte mit `/collab` schreiben ihre Text-Records nur lokal (kein Push, der Server materialisiert),
-sonst kann ein Record-Push, der vor dem Y-Update desselben Geräts ankommt, als Diff noch einmal eingefügt werden;
-Web-Client: Provider an `/collab` mit Token aus dem verschlüsselten Speicher, Abstammungs-Regel oben. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
+**Web-Client an `/collab` (BSD-220 Teil 3):** Einstellung „Real-time text (beta)“ unter Sync & server (Standard aus,
+gespeichert neben URL und Token; das Token bleibt verschlüsselt und geht nur in die Hocuspocus-Auth-Nachricht).
+Gilt für Seiten, die danach geöffnet werden. Regeln (`packages/editor/src/yjs/collab.ts`, `CollabBinder`):
+
+- **Abstammung:** Ein gespeicherter Y-Stand mit `based.origin = "server"` wird sofort benutzt (auch offline) und
+  verbunden. Sonst startet das Gerät mit leerem Y.Doc, wartet auf den ersten Abgleich (2,5 s; offline gar nicht)
+  und fällt ohne Abgleich (offline, Seite dem Server noch unbekannt) auf Records + Sync v2 zurück.
+- **Y.Doc ist die Quelle** (`DocSession` mit `collab: true`): Records werden aus dem Y.Doc abgeleitet, nie
+  umgekehrt; Records, die per Sync ankommen, gehen nicht ins Y.Doc (der Server bringt sie über Yjs), stattdessen
+  werden die lokalen Records wieder aus dem Y.Doc abgeleitet. Lokale Änderungen anderer Teile (Shell, Agent) werden
+  erst nach diesem Ableiten per Diff übernommen.
+- **Abgeleitete Records werden nicht gepusht** (`ChangeOrigin` „derived“, Spalte `changes.local = 2`): der Server
+  schreibt dieselben Records aus dem Y.Doc. Ein Voll-Pull löscht sie nicht. Ist Echtzeit-Text aus (oder kein
+  Server), werden noch nicht bestätigte abgeleitete Änderungen beim Start des Syncs doch gepusht
+  (`promoteDerived`). Swift liest `local != 0` als lokal und pusht sie (altes LWW-Verhalten), die Datei bleibt
+  austauschbar.
+
+Bekannte Grenzen: Eine neue Seite bekommt Echtzeit-Text erst beim nächsten Öffnen (der Server kennt sie vorher
+nicht). Lokale, noch nicht gepushte Text-Änderungen von vor dem Einschalten können beim ersten Öffnen mit
+Echtzeit-Text vom Server-Stand überschrieben werden – vor dem Einschalten einmal synchronisieren. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
 
 ## Sandbox pro Lauf (BSD-161)
 

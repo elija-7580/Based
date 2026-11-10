@@ -24,8 +24,16 @@ export interface ChangeEntry {
   deleted: boolean;
   /** Auf diesem Gerät entstanden (wird gepusht) oder per Sync angekommen (nie zurückgepusht). */
   local: boolean;
+  /**
+   * BSD-220: lokal aus einem /collab-Y.Doc abgeleitet (Spalte `local = 2`): nicht pushen, bei einem Voll-Pull nicht
+   * löschen. Swift liest `local != 0` und pusht sie (altes Verhalten, LWW) – die Datei bleibt austauschbar.
+   */
+  derived: boolean;
   deletedStamp: Stamp | undefined;
 }
+
+/** Wert der Spalte `changes.local`: 0 angekommen, 1 lokal (pushen), 2 abgeleitet (BSD-220, nicht pushen). */
+export const LOCAL_DERIVED = 2;
 
 export interface UndecodableRow {
   key: RecordKeyString;
@@ -91,7 +99,8 @@ export class SqlitePersistence implements Persistence {
     });
   }
 
-  write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>, local: boolean): void {
+  write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>, local: boolean, derived = false): void {
+    const flag = derived ? LOCAL_DERIVED : local ? 1 : 0;
     this.guard("write", () => {
       this.db.exec("BEGIN IMMEDIATE");
       try {
@@ -102,7 +111,7 @@ export class SqlitePersistence implements Persistence {
             kind,
             id,
             deleted ? 1 : 0,
-            local ? 1 : 0,
+            flag,
             deleted && stamp ? encodeStamp(stamp) : null,
           ]);
         };
@@ -161,10 +170,44 @@ export class SqlitePersistence implements Persistence {
           seq: asInt(r.seq),
           key: keyOf(asText(r.kind) as RecordKind, asText(r.id) ?? ""),
           deleted: asInt(r.deleted) !== 0,
-          local: asInt(r.local) !== 0,
+          local: asInt(r.local) !== 0 && asInt(r.local) !== LOCAL_DERIVED,
+          derived: asInt(r.local) === LOCAL_DERIVED,
           deletedStamp: decodeStamp(asText(r.deleted_stamp)),
         })),
     );
+  }
+
+  /** BSD-220: abgeleitete Änderungen, die der Server noch nicht bestätigt hat (sein Record ersetzt den Eintrag). */
+  derivedKeys(): RecordKeyString[] {
+    return this.guard("read change log", () =>
+      this.db.all("SELECT kind, id FROM changes WHERE local = ?", [LOCAL_DERIVED]).map((r) => keyOf(asText(r.kind) as RecordKind, asText(r.id) ?? "")));
+  }
+
+  /**
+   * BSD-220: abgeleitete Änderungen doch pushen (Echtzeit-Text ausgeschaltet oder ohne Server): als neue lokale
+   * Einträge hinter den Push-Cursor. Gibt die Anzahl zurück.
+   */
+  promoteDerived(): number {
+    return this.guard("write", () => {
+      const rows = this.db.all("SELECT kind, id, deleted, deleted_stamp FROM changes WHERE local = ? ORDER BY seq", [LOCAL_DERIVED]);
+      if (rows.length === 0) return 0;
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        for (const r of rows) {
+          this.db.run("DELETE FROM changes WHERE kind = ? AND id = ?", [r.kind ?? null, r.id ?? null]);
+          this.db.run("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, ?, 1, ?)", [r.kind ?? null, r.id ?? null, r.deleted ?? 0, r.deleted_stamp ?? null]);
+        }
+        this.db.exec("COMMIT");
+      } catch (e) {
+        try {
+          this.db.exec("ROLLBACK");
+        } catch {
+          // nichts offen
+        }
+        throw e;
+      }
+      return rows.length;
+    });
   }
 
   maxSeq(): number {

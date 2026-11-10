@@ -95,4 +95,26 @@ describe("transact mit keepStamps", () => {
     expect(writes).toEqual([true]);
     expect(s.canUndo).toBe(false);
   });
+
+  it("BSD-220 derived: nicht lokal (kein Push), nicht rückgängig, Herkunft „derived“; mit keepStamps ungestempelt", () => {
+    const writes: [boolean, boolean][] = [];
+    class Spy extends MemoryPersistence {
+      override write(u: WireRecord[], d: RecordKeyString[], t: Map<RecordKeyString, Stamp>, local?: boolean, derived?: boolean) {
+        writes.push([local === true, derived === true]);
+        super.write(u, d, t);
+      }
+    }
+    const s = new WorkspaceStore({ persistence: new Spy(), node: "n" });
+    const origins: string[] = [];
+    s.observe((c) => origins.push(c.origin));
+    s.transact("Edit", (tx) => tx.put(block("a", "w", "a0")), { derived: true });
+    expect(s.blocks.get("a")?.stamp?.node).toBe("n"); // frisch gestempelt
+    const r = block("b", "w", "a1");
+    (r.data as { stamp: unknown }).stamp = { millis: 42, counter: 7, node: "x" };
+    s.transact("Edit", (tx) => tx.put(r), { derived: true, keepStamps: true });
+    expect(s.blocks.get("b")?.stamp).toEqual({ millis: 42, counter: 7, node: "x" });
+    expect(writes).toEqual([[false, true], [false, true]]);
+    expect(origins).toEqual(["derived", "derived"]);
+    expect(s.canUndo).toBe(false);
+  });
 });

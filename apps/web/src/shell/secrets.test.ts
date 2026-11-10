@@ -76,6 +76,11 @@ describe("Token-Speicher", () => {
     expect(await syncConfig.load()).toEqual({ url: "https://s", token: "abc" });
     syncConfig.set(undefined);
     expect(await syncConfig.load()).toBeUndefined();
+    // BSD-220: Echtzeit-Text bleibt erhalten (Klartext-Feld, Token weiter verschlüsselt)
+    syncConfig.set({ url: "https://s", token: "abc", collab: true });
+    syncConfig._use(new SecretStore(kv));
+    expect(await syncConfig.load()).toEqual({ url: "https://s", token: "abc", collab: true });
+    syncConfig.set(undefined);
   });
 
   it("syncConfig.flush: danach liegt der Wert im Speicher, ein frischer Leser findet ihn", async () => {

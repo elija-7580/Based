@@ -26,13 +26,18 @@ const swiftNow = () => (Date.now() - 978_307_200_000) / 1000;
  */
 export const afterRemoteMerge: ((store: WorkspaceStore, records: readonly WireRecord[]) => void)[] = [];
 
-export type ChangeOrigin = "local" | "undo" | "redo" | "remote" | "load" | "import";
+/**
+ * `derived`: lokal geschrieben, aber aus einem Y.Doc abgeleitet, das über `/collab` abgeglichen wird (BSD-220). Wird
+ * gespeichert und angezeigt, aber nicht gepusht – der Server schreibt dieselben Records aus dem Y.Doc selbst.
+ */
+export type ChangeOrigin = "local" | "undo" | "redo" | "remote" | "load" | "import" | "derived";
 const isLocalWrite = (o: ChangeOrigin) => o === "local" || o === "undo" || o === "redo" || o === "import";
 
 /** Speicher unter dem Store (SQLite auf dem Gerät, Speicher in Tests). */
 export interface Persistence {
   loadAll(): WireRecord[];
-  write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>, local: boolean): void;
+  /** `derived` (BSD-220): lokal, aber nicht pushen (siehe ChangeOrigin); `local` ist dann `false`. */
+  write(upserts: WireRecord[], deletions: RecordKeyString[], tombstones: Map<RecordKeyString, Stamp>, local: boolean, derived?: boolean): void;
   /** Stempel der Löschung, falls der Record hier gelöscht wurde (und die Löschung einen Stempel hatte). */
   tombstone(key: RecordKeyString): Stamp | undefined;
   /** Schreibt eine Probe; wirft, wenn die Datenbank nicht beschreibbar ist (für `retryWrites`). */
@@ -342,11 +347,13 @@ export class WorkspaceStore {
    * Import) und werden unverändert übernommen – trotzdem als lokale Änderung gespeichert und gesynct. Ohne würde der
    * Worker neu stempeln, und das Echo überschriebe neuere Eingaben in der Replik.
    */
-  transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean; keepStamps?: boolean } = {}): T {
+  transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean; keepStamps?: boolean; derived?: boolean } = {}): T {
     const tx = new Tx(this);
     try {
       const result = body(tx);
-      this.commit(tx, name, opts.coalesce, opts.keepStamps ? "import" : "local", opts.keepStamps ? false : opts.undoable ?? true);
+      // BSD-220 `derived`: aus einem /collab-Y.Doc abgeleitet (nie rückgängig, nicht pushen); gestempelt wie sonst auch.
+      const origin: ChangeOrigin = opts.derived ? "derived" : opts.keepStamps ? "import" : "local";
+      this.commit(tx, name, opts.coalesce, origin, opts.keepStamps || opts.derived ? false : opts.undoable ?? true, !opts.keepStamps);
       return result;
     } catch (e) {
       this.rollback(tx);
@@ -378,7 +385,7 @@ export class WorkspaceStore {
   }
 
   /** `false`: nicht gespeichert (schreibgeschützt oder Schreiben gescheitert); die Änderungen sind im Speicher zurückgedreht. */
-  private commit(tx: Tx, name: string, coalesce: string | undefined, origin: ChangeOrigin, undoable: boolean): boolean {
+  private commit(tx: Tx, name: string, coalesce: string | undefined, origin: ChangeOrigin, undoable: boolean, stamp?: boolean): boolean {
     if (this.persistence && this.writeFailure && tx.order.length > 0) {
       this.rollback(tx);
       this.writeFailure.rejected += 1;
@@ -390,7 +397,7 @@ export class WorkspaceStore {
     const before = new Map<RecordKeyString, Snapshot>();
     const after = new Map<RecordKeyString, Snapshot>();
     const now = this.now();
-    const restamp = origin !== "remote" && origin !== "load" && origin !== "import";
+    const restamp = stamp ?? (origin !== "remote" && origin !== "load" && origin !== "import");
     for (const key of tx.order) {
       const prev = tx.before.get(key);
       let cur = this.record(key);
@@ -417,7 +424,7 @@ export class WorkspaceStore {
     }
     if (upserts.length === 0 && deletions.length === 0) return true;
     try {
-      this.persistence?.write(upserts, deletions, tombstones, isLocalWrite(origin));
+      this.persistence?.write(upserts, deletions, tombstones, isLocalWrite(origin), origin === "derived");
     } catch (e) {
       // Speicher und Platte bleiben gleich: Transaktion im Speicher zurückdrehen, ab jetzt schreibgeschützt.
       this.rollback(tx);

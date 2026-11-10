@@ -182,7 +182,7 @@ export class StoreHost {
         case "includeSynced": reply(this.includeSynced(msg.pageID, msg.source)); break;
         case "includeDatabase": reply(this.includeDatabase(msg.pageID, msg.databaseID)); break;
         case "listDatabases": reply(this.listDatabases(msg.query)); break;
-        case "applyLocal": this.applyLocal(msg.upserts, msg.deletions); reply(true); break;
+        case "applyLocal": this.applyLocal(msg.upserts, msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
@@ -726,13 +726,14 @@ export class StoreHost {
   }
 
   /** Änderungen aus einer Replik: als lokale Transaktion speichern (neu gestempelt, wird gepusht). */
-  applyLocal(upserts: WireRecord[], deletions: RecordKeyString[]) {
+  /** `derived` (BSD-220): Text aus einem /collab-Y.Doc – speichern, aber nicht pushen (der Server materialisiert ihn). */
+  applyLocal(upserts: WireRecord[], deletions: RecordKeyString[], derived = false) {
     const store = this.store;
     for (const r of upserts) if (r.data.stamp) store.clock.observe(r.data.stamp as never);
     store.transact("Edit", (tx) => {
       for (const r of upserts) tx.put(r);
       for (const k of deletions) tx.remove(k);
-    }, { undoable: false, keepStamps: true });
+    }, derived ? { undoable: false, keepStamps: true, derived: true } : { undoable: false, keepStamps: true });
     if (store.isReadOnly) throw new Error("read-only: " + (store.writeFailure?.message ?? ""));
   }
 
@@ -810,6 +811,14 @@ export class StoreHost {
     this.sync = undefined;
     const ws = this.ws;
     if (!ws) return;
+    // BSD-220: ohne Echtzeit-Text gehen abgeleitete Text-Änderungen (nur über /collab gemeldet) doch per Push raus.
+    if (!cfg?.url || !cfg.collab) {
+      try {
+        ws.persistence.promoteDerived();
+      } catch {
+        // schreibgeschützt: der Status meldet es
+      }
+    }
     this.assets?.configure(cfg?.url ? { baseURL: cfg.url, token: cfg.token } : undefined);
     if (!cfg?.url) {
       this.syncState = ws.persistent ? "local" : "memory";

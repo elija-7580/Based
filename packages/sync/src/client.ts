@@ -248,7 +248,8 @@ export class SyncClient {
     }
     if (fullPull) {
       // Lokale Änderungen, die während dieser Runde entstanden (nach dem Push), hat der Server noch nicht: behalten.
-      const unpushed = new Set<RecordKeyString>();
+      // BSD-220: abgeleitete Änderungen (Echtzeit-Text) kommen über /collab zum Server, nicht über Push: auch behalten.
+      const unpushed = new Set<RecordKeyString>(this.persistence.derivedKeys());
       for (let cur = pushed, batch = this.persistence.changes(cur, 5000); batch.length > 0; batch = this.persistence.changes(cur, 5000)) {
         for (const e of batch) if (e.local) unpushed.add(e.key);
         cur = batch[batch.length - 1]!.seq;
@@ -285,7 +286,7 @@ export class SyncClient {
     const interval = opts.intervalMs ?? 20_000;
     const pushDelay = opts.pushDelayMs ?? 1_500;
     this.unobserve = this.store.observe((change) => {
-      if (change.origin === "remote" || change.origin === "load") return;
+      if (change.origin === "remote" || change.origin === "load" || change.origin === "derived") return;
       clearTimeout(this.pushTimer);
       this.pushTimer = setTimeout(() => void this.syncNow(), pushDelay);
     });

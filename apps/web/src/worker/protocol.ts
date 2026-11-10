@@ -12,6 +12,8 @@ import type { AgentSnapshot, ChatInfo } from "@based/brain";
 export interface SyncConfig {
   url: string;
   token: string;
+  /** BSD-220: Echtzeit-Text (Beta) – Seitentext über `/collab` (Yjs) abgleichen. Standard aus. */
+  collab?: boolean;
 }
 
 /** Zustand des Speichers und des Syncs, wie ihn die Seitenleiste zeigt. */
@@ -151,7 +153,7 @@ export type Request =
   | { type: "openPage"; pageID: string }
   | { type: "closePage"; pageID: string }
   /** Änderungen aus einer Seiten-Replik (Editor) übernehmen. */
-  | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] }
+  | { type: "applyLocal"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[]; derived?: boolean }
   | { type: "setSync"; sync?: SyncConfig }
   | { type: "syncNow" }
   /** Im Import-Worker vorbereiteten Import schreiben (Antwort: ImportSummary). */
