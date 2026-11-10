@@ -103,7 +103,7 @@ describe("Gefilterter Sync", () => {
     const edit = bearer((await createLink(app.url, shared, "access", "edit")).body.secret!);
     const view = bearer((await createLink(app.url, shared, "access", "view")).body.secret!);
     const store = app.sync.store;
-    const stampLater = (b: { stamp: { millis: number; counter: number; node: string } }) => ({ ...b.stamp, millis: b.stamp.millis + 1000, node: "guest" });
+    const stampLater = (b: { stamp?: { millis: number; counter: number; node: string } | undefined }) => ({ ...b.stamp!, millis: b.stamp!.millis + 1000, node: "guest" });
     const para = store.children("b:" + sub)[0]!;
     const privPara = store.children("b:" + priv)[0]!;
     const edited = { ...structuredClone(store.blocks.get(para)!), text: "Changed by guest" };
@@ -122,7 +122,7 @@ describe("Gefilterter Sync", () => {
     expect(newer).toContain(sub); // zurückrollen
     expect(newer).not.toContain(privPara); // nichts Privates verraten
 
-    const again = { ...edited, text: "viewer edit", stamp: { ...edited.stamp, millis: edited.stamp.millis + 1000 } };
+    const again = { ...edited, text: "viewer edit", stamp: { ...edited.stamp, millis: edited.stamp.millis + 2000 } };
     await post(`${app.url}/sync/v2/push`, { records: [{ kind: "block", data: again }], deletions: [{ kind: "block", id: para }] }, view);
     expect(store.blocks.get(para)?.text).toBe("Changed by guest");
 
