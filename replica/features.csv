@@ -72,7 +72,7 @@ Turn into (any block type),editor,must,yes,yes,,partial: Blockmenü „Turn into
 Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)"
 Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete"
 Drag handle to reorder blocks,editor,must,yes,yes,,yes
-Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns",no
+Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
 Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; dazu Maus/Shift)"
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
 Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)"
