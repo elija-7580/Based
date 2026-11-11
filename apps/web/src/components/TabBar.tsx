@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore, type DragEvent } from "react";
 import { Icon } from "../icons.js";
 import type { History, Route } from "../shell/router.js";
+import { keyLabel } from "../shell/keyHints.js";
 
 const DRAG_TYPE = "application/x-based-tab";
 
@@ -50,7 +51,9 @@ export function TabBar({ history, titles }: { history: History; titles: Readonly
 
   return (
     <div className="tabbar" role="tablist" aria-label="Tabs">
-      {tabs.map((t) => {
+      {tabs.map((t, i) => {
+        // BSD-270: ⌘1–⌘8 für die ersten Tabs, ⌘9 immer für den letzten (Plakette nur beim Halten von ⌘)
+        const digit = i === tabs.length - 1 ? 9 : i < 8 ? i + 1 : undefined;
         const title = routeTitle(t.route, titles);
         const selected = t.id === active;
         const mark = drop?.id === t.id ? (drop.after ? " drop-after" : " drop-before") : "";
@@ -93,6 +96,7 @@ export function TabBar({ history, titles }: { history: History; titles: Readonly
           >
             <Icon name={t.route.name === "page" ? "page" : t.route.name === "trash" ? "trash" : t.route.name === "settings" ? "settings" : t.route.name === "graph" ? "graph" : "home"} size={14} />
             <span className="tab-title">{title}</span>
+            {digit ? <span className="key-badge" aria-hidden="true">{keyLabel(String(digit))}</span> : null}
             <button
               type="button"
               className="tab-close"

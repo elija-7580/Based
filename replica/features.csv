@@ -114,7 +114,7 @@ Property: status,properties,must,yes,yes,,yes
 Property: date (range / time),properties,must,yes,yes,,yes
 Property: checkbox,properties,must,yes,yes,,yes
 Property: url / email / phone,properties,must,yes,yes,,yes
-Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),partial: nur „Me“ oder frei getippte Kennung; keine Nutzerliste
+Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),"yes (BSD-216): „Me“, Auswahl aus schon verwendeten Namen der Datenbank und den People des Agent Brain, neue Namen per Eingabe"
 Property: files & media,properties,should,yes,yes,,"yes (BSD-208: Links und Upload in den Asset-Speicher, Wert wie Swift mit asset; Öffnen als Blob)"
 Property: created / edited time and by,properties,must,yes,yes,,yes
 Property: unique ID,properties,could,yes,yes,,yes
@@ -182,8 +182,8 @@ Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, lo
 Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; blocks edited or added in Based are kept via import fingerprints (BSD-32); removed untouched content → trash; original timestamps and authors kept,partial: für Datei-Exporte (HTML/Markdown) über stabile Import-IDs; Re-Import über die Notion-API fehlt
 Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression",no
 Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store,partial: Anhänge aus Notion-Export-ZIP übernommen (Pass 30); API-Import fehlt
-Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import,"partial: Widgets hinzufügen, Breite, entfernen, Anzeige aus anderen Datenbanken; Verschieben, Zeilenhöhe und Quelle wählen fehlen in der Bedienung"
-Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,partial: Number-Chart und Caption ja; Farbschema und Höhe fehlen
+Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import,"yes (BSD-216): Widgets hinzufügen (Quelle: diese oder andere Datenbank), verschieben (links/rechts, Zeile darüber/darunter), Breite, Zeilenhöhe, entfernen"
+Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,"yes (BSD-216): Number-Chart, Caption, Farbschema (Auto, Colorful, eine Farbe) und Höhe (Small–Extra large, wie Swift)"
 Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding"
 Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes
 Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"yes: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings als Icon-Zeile neben dem Sync-Status, oben nur Search/Home/Chat, Einträge per Rechtsklick anpinnbar/ausblendbar, Graph und Meetings als Library-Reiter, Aufnahme-Pille oben, ⌘K-Befehle (BSD-281), Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden, Hover-Peek am linken Rand (BSD-203)"

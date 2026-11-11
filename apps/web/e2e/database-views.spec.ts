@@ -487,6 +487,92 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
+test("BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "createDatabase", title: "Other source" }));
+  await seedDatabase(page, {
+    title: "Board room",
+    properties: [{ id: "title", name: "Name", type: "title" }, status],
+    rows: [{ title: "A", values: { st: { status: { _0: "todo" } } } }],
+    views: [{ id: "vd", name: "Dashboard", type: "dashboard", extra: { dashboard: { rows: [] } } }],
+  });
+  const dash = page.getByTestId("dashboard");
+  const add = async (type: string, source?: string) => {
+    await dash.getByRole("button", { name: "Add widget" }).click();
+    if (source) await page.getByTestId("widget-source").filter({ hasText: source }).click();
+    await page.getByTestId(`add-widget-${type}`).click();
+  };
+  await add("table");
+  await add("list", "Other source");
+  const rows = dash.getByTestId("dashboard-row");
+  await expect(rows).toHaveCount(2);
+  await expect(dash.getByTestId("dashboard-widget")).toHaveCount(2);
+  // zweites Widget (aus „Other source“) in die Zeile darüber → eine Zeile mit zwei Widgets
+  await dash.getByTestId("widget-actions").nth(1).click();
+  await page.getByTestId("widget-move-up").click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first().getByTestId("dashboard-widget")).toHaveCount(2);
+  // Breite und Zeilenhöhe
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-width-4").click();
+  await expect(dash.locator(".dbui-dash-cell").first()).toHaveAttribute("data-width", "4");
+  const body = dash.locator(".dbui-widget-body").first();
+  const before = (await body.boundingBox())!.height;
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("row-height-large").click();
+  await expect.poll(async () => (await body.boundingBox())!.height).toBeGreaterThan(before + 100);
+  // links/rechts tauschen, dann entfernen
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-move-right").click();
+  await expect(dash.locator(".dbui-dash-cell").nth(1)).toHaveAttribute("data-width", "4");
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-remove").click();
+  await expect(dash.getByTestId("dashboard-widget")).toHaveCount(1);
+});
+
+test("BSD-216 Teil 2: Diagramm – Farben und Höhe", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const st = (o: string) => ({ st: { status: { _0: o } } });
+  await seedDatabase(page, {
+    title: "Charts",
+    properties: [{ id: "title", name: "Name", type: "title" }, status],
+    rows: [{ title: "A", values: st("todo") }, { title: "B", values: st("doing") }, { title: "C", values: st("doing") }],
+    views: [{ id: "vc", name: "Chart", type: "chart", extra: { chart: { kind: "bar", xPropertyID: "st", aggregate: "count", dateBucket: "month", showLegend: true, showValues: true, sortByValue: false } } }],
+  });
+  const chart = page.getByTestId("chart");
+  await expect(chart.locator("rect.mark").first()).toBeVisible();
+  const svgH = async () => Number(await chart.locator("svg").first().getAttribute("height"));
+  const before = await svgH();
+  await page.getByRole("button", { name: "View settings" }).click();
+  await page.getByLabel("Chart colors").selectOption("green");
+  await page.getByLabel("Chart height").selectOption("large");
+  await expect(chart).toHaveAttribute("data-theme", "green");
+  await expect(chart.locator("rect.mark.tone-green")).not.toHaveCount(0);
+  await expect.poll(svgH).toBeGreaterThan(before);
+  await page.getByLabel("Chart colors").selectOption("colorful");
+  await expect(chart.locator("rect.mark.tone-blue")).toHaveCount(1);
+});
+
+test("BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen)", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const owner = { id: "ow", name: "Owner", type: "person" };
+  await seedDatabase(page, {
+    title: "People",
+    properties: [{ id: "title", name: "Name", type: "title" }, owner],
+    rows: [{ id: "r-a", title: "Alpha", values: { ow: { person: { _0: ["Anna Berg"] } } } }, { id: "r-b", title: "Beta" }],
+    views: [{ id: "vt", name: "Table", type: "table" }],
+  });
+  await page.locator('[data-cell="r-b:1"]').click();
+  const pick = page.getByTestId("person-suggestion").filter({ hasText: "Anna Berg" });
+  await expect(pick).toBeVisible();
+  await pick.click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator('[data-cell="r-b:1"]')).toContainText("Anna Berg");
+});
+
 test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

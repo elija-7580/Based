@@ -18,6 +18,7 @@ import { cleanNavPrefs, FOOTER_STYLE, hideNav, NAV, navLayout, navPlace, pinNav,
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import { meetingHost } from "../editorSlot.js";
+import { keyLabel } from "../shell/keyHints.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 
@@ -339,15 +340,15 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   });
   type NavEntry = { id: NavID; name: string; icon: IconName; cut?: IconName; active: boolean; key?: string; badge?: string; go: () => void };
   const entries: Record<NavID, NavEntry> = {
-    search: { id: "search", name: "Search", icon: "search", active: false, key: "⌘K", go: onQuickFind },
+    search: { id: "search", name: "Search", icon: "search", active: false, key: keyLabel("k"), go: onQuickFind },
     home: { id: "home", name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home", go: () => onNavigate({ name: "home" }) },
-    chat: { id: "chat", name: "Chat", icon: "chat", active: route.name === "chat", key: "⌘J", go: () => onNavigate({ name: "chat" }) },
+    chat: { id: "chat", name: "Chat", icon: "chat", active: route.name === "chat", key: keyLabel("j"), go: () => onNavigate({ name: "chat" }) },
     tasks: { id: "tasks", name: "Tasks", icon: "agent", active: route.name === "tasks", go: () => onNavigate({ name: "tasks" }) },
     coding: { id: "coding", name: "Coding", icon: "terminal", active: route.name === "coding", go: () => onNavigate({ name: "coding" }) },
     graph: { id: "graph", name: "Graph", icon: "graph", active: route.name === "graph", go: () => onNavigate({ name: "graph" }) },
     library: { id: "library", name: "Library", icon: "library", active: route.name === "library", go: () => onNavigate({ name: "library" }) },
     trash: { id: "trash", name: "Trash", icon: "trash", active: route.name === "trash", ...(trashCount ? { badge: String(trashCount) } : {}), go: () => onNavigate({ name: "trash" }) },
-    settings: { id: "settings", name: "Settings", icon: "settings", active: route.name === "settings", key: "⌘,", go: () => onNavigate({ name: "settings" }) },
+    settings: { id: "settings", name: "Settings", icon: "settings", active: route.name === "settings", key: keyLabel(","), go: () => onNavigate({ name: "settings" }) },
   };
   const layout = navLayout(navPrefs, { advanced });
   const onNavMenu = (id: NavID) => (e: React.MouseEvent) => {
@@ -366,6 +367,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
       aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)}>
       <Icon name={n.icon} size={18} filled={n.active && FILLABLE.has(n.icon)} />
       {n.badge ? <span className="nav-icon-badge" aria-hidden="true">{n.badge}</span> : null}
+      {n.key ? <span className="key-badge above" aria-hidden="true">{n.key}</span> : null}
     </button>
   );
   const syncStatus = (
