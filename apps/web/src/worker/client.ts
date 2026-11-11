@@ -334,6 +334,11 @@ export class StoreClient {
 
   /** Datei speichern (BSD-78): liegt danach auf diesem Gerät und wird zum Sync-Server hochgeladen. */
   /** BSD-220: gespeicherter Y-Zustand einer Dokument-Wurzel (Editor). */
+  /** BSD-252: hat die Seite lokale Änderungen, die noch nicht beim Server sind? */
+  pendingLocal(rootID: string): Promise<boolean> {
+    return this.request<boolean>({ type: "pendingLocal", rootID });
+  }
+
   async ydocLoad(rootID: string): Promise<Uint8Array | undefined> {
     return (await this.request<Uint8Array | null>({ type: "ydocLoad", rootID })) ?? undefined;
   }

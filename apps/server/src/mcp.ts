@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { getRunText, inboxText, listRunsText } from "./runs.js";
+import { getProjectText, getRunText, inboxText, listProjectsText, listRunsText } from "./runs.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -16,8 +16,9 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
-- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user.
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
+- Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
 
 export const GUIDE: Record<string, string> = {
@@ -87,6 +88,16 @@ export function createMcpServer(pages: Pages): McpServer {
     { description: "What needs the user: runs waiting for an answer or approval", inputSchema: {}, annotations: { readOnlyHint: true } },
     guarded(() => text(inboxText(pages.store))),
   );
+  server.registerTool(
+    "list_projects",
+    { description: "Projects with status, goal and run count; filter by status (active, paused, done)", inputSchema: { status: z.string().optional(), limit }, annotations: { readOnlyHint: true } },
+    guarded(({ status, limit: n }: { status?: string | undefined; limit?: number | undefined }) => text(listProjectsText(pages.store, { status, limit: n }))),
+  );
+  server.registerTool(
+    "get_project",
+    { description: "One project: status, goal, budget, project page and recent runs (by id or name)", inputSchema: { project_id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ project_id }: { project_id: string }) => text(getProjectText(pages.store, project_id))),
+  );
 
   // MARK: Datenbanken (BSD-221)
   server.registerTool(
@@ -124,6 +135,64 @@ export function createMcpServer(pages: Pages): McpServer {
       dbs.updateRow(id, v);
       return text(`Updated row ${id}.`);
     }),
+  );
+
+  // BSD-221 Teil 3b: Schema und Ansichten (Namen und Argumente wie Swift AgentTools).
+  const viewArgs = {
+    name: z.string().optional().describe("View name"),
+    filters: z.array(z.object({ property: z.string(), op: z.string().optional(), value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]).optional() })).optional()
+      .describe("[{property, op, value}] — op: equals, notEquals, contains, notContains, isEmpty, isNotEmpty, greater, less, before, after, onOrBefore, onOrAfter"),
+    filter_mode: z.enum(["and", "or"]).optional(),
+    sorts: z.array(z.object({ property: z.string(), direction: z.string().optional() })).optional().describe("[{property, direction: ascending|descending}]"),
+    group_by: z.string().optional().describe("Property name to group by (empty string clears)"),
+  };
+  server.registerTool(
+    "create_database",
+    {
+      description: "Create a database, inline inside a page or as a full page. Properties: name → type (text, number, select, multiSelect, status, date, person, files, checkbox, url, email, phone, relation, place).",
+      inputSchema: {
+        title: z.string(), parent_id: z.string().optional().describe("Parent page id (omit for workspace root)"),
+        inline: z.boolean().optional().describe("Embed in the parent page (default true when parent_id is given)"),
+        properties: z.record(z.string(), z.string()).optional().describe("name → property type"),
+        view: z.string().optional().describe("First view layout: table, board, list, gallery, calendar, timeline"),
+      },
+    },
+    guarded((a: Parameters<Databases["createDatabase"]>[0]) => text(dbs.createDatabase(a))),
+  );
+  server.registerTool(
+    "update_database",
+    {
+      description: "Rename a database, or add, rename, retype or delete properties, or add select options.",
+      inputSchema: {
+        database_id: z.string(), title: z.string().optional(),
+        add_properties: z.record(z.string(), z.string()).optional().describe("name → type"),
+        rename_properties: z.record(z.string(), z.string()).optional().describe("old name → new name"),
+        change_types: z.record(z.string(), z.string()).optional().describe("name → new type"),
+        delete_properties: z.array(z.string()).optional(),
+        add_options: z.record(z.string(), z.array(z.string())).optional().describe("select/status property name → option names"),
+      },
+    },
+    guarded((a: Parameters<Databases["updateDatabase"]>[0]) => text(dbs.updateDatabase(a))),
+  );
+  server.registerTool(
+    "list_views",
+    { description: "List the views of a database with their layout, filters, sorts and grouping.", inputSchema: { database_id: z.string() } },
+    guarded(({ database_id }: { database_id: string }) => text(dbs.listViews(database_id))),
+  );
+  server.registerTool(
+    "create_view",
+    { description: "Add a view (table, board, list, gallery, calendar, timeline, map, form) to a database, optionally with filters, sorts and grouping.", inputSchema: { database_id: z.string(), type: z.string(), ...viewArgs } },
+    guarded((a: Parameters<Databases["createView"]>[0]) => text(dbs.createView(a))),
+  );
+  server.registerTool(
+    "update_view",
+    { description: "Change a view's name, layout, filters, sorts or grouping. Passing filters/sorts replaces them; pass [] to clear.", inputSchema: { view_id: z.string(), type: z.string().optional(), ...viewArgs } },
+    guarded((a: Parameters<Databases["updateViewTool"]>[0]) => text(dbs.updateViewTool(a))),
+  );
+  server.registerTool(
+    "delete_view",
+    { description: "Delete a view of a database (the last view stays).", inputSchema: { view_id: z.string() } },
+    guarded(({ view_id }: { view_id: string }) => text(dbs.deleteViewTool(view_id))),
   );
 
   server.registerTool(

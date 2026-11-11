@@ -99,6 +99,29 @@ describe("BSD-220 Teil 3: Gerät an /collab", () => {
     expect(texts(store, page)).toEqual(["Hallo Welt"]);
   });
 
+  it("BSD-252: Synced-Block-Original ist eine eigene Wurzel auf /collab; eine Kopie nicht", async () => {
+    const app = await startApp({ collabDebounce: 50 });
+    cleanup.push(() => app.close());
+    const store = app.sync.store;
+    const page = createPage(store, { title: "Mit Synced Block" });
+    const now = store.now();
+    store.transact("t", (tx) => {
+      tx.put({ kind: "block", data: { id: "orig", type: "syncedBlock", parent: "b:" + page, sk: "a0", createdAt: now, updatedAt: now } as Block });
+      tx.put({ kind: "block", data: { id: "inner", type: "text", parent: "b:orig", sk: "a0", text: "Geteilt", createdAt: now, updatedAt: now } as Block });
+      tx.put({ kind: "block", data: { id: "copy", type: "syncedBlock", parent: "b:" + page, sk: "a1", props: { syncSource: "orig" }, createdAt: now, updatedAt: now } as Block });
+    });
+    const records = store.allRecords();
+    const a = device(app.url, records);
+    const h = (await a.binder.open("orig"))!;
+    expect(h).toBeDefined();
+    const s = new DocSession(a.store, "orig", { converter: sharedConverter(), doc: h.doc, collab: true, debounceMs: 0 });
+    cleanup.push(() => { s.close(); h.release(); });
+    expect(sharedConverter().fromFragment(h.doc.getXmlFragment(FRAGMENT)).map((b) => b.id)).toEqual(["inner"]);
+    h.doc.transact(() => firstText(h.doc.getXmlFragment(FRAGMENT))!.insert(7, " live"));
+    await expect.poll(() => texts(store, "orig"), { timeout: 5000 }).toEqual(["Geteilt live"]);
+    expect(await device(app.url, records).binder.open("copy")).toBeUndefined();
+  }, 15_000);
+
   it("ohne Verbindung (aus) oder ohne Abgleich: kein Collab-Dokument, der Editor arbeitet wie bisher", async () => {
     const off = new CollabBinder({ connect: () => undefined, docStore: new MemoryYDocStore() });
     expect(await off.open("P")).toBeUndefined();
@@ -114,6 +137,23 @@ describe("BSD-220 Teil 3: Gerät an /collab", () => {
     let connects = 0;
     const offline = new CollabBinder({ connect: () => { connects++; return undefined; }, docStore: new MemoryYDocStore(), online: () => false });
     expect(await offline.open("P")).toBeUndefined();
+    expect(connects).toBe(0);
+  });
+
+  it("BSD-252: noch nicht gepushte lokale Änderungen ohne Server-Stand → ohne /collab öffnen, gar nicht verbinden", async () => {
+    let connects = 0;
+    const asked: string[] = [];
+    const binder = new CollabBinder({
+      connect: () => { connects++; return { synced: Promise.resolve(), destroy: () => undefined }; },
+      docStore: new MemoryYDocStore(),
+      unsynced: async (root) => { asked.push(root); return true; },
+    });
+    expect(await binder.open("P")).toBeUndefined();
+    expect(connects).toBe(0);
+    expect(asked).toEqual(["P"]);
+    // Fehler bei der Rückfrage zählt wie „noch offen“ (lieber ohne /collab als Text verlieren).
+    const failing = new CollabBinder({ connect: () => { connects++; return undefined; }, docStore: new MemoryYDocStore(), unsynced: async () => { throw new Error("worker gone"); } });
+    expect(await failing.open("P")).toBeUndefined();
     expect(connects).toBe(0);
   });
 
