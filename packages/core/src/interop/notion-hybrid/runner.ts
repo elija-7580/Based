@@ -204,6 +204,12 @@ export class HybridNotionImport {
     s.totals.content = r.pending;
     this.note(r.deviations);
     s.warnings.push(...r.report.warnings);
+    if (this.index) {
+      // Was das ZIP-Verzeichnis nicht hergab, gehört in den Bericht.
+      for (const x of this.index.skipped.slice(0, 50)) s.warnings.push(`Skipped ${x}`);
+      if (this.index.skipped.length > 50) s.warnings.push(`…and ${this.index.skipped.length - 50} more skipped files in the export.`);
+      if (this.index.duplicates > 0) s.warnings.push(`${this.index.duplicates} file${this.index.duplicates === 1 ? "" : "s"} in the export share a Notion ID with another file; the first one was used.`);
+    }
     if (structure.stats.pages + structure.stats.rows + structure.stats.databases === 0 && !delta && s.warnings.length === 0) {
       s.warnings.push("Nothing was imported. Make sure the pages are shared with the integration (••• → Connections).");
     }
