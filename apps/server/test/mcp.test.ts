@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view"].sort(),
     );
   });
 
@@ -246,3 +246,46 @@ describe("MCP: Datenbanken (BSD-221)", () => {
     expect((await call("query_database", { id: "missing" })).isError).toBe(true);
   });
 });
+
+describe("MCP: Schema und Ansichten (BSD-221 Teil 3b, wie Swift NotionParityToolsTests)", () => {
+  it("create_database, update_database, add_row, create_view/list_views/update_view/delete_view", async () => {
+    const { app, call } = await httpClient();
+    const page = textOf(await call("create_page", { title: "Home" }));
+    const pageID = idIn(page) || /([0-9a-f-]{36})/.exec(page)![1]!;
+    const created = await call("create_database", { title: "Tasks", parent_id: pageID, properties: { Status: "select", Due: "date", Points: "number" } });
+    expect(created.isError).toBeFalsy();
+    const dbID = textOf(created).split(" ")[2]!;
+    const db = () => app.sync.store.databases.get(dbID)!;
+    expect(db().properties.find((p) => p.name === "Status")?.type).toBe("select");
+    expect(app.sync.store.blocks.get(db().blockID)?.type).toBe("databaseInline");
+
+    const upd = await call("update_database", { database_id: dbID, add_options: { Status: ["Todo", "Done"] }, rename_properties: { Points: "Estimate" }, delete_properties: ["Due"] });
+    expect(textOf(upd)).toContain("Updated database");
+    expect(db().properties.some((p) => p.name === "Due")).toBe(false);
+    expect(db().properties.some((p) => p.name === "Estimate")).toBe(true);
+    // Tippfehler: nichts wird geändert
+    const bad = await call("update_database", { database_id: dbID, title: "Neu", delete_properties: ["Gibts nicht"] });
+    expect(bad.isError).toBe(true);
+    expect(db().title).toBe("Tasks");
+    expect((await call("update_database", { database_id: dbID, delete_properties: ["Name"] })).isError).toBe(true);
+
+    expect((await call("add_row", { id: dbID, values: { Name: "A", Status: "Todo" } })).isError).toBeFalsy();
+    const view = await call("create_view", { database_id: dbID, type: "board", name: "Open", filters: [{ property: "Status", op: "equals", value: "Todo" }], sorts: [{ property: "Estimate", direction: "descending" }], group_by: "Status" });
+    expect(view.isError).toBeFalsy();
+    const viewID = /Created view (\S+)\./.exec(textOf(view))![1]!;
+    const views = textOf(await call("list_views", { database_id: dbID }));
+    expect(views).toContain("Open");
+    expect(views).toContain("Status equals Todo");
+    expect(views).toContain("Estimate desc");
+    expect(views).toContain("group by Status");
+    await call("update_view", { view_id: viewID, filters: [], name: "All" });
+    const after = textOf(await call("list_views", { database_id: dbID }));
+    expect(after).toContain("- All");
+    expect(after).not.toContain("Status equals");
+    expect((await call("create_view", { database_id: dbID, type: "board", filters: [{ property: "Status", value: "Gibts nicht" }] })).isError).toBe(true);
+    expect(textOf(await call("delete_view", { view_id: viewID }))).toContain("Deleted view");
+    expect(textOf(await call("list_views", { database_id: dbID }))).not.toContain(viewID);
+    expect((await call("create_database", { title: "X", properties: { A: "hologram" } })).isError).toBe(true);
+  });
+});
+
