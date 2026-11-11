@@ -357,18 +357,18 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
     <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
       {actions ? (
         <>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="page" size={18} />Copy link</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="link" size={18} />Copy link</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.openWindow(); }}><Icon name="expand" size={18} />Open in new window</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.find(); }}><Icon name="search" size={18} />Find in page<kbd className="menu-kbd t-meta">⌘F</kbd></button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate(); }}><Icon name="duplicate" size={18} />Duplicate</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move(); }}><Icon name="move" size={18} />Move to…</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button>
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.exportPage(); }}><Icon name="expand" size={18} />Export…</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.exportPage(); }}><Icon name="export" size={18} />Export…</button>
           <div className="menu-sep" role="separator" />
         </>
       ) : null}
       <button type="button" role="menuitem" className="menu-item" onClick={onHistory}><Icon name="restore" size={18} />Version history</button>
-      {outline ? <button type="button" role="menuitem" className="menu-item" onClick={outline.toggle}><Icon name="page" size={18} />{outline.hidden ? "Show outline" : "Hide outline"}</button> : null}
+      {outline ? <button type="button" role="menuitem" className="menu-item" onClick={outline.toggle}><Icon name="outline" size={18} />{outline.hidden ? "Show outline" : "Hide outline"}</button> : null}
       {options ? (
         <>
           {!options.isDatabase ? (
@@ -383,11 +383,11 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
           ) : null}
           {!options.isDatabase ? (
             <button type="button" role="menuitemcheckbox" aria-checked={options.format.smallText} className="menu-item" onClick={() => options.set({ smallText: !options.format.smallText })}>
-              <Icon name="page" size={18} />Small text{options.format.smallText ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+              <Icon name="textSize" size={18} />Small text{options.format.smallText ? <span className="menu-check" aria-hidden="true">✓</span> : null}
             </button>
           ) : null}
           <button type="button" role="menuitemcheckbox" aria-checked={options.format.fullWidth} className="menu-item" onClick={() => options.set({ fullWidth: !options.format.fullWidth })}>
-            <Icon name="page" size={18} />Full width{options.format.fullWidth ? <span className="menu-check" aria-hidden="true">✓</span> : null}
+            <Icon name="width" size={18} />Full width{options.format.fullWidth ? <span className="menu-check" aria-hidden="true">✓</span> : null}
           </button>
           <button type="button" role="menuitemcheckbox" aria-checked={options.format.locked} className="menu-item" onClick={() => { options.set({ locked: !options.format.locked }); onClose(); }}>
             <Icon name="lock" size={18} />Lock page{options.format.locked ? <span className="menu-check" aria-hidden="true">✓</span> : null}

@@ -55,7 +55,20 @@ describe("Zone beim Ziehen", () => {
   it("rechter Rand und links daneben: Spalte; untere Hälfte weiter rechts: hinein; obere Hälfte: davor", () => {
     const x = t([{ id: "a", left: 100, isLast: false }]);
     expect(dropZone(690, 115, x)).toEqual({ kind: "column", side: "right", id: "a" });
-    expect(dropZone(80, 115, x)).toEqual({ kind: "column", side: "left", id: "a" });
+    // links: Spalte erst links vom Griff; direkt neben dem Inhalt (Griff-Streifen) wird umsortiert
+    expect(dropZone(50, 115, x)).toEqual({ kind: "column", side: "left", id: "a" });
+    expect(dropZone(50, 102, x)).toEqual({ kind: "column", side: "left", id: "a" });
+    expect(dropZone(50, 128, x)).toEqual({ kind: "column", side: "left", id: "a" });
+    expect(dropZone(80, 104, x)).toEqual({ kind: "before", id: "a" });
+    expect(dropZone(80, 115, x)).toEqual({ kind: "after", id: "a" });
+    expect(dropZone(80, 126, x)).toEqual({ kind: "after", id: "a" });
+    // rechts: über die ganze Höhe, auch im Rand neben dem Block
+    expect(dropZone(690, 101, x)).toEqual({ kind: "column", side: "right", id: "a" });
+    expect(dropZone(690, 129, x)).toEqual({ kind: "column", side: "right", id: "a" });
+    expect(dropZone(740, 115, x)).toEqual({ kind: "column", side: "right", id: "a" });
+    // in einer Spalte: links direkt neben dem Inhalt, nur in der Mitte der Höhe
+    expect(dropZone(90, 115, { ...x, inColumn: true })).toEqual({ kind: "column", side: "left", id: "a" });
+    expect(dropZone(90, 102, { ...x, inColumn: true })).toEqual({ kind: "before", id: "a" });
     expect(dropZone(160, 126, x)).toEqual({ kind: "nest", id: "a" });
     expect(dropZone(110, 126, x)).toEqual({ kind: "after", id: "a" });
     expect(dropZone(300, 104, x)).toEqual({ kind: "before", id: "a" });

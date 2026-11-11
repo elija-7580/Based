@@ -29,8 +29,10 @@ export function isOutlineHidden(store: WorkspaceStore, pageID: string): boolean 
 
 function scrollParent(el: HTMLElement | null): HTMLElement | Window {
   for (let p = el?.parentElement; p; p = p.parentElement) {
+    // Nicht prüfen, ob gerade etwas überläuft: beim ersten Aufruf ist die Seite oft noch leer, und wer dann aufs
+    // Fenster ausweicht, hört nie wieder ein Scroll-Ereignis (die Markierung blieb auf der ersten Überschrift stehen).
     const o = getComputedStyle(p).overflowY;
-    if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
+    if (o === "auto" || o === "scroll") return p;
   }
   return window;
 }
@@ -69,7 +71,10 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
         const el = headingElement(container, id);
         return el ? el.getBoundingClientRect().top - top : Number.POSITIVE_INFINITY;
       });
-      setActive(Math.max(0, activeHeadingIndex(tops, height * ACTIVE_FRACTION)));
+      const scrolled = scroller instanceof Window ? window.scrollY : scroller.scrollTop;
+      const total = scroller instanceof Window ? document.documentElement.scrollHeight : scroller.scrollHeight;
+      const atEnd = scrolled > 0 && scrolled + height >= total - 2;
+      setActive(Math.max(0, activeHeadingIndex(tops, height * ACTIVE_FRACTION, atEnd)));
     };
     const onScroll = () => {
       if (frame === 0) frame = requestAnimationFrame(measure);
@@ -77,7 +82,11 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
     measure();
     scroller.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    // Inhalt wächst oder schrumpft (Laden, Tippen, Toggle auf/zu): neu messen.
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(onScroll) : undefined;
+    ro?.observe(container);
     return () => {
+      ro?.disconnect();
       scroller.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       if (frame !== 0) cancelAnimationFrame(frame);

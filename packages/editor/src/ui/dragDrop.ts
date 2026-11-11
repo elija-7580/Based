@@ -24,13 +24,26 @@ export type DropZone =
   | { kind: "after"; id: string }
   | { kind: "before"; id: string };
 
+/** Breite der Spalten-Zonen: rechts innen am Rand, links im Rand neben dem Inhalt. */
+export const COLUMN_EDGE = 64;
+export const COLUMN_GUTTER = 48;
+/** Streifen links neben dem Inhalt, in dem der Griff ⋮⋮ sitzt: dort wird umsortiert, nicht gespalten. */
+export const HANDLE_GUTTER = 36;
+/** So weit neben einem Block (links und rechts) zählt der Zeiger noch zu ihm. */
+export const COLUMN_REACH = 120;
+
 /** Einrückung einer Ebene (BlockNote: 24 px bei 16 px Schrift). */
 export const NEST_INDENT = 24;
 
 /**
  * Wohin ein gezogener Block fällt (immer ein Ziel, solange der Zeiger über einem Block steht).
- * - Obere Hälfte: davor; untere Hälfte: dahinter auf gleicher Ebene.
- * - Mitte des Blocks, rechter Rand (letzte 15 %, höchstens 48 px) oder links neben dem Inhalt: neue Spalte.
+ * - Rechter Rand (letzte 12 %, höchstens 64 px, und der Rand rechts daneben): neue Spalte – über die ganze Höhe des
+ *   Blocks, wie in Notion. Vorher ging das nur in einem Streifen in der Mitte (bei einer Zeile rund 13 px hoch).
+ * - Links: neue Spalte erst links vom Griff (mehr als 36 px neben dem Inhalt), ebenfalls über die ganze Höhe. Der
+ *   Streifen direkt neben dem Inhalt gehört dem Griff ⋮⋮: Wer dort gerade nach oben oder unten zieht, sortiert um.
+ *   Vorher sprang die Anzeige dort bei jeder Zeile zwischen „davor“, „Spalte“ und „dahinter“.
+ * - In einer Spalte ist links kaum Platz: dort bleibt die Spalten-Zone direkt neben dem Inhalt, in der Mitte der Höhe.
+ * - Sonst obere Hälfte: davor; untere Hälfte: dahinter auf gleicher Ebene.
  * - Untere Hälfte, Zeiger eine Einrückung weiter rechts als der Block: als erstes Kind hinein.
  * - Untere Hälfte, Zeiger links vom Block: hinter den Vorfahren, an dessen Kante er steht (nur vom letzten Kind aus).
  */
@@ -38,12 +51,15 @@ export function dropZone(x: number, y: number, t: DropTarget): DropZone {
   const { rect } = t;
   const h = rect.bottom - rect.top;
   const w = rect.right - rect.left;
-  const band = Math.min(h / 4, 12);
-  const middle = y >= rect.top + band && y <= rect.bottom - band;
-  const edge = Math.min(48, w * 0.15);
+  const edge = Math.min(COLUMN_EDGE, w * 0.12);
   const flat = t.levels.length <= 1; // Spalten nur oben im Dokument oder direkt in einer Spalte
-  if (middle && flat && x >= rect.right - edge) return { kind: "column", side: "right", id: t.id };
-  if (middle && x < rect.left && x >= rect.left - 48 && flat) return { kind: "column", side: "left", id: t.id };
+  if (flat && x >= rect.right - edge) return { kind: "column", side: "right", id: t.id };
+  if (flat && t.inColumn) {
+    const band = Math.min(h / 4, 12);
+    if (y >= rect.top + band && y <= rect.bottom - band && x < rect.left && x >= rect.left - COLUMN_GUTTER) return { kind: "column", side: "left", id: t.id };
+  } else if (flat && x < rect.left - HANDLE_GUTTER && x >= rect.left - COLUMN_REACH) {
+    return { kind: "column", side: "left", id: t.id };
+  }
   if (y < rect.top + h / 2) return { kind: "before", id: t.id };
   const own = t.levels[0]?.left ?? rect.left;
   if (x >= own + NEST_INDENT && !t.noChildren) return { kind: "nest", id: t.id };
@@ -182,11 +198,17 @@ function nearestBlock(root: HTMLElement, x: number, y: number, ignore: ReadonlyS
     const c = contentOf(o);
     if (!c) continue;
     const r = c.getBoundingClientRect();
-    if (y < r.top || y > r.bottom || x < r.left - 48 || x > r.right + 8) continue;
+    if (y < r.top || y > r.bottom || x < r.left - COLUMN_REACH || x > r.right + COLUMN_REACH) continue;
     const d = x < r.left ? r.left - x : x > r.right ? x - r.right : 0;
     if (d < bestDist || (d === bestDist && best?.contains(o))) { best = o; bestDist = d; }
   }
-  return best;
+  if (best) return best;
+  // Unter dem letzten Block der Seite: dahinter ablegen (sonst gab es dort kein Ziel).
+  const top = [...root.querySelectorAll(":scope > .bn-block-group > .bn-block-outer[data-id]")].filter((o) => !ignore.has(o.getAttribute("data-id") ?? ""));
+  const last = top[top.length - 1];
+  const lr = last ? (contentOf(last) ?? last).getBoundingClientRect() : undefined;
+  if (last && lr && y > lr.bottom && x >= lr.left - COLUMN_REACH && x <= lr.right + COLUMN_REACH && !LAYOUT.has(typeOf(last))) return last;
+  return null;
 }
 
 /** Wo der Hinweis-Strich hinkommt (Bildschirmkoordinaten). */
@@ -270,7 +292,14 @@ export function attachBlockDrop(
   };
   const over = (e: DragEvent) => {
     const view = viewOf();
-    if (!view?.dragging) return reset();
+    // Andere Editoren auf der Seite hören mit: nur aufräumen, wenn dieser hier gerade etwas anzeigt.
+    if (!view?.dragging) { if (current) reset(); return; }
+    // BlockNote schickt für Zeiger neben dem Editor ein zweites, künstliches dragover mit Koordinaten im Editor
+    // (SideMenu, `synthetic`). Das würde die Zone im Rand (Spalte links/rechts) sofort mit „dahinter“ überschreiben.
+    if ((e as DragEvent & { synthetic?: boolean }).synthetic) {
+      if (current) { e.preventDefault(); e.stopPropagation(); }
+      return;
+    }
     autoScroll(e);
     const root = view.dom;
     const ids = dragged(view);
@@ -294,15 +323,14 @@ export function attachBlockDrop(
     if (applyDrop(host, ids, zone)) host.focus?.();
   };
   const end = () => reset();
-  const leave = (e: DragEvent) => { if (!container.contains(e.relatedTarget as Node | null)) reset(); };
-  container.addEventListener("dragover", over, true);
-  container.addEventListener("drop", drop, true);
-  container.addEventListener("dragleave", leave);
+  // Am Dokument, nicht am Editor: die Spalten-Zonen liegen auch im Rand links und rechts neben dem Editor.
+  const doc = container.ownerDocument;
+  doc.addEventListener("dragover", over, true);
+  doc.addEventListener("drop", drop, true);
   globalThis.document?.addEventListener("dragend", end);
   return () => {
-    container.removeEventListener("dragover", over, true);
-    container.removeEventListener("drop", drop, true);
-    container.removeEventListener("dragleave", leave);
+    doc.removeEventListener("dragover", over, true);
+    doc.removeEventListener("drop", drop, true);
     globalThis.document?.removeEventListener("dragend", end);
     reset();
   };

@@ -212,3 +212,25 @@ test("Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Ne
   await expect(columns(page)).toHaveCount(0);
   await expect.poll(() => topOrder(page)).toEqual(["Alpha", "Omega", "Beta", "Gamma", "Delta"]);
 });
+
+// Feedback 11. 11.: Im Streifen des Griffs ⋮⋮ sprang die Anzeige zwischen „davor“, „Spalte“ und „dahinter“; die
+// Spalten-Zonen waren nur in der Mitte der Zeile aktiv. Jetzt: am Griff entlang wird umsortiert, Spalten gibt es links
+// vom Griff und am rechten Rand über die ganze Höhe, und unter dem letzten Block landet man dahinter.
+test("Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter", async ({ page }) => {
+  await setup(page);
+  // gerade nach oben im Griff-Streifen, Mitte der Zeile von Beta (früher: Spalte links)
+  await dragBlock(page, "Omega", "Beta", (b) => ({ x: b.x - 16, y: b.y + b.height / 2 - 2 }));
+  await expect(columns(page)).toHaveCount(0);
+  await expect.poll(() => topOrder(page)).toEqual(["Alpha", "Omega", "Beta", "Gamma", "Delta"]);
+  // unter den letzten Block ins Leere
+  await dragBlock(page, "Alpha", "Delta", (b) => ({ x: b.x + 4, y: b.y + b.height + 60 }));
+  await expect.poll(() => topOrder(page)).toEqual(["Omega", "Beta", "Gamma", "Delta", "Alpha"]);
+  // rechter Rand, ganz oben in der Zeile (früher: davor)
+  await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x + b.width - 10, y: b.y + 3 }));
+  await expect.poll(() => columnTexts(page)).toEqual([["Omega"], ["Alpha"]]);
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(columns(page)).toHaveCount(0);
+  // links vom Griff, unten in der Zeile
+  await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+  await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+});

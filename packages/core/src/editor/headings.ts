@@ -59,10 +59,13 @@ export function withDepth(items: readonly { id: string; level: number; title: st
 /**
  * Aktuelle Position: die letzte Überschrift, deren Oberkante höchstens `offset` unter dem oberen Rand des
  * Sichtbereichs liegt (`tops` = Abstand der Überschriften zum oberen Rand, in Dokumentreihenfolge). Vor der
- * ersten Überschrift gilt die erste.
+ * ersten Überschrift gilt die erste. Ist die Seite bis ans Ende gescrollt (`atEnd`), gilt die letzte: sie kann die
+ * Marke nicht mehr erreichen.
  */
-export function activeHeadingIndex(tops: readonly number[], offset = 0): number {
+export function activeHeadingIndex(tops: readonly number[], offset = 0, atEnd = false): number {
   if (tops.length === 0) return -1;
+  // Am Seitenende erreichen die letzten Überschriften die Marke nie – dann gilt die letzte.
+  if (atEnd) return tops.length - 1;
   let active = 0;
   for (let i = 0; i < tops.length; i++) {
     if (tops[i]! <= offset) active = i;

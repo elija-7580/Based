@@ -80,3 +80,64 @@ test("Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmer
     expect(await text.evaluate((el) => el.scrollWidth <= el.clientWidth), `${state} ungekürzt`).toBe(true);
   }
 });
+
+// Feedback 11. 11. (Mac): Ampel, Knopf „Show sidebar“ und die Pfeile der Kopfzeile lagen übereinander.
+test("Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  for (const shell of ["web", "desktop"] as const) {
+    await page.evaluate((s) => { if (s === "desktop") document.documentElement.dataset.shell = "desktop"; }, shell);
+    if (await page.locator("nav.sidebar").isVisible()) await page.keyboard.press("ControlOrMeta+Backslash");
+    const show = (await page.getByTestId("sidebar-show").boundingBox())!;
+    const panel = (await page.locator(".panel").boundingBox())!;
+    const back = (await page.getByRole("button", { name: /^Back/ }).first().boundingBox())!;
+    expect(show.y + show.height, shell).toBeLessThanOrEqual(panel.y); // ganz über dem Panel
+    expect(back.y, shell).toBeGreaterThanOrEqual(show.y + show.height); // Pfeile liegen darunter, nicht daneben
+    if (shell === "desktop") expect(show.x).toBeGreaterThanOrEqual(76); // rechts neben der Ampel (18 … 70 px)
+    // Hover-Vorschau: unter der Zeile, bündig mit dem Panel, ohne zweiten Seitenleisten-Knopf und ohne Leerraum oben
+    await page.mouse.move(2, 400);
+    const peek = page.locator("nav.sidebar.peek");
+    await expect(peek).toBeVisible();
+    const pk = (await peek.boundingBox())!;
+    expect(Math.round(pk.y), shell).toBe(Math.round(panel.y));
+    expect(pk.y, shell).toBeGreaterThanOrEqual(show.y + show.height);
+    await expect(peek.getByTestId("sidebar-hide")).toBeHidden();
+    const brand = (await peek.locator(".brand").boundingBox())!;
+    expect(brand.y - pk.y, shell).toBeLessThanOrEqual(20);
+    await page.mouse.move(700, 400);
+    await expect(peek).toBeHidden();
+  }
+  // Mit Tabs: die Tab-Leiste beginnt rechts neben Ampel und Knopf.
+  await page.getByTestId("sidebar-show").click();
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click({ modifiers: ["ControlOrMeta"] });
+  await page.keyboard.press("ControlOrMeta+Backslash");
+  const show = (await page.getByTestId("sidebar-show").boundingBox())!;
+  const tab = (await page.getByRole("tab").first().boundingBox())!;
+  expect(tab.x).toBeGreaterThanOrEqual(show.x + show.width);
+});
+
+test("Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.getByRole("button", { name: "New page" }).first().click();
+  const editor = page.locator(".bn-editor[contenteditable='true']").first();
+  await editor.click();
+  // Die Gliederung hängt sich ein, solange die Seite noch nicht scrollt – genau der Fall, in dem sie früher stehen blieb.
+  for (const h of ["One", "Two", "Three", "Four"]) {
+    await page.keyboard.type(`## ${h}`);
+    await page.keyboard.press("Enter");
+    for (let i = 0; i < 16; i++) { await page.keyboard.type("t"); await page.keyboard.press("Enter"); }
+  }
+  const outline = page.getByTestId("page-outline");
+  const current = () => outline.locator("[aria-current]").getAttribute("title");
+  const panel = page.locator(".panel");
+  await panel.evaluate((el) => el.scrollTo(0, 0));
+  await expect.poll(current).toBe("One");
+  await page.locator(".bn-block-outer", { hasText: /^Two$/ }).last().evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await expect.poll(current).toBe("Two");
+  await panel.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  await expect.poll(current).toBe("Four");
+  await panel.evaluate((el) => el.scrollTo(0, 0));
+  await expect.poll(current).toBe("One");
+});

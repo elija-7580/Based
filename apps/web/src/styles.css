@@ -60,6 +60,8 @@ input::placeholder { color: var(--muted); }
 .muted { color: var(--muted); }
 
 /* Shell: Seitenleiste auf canvas, Seite als Panel */
+/* Höhe der Zeile über der Seite (Tab-Leiste bzw. Knopf zum Einblenden) samt Abstand zum Panel */
+:root { --titlebar-row: calc(var(--space-3) + var(--space-6) + var(--space-2)); }
 .shell { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 .sidebar {
   flex: none; width: var(--sidebar-current, var(--sidebar-width)); padding: var(--space-3) var(--space-3); display: flex; flex-direction: column; gap: var(--space-1);
@@ -74,8 +76,14 @@ input::placeholder { color: var(--muted); }
 .sidebar-resize::after { content: ""; width: 1px; height: 100%; background: transparent; transition: background var(--duration-fast) var(--ease-out); }
 .sidebar-resize:hover::after, .sidebar-resize:focus-visible::after { background: var(--line); }
 .sidebar-resize:focus-visible { outline: none; }
-.sidebar-show { position: fixed; top: var(--space-4); left: var(--space-4); z-index: 31; }
-[data-shell="desktop"] .sidebar-show { left: calc(var(--space-8) + var(--space-7)); top: var(--space-3); }
+/* Seitenleiste ausgeblendet: Der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite (auf der Höhe der
+   Tab-Leiste), nicht mehr über der Kopfzeile der Seite – dort lag er auf den Pfeilen und dem Seitentitel. In der
+   Desktop-Hülle steht er in dieser Zeile rechts neben der Ampel, auf einer Linie mit ihr (tauri.conf.json). */
+.sidebar-show { position: fixed; top: var(--space-3); left: var(--space-3); z-index: 31; }
+[data-shell="desktop"] .sidebar-show { left: calc(var(--space-8) + var(--space-5)); }
+[data-sidebar="hidden"] .main:not(:has(> .tabbar)) { padding-top: var(--titlebar-row); }
+[data-sidebar="hidden"] .tabbar { padding-left: calc(var(--space-6) + var(--space-2)); }
+[data-shell="desktop"][data-sidebar="hidden"] .tabbar { padding-left: calc(var(--space-8) + var(--space-7) + var(--space-3)); }
 .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3) var(--space-4); }
 .brand img { width: var(--icon-md); height: var(--icon-md); flex: none; }
 /* Ausblenden-Knopf rechts in der Kopfzeile der Seitenleiste: ruhig, beim Überfahren der Leiste deutlicher */
@@ -476,6 +484,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .titlebar-drag { position: fixed; top: 0; left: 0; z-index: 30; -webkit-user-select: none; user-select: none; }
 .titlebar-drag-sidebar { width: var(--sidebar-current, var(--sidebar-width)); height: var(--space-7); }
 .titlebar-drag-top { right: 0; height: var(--space-3); }
+/* ohne Seitenleiste und ohne Tabs ist die ganze Zeile über der Seite Zugfläche */
+[data-shell="desktop"][data-sidebar="hidden"]:not(:has(.main > .tabbar)) .titlebar-drag-top { height: var(--titlebar-row); }
 
 /* Tabs der Shell (components/TabBar.tsx): ab dem zweiten Tab über der Seite, wie die Navigation auf canvas. */
 .main { flex-direction: column; gap: var(--space-2); }
@@ -526,9 +536,13 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .tree-row.picked { background: var(--selected); }
 .sidebar-peek-zone { position: fixed; left: 0; top: 0; bottom: 0; width: var(--space-3); z-index: 30; }
 .sidebar.peek {
-  position: fixed; left: var(--space-2); top: var(--space-8); bottom: var(--space-4); z-index: 32; height: auto;
-  background: var(--canvas); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); overflow: auto;
+  position: fixed; left: var(--space-3); top: var(--titlebar-row); bottom: var(--space-3); z-index: 32; height: auto;
+  background: var(--canvas); border: 1px solid var(--line); border-radius: var(--radius-xl); box-shadow: var(--shadow-float); overflow: auto;
 }
+/* Die Vorschau liegt unter der Ampel, braucht also deren Platz nicht; der Knopf zum Festhalten steht direkt darüber
+   (Show sidebar) und wäre in der Karte doppelt. */
+[data-shell="desktop"] .sidebar.peek { padding-top: var(--space-3); }
+.sidebar.peek .sidebar-hide { display: none; }
 .sidebar.peek .sidebar-resize { display: none; }
 
 /* BSD-201 Teil 2: Cover und Bild-Icon */

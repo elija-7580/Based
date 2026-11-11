@@ -144,6 +144,9 @@ describe("Gliederung", () => {
     expect(activeHeadingIndex([50, 300, 900], 0)).toBe(0);
     expect(activeHeadingIndex([-400, -10, 600], 0)).toBe(1);
     expect(activeHeadingIndex([-400, 80, 600], 100)).toBe(1);
+    // am Seitenende gilt die letzte Überschrift, auch wenn sie die Marke nicht erreicht
+    expect(activeHeadingIndex([-400, 80, 600], 100, true)).toBe(2);
+    expect(activeHeadingIndex([], 0, true)).toBe(-1);
     expect(activeHeadingIndex([-900, -500, -100], 0)).toBe(2);
   });
 });
