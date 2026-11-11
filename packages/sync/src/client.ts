@@ -247,11 +247,14 @@ export class SyncClient {
       }
       if (skipped > 0) log?.("warning", `Sync: ${skipped} undecodable records not pushed`);
       if (records.length > 0 || deletions.length > 0) {
-        const reply = await this.request<{ newer?: unknown; deleted?: unknown; seq?: number }>("POST", "sync/v2/push", { records, deletions });
+        const reply = await this.request<{ newer?: unknown; deleted?: unknown; seq?: number; rejected?: unknown }>("POST", "sync/v2/push", { records, deletions });
         const newer = decodeRecords(reply.newer, log);
         const deleted = decodeDeletions(reply.deleted, log);
+        // BSD-285: vom Server abgelehnt (geteilte Seite ohne Bearbeiten-Recht): seine Kopie gilt trotz eigenem Stempel.
+        const rejected = new Set(decodeDeletions(reply.rejected).keys);
+        if (rejected.size > 0) log?.("warning", `Sync: ${rejected.size} change${rejected.size === 1 ? "" : "s"} not allowed on this shared page; reverted to the server's version`);
         // Neuere Server-Kopien gewinnen; was der Server gelöscht hält (neuerer Tombstone), wird auch hier gelöscht.
-        if (newer.length > 0 || deleted.keys.length > 0) this.store.applyRemote(newer, deleted.keys, deleted.stamps);
+        if (newer.length > 0 || deleted.keys.length > 0) this.store.applyRemote(newer, deleted.keys, deleted.stamps, rejected);
         result.pushed += records.length + deletions.length;
       }
       pushed = last.seq;

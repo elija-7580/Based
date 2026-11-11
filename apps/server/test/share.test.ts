@@ -131,6 +131,51 @@ describe("Gefilterter Sync", () => {
     expect(rows.map((r) => r.id)).toContain(priv);
   });
 
+  it("BSD-285: Löschungen kommen nur aus dem Bereich des Gastes", async () => {
+    const { app, shared, sub, priv } = await setup();
+    const { body } = await createLink(app.url, shared, "access", "view");
+    const guest = bearer(body.secret!);
+    const first = await get(`${app.url}/sync/v2/pull?after=0&limit=5000`, guest);
+    const privPara = app.sync.store.children("b:" + priv)[0]!;
+    const subPara = app.sync.store.children("b:" + sub)[0]!;
+    app.sync.store.transact("Delete", (tx) => { tx.remove(keyOf("block", privPara)); tx.remove(keyOf("block", subPara)); });
+    const next = await get(`${app.url}/sync/v2/pull?after=${first.body!.next as number}`, guest);
+    const gone = (next.body!.deletions as { kind: string; id: string }[]).map((d) => d.id);
+    expect(gone).toContain(subPara);
+    expect(gone).not.toContain(privPara);
+    // Der Besitzer sieht beide.
+    const owner = await get(`${app.url}/sync/v2/pull?after=${first.body!.next as number}`);
+    expect((owner.body!.deletions as { id: string }[]).map((d) => d.id)).toEqual(expect.arrayContaining([privPara, subPara]));
+    // Ganze private Seite samt Inhalt löschen: nichts davon beim Gast.
+    const rest = app.sync.store.children("b:" + priv);
+    app.sync.store.transact("Delete page", (tx) => { for (const c of rest) tx.remove(keyOf("block", c)); tx.remove(keyOf("block", priv)); });
+    const later = await get(`${app.url}/sync/v2/pull?after=${next.body!.next as number}`, guest);
+    expect(later.body!.deletions).toEqual([]);
+  });
+
+  it("BSD-285: abgelehnte Records stehen in der Antwort; der Sync-Client des Gastes übernimmt die Server-Kopie", async () => {
+    const { app, shared, sub } = await setup();
+    const view = (await createLink(app.url, shared, "access", "view")).body.secret!;
+    const { openWorkspace, SyncClient } = await import("@based/sync");
+    const { openNodeDatabase } = await import("@based/sync/node");
+    const ws = openWorkspace(openNodeDatabase());
+    const client = new SyncClient(ws.store, ws.persistence, { baseURL: app.url, token: view });
+    await client.syncNow();
+    const para = app.sync.store.children("b:" + sub)[0]!;
+    const original = ws.store.blocks.get(para)!.text;
+    ws.store.setText(para, "lokal geändert");
+    await client.syncNow();
+    expect(app.sync.store.blocks.get(para)!.text).toEqual(original);
+    expect(ws.store.blocks.get(para)!.text).toEqual(original);
+    // Direkt am Protokoll: rejected nennt den Record.
+    const rec = structuredClone(app.sync.store.blocks.get(para)!);
+    rec.text = "nochmal";
+    rec.stamp = { ...rec.stamp!, millis: rec.stamp!.millis + 10_000, node: "guest" };
+    const r = await post(`${app.url}/sync/v2/push`, { records: [{ kind: "block", data: rec }], deletions: [] }, bearer(view));
+    expect(r.body!.rejected).toEqual([{ kind: "block", id: para }]);
+    client.stop();
+  });
+
   it("Snapshot: alles Lesbare plus Position", async () => {
     const { app, shared, priv } = await setup();
     const { body } = await createLink(app.url, shared, "access", "view");

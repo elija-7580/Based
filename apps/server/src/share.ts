@@ -12,7 +12,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { isPageLike, isTrashed, keyOf, parseKey, type RecordKeyString, type WireRecord, type WorkspaceStore } from "@based/core";
 import { asText, type SqlitePersistence } from "@based/sync";
-import type { DecodedPush, PullPage, PushReply, SyncService, WireDeletion } from "./sync.js";
+import { OLDEST_SEQ_KEY, type DecodedPush, type PullPage, type PushReply, type SyncService, type WireDeletion } from "./sync.js";
 
 export type ShareRole = "view" | "comment" | "edit" | "full";
 export const SHARE_ROLES: readonly ShareRole[] = ["view", "comment", "edit", "full"];
@@ -95,6 +95,10 @@ export class ShareService {
 
   /** BSD-284: Elternverweis je Block (zum Erkennen von Verschiebungen). */
   private readonly parents = new Map<string, string>();
+  /** BSD-285: Block einer Datenbank bzw. Ansicht – damit sich nach einer Löschung noch sagen lässt, wo sie lag. */
+  private readonly dbBlocks = new Map<string, string>();
+  private readonly viewBlocks = new Map<string, string>();
+  private deletedSincePrune = 0;
   private readonly unobserve: () => void;
   /** BSD-284: Long-Polls wecken, wenn eine Freigabe neuen Inhalt sichtbar macht (setzt die App). */
   onScopeChange?: () => void;
@@ -106,7 +110,10 @@ export class ShareService {
   ) {
     this.state = ShareService.load(persistence);
     persistence.db.exec("CREATE TABLE IF NOT EXISTS share_moves (id TEXT PRIMARY KEY, seq INTEGER NOT NULL)");
+    persistence.db.exec("CREATE TABLE IF NOT EXISTS share_deleted (key TEXT PRIMARY KEY, chain TEXT NOT NULL, seq INTEGER NOT NULL)");
     for (const [id, b] of store.blocks) this.parents.set(id, b.parent);
+    for (const [id, d] of store.databases) this.dbBlocks.set(id, d.blockID);
+    for (const [id, v] of store.views) this.viewBlocks.set(id, v.blockID);
     this.unobserve = store.observe((change) => this.noteMoves(change.keys));
   }
 
@@ -121,9 +128,27 @@ export class ShareService {
    */
   private noteMoves(keys: readonly RecordKeyString[]) {
     let seq: number | undefined;
+    // BSD-285: erst die Lage gelöschter Records festhalten (die Zwischenspeicher kennen sie noch), dann aktualisieren.
+    const gone: [RecordKeyString, string[]][] = [];
     for (const key of keys) {
-      if (!key.startsWith("block:")) continue;
-      const id = key.slice(6);
+      if (this.store.record(key)) continue;
+      const chain = this.cachedChain(key);
+      if (chain) gone.push([key, chain]);
+    }
+    for (const key of keys) {
+      const i = key.indexOf(":");
+      const kind = key.slice(0, i), id = key.slice(i + 1);
+      if (kind === "database") {
+        const d = this.store.databases.get(id);
+        if (d) this.dbBlocks.set(id, d.blockID); else this.dbBlocks.delete(id);
+        continue;
+      }
+      if (kind === "view") {
+        const v = this.store.views.get(id);
+        if (v) this.viewBlocks.set(id, v.blockID); else this.viewBlocks.delete(id);
+        continue;
+      }
+      if (kind !== "block") continue;
       const b = this.store.blocks.get(id);
       const old = this.parents.get(id);
       if (!b) { this.parents.delete(id); continue; }
@@ -132,6 +157,42 @@ export class ShareService {
       seq ??= this.persistence.maxSeq();
       this.persistence.db.run("INSERT OR REPLACE INTO share_moves(id, seq) VALUES(?, ?)", [id, seq]);
     }
+    if (gone.length > 0) {
+      seq ??= this.persistence.maxSeq();
+      for (const [key, chain] of gone) this.persistence.db.run("INSERT OR REPLACE INTO share_deleted(key, chain, seq) VALUES(?, ?, ?)", [key, JSON.stringify(chain), seq]);
+      this.deletedSincePrune += gone.length;
+      if (this.deletedSincePrune >= 500) {
+        this.deletedSincePrune = 0;
+        // Nur so lange, wie das Change-Log die Löschung führt (Tombstone-GC, BSD-104).
+        this.persistence.db.run("DELETE FROM share_deleted WHERE seq <= ?", [this.persistence.metaInt(OLDEST_SEQ_KEY)]);
+      }
+    }
+  }
+
+  /** BSD-285: Block-IDs vom Record bis ganz oben, aus den Zwischenspeichern (auch für eben gelöschte Records). */
+  private cachedChain(key: RecordKeyString): string[] | undefined {
+    const i = key.indexOf(":");
+    const kind = key.slice(0, i), id = key.slice(i + 1);
+    let cur: string | undefined;
+    const out: string[] = [];
+    if (kind === "block") { if (!this.parents.has(id)) return undefined; out.push(id); cur = this.parents.get(id); }
+    else if (kind === "database") { const b = this.dbBlocks.get(id); if (b === undefined) return undefined; cur = "b:" + b; }
+    else if (kind === "view") { const b = this.viewBlocks.get(id); if (b === undefined) return undefined; cur = "b:" + b; }
+    else return undefined;
+    for (let guard = 0; cur && guard < 512; guard++) {
+      if (cur.startsWith("b:")) { const b = cur.slice(2); out.push(b); cur = this.parents.get(b); }
+      else if (cur.startsWith("d:")) { const b = this.dbBlocks.get(cur.slice(2)); cur = b === undefined ? undefined : "b:" + b; }
+      else cur = undefined;
+    }
+    return out;
+  }
+
+  /** BSD-285: Lag der gelöschte Record im Bereich des Principals? `undefined` = unbekannt (vor dieser Version). */
+  private deletionVisible(direct: Map<string, ShareRole>, key: string): boolean | undefined {
+    const row = this.persistence.db.all("SELECT chain FROM share_deleted WHERE key = ?", [key])[0];
+    if (!row) return undefined;
+    const chain = JSON.parse(asText(row.chain) ?? "[]") as string[];
+    return chain.some((id) => direct.has(id));
   }
 
   /** Verschobene oder neu freigegebene Blöcke mit Log-Position in (after, upTo]. */
@@ -398,8 +459,10 @@ export class ShareService {
     const page = sync.pull(after, limit);
     if (p.kind === "owner") return page;
     const records: WireRecord[] = [];
-    const deletions: WireDeletion[] = [...page.deletions];
-    const seen = new Set<string>(page.deletions.map((d) => `${d.kind}:${d.id}`));
+    // BSD-285: Löschungen nur aus dem Bereich des Gastes (sonst sähe er, wie viel anderswo gelöscht wird).
+    const direct = this.directRoles(p);
+    const deletions: WireDeletion[] = page.deletions.filter((d) => this.deletionVisible(direct, `${d.kind}:${d.id}`) !== false);
+    const seen = new Set<string>(deletions.map((d) => `${d.kind}:${d.id}`));
     const drop = (key: RecordKeyString) => {
       if (seen.has(key)) return;
       seen.add(key);

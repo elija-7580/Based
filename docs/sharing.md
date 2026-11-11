@@ -78,8 +78,12 @@ server stays the reference until it is switched off.
   valid guest token on an owner route gets **403** (MCP, Sync v1, `/sandbox/*` …); no token or a wrong one gets 401.
 - **Sync:** `/sync/v2/info|pull|push|wait` and `/share/v1/snapshot` accept guests. Pull turns changed records the
   guest can't read into unstamped deletions; a page that leaves the shared area takes its content (sub-pages,
-  database, rows, views) with it. Push applies only records with edit access where they are *and* where they go;
-  the rest come back in `newer` (only if the guest may read them). Assets: guests read only files referenced from
+  database, rows, views) with it; a page that moves *into* the shared area (or a new grant for a connected user)
+  brings its unchanged content once (table `share_moves`, BSD-284). Deletions reach a guest only if the record last
+  lay in the guest's area (table `share_deleted`; deletions from before it existed still pass, BSD-285). Push
+  applies only records with edit access where they are *and* where they go; the rest come back in `newer` (only if
+  the guest may read them) and are listed in `rejected` (`[{kind, id}]`), so the device takes the server copy even
+  though its own stamp is newer. Assets: guests read only files referenced from
   readable records and upload only with an edit role somewhere.
 - **Publish:** `/p/<id>[/<page>]` is rendered with the core HTML exporter (`exportHTMLPage`, `offline: true`) and the
   token stylesheet from `@based/design-tokens/export-css` — no scripts, no fonts or scripts from other servers.
