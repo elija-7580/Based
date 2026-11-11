@@ -81,3 +81,17 @@ test("Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderunge
   await page.reload();
   await expect(page.getByTestId("page-content")).toContainText("edited by guest", { timeout: 20_000 });
 });
+
+test("Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs", async ({ page }) => {
+  const res = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "view" }) });
+  const link = (await res.json()) as { id: string; secret: string };
+  await page.goto("/#/share/" + encodeURIComponent(`${serverURL}/s/${link.secret}`));
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  expect((await fetch(`${serverURL}/share/v1/links/${link.id}/revoke`, { method: "POST", headers: owner })).ok).toBe(true);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "This link no longer works" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("based-root")).toHaveCount(0);
+  await page.getByRole("button", { name: "Open Based" }).click();
+  await expect(page).not.toHaveURL(/guest=/);
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "", { timeout: 20_000 });
+});

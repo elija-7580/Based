@@ -10,6 +10,7 @@ import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
+import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { StoreClient } from "./worker/client.js";
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
@@ -55,14 +56,32 @@ if (share) {
         return start(undefined);
       }
       const me = await fetchGuestMe(config);
-      if (me === "revoked") diagnosticsLog.add("warning", "guest link no longer works");
+      if (me === "revoked") {
+        // BSD-235 Teil 3: widerrufen/entfernt → Hinweis statt leerem Gast-Arbeitsbereich
+        diagnosticsLog.add("warning", "guest link no longer works");
+        return showGuestRevoked();
+      }
       // Sync-Einstellungen des Gastes nur im Speicher – nie die des Besitzers überschreiben.
       syncConfig._use(new SecretStore(memoryKV()), { noMigrate: true });
       syncConfig.set({ url: config.server, token: config.secret });
       document.title = "Shared · Based";
-      start({ id, config, me: me === "revoked" ? undefined : me, start: guestStartPage(config, me === "revoked" ? undefined : me) });
+      start({ id, config, me, start: guestStartPage(config, me) });
     });
   }
+}
+
+function showGuestRevoked() {
+  const root = document.getElementById("root");
+  if (!root) throw new Error("#root fehlt");
+  document.title = "Link no longer works · Based";
+  const appearance = appearanceStore.get();
+  createRoot(root).render(
+    <StrictMode>
+      <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
+        <GuestRevoked onOpenBased={() => location.replace(location.pathname)} />
+      </Theme>
+    </StrictMode>,
+  );
 }
 
 function start(guest: GuestBoot | undefined) {

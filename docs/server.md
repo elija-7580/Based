@@ -174,7 +174,8 @@ Server wartende Läufe selbst aus – derselbe `AgentRunner` wie in der App (Lea
 App zugleich offen, übernimmt nur einer), mit den Workspace-Werkzeugen über den Server-Store. Ergebnis, Verbrauch und
 Transkript (Chat) landen wie in der App am Run. Fragepflichtige Aufrufe („Ask before edits“, `ask`-Regeln) werden auf dem
 Server abgelehnt, weil dort niemand erlauben kann; MCP-Connections der Agenten laufen nur in der App. Ohne Schlüssel
-bleiben Läufe `queued`, bis die App sie ausführt.
+bleiben Läufe `queued`, bis die App sie ausführt. Ob der Server ausführt, meldet `GET /sync/v2/info` als `agents.runsOnServer` (für den Hinweis „läuft auf
+dem Server“ / „nur bei offener App“ in der Oberfläche).
 
 ## Sandbox pro Lauf (BSD-161)
 
