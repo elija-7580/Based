@@ -75,7 +75,7 @@ describe("Diagramm-Farben (BSD-216)", () => {
     const pts = [{ key: "a", label: "A", value: 1, color: "pink" }, { key: "b", label: "B", value: 2 }] as never[];
     expect(themedPoints(pts, undefined)).toBe(pts);
     expect(themedPoints(pts, "auto")).toBe(pts);
-    expect(themedPoints(pts, "colorful").map((p: { color?: string }) => p.color)).toEqual(["blue", "green"]);
-    expect(themedPoints(pts, "green").map((p: { color?: string }) => p.color)).toEqual(["green", "green"]);
+    expect(themedPoints(pts, "colorful").map((p) => p.color)).toEqual(["blue", "green"]);
+    expect(themedPoints(pts, "green").map((p) => p.color)).toEqual(["green", "green"]);
   });
 });
