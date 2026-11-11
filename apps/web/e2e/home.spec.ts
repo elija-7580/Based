@@ -36,7 +36,8 @@ test("Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; R
     // frischer Workspace: ehrlicher Leerzustand
     await expect(page.getByTestId("home-empty")).toBeVisible();
     await expect(page.getByTestId("home-sentence")).toContainText("Nothing is running yet");
-    await expect(page.getByTestId("home-cost")).toHaveText("today 0.00 €");
+    // BSD-278: Kosten nur, wenn etwas angefallen ist (oder Agent-Details an)
+    await expect(page.getByTestId("home-cost")).toHaveCount(0);
     await expect(page.getByTestId("needs-you")).toHaveCount(0);
 
     // ohne Modell: Karte „Received“, wartet
@@ -112,15 +113,16 @@ test("Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; P
   await call(page, "useAgentScript", [{ wait: 300 }, { tool: "create_page", input: { title: "Sync engines compared", markdown: "Automerge, Yjs, Loro." } }, { text: "Compared three sync engines." }]);
   await send(page, "Research open-source sync engines for Publit project");
   const ring = page.getByTestId("arc-running").filter({ hasText: "sync engines" });
-  await expect(ring).toBeVisible({ timeout: 10_000 });
-  await expect(card(page)).toHaveCount(0);
   const apex = page.getByTestId("needs-you");
   await expect(apex).toContainText("wants to use create page", { timeout: 10_000 });
-  await expect(ring).toHaveAttribute("data-status", "needsYou");
-  await expect(page.getByTestId("home-sentence")).toContainText("one thing needs you");
+  // BSD-278: was oben „Needs you“ ist, steht nicht zusätzlich im inneren Ring
+  await expect(ring).toHaveCount(0);
+  await expect(card(page)).toHaveCount(0);
+  await expect(page.getByTestId("home-sentence")).toContainText(/one thing needs you/i);
+  await expect(page.getByTestId("home-sentence")).not.toContainText("agent is working");
 
-  // Klick auf die laufende Karte → Agent-Detail
-  await ring.click();
+  // „Details“ am Scheitel → Agent-Detail
+  await apex.getByRole("button", { name: /^Details for / }).click();
   const detail = page.getByTestId("agent-detail");
   await expect(detail).toBeVisible();
   await expect(detail.getByRole("heading", { level: 1 })).toContainText("sync engines");
@@ -154,6 +156,22 @@ test("Projekt-Detail aus echten Records", async ({ page }) => {
   await expect(d.getByTestId("project-landed")).toContainText("offline maps");
   await expect(d.getByRole("region", { name: "Updates from the main agent" })).toContainText("offline maps");
   await expect(d.getByText("Done this week")).toBeVisible();
+});
+
+test("BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile", async ({ page }) => {
+  await open(page);
+  await expect(page.getByTestId("home-cost")).toHaveCount(0);
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "seedDueTasks" }));
+  await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Home" }).click();
+  const due = page.getByTestId("arc-due");
+  await expect(due.filter({ hasText: "Pay rent" })).toBeVisible({ timeout: 10_000 });
+  await expect(due.filter({ hasText: "Pay rent" })).toContainText("today");
+  await expect(due.filter({ hasText: "Ship the release" })).toBeVisible();
+  await expect(due.filter({ hasText: "Call the dentist" })).toHaveCount(0);
+  await expect(page.getByTestId("home-empty")).toHaveCount(0);
+  await expect(page.getByTestId("home-sentence")).toContainText("Due today: Pay rent");
+  await due.filter({ hasText: "Pay rent" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Pay rent");
 });
 
 // MARK: Screenshots

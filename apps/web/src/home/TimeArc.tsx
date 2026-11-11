@@ -111,10 +111,20 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Pro
 
       {layout.done.placed.map((p) => {
         const c = doneCards.get(p.id)!;
+        if (c.kind === "group") return <GroupCard key={p.id} card={c} style={{ ...pos(p.box), width: SIZES.done.w, height: SIZES.done.h }} titleOf={titleOf} nowMs={nowMs} {...h} />;
         return <DoneCard key={p.id} card={c} style={{ ...pos(p.box), width: SIZES.done.w, height: SIZES.done.h }} titleOf={titleOf} nowMs={nowMs} {...h} />;
       })}
       {layout.planned.placed.map((p) => {
         const c = plannedCards.get(p.id)!;
+        if (c.kind === "due") {
+          return (
+            <button type="button" key={p.id} className="arc-card" data-state="planned" data-kind="due" data-testid="arc-due" data-overdue={c.overdue ? "" : undefined}
+              style={{ ...pos(p.box), width: SIZES.planned.w, height: SIZES.planned.h }} title={`${c.title} · ${c.detail ?? ""}`}
+              aria-label={`${c.title}, due ${c.allDay ? "today" : when(c.atMs, nowMs)} in ${c.detail ?? "a database"} — open`} onClick={() => c.pageID && h.onOpenPage(c.pageID)}>
+              <span className="arc-row"><span className="home-mono">{c.allDay ? "today" : c.overdue ? "due" : when(c.atMs, nowMs)}</span><span className="t1">{c.title}</span></span>
+            </button>
+          );
+        }
         return (
           <article key={p.id} className="arc-card" data-state="planned" data-testid="arc-planned" data-task-id={c.taskID} style={{ ...pos(p.box), width: SIZES.planned.w, height: SIZES.planned.h }} title={c.detail}>
             <span className="arc-row"><span className="home-mono">{when(c.atMs, nowMs)}</span><span className="t1">{c.title}</span></span>
@@ -153,6 +163,42 @@ function DoneCard({ card: c, style, titleOf, nowMs, ...h }: { card: ArcCard; sty
   );
 }
 
+/** BSD-278: Erledigtes eines Projekts gebündelt („Publit · 3 done“); klappt die einzelnen Karten darunter auf. */
+function GroupCard({ card: c, style, titleOf, nowMs, ...h }: { card: ArcCard; style: React.CSSProperties; titleOf: (id: string) => string | undefined; nowMs: number } & ArcHandlers) {
+  const [open, setOpen] = useState(false);
+  const items = c.items ?? [];
+  return (
+    <article className="arc-card arc-group" data-state={c.state} data-testid="arc-group" data-open={open ? "" : undefined} style={style}>
+      <span className="arc-row">
+        <span className="arc-check" aria-hidden="true"><Icon name="check" size={14} /></span>
+        <button type="button" className="t1 arc-group-toggle" aria-expanded={open} onClick={() => setOpen((o) => !o)} title={c.title}>{c.title}</button>
+      </span>
+      <span className="arc-row">
+        <span className="t2"><span className="home-mono arc-time">{when(c.atMs, nowMs)}</span>{c.detail ?? `${items.length} cards`}</span>
+        <span className="arc-card-actions">
+          {c.projectID ? <button type="button" className="arc-link" onClick={() => h.onOpenProject(c.projectID!)}>Project</button> : null}
+        </span>
+      </span>
+      {open ? (
+        <ul className="arc-group-list" aria-label={`${c.title}: finished cards`}>
+          {items.map((x) => {
+            const page = x.pageID && titleOf(x.pageID) !== undefined ? x.pageID : undefined;
+            return (
+              <li key={x.id} data-testid="arc-group-item" data-state={x.state}>
+                <span className="home-mono arc-time">{when(x.atMs, nowMs)}</span>
+                <span className="t1" title={x.detail}>{x.title}</span>
+                {page ? <button type="button" className="arc-link" onClick={() => h.onOpenPage(page)}>Open</button> : null}
+                {x.runID ? <button type="button" className="arc-link" onClick={() => h.onOpenRun(x.runID!)}>Details</button> : null}
+                {x.canUndo && x.taskID ? <button type="button" className="arc-link" onClick={() => h.onUndo(x.taskID!)}>Undo</button> : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </article>
+  );
+}
+
 const STATUS: Record<RingCard["status"], string> = { queued: "queued", running: "working", needsYou: "needs you", done: "done", failed: "failed", cancelled: "stopped" };
 
 function RingCardView({ card: c, style, nowMs, showDetails, onOpen }: { card: RingCard; style: React.CSSProperties; nowMs: number; showDetails: boolean; onOpen: () => void }) {
@@ -184,6 +230,8 @@ function Apex({ items, style, ...h }: { items: readonly NeedsYou[]; style: React
       <span className="head">
         <span className="dot" aria-hidden="true" />Needs you
         {items.length > 1 ? <button type="button" className="arc-link" onClick={() => setIndex(i + 1)} aria-label="Show the next thing that needs you">{`${i + 1} of ${items.length}`}</button> : null}
+        {/* BSD-278: der Agent steht nicht mehr zusätzlich im Ring – sein Detail ist von hier erreichbar */}
+        {n.kind === "approval" ? <button type="button" className="arc-link" onClick={() => h.onOpenRun(n.runID)} aria-label={`Details for ${n.title}`}>Details</button> : null}
       </span>
       {n.kind === "approval" ? (
         <>

@@ -48,6 +48,23 @@
 .arc-card[data-state="done"], .arc-card[data-state="filed"], .arc-card[data-state="failed"] { background: var(--surface-soft); }
 .arc-card[data-state="done"] .t1, .arc-card[data-state="filed"] .t1, .arc-card[data-state="failed"] .t1 { color: var(--muted); font-weight: 550; }
 .arc-check { flex: none; color: var(--muted); display: inline-flex; }
+/* BSD-278: Erledigtes eines Projekts gebündelt; aufgeklappt liegt die Liste wie ein Menü unter der Karte */
+.arc-group { overflow: visible; }
+.arc-group[data-open] { z-index: 3; box-shadow: var(--shadow-control); }
+.arc-group-toggle { border: 0; background: none; padding: 0; font: inherit; text-align: left; cursor: pointer; }
+.arc-group-toggle:hover { text-decoration: underline; text-underline-offset: 2px; }
+.arc-group-toggle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+.arc-group-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + var(--space-1)); margin: 0; padding: var(--space-1) 0; list-style: none;
+  background: var(--bg); border-radius: var(--radius-md); box-shadow: var(--shadow-float); max-height: calc(var(--space-8) * 4); overflow-y: auto;
+}
+.arc-group-list li { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); min-width: 0; }
+.arc-group-list li .t1 { flex: 1; min-width: 0; font-weight: 500; color: var(--ink); }
+.arc-group-list li[data-state="failed"] .t1 { color: var(--muted); }
+/* BSD-278: fällige Datenbank-Zeile (rechts): klickbar, öffnet die Zeile */
+.arc-card[data-kind="due"] { cursor: pointer; flex-direction: column; }
+.arc-card[data-kind="due"]:hover { border-color: var(--muted); }
+.arc-card[data-kind="due"][data-overdue] .home-mono { color: var(--danger); }
 /* geplant: gestrichelte Pille */
 .arc-card[data-state="planned"] { background: transparent; border: 1.5px dashed var(--line); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-4); }
 /* läuft (innerer Ring): Marker-Strich links, pulsierender Punkt, Fortschritt */
