@@ -487,6 +487,40 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
+test("BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const now = new Date();
+  let mon = 2;
+  while (new Date(now.getFullYear(), now.getMonth(), mon).getDay() !== 1) mon++;
+  const day = (d: number) => ({ dt: { date: { _0: { start: (new Date(now.getFullYear(), now.getMonth(), d).getTime() - 978_307_200_000) / 1000, includeTime: false } } } });
+  await seedDatabase(page, {
+    title: "Dates",
+    properties: [{ id: "title", name: "Name", type: "title" }, { id: "dt", name: "Date", type: "date" }],
+    // Montag/Dienstag liegen bei Wochenstart Sonntag wie Montag in derselben Zeile; C3 eine Woche unter C2
+    rows: [{ title: "C1", values: day(mon) }, { title: "C2", values: day(mon + 1) }, { title: "C3", values: day(mon + 8) }],
+    views: [{ id: "vc", name: "Calendar", type: "calendar", extra: { datePropertyID: "dt" } }, { id: "vt", name: "Timeline", type: "timeline", extra: { datePropertyID: "dt" } }],
+  });
+  const entry = (t: string) => page.locator(".dbui-cal-entry", { hasText: t }).first();
+  await expect(entry("C1")).toBeVisible();
+  await entry("C1").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(entry("C2")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(entry("C3")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(entry("C2")).toBeFocused();
+
+  await page.getByRole("tab", { name: "Timeline" }).click();
+  const bar = (t: string) => page.locator(".dbui-tl-bar", { hasText: t }).first();
+  await expect(bar("C1")).toBeAttached();
+  await bar("C1").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(bar("C2")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(bar("C3")).toBeFocused();
+});
+
 test("BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

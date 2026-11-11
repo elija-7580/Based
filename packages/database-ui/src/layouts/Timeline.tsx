@@ -2,6 +2,7 @@
 // und an beiden Enden ziehen (je eine Transaktion), Zeilen ohne Datum in einer Seitenleiste (auf die Achse ziehen
 // gibt ihnen ein Datum), optional Tabellenspalten links, Gruppierung. Virtualisiert in beiden Richtungen: Zeilen
 // über den Virtualisierer, Balken, Ticks und Gitterlinien nur im sichtbaren Zeitfenster.
+import { cardKeys } from "../cardKeys.js";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -258,7 +259,7 @@ function Timeline({ view, result }: { view: DatabaseView; result: QueryResult })
       </div>
       <div className="dbui-tl-main">
         <div className="dbui-tl-scroll" ref={scrollRef} onScroll={onScroll} data-testid="timeline-scroll" role="grid" aria-label={`Timeline by ${SCALE_LABELS[scale].toLowerCase()}`}
-          aria-rowcount={items.length}>
+          aria-rowcount={items.length} onKeyDown={cardKeys}>
           <div className="dbui-tl-inner" style={{ width: tableW + width, height: Math.max(total, HEAD_H) }}>
             {/* Gitter, heute, Ablage-Linie: nur im sichtbaren Fenster */}
             {ticks.minor.map((t) => <div key={"l" + t.day} className="dbui-tl-line" style={{ left: x(t.day), top: HEAD_H, height: Math.max(0, total - HEAD_H) }} aria-hidden />)}

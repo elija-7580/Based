@@ -5,6 +5,7 @@
 // Farben und Schrift kommen zur Laufzeit aus den Design-Tokens (CSS-Variablen), keine Literale.
 // Design: Seiten der obersten Ebene gefüllt in Tinte, Seiten darunter als Ringe (docs/design/README.md). Der Marker
 // (Agent-Änderungen) bleibt frei, bis Records die Herkunft „Agent“ tragen.
+import { graphStep } from "./graphKeys.js";
 import { LibraryTabs } from "../components/LibraryTabs.js";
 import { Button } from "@astryxdesign/core/Button";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
@@ -192,6 +193,28 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
     dirty.current = true;
   }, []);
 
+  // BSD-238 Teil 3: Tastatur auf der Fläche – Pfeile wandern zwischen Knoten, Enter öffnet, +/−/0 zoomen, Esc hebt auf.
+  const onCanvasKey = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const s = scene.current;
+    const dir = e.key === "ArrowUp" ? "up" : e.key === "ArrowDown" ? "down" : e.key === "ArrowLeft" ? "left" : e.key === "ArrowRight" ? "right" : undefined;
+    if (dir && s && s.graph.nodes.length) {
+      e.preventDefault();
+      const cur = selected !== undefined ? s.index.get(selected) : undefined;
+      const next = cur === undefined ? (s.byDegree[0] ?? 0) : graphStep(s.layout.x, s.layout.y, cur, dir);
+      if (next < 0) return;
+      const id = s.graph.nodes[next]!.id;
+      setSelected(id);
+      centerOn(id);
+    } else if (e.key === "Enter" && selected) {
+      e.preventDefault();
+      onOpenPage(selected);
+    } else if (e.key === "+" || e.key === "=") { e.preventDefault(); zoomBy(1.4); }
+    else if (e.key === "-" || e.key === "_") { e.preventDefault(); zoomBy(1 / 1.4); }
+    else if (e.key === "0") { e.preventDefault(); autoFit.current = true; fit(); }
+    else if (e.key === "Escape" && selected) { e.preventDefault(); setSelected(undefined); }
+  };
+
   // Zeichenschleife: Layout im Budget weiterrechnen, nur zeichnen, wenn sich etwas geändert hat.
   useEffect(() => {
     const canvas = canvasRef.current, wrap = wrapRef.current;
@@ -363,7 +386,9 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
           <canvas
             ref={canvasRef}
             role="img"
-            aria-label={`Graph of ${count(nodes, "page")} and ${count(edges, "link")}. Use the search in the panel to find and open pages.`}
+            tabIndex={0}
+            aria-label={`Graph of ${count(nodes, "page")} and ${count(edges, "link")}. Arrow keys move between pages, Enter opens, + and − zoom, 0 fits, Esc clears.`}
+            onKeyDown={onCanvasKey}
             data-testid="graph-canvas"
             data-nodes={nodes}
             data-edges={edges}
