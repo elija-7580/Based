@@ -20,6 +20,7 @@ import { cleanTitle, NotionHTMLImporter } from "./notion-html.js";
 import { toRichText } from "./runs.js";
 import { extractZip, ImportCancelled, isZip, type ZipLimits } from "./zip.js";
 import { markdownFileName } from "./markdown-export.js";
+import { findObsidianVault, ObsidianImporter } from "./obsidian-import.js";
 
 export interface NotionImportOptions {
   /** Wohin Bilder und Dateien kommen; ohne Speicher bleiben nur externe URLs. */
@@ -58,6 +59,8 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   const out: PreparedImport = { builder: undefined, markdown: undefined, notes: [] };
   const html: ImportSource[] = [];
   const md: ImportSource[] = [];
+  // BSD-260: Obsidian-Vaults (Ordner mit `.obsidian/`) liest ein eigener Importer (Wikilinks, Einbettungen, Frontmatter).
+  const vaults: { files: ImportFiles; vault: string; title: string | undefined }[] = [];
   sources.forEach((src, i) => {
     const p = normalizePath(src.path);
     const ext = extname(p).toLowerCase();
@@ -68,9 +71,17 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const r = extractZip(zip, { limits: opts.zipLimits, isCancelled: opts.isCancelled, progress: (f) => progress((i + f * 0.5) / sources.length) });
       out.notes.push(`Unpacked ${basename(p)}: ${r.count} files`);
       for (const s of r.skipped) out.notes.push(`Skipped ${s}`);
+      const vault = findObsidianVault(r.files, "");
+      if (vault !== undefined) {
+        vaults.push({ files: r.files, vault, title: vault === "" ? stripExtension(basename(p)) : undefined });
+        progress((i + 1) / sources.length * 0.5);
+        return;
+      }
       const hasHTML = containsExt(r.files, "", ["html", "htm"]);
       if (hasHTML) html.push({ files: r.files, path: "" });
       if (containsExt(r.files, "", ["md", "csv"]) || !hasHTML) md.push({ files: r.files, path: "" });
+    } else if (exists && isDir(src.files, p) && findObsidianVault(src.files, p) !== undefined) {
+      vaults.push({ files: src.files, vault: findObsidianVault(src.files, p)!, title: undefined });
     } else if (exists && isDir(src.files, p) && containsExt(src.files, p, ["html", "htm"])) {
       html.push({ files: src.files, path: p });
       if (containsExt(src.files, p, ["md", "csv"])) md.push({ files: src.files, path: p });
@@ -95,6 +106,18 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
     out.builder = builder;
   }
   if (md.length > 0) out.markdown = new MarkdownNotionImporter(opts).run(md);
+  for (const v of vaults) {
+    const prev = out.markdown;
+    const r = new ObsidianImporter(v.files, v.vault, { assets: opts.assets, now: opts.now, userID: opts.userID, isCancelled: opts.isCancelled }).run(v.title, prev?.rootKeys.at(-1));
+    if (!prev) out.markdown = r;
+    else {
+      prev.records.push(...r.records);
+      prev.rootKeys.push(...r.rootKeys);
+      const a = prev.report, b = r.report;
+      a.pages += b.pages; a.databases += b.databases; a.rows += b.rows; a.assets += b.assets;
+      a.warnings.push(...b.warnings); a.rootIDs.push(...b.rootIDs);
+    }
+  }
   progress(1);
   return out;
 }
