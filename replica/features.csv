@@ -22,7 +22,7 @@ Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1�
 Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)",yes
 Recent pages in search,search,should,yes,yes,,yes
 Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope"
-Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende)"
+Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende; BSD-90: unverlinkte Erwähnungen mit „Link“)"
 Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page)"
 Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)"
 Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung"
