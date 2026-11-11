@@ -119,6 +119,26 @@ export function onOpenChatPanel(fn: (open: boolean) => void): () => void {
   return () => void panelListeners.delete(fn);
 }
 
+// BSD-168: Zustand des Panels für den AI-Knopf in der Kopfzeile (aktiv, solange das Panel offen ist; wie Swift
+// NotionChrome „Ask AI (⌘J)“). ChatDock meldet jede Änderung, der Knopf liest per useSyncExternalStore.
+let panelOpen = false;
+const panelStateListeners = new Set<() => void>();
+export function setChatPanelOpen(open: boolean) {
+  if (panelOpen === open) return;
+  panelOpen = open;
+  for (const fn of panelStateListeners) fn();
+}
+export const isChatPanelOpen = (): boolean => panelOpen;
+export function subscribeChatPanel(fn: () => void): () => void {
+  panelStateListeners.add(fn);
+  return () => void panelStateListeners.delete(fn);
+}
+/** Panel auf/zu wie ⌘J. */
+export function toggleChatPanel() {
+  const next = !panelOpen;
+  for (const fn of panelListeners) fn(next);
+}
+
 /** Frage aus dem Composer auf Home: im Panel stellen. `false`, solange der Chat noch nicht bereit ist. */
 export function askBased(text: string): boolean {
   if (!shared) return false;

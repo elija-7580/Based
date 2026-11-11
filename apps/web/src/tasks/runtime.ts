@@ -43,6 +43,7 @@ export function clientRunBackend(client: StoreClient): AgentRunBackend {
     claimSchedule: (id, nowMs) => q({ op: "claimSchedule", id, nowMs }),
     chatCreate: (title) => client.chatCreate(title),
     chatSave: (id, base, events) => client.chatSave(id, base, events),
+    chatLoad: (id) => client.chatLoad(id).then((r) => r.events),
     projectUpdate: (id, markdown) => q({ op: "projectUpdate", id, markdown }),
   };
 }

@@ -5,6 +5,7 @@
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
 import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
+import { autoUpdatePref } from "./shell/storage.js";
 
 /** Läuft die Seite in der Tauri-Hülle? (Tauri 2 setzt `__TAURI_INTERNALS__` vor dem ersten Skript.) */
 export function isTauri(g: object = globalThis): boolean {
@@ -88,7 +89,7 @@ export async function startDesktop(onCloseTab?: () => void) {
   // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
   if (onCloseTab) await win.listen("desktop://close-tab", () => onCloseTab());
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
-  if (main) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+  if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }
 
 /** BSD-138: „Install Command Line Tool…“ – zeigt, wo das geht (Opt-in in den Einstellungen). */

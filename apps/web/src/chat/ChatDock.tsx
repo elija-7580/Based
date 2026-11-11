@@ -4,7 +4,7 @@ import type { ChatInfo } from "@based/brain";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { History, Route } from "../shell/router.js";
 import type { StoreClient } from "../worker/client.js";
-import { chatController, onOpenChatPanel, openChatPanel, restoreLastChat } from "./runtime.js";
+import { chatController, onOpenChatPanel, openChatPanel, restoreLastChat, setChatPanelOpen } from "./runtime.js";
 // BSD-280: die Chat-Ansicht (Markdown, Code) erst laden, wenn der Chat aufgeht – nicht im Start-Bundle.
 const ChatView = lazy(() => import("./ChatView.js").then((m) => ({ default: m.ChatView })));
 
@@ -54,6 +54,8 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
   }, []);
 
   useEffect(() => onOpenChatPanel(setOpenSaved), [setOpenSaved]);
+  // BSD-168: der AI-Knopf in der Kopfzeile zeigt, ob das Panel gerade sichtbar ist.
+  useEffect(() => setChatPanelOpen(open && !onPage), [open, onPage]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -331,6 +331,7 @@ export class StoreHost {
         if (c.title) opts.title = c.title;
         if (c.section && c.section !== PRIVATE_SECTION) opts.section = { kind: "teamspace", id: c.section };
         if (c.after) opts.position = { kind: "after", id: c.after };
+        if (c.format) opts.format = c.format;
         const id = createPage(store, opts);
         return store.blocks.has(id) ? id : undefined;
       }

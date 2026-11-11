@@ -17,7 +17,7 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText } from "../../shell/diagnostics.js";
-import { deviceNode, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, newPageFormat, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
@@ -260,6 +260,7 @@ function BillingSection() {
 
 function UpdatesSection() {
   const [busy, setBusy] = useState(false);
+  const auto = useSyncExternalStore(autoUpdatePref.subscribe, autoUpdatePref.get);
   if (!isTauri()) {
     return (
       <Group>
@@ -269,9 +270,10 @@ function UpdatesSection() {
   }
   return (
     <Group>
-      <Row label="Desktop app" hint="Based Next checks for updates when it starts">
+      <Row label="Desktop app" hint={auto ? "Based Next checks for updates when it starts" : "Automatic checks are off — check by hand"}>
         <BasedButton label="Check for updates…" busy={busy} onClick={() => { setBusy(true); void checkForUpdates({ interactive: true }).finally(() => setBusy(false)); }} />
       </Row>
+      <Switch label="Check automatically" description="Look for a new version a few seconds after Based starts" value={auto} onChange={(on) => autoUpdatePref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
     </Group>
   );
 }
@@ -355,6 +357,30 @@ function StartPageSection({ state }: SettingsSectionProps) {
   );
 }
 
+const FONTS = [{ value: "default", label: "Default" }, { value: "serif", label: "Serif" }, { value: "mono", label: "Mono" }] as const;
+
+/** BSD-168: Vorgaben für neue Seiten und Rechtschreibprüfung (pro Gerät, wie Swift). */
+function WritingSection(_: SettingsSectionProps) {
+  const fmt = useSyncExternalStore(newPageFormat.subscribe, newPageFormat.get);
+  const spell = useSyncExternalStore(spellCheckPref.subscribe, spellCheckPref.get);
+  return (
+    <VStack gap={4}>
+      <Group>
+        <Row label="Font" hint="For new pages; each page can still change it in its ••• menu">
+          <SegmentedControl label="Font for new pages" value={fmt.font} onChange={(v) => newPageFormat.set({ ...fmt, font: v as typeof fmt.font })}>
+            {FONTS.map((f) => <SegmentedControlItem key={f.value} value={f.value} label={f.label} />)}
+          </SegmentedControl>
+        </Row>
+        <Switch label="Small text" description="New pages start with smaller text" value={fmt.smallText} onChange={(on) => newPageFormat.set({ ...fmt, smallText: on })} labelPosition="start" labelSpacing="spread" width="100%" />
+        <Switch label="Full width" description="New pages use the whole window width" value={fmt.fullWidth} onChange={(on) => newPageFormat.set({ ...fmt, fullWidth: on })} labelPosition="start" labelSpacing="spread" width="100%" />
+      </Group>
+      <Group>
+        <Switch label="Spell-check" description="Underline misspelled words while you write" value={spell} onChange={(on) => spellCheckPref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
+      </Group>
+    </VStack>
+  );
+}
+
 let registered = false;
 
 /** Meldet die eingebauten Abschnitte einmal an (aus Settings.tsx). */
@@ -364,13 +390,14 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection });
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
   registerSettingsSection({ id: "start-page", page: "my-settings", title: "Home", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
-  registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection });
+  registerSettingsSection({ id: "writing", page: "my-settings", title: "Writing", order: 30, component: WritingSection, provides: ["Default font, small text and full width for new pages", "Spell-check"] });
+  registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection, provides: ["Workspace icon"] });
   registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });
   registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection });
   registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection });
-  registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection });
-  registerSettingsSection({ id: "diagnostics", page: "diagnostics", title: "This device", order: 10, component: DiagnosticsSection });
+  registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"] });
+  registerSettingsSection({ id: "diagnostics", page: "diagnostics", title: "This device", order: 10, component: DiagnosticsSection, provides: ["Logs"] });
   // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.
   registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
   registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection });

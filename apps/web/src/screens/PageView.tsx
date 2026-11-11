@@ -5,6 +5,7 @@ import { pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree,
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
+import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
 import { openPageWindow } from "../desktop.js";
 import { FindBar } from "../components/FindBar.js";
@@ -112,6 +113,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   }
 
   const favorite = outline?.favorites.includes(pageID) ?? false;
+  const chatOpen = useSyncExternalStore(subscribeChatPanel, isChatPanelOpen);
   const subpages = outline?.children[pageID]?.length ?? 0;
   // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
@@ -156,6 +158,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
               <Icon name="star" size={18} filled={favorite} />
             </button>
             <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
+            {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}
+            <button type="button" className="icon-btn ghost" aria-label="Ask AI" title="Ask AI (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
+              <Icon name="chat" size={18} filled={chatOpen} />
+            </button>
             <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
             <button type="button" className="icon-btn ghost" aria-label="Page menu" data-menu-trigger="" aria-haspopup="menu" aria-expanded={menu !== undefined} title="More" onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();

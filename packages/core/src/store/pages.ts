@@ -89,6 +89,8 @@ export interface CreatePageOptions {
   title?: string;
   position?: InsertPosition;
   id?: string;
+  /** BSD-168: Vorgaben für neue Seiten (Einstellungen → My settings → New pages), im selben Undo-Schritt. */
+  format?: { font?: "default" | "serif" | "mono"; smallText?: boolean; fullWidth?: boolean };
 }
 
 /** Neue leere Seite (Swift `createTopLevelPage` / `createPage`). */
@@ -105,6 +107,10 @@ export function insertPage(store: WorkspaceStore, tx: Tx, opts: CreatePageOption
   if (opts.title) b.text = opts.title;
   if (store.userID != null) b.createdBy = store.userID;
   if (!opts.parent && opts.section?.kind === "teamspace") b.props = { teamspace: opts.section.id };
+  const f = opts.format;
+  if (f && ((f.font && f.font !== "default") || f.smallText || f.fullWidth)) {
+    b.props = { ...(b.props ?? {}), format: { ...(f.font && f.font !== "default" ? { font: f.font } : {}), ...(f.smallText ? { smallText: true } : {}), ...(f.fullWidth ? { fullWidth: true } : {}) } };
+  }
   tx.put({ kind: "block", data: b });
   return id;
 }
