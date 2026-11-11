@@ -162,6 +162,14 @@ Echtzeit-Text (BSD-252, `CollabBinder.unsynced`, Worker `pendingLocal`); nach de
 so überschreibt der Server-Stand nichts. Synced-Block-Originale (eigene Wurzeln, `syncedBlock` ohne `syncSource`) haben
 ein eigenes `/collab`-Dokument (`page:<id>`, BSD-252); Kopien nicht.
 
+## Zeitpläne (BSD-243)
+
+`src/scheduler.ts` prüft alle 30 s (`scheduleEvery`) die Zeitplan-Records aller Agenten und legt fällige Läufe als
+Run-Records an (`queued`; Monatsbudget aufgebraucht → `cancelled` mit Grund) – dieselbe Regel wie die App
+(`claimSchedule` + `scheduledRun` aus `@based/brain`). Wer den Termin zuerst weiterschiebt, legt den Lauf an; verpasste
+Termine werden höchstens einmal nachgeholt. Ausgeführt werden die Läufe von der App (AgentRunner), sobald sie offen ist;
+der Server selbst ruft (noch) keine Modelle auf.
+
 ## Sandbox pro Lauf (BSD-161)
 
 `src/sandbox.ts` (Port von Swift `Sandbox.swift`, `SandboxPart3/4.swift`). `DockerSandboxProvider` steuert die

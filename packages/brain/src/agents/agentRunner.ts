@@ -115,19 +115,13 @@ export class AgentRunner {
   }
 
   async fireSchedules(): Promise<number> {
+    // Gleiche Regel wie der Server-Scheduler (BSD-243): wer den Termin weiterschiebt (claim), legt den Lauf an.
     const now = this.now();
     let fired = 0;
     for (const s of await this.o.backend.schedules()) {
       if (!s.data.enabled || s.data.nextAt === undefined) continue;
       if (!(await this.o.backend.claimSchedule(s.id, now))) continue;
-      const main = await this.o.backend.main();
-      const spent = spentThisMonth(await this.o.backend.runs(), s.data.agentID, now);
-      const exhausted = main.monthlyBudgetEUR !== undefined && spent >= main.monthlyBudgetEUR;
-      await this.o.backend.createRun({
-        kind: "schedule", status: exhausted ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
-        ...(s.data.projectID ? { projectID: s.data.projectID } : {}), ...(s.data.taskID ? { taskID: s.data.taskID } : {}),
-        ...(exhausted ? { result: `Skipped: monthly budget used up (${spent.toFixed(2)} € of ${main.monthlyBudgetEUR!.toFixed(2)} €)` } : {}),
-      });
+      await this.o.backend.createRun(scheduledRun(s, await this.o.backend.main(), await this.o.backend.runs(), now));
       fired += 1;
     }
     return fired;
@@ -211,3 +205,18 @@ export class AgentRunner {
 }
 
 export const runIsActive = (r: RunData) => !isRunFinished(r.status);
+
+/**
+ * BSD-243: Lauf für einen fälligen Zeitplan (nach `claimSchedule`). Gemeinsame Regel für die App (AgentRunner) und
+ * den Server-Scheduler: Monatsbudget des Agenten aufgebraucht → „cancelled“ mit Grund, sonst „queued“. Verpasste
+ * Termine holt `claimSchedule` höchstens einmal nach (es schiebt `nextAt` auf den nächsten künftigen Termin).
+ */
+export function scheduledRun(s: Rec<ScheduleData>, main: AgentData, runs: readonly Rec<RunData>[], nowMs: number): NewRun {
+  const spent = spentThisMonth(runs, s.data.agentID, nowMs);
+  const exhausted = main.monthlyBudgetEUR !== undefined && spent >= main.monthlyBudgetEUR;
+  return {
+    kind: "schedule", status: exhausted ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
+    ...(s.data.projectID ? { projectID: s.data.projectID } : {}), ...(s.data.taskID ? { taskID: s.data.taskID } : {}),
+    ...(exhausted ? { result: `Skipped: monthly budget used up (${spent.toFixed(2)} € of ${main.monthlyBudgetEUR!.toFixed(2)} €)` } : {}),
+  };
+}
