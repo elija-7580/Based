@@ -57,6 +57,7 @@ export { EnexImporter, enexDate, enmlToHTML, parseEnex, type EnexNote, type Enex
 export { md5Hex } from "./interop/md5.js";
 export { exportOPML, importOPML, parseOPML, type OutlineNode as OPMLOutline } from "./interop/opml.js";
 export { DocxImporter, parseXML, type XNode } from "./interop/docx-import.js";
+export { exportPageJSON } from "./interop/json-export.js";
 export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
 export { toRichText, runsOf, replaceInRichText } from "./interop/runs.js";

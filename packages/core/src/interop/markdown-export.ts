@@ -55,11 +55,25 @@ export function visiblePropertyIDs(v: DatabaseView, db: Database): string[] {
 export interface MarkdownExporterOptions {
   pageLink?: PageLink;
   assetLink?: (a: AssetRef) => string;
+  /** BSD-260: Eigenschaften als YAML-Frontmatter (Obsidian & Co.) statt als „Name: Wert“-Zeilen. */
+  frontmatter?: boolean | undefined;
 }
+
+/** YAML-Skalar: einfache Wörter roh, sonst als JSON-String (gültiges YAML). */
+export function yamlScalar(v: string | number | boolean): string {
+  if (typeof v !== "string") return String(v);
+  return /^[\p{L}\p{N}][\p{L}\p{N} _.\/-]*$/u.test(v) && !/^(true|false|null|yes|no|on|off|~)$/i.test(v) && !/^[\d.+-]+$/.test(v) && v.trim() === v ? v : JSON.stringify(v);
+}
+
+const isoDate = (swiftSeconds: number, withTime: boolean) => {
+  const d = new Date(swiftSeconds * 1000 + 978_307_200_000).toISOString();
+  return withTime ? d.replace(/\.\d{3}Z$/, "Z") : d.slice(0, 10);
+};
 
 export class MarkdownExporter {
   readonly pageLink: PageLink;
   readonly assetLink: (a: AssetRef) => string;
+  readonly frontmatter: boolean;
   private engine: QueryEngine | undefined;
 
   constructor(readonly store: WorkspaceStore, opts: MarkdownExporterOptions = {}) {
@@ -68,6 +82,33 @@ export class MarkdownExporter {
       return { title: t, url: encodeURLPath(markdownFileName(t) + ".md") };
     });
     this.assetLink = opts.assetLink ?? ((a) => "assets/" + a.name);
+    this.frontmatter = opts.frontmatter === true;
+  }
+
+  /** BSD-260: YAML-Frontmatter einer Seite (Titel, Icon, Zeiten, Properties einer Datenbankzeile). */
+  frontmatterOf(id: string): string {
+    const page = this.store.blocks.get(id);
+    if (!page) return "";
+    const lines = ["---", `title: ${yamlScalar(titleOf(this.store, id))}`];
+    const icon = page.props?.icon;
+    if (typeof icon === "string" && icon !== "") lines.push(`icon: ${yamlScalar(icon)}`);
+    lines.push(`created: ${isoDate(page.createdAt, true)}`, `updated: ${isoDate(page.updatedAt, true)}`);
+    const db = page.parent.startsWith("d:") ? this.store.databases.get(page.parent.slice(2)) : undefined;
+    for (const p of db ? db.properties : []) {
+      if (p.type === "title" || !db) continue;
+      const v = this.query.value(page, p, db);
+      if (isEmptyValue(v)) continue;
+      const key = yamlScalar(p.name);
+      if (v.t === "list") {
+        lines.push(`${key}:`);
+        for (const item of v.v) lines.push(`  - ${yamlScalar(cellText(this.store, item))}`);
+      } else if (v.t === "date") lines.push(`${key}: ${isoDate(v.v.start, v.v.includeTime)}`);
+      else if (v.t === "number") lines.push(`${key}: ${v.v}`);
+      else if (v.t === "bool") lines.push(`${key}: ${v.v}`);
+      else lines.push(`${key}: ${yamlScalar(cellText(this.store, v))}`);
+    }
+    lines.push("---");
+    return lines.join("\n");
   }
 
   private get query() { return (this.engine ??= new QueryEngine(this.store)); }
@@ -77,9 +118,10 @@ export class MarkdownExporter {
     const page = this.store.blocks.get(id);
     if (!page) return "";
     const lines: string[] = [];
+    if (this.frontmatter) lines.push(this.frontmatterOf(id), "");
     if (includeTitle) lines.push("# " + titleOf(this.store, id), "");
     const db = page.parent.startsWith("d:") ? this.store.databases.get(page.parent.slice(2)) : undefined;
-    if (db) {
+    if (db && !this.frontmatter) {
       const props: string[] = [];
       for (const p of db.properties) {
         if (p.type === "title") continue;

@@ -187,6 +187,25 @@ test("Word-Dokument (.docx) importieren (BSD-260)", async ({ page }) => {
   await expect(content.locator("img").first()).toBeVisible();
 });
 
+test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => {
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Export page" });
+  await dialog.getByRole("radio", { name: /Markdown/ }).click();
+  await dialog.getByTestId("markdown-export-options").getByText("Properties as YAML front matter").click();
+  const [md] = await Promise.all([page.waitForEvent("download"), dialog.getByRole("button", { name: "Export", exact: true }).click()]);
+  const text = readFileSync((await md.path())!, "utf8");
+  expect(text).toMatch(/^---\ntitle: Welcome to Based\n(icon: .+\n)?created: \d{4}-\d{2}-\d{2}T/);
+  expect(text).toContain("---\n\n# Welcome to Based");
+  await dialog.getByRole("radio", { name: /JSON/ }).click();
+  await expect(dialog.getByTestId("markdown-export-options")).toHaveCount(0);
+  const [json] = await Promise.all([page.waitForEvent("download"), dialog.getByRole("button", { name: "Export", exact: true }).click()]);
+  expect(json.suggestedFilename()).toMatch(/^Welcome.to.Based\.json$/);
+  const v = JSON.parse(readFileSync((await json.path())!, "utf8"));
+  expect(v).toMatchObject({ format: "based.page", version: 1, title: "Welcome to Based" });
+  expect(v.blocks.length).toBeGreaterThan(0);
+});
+
 test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
