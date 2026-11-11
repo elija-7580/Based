@@ -369,7 +369,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
     </button>
   );
   const syncStatus = (
-    <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
+    <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-sync={status.sync ?? status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
       <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
       {SYNC_LABEL[status.state]}
       {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}

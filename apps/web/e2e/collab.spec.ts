@@ -46,7 +46,7 @@ async function connect(page: Page, serverURL: string) {
   await page.getByLabel("Server URL").fill(serverURL);
   await page.getByLabel("Token").fill(TOKEN);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "synced", { timeout: 20_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
   const live = page.getByRole("switch", { name: /Real-time text/ });
   await live.click();
   await expect(live).toBeChecked();

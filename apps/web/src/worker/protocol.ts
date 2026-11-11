@@ -40,6 +40,8 @@ export interface StatusInfo {
   canRedo: boolean;
   /** Dateien (BSD-78): nur gesetzt, wenn etwas aussteht oder gescheitert ist. */
   assets?: AssetsInfo;
+  /** BSD-287: Zustand des Syncs selbst (auch wenn `state` „memory“ zeigt). */
+  sync?: SyncState;
   /** BSD-286: Uhr dieses Geräts weicht von der Server-Uhr ab (Sekunden, Server minus Gerät); nur über der Grenze. */
   clockSkew?: number;
 }

@@ -59,7 +59,7 @@ async function connect(page: Page, opts: { dark?: boolean } = {}) {
   await page.getByLabel("Server URL").fill(serverURL);
   await page.getByLabel("Token").fill(TOKEN);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "synced", { timeout: 20_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
 }
 
 async function newPage(page: Page, title: string, text: string) {

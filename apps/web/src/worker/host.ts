@@ -1094,12 +1094,20 @@ export class StoreHost {
     const store = this.ws?.store;
     let state = this.syncState;
     let detail = this.syncDetail;
+    const syncState = state;
     if (store?.isReadOnly) {
       state = "readonly";
       detail = store.writeFailure?.message;
+    } else if (this.ws && !this.ws.persistent && state !== "error" && state !== "starting") {
+      // BSD-287 (Swift BSD-15): nur im Speicher bleibt sichtbar, auch wenn der Sync läuft – sonst stünde „Synced“
+      // da, und Änderungen ohne Netz gingen beim Schließen still verloren. Der Sync-Zustand steht im Detail.
+      const sync = state === "memory" ? undefined : state;
+      state = "memory";
+      detail = [this.ws.note ?? "In memory only", sync ? `sync: ${sync}${detail ? ` (${detail})` : ""}` : undefined].filter(Boolean).join(" · ");
     }
     const s: StatusInfo = { state, persistent: this.ws?.persistent ?? false, canUndo: store?.canUndo ?? false, canRedo: store?.canRedo ?? false };
     if (detail) s.detail = detail;
+    if (state !== syncState) s.sync = syncState;
     if (this.sync?.clockSkew !== undefined) s.clockSkew = Math.round(this.sync.clockSkew / 1000);
     const a = this.assets?.status();
     if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {

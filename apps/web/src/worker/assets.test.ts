@@ -363,3 +363,20 @@ describe("pendingLocal (BSD-252)", () => {
     await expect.poll(() => a.client.pendingLocal(homePageID!), { timeout: 8_000 }).toBe(false);
   }, 15_000);
 });
+
+// BSD-287: Nur im Speicher bleibt sichtbar, auch wenn der Sync läuft.
+describe("Speicher-Modus bei laufendem Sync (BSD-287)", () => {
+  it("Status bleibt „memory“, Sync-Zustand steht im Detail", async () => {
+    const server = fakeServer();
+    const a = device(server.fetcher, {
+      migrateDelayMs: 60_000,
+      open: async ({ device: d }) => ({ ...openWorkspace(openNodeDatabase(), { device: d }), persistent: false, note: "Not saved on this device: OPFS busy" }),
+    });
+    await a.client.init({ sync });
+    await expect.poll(() => a.host.status().detail ?? "").toContain("sync: synced");
+    const st = a.host.status();
+    expect(st.state).toBe("memory");
+    expect(st.persistent).toBe(false);
+    expect(st.detail).toContain("OPFS busy");
+  });
+});
