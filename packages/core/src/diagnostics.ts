@@ -97,7 +97,8 @@ export function beginSession(storage: DiagnosticsStorage, now: number): SessionR
 export function heartbeat(storage: DiagnosticsStorage, now: number, update: Partial<Pick<SessionRecord, "stalls" | "log">> = {}) {
   const cur = read(storage, SESSION_KEY);
   if (!cur) return;
-  write(storage, SESSION_KEY, { ...cur, ...update, lastBeat: now });
+  // Wer noch schlägt, lebt: ein „sauber beendet“ (z. B. Fenster schließen, das dann doch offen blieb) gilt nicht mehr.
+  write(storage, SESSION_KEY, { ...cur, ...update, lastBeat: now, clean: false });
 }
 
 export function endSession(storage: DiagnosticsStorage, now: number, log?: DiagnosticsEntry[]) {

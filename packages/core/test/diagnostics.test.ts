@@ -43,6 +43,14 @@ describe("Diagnose (BSD-227)", () => {
     expect(buildReport({ version: "1.0" }, crashed, [], 9000)).toContain("boom");
   });
 
+  it("Sitzung: wer nach einem „sauber beendet“ weiter schlägt, lebt noch (Fenster schließen, das offen blieb)", () => {
+    const s = memory();
+    beginSession(s, 1000);
+    endSession(s, 2000);
+    heartbeat(s, 3000);
+    expect(beginSession(s, 4000)!.clean).toBe(false);
+  });
+
   it("kaputte Marke im Speicher wird ignoriert", () => {
     const s = memory();
     s.data.set("based.diagnostics.session", "{kaputt");

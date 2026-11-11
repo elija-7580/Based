@@ -26,11 +26,13 @@ import { connectAssets } from "./assetBridge.js";
 import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
-import { diagnosticsLog, installDiagnostics } from "./shell/diagnostics.js";
+import { bootMark, diagnosticsLog, installDiagnostics } from "./shell/diagnostics.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
 installDiagnostics();
+// Zeit bis hierher = Laden und Auswerten aller Skripte (die Importe oben laufen vor dieser Zeile).
+bootMark("scripts loaded");
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(appearanceStore.get());
@@ -107,7 +109,10 @@ function start(guest: GuestBoot | undefined) {
   {
     let last = "";
     client.subscribe(() => {
-      const st = client.getState().status;
+      const whole = client.getState();
+      bootMark("store answered");
+      if (whole.ready && whole.outline) bootMark("store ready", `${Object.keys(whole.outline?.nodes ?? {}).length} pages`);
+      const st = whole.status;
       const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}`;
       if (line === last) return;
       last = line;
@@ -150,6 +155,7 @@ function start(guest: GuestBoot | undefined) {
   function Root() {
     const appearance = useSyncExternalStore(appearanceStore.subscribe, appearanceStore.get);
     const [, bump] = useState(0);
+    useEffect(() => bootMark("first render"), []);
     useEffect(() => (appearance.theme === "system" ? onSystemThemeChange(() => bump((n) => n + 1)) : undefined), [appearance.theme]);
     return (
       <Theme theme={astryxThemes[appearance.density]} mode={effectiveTheme(appearance)}>
@@ -161,7 +167,9 @@ function start(guest: GuestBoot | undefined) {
   const root = document.getElementById("root");
   if (!root) throw new Error("#root fehlt");
   // Sync-Server erst aus IndexedDB lesen (wenige ms), damit die Einstellungen ihn beim ersten Zeichnen kennen.
+  bootMark("shell started");
   void syncConfig.load().finally(() => {
+    bootMark("settings read");
     createRoot(root).render(<StrictMode><Root /></StrictMode>);
   });
 }

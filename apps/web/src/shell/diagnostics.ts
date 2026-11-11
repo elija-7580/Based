@@ -20,6 +20,25 @@ function storage(): DiagnosticsStorage {
 }
 
 export const diagnosticsLog = new DiagnosticsLog();
+
+// Start-Marken: Wo beim Start die Zeit bleibt. Ein Hänger nennt die letzte Marke, damit ein Bericht vom Mac zeigt,
+// in welchem Abschnitt der Hauptthread stand (Feedback 11. 11.: „main thread blocked for 26485 ms“ ohne Ort).
+let phase = "page load";
+const marked = new Set<string>();
+const sinceLoad = () => Math.round(globalThis.performance?.now?.() ?? 0);
+
+/** Marke im Diagnose-Log (jede nur einmal): `boot: <name> +<ms seit Seitenstart>`. Keine Nutzerinhalte übergeben. */
+export function bootMark(name: string, detail?: string) {
+  if (marked.has(name)) return;
+  marked.add(name);
+  phase = name;
+  diagnosticsLog.add("info", `boot: ${name} +${sinceLoad()} ms${detail ? ` (${detail})` : ""}`);
+}
+
+/** Sitzung als sauber beendet markieren (Fenster/App schließt). Schlägt die Sitzung danach weiter, gilt das nicht mehr. */
+export function markSessionEnd() {
+  endSession(storage(), Date.now(), diagnosticsLog.all.slice(-50));
+}
 let previous: SessionRecord | undefined;
 let stalls = 0;
 let installed = false;
@@ -54,7 +73,8 @@ export function installDiagnostics(win: Window & typeof globalThis = globalThis 
     stop = startStallDetector({
       onStall: (ms) => {
         stalls += 1;
-        diagnosticsLog.add("warning", `main thread blocked for ${Math.round(ms)} ms`);
+        const doc = win.document;
+        diagnosticsLog.add("warning", `main thread blocked for ${Math.round(ms)} ms (after “${phase}”, window ${doc.hasFocus() ? "focused" : "not focused"})`);
       },
     });
   };
@@ -64,6 +84,8 @@ export function installDiagnostics(win: Window & typeof globalThis = globalThis 
   const beat = () => heartbeat(store, Date.now(), { stalls, log: diagnosticsLog.all.slice(-50) });
   win.setInterval(beat, 10_000);
   win.addEventListener("pagehide", () => endSession(store, Date.now(), diagnosticsLog.all.slice(-50)));
+  // WKWebView (Desktop-Hülle) meldet pagehide beim Beenden der App nicht zuverlässig; beforeunload zusätzlich.
+  win.addEventListener("beforeunload", () => endSession(store, Date.now(), diagnosticsLog.all.slice(-50)));
   // Wird die Seite aus dem Back/Forward-Cache zurückgeholt, läuft die Sitzung weiter.
   win.addEventListener("pageshow", (e: PageTransitionEvent) => { if (e.persisted) beginSession(store, Date.now()); });
 }
