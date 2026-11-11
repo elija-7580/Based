@@ -1,7 +1,7 @@
 // Teilen (docs/sharing.md): Rollen und Vererbung, gefilterter Pull/Push, Löschung beim Herausbewegen, gehashte
 // Geheimnisse, Widerruf, Einladungen, Publish to web (ohne Token lesbar, privater Bereich nicht).
 import { createHash } from "node:crypto";
-import { keyOf } from "@based/core";
+import { dbops, keyOf } from "@based/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { META_KEY } from "../src/share.js";
 import { auth, get, post, startApp } from "./helpers.js";
@@ -397,5 +397,82 @@ describe("Gast-Modus (BSD-235)", () => {
     expect((await get(`${app.url}/share/v1/resolve?path=/s/bdl_unknown`)).status).toBe(404);
     await post(`${app.url}/share/v1/links/${access.body.id}/revoke`, {});
     expect((await get(`${app.url}/share/v1/resolve?path=${encodeURIComponent(access.body.path!)}`)).status).toBe(404);
+  });
+});
+
+// BSD-279 (Review): Was eine geteilte oder veröffentlichte Seite über Dinge außerhalb ihres Bereichs verrät.
+describe("Review BSD-279: Leseansicht verrät nichts von außerhalb des Bereichs", () => {
+  async function world() {
+    const s = await setup();
+    const store = s.app.sync.store;
+    // privat: Datenbank „Clients“ mit einer Zeile
+    const clients = dbops.createDatabase(store, { parent: "w", title: "Clients", sampleRows: 0 });
+    const revenue = dbops.addProperty(store, clients.databaseID, "Revenue", "number")!;
+    const acme = dbops.addRow(store, clients.databaseID)!;
+    dbops.setRowTitle(store, acme, "Acme Corp");
+    dbops.setValue(store, acme, revenue, dbops.pv("number", 987654));
+    // geteilt: Datenbank „Tasks“ mit Relation und Rollup auf „Clients“
+    const tasks = dbops.createDatabase(store, { parent: "b:" + s.shared, title: "Tasks", sampleRows: 0, inline: true });
+    const rel = dbops.addProperty(store, tasks.databaseID, "Client", "relation")!;
+    dbops.setRelationTarget(store, tasks.databaseID, rel, clients.databaseID);
+    const roll = dbops.addProperty(store, tasks.databaseID, "Client revenue", "rollup")!;
+    dbops.setRollup(store, tasks.databaseID, roll, { relationPropertyID: rel, targetPropertyID: revenue, function: "sum" });
+    const fx = dbops.addProperty(store, tasks.databaseID, "Who", "formula")!;
+    dbops.updateProperty(store, tasks.databaseID, fx, (q) => { q.formula = 'prop("Client")'; }, "Formula");
+    const row = dbops.addRow(store, tasks.databaseID)!;
+    dbops.setRowTitle(store, row, "Send offer");
+    dbops.setValue(store, row, rel, dbops.pv("relation", [acme]));
+    // geteilt: Erwähnung und Link auf die private Seite
+    const para = store.children("b:" + s.shared)[0]!;
+    store.transact("Mention", (tx) => {
+      tx.update(para, (b) => { b.text = [{ t: "see " }, { t: "x", mention: { page: { _0: s.priv } } }]; });
+      const base = structuredClone(store.blocks.get(para)!);
+      tx.put({ kind: "block", data: { ...base, id: "33333333-3333-4333-8333-333333333333", type: "linkToPage", text: "", props: { linkTarget: s.priv }, sk: base.sk + "V" } });
+    });
+    return { ...s, store, clients, tasks, acme, row, para };
+  }
+  const SECRETS = ["Private Diary", "Acme Corp", "987654", "987,654", "secret thoughts"];
+
+  it("veröffentlichte Seite: keine Titel privater Seiten (Erwähnung, Link, Relation), keine Rollup-/Formelwerte daraus", async () => {
+    const w = await world();
+    const { body } = await createLink(w.app.url, w.shared, "publish", "view");
+    const page = await text(`${w.app.url}${body.path}`);
+    expect(page.status).toBe(200);
+    expect(page.body).toContain("Send offer");
+    expect(page.body).toContain("Tasks");
+    for (const secret of SECRETS) expect(page.body).not.toContain(secret);
+    // die Zeile als eigene Seite (Eigenschaften-Tabelle)
+    const rowPage = await text(`${w.app.url}/p/${body.id}/${w.row}`);
+    expect(rowPage.status).toBe(200);
+    for (const secret of SECRETS) expect(rowPage.body).not.toContain(secret);
+    // Erwähnung bleibt als Platzhalter sichtbar
+    expect(page.body).toContain("No access");
+  });
+
+  it("Gast mit Bearbeiten-Link kann über einen verknüpften Datenbank-Block keine private Datenbank auslesen", async () => {
+    const w = await world();
+    const secret = (await createLink(w.app.url, w.shared, "access", "edit")).body.secret!;
+    // Die ID der privaten Datenbank steht in der Relation der geteilten Datenbank, der Gast kennt sie also.
+    const pulled = await get(`${w.app.url}/sync/v2/pull?after=0&limit=5000`, bearer(secret));
+    expect(JSON.stringify(pulled.body)).toContain(w.clients.databaseID);
+    expect(JSON.stringify(pulled.body)).not.toContain("Acme Corp");
+    const base = structuredClone(w.store.blocks.get(w.para)!);
+    const spy = { ...base, id: "44444444-4444-4444-8444-444444444444", type: "databaseInline", text: "", props: { databaseID: w.clients.databaseID, viewIDs: [] }, sk: base.sk + "W", stamp: { millis: Date.now() + 5000, counter: 0, node: "guest" } };
+    const pushed = await post(`${w.app.url}/sync/v2/push`, { records: [{ kind: "block", data: spy }], deletions: [] }, bearer(secret));
+    expect(pushed.status).toBe(200);
+    const page = await text(`${w.app.url}/s/${secret}`);
+    expect(page.status).toBe(200);
+    for (const s of SECRETS) expect(page.body).not.toContain(s);
+    // derselbe Block als Ziel der Leseansicht
+    const direct = await text(`${w.app.url}/s/${secret}/${spy.id}`);
+    for (const s of SECRETS) expect(direct.body).not.toContain(s);
+  });
+
+  it("Datei-Export des Besitzers zeigt weiter alles", async () => {
+    const w = await world();
+    const { HTMLExporter, exportHTMLPage } = await import("@based/core");
+    const html = exportHTMLPage(new HTMLExporter(w.store), w.shared, {});
+    expect(html).toContain("Private Diary");
+    expect(html).toContain("Acme Corp");
   });
 });

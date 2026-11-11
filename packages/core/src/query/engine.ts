@@ -161,6 +161,12 @@ export interface QueryEngineOptions {
   now?: number;
   /** Erster Wochentag für Wochengruppen (0 = Sonntag, Standard 1 = Montag wie Calendar.current in Wien und unter Linux). */
   weekStart?: number;
+  /**
+   * BSD-279: Welche Seiten der Leser sehen darf (geteilte und veröffentlichte Seiten). Relationen, Rollups und
+   * Formeln rechnen dann nur über lesbare Seiten – was der Leser nicht sehen darf, fließt in keinen Wert ein.
+   * Ohne Angabe: alles.
+   */
+  canRead?: (blockID: string) => boolean;
 }
 
 export class QueryEngine {
@@ -181,6 +187,12 @@ export class QueryEngine {
   constructor(readonly store: WorkspaceStore, opts: QueryEngineOptions = {}) {
     this.now = opts.now ?? fromJSDate(new Date());
     this.weekStart = opts.weekStart ?? 1;
+    this.canRead = opts.canRead;
+  }
+
+  private readonly canRead: ((blockID: string) => boolean) | undefined;
+  private readable(id: string): boolean {
+    return this.canRead === undefined || this.canRead(id);
   }
 
   reset(now = fromJSDate(new Date())) {
@@ -253,7 +265,7 @@ export class QueryEngine {
       case "button": case "verification": v = EMPTY; break;
       case "relation": {
         const c = enumCase(row.values?.[p.id]);
-        if (c && c[0] === "relation" && Array.isArray(c[1])) v = list(liveRelationTargets(this.store, c[1] as string[]).map((id) => ({ t: "page", v: id })));
+        if (c && c[0] === "relation" && Array.isArray(c[1])) v = list(liveRelationTargets(this.store, c[1] as string[]).filter((id) => this.readable(id)).map((id) => ({ t: "page", v: id })));
         else v = QueryEngine.valueOf(row.values?.[p.id], p);
         break;
       }
@@ -329,6 +341,7 @@ export class QueryEngine {
         return this.value(row, q, db);
       },
       pageProp: (pid, name) => {
+        if (!this.readable(pid)) return EMPTY;
         const r = this.store.blocks.get(pid), d = databaseOfRow(this.store, pid);
         if (!r || !d) {
           const l = name.toLowerCase();
@@ -338,7 +351,7 @@ export class QueryEngine {
         if (!q) throw new FormulaError(`Property “${name}” not found`);
         return this.value(r, q, d);
       },
-      pageTitle: (id) => titleOf(this.store, id),
+      pageTitle: (id) => (this.readable(id) ? titleOf(this.store, id) : ""),
       personName: (id) => (id === "me" ? "Me" : id),
       personEmail: () => "",
       currentPage: row.id,
@@ -354,7 +367,7 @@ export class QueryEngine {
     const c = enumCase(row.values?.[rel.id]);
     if (!c || c[0] !== "relation") return QueryEngine.aggregate([], cfg.function, undefined);
     const tp = propertyById(target, cfg.targetPropertyID) ?? titleProperty(target);
-    const values = (c[1] as string[]).map((id) => this.store.blocks.get(id)).filter((b): b is Block => !!b && !isTrashed(this.store, b.id))
+    const values = (c[1] as string[]).map((id) => this.store.blocks.get(id)).filter((b): b is Block => !!b && !isTrashed(this.store, b.id) && this.readable(b.id))
       .map((b) => this.value(b, tp, target));
     return QueryEngine.aggregate(values, cfg.function, tp);
   }
@@ -625,7 +638,7 @@ export class QueryEngine {
       const idx = (c[1] as string[]).map((id) => p.options?.findIndex((o) => o.id === id) ?? -1).filter((i) => i >= 0).sort((a, b) => a - b);
       return list(idx.map(num));
     }
-    if (p.type === "relation" && c?.[0] === "relation") return list((c[1] as string[]).map((id) => str(titleOf(this.store, id))));
+    if (p.type === "relation" && c?.[0] === "relation") return list((c[1] as string[]).filter((id) => this.readable(id)).map((id) => str(titleOf(this.store, id))));
     return this.value(row, p, db);
   }
 
