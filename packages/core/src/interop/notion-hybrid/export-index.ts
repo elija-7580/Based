@@ -88,7 +88,9 @@ export class NotionExportIndex {
  * Spaltentypen – dafür bleibt der gewöhnliche ZIP-Import).
  */
 export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExportOptions = {}): NotionExportIndex {
-  const limits = { ...DEFAULT_ZIP_LIMITS, ...opts.limits };
+  // Nichts wird vorab entpackt, deshalb darf das Verzeichnis groß sein (ein Workspace mit 20.000 Seiten und ihren
+  // Bildern hat schnell über 100.000 Einträge). Die Grenzen je Datei gelten weiter.
+  const limits = { ...DEFAULT_ZIP_LIMITS, maxEntries: 1_000_000, ...opts.limits };
   const index = new NotionExportIndex();
   const state = { entries: 0 };
   const visit = (src: ByteSource, prefix: string, depth: number) => {
@@ -104,7 +106,8 @@ export function openNotionExport(input: Uint8Array | ByteSource, opts: OpenExpor
       if (isDirectoryEntry(entry)) { index.files.addDirectory(dest); continue; }
       if (isEncryptedEntry(entry)) { index.skipped.push(`${rel} — encrypted`); continue; }
       if (entry.method !== 0 && entry.method !== 8) { index.skipped.push(`${rel} — compression method ${entry.method}`); continue; }
-      if (entry.uncompressedSize > limits.maxEntryBytes) throw new ZipError("limit", `${rel} is larger than ${limits.maxEntryBytes} bytes`);
+      if (entry.uncompressedSize > limits.maxEntryBytes) { index.skipped.push(`${rel} — larger than ${limits.maxEntryBytes} bytes`); continue; }
+      if (entry.uncompressedSize > 1_000_000 && entry.uncompressedSize > entry.compressedSize * limits.maxRatio) { index.skipped.push(`${rel} — expands more than ${limits.maxRatio}×`); continue; }
       if (extname(rel).toLowerCase() === "zip" && depth < limits.maxDepth) {
         try {
           if (entry.method === 0 && entry.compressedSize >= 4) {
