@@ -72,8 +72,8 @@ type Phase =
   | { k: "error"; message: string };
 
 /** Import-Dialog. `onOpenPage` (optional) bietet an, die erste importierte Seite zu öffnen. */
-export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreClient; onClose: () => void; onOpenPage?: (id: string) => void }) {
-  const [phase, setPhase] = useState<Phase>({ k: "pick" });
+export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: { client: StoreClient; onClose: () => void; onOpenPage?: (id: string) => void; initial?: "pick" | "notion" }) {
+  const [phase, setPhase] = useState<Phase>({ k: initial });
   const running = useRef<PreparingImport | undefined>(undefined);
   const files = useRef<HTMLInputElement>(null);
   const folder = useRef<HTMLInputElement>(null);
@@ -140,7 +140,7 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
         </>
       ) : null}
       {phase.k === "notion" ? (
-        <NotionImport client={client} onBack={() => setPhase({ k: "pick" })} onBusy={setNotionBusy}
+        <NotionImport client={client} onBack={() => setPhase({ k: "pick" })} onBusy={setNotionBusy} onClose={onClose}
           onDone={(summary, report) => setPhase({ k: "done", summary, report })} />
       ) : null}
       {busy && phase.k !== "notion" ? (

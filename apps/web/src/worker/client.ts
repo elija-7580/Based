@@ -18,7 +18,7 @@ import type { DueItem } from "@based/brain/home";
 import type { MeetingListItem, UnlinkedMentionInfo } from "./protocol.js";
 import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
 import type { AgentAction } from "./agents.js";
-import type { JSONValue, SearchFilters, SearchSort } from "@based/core";
+import type { HybridContentResult, HybridPageContent, HybridPendingPage, HybridStructureResult, HybridStructureWire, JSONValue, SearchFilters, SearchSort } from "@based/core";
 import type { ChatLoaded, ToolCatalog } from "./chat.js";
 import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Endpoint, Event, GraphResult, HistoryContent, HistoryList, HistoryRestoreResult, InitResult, PageInfo, PageRecords, Request, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncedRecords } from "./protocol.js";
 
@@ -308,6 +308,17 @@ export class StoreClient {
   /** BSD-283: abgebrochener Import – schon abgelegte, unbenutzte Dateien wieder entfernen. */
   discardImport(): Promise<number> {
     return this.request<number>({ type: "discardImport" });
+  }
+
+  /** BSD-317: Schritte des Hybrid-Notion-Imports im Store-Worker (Dateien vorher über `importAsset`). */
+  hybridStructure(wire: HybridStructureWire, parent?: string): Promise<HybridStructureResult> {
+    return this.request<HybridStructureResult>(parent ? { type: "hybridStructure", wire, parent } : { type: "hybridStructure", wire });
+  }
+  hybridPending(): Promise<HybridPendingPage[]> {
+    return this.request<HybridPendingPage[]>({ type: "hybridPending" });
+  }
+  hybridContent(batch: HybridPageContent[]): Promise<HybridContentResult> {
+    return this.request<HybridContentResult>({ type: "hybridContent", batch });
   }
 
   commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {

@@ -1,7 +1,7 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, WireRecord } from "@based/core";
+import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, HybridPageContent, HybridStructureWire, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { PageExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
@@ -197,6 +197,10 @@ export type Request =
   | { type: "importAsset"; assetID: string; name: string; mime?: string; bytes: Uint8Array }
   /** BSD-283: abgebrochener Import – schon abgelegte Dateien wieder entfernen (nur neue, nur unbenutzte). */
   | { type: "discardImport" }
+  /** BSD-317: Hybrid-Notion-Import – Struktur schreiben, Warteschlange lesen, Seiteninhalt einsetzen (packages/core, notion-hybrid). */
+  | { type: "hybridStructure"; wire: HybridStructureWire; parent?: string }
+  | { type: "hybridPending" }
+  | { type: "hybridContent"; batch: HybridPageContent[] }
   /** Exporte (Antwort: ExportFile). */
   | { type: "exportPage"; pageID: string; format: PageExportFormat; html?: HTMLExportChoice }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat; html?: HTMLExportChoice }

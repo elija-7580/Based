@@ -21,6 +21,7 @@ import { meetingHost } from "../editorSlot.js";
 import { keyLabel } from "../shell/keyHints.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
+import { HybridImportPill } from "./NotionHybrid.js";
 
 /** Nur geschlossene Formen werden im aktiven Zustand gefüllt (Lupe und Zahnrad nicht). */
 const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
@@ -57,6 +58,8 @@ interface Props {
   onOpenPage: (id: string) => void;
   onNewPage: (opts?: { parent?: string; section?: string }) => Promise<string | undefined>;
   onQuickFind: () => void;
+  /** BSD-317: Stand des Notion-Imports angeklickt. */
+  onImportStatus?: (() => void) | undefined;
   /** BSD-281: erweiterter Agenten-Modus („Show agent details“) – nur dann steht Coding in der Leiste. */
   advanced?: boolean;
 }
@@ -67,7 +70,7 @@ interface Menu {
   y: number;
 }
 
-export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, advanced = false }: Props) {
+export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, onImportStatus, advanced = false }: Props) {
   const { outline, titles, status } = state;
   const [expanded, setExpanded] = useState<Set<string>>(expandedPages.get);
   const [collapsed, setCollapsed] = useState<Set<string>>(collapsedSections.get);
@@ -466,6 +469,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         renderRow={renderRow}
         revealIndex={reveal}
       />
+      {onImportStatus ? <HybridImportPill onOpen={onImportStatus} /> : null}
       {FOOTER_STYLE === "icons" ? (
         <div className="sidebar-footer icons" role="group" aria-label="Workspace tools">
           {syncStatus}

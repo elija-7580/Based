@@ -59,6 +59,13 @@ import {
   type WireRecord,
   type WorkspaceStore,
   assetIDsInStore,
+  commitHybridContent,
+  commitHybridStructure,
+  hybridPending,
+  type HybridContentResult,
+  type HybridPageContent,
+  type HybridStructureResult,
+  type HybridStructureWire,
   remapAssetRefs,
   remapStoreAssets,
   type SearchFilters,
@@ -200,6 +207,9 @@ export class StoreHost {
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
         case "importAsset": reply(await this.importAsset(msg.assetID, msg.bytes, msg.name, msg.mime)); break;
+        case "hybridStructure": reply(this.hybridStructure(msg.wire, msg.parent)); break;
+        case "hybridPending": reply(hybridPending(this.store)); break;
+        case "hybridContent": reply(this.hybridContent(msg.batch)); break;
         case "discardImport": reply(await this.discardImport()); break;
         case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.exportAssets(), msg.html)); break;
         case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.exportAssets(), msg.html)); break;
@@ -989,6 +999,23 @@ export class StoreHost {
       removed += 1;
     }
     return removed;
+  }
+
+  /**
+   * BSD-317: Hybrid-Notion-Import. Anders als `commitImport` läuft er in vielen Schritten: die Zuordnung vorläufiger
+   * Datei-IDs bleibt deshalb stehen (jeder Schritt schreibt nur die Verweise um, die er enthält).
+   */
+  private hybridStructure(wire: HybridStructureWire, parent?: string): HybridStructureResult {
+    const r = commitHybridStructure(this.store, remapAssetRefs(wire, this.importedAssetIDs), parent);
+    if (this.store.isReadOnly) throw new Error(this.store.writeFailure?.message || "The workspace is read-only.");
+    return r;
+  }
+
+  private hybridContent(batch: HybridPageContent[]): HybridContentResult {
+    const r = commitHybridContent(this.store, remapAssetRefs(batch, this.importedAssetIDs));
+    if (this.store.isReadOnly) throw new Error(this.store.writeFailure?.message || "The workspace is read-only.");
+    this.importCreatedHashes.clear();
+    return r;
   }
 
   private async commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {

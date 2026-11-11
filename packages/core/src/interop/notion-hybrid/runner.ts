@@ -300,7 +300,7 @@ const LABEL: Record<HybridDeviationKind, (n: number) => string> = {
   missingInZip: (n) => `${n} page${n === 1 ? " is" : "s are"} in Notion but not in the export — read through the API instead`,
   editedAfterExport: (n) => `${n} page${n === 1 ? " was" : "s were"} edited in Notion around or after the export — read through the API instead`,
   onlyInZip: (n) => `${n} page${n === 1 ? " is" : "s are"} only in the export (not shared with the integration, or deleted since) — imported from the ZIP without views and relations`,
-  titleDiffers: (n) => `${n} page title${n === 1 ? "" : "s"} differ between the export and Notion — kept Notion's`,
+  titleDiffers: (n) => `${n} page title${n === 1 ? " differs" : "s differ"} between the export and Notion — kept Notion’s`,
   conflict: (n) => `${n} page${n === 1 ? " was" : "s were"} changed in both Notion and Based — kept the Based version`,
   unmatchedDatabase: (n) => `${n} embedded database${n === 1 ? "" : "s"} or sub-page${n === 1 ? "" : "s"} in the export couldn't be matched to Notion`,
   danglingRelation: (n) => `${n} row${n === 1 ? " has" : "s have"} relations to pages that weren't imported (not shared with the integration)`,
@@ -314,8 +314,13 @@ export function hybridDeviationWarnings(deviations: readonly HybridDeviation[], 
   for (const d of deviations) by.set(d.kind, [...(by.get(d.kind) ?? []), d]);
   const out: string[] = [];
   for (const [kind, list] of by) {
-    const names = [...new Set(list.map((d) => (d.detail !== undefined && (kind === "titleDiffers" || kind === "unmatchedDatabase") ? `${d.title} (${d.detail})` : d.title)))];
-    const shown = names.slice(0, sample).map((t) => `“${t}”`).join(", ");
+    const name = (d: HybridDeviation) => {
+      if (d.detail !== undefined && kind === "titleDiffers") return `“${d.title}” (export: “${d.detail}”)`;
+      if (d.detail !== undefined && kind === "unmatchedDatabase") return `“${d.detail}” on “${d.title}”`;
+      return `“${d.title}”`;
+    };
+    const names = [...new Set(list.map(name))];
+    const shown = names.slice(0, sample).join(", ");
     out.push(`${LABEL[kind](list.length)}: ${shown}${names.length > sample ? `, and ${names.length - sample} more` : ""}.`);
   }
   return out;
