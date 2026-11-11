@@ -766,6 +766,40 @@ export function forgetOption(view: DatabaseView, optionID: string, propertyID: s
 
 // MARK: Relationen-Integrität (BSD-31)
 
+/**
+ * BSD-248 (Swift `unlinkRemovedRows`): bevor `ids` endgültig verschwinden, verlieren Relationswerte anderswo die
+ * entfernten Zeilen, und Relationen in eine entfernte Datenbank werden one-way (ihr Spiegel ist weg).
+ */
+export function unlinkRemovedRows(store: WorkspaceStore, ids: ReadonlySet<string>, tx: Tx) {
+  const rowDBs = new Set<string>(), removedDBs = new Set<string>();
+  for (const id of ids) {
+    const b = store.blocks.get(id);
+    if (!b) continue;
+    if (b.parent.startsWith("d:")) rowDBs.add(b.parent.slice(2));
+    const d = b.props?.databaseID;
+    if (d && store.databases.get(d)?.blockID === id) removedDBs.add(d);
+  }
+  if (rowDBs.size === 0 && removedDBs.size === 0) return;
+  for (const db of [...store.databases.values()]) {
+    if (removedDBs.has(db.id)) continue;
+    const rels = db.properties.filter((p) => p.type === "relation" && p.relation && rowDBs.has(p.relation.databaseID));
+    if (rels.length > 0) {
+      for (const r of allRows(store, db.id)) {
+        if (ids.has(r.id)) continue;
+        for (const p of rels) {
+          const raw = r.values?.[p.id] as { relation?: { _0?: unknown } } | undefined;
+          const targets = raw?.relation?._0;
+          if (!Array.isArray(targets) || !targets.some((t) => ids.has(t as string))) continue;
+          const rest = (targets as string[]).filter((t) => !ids.has(t));
+          tx.update(r.id, (b) => setRowValue(b, p.id, rest.length === 0 ? null : ({ relation: { _0: rest } } as PropertyValue)));
+        }
+      }
+    }
+    const orphaned = db.properties.filter((p) => p.relation && removedDBs.has(p.relation.databaseID) && p.relation.syncedPropertyID !== undefined).map((p) => p.id);
+    if (orphaned.length > 0) updDB(tx, store, db.id, (d) => { for (const p of d.properties) if (orphaned.includes(p.id) && p.relation) delete p.relation.syncedPropertyID; });
+  }
+}
+
 function detachMirror(store: WorkspaceStore, tx: Tx, databaseID: string, propertyID: string) {
   const rel = store.databases.get(databaseID)?.properties.find((p) => p.id === propertyID)?.relation;
   const mirror = rel?.syncedPropertyID;

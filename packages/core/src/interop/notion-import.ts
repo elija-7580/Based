@@ -23,6 +23,7 @@ import { markdownFileName } from "./markdown-export.js";
 import { findObsidianVault, ObsidianImporter } from "./obsidian-import.js";
 import { EnexImporter } from "./enex-import.js";
 import { importOPML } from "./opml.js";
+import { planJSONImport, type JSONImportPlan } from "./json-import.js";
 import { DocxImporter } from "./docx-import.js";
 
 export interface NotionImportOptions {
@@ -66,6 +67,8 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   const vaults: { files: ImportFiles; vault: string; title: string | undefined }[] = [];
   // BSD-260: Evernote-Notizbücher (.enex), Gliederungen (.opml) und Word-Dokumente (.docx), auch in ZIPs und Ordnern.
   const enex: { files: ImportFiles; path: string }[] = [];
+  // BSD-260 Teil 7: JSON/JSONL – Seiten-JSON als Seite, Tabellen als CSV-Datenbank.
+  const jsonPages: Extract<JSONImportPlan, { kind: "page" }>[] = [];
   const enexIn = (files: ImportFiles, dir: string) => files.walk(dir).filter((f) => ["enex", "opml", "docx"].includes(extname(f).toLowerCase()));
   sources.forEach((src, i) => {
     const p = normalizePath(src.path);
@@ -92,6 +95,11 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const hasHTML = containsExt(r.files, "", ["html", "htm"]);
       if (hasHTML) html.push({ files: r.files, path: "" });
       if (containsExt(r.files, "", ["md", "csv"]) || !hasHTML) md.push({ files: r.files, path: "" });
+    } else if (exists && src.files.isFile(p) && (ext === "json" || ext === "jsonl")) {
+      const plan = planJSONImport(src.files.readText(p) ?? "", stripExtension(basename(p)), ext === "jsonl");
+      if (plan.kind === "csv") md.push({ files: new ImportFiles([[plan.name, new TextEncoder().encode(plan.csv)]]), path: plan.name });
+      else if (plan.kind === "page") jsonPages.push(plan);
+      else md.push({ files: src.files, path: p }); // wie bisher: übersprungen mit Hinweis
     } else if (exists && (ext === "enex" || ext === "opml" || ext === "docx")) {
       enex.push({ files: src.files, path: p });
     } else if (exists && isDir(src.files, p) && enexIn(src.files, p).length > 0 && !containsExt(src.files, p, ["md", "csv", "html", "htm"])) {
@@ -125,6 +133,7 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   const extra: (() => { records: WireRecord[]; rootKeys: string[]; report: ImportReport })[] = [];
   const common = { assets: opts.assets, now: opts.now, userID: opts.userID, isCancelled: opts.isCancelled };
   for (const v of vaults) extra.push(() => new ObsidianImporter(v.files, v.vault, common).run(v.title, out.markdown?.rootKeys.at(-1)));
+  for (const j of jsonPages) extra.push(() => j.run({ now: opts.now, userID: opts.userID, afterKey: out.markdown?.rootKeys.at(-1) }));
   for (const e of enex) {
     extra.push(() => {
       const title = stripExtension(basename(e.path));
