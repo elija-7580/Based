@@ -366,3 +366,6 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 /* BSD-249: Ziel beim Ziehen (davor/dahinter, Verschachteln, Ausrücken, Spalte) – Strich wie die Einfügestelle bei Tabs */
 .bx-drop-indicator { position: fixed; z-index: 60; pointer-events: none; background: var(--marker-strong); border-radius: var(--radius-pill); }
 html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn-drop-cursor { display: none; }
+
+/* BSD-258: Rechteck-Auswahl aus dem Seitenrand */
+.bx-marquee { position: fixed; z-index: 60; pointer-events: none; background: color-mix(in srgb, var(--selected) 60%, transparent); border: 1px solid var(--control-border); border-radius: var(--radius-xs); }
