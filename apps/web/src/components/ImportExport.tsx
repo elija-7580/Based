@@ -189,6 +189,7 @@ const PAGE_FORMATS: { value: PageFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "A .md file (databases as .csv)" },
   { value: "html", label: "HTML", hint: "A standalone web page you can open anywhere" },
   { value: "pdf", label: "PDF", hint: "Opens the print dialog — choose “Save as PDF” there" },
+  { value: "docx", label: "Word", hint: "A .docx document for Word, Pages or Google Docs (images included)" },
   { value: "opml", label: "OPML", hint: "An outline for Workflowy, Dynalist, OmniOutliner, Logseq …" },
   { value: "json", label: "JSON", hint: "Structured data for scripts and other apps (blocks, properties, rows)" },
 ];
