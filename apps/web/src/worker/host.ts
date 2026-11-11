@@ -33,6 +33,8 @@ import {
   renamePage,
   renameWorkspace,
   setWorkspaceIcon,
+  linkUnlinkedMention,
+  unlinkedMentions,
   restorePages,
   SearchIndex,
   setFavorite,
@@ -192,6 +194,7 @@ export class StoreHost {
         case "listDatabases": reply(this.listDatabases(msg.query)); break;
         case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
         case "meetings": reply(this.meetings()); break;
+        case "unlinkedMentions": reply(unlinkedMentions(this.store, msg.pageID).map((m) => ({ ...m, pageTitle: titleOf(this.store, m.pageID) || "Untitled" }))); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -357,6 +360,7 @@ export class StoreHost {
       case "renameTeamspace": return renameTeamspace(store, c.id, c.name);
       case "renameWorkspace": return renameWorkspace(store, c.name);
       case "setWorkspaceIcon": return setWorkspaceIcon(store, c.icon);
+      case "linkMention": return linkUnlinkedMention(store, c.blockID, c.start, c.length, c.pageID);
       case "setTeamspaceIcon": return setTeamspaceIcon(store, c.id, c.icon);
       case "deleteTeamspace": return deleteTeamspace(store, c.id);
       case "undo": return store.undo().name;
