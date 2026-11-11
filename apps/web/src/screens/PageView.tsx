@@ -1,11 +1,13 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { pageFormat, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import { BlockView } from "../components/BlockView.js";
 import { openPageWindow } from "../desktop.js";
+import { FindBar } from "../components/FindBar.js";
 import { ExportDialog } from "../components/ImportExport.js";
 import { MoveDialog } from "../components/MoveDialog.js";
 import { CoverPicker, PageCoverBand, uploadPageIcon, useImageURL } from "../components/PageCover.js";
@@ -15,6 +17,7 @@ import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
+import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
 import type { PageReplica, ShellState, StoreClient } from "../worker/client.js";
 import type { HistoryRestoreResult } from "../worker/protocol.js";
@@ -58,6 +61,24 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const [moving, setMoving] = useState(false);
   const [restored, setRestored] = useState<HistoryRestoreResult | undefined>();
   useSyncExternalStore(history.subscribe, () => `${history.canBack}${history.canForward}`);
+
+  // BSD-206: Suchen in der Seite (⌘F, ⌘G / ⇧⌘G).
+  const article = useRef<HTMLElement>(null);
+  const [find, setFind] = useState<{ focus: number; step: { n: number; delta: 1 | -1 } } | undefined>();
+  useEffect(() => {
+    const on = (e: Event) => {
+      const a = (e as CustomEvent<ShortcutAction>).detail;
+      e.preventDefault();
+      // Sofort zeichnen: das Feld hat den Fokus, bevor die nächste Taste kommt.
+      flushSync(() => setFind((f) => {
+        if (a.kind === "findStep" && f) return { ...f, step: { n: f.step.n + 1, delta: a.delta } };
+        return { focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } };
+      }));
+    };
+    window.addEventListener(FIND_EVENT, on);
+    return () => window.removeEventListener(FIND_EVENT, on);
+  }, []);
+  const findRoot = useRef(() => article.current).current;
 
   const store = replica?.store;
   const page = store?.blocks.get(pageID);
@@ -159,6 +180,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             move: () => setMoving(true),
             favorite: { on: favorite, toggle: () => void client.command({ op: "favorite", ids: [pageID], on: !favorite }) },
             exportPage: () => setExporting(true),
+            find: () => setFind((f) => ({ focus: (f?.focus ?? 0) + 1, step: f?.step ?? { n: 0, delta: 1 } })),
+            stats: store && !dbID ? pageTextStats(store, pageID) : undefined,
             trash: () => { void client.command({ op: "trash", ids: [pageID] }); onNavigate({ name: "home" }); },
             edited,
           } : undefined} />
@@ -192,7 +215,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           }}>Delete forever</button>
         </div>
       ) : null}
-      <article className={dbID ? "page page-database" : "page"} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
+      {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
+      <article ref={article} className={dbID ? "page page-database" : "page"} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
         data-full-width={format.fullWidth ? "" : undefined} data-locked={format.locked ? "" : undefined}>
         {store && page && page.props?.cover ? <PageCoverBand store={store} pageID={pageID} readOnly={readOnly} position={typeof page.props?.format?.coverPosition === "number" ? page.props.format.coverPosition : 0.5} /> : null}
         <div className="page-grid">
@@ -263,6 +287,9 @@ interface PageActions {
   move: () => void;
   favorite: { on: boolean; toggle: () => void };
   exportPage: () => void;
+  find: () => void;
+  /** Wortzahl (nur Seiten mit Text). */
+  stats?: { words: number; characters: number } | undefined;
   trash: () => void;
   /** „Edited …“ als Fußzeile. */
   edited?: string | undefined;
@@ -287,6 +314,8 @@ export function editedLabel(t: number | undefined, now = new Date()): string | u
   if (/^\d+ (min|h)$/.test(r)) return `Edited ${r} ago`;
   return `Edited ${r}`;
 }
+
+const count = (n: number, unit: string) => `${n.toLocaleString("en-US")} ${unit}${n === 1 ? "" : "s"}`;
 
 async function copyPageLink(pageID: string) {
   const url = new URL(globalThis.location.href);
@@ -327,6 +356,7 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
         <>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.copyLink(); }}><Icon name="page" size={18} />Copy link</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.openWindow(); }}><Icon name="expand" size={18} />Open in new window</button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.find(); }}><Icon name="search" size={18} />Find in page<kbd className="menu-kbd t-meta">⌘F</kbd></button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.duplicate(); }}><Icon name="duplicate" size={18} />Duplicate</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.move(); }}><Icon name="move" size={18} />Move to…</button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => { onClose(); actions.favorite.toggle(); }}><Icon name="star" size={18} />{actions.favorite.on ? "Remove from Favorites" : "Add to Favorites"}</button>
@@ -365,6 +395,7 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
         <>
           <div className="menu-sep" role="separator" />
           <button type="button" role="menuitem" className="menu-item danger" onClick={() => { onClose(); actions.trash(); }}><Icon name="trash" size={18} />Move to Trash</button>
+          {actions.stats ? <p className="menu-foot t-meta" data-testid="page-menu-words">{count(actions.stats.words, "word")} · {count(actions.stats.characters, "character")}</p> : null}
           {actions.edited ? <p className="menu-foot t-meta" data-testid="page-menu-edited">{actions.edited}</p> : null}
         </>
       ) : null}

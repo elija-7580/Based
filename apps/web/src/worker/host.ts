@@ -58,6 +58,9 @@ import {
   assetIDsInStore,
   remapAssetRefs,
   remapStoreAssets,
+  type SearchFilters,
+  type SearchOptions,
+  type SearchSort,
 } from "@based/core";
 import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
@@ -123,7 +126,7 @@ export class StoreHost {
   /** Volltextindex für Quick Find: einmal gebaut, danach inkrementell (geänderte Records vor der nächsten Suche). */
   private index: SearchIndex | undefined;
   private indexDirty = new Set<RecordKeyString>();
-  private pendingSearch: { id: number; query: string; limit: number } | undefined;
+  private pendingSearch: { id: number; query: string; limit: number; filters?: SearchFilters | undefined; sort?: SearchSort | undefined } | undefined;
   /** Backlink-Index: beim ersten Gebrauch gebaut, danach inkrementell (wie der Volltextindex). */
   private links: LinkIndex | undefined;
   private linksDirty = new Set<RecordKeyString>();
@@ -174,7 +177,7 @@ export class StoreHost {
       switch (msg.type) {
         case "init": reply(await this.init(msg.device, msg.sync, msg.opfs)); break;
         case "command": reply(this.command(msg.command)); break;
-        case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30); break;
+        case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30, msg.filters, msg.sort); break;
         case "warmSearch": this.searchIndex(); reply(true); break;
         case "openPage": reply(this.openPage(msg.pageID)); break;
         case "closePage": this.openPages.delete(msg.pageID); this.pageDelta.delete(msg.pageID); this.syncedDeps.delete(msg.pageID); this.syncedDirty.delete(msg.pageID); this.history?.pageClosed(msg.pageID); reply(true); break;
@@ -768,16 +771,16 @@ export class StoreHost {
   }
 
   /** Neuere Suchen brechen ältere ab, die noch nicht liefen (Tippen). */
-  private queueSearch(id: number, query: string, limit: number) {
+  private queueSearch(id: number, query: string, limit: number, filters?: SearchFilters, sort?: SearchSort) {
     const prev = this.pendingSearch;
     if (prev) this.opts.post({ type: "reply", id: prev.id, ok: false, error: "cancelled", cancelled: true });
-    this.pendingSearch = { id, query, limit };
+    this.pendingSearch = { id, query, limit, filters, sort };
     const run = () => {
       const p = this.pendingSearch;
       if (!p) return;
       this.pendingSearch = undefined;
       // Abbrechen, sobald eine neuere Suche ansteht (z. B. über `defer` eingereiht).
-      const r = this.search(p.query, p.limit, () => this.pendingSearch !== undefined);
+      const r = this.search(p.query, p.limit, () => this.pendingSearch !== undefined, p.filters, p.sort);
       if (r) this.opts.post({ type: "reply", id: p.id, ok: true, result: r });
       else this.opts.post({ type: "reply", id: p.id, ok: false, error: "cancelled", cancelled: true });
     };
@@ -785,12 +788,16 @@ export class StoreHost {
   }
 
   /** Quick Find über den Volltextindex (Titel, Inhalt mit Snippet, Zeilenwerte); `undefined` = abgebrochen. */
-  search(query: string, limit = 30, isCancelled?: () => boolean): SearchResult | undefined {
+  search(query: string, limit = 30, isCancelled?: () => boolean, filters?: SearchFilters, sort?: SearchSort): SearchResult | undefined {
     const t0 = performance.now();
     const store = this.store;
     let found: ReturnType<SearchIndex["run"]> = [];
     if (query.trim()) {
-      found = this.searchIndex().run(query, isCancelled ? { limit, isCancelled } : { limit });
+      const opts: SearchOptions = { limit };
+      if (isCancelled) opts.isCancelled = isCancelled;
+      if (filters) opts.filters = filters;
+      if (sort) opts.sort = sort;
+      found = this.searchIndex().run(query, opts);
       if (!found) return undefined;
     }
     const hits = found.map((h) => {

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Seitenfenster öffnen, Menü, Updater, Rückfrage-Dialog, Neustart nach dem Update.",
+  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Seitenfenster öffnen, Menü, Updater, Rückfrage-Dialog, Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien).",
   "windows": [
     "main",
     "page-*"
@@ -14,6 +14,29 @@
     "updater:default",
     "dialog:allow-ask",
     "dialog:allow-message",
-    "process:allow-restart"
+    "process:allow-restart",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://api.notion.com/*"
+        },
+        {
+          "url": "https://*.notion.so/*"
+        },
+        {
+          "url": "https://*.notion.com/*"
+        },
+        {
+          "url": "https://*.notionusercontent.com/*"
+        },
+        {
+          "url": "https://*.notion-static.com/*"
+        },
+        {
+          "url": "https://*.amazonaws.com/*"
+        }
+      ]
+    }
   ]
 }

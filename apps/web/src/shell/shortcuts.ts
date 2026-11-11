@@ -13,7 +13,13 @@ export type ShortcutAction =
   | { kind: "cycleTab"; delta: 1 | -1 }
   | { kind: "tab"; index: number } // 0-basiert, -1 = letzter (⌘9 wie im Browser)
   | { kind: "back" }
-  | { kind: "forward" };
+  | { kind: "forward" }
+  /** BSD-206: Suchen in der Seite (⌘F), nächste/vorige Fundstelle (⌘G / ⇧⌘G). */
+  | { kind: "find" }
+  | { kind: "findStep"; delta: 1 | -1 };
+
+/** App → Seite: ⌘F/⌘G. Die Seite ruft `preventDefault()`, wenn sie die Taste nimmt. */
+export const FIND_EVENT = "based:find";
 
 export interface KeyLike {
   key: string;
@@ -34,6 +40,7 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
   if (e.altKey) return undefined;
   if (e.shiftKey) {
     if (code === "KeyL" || k === "l") return { kind: "toggleTheme" };
+    if (code === "KeyG" || k === "g") return { kind: "findStep", delta: -1 };
     if (code === "BracketLeft" || code === "BracketRight") return { kind: "cycleTab", delta: code === "BracketRight" ? 1 : -1 };
     return undefined;
   }
@@ -42,6 +49,8 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
   if (k === ",") return { kind: "settings" };
   if (k === "t") return { kind: "newTab" };
   if (k === "w") return { kind: "closeTab" };
+  if (k === "f") return { kind: "find" };
+  if (k === "g") return { kind: "findStep", delta: 1 };
   if (k === "[") return { kind: "back" };
   if (k === "]") return { kind: "forward" };
   const digit = /^Digit([1-9])$/.exec(code)?.[1] ?? (/^[1-9]$/.test(k) ? k : undefined);

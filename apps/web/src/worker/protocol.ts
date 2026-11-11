@@ -1,7 +1,7 @@
 // BSD-153: Nachrichten zwischen UI (Hauptthread) und Store-Worker. Der WorkspaceStore liegt im Worker (SQLite-WASM
 // auf OPFS braucht einen Dedicated Worker); die UI bekommt Snapshots und Änderungen und schickt Befehle, die der
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
-import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outline, PageGraph, RecordKeyString, WireRecord } from "@based/core";
+import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
 import type { ExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
@@ -150,7 +150,7 @@ export interface DatabaseInfo {
 export type Request =
   | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string }
   | { type: "command"; command: Command }
-  | { type: "search"; query: string; limit?: number }
+  | { type: "search"; query: string; limit?: number; filters?: SearchFilters; sort?: SearchSort }
   | { type: "warmSearch" }
   | { type: "openPage"; pageID: string }
   | { type: "closePage"; pageID: string }

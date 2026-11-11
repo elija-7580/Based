@@ -97,3 +97,12 @@ Braucht Rust (stable). Unter Linux zusätzlich `libwebkit2gtk-4.1-dev libgtk-3-d
 librsvg2-dev libsoup-3.0-dev`; dort prüft `pnpm --filter @based/desktop exec tauri build --no-bundle` Konfiguration
 und Rust-Teil. Das App-Icon entsteht aus `apps/desktop/icon.svg` (= `docs/design/logo/based-icon-light.svg` im
 macOS-Raster) mit `pnpm --filter @based/desktop exec tauri icon icon.svg -o src-tauri/icons`.
+
+## HTTP (Notion-API-Import, BSD-217)
+
+Die Hülle lädt `tauri-plugin-http`, damit der Import direkt mit `api.notion.com` sprechen kann (ein Browser-Tab darf das
+wegen CORS nicht). Erlaubt sind nur die Adressen in `src-tauri/capabilities/default.json`: die Notion-API und die Hosts,
+von denen Notion Dateien ausliefert (`*.notion.so`, `*.notion.com`, `*.notionusercontent.com`, `*.notion-static.com`,
+`*.amazonaws.com`). Das Token liegt verschlüsselt in der Web-Ablage (`shell/secrets.ts`, Name `notion:token`), nie in
+Rust oder im localStorage. Ablauf: `apps/web/src/worker/notionApi.worker.ts` holt und übersetzt, der Hauptthread macht
+das HTTP (`shell/notionTransport.ts`), geschrieben wird im Store-Worker wie beim Datei-Import.

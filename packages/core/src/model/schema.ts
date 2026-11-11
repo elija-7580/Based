@@ -124,7 +124,7 @@ export const pageIcon = z.union([
 export const pageCover = z.union([caseOf("gradient", int), caseOf("color", tColor), caseOf("asset", assetRef), caseOf("url", z.string())]);
 export const pageFormat = z.looseObject({
   font: pageFont.optional(), smallText: z.boolean().optional(), fullWidth: z.boolean().optional(), locked: z.boolean().optional(),
-  coverPosition: z.number().optional(), hideBacklinks: z.boolean().optional(), hideOutline: z.boolean().optional(),
+  coverPosition: z.number().optional(), coverHeight: z.number().optional(), hideBacklinks: z.boolean().optional(), hideOutline: z.boolean().optional(),
 });
 export const bookmarkMeta = z.looseObject({
   title: z.string().optional(), summary: z.string().optional(), imageURL: z.string().optional(), iconURL: z.string().optional(),

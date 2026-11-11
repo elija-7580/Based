@@ -22,6 +22,9 @@ describe("Tastaturkürzel (BSD-204)", () => {
     expect(matchShortcut(key("1", { code: "Digit1" }))).toEqual({ kind: "tab", index: 0 });
     expect(matchShortcut(key("4"))).toEqual({ kind: "tab", index: 3 });
     expect(matchShortcut(key("9", { code: "Digit9" }))).toEqual({ kind: "tab", index: -1 });
+    expect(matchShortcut(key("f"))).toEqual({ kind: "find" });
+    expect(matchShortcut(key("g"))).toEqual({ kind: "findStep", delta: 1 });
+    expect(matchShortcut(key("G", { shift: true, code: "KeyG" }))).toEqual({ kind: "findStep", delta: -1 });
   });
 
   it("ohne ⌘/Strg oder mit fremden Kombinationen: nichts", () => {

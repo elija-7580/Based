@@ -486,3 +486,41 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByTestId("database-view")).toBeVisible();
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
+
+test("BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const st = (o: string) => ({ st: { status: { _0: o } } });
+  await seedDatabase(page, {
+    title: "Keys",
+    properties: [{ id: "title", name: "Name", type: "title" }, status],
+    rows: [{ title: "A1", values: st("todo") }, { title: "A2", values: st("todo") }, { title: "A3", values: st("todo") }, { title: "B1", values: st("doing") }, { title: "B2", values: st("doing") }],
+    views: [{ id: "vb", name: "Board", type: "board", extra: { groupBy: { propertyID: "st" } } }, { id: "vl", name: "List", type: "list" }],
+  });
+  const board = page.getByTestId("board");
+  const card = (t: string) => board.locator(".dbui-card", { hasText: t }).locator(".dbui-card-open");
+  await expect(card("A1")).toBeVisible();
+  await card("A1").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(card("A2")).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(card("B2")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(card("B1")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(card("B1")).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(card("A1")).toBeFocused();
+  await page.keyboard.press("Shift+F10");
+  await expect(page.getByRole("menu", { name: "Row actions" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("tab", { name: "List" }).click();
+  const row = (t: string) => page.locator(".dbui-list-row", { hasText: t }).locator(".dbui-list-title");
+  await row("A1").focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await expect(row("A3")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(row("A2")).toBeFocused();
+});

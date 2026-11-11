@@ -1,7 +1,9 @@
 // Quick Find (⌘K): sucht im Store-Worker über den Volltextindex (Titel, Inhalt mit Snippet, Zeilen). Jede Eingabe bricht die vorige
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
-import { useEffect, useId, useRef, useState } from "react";
+// BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "../icons.js";
+import { DATE_OPTIONS, SORT_OPTIONS, toSearchFilters, type QuickFindFilters } from "../shell/quickFindFilters.js";
 import type { RecentEntry } from "../shell/storage.js";
 import type { StoreClient } from "../worker/client.js";
 import type { QuickFindHit } from "../worker/protocol.js";
@@ -10,11 +12,14 @@ interface Props {
   client: StoreClient;
   titles: ReadonlyMap<string, string>;
   recent: RecentEntry[];
+  /** Offene Seite: bietet „In this page“ an. */
+  currentPage?: { id: string; title: string } | undefined;
   onOpen: (id: string) => void;
   onClose: () => void;
 }
 
-export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
+export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose }: Props) {
+  const [filters, setFilters] = useState<QuickFindFilters>({ titleOnly: false, inPage: false, date: "any", sort: "bestMatch" });
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<QuickFindHit[] | undefined>();
   const [took, setTook] = useState<number | undefined>();
@@ -22,8 +27,8 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
   const listID = useId();
   const input = useRef<HTMLInputElement>(null);
 
+  useLayoutEffect(() => input.current?.focus(), []);
   useEffect(() => {
-    input.current?.focus();
     void client.warmSearch().catch(() => undefined);
     return () => client.cancelSearch();
   }, [client]);
@@ -36,7 +41,7 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
     }
     let alive = true;
     const t0 = performance.now();
-    void client.search(query).then((r) => {
+    void client.search(query, undefined, { filters: toSearchFilters(filters, currentPage?.id), sort: filters.sort }).then((r) => {
       if (!alive || !r) return;
       setHits(r.hits);
       setTook(performance.now() - t0);
@@ -45,7 +50,7 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
     return () => {
       alive = false;
     };
-  }, [client, query]);
+  }, [client, query, filters, currentPage?.id]);
 
   const items: QuickFindHit[] = hits ?? recent.filter((r) => titles.has(r.id)).slice(0, 8).map((r) => ({ pageID: r.id, title: titles.get(r.id)!, path: "", kind: "page" }));
   const open = (i: number) => {
@@ -55,7 +60,7 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
 
   return (
     <div className="qf-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-label="Quick Find" className="qf">
+      <div role="dialog" aria-modal="true" aria-label="Quick Find" className="qf" onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } }}>
         <div className="qf-field">
           <Icon name="search" size={18} />
           <input
@@ -85,6 +90,26 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
             }}
           />
         </div>
+        <div className="qf-filters" role="group" aria-label="Filters">
+          <button type="button" className="qf-chip" aria-pressed={filters.titleOnly} onClick={() => setFilters((f) => ({ ...f, titleOnly: !f.titleOnly }))}>Title only</button>
+          {currentPage ? (
+            <button type="button" className="qf-chip" aria-pressed={filters.inPage} title={`Only “${currentPage.title}” and its sub-pages`} onClick={() => setFilters((f) => ({ ...f, inPage: !f.inPage }))}>In this page</button>
+          ) : null}
+          <label className="qf-chip qf-select" data-active={filters.date !== "any" ? "" : undefined}>
+            <span className="sr-only">Edited</span>
+            <select aria-label="Edited" value={filters.date} onChange={(e) => setFilters((f) => ({ ...f, date: e.target.value as QuickFindFilters["date"] }))}>
+              {DATE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+            <Icon name="chevron" size={14} />
+          </label>
+          <label className="qf-chip qf-select" data-active={filters.sort !== "bestMatch" ? "" : undefined}>
+            <span className="sr-only">Sort</span>
+            <select aria-label="Sort" value={filters.sort} onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as QuickFindFilters["sort"] }))}>
+              {SORT_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+            <Icon name="chevron" size={14} />
+          </label>
+        </div>
         <div className="qf-head t-meta">{hits ? (hits.length ? "Best matches" : "") : items.length ? "Recent" : ""}</div>
         <ul id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
           {items.map((h, i) => (
@@ -97,7 +122,7 @@ export function QuickFind({ client, titles, recent, onOpen, onClose }: Props) {
               onMouseMove={() => setSelected(i)}
               onClick={() => open(i)}
             >
-              <span className="tile"><Icon name={h.kind === "database" ? "database" : "page"} size={18} /></span>
+              <span className="tile"><Icon name={h.kind === "page" ? "page" : "database"} size={18} /></span>
               <span className="grow">
                 <strong>{h.title}</strong>
                 {h.path ? <span className="t-desc qf-path"> — {h.path}</span> : null}

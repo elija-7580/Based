@@ -169,3 +169,29 @@ describe("Design-Tokens", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+import { nearestInDirection, type Box } from "./logic/spatial.js";
+
+describe("Pfeiltasten zwischen Karten (BSD-238)", () => {
+  const box = (col: number, row: number, h = 60): Box => ({ left: col * 280, right: col * 280 + 260, top: row * 70, bottom: row * 70 + h });
+  // Board: Spalte 0 mit drei Karten, Spalte 1 mit zwei.
+  const cards = [box(0, 0), box(0, 1), box(0, 2), box(1, 0), box(1, 1)];
+  it("↓/↑ bleiben in der Spalte und enden am Rand", () => {
+    expect(nearestInDirection(cards[0]!, cards, "down")).toBe(1);
+    expect(nearestInDirection(cards[2]!, cards, "up")).toBe(1);
+    expect(nearestInDirection(cards[2]!, cards, "down")).toBe(-1);
+    expect(nearestInDirection(cards[4]!, cards, "down")).toBe(-1);
+  });
+  it("→/← gehen in die Nachbarspalte auf gleiche Höhe, sonst zur nächstliegenden Karte", () => {
+    expect(nearestInDirection(cards[1]!, cards, "right")).toBe(4);
+    expect(nearestInDirection(cards[2]!, cards, "right")).toBe(4);
+    expect(nearestInDirection(cards[3]!, cards, "left")).toBe(0);
+    expect(nearestInDirection(cards[0]!, cards, "left")).toBe(-1);
+  });
+  it("Galerie-Raster: Zeilenweise rechts, spaltenweise runter", () => {
+    const grid = [box(0, 0, 200), box(1, 0, 200), box(2, 0, 200), box(0, 4, 200), box(1, 4, 200)];
+    expect(nearestInDirection(grid[0]!, grid, "right")).toBe(1);
+    expect(nearestInDirection(grid[1]!, grid, "down")).toBe(4);
+    expect(nearestInDirection(grid[2]!, grid, "down")).toBe(-1);
+  });
+});

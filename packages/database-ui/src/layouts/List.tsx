@@ -1,4 +1,5 @@
 // BSD-155: Liste und Galerie – virtualisiert (Zeilen bzw. Kartenreihen), mit Gruppen und „+ New“.
+import { cardKeys } from "../cardKeys.js";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { plainText, propertyOf, valueCase, type Block, type DatabaseView, type PropertySchema, type QueryResult } from "@based/core";
@@ -47,7 +48,7 @@ function Virtual({ items, estimate, render, label, testID }: {
   });
   return (
     <div className="dbui-scroll" ref={scrollRef} data-testid={testID}>
-      <div className="dbui-vlist" role="list" aria-label={label} style={{ height: virtualizer.getTotalSize() }}>
+      <div className="dbui-vlist" role="list" aria-label={label} style={{ height: virtualizer.getTotalSize() }} onKeyDown={cardKeys}>
         {virtualizer.getVirtualItems().map((vi) => (
           <div key={vi.key} className="dbui-vitem" data-index={vi.index} ref={virtualizer.measureElement} style={{ transform: `translateY(${vi.start}px)` }}>
             {render(items[vi.index]!)}
@@ -136,7 +137,7 @@ export function GalleryLayout({ view, result }: { view: DatabaseView; result: Qu
   const editRow = editing ? store.blocks.get(editing.rowID) : undefined;
   const title = db.properties.find((p) => p.type === "title") ?? { id: "title", name: "Name", type: "title" };
   return (
-    <div className="dbui-gallery-wrap" ref={outer}>
+    <div className="dbui-gallery-wrap" ref={outer} onKeyDown={cardKeys}>
       <Virtual items={items} label={view.name} testID="gallery-scroll" estimate={(it) => (it.kind === "cards" ? (CARD_HEIGHT[view.cardSize ?? "medium"] ?? 220) + 16 : GROUP_ROW)} render={(it) => {
         if (it.kind === "group") return <GroupHeader group={it.group} prop={gp} collapsed={it.collapsed} onToggle={() => toggle(it.group.id)} />;
         if (it.kind === "new") return <button type="button" className="dbui-new-row" onClick={() => addRow(it.groupID)}><Icon name="plus" size={14} />New</button>;

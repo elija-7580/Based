@@ -4,7 +4,7 @@ Nested subpages (page inside page),pages,must,yes,yes,,yes
 Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
 Page icon (uploaded image),pages,could,yes,yes,,"yes (BSD-201): Upload image im Icon-Menü, gespeichert wie Swift PageIcon.asset"
 Page cover (gallery / color / gradient),pages,should,yes,yes,,"partial (BSD-201): Farbe (Töne mit Token), Swift-Verläufe werden angezeigt; Galerie und Verlaufs-Auswahl fehlen (Designfrage: Farben)"
-Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition durch Ziehen, Remove"
+Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition wie Notion (Klick, ziehen, Save/Cancel), Höhe per Unterkante ziehen (pro Seite, nur TS), Remove"
 Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
 Small text,pages,should,yes,yes,,yes (BSD-201)
 Full width,pages,should,yes,yes,,yes (BSD-201)
@@ -21,7 +21,7 @@ Open page in new window (Mac),navigation,should,yes,partial,open in new tab from
 Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs",yes
 Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)",yes
 Recent pages in search,search,should,yes,yes,,yes
-Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter",no
+Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope"
 Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende)"
 Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page)"
 Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)"
@@ -82,9 +82,9 @@ Undo / redo for text and structure,editor,must,yes,yes,,yes
 Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30 Markdown; BSD-211: strukturiertes HTML aus Notion/Google Docs/Web über den Kern-Importer, Fixtures auch durch den Editor-Pfad)"
 Paste URL as bookmark / mention / link,editor,could,yes,yes,,yes (BSD-211: nackte URL in leeren Absatz → Menü Link / Bookmark / Embed; Seiten-Erwähnung über Notion-/Based-Links)
 Copy blocks as Markdown,editor,should,yes,yes,,"yes (BSD-211: Blockmenü „Copy as Markdown“ über den Markdown-Exporter des Kerns, mit Kindern und eigenen Blöcken)"
-Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search",no
+Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search","yes: ⌘F find bar with count, Enter/⇧Enter, ⌘G/⇧⌘G, matches across formatting via CSS highlights (BSD-206); in databases it searches the rendered rows"
 Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)"
-Word / character count,editor,could,yes,yes,,no
+Word / character count,editor,could,yes,yes,,yes: words · characters in the ••• page menu (BSD-206)
 Placeholders per block type,editor,should,yes,yes,,yes
 Database inline,databases,must,yes,yes,,yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an)
 Database full page,databases,must,yes,yes,,yes
@@ -134,7 +134,7 @@ Page history / versions,history,should,yes,no,,yes
 Comments and discussions,collaboration,should,yes,no,,no
 Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view","partial: Rollen/Vererbung, Access-Links, Einladungen, Widerruf, gefilterter Pull/Push im TS-Server, Share-Panel; Gast-Modus im Web und Universal Links fehlen"
 Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included","yes (Pass 30: /p/<id> server-gerendert, Token-Styles, CSP, HTML-Blöcke in Sandbox; Publish/Unpublish im Share-Panel)"
-Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended","yes (BSD-254: große Exporte ≥ 500 MB werden aus der Datei gelesen statt ganz geladen; Anhänge gehen einzeln in den Asset-Speicher; 1-GB-Test: Spitze ~70 MiB)"
+Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended",yes (BSD-254: große Exporte ≥ 500 MB werden aus der Datei gelesen statt ganz geladen; Anhänge gehen einzeln in den Asset-Speicher; 1-GB-Test: Spitze ~70 MiB)
 Import Markdown files,import,must,yes,yes,,yes
 Export page as Markdown,export,must,yes,yes,,yes
 Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
@@ -155,7 +155,7 @@ Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; S
 Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)","partial: Zeitpläne nur solange die App offen ist, nur Hauptagent"
 MCP server for external AI clients,ai,should,yes,yes,"stdio + Streamable HTTP; version negotiation, projects/runs/inbox/main-agent tools, paging, docs/mcp.md (BSD-58); permission rules apply (BSD-98)","partial: stdio und Streamable HTTP mit Seiten-Werkzeugen (suchen, lesen, anlegen, ändern, Papierkorb) und Datenbank-Werkzeugen (list_databases, database_schema, query_database, add_row, update_row; BSD-221 Teil 1); Projekte/Runs/Inbox/Hauptagent, Skills als Prompts und Berechtigungsregeln fehlen"
 Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device,no
-Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1","partial: Kern in @based/core (Client mit Drossel/429/Seiten, Crawler, Übersetzung von Seiten, Blöcken, Datenbanken, Views inkl. Dashboards/Karten/Filtern, Formeln, Dateien, Reimport, Diagnosebericht); 6/6 Golden Fixtures aus Swift grün (BSD-217 Teil 1). Oberfläche (Token, Ziele, Fortschritt, Abbrechen) und Desktop-HTTP fehlen"
+Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1","partial: core (crawler, mapper, views, formulas, files, re-import) + dialog ""Connect Notion directly"" (token encrypted on device, check, links or everything shared, progress, cancel, copy report); runs in its own worker, HTTP via Tauri plugin in the desktop app (BSD-217). Not yet run against the real Notion API on a Mac; browser tab cannot reach the API (CORS)"
 Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,yes
 Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
 HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",partial: /html und Sprache HTML mit Vorschau im abgeschotteten iframe (BSD-209); Mermaid fehlt
@@ -178,7 +178,7 @@ Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcr
 CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal,"yes (BSD-223: #coding → CLI history, nach Projekt gruppiert, Transkript lesen, Fortsetzen in Based oder per Terminal-Befehl; Server-Rechner)"
 Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning","partial: #coding → Setup (CLIs mit Pfad/Version, Login, Befehl zum Beheben, Test per ACP-Handshake; BSD-223); prüft den Server-Rechner, nicht den lokalen"
 "Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D",no
-"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,"via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps",no
+"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,"via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps","yes via the API import (BSD-217): filters, sorts, groups, layouts, dashboards; E2E against fixture routes. HTML/ZIP export carries no views"
 Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; blocks edited or added in Based are kept via import fingerprints (BSD-32); removed untouched content → trash; original timestamps and authors kept,partial: für Datei-Exporte (HTML/Markdown) über stabile Import-IDs; Re-Import über die Notion-API fehlt
 Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression",no
 Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store,partial: Anhänge aus Notion-Export-ZIP übernommen (Pass 30); API-Import fehlt
@@ -198,7 +198,7 @@ CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml update
 Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice",no
 Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)"
-Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: im Browser über den Browser-Verlauf; in der Desktop-Hülle keine eigene Behandlung, ⌘←/⌘→ und Verlaufsmenü fehlen"
+Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: mouse buttons 4/5, trackpad swipe with edge hint, ⌘←/⌘→ (Alt+←/→ off Apple) outside text, ⌘[ ⌘] (BSD-244); history menu on the arrows missing"
 Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())"
 Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,"yes (BSD-225): Leertaste auf leerer Zeile (wenn ein Modell eingerichtet ist) oder /Ask AI; Vorschau → Insert / Try again / Discard, ein Undo-Schritt; jede Engine aus BSD-159"
 Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"yes: Ask AI (Improve, Fix spelling, Make shorter, Summarize, eigene Anweisung → Replace/Insert below; BSD-225), Turn into, B/I/U/S/Code, Link, Farbe"
