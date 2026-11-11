@@ -1,11 +1,12 @@
 // BSD-159: ⌘J öffnet den Chat als rechtes Panel (Breite ziehbar, gemerkt) bzw. schließt es; „Open as page“ zeigt
 // ihn als Vollseite (Route #chat). Die Chat-Liste hält der Store-Worker aktuell (`chats`-Ereignis).
 import type { ChatInfo } from "@based/brain";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { History, Route } from "../shell/router.js";
 import type { StoreClient } from "../worker/client.js";
 import { chatController, onOpenChatPanel, openChatPanel, restoreLastChat } from "./runtime.js";
-import { ChatView } from "./ChatView.js";
+// BSD-280: die Chat-Ansicht (Markdown, Code) erst laden, wenn der Chat aufgeht – nicht im Start-Bundle.
+const ChatView = lazy(() => import("./ChatView.js").then((m) => ({ default: m.ChatView })));
 
 const WIDTH_KEY = "based.chatWidth";
 const OPEN_KEY = "based.chatOpen";
@@ -100,7 +101,9 @@ export function ChatDock({ client, history, route }: { client: StoreClient; hist
           else if (e.key === "ArrowRight") resize(width - 24);
         }}
       />
-      <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="panel" onClose={() => setOpenSaved(false)} onToggleMode={() => { setOpenSaved(false); history.navigate({ name: "chat" }); }} />
+      <Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading chat" />}>
+        <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="panel" onClose={() => setOpenSaved(false)} onToggleMode={() => { setOpenSaved(false); history.navigate({ name: "chat" }); }} />
+      </Suspense>
     </aside>
   );
 }
@@ -110,6 +113,8 @@ export function ChatPage({ client, history }: { client: StoreClient; history: Hi
   const controller = chatController(client);
   const chats = useChats(client);
   return (
-    <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="page" onToggleMode={() => { openChatPanel(); history.back(); }} />
+    <Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading chat" />}>
+      <ChatView controller={controller} chats={chats} onImport={() => client.chatImportLegacy().then((r) => r.length)} mode="page" onToggleMode={() => { openChatPanel(); history.back(); }} />
+    </Suspense>
   );
 }

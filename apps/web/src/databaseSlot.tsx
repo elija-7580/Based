@@ -2,13 +2,14 @@
 // der Shell (showTitle aus), Inline-Datenbanken im Editor mit Titel und begrenzter Höhe.
 // Zeilen öffnen je Ansicht als Side Peek, Center Peek oder ganze Seite (database/RowPeek.tsx); die Formular-Ansicht
 // kommt aus Astryx-Formkomponenten (database/FormView.tsx).
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { attachWheelPassThrough } from "./database/wheelPassThrough.js";
 import { weekStartPref } from "./shell/storage.js";
 import { plainText } from "@based/core";
 import { DatabaseView, type FormRenderProps, type PeekOptions, type RowActions } from "@based/database-ui";
 import "@based/database-ui/styles.css";
-import { FormView } from "./database/FormView.js";
+// BSD-280: Formular-Ansicht (Astryx-Formfelder) erst bei Bedarf laden.
+const FormView = lazy(() => import("./database/FormView.js").then((m) => ({ default: m.FormView })));
 import { InPeek, RowPeek } from "./database/RowPeek.js";
 import { asNewTabs, wantsNewTab } from "./shell/newTabIntent.js";
 import { routeToHash } from "./shell/router.js";
@@ -27,7 +28,7 @@ function peekStorage(blockID: string): NonNullable<PeekOptions["storage"]> {
   };
 }
 
-const renderForm = (p: FormRenderProps) => <FormView {...p} />;
+const renderForm = (p: FormRenderProps) => <Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading form" />}><FormView {...p} /></Suspense>;
 
 export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpenPage, asPage }: DatabaseViewProps) {
   // Ganze Seite: Datenbankseite, oder eine Inline-Datenbank, die per „Open as full page“ als Seite offen ist (BSD-255).

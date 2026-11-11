@@ -1,27 +1,18 @@
 // BSD-153: die Shell auf echten Daten – Seitenleiste (Struktur aus dem Store-Worker), Quick Find, Seiten, Papierkorb,
 // Einstellungen. Home ist die Startseite nach Mockup v10 (Zeitbogen, Auftragskarten; BSD-162/197) mit Agent- und
 // Projekt-Detail (BSD-133).
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { ChatDock, ChatPage } from "./chat/ChatDock.js";
-import { AgentDetailScreen } from "./home/AgentDetail.js";
-import { ProjectDetailScreen } from "./home/ProjectDetail.js";
 import { ImportDialog } from "./components/ImportExport.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
-import { Meetings } from "./screens/Meetings.js";
 import { TabBar } from "./components/TabBar.js";
-import { Graph } from "./screens/Graph.js";
 import { Home } from "./screens/Home.js";
-import { Library } from "./screens/Library.js";
 import { PageView } from "./screens/PageView.js";
-import { Settings } from "./screens/Settings.js";
-import { Trash } from "./screens/Trash.js";
 import { tasksRuntime } from "./tasks/runtime.js";
-import { TasksScreen } from "./tasks/TasksScreen.js";
-import { CodingScreen } from "./coding/CodingScreen.js";
 import "./tasks/AgentSettingsSection.js";
 import { installHistoryGestures } from "./shell/historyGestures.js";
 import { Icon } from "./icons.js";
@@ -31,6 +22,17 @@ import { FIND_EVENT, matchShortcut } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { recentPages, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
+
+// BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
+const AgentDetailScreen = lazy(() => import("./home/AgentDetail.js").then((m) => ({ default: m.AgentDetailScreen })));
+const ProjectDetailScreen = lazy(() => import("./home/ProjectDetail.js").then((m) => ({ default: m.ProjectDetailScreen })));
+const Meetings = lazy(() => import("./screens/Meetings.js").then((m) => ({ default: m.Meetings })));
+const Graph = lazy(() => import("./screens/Graph.js").then((m) => ({ default: m.Graph })));
+const Library = lazy(() => import("./screens/Library.js").then((m) => ({ default: m.Library })));
+const Settings = lazy(() => import("./screens/Settings.js").then((m) => ({ default: m.Settings })));
+const Trash = lazy(() => import("./screens/Trash.js").then((m) => ({ default: m.Trash })));
+const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ default: m.TasksScreen })));
+const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
 /** Bold-Schriften nur laden, wenn der Stil sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
 function ensureBoldFonts() {
@@ -187,7 +189,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       <Sidebar client={client} state={state} route={route} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} advanced={appearance.agentDetails} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
-        <div className="panel">{screen}</div>
+        <div className="panel"><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
         <div ref={swipeHint} className="swipe-hint" aria-hidden="true" data-side="">
           <span className="swipe-back"><Icon name="back" size={18} /></span>
           <span className="swipe-forward"><Icon name="forward" size={18} /></span>

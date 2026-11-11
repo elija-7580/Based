@@ -46,6 +46,8 @@ jobs:
         run: |
           set -o pipefail
           { pnpm -r typecheck && pnpm lint && pnpm -r test; } 2>&1 | tee ts.log
+      - name: Start-Bundle im Budget (BSD-280)
+        run: pnpm --filter @based/web budget
       - name: Playwright (WebKit + Chromium)
         if: always()
         run: |
