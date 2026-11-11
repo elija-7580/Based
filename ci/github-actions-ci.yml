@@ -27,7 +27,8 @@ jobs:
   ts:
     name: TypeScript (pnpm, Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # BSD-168: der volle Playwright-Lauf (WebKit + Chromium) braucht inzwischen > 20 min
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -75,7 +76,8 @@ jobs:
           if git diff --name-only "$base" HEAD | grep -qE '^(legacy|fixtures)/' || [ "${{ github.event_name }}" = workflow_dispatch ]; then
             echo "run=1" >> "$GITHUB_OUTPUT"; else echo "run=0" >> "$GITHUB_OUTPUT"; echo "legacy/ und fixtures/ unverändert – übersprungen"; fi
       - if: steps.changed.outputs.run == '1'
-        run: apt-get update -qq && apt-get install -y -qq libsqlite3-dev
+        # DNS im Container fällt manchmal kurz aus: dreimal versuchen
+        run: for i in 1 2 3; do apt-get update -qq && apt-get install -y -qq libsqlite3-dev && exit 0; sleep 15; done; exit 1
       - if: steps.changed.outputs.run == '1'
         uses: actions/cache@v4
         with:
