@@ -524,10 +524,28 @@ export class ShareService {
       else rejected.push(key);
     }
     const deletions: RecordKeyString[] = [];
+    // BSD-282: Wer nur bearbeiten darf, legt Seiten, Zeilen und Datenbanken in den Papierkorb (das ist eine Änderung
+    // am Record), löscht sie aber nicht endgültig. Dazu gehört alles, was eine solche Löschung mitnähme (der Inhalt
+    // der Seite) oder verwaisen ließe (ein Block, unter dem nach diesem Push noch eine Seite hängt).
+    const kept = new Set<string>();
+    const movedTo = new Map<string, string>();
+    for (const r of allowed) if (r.kind === "block") movedTo.set(r.data.id, r.data.parent);
+    const wanted: { key: RecordKeyString; record: WireRecord; role: ShareRole | undefined }[] = [];
     for (const k of body.deletions) {
       const r = this.store.record(k);
-      if (r && canEdit(this.role(p, r))) deletions.push(k);
-      else rejected.push(k);
+      const role = r ? this.role(p, r) : undefined;
+      if (!r || !canEdit(role)) { rejected.push(k); continue; }
+      wanted.push({ key: k, record: r, role });
+      if (canShare(role)) continue;
+      if (r.kind === "block" && this.store.isTrashable(r.data)) kept.add(r.data.id);
+      else if (r.kind === "database") kept.add(r.data.blockID);
+    }
+    for (const w of wanted) {
+      if (canShare(w.role)) { deletions.push(w.key); continue; }
+      const chain = this.chainOf(w.record);
+      const keepsPage = w.record.kind === "block" && this.holdsPage(w.record.data.id, movedTo);
+      if (keepsPage || chain.some((id) => kept.has(id))) rejected.push(w.key);
+      else deletions.push(w.key);
     }
     const stamps = new Map([...body.stamps].filter(([k]) => deletions.includes(k)));
     const reply = sync.pushDecoded({ records: allowed, deletions, stamps });
@@ -536,6 +554,24 @@ export class ShareService {
       if (r && this.canRead(p, r)) reply.newer.push(r);
     }
     return { ...reply, rejected };
+  }
+
+  /**
+   * Hängt unter dem Block (ihn selbst ausgenommen) noch eine Seite, Zeile oder eigene Datenbank? `movedTo`: neue
+   * Eltern aus demselben Push (der Client zieht eingebettete Seiten vor dem Löschen heraus, BSD-99).
+   */
+  private holdsPage(id: string, movedTo: Map<string, string>): boolean {
+    const stack = [...this.store.children("b:" + id)];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const b = this.store.blocks.get(cur);
+      if (!b) continue;
+      const parent = movedTo.get(cur);
+      if (parent !== undefined && parent !== b.parent && !this.chainOfParent(parent).includes(id)) continue;
+      if (this.store.isTrashable(b)) return true;
+      stack.push(...this.store.children("b:" + cur));
+    }
+    return false;
   }
 
   // MARK: Veröffentlichen
