@@ -65,7 +65,8 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Pro
     const ringBoxes = ring.placed.map((p) => p.box);
     const minT = 0;
     const done = placeSide(model.done.map((c) => ({ id: c.id, t: timeToT(c.atMs, nowMs, frame) })), "done", g, u(SIZES.done), [...blocked, ...ringBoxes], { minT });
-    const planned = placeSide(model.planned.map((c) => ({ id: c.id, t: timeToT(c.atMs, nowMs, frame) })), "planned", g, u(SIZES.planned), [...blocked, ...ringBoxes], { minT });
+    // Beide Seiten treffen sich am Scheitel (gerade fertig / jetzt fällig): Geplantes weicht dem Erledigten aus.
+    const planned = placeSide(model.planned.map((c) => ({ id: c.id, t: timeToT(c.atMs, nowMs, frame) })), "planned", g, u(SIZES.planned), [...blocked, ...ringBoxes, ...done.placed.map((p) => p.box)], { minT });
     const all = [...blocked, ...ringBoxes, ...done.placed.map((p) => p.box), ...planned.placed.map((p) => p.box)];
     const endOffset = u(SIZES.done).h / 2 + 14 * k;
     const ticks = visibleTicks(arcTicks(g, frame, endOffset), all, { w: 44 * k, h: 16 * k });
