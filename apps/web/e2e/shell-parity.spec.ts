@@ -235,6 +235,25 @@ test("Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet", async ({ pag
   await page.mouse.down();
   await page.mouse.up();
   await expect(page.getByLabel("Page title")).toHaveValue("Roadmap");
+
+  // BSD-238 Teil 3: Graph per Tastatur – Pfeil wählt (erst den wichtigsten Knoten, dann Nachbarn), Enter öffnet
+  await page.getByRole("button", { name: "Library" }).click();
+  await page.getByRole("radiogroup", { name: "Library view" }).getByRole("radio", { name: "Graph" }).click();
+  await expect(canvas).toHaveAttribute("data-settled", "", { timeout: 20_000 });
+  await canvas.focus();
+  await page.keyboard.press("Escape");
+  const sel = page.getByTestId("graph-selected");
+  await page.keyboard.press("ArrowRight");
+  await expect(sel).toBeVisible();
+  const first = await sel.textContent();
+  let moved = false;
+  for (const k of ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"]) {
+    await page.keyboard.press(k);
+    if ((await sel.textContent()) !== first) { moved = true; break; }
+  }
+  expect(moved).toBe(true);
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toBeVisible();
 });
 
 test("Graph bleibt mit 5.000 Seiten bedienbar", async ({ page }) => {

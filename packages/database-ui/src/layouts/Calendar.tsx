@@ -2,6 +2,7 @@
 // Datums-Property inkl. Zeitraum bzw. Ende-Property, mehrtägig als durchgehende Balken über die Tageszellen,
 // „+N more“ öffnet die Liste des Tages, Ziehen verschiebt Beginn und Ende (eine Transaktion), Klick auf einen
 // leeren Tag legt eine Zeile mit diesem Datum an. Wochenbeginn aus den Einstellungen bzw. dem Locale.
+import { cardKeys } from "../cardKeys.js";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -194,7 +195,7 @@ function MonthView({ v, todayDay, weekStart, a, drag, onCreate, onMore, scrollRe
     <>
       {header(formatDay(focusDay, { month: "long", year: "numeric" }), () => jump(addMonths(startOfMonth(focusDay), -1)), () => jump(addMonths(startOfMonth(focusDay), 1)), goToday)}
       <Weekdays weekStart={weekStart} />
-      <div className="dbui-cal-scroll" ref={scrollRef} data-testid="calendar-scroll" role="grid" aria-label="Calendar" aria-readonly={!a.writable}>
+      <div className="dbui-cal-scroll" ref={scrollRef} data-testid="calendar-scroll" role="grid" aria-label="Calendar" aria-readonly={!a.writable} onKeyDown={cardKeys}>
         <div className="dbui-cal-inner" style={{ height: virtualizer.getTotalSize() }}>
           {height > 0 && virtualizer.getVirtualItems().map((vi) => (
             <WeekRow key={vi.index} first={range.first + vi.index * 7} top={vi.start} height={weekH} lanes={lanes} focusMonth={year * 12 + month}
@@ -251,7 +252,7 @@ function WeekView({ v, todayDay, weekStart, a, drag, onCreate, scrollRef, header
     <>
       {header(title, () => setFirst(first - 7), () => setFirst(first + 7), () => setFirst(startOfWeek(todayDay, weekStart)))}
       <Weekdays weekStart={weekStart} days={first} />
-      <div className="dbui-cal-scroll week" ref={scrollRef} data-testid="calendar-scroll" role="grid" aria-label="Calendar week" aria-readonly={!a.writable}>
+      <div className="dbui-cal-scroll week" ref={scrollRef} data-testid="calendar-scroll" role="grid" aria-label="Calendar week" aria-readonly={!a.writable} onKeyDown={cardKeys}>
         <div className="dbui-cal-inner" style={{ height: total }}>
           <div className="dbui-cal-week tall" role="row" style={{ height: total }}>
             {Array.from({ length: 7 }, (_, i) => <DayCell key={i} day={first + i} out={false} isToday={first + i === todayDay} writable={a.writable} onCreate={onCreate} height={total} />)}

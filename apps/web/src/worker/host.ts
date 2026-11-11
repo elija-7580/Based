@@ -32,6 +32,7 @@ import {
   recordKey,
   renamePage,
   renameWorkspace,
+  setWorkspaceIcon,
   restorePages,
   SearchIndex,
   setFavorite,
@@ -323,6 +324,7 @@ export class StoreHost {
       case "createTeamspace": return createTeamspace(store, c.name, c.icon);
       case "renameTeamspace": return renameTeamspace(store, c.id, c.name);
       case "renameWorkspace": return renameWorkspace(store, c.name);
+      case "setWorkspaceIcon": return setWorkspaceIcon(store, c.icon);
       case "setTeamspaceIcon": return setTeamspaceIcon(store, c.id, c.icon);
       case "deleteTeamspace": return deleteTeamspace(store, c.id);
       case "undo": return store.undo().name;

@@ -38,6 +38,8 @@ export interface TrashEntry {
 
 export interface Outline {
   workspaceName: string;
+  /** BSD-205: Emoji des Workspaces, falls gesetzt. */
+  workspaceIcon?: string;
   /** Teamspaces in ihrer Reihenfolge, dann Private. */
   sections: OutlineSection[];
   /** Kinder je Abschnitt (`section:<id>`) oder Seite (`<id>`), nur Seiten außerhalb des Papierkorbs. */
@@ -129,7 +131,8 @@ export function buildOutline(store: WorkspaceStore): Outline {
     trash.push(e);
   }
   trash.sort((a, b) => b.trashedAt - a.trashedAt || (a.id < b.id ? -1 : 1));
-  return { workspaceName: store.workspace.name, sections, children, nodes, favorites: store.workspace.favorites.filter((f) => nodes[f]), trash };
+  const wsIcon = store.workspace.icon;
+  return { workspaceName: store.workspace.name, ...(typeof wsIcon === "string" && wsIcon ? { workspaceIcon: wsIcon } : typeof wsIcon === "object" && wsIcon?.emoji ? { workspaceIcon: wsIcon.emoji } : {}), sections, children, nodes, favorites: store.workspace.favorites.filter((f) => nodes[f]), trash };
 }
 
 function parentTitle(store: WorkspaceStore, b: Block): string | undefined {

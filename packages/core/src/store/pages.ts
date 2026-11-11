@@ -304,6 +304,16 @@ export function renameWorkspace(store: WorkspaceStore, name: string) {
   store.transact("Rename workspace", (tx) => updateWorkspace(store, tx, (w) => { w.name = n; }));
 }
 
+/** BSD-205: Icon des Workspaces setzen (Emoji, wie Swift `Workspace.icon`) oder mit `undefined` entfernen. */
+export function setWorkspaceIcon(store: WorkspaceStore, icon: string | undefined) {
+  const next = icon?.trim() || undefined;
+  if (store.workspace.icon === next) return;
+  store.transact("Change workspace icon", (tx) => updateWorkspace(store, tx, (w) => {
+    if (next) w.icon = next;
+    else delete w.icon;
+  }));
+}
+
 /** Icon eines Teamspaces setzen (Emoji) oder mit `undefined` entfernen. */
 export function setTeamspaceIcon(store: WorkspaceStore, id: string, icon: string | undefined) {
   const cur = (store.workspace.teamspaces ?? []).find((t) => t.id === id);
