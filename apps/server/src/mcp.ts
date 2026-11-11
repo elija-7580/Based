@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { getRunText, inboxText, listRunsText } from "./runs.js";
+import { getProjectText, getRunText, inboxText, listProjectsText, listRunsText } from "./runs.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -16,7 +16,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
-- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user.
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
@@ -87,6 +87,16 @@ export function createMcpServer(pages: Pages): McpServer {
     "inbox",
     { description: "What needs the user: runs waiting for an answer or approval", inputSchema: {}, annotations: { readOnlyHint: true } },
     guarded(() => text(inboxText(pages.store))),
+  );
+  server.registerTool(
+    "list_projects",
+    { description: "Projects with status, goal and run count; filter by status (active, paused, done)", inputSchema: { status: z.string().optional(), limit }, annotations: { readOnlyHint: true } },
+    guarded(({ status, limit: n }: { status?: string | undefined; limit?: number | undefined }) => text(listProjectsText(pages.store, { status, limit: n }))),
+  );
+  server.registerTool(
+    "get_project",
+    { description: "One project: status, goal, budget, project page and recent runs (by id or name)", inputSchema: { project_id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ project_id }: { project_id: string }) => text(getProjectText(pages.store, project_id))),
   );
 
   // MARK: Datenbanken (BSD-221)

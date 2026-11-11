@@ -1,8 +1,8 @@
 // BSD-221 Teil 3a: Läufe (BSD-160-Records) und die Inbox für MCP – damit `based runs`, `based run <id>` und
 // `based inbox` gegen den TS-Server funktionieren. Nur lesen; das Format folgt dem, was die CLI erwartet
 // (`runSnapshot`: erste Zeile „- [Status] …“, Abschnitte „Result:“, „Sub-runs:“; „Sandbox: …“ falls vorhanden).
-import { getRecord, listRecords, RUN_TYPE, toMs, type RunData, type RunStatus } from "@based/brain";
-import type { WorkspaceStore } from "@based/core";
+import { getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type RunData, type RunStatus } from "@based/brain";
+import { titleOf, type WorkspaceStore } from "@based/core";
 import { ToolError } from "./pages.js";
 
 export const RUN_STATUS_LABEL: Record<RunStatus, string> = { queued: "Queued", running: "Running", needsYou: "Needs you", done: "Done", failed: "Failed", cancelled: "Cancelled" };
@@ -63,4 +63,35 @@ export function inboxText(store: WorkspaceStore): string {
   const waiting = listRecords<RunData>(store, RUN_TYPE).filter((r) => r.data.status === "needsYou").sort((a, b) => a.data.startedAt - b.data.startedAt);
   if (waiting.length === 0) return "Nothing needs you right now.";
   return [`${waiting.length} ${waiting.length === 1 ? "run needs" : "runs need"} you:`, ...waiting.map((r) => `${line(r)}${r.data.result ? `\n  ${r.data.result.split("\n")[0]}` : ""}`)].join("\n");
+}
+
+// MARK: Projekte (BSD-221 Teil 3c, lesend; Swift AgentTools list_projects/get_project)
+
+const PROJECT_STATUSES = ["active", "paused", "done"] as const;
+
+export function listProjectsText(store: WorkspaceStore, o: { status?: string | undefined; limit?: number | undefined } = {}): string {
+  let ps = listRecords<ProjectData>(store, PROJECT_TYPE);
+  if (o.status) {
+    const st = PROJECT_STATUSES.find((x) => x === o.status!.toLowerCase());
+    if (!st) throw new ToolError(`Unknown status '${o.status}'`);
+    ps = ps.filter((p) => p.data.status === st);
+  }
+  if (ps.length === 0) return "No projects yet.";
+  ps.sort((a, b) => a.name.localeCompare(b.name));
+  const runs = listRecords<RunData>(store, RUN_TYPE);
+  const n = o.limit ?? 50;
+  const lines = ps.slice(0, n).map((p) => `- ${p.name || "Untitled"} [${p.data.status}] (id: ${p.id})${p.data.goal ? ` — ${p.data.goal}` : ""} · ${runs.filter((r) => r.data.projectID === p.id).length} runs`);
+  return lines.join("\n") + (ps.length > n ? `\n… ${ps.length - n} more` : "");
+}
+
+export function getProjectText(store: WorkspaceStore, id: string): string {
+  const p = getRecord<ProjectData>(store, PROJECT_TYPE, id) ?? listRecords<ProjectData>(store, PROJECT_TYPE).find((x) => x.name.toLowerCase() === id.toLowerCase());
+  if (!p) throw new ToolError(`No project ${id}. Use list_projects.`);
+  const out = [`# ${p.name || "Untitled"}`, `Status: ${p.data.status}`, `id: ${p.id}`];
+  if (p.data.goal) out.push(`Goal: ${p.data.goal}`);
+  if (p.data.budgetEUR !== undefined) out.push(`Budget per task: ${eur(p.data.budgetEUR)}`);
+  if (p.data.pageID && store.blocks.has(p.data.pageID)) out.push(`Page: ${titleOf(store, p.data.pageID)} (id: ${p.data.pageID})`);
+  const runs = listRecords<RunData>(store, RUN_TYPE).filter((r) => r.data.projectID === p.id).sort((a, b) => b.data.startedAt - a.data.startedAt);
+  if (runs.length > 0) out.push("", "Recent runs:", ...runs.slice(0, 10).map(line));
+  return out.join("\n");
 }

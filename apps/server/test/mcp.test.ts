@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { MAIN_AGENT_ID, putRecord, RUN_TYPE } from "@based/brain";
+import { MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project"].sort(),
     );
   });
 
@@ -286,6 +286,29 @@ describe("MCP: Schema und Ansichten (BSD-221 Teil 3b, wie Swift NotionParityTool
     expect(textOf(await call("delete_view", { view_id: viewID }))).toContain("Deleted view");
     expect(textOf(await call("list_views", { database_id: dbID }))).not.toContain(viewID);
     expect((await call("create_database", { title: "X", properties: { A: "hologram" } })).isError).toBe(true);
+  });
+});
+
+describe("MCP: Projekte (BSD-221 Teil 3c)", () => {
+  it("list_projects mit Status-Filter, get_project nach id oder Name mit Läufen", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    expect(textOf(await call("list_projects"))).toBe("No projects yet.");
+    const p1 = "44444444-4444-4444-8444-444444444444", p2 = "55555555-5555-4555-8555-555555555555", r1 = "66666666-6666-4666-8666-666666666666";
+    store.transact("projects", (tx) => {
+      putRecord(store, tx, PROJECT_TYPE, p1, "Website", { v: 1, status: "active", goal: "Relaunch", createdAt: 0, budgetEUR: 2 });
+      putRecord(store, tx, PROJECT_TYPE, p2, "Archiv", { v: 1, status: "done", createdAt: 0 });
+      putRecord(store, tx, RUN_TYPE, r1, "Draft copy", { v: 1, kind: "main", status: "done", agentID: MAIN_AGENT_ID, title: "Draft copy", startedAt: 10, usage: { inputTokens: 1, outputTokens: 1, costUSD: 0 }, costEUR: 0, projectID: p1 });
+    });
+    const list = textOf(await call("list_projects"));
+    expect(list.split("\n")).toEqual([`- Archiv [done] (id: ${p2}) · 0 runs`, `- Website [active] (id: ${p1}) — Relaunch · 1 runs`]);
+    expect(textOf(await call("list_projects", { status: "active" }))).not.toContain("Archiv");
+    expect((await call("list_projects", { status: "bogus" })).isError).toBe(true);
+    const got = textOf(await call("get_project", { project_id: "website" }));
+    expect(got).toContain("# Website\nStatus: active");
+    expect(got).toContain("Goal: Relaunch");
+    expect(got).toContain("Recent runs:\n- [Done] Draft copy");
+    expect((await call("get_project", { project_id: "nope" })).isError).toBe(true);
   });
 });
 
