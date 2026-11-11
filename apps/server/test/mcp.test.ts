@@ -9,6 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
+import { MAIN_AGENT_ID, putRecord, RUN_TYPE } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -39,8 +40,41 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "list_databases", "list_pages", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row"].sort(),
     );
+  });
+
+  it("BSD-221 Teil 3a: list_runs, get_run, inbox aus den Lauf-Records", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    expect(textOf(await call("list_runs"))).toBe("No runs yet.");
+    expect(textOf(await call("inbox"))).toBe("Nothing needs you right now.");
+    const usage = { inputTokens: 1200, outputTokens: 300, costUSD: 0.02 };
+    const run = (id: string, title: string, status: string, startedAt: number, extra: object = {}) =>
+      ({ v: 1, kind: "main", status, agentID: MAIN_AGENT_ID, title, startedAt, usage, costEUR: 0.018, ...extra });
+    const parent = "11111111-1111-4111-8111-111111111111", child = "22222222-2222-4222-8222-222222222222", waiting = "33333333-3333-4333-8333-333333333333";
+    store.transact("runs", (tx) => {
+      putRecord(store, tx, RUN_TYPE, parent, "Plan trip", run(parent, "Plan trip", "done", 100, { endedAt: 160, result: "Booked.", model: "anthropic/x", sandbox: "docker:based-run-1" }));
+      putRecord(store, tx, RUN_TYPE, child, "Find hotel", run(child, "Find hotel", "done", 110, { kind: "subagent", parentID: parent }));
+      putRecord(store, tx, RUN_TYPE, waiting, "Send mail", run(waiting, "Send mail", "needsYou", 200, { result: "May I send the mail?\nDetails…" }));
+    });
+    const list = textOf(await call("list_runs"));
+    expect(list.split("\n").map((l) => l.slice(0, 22))).toEqual(["- [Needs you] Send mai", "- [Done] Find hotel (i", "- [Done] Plan trip (id"]);
+    expect(textOf(await call("list_runs", { status: "Needs you" }))).toContain(waiting);
+    expect(textOf(await call("list_runs", { status: "running" }))).toBe("No runs with status Running.");
+    expect((await call("list_runs", { status: "bogus" })).isError).toBe(true);
+    expect(textOf(await call("list_runs", { limit: 1 }))).toContain("… 2 more");
+    const got = textOf(await call("get_run", { run_id: parent }));
+    expect(got.split("\n")[0]).toMatch(/^- \[Done\] Plan trip \(id: /);
+    expect(got).toContain("\n\nResult:\nBooked.");
+    expect(got).toContain("Sandbox: docker:based-run-1");
+    expect(got).toContain("Sub-runs:\n- [Done] Find hotel");
+    expect(got).toContain("Usage: 1200 in / 300 out tokens · €0.018");
+    expect((await call("get_run", { run_id: "nope" })).isError).toBe(true);
+    const inbox = textOf(await call("inbox"));
+    expect(inbox).toContain("1 run needs you:");
+    expect(inbox).toContain("May I send the mail?");
+    expect(inbox).not.toContain("Details…");
   });
 
   it("BSD-221 Teil 2: find_replace, move_page, duplicate_page, backlinks, set_favorite", async () => {

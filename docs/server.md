@@ -262,7 +262,8 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
   genauso. Was der TS-Server noch nicht kann (Agenten, Scheduler, Captures, Sessions, Teilen, Web-App `/app`),
   fehlt dann – ein paralleler Betrieb nach Pfaden bräuchte zwei Workspaces, die sich gegenseitig per Sync v2
   abgleichen (zwei `--node`-Kennungen).
-- **MCP**: Agenten-, Projekt-, Run-, Inbox-, Capture- und Host-Werkzeuge, Prompts (Skills), `/mcp/session/<id>` mit
-  Sitzungs-Tokens. Da sind: Seiten (inkl. `find_replace`, `move_page`, `duplicate_page`, `backlinks`,
-  `set_favorite`, BSD-221 Teil 2) und Datenbanken (Teil 1).
+- **MCP**: Agenten-, Projekt-, Capture- und Host-Werkzeuge, `ask_main_agent`, `resolve_inbox`, Prompts (Skills),
+  `/mcp/session/<id>` mit Sitzungs-Tokens. Da sind: Seiten (inkl. `find_replace`, `move_page`, `duplicate_page`,
+  `backlinks`, `set_favorite`, BSD-221 Teil 2), Datenbanken (Teil 1) und lesend `list_runs`, `get_run`, `inbox`
+  (Teil 3a; damit gehen `based runs`, `based run`, `based inbox`).
 - Schreibfehler der Datenbank (Store schreibgeschützt) ergeben 500; ein Health-Feld dafür fehlt noch.

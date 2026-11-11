@@ -75,12 +75,18 @@ describe("gegen den Server (MCP)", () => {
     expect(JSON.parse(json.out)).toMatchObject({ content: [{ type: "text" }] });
   });
 
-  it("was der Server nicht anbietet (ask, runs, inbox), sagt der Befehl ehrlich", async () => {
-    for (const argv of [["ask", "Do it"], ["runs"], ["inbox"], ["sandbox", "shell", "r1"]]) {
-      const r = await run(argv);
-      expect(r.code).toBe(1);
-      expect(r.err).toMatch(/This server doesn't offer .* \(no `(ask_main_agent|list_runs|inbox|get_run)` tool\)/);
-    }
+  it("was der Server nicht anbietet (ask), sagt der Befehl ehrlich", async () => {
+    const r = await run(["ask", "Do it"]);
+    expect(r.code).toBe(1);
+    expect(r.err).toMatch(/This server doesn't offer .* \(no `ask_main_agent` tool\)/);
+  });
+
+  it("BSD-221 Teil 3a: runs, run, inbox gegen den TS-Server", async () => {
+    expect(await run(["runs"])).toMatchObject({ code: 0, out: "No runs yet." });
+    expect(await run(["inbox"])).toMatchObject({ code: 0, out: "Nothing needs you right now." });
+    const shell = await run(["sandbox", "shell", "r1"]);
+    expect(shell.code).toBe(1);
+    expect(shell.err).toContain("No run with id r1");
   });
 
   it("falscher Token: verständliche Meldung, Exit 1; Token nie in der Ausgabe", async () => {
