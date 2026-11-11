@@ -133,6 +133,8 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
   await expect(block(page)).toHaveAttribute("data-status", "recording");
   await expect(block(page)).toContainText("Let everyone know this conversation is being recorded and transcribed");
   await expect(page.getByTestId("meeting-clock")).not.toHaveText("0:00", { timeout: 5000 });
+  // BSD-281: laufende Aufnahme als Pille oben in der Seitenleiste
+  await expect(page.getByTestId("recording-pill")).toContainText("Recording");
 
   await typeNote(page, "Ship on Friday");
   const stamped = page.getByTestId("meeting-stamped-notes");
@@ -149,6 +151,7 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
 
   await block(page).getByRole("button", { name: "Stop" }).click();
   await expect(block(page)).toHaveAttribute("data-status", "done", { timeout: 15_000 });
+  await expect(page.getByTestId("recording-pill")).toHaveCount(0);
   await expect(block(page)).not.toHaveAttribute("data-recording", "true");
   const transcript = page.getByTestId("meeting-transcript");
   await expect(transcript).toContainText("The release ships on Friday.");
@@ -188,4 +191,17 @@ test("Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfas
   // Nach dem Neuladen kommt die Aufnahme aus dem Asset-Speicher.
   await page.getByTestId("meeting-stamped-notes").locator(".bx-meet-time").first().click();
   await expect(page.getByTestId("meeting-playback")).toContainText("Playing");
+});
+
+test("BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite", async ({ page }) => {
+  await newPageWithMeeting(page, "Planning");
+  await block(page).getByLabel("Meeting title").fill("Roadmap planning");
+  await block(page).getByLabel("Meeting title").press("Enter");
+  await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Library" }).click();
+  await page.getByRole("radiogroup", { name: "Library view" }).getByRole("radio", { name: "Meetings" }).click();
+  const list = page.getByTestId("meetings");
+  await expect(list).toHaveAttribute("data-loaded", "");
+  await expect(list.getByText("Roadmap planning")).toBeVisible();
+  await list.getByText("Roadmap planning").click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Planning");
 });

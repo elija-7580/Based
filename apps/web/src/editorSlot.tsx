@@ -8,7 +8,7 @@ import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
 import { Equation } from "./equation.js";
-import { createMeetingHost } from "./meeting/host.js";
+import { createMeetingHost, type WebMeetingHost } from "./meeting/host.js";
 import { chatController } from "./chat/runtime.js";
 import { editorAI } from "./editorAI.js";
 import { ShellPageDirectory } from "./shell/pageDirectory.js";
@@ -21,7 +21,10 @@ import type { CollabBinder } from "@based/editor";
 
 let shellClient: StoreClient | undefined;
 let directory: ShellPageDirectory | undefined;
-let meeting: MeetingHost | undefined;
+let meeting: WebMeetingHost | undefined;
+
+/** BSD-281: die Aufnahme-Pille in der Seitenleiste liest den Zustand der laufenden Aufnahme. */
+export const meetingHost = (): WebMeetingHost | undefined => meeting;
 let docStore: WorkerYDocStore | undefined;
 let collab: CollabBinder | undefined;
 

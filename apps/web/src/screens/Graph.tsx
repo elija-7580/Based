@@ -27,7 +27,7 @@ interface Props {
   state: ShellState;
   onOpenPage: (id: string) => void;
   /** BSD-281: Reiter Pages/Graph. */
-  onSwitch?: (to: "library" | "graph") => void;
+  onSwitch?: (to: "library" | "graph" | "meetings") => void;
 }
 
 const ALL = "all";

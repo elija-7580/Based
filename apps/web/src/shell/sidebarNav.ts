@@ -107,6 +107,7 @@ export const NAV_COMMANDS: readonly NavCommand[] = [
   { id: "tasks", label: "All tasks", keywords: ["tasks", "agents", "inbox"] },
   { id: "coding", label: "Coding", keywords: ["code", "agent", "terminal"] },
   { id: "graph", label: "Graph", keywords: ["links", "map"] },
+  { id: "meetings", label: "Meetings", keywords: ["meeting notes", "recordings", "transcripts"] },
   { id: "meeting", label: "New meeting", keywords: ["meeting", "notes", "record", "transcribe"] },
   { id: "library", label: "Library", keywords: ["all pages", "pages", "databases"] },
   { id: "trash", label: "Trash", keywords: ["deleted", "bin"] },

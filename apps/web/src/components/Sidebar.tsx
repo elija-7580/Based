@@ -3,7 +3,7 @@
 // weiße Pille. Seiten: auf-/zuklappen, neue Seite, umbenennen, Favorit, Papierkorb, Ziehen zum Umsortieren.
 import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { VirtualList } from "@based/ui";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type KeyboardEvent } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type DragEvent, type KeyboardEvent } from "react";
 import "./teamspaces.css";
 import markLight from "../../../../docs/design/logo/based-mark-small.svg?url";
 import markDark from "../../../../docs/design/logo/based-mark-small-on-dark.svg?url";
@@ -17,6 +17,7 @@ import { collapsedSections, expandedPages, sidebarNavPrefs } from "../shell/stor
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
+import { meetingHost } from "../editorSlot.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
 
@@ -397,6 +398,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         <img className="on-dark" src={markDark} alt="" />
         <span className="wordmark">based</span>
       </div>
+      <RecordingPill onOpenPage={onOpenPage} />
       {layout.top.map((id) => navButton(entries[id]))}
       <VirtualList
         className="tree"
@@ -664,6 +666,27 @@ function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, 
       {item("Move to…", "move", onMove)}
       {item("Move to Trash", "trash", onTrash)}
     </div>
+  );
+}
+
+const NO_RECORDING = () => () => undefined;
+const NOT_RECORDING = () => undefined;
+
+/** BSD-281: laufende Aufnahme als Pille oben in der Seitenleiste; ein Klick führt zur Seite mit dem Meeting. */
+function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
+  const host = meetingHost();
+  const s = useSyncExternalStore(host?.subscribe ?? NO_RECORDING, host?.getState ?? NOT_RECORDING);
+  const page = host?.recordingPage();
+  if (!s?.recording || !page) return null;
+  const t = Math.max(0, Math.floor(s.elapsed));
+  const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+  return (
+    <button type="button" className="rec-pill" data-testid="recording-pill" data-paused={s.paused ? "" : undefined} onClick={() => onOpenPage(page)}
+      aria-label={`${s.paused ? "Recording paused" : "Recording"}, ${clock} — open meeting`}>
+      <span className="rec-dot" aria-hidden="true" />
+      {s.paused ? "Paused" : "Recording"}
+      <span className="t-data rec-time">{clock}</span>
+    </button>
   );
 }
 

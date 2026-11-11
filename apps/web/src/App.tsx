@@ -11,6 +11,7 @@ import { ImportDialog } from "./components/ImportExport.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
+import { Meetings } from "./screens/Meetings.js";
 import { TabBar } from "./components/TabBar.js";
 import { Graph } from "./screens/Graph.js";
 import { Home } from "./screens/Home.js";
@@ -173,6 +174,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <Library client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
   } else if (route.name === "graph") {
     screen = <Graph client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
+  } else if (route.name === "meetings") {
+    screen = <Meetings client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} onNewMeeting={() => void newMeeting()} />;
   } else if (route.name === "settings") {
     screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
   } else {
@@ -197,7 +200,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         onCommand={(id) => {
           setQuickFind(false);
           if (id === "meeting") void newMeeting();
-          else if (id === "home" || id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
+          else if (id === "home" || id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>
   );

@@ -71,6 +71,7 @@ import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
 import { dueItems } from "@based/brain/home";
+import type { MeetingListItem } from "./protocol.js";
 import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -189,6 +190,7 @@ export class StoreHost {
         case "includeDatabase": reply(this.includeDatabase(msg.pageID, msg.databaseID)); break;
         case "listDatabases": reply(this.listDatabases(msg.query)); break;
         case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
+        case "meetings": reply(this.meetings()); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -396,6 +398,26 @@ export class StoreHost {
       }
     }, { undoable: false });
     return made.blockID;
+  }
+
+  /** BSD-281: Meeting-Blöcke außerhalb des Papierkorbs mit ihrer Seite, neueste zuerst. */
+  meetings(): MeetingListItem[] {
+    const store = this.store;
+    const out: MeetingListItem[] = [];
+    for (const b of store.blocks.values()) {
+      if (b.type !== "meeting" || isTrashed(store, b.id)) continue;
+      const pageID = store.containingPage(b.id);
+      if (!pageID) continue;
+      const info = b.props?.meeting;
+      const at = info?.startedAt ?? b.createdAt;
+      const item: MeetingListItem = {
+        meetingID: b.id, pageID, title: plainText(b.text) || "Meeting", pageTitle: titleOf(store, pageID) || "Untitled",
+        status: info?.status ?? "ready", atMs: at * 1000 + 978_307_200_000,
+      };
+      if (info?.duration !== undefined) item.duration = info.duration;
+      out.push(item);
+    }
+    return out.sort((a, b) => b.atMs - a.atMs);
   }
 
   private seedDueTasks(): string {

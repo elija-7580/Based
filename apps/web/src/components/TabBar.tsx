@@ -17,6 +17,7 @@ export function routeTitle(r: Route, titles: ReadonlyMap<string, string>): strin
     case "tasks": return "Tasks";
     case "coding": return "Coding agents";
     case "library": return "Library";
+    case "meetings": return "Meetings";
     case "agent": return "Agent";
     case "project": return "Project";
   }
