@@ -62,6 +62,16 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
 }
 
 /** Sync-Server (Sync v2): URL und Token; leer = nur auf diesem Gerät. */
+/** BSD-286: „This device's clock is 1 h 5 min behind the server“. */
+export function clockSkewText(seconds: number): string {
+  const a = Math.abs(seconds);
+  const parts = a >= 86_400 ? [`${Math.floor(a / 86_400)} d`, `${Math.floor((a % 86_400) / 3600)} h`]
+    : a >= 3600 ? [`${Math.floor(a / 3600)} h`, `${Math.floor((a % 3600) / 60)} min`]
+      : [`${Math.max(1, Math.round(a / 60))} min`];
+  const span = parts.filter((p) => !/^0 /.test(p)).join(" ");
+  return `This device's clock is ${span} ${seconds > 0 ? "behind" : "ahead of"} the server`;
+}
+
 function SyncSection({ client, state }: SettingsSectionProps) {
   const status = state.status;
   const saved = syncConfig.get();
@@ -101,6 +111,11 @@ function SyncSection({ client, state }: SettingsSectionProps) {
       <Row label="Status" hint={status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}>
         <Value testID="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}{status.assets ? ` · ${assetsLabel(status.assets)}` : ""}</Value>
       </Row>
+      {status.clockSkew !== undefined ? (
+        <Row label="Clock" hint="Based stamps your changes with the server's time until this is fixed. Set the date and time of this device automatically.">
+          <Value testID="sync-clock-skew">{clockSkewText(status.clockSkew)}</Value>
+        </Row>
+      ) : null}
       <form onSubmit={(e) => { e.preventDefault(); connect(); }} noValidate>
         <VStack gap={4}>
           <BasedField label="Server URL" type="url" placeholder="https://based.example.com" value={url} disabled={connected} onChange={(v) => { setURL(v); setError(undefined); }} {...(error ? { error } : {})} hint="Connect a based-server to use this workspace on your other devices." />
@@ -256,6 +271,7 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   const lines = [
     `sync: ${s.state}${s.detail ? ` (${s.detail})` : ""}`,
     `storage: ${s.persistent ? "persistent" : "memory"}`,
+    ...(s.clockSkew !== undefined ? [`clock: ${clockSkewText(s.clockSkew)}`] : []),
     `device: ${deviceNode.get() ?? "-"}`,
     `shell: ${isTauri() ? "desktop" : "web"}`,
     `pages: ${Object.keys(state.outline?.nodes ?? {}).length}, trash: ${state.outline?.trash.length ?? 0}`,
@@ -265,6 +281,7 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
     <Group>
       <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
       <Row label="Storage"><Value>{s.persistent ? "Persistent (OPFS)" : "Memory only"}</Value></Row>
+      {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
       <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
       <Row label="Report" hint="State of this device as text — contains no page content">
         <BasedButton label={copied ? "Copied" : "Copy diagnostics"} onClick={copy} />

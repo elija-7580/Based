@@ -50,6 +50,25 @@ export interface SyncClientOptions {
    * Ein Fehler hier hält die Runde nicht auf.
    */
   beforePush?: () => Promise<void>;
+  /** BSD-286: Die eigene Uhr weicht um `skewMs` (Server minus Gerät) ab bzw. stimmt wieder (`undefined`). */
+  onClockSkew?: (skewMs: number | undefined) => void;
+}
+
+/** BSD-286: ab dieser Abweichung zur Server-Uhr warnt Based und stempelt mit der korrigierten Zeit. */
+export const CLOCK_SKEW_LIMIT_MS = 2 * 60_000;
+
+/**
+ * BSD-286: Abweichung der Geräte-Uhr aus dem `Date`-Header einer Antwort (Server minus Gerät, ms). Die Mitte der
+ * Anfrage gilt als Zeitpunkt; der Header hat Sekunden-Auflösung, daher ±1 s Toleranz. `undefined` = kein Header.
+ */
+export function clockSkewFrom(dateHeader: string | null, sentAt: number, receivedAt: number): number | undefined {
+  if (!dateHeader) return undefined;
+  const server = Date.parse(dateHeader);
+  if (!Number.isFinite(server)) return undefined;
+  const local = (sentAt + receivedAt) / 2;
+  const diff = server - local;
+  // Der Header schneidet Millisekunden ab: Abweichungen unter einer Sekunde plus halbe Laufzeit sind Rauschen.
+  return Math.abs(diff) <= 1000 + (receivedAt - sentAt) / 2 ? 0 : diff;
 }
 
 export interface SyncRoundResult {
@@ -95,6 +114,9 @@ export class SyncClient {
   lastError: string | undefined;
   /** Zeit der letzten erfolgreichen Runde (ms seit 1970). */
   lastSync: number | undefined;
+  /** BSD-286: Abweichung der Geräte-Uhr zur Server-Uhr (ms, Server minus Gerät), nur wenn über der Grenze. */
+  clockSkew: number | undefined;
+  private readonly deviceClock: () => number;
   private readonly fetcher: typeof fetch;
   private syncing: Promise<void> | undefined;
   private rerun = false;
@@ -112,6 +134,24 @@ export class SyncClient {
     this.baseURL = opts.baseURL.replace(/\/+$/, "");
     this.pageSize = opts.pageSize ?? 500;
     this.fetcher = opts.fetch ?? ((...a) => fetch(...a));
+    this.deviceClock = store.clock.wallClock;
+  }
+
+  /**
+   * BSD-286: Uhrvergleich mit dem Server. Weicht die Geräte-Uhr mehr als `CLOCK_SKEW_LIMIT_MS` ab, stempelt der Store
+   * neue Änderungen mit der korrigierten Zeit (sonst gewönne bzw. verlöre jede Änderung dieses Geräts falsch).
+   */
+  private noteServerDate(header: string | null, sentAt: number, receivedAt: number) {
+    const diff = clockSkewFrom(header, sentAt, receivedAt);
+    if (diff === undefined) return;
+    const skew = Math.abs(diff) > CLOCK_SKEW_LIMIT_MS ? diff : undefined;
+    if (skew === undefined && this.clockSkew === undefined) return;
+    if (skew !== undefined && this.clockSkew !== undefined && Math.abs(skew - this.clockSkew) < 5_000) return;
+    this.clockSkew = skew;
+    const device = this.deviceClock;
+    this.store.clock.wallClock = skew === undefined ? device : () => device() + skew;
+    if (skew !== undefined) this.opts.log?.("warning", `Sync: this device's clock is off by ${Math.round(skew / 1000)} s; using the server's time`);
+    this.opts.onClockSkew?.(skew);
   }
 
   // MARK: HTTP
@@ -123,7 +163,9 @@ export class SyncClient {
     };
     if (body !== undefined) init.body = JSON.stringify(body);
     if (signal) init.signal = signal;
+    const sentAt = this.deviceClock();
     const res = await this.fetcher(`${this.baseURL}/${path}`, init);
+    this.noteServerDate(res.headers.get("date"), sentAt, this.deviceClock());
     if (!res.ok) throw new SyncHTTPError(res.status, path.split("?")[0] ?? path, await res.text().catch(() => ""));
     return (await res.json()) as T;
   }
@@ -306,6 +348,12 @@ export class SyncClient {
     clearTimeout(this.pushTimer);
     clearTimeout(this.tickTimer);
     this.waitAbort?.abort();
+    // BSD-286: ohne diesen Server keine Korrektur (ein anderer Server misst neu).
+    if (this.clockSkew !== undefined) {
+      this.clockSkew = undefined;
+      this.store.clock.wallClock = this.deviceClock;
+      this.opts.onClockSkew?.(undefined);
+    }
   }
 
   /** Long-Poll: sobald der Server eine Änderung nach `pulled` hat, eine Runde starten. */

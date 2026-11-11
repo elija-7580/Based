@@ -124,6 +124,8 @@ export class Router {
     if (origin && this.config.allowedOrigin && origin === this.config.allowedOrigin) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Vary", "Origin");
+      // BSD-286: Clients vergleichen ihre Uhr mit dem Date-Header (sonst im Browser nicht lesbar).
+      res.setHeader("Access-Control-Expose-Headers", "Date");
     }
     const controller = new AbortController();
     res.on("close", () => controller.abort());

@@ -10,7 +10,7 @@ export { CURRENT_SCHEMA_VERSION, MIGRATIONS, PersistenceError, migrate, schemaVe
 export type { Migration } from "./migrations.js";
 export { LOCAL_DERIVED, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode } from "./persistence.js";
 export type { ChangeEntry, DeviceNodeStore, NodeResolution, UndecodableRow } from "./persistence.js";
-export { PULLED_KEY, PUSHED_KEY, SyncClient, SyncHTTPError, decodeDeletions, decodeRecords } from "./client.js";
+export { PULLED_KEY, PUSHED_KEY, SyncClient, SyncHTTPError, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
 export type { SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";
 // BSD-73: Versionsverlauf in einer eigenen Datei (history.sqlite, Format wie Swift)
 export { HISTORY_SCHEMA, SqliteHistoryStorage } from "./history.js";

@@ -47,3 +47,13 @@ describe("Stempel aus der Zukunft (BSD-279)", () => {
     expect(app.sync.pull(0).records.find((r) => r.data.id === "p3")?.data.text).toBe("wieder da");
   });
 });
+
+describe("Date-Header für den Uhrvergleich (BSD-286)", () => {
+  it("jede Antwort hat Date; für den erlaubten Origin ist er im Browser lesbar", async () => {
+    const app = await startApp({ allowedOrigin: "https://web.example" });
+    apps.push(app);
+    const r = await fetch(`${app.url}/sync/v2/info`, { headers: { Authorization: "Bearer test-token-0123456789", Origin: "https://web.example" } });
+    expect(Math.abs(Date.parse(r.headers.get("date")!) - Date.now())).toBeLessThan(5_000);
+    expect(r.headers.get("access-control-expose-headers")).toBe("Date");
+  });
+});
