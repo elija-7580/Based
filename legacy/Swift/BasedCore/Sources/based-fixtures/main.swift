@@ -2,7 +2,7 @@ import BasedCore
 import Foundation
 
 // BSD-148/149 (ADR 0011): schreibt die Golden Fixtures für den TypeScript-Stack.
-//   swift run based-fixtures [<ausgabe-ordner>]          (Standard: ../../fixtures)
+//   swift run based-fixtures [<ausgabe-ordner>]          (Standard: ../../../fixtures, also fixtures/ im Repo)
 //   swift run based-fixtures --records-from <based.sqlite> <ausgabe.jsonl>
 //       exportiert alle Records einer echten Datenbank als JSONL (eine Zeile pro Record, Swift-Bytes),
 //       z. B. für `BASED_RECORDS=<ausgabe.jsonl> pnpm --filter @based/core test`.
@@ -26,7 +26,7 @@ if args.first == "--records-from" {
 }
 
 let here = URL(fileURLWithPath: #filePath)
-let defaultOut = here.deletingLastPathComponent().appendingPathComponent("../../../../fixtures").standardizedFileURL
+let defaultOut = here.deletingLastPathComponent().appendingPathComponent("../../../../../fixtures").standardizedFileURL
 let out = args.first.map { URL(fileURLWithPath: $0) } ?? defaultOut
 do {
     guard FixtureExport.isUTC else { fail("based-fixtures: Zeitzone ist nicht UTC (\(TimeZone.current.identifier))") }

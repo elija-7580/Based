@@ -15,7 +15,7 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0008](0008-collaboration-ready.md) | Prepare for multi-user: properties become records, text CRDT chosen by spike, LWW until then. |
 | [0009](0009-design-tokens.md) | Colours, spacing, fonts, radii and motion come only from `DS`/`Theme`. |
 | [0010](0010-text-crdt.md) | *Superseded by 0011:* Automerge als Text-CRDT pro Block vorgeschlagen; der Spike bleibt als Messgrundlage. |
-| [0011](0011-typescript-stack.md) | Neustart: TypeScript-Kern, BlockNote + Yjs, Tauri 2 (Desktop), Tauri Mobile/Capacitor, Watch nativ; Migration über Fixtures und Sync v2. |
+| [0011](0011-typescript-stack.md) | Neustart: TypeScript-Kern, BlockNote + Yjs, Tauri 2 (Desktop), Tauri Mobile/Capacitor, Watch nativ; Migration über Fixtures und Sync v2. *Umgesetzt 11.11.2026 (BSD-168): Swift-Code in `legacy/`.* |
 | [0012](0012-design-language.md) | Designsprache „Based Default“: leiser Standard, Agent-Marker als einziges Signal, Theme „Bold“; Werte im Paket `@based/design-tokens`. |
 | [0013](0013-main-agent-task-cards.md) | Hauptagent als Auftragskarten: Auftrag zuerst gespeichert, Plan per Schema aus festem Aktionskatalog, deterministischer Ausführer mit Undo und Sicherheitsstufen. |
 

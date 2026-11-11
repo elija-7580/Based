@@ -22,7 +22,7 @@ import Testing
 
     /// Die eingecheckten Dateien unter fixtures/ sind aktuell. Bei Fehlschlag: `swift run based-fixtures`.
     @Test func committedFixturesAreCurrent() throws {
-        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../fixtures").standardizedFileURL
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../../fixtures").standardizedFileURL
         // Auf einem Mac in Wien fehlen die *.utc.json-Dateien hier (andere Zeitzone); die prüft Linux/CI.
         for (path, text) in try FixtureExport.all() {
             let onDisk = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8)

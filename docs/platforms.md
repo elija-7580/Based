@@ -25,7 +25,7 @@ CloudKit sync is an optional second channel. The `based-server` channel works ev
 ## Recommended route to Web, Windows and Linux
 
 1. **Web client** served by `based-server` at `/app`. A first read-only version exists
-   (`Swift/BasedBrain/Sources/BasedBrain/Server/WebApp.swift`, one HTML file with no build step): you enter the token, it pages through
+   (`legacy/Swift/BasedBrain/Sources/BasedBrain/Server/WebApp.swift`, one HTML file with no build step): you enter the token, it pages through
    `/sync/v2/pull`, then shows the page tree and renders pages (text, headings, lists, to-dos, toggles, quotes, callouts,
    code, tables, columns, images, page links), updates live, and lets you edit text blocks without inline formatting
    (written back with a newer HLC stamp through `/sync/v2/push`). Next is the full client:

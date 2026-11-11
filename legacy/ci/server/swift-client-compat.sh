@@ -8,8 +8,9 @@
 #   --reference   dieselben Tests zusätzlich gegen den Swift-based-server (Kontrolle, dass die Tests stimmen)
 # Umgebung: SWIFT_BIN (Ordner mit `swift`), BASED_COMPAT_PORT (Standard 18120; Referenz-Server: Port + 1).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PKG="$ROOT/Swift/BasedBrain"
+LEGACY="$(cd "$(dirname "$0")/../.." && pwd)"   # legacy/ (Swift-Code seit BSD-168)
+ROOT="$(cd "$LEGACY/.." && pwd)"
+PKG="$LEGACY/Swift/BasedBrain"
 PORT="${BASED_COMPAT_PORT:-18120}"
 TOKEN="compat-$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 SKIP_BUILD=0
