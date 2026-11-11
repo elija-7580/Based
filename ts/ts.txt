@@ -18,52 +18,49 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1624 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1625)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
-packages/sync test: [2m      Tests [22m [1m[32m45 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (48)[39m
-packages/brain test: [2m      Tests [22m [1m[32m383 passed[39m[22m[90m (383)[39m
-packages/editor test: [2m      Tests [22m [1m[32m77 passed[39m[22m[90m (77)[39m
-apps/server test: [2m      Tests [22m [1m[32m115 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (116)[39m
-apps/web test: [2m      Tests [22m [1m[32m172 passed[39m[22m[90m (172)[39m
-apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+packages/core test: [31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+packages/core test: [31m[1m[7m FAIL [27m[22m[39m test/store-perf.test.ts[2m > [22m8.000 verschachtelte Seiten mit 400 Datenbanken: in den Papierkorb, zurück, wieder hinein und leeren – je unter 1 s
+packages/core test: [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1665 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1667)[39m
+packages/core test: ::error file=/home/runner/work/Based/Based/packages/core/test/store-perf.test.ts,title=test/store-perf.test.ts > 8.000 verschachtelte Seiten mit 400 Datenbanken%3A in den Papierkorb%2C zurück%2C wieder hinein und leeren – je unter 1 s,line=40,column=63::AssertionError: expected 1753.9443309999997 to be less than 1000%0A ❯ test/store-perf.test.ts:40:63%0A%0A
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/core@0.0.0 test: `vitest run`
 --- e2e
+  ✓  380 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (23.8s)
+  ✓  382 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (8.8s)
+  -  383 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  384 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  381 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da (24.5s)
+  ✓  385 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (6.4s)
+  ✓  386 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (6.5s)
+  ✓  387 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (4.6s)
+  ✓  389 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (6.7s)
+  ✓  388 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (11.0s)
+  ✓  390 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (3.6s)
+  ✓  392 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (4.6s)
+  ✓  391 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (7.6s)
+  ✓  393 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.5s)
+  ✓  394 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.6s)
+  ✓  395 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.1s)
 
 
-      310 |   await command(page, { op: "trash", ids: [zeppelin] });
-      311 |   const trashed = editor(page).locator(".bx-mention[data-kind=page]", { hasText: "Project Airship" });
-    > 312 |   await expect(trashed).toHaveAttribute("data-trashed", "true");
-          |                         ^
-      313 |   await expect(trashed).toContainText("in Trash");
-      314 |   await command(page, { op: "restore", ids: [zeppelin] });
-      315 |   await expect(trashed).not.toHaveAttribute("data-trashed", "true");
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:312:25
-
-    Error Context: test-results/editor-parity--und-erwähne-8255a-ichtbar-Papierkorb-markiert-webkit/error-context.md
-
-  3) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
+  1) [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms ─────────
 
     Error: expect(received).toBeLessThan(expected)
 
-    Expected: < 34
-    Received:   43
+    Expected: < 100
+    Received:   119
 
-      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
-      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
-    > 144 |   expect(r.p95).toBeLessThan(34);
-          |                 ^
-      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
-      146 | });
-      147 |
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
+      107 |   console.log(`[${info.project.name}] Quick Find (Hin und zurück zum Worker, ms):`, took.join(", "));
+      108 |   expect(took[2]).toBeLessThan(50);
+    > 109 |   expect(took[4]).toBeLessThan(100);
+          |                   ^
+      110 |   await box.press("Enter");
+      111 |   await expect(page.getByLabel("Page title")).toHaveValue("Page 5000");
+      112 |   await expect(page.getByRole("dialog", { name: "Quick Find" })).toHaveCount(0);
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:109:19
 
-    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+    Error Context: test-results/shell-Quick-Find-über-5-000-Seiten-antwortet-in-50-ms-webkit/error-context.md
 
-  3 failed
-    [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
-    [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
-  20 skipped
-  345 passed (19.6m)
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
-Exit status 1
+  1 flaky
+    [webkit] › e2e/shell.spec.ts:92:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms ──────────
+  22 skipped
+  371 passed (21.9m)
