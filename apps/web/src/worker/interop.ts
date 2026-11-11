@@ -5,6 +5,7 @@ import {
   commitPreparedImport,
   exportAssetRefs,
   exportPageHTML,
+  exportOPML,
   exportWorkspaceHTML,
   importArchiveRecords,
   planWorkspaceExport,
@@ -41,6 +42,8 @@ export interface ImportSummary {
 
 export type ExportFormat = "markdown" | "html";
 export type WorkspaceExportFormat = ExportFormat | "archive";
+/** Nur für einzelne Seiten (BSD-260): Gliederung als OPML. */
+export type PageExportFormat = ExportFormat | "opml";
 
 /** Wahl beim HTML-Export. */
 export interface HTMLExportChoice {
@@ -108,9 +111,13 @@ function htmlFile(r: HTMLExportResult, name = r.name): ExportFile {
  * Eine Seite als Markdown (Datenbank: CSV) oder HTML. HTML: eigenständige Datei mit eingebetteten Bildern, oder – mit
  * Unterseiten, `images: "folder"` oder nicht einbettbaren Anhängen – ein ZIP mit `assets/`.
  */
-export async function exportPage(store: WorkspaceStore, pageID: string, format: ExportFormat, assets?: AssetStore, choice: HTMLExportChoice = {}): Promise<ExportFile> {
+export async function exportPage(store: WorkspaceStore, pageID: string, format: PageExportFormat, assets?: AssetStore, choice: HTMLExportChoice = {}): Promise<ExportFile> {
   const page = store.blocks.get(pageID);
   if (!page) throw new Error("This page doesn't exist.");
+  if (format === "opml") {
+    const r = exportOPML(store, pageID);
+    return { name: r.name, mime: "text/x-opml;charset=utf-8", data: enc.encode(r.xml), summary: `Exported “${r.name}”.` };
+  }
   if (format === "html") {
     const files = await loadAssets(assets, exportAssetRefs(store, [pageID], choice.subpages === true));
     return htmlFile(exportPageHTML(store, pageID, { ...choice, readAsset: (ref) => files.get(ref.id) }));
