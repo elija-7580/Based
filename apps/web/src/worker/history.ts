@@ -179,13 +179,11 @@ export class PageHistory {
       pages.add(id);
       for (const d of subtree(this.store, id)) if (isPageLike(this.store.blocks.get(d))) pages.add(d);
     }
-    for (const p of pages) {
-      this.dirty.delete(p);
-      try {
-        this.history.forget(p);
-      } catch (e) {
-        this.lastError = e instanceof Error ? e.message : String(e);
-      }
+    for (const p of pages) this.dirty.delete(p);
+    try {
+      this.history.forgetAll(pages);
+    } catch (e) {
+      this.lastError = e instanceof Error ? e.message : String(e);
     }
   }
 

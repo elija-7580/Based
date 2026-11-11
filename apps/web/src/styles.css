@@ -349,6 +349,7 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .empty-page { padding: var(--space-2) 0; }
 .trash-head { display: flex; align-items: flex-end; gap: var(--space-4); justify-content: space-between; flex-wrap: wrap; }
 .trash-head .actions { display: flex; gap: var(--space-2); }
+.trash-more { display: flex; align-items: center; gap: var(--space-2); }
 .group .row .btn { flex: none; }
 .page { padding: var(--space-6) var(--space-6) var(--space-8); }
 /* Datenbankseiten nutzen die ganze Panelbreite (wie Notion); Titel bleibt an der Spaltenkante. */

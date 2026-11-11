@@ -367,6 +367,16 @@ export class VersionHistory {
 
   /** Entfernt alle Versionen einer Seite (endgültig gelöscht); Objekte räumt `collectGarbage` weg. */
   forget(pageID: string) {
-    this.storage.transaction(() => this.storage.deletePageVersions(pageID));
+    this.forgetAll([pageID]);
+  }
+
+  /**
+   * Wie `forget`, für viele Seiten in einer Transaktion. Eine Transaktion je Seite hieß auf SQLite/OPFS ein
+   * Schreibvorgang je Seite: „Papierkorb leeren“ mit 3.000 Seiten dauerte so rund 14 s (Feedback 11. 11.).
+   */
+  forgetAll(pageIDs: Iterable<string>) {
+    const ids = [...pageIDs];
+    if (!ids.length) return;
+    this.storage.transaction(() => { for (const id of ids) this.storage.deletePageVersions(id); });
   }
 }
