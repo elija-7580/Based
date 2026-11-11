@@ -1,10 +1,9 @@
-// Testserver auf einem freien Port aus 18100–18199 (parallele Arbeitsordner teilen sich die Maschine).
+// Testserver auf einem freien Port (das Betriebssystem wählt ihn).
 import { createApp, type App, type AppOptions } from "../src/app.js";
 import { silentLogger } from "../src/log.js";
 
 export const TOKEN = "test-token-0123456789";
 
-// Jeder Start nimmt den nächsten Port (keine Wiederverwendung im selben Lauf: fetch hält Verbindungen offen).
 
 export async function startApp(opts: Partial<AppOptions> = {}): Promise<App & { url: string; port: number }> {
   // Port 0: das Betriebssystem wählt einen freien. Feste Ports stießen zwischen parallel laufenden Testdateien
