@@ -21,6 +21,8 @@ export interface CLIOptions {
   url?: string;
   tokenFile?: string;
   json: boolean;
+  /** BSD-138: den lokalen Server der Desktop-App nehmen (Discovery-Datei), auch wenn ein anderer eingestellt ist. */
+  local?: boolean;
 }
 
 export class CLIError extends Error {
@@ -52,12 +54,14 @@ Options (any command):
   --url <url>          Server URL (default: BASED_URL, then the config file)
   --token-file <path>  File that contains the token (default: BASED_TOKEN_FILE)
   --json               Print the raw tool result as JSON
+  --local              Use the local server of the Based desktop app (no server needed)
 
 The token is never accepted as an argument. Use BASED_TOKEN, --token-file, or \`based login\`
-(stored in ~/.config/based/config.json, mode 0600).`;
+(stored in ~/.config/based/config.json, mode 0600). Without any server configured, \`based\` uses the
+desktop app's local server when the app is running (~/.config/based/local.json).`;
 
 const VALUE_FLAGS = new Set(["--url", "--token-file", "--kind", "--project", "--status", "--limit", "--title", "--parent", "--timeout"]);
-const BOOL_FLAGS = new Set(["--json", "--running", "--help", "-h", "--version", "--wait"]);
+const BOOL_FLAGS = new Set(["--local", "--json", "--running", "--help", "-h", "--version", "--wait"]);
 const SECRET_FLAGS = new Set(["--token", "-t", "--password", "--secret", "--api-key"]);
 export const RUN_STATUSES = ["Queued", "Running", "Needs you", "Done", "Failed", "Cancelled"];
 
@@ -90,6 +94,10 @@ export function parseArgs(argv: string[]): { command: CLICommand; options: CLIOp
     else rest.push(a);
   }
   const options: CLIOptions = { json: bools.has("--json") };
+  if (bools.has("--local")) {
+    if (flags.has("--url") || flags.has("--token-file")) throw new CLIError("--local doesn't go with --url or --token-file", 2);
+    options.local = true;
+  }
   if (flags.has("--url")) options.url = flags.get("--url")!;
   if (flags.has("--token-file")) options.tokenFile = flags.get("--token-file")!;
   const done = (command: CLICommand) => ({ command, options });

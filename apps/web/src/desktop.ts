@@ -79,10 +79,34 @@ export async function startDesktop(onCloseTab?: () => void) {
   const win = getCurrentWebviewWindow();
   const main = win.label === "main";
   if (main) await win.listen("desktop://check-updates", () => void checkForUpdates({ interactive: true }));
+  // BSD-138: lokaler Server (falls eingeschaltet) und „Install Command Line Tool…“ – nur im Hauptfenster.
+  if (main) {
+    const { localServer } = await import("./desktop/localServer.js");
+    void localServer().autostart();
+    await win.listen("desktop://install-cli", () => void showCliInstall());
+  }
   // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
   if (onCloseTab) await win.listen("desktop://close-tab", () => onCloseTab());
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+}
+
+/** BSD-138: Befehl zum Installieren von `based` zeigen (und in die Zwischenablage legen). */
+async function showCliInstall() {
+  const [{ localServer }, dialog] = await Promise.all([import("./desktop/localServer.js"), import("@tauri-apps/plugin-dialog")]);
+  const install = await localServer().cliInstall();
+  if (!install) return;
+  try {
+    await navigator.clipboard.writeText(install.command);
+  } catch {
+    // ohne Zwischenablage: der Befehl steht im Dialog
+  }
+  const on = localServer().getState().enabled;
+  await dialog.message(
+    `Run this in Terminal (copied to the clipboard):\n\n${install.command}\n\nThen \`based --help\`. ` +
+      (on ? "The local server is on, so `based` works while Based Next is open." : "Turn on Settings → Sync & server → Local server so `based` works without a server."),
+    { title: "Install Command Line Tool", kind: "info" },
+  );
 }
 
 /** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */

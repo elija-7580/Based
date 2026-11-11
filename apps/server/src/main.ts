@@ -16,6 +16,7 @@ import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./s
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
+import { loginShellPath, mergePath, newLocalToken, removeLocalDiscovery, writeLocalDiscovery } from "./local.js";
 import { SyncService } from "./sync.js";
 
 export interface Options {
@@ -42,9 +43,11 @@ export interface Options {
   codingEnv: Record<string, string[]>;
   /** BSD-223: JSON-Datei mit eigenen bzw. geänderten Agenten (Liste von AgentDefinition-Teilen, nach `id` gemischt). */
   codingAgents: string | undefined;
+  /** BSD-138: Sidecar der Desktop-App – nur 127.0.0.1, freier Port, Discovery-Datei für die CLI, Ende mit stdin. */
+  local: boolean;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -64,7 +67,9 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     codingRoots: (env.BASED_CODING_ROOTS ?? "").split(":").filter((r) => r !== ""),
     codingEnv: parseCodingEnv(env.BASED_CODING_ENV),
     codingAgents: env.BASED_CODING_AGENTS,
+    local: false,
   };
+  let portGiven = false;
   let sandbox = env.BASED_SANDBOX;
   const args = [...argv];
   const value = (name: string) => {
@@ -77,7 +82,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     switch (a) {
       case "--": break;
       case "--db": o.db = value(a); break;
-      case "--port": o.port = Number(value(a)); break;
+      case "--port": o.port = Number(value(a)); portGiven = true; break;
       case "--host": o.host = value(a); break;
       case "--token": o.token = value(a); break;
       case "--node": o.node = value(a); break;
@@ -90,12 +95,19 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--coding-root": o.codingRoots.push(value(a)); break;
       case "--coding-agents": o.codingAgents = value(a); break;
       case "--stdio": o.stdio = true; break;
+      case "--local": o.local = true; break;
       default: throw new Error(`unknown option ${a}`);
     }
   }
   if (sandbox !== undefined && sandbox !== "" && sandbox !== "off") {
     if (sandbox !== "docker" && sandbox !== "local") throw new Error("--sandbox must be docker, local or off");
     o.sandbox = sandbox;
+  }
+  if (o.local) {
+    // Nie nach außen: nur Loopback; ohne --port ein freier Port (die CLI findet ihn über die Discovery-Datei).
+    if (o.stdio) throw new Error("--local and --stdio don't go together");
+    o.host = "127.0.0.1";
+    if (!portGiven) o.port = 0;
   }
   if (o.codingRoots.some((r) => !r.startsWith("/"))) throw new Error("--coding-root must be an absolute path");
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
@@ -174,7 +186,7 @@ function sandboxManager(opts: Options): SandboxManager {
   return new SandboxManager(opts.sandbox === "docker" ? new DockerSandboxProvider({ snapshotDirectory }) : new LocalSandboxProvider({ snapshotDirectory }));
 }
 
-async function main() {
+export async function main() {
   const log = createLogger({ minimum: parseLogLevel(process.env.BASED_LOG_LEVEL) ?? "info" });
   let opts: Options;
   try {
@@ -197,6 +209,9 @@ async function main() {
     return;
   }
 
+  if (!opts.token && opts.local) opts.token = newLocalToken();
+  // BSD-138: als Beilage aus dem Finder gestartet → PATH der Login-Shell, damit Coding-Agenten gefunden werden.
+  if (opts.local) process.env.PATH = mergePath(loginShellPath(process.env.SHELL), process.env.PATH);
   if (!opts.token) {
     process.stderr.write("based-server: no token. Set BASED_TOKEN or pass --token <secret>; the server does not start without one.\n");
     process.exit(2);
@@ -219,12 +234,18 @@ async function main() {
   const { port } = await app.listen(opts.port, opts.host);
   bound.port = port;
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
+  if (opts.local) {
+    // BSD-138: für die CLI auffindbar; die Hülle liest die Adresse aus dieser Zeile (der Token steht nicht darin).
+    const d = writeLocalDiscovery(homedir(), { port, token: opts.token, owner: process.env.BASED_LOCAL_OWNER ?? "based-server --local" });
+    process.stdout.write(`BASED_LOCAL_READY ${JSON.stringify({ url: d.url, pid: d.pid })}\n`);
+  }
 
   let stopping = false;
   const stop = (signal: string) => {
     if (stopping) return;
     stopping = true;
     log.info("stopping", { signal });
+    if (opts.local) removeLocalDiscovery(homedir());
     app.close().then(
       () => process.exit(0),
       () => process.exit(1),
@@ -232,7 +253,15 @@ async function main() {
   };
   process.on("SIGTERM", () => stop("SIGTERM"));
   process.on("SIGINT", () => stop("SIGINT"));
+  // Sidecar: endet die Hülle (stdin zu), endet auch der Server – kein verwaister Prozess, keine alte Discovery-Datei.
+  if (opts.local) {
+    process.stdin.on("end", () => stop("stdin closed"));
+    process.stdin.on("error", () => stop("stdin closed"));
+    process.stdin.resume();
+  }
 }
 
-const isEntry = process.argv[1] !== undefined && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+// Gebündelt (BSD-138, Sidecar) startet bin.ts; dort ist `__BASED_BUNDLED__` gesetzt (esbuild define).
+declare const __BASED_BUNDLED__: boolean | undefined;
+const isEntry = typeof __BASED_BUNDLED__ === "undefined" && process.argv[1] !== undefined && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (isEntry) void main();

@@ -35,3 +35,36 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
   assert.deepEqual(cap.windows, ["main", "page-*"]);
   assert.ok(cap.permissions.includes("core:webview:allow-create-webview-window"));
 });
+
+test("BSD-138: Beilage based-server, nur vom Hauptfenster, nur dieser Sidecar; Plugin in Cargo.toml und lib.rs", () => {
+  assert.deepEqual(conf.bundle.externalBin, ["binaries/based-server"]);
+  assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
+  assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
+  const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/local-server.json", import.meta.url), "utf8"));
+  assert.deepEqual(cap.windows, ["main"]);
+  const spawn = cap.permissions.find((p) => typeof p === "object" && p.identifier === "shell:allow-spawn");
+  assert.deepEqual(spawn.allow.map((a) => [a.name, a.sidecar]), [["binaries/based-server", true]]);
+  assert.ok(!cap.permissions.includes("shell:default") && !cap.permissions.includes("shell:allow-execute") && !cap.permissions.includes("shell:allow-open"));
+  const def = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"));
+  assert.ok(!JSON.stringify(def).includes("shell:"));
+  assert.match(readFileSync(new URL("../src-tauri/Cargo.toml", import.meta.url), "utf8"), /tauri-plugin-shell = "2"/);
+  const lib = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
+  assert.match(lib, /tauri_plugin_shell::init\(\)/);
+  assert.match(lib, /desktop:\/\/install-cli/);
+});
+
+test("BSD-138: Beilage bündelt und spielt beide Rollen (cli / Server)", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  const dir = fileURLToPath(new URL("..", import.meta.url));
+  execFileSync(process.execPath, ["scripts/build-sidecar.mjs", "--bundle"], { cwd: dir, stdio: "ignore" });
+  const out = execFileSync(process.execPath, ["dist-sidecar/based-server.cjs", "cli", "--version"], { cwd: dir, encoding: "utf8" });
+  assert.equal(out.trim(), "based 0.1.0");
+  let failed;
+  try {
+    execFileSync(process.execPath, ["dist-sidecar/based-server.cjs", "--local", "--stdio"], { cwd: dir, encoding: "utf8", stdio: "pipe" });
+  } catch (e) {
+    failed = String(e.stderr);
+  }
+  assert.match(failed ?? "", /--local and --stdio/);
+});

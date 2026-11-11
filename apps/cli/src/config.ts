@@ -15,6 +15,8 @@ export interface ConfigIO {
   readFile: (path: string) => string | undefined;
   /** POSIX-Rechte (undefined = unbekannt). */
   fileMode?: (path: string) => number | undefined;
+  /** Läuft der Prozess noch? (Discovery-Datei eines beendeten Sidecars ignorieren.) */
+  alive?: (pid: number) => boolean;
 }
 
 export const configPath = (home: string) => `${home}/.config/based/config.json`;
@@ -39,7 +41,43 @@ export function checkURL(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+/** BSD-138: Discovery-Datei des lokalen Servers der Desktop-App (ohne Token; der steht in `tokenFile`, 0600). */
+export const localDiscoveryPath = (home: string) => `${home}/.config/based/local.json`;
+
+/** Lokalen Server der Desktop-App finden; `undefined`, wenn keiner läuft. Wirft bei unsicheren Dateien. */
+export function localConfig(io: ConfigIO): CLIConfig | undefined {
+  const path = localDiscoveryPath(io.home);
+  const raw = io.readFile(path);
+  if (raw === undefined) return undefined;
+  let d: { url?: unknown; pid?: unknown; tokenFile?: unknown };
+  try {
+    d = JSON.parse(raw) as typeof d;
+  } catch {
+    return undefined;
+  }
+  if (typeof d.url !== "string" || typeof d.tokenFile !== "string") return undefined;
+  if (typeof d.pid === "number" && io.alive && !io.alive(d.pid)) return undefined;
+  let u: URL;
+  try {
+    u = new URL(d.url);
+  } catch {
+    return undefined;
+  }
+  // Nur der eigene Rechner: eine manipulierte Datei soll den Token nirgendwo anders hinschicken.
+  if (u.protocol !== "http:" || !["127.0.0.1", "[::1]", "localhost"].includes(u.hostname)) throw new CLIError(`${path} points outside this computer`);
+  const m = io.fileMode?.(d.tokenFile);
+  if (m !== undefined && (m & 0o077) !== 0) throw new CLIError(`${d.tokenFile} is readable by others (chmod 600 ${d.tokenFile})`);
+  const token = nonEmpty(io.readFile(d.tokenFile));
+  if (!token) return undefined;
+  return { url: d.url.replace(/\/+$/, ""), token, tokenSource: `desktop app (${d.tokenFile})` };
+}
+
 export function resolveConfig(options: CLIOptions, io: ConfigIO): CLIConfig {
+  if (options.local) {
+    const local = localConfig(io);
+    if (!local) throw new CLIError("The Based desktop app isn't running (or its local server is off). Open Based Next and try again.");
+    return local;
+  }
   const cfgPath = configPath(io.home);
   let fileURL: string | undefined, fileToken: string | undefined;
   const raw = io.readFile(cfgPath);
@@ -53,7 +91,12 @@ export function resolveConfig(options: CLIOptions, io: ConfigIO): CLIConfig {
     }
   }
   const url = nonEmpty(options.url) ?? nonEmpty(io.env.BASED_URL) ?? nonEmpty(fileURL);
-  if (!url) throw new CLIError("No server configured. Run `based login --url <https://your-server>` or set BASED_URL.");
+  if (!url) {
+    // Kein Server eingestellt: der lokale Server der Desktop-App, wenn sie läuft.
+    const local = localConfig(io);
+    if (local) return local;
+    throw new CLIError("No server configured. Open the Based desktop app, run `based login --url <https://your-server>`, or set BASED_URL.");
+  }
   const checked = checkURL(url);
   const private_ = (p: string) => {
     const m = io.fileMode?.(p);

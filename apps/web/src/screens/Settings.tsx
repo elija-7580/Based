@@ -16,6 +16,7 @@ import { settingsRegistry } from "./settings/registry.js";
 import { registerBuiltinSettings } from "./settings/sections.js";
 import "../brain/BrainSettings.js";
 import "../chat/ConnectionsSection.js";
+import "../desktop/LocalServerSection.js";
 import "./settings/settings.css";
 
 registerBuiltinSettings();

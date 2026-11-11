@@ -9,9 +9,12 @@
     "test": "node --test test/config.test.mjs",
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "sidecar": "node scripts/build-sidecar.mjs"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.4"
+    "@tauri-apps/cli": "^2.12.4",
+    "esbuild": "0.25.12",
+    "postject": "1.0.0-alpha.6"
   }
 }
