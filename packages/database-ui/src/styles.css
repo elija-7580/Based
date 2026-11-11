@@ -584,7 +584,20 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-root.inline .dbui-head { padding: 0; gap: var(--space-2); }
 .dbui-root.inline .dbui-body[data-view-type="table"] { flex: none; }
 .dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { flex: none; overflow-y: hidden; overflow-x: auto; overscroll-behavior: auto; }
-.dbui-root.inline .dbui-body:not([data-view-type="table"]) { height: calc(var(--space-8) * 7); }
+/* BSD-255 Teil 2: Board, Liste, Galerie wachsen mit der Seite (kein eigener senkrechter Scroller, „Load more“);
+   Kalender, Timeline, Diagramm, Karte, Dashboard brauchen eine Fläche und behalten die feste Höhe. */
+.dbui-root.inline .dbui-body:not(:is([data-view-type="table"], [data-view-type="board"], [data-view-type="list"], [data-view-type="gallery"])) { height: calc(var(--space-8) * 7); }
+.dbui-root.inline .dbui-body:is([data-view-type="board"], [data-view-type="list"], [data-view-type="gallery"]) { flex: none; }
+.dbui-root.inline :is(.dbui-gallery-wrap, .dbui-board) { flex: none; }
+.dbui-root.inline .dbui-board { padding-inline: 0; }
+.dbui-root.inline .dbui-board-col { max-height: none; }
+.dbui-root.inline .dbui-board-scroll { flex: none; overflow: visible; }
+.dbui-board-inner.static { display: flex; flex-direction: column; gap: var(--space-2); }
+.dbui-card-slot.static { position: relative; }
+.dbui-root.inline .dbui-vlist { margin-inline: 0; }
+.dbui-vlist.static { display: flex; flex-direction: column; }
+.dbui-vitem.static { position: static; }
+.dbui-board-col .dbui-load-more { padding-left: var(--space-3); }
 .dbui-root.inline .dbui-actions, .dbui-root.inline .dbui-open-full { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
 .dbui-root.inline:hover .dbui-actions, .dbui-root.inline:focus-within .dbui-actions,
 .dbui-root.inline:hover .dbui-open-full, .dbui-root.inline:focus-within .dbui-open-full { opacity: 1; }

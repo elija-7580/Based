@@ -86,7 +86,7 @@ Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and
 Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)"
 Word / character count,editor,could,yes,yes,,yes: words · characters in the ••• page menu (BSD-206)
 Placeholders per block type,editor,should,yes,yes,,yes
-Database inline,databases,must,yes,yes,,"yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an; BSD-255: ruhig ohne Kasten, Tabelle ohne eigenen senkrechten Scroller mit Load more, Werkzeuge beim Überfahren, Open as full page)"
+Database inline,databases,must,yes,yes,,"yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an; BSD-255: ruhig ohne Kasten, Tabelle ohne eigenen senkrechten Scroller mit Load more, Werkzeuge beim Überfahren, Open as full page; Liste, Galerie, Board wachsen mit der Seite, Load more auch je Board-Spalte)"
 Database full page,databases,must,yes,yes,,yes
 Linked database view,databases,should,yes,yes,,"yes: /Linked view of database wählt eine Datenbank (auch von anderen Seiten), eigene Ansicht, bleibt live (BSD-212)"
 Table view,databases,must,yes,yes,,yes

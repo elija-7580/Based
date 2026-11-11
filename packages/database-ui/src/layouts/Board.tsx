@@ -1,10 +1,10 @@
 // BSD-155: Board – Spalten als Flächen (surface-raised, Radius 18), jede Spalte virtualisiert und für sich
 // scrollbar; Karten per Drag & Drop in andere Spalten bzw. an andere Stellen (moveRowToGroup, ein Undo-Schritt).
-import { memo, useMemo, useRef, useState, type DragEvent } from "react";
+import { memo, useContext, useMemo, useRef, useState, type DragEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { moveRowToGroup, setGroupHidden, type Block, type DatabaseView, type PropertySchema, type QueryResult, type RowGroup } from "@based/core";
 import { CellEditor } from "../cells/CellEditor.js";
-import { useDB } from "../context.js";
+import { InlineView, useDB } from "../context.js";
 import { Icon, OptionPill, type Anchor } from "../ui.js";
 import { cardKeys } from "../cardKeys.js";
 import { CardBody, cardProperties, EmptyState, groupProperty, RowMenu, useAddRow } from "./shared.js";
@@ -40,7 +40,11 @@ function Column({ group, gp, view, props, onMenu, onEditTitle }: {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [drop, setDrop] = useState<{ before: string | null } | null>(null);
   const addRow = useAddRow(view);
-  const rows = group.rows;
+  // BSD-255 Teil 2: inline wächst die Spalte mit der Seite (kein eigener Scroller), „Load more“ je Spalte.
+  const inline = useContext(InlineView);
+  const [limit, setLimit] = useState(inline?.pageSize ?? Infinity);
+  const rows = inline ? group.rows.slice(0, limit) : group.rows;
+  const hiddenCards = group.rows.length - rows.length;
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollRef.current,
@@ -85,11 +89,20 @@ function Column({ group, gp, view, props, onMenu, onEditTitle }: {
       onDragOver={onDragOver} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDrop(null); }} onDrop={onDrop}>
       <header className="dbui-board-head">
         {isOption ? <OptionPill name={group.title} color={group.color} status={gp.type === "status"} /> : <span className="dbui-group-title">{group.title}</span>}
-        <span className="dbui-count">{rows.length}</span>
+        <span className="dbui-count">{group.rows.length}</span>
         {!locked && <button type="button" className="dbui-icon-btn" aria-label={`Hide ${group.title}`} onClick={() => setGroupHidden(store, view.id, group.id, true)}><Icon name="eyeOff" size={14} /></button>}
         {!locked && <button type="button" className="dbui-icon-btn" aria-label={`New in ${group.title}`} onClick={() => addRow(group.id)}><Icon name="plus" size={14} /></button>}
       </header>
       <div className="dbui-board-scroll" ref={scrollRef} role="list" aria-label={`${group.title} cards`}>
+        {inline ? (
+          <div className="dbui-board-inner static">
+            {rows.map((row) => (
+              <div key={row.id} className={"dbui-card-slot static" + (drop?.before === row.id ? " drop-before" : "")}>
+                <Card row={row} props={props} agent={isAgentEdit(row)} draggable={!locked} groupID={group.id} onMenu={onMenu} onEditTitle={onEditTitle} />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="dbui-board-inner" style={{ height: virtualizer.getTotalSize() }}>
           {virtualizer.getVirtualItems().map((vi) => {
             const row = rows[vi.index]!;
@@ -101,8 +114,14 @@ function Column({ group, gp, view, props, onMenu, onEditTitle }: {
             );
           })}
         </div>
+        )}
         {drop && drop.before === null && <div className="dbui-drop-end" aria-hidden />}
       </div>
+      {hiddenCards > 0 ? (
+        <button type="button" className="dbui-load-more" onClick={() => setLimit((l) => l + (inline?.pageSize ?? 25))}>
+          Load more <span className="dbui-count">{Math.min(hiddenCards, inline?.pageSize ?? 25)} of {hiddenCards}</span>
+        </button>
+      ) : null}
       {!locked && <button type="button" className="dbui-new-row" onClick={() => addRow(group.id)}><Icon name="plus" size={14} />New</button>}
     </section>
   );

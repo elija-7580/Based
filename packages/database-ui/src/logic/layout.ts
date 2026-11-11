@@ -74,7 +74,8 @@ export function nextRowIndex(items: FlatItem[], from: number, dir: 1 | -1): numb
  * und die „New“-Zeilen verborgener Gruppen fallen weg. `hidden` = wie viele Zeilen „Load more“ noch bringt.
  */
 export function limitRows(items: readonly FlatItem[], limit: number): { items: FlatItem[]; hidden: number } {
-  const total = items.filter((it) => it.kind === "row").length;
+  // Galerie (Teil 2): eine Kartenreihe zählt mit ihren Karten; die letzte gezeigte Reihe wird ggf. gekürzt.
+  const total = items.reduce((n, it) => n + (it.kind === "row" ? 1 : it.kind === "cards" ? it.rows.length : 0), 0);
   if (total <= limit) return { items: [...items], hidden: 0 };
   const out: FlatItem[] = [];
   let shown = 0;
@@ -83,6 +84,11 @@ export function limitRows(items: readonly FlatItem[], limit: number): { items: F
       if (shown >= limit) continue;
       shown++;
       out.push(it);
+    } else if (it.kind === "cards") {
+      if (shown >= limit) continue;
+      const take = Math.min(it.rows.length, limit - shown);
+      shown += take;
+      out.push(take === it.rows.length ? it : { ...it, rows: it.rows.slice(0, take) });
     } else if (it.kind === "group") {
       if (shown < limit) out.push(it);
     } else if (shown < limit) out.push(it);
@@ -91,7 +97,7 @@ export function limitRows(items: readonly FlatItem[], limit: number): { items: F
   while (out.length && out[out.length - 1]!.kind === "group") out.pop();
   // „New“ der letzten gezeigten Gruppe bleibt, damit man auch bei langen Tabellen Zeilen anlegen kann.
   const last = out[out.length - 1];
-  if (last && last.kind === "row") {
+  if (last && (last.kind === "row" || last.kind === "cards")) {
     const add = items.find((it) => it.kind === "new" && it.groupID === last.groupID);
     if (add) out.push(add);
   }

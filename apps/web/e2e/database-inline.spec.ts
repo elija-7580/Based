@@ -84,3 +84,42 @@ test("Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Üb
   await expect(page.locator(".shell-database.full .dbui-vrow[data-row-id]").first()).toBeVisible();
   await expect(page.locator(".shell-database.full").getByRole("button", { name: /Load more/ })).toHaveCount(0);
 });
+
+// BSD-255 Teil 2: Liste, Galerie und Board inline wachsen mit der Seite (keine feste Höhe, kein eigener senkrechter
+// Scroller), „Load more“ für die Liste/Galerie und je Board-Spalte.
+for (const type of ["list", "gallery", "board"] as const) {
+  test(`Inline-${type}: wächst mit der Seite, Load more`, async ({ page, browserName }) => {
+    await ready(page);
+    const { db } = await setup(page);
+    await addRows(page, 30);
+    await db.hover();
+    await db.getByRole("button", { name: "Add view" }).click();
+    // per Tastatur: in WebKit liegt das Menü unter dem Seitenende und ist nicht klickbar, ohne zu scrollen
+    await page.getByTestId(`add-view-${type}`).focus();
+    await page.keyboard.press("Enter");
+    const body = db.locator(`.dbui-body[data-view-type="${type}"]`);
+    await expect(body).toBeVisible();
+    const items = type === "list" ? db.locator(".dbui-list-row") : db.locator(".dbui-card[data-row-id]");
+    // 3 Beispielzeilen + 30 = 33: 25 sichtbar
+    await expect(items).toHaveCount(25);
+    // kein eigener senkrechter Scroller: der Inhalt passt in die Fläche
+    const [sh, ch] = await body.evaluate((el) => [el.scrollHeight, el.clientHeight]);
+    expect(sh - ch).toBeLessThan(4);
+    const more = db.getByRole("button", { name: /Load more/ }).first();
+    await expect(more).toContainText("8 of 8");
+    if (SHOTS && browserName === "chromium") {
+      // Schreibmarke zurück in den Text, damit der Datenbank-Block nicht als ausgewählt (blau) erscheint
+      await page.getByText("Notes before the table.").click();
+      await page.mouse.move(10, 450);
+      for (const theme of ["light", "dark"] as const) {
+        if ((await page.evaluate(() => document.documentElement.dataset.theme)) !== theme) await page.keyboard.press("ControlOrMeta+Shift+l");
+        await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(theme);
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: `../../docs/design/screens/web-db-inline-${type}-${theme}.png` });
+      }
+      await page.keyboard.press("ControlOrMeta+Shift+l");
+    }
+    await more.click();
+    await expect(items).toHaveCount(33);
+  });
+}
