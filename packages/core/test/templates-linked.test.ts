@@ -73,6 +73,19 @@ describe("Workspace umbenennen (BSD-205)", () => {
     store.undo();
     expect(store.workspace.name).toBe(before);
   });
+
+  it("Icon setzen und entfernen, im Outline sichtbar, ein Undo-Schritt", async () => {
+    const { setWorkspaceIcon, buildOutline } = await import("../src/index.js");
+    const { store } = setup();
+    setWorkspaceIcon(store, "🚀");
+    expect(store.workspace.icon).toBe("🚀");
+    expect(buildOutline(store).workspaceIcon).toBe("🚀");
+    setWorkspaceIcon(store, undefined);
+    expect(store.workspace.icon).toBeUndefined();
+    expect(buildOutline(store).workspaceIcon).toBeUndefined();
+    store.undo();
+    expect(store.workspace.icon).toBe("🚀");
+  });
 });
 
 describe("Zeilen-Sammelaktionen (BSD-213)", () => {
