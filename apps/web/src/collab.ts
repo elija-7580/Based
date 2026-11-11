@@ -48,7 +48,10 @@ export function createCollab(docStore: YDocStore, config: () => SyncConfig | und
   });
 }
 
-/** Nur die Wurzel der Seite selbst (der Server kennt nur Seiten; Synced-Block-Originale bleiben bei Records). */
-export function pageCollab(binder: CollabSource, pageID: string): CollabSource {
-  return { open: (rootID) => (rootID === pageID ? binder.open(rootID) : Promise.resolve(undefined)) };
+/**
+ * Die Seite selbst und (BSD-252) Synced-Block-Originale, die darin stehen (eigene Wurzeln). Andere Wurzeln lehnt der
+ * Server bei der Anmeldung ab; der Binder fällt dann sofort auf Records + Sync zurück.
+ */
+export function pageCollab(binder: CollabSource, pageID: string, isSyncedOriginal: (rootID: string) => boolean = () => false): CollabSource {
+  return { open: (rootID) => (rootID === pageID || isSyncedOriginal(rootID) ? binder.open(rootID) : Promise.resolve(undefined)) };
 }

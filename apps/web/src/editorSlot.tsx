@@ -65,7 +65,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   } : undefined), [client, pageID]);
   // BSD-220: Echtzeit-Text nur, wenn eingeschaltet (beim Öffnen der Seite entschieden).
   const collabOn = syncConfig.get()?.collab === true;
-  const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID) : undefined), [pageID, collabOn]);
+  const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID, () => true /* BSD-252: verschachtelte Wurzeln sind nur Synced-Block-Originale */) : undefined), [pageID, collabOn]);
   // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
   const ai = useMemo(() => (client ? editorAI((system, prompt, signal) => chatController(client).write(system, prompt, signal), () => chatController(client).canWrite()) : undefined), [client]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);

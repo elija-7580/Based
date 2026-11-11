@@ -99,6 +99,29 @@ describe("BSD-220 Teil 3: Gerät an /collab", () => {
     expect(texts(store, page)).toEqual(["Hallo Welt"]);
   });
 
+  it("BSD-252: Synced-Block-Original ist eine eigene Wurzel auf /collab; eine Kopie nicht", async () => {
+    const app = await startApp({ collabDebounce: 50 });
+    cleanup.push(() => app.close());
+    const store = app.sync.store;
+    const page = createPage(store, { title: "Mit Synced Block" });
+    const now = store.now();
+    store.transact("t", (tx) => {
+      tx.put({ kind: "block", data: { id: "orig", type: "syncedBlock", parent: "b:" + page, sk: "a0", createdAt: now, updatedAt: now } as Block });
+      tx.put({ kind: "block", data: { id: "inner", type: "text", parent: "b:orig", sk: "a0", text: "Geteilt", createdAt: now, updatedAt: now } as Block });
+      tx.put({ kind: "block", data: { id: "copy", type: "syncedBlock", parent: "b:" + page, sk: "a1", props: { syncSource: "orig" }, createdAt: now, updatedAt: now } as Block });
+    });
+    const records = store.allRecords();
+    const a = device(app.url, records);
+    const h = (await a.binder.open("orig"))!;
+    expect(h).toBeDefined();
+    const s = new DocSession(a.store, "orig", { converter: sharedConverter(), doc: h.doc, collab: true, debounceMs: 0 });
+    cleanup.push(() => { s.close(); h.release(); });
+    expect(sharedConverter().fromFragment(h.doc.getXmlFragment(FRAGMENT)).map((b) => b.id)).toEqual(["inner"]);
+    h.doc.transact(() => firstText(h.doc.getXmlFragment(FRAGMENT))!.insert(7, " live"));
+    await expect.poll(() => texts(store, "orig"), { timeout: 5000 }).toEqual(["Geteilt live"]);
+    expect(await device(app.url, records).binder.open("copy")).toBeUndefined();
+  }, 15_000);
+
   it("ohne Verbindung (aus) oder ohne Abgleich: kein Collab-Dokument, der Editor arbeitet wie bisher", async () => {
     const off = new CollabBinder({ connect: () => undefined, docStore: new MemoryYDocStore() });
     expect(await off.open("P")).toBeUndefined();

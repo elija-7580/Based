@@ -79,7 +79,10 @@ export class Collab {
       async onAuthenticate({ token: given, documentName }) {
         if (!tokenEquals(given, token)) throw new Error("unauthorized");
         const id = documentName.startsWith(DOC_PREFIX) ? documentName.slice(DOC_PREFIX.length) : "";
-        if (!isPageLike(store.blocks.get(id))) throw new Error("no such page");
+        const root = store.blocks.get(id);
+        // Seiten und (BSD-252) Synced-Block-Originale sind eigene Dokument-Wurzeln; Kopien zeigen nur aufs Original.
+        const syncedOriginal = root?.type === "syncedBlock" && !root.props?.syncSource;
+        if (!isPageLike(root) && !syncedOriginal) throw new Error("no such page");
         return { page: id };
       },
       async onLoadDocument({ document, documentName }) {

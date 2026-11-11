@@ -159,7 +159,8 @@ Gilt für Seiten, die danach geöffnet werden. Regeln (`packages/editor/src/yjs/
 Bekannte Grenzen: Eine neue Seite bekommt Echtzeit-Text erst beim nächsten Öffnen (der Server kennt sie vorher
 nicht). Hat eine Seite lokale, noch nicht gepushte Änderungen und noch keinen Stand vom Server, öffnet sie ohne
 Echtzeit-Text (BSD-252, `CollabBinder.unsynced`, Worker `pendingLocal`); nach dem Push verbindet das nächste Öffnen –
-so überschreibt der Server-Stand nichts. Synced-Block-Originale (eigene Wurzeln) haben noch kein `/collab`-Dokument.
+so überschreibt der Server-Stand nichts. Synced-Block-Originale (eigene Wurzeln, `syncedBlock` ohne `syncSource`) haben
+ein eigenes `/collab`-Dokument (`page:<id>`, BSD-252); Kopien nicht.
 
 ## Sandbox pro Lauf (BSD-161)
 
