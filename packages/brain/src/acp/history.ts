@@ -200,7 +200,9 @@ export function cliTranscript(tool: CliTool, text: string, limit = 3000): Stored
       continue;
     }
     switch (v.type) {
-      case "summary": if (s(v.summary)) out.push({ type: "notice", text: `Summary: ${s(v.summary)}` }); break;
+      // Die Zusammenfassung ist der Titel des Gesprächs (claudeCliSession). Als Hinweis vor der ersten Nachricht
+      // eröffnete sie eine leere, nie beendete Antwort – die Ansicht zeigte dort dauerhaft „… is thinking“.
+      case "summary": break;
       case "user": {
         if (v.isMeta === true) break;
         const content = obj(v.message)?.content;

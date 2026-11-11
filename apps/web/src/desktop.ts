@@ -88,6 +88,10 @@ export async function startDesktop(onCloseTab?: () => void) {
   }
   // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
   if (onCloseTab) await win.listen("desktop://close-tab", () => onCloseTab());
+  // Diagnose: Beim Schließen des Fensters bzw. Beenden der App meldet WKWebView kein pagehide – ohne das hier sah
+  // jedes normale Beenden wie ein Absturz aus („didn't close normally“).
+  const { markSessionEnd } = await import("./shell/diagnostics.js");
+  if (main) for (const ev of ["tauri://close-requested", "tauri://destroyed"]) await win.listen(ev, () => markSessionEnd());
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }

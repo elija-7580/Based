@@ -18,37 +18,35 @@ import { cliResumeCommand, cliSessionsByProject, codingErrorMessage, foldTranscr
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ChatMessages } from "../chat/ChatMessages.js";
 import { PERMISSIONS } from "../chat/AiSettingsSection.js";
-import { syncConfig } from "../shell/storage.js";
-import { CodingModel } from "./model.js";
+import { codingModelFor, useCodingConnection } from "./connection.js";
+import type { CodingModel } from "./model.js";
 import "./coding.css";
 
 type Pane = "sessions" | "history" | "setup";
-
-let shared: { key: string; model: CodingModel } | undefined;
-/** Ein Modell je Server-Verbindung (bleibt beim Tab-Wechsel erhalten). */
-function modelFor(url: string, token: string): CodingModel {
-  const key = `${url}\n${token}`;
-  if (shared?.key !== key) {
-    shared?.model.stop();
-    shared = { key, model: new CodingModel({ url, token }) };
-  }
-  return shared.model;
-}
 
 const STATE_DOT = { starting: "accent", idle: "success", running: "accent", failed: "error", closed: "neutral" } as const;
 const noop = () => {};
 
 export function CodingScreen() {
-  const config = syncConfig.get();
-  if (!config?.url) {
-    return (
-      <VStack className="coding" gap={4}>
-        <Text as="h1" type="large" weight="bold">Coding agents</Text>
+  const { connection, local, pending, turnOnLocal } = useCodingConnection();
+  if (connection) return <CodingBody model={codingModelFor(connection)} />;
+  // BSD-251: in der Desktop-App genügt der lokale Server – ein Klick, kein eigener Server nötig.
+  const desktop = local.status !== "unavailable";
+  const problem = local.error ?? (local.node && !local.node.ok ? local.node.message : undefined);
+  return (
+    <VStack className="coding" gap={4}>
+      <Text as="h1" type="large" weight="bold">Coding agents</Text>
+      {pending ? <Text type="supporting" role="status">Starting the local server…</Text> : desktop ? (
+        <>
+          <EmptyState title="Turn on the local server" description="Coding agents (Claude Code, Codex …) and your CLI conversations run through a small Based server on this Mac. It only listens on this computer and needs Node.js 22 or newer."
+            actions={<Button variant="primary" label="Turn on" onClick={() => void turnOnLocal()} data-testid="coding-local-on" />} />
+          {problem ? <Banner status="error" title="Local server" description={problem} /> : null}
+        </>
+      ) : (
         <EmptyState title="Connect a based-server" description="Coding agents (Claude Code, Codex, Gemini CLI …) run on your based-server. Connect one in Settings → Sync & server and start it with --coding-root <folder>." />
-      </VStack>
-    );
-  }
-  return <CodingBody model={modelFor(config.url, config.token)} />;
+      )}
+    </VStack>
+  );
 }
 
 function CodingBody({ model }: { model: CodingModel }) {

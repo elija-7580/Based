@@ -7,8 +7,10 @@ import { HStack } from "@astryxdesign/core/Layout";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { List, ListItem } from "@astryxdesign/core/List";
-import type { ChatInfo, ComputeLevel, PermissionMode } from "@based/brain";
+import type { ChatInfo, CliSession, ComputeLevel, PermissionMode } from "@based/brain";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { CliChatList, CliChatView, cliKey } from "../coding/CliChats.js";
+import type { CodingConnection } from "../coding/connection.js";
 import { Composer, type ComposerOption } from "../components/Composer.js";
 import { Icon } from "../icons.js";
 import { relative } from "../shell/format.js";
@@ -39,8 +41,8 @@ function ImportOldChats({ onImport }: { onImport: () => Promise<number> }) {
   );
 }
 
-export function ChatHistoryList({ chats, current, onOpen, onDelete, onImport }: { chats: readonly ChatInfo[]; current: string | undefined; onOpen: (id: string) => void; onDelete: (id: string) => void; onImport?: () => Promise<number> }) {
-  const importer = onImport ? <ImportOldChats onImport={onImport} /> : null;
+export function ChatHistoryList({ chats, current, onOpen, onDelete, onImport, extra }: { chats: readonly ChatInfo[]; current: string | undefined; onOpen: (id: string) => void; onDelete: (id: string) => void; onImport?: () => Promise<number>; /** Weitere Gruppen unter den Chats (BSD-251: Gespräche aus Claude Code und Codex). */ extra?: React.ReactNode }) {
+  const importer = <>{extra}{onImport ? <ImportOldChats onImport={onImport} /> : null}</>;
   if (chats.length === 0) return <><p className="t-desc chat-history-empty">No chats yet.</p>{importer}</>;
   return (
     <>
@@ -76,9 +78,12 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
   const s = useSyncExternalStore(controller.subscribe, controller.getState);
   const ai = useSyncExternalStore(config.subscribe, config.getState);
   const [pane, setPane] = useState<ChatPane>("chat");
+  // BSD-251: ein Gespräch aus Claude Code/Codex, das gerade statt eines Based-Chats gezeigt wird (nur lesen).
+  const [cli, setCli] = useState<{ session: CliSession; connection: CodingConnection }>();
   const t = useMemo(() => transcriptOf(s.events), [s.events]);
   const info = chats.find((c) => c.id === s.chatID);
-  const title = info?.title || (t.items[0]?.kind === "user" ? t.items[0].text : "") || "New chat";
+  const title = cli ? cli.session.title || "Untitled" : info?.title || (t.items[0]?.kind === "user" ? t.items[0].text : "") || "New chat";
+  const cliList = (after?: () => void) => <CliChatList current={cli ? cliKey(cli.session) : undefined} onOpen={(session, connection) => { setCli({ session, connection }); after?.(); }} />;
   const total = usageLine(t.usage);
   const brain = brainChatOf(controller);
   const brainEvents = useMemo(() => brainEventsByTurn(s.events), [s.events]);
@@ -134,7 +139,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
           {mode === "panel" ? (
             <IconButton size="sm" variant="ghost" label="Chats" icon={<Icon name="history" size={18} />} onClick={() => setPane(pane === "history" ? "chat" : "history")} />
           ) : null}
-          <IconButton size="sm" variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} onClick={() => { controller.newChat(); setPane("chat"); }} />
+          <IconButton size="sm" variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} onClick={() => { controller.newChat(); setCli(undefined); setPane("chat"); }} />
           <IconButton size="sm" variant="ghost" label="Chat settings" icon={<Icon name="settings" size={18} />} onClick={() => setPane(showSettings ? "chat" : "settings")} />
           {onToggleMode ? (
             <IconButton size="sm" variant="ghost" label={mode === "panel" ? "Open as page" : "Open as side panel"} icon={<Icon name={mode === "panel" ? "expand" : "collapse"} size={18} />} onClick={onToggleMode} />
@@ -145,7 +150,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
       <div className="chat-body">
         {mode === "page" && !showSettings ? (
           <aside className="chat-side" aria-label="Chats">
-            <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => void controller.open(id)} onDelete={(id) => void controller.remove(id)} {...(onImport ? { onImport } : {})} />
+            <ChatHistoryList chats={chats} current={cli ? undefined : s.chatID} onOpen={(id) => { setCli(undefined); void controller.open(id); }} onDelete={(id) => void controller.remove(id)} extra={cliList()} {...(onImport ? { onImport } : {})} />
           </aside>
         ) : null}
         <div className="chat-main">
@@ -153,8 +158,10 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
             <div className="chat-scroll"><AiSettingsSection config={config} compact={mode === "panel"} /></div>
           ) : pane === "history" && mode === "panel" ? (
             <div className="chat-scroll">
-              <ChatHistoryList chats={chats} current={s.chatID} onOpen={(id) => { void controller.open(id); setPane("chat"); }} onDelete={(id) => void controller.remove(id)} {...(onImport ? { onImport } : {})} />
+              <ChatHistoryList chats={chats} current={cli ? undefined : s.chatID} onOpen={(id) => { setCli(undefined); void controller.open(id); setPane("chat"); }} onDelete={(id) => void controller.remove(id)} extra={cliList(() => setPane("chat"))} {...(onImport ? { onImport } : {})} />
             </div>
+          ) : cli ? (
+            <CliChatView session={cli.session} connection={cli.connection} />
           ) : (
             <>
               <div className="chat-scroll" data-testid="chat-messages">

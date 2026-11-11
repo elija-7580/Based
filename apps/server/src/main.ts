@@ -181,6 +181,23 @@ export function allowedOrigin(publicURL: string | undefined): string | undefined
   }
 }
 
+/**
+ * BSD-251: Herkunft der Desktop-App (BASED_APP_ORIGIN), die den lokalen Server (`--local`) aus ihrem Fenster
+ * ansprechen darf – ohne das scheitert jede Anfrage der App an CORS. Nur die festen Adressen einer Tauri-Hülle bzw.
+ * Loopback (Entwicklung), nie eine fremde Website. Der Token bleibt trotzdem Pflicht.
+ */
+export function localAppOrigin(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value === "tauri://localhost") return value;
+  try {
+    const u = new URL(value);
+    const loopback = u.hostname === "localhost" || u.hostname === "tauri.localhost" || u.hostname === "127.0.0.1";
+    return (u.protocol === "http:" || u.protocol === "https:") && loopback && u.origin === value ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function sandboxManager(opts: Options): SandboxManager {
   const snapshotDirectory = opts.sandboxDir ?? opts.db.replace(/(\.sqlite)?$/, ".sandbox");
   return new SandboxManager(opts.sandbox === "docker" ? new DockerSandboxProvider({ snapshotDirectory }) : new LocalSandboxProvider({ snapshotDirectory }));
@@ -221,7 +238,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const bound: { port?: number } = {};
   const token = opts.token;
   const selfMcp = (): AcpMcpServer[] => (bound.port ? [{ name: "based", url: `http://${selfHost(opts.host)}:${bound.port}/mcp`, headers: { Authorization: `Bearer ${token}` } }] : []);
-  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
+  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL) ?? (opts.local ? localAppOrigin(process.env.BASED_APP_ORIGIN) : undefined),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).

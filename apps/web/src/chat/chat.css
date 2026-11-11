@@ -86,3 +86,12 @@
 .chat-view :where([aria-current="true"]) :where(:not(svg, svg *)) { color: var(--ink); }
 .chat-view :where(li) :where(span) { color: inherit; }
 .chat-import { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-3) var(--space-2); }
+
+/* BSD-251: Gespräche aus Claude Code und Codex – Gruppe in der Chat-Liste und Kopfzeile über dem Transkript */
+.chat-cli-offer { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); }
+.chat-cli-more { padding: var(--space-2) var(--space-3); }
+.chat-cli-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2) var(--space-3); padding: 0 var(--space-5) var(--space-2) calc(var(--space-5) + var(--space-3)); }
+.chat-page .chat-cli-bar { width: 100%; max-width: calc(var(--page-measure) + var(--space-7) * 2); margin-inline: auto; }
+/* Herkunft (Werkzeug · Ordner · Zeit): bekommt eine eigene Zeile, wenn neben den Knöpfen kein Platz mehr ist */
+.chat-cli-origin { flex: 1 1 calc(var(--page-measure) / 3); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-mono); }
+.chat-cli-actions { display: inline-flex; gap: var(--space-2); flex: none; }

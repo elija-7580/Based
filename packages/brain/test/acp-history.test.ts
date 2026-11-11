@@ -61,7 +61,7 @@ describe("CLI-Verlauf", () => {
 
   it("Transkript als ChatEvents (Turns, Werkzeuge mit Ergebnis, MCP-Namen), nutzbar für Ansicht und Übergabe", () => {
     const ev = cliTranscript("claude", CLAUDE);
-    expect(ev.map((e) => e.type)).toEqual(["notice", "userMessage", "thinking", "text", "toolUse", "toolResult", "text", "toolUse", "result", "userMessage", "result"]);
+    expect(ev.map((e) => e.type)).toEqual(["userMessage", "thinking", "text", "toolUse", "toolResult", "text", "toolUse", "result", "userMessage", "result"]);
     expect(ev.find((e) => e.type === "toolUse")).toMatchObject({ id: "tu1", name: "Read", input: { file_path: "/p/web/auth.ts" } });
     expect(ev.filter((e) => e.type === "toolUse")[1]).toMatchObject({ name: "github:create_issue" });
     expect(ev.find((e) => e.type === "toolResult")).toMatchObject({ id: "tu1", output: "export const x = 1" });

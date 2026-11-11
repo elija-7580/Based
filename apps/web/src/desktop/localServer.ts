@@ -221,6 +221,8 @@ class LocalServer {
       const env = actionEnv(bundle, "local", {
         BASED_DB: db, BASED_PORT: String(LOCAL_SERVER_PORT), BASED_CODING_ROOT: home,
         BASED_TOKEN: await this.token(), BASED_LOCAL_OWNER: "Based Next", BASED_LOG_LEVEL: "warning",
+        // BSD-251: das Fenster der App darf den Server ansprechen (CORS) – sonst scheitern Coding, CLI-Verlauf und Sync
+        BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
       });
       const cmd = Command.create(RUN.name, [...RUN.args], { env });
       cmd.stdout.on("data", (line: string) => {

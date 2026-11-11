@@ -53,3 +53,10 @@
 @media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
 /* BSD-205: Icon des Workspaces neben der Wortmarke */
 .brand .ws-icon { margin-left: auto; font-size: var(--type-ui-size); line-height: 1; }
+
+/* Einträge der Seitenleiste ziehen: Strich in der Marker-Farbe an der Stelle, an der der Eintrag landet
+   (oben waagrecht zwischen den Zeilen, in der Icon-Zeile senkrecht zwischen den Icons). */
+.nav-item.nav-drop-before { box-shadow: inset 0 var(--marker-width) 0 var(--marker-strong); }
+.nav-item.nav-drop-after { box-shadow: inset 0 calc(-1 * var(--marker-width)) 0 var(--marker-strong); }
+.nav-icon.nav-drop-before { box-shadow: inset var(--marker-width) 0 0 var(--marker-strong); }
+.nav-icon.nav-drop-after { box-shadow: inset calc(-1 * var(--marker-width)) 0 0 var(--marker-strong); }
