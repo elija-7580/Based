@@ -130,6 +130,25 @@ test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bi
   await expect(content.locator("img").first()).toBeVisible();
 });
 
+test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await expect(dialog).toContainText("Evernote");
+  const enex = `<?xml version="1.0" encoding="UTF-8"?><en-export><note><title>Garden log</title><created>20230115T093000Z</created><tag>garden</tag>
+<content><![CDATA[<en-note><div>Planted <b>basil</b> today.</div><div><en-todo checked="true"/>Water</div></en-note>]]></content></note></en-export>`;
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Hobby.enex", mimeType: "application/xml", buffer: Buffer.from(enex) });
+  await expect(dialog.getByTestId("import-summary")).toContainText("1 database");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("treeitem", { name: "Hobby" })).toBeVisible();
+  const hits = await quickFind(page, "basil");
+  await expect(hits.first()).toContainText("Garden log");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("page-content")).toContainText("Planted basil today.");
+  await expect(page.getByTestId("page-content")).toContainText("Water");
+});
+
 test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
