@@ -10,7 +10,7 @@ import { printHTML } from "../shell/print.js";
 import type { StoreClient } from "../worker/client.js";
 import { CopyReport, NotionImport } from "./NotionImport.js";
 import { ImportCancelledError, prepareInWorker, readFiles, type PreparingImport } from "../worker/importClient.js";
-import type { ExportFile, ExportFormat, ImportSummary, WorkspaceExportFormat } from "../worker/interop.js";
+import type { ExportFile, ImportSummary, PageExportFormat, WorkspaceExportFormat } from "../worker/interop.js";
 
 /** Datei im Browser herunterladen. */
 export function download(file: ExportFile) {
@@ -115,13 +115,13 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
   return (
     <Dialog title={phase.k === "notion" ? "Import from Notion" : "Import"} onClose={onClose} busy={busy}>
       <input ref={files} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Choose files to import"
-        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.jsonl" onChange={(e) => void start(e.target.files)} />
+        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.jsonl,.enex,.opml" onChange={(e) => void start(e.target.files)} />
       <input ref={folder} type="file" className="sr-only" tabIndex={-1} aria-label="Choose a folder to import"
         {...{ webkitdirectory: "" }} onChange={(e) => void start(e.target.files)} />
       {phase.k === "pick" || phase.k === "error" ? (
         <>
           <p className="t-desc">
-            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
+            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
             Importing the same Notion export again updates those pages and keeps what you changed in Based.
           </p>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}
@@ -184,11 +184,12 @@ function ImportReport({ summary, report, onClose, onMore, onOpenPage }: { summar
   );
 }
 
-type PageFormat = ExportFormat | "pdf";
+type PageFormat = PageExportFormat | "pdf";
 const PAGE_FORMATS: { value: PageFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "A .md file (databases as .csv)" },
   { value: "html", label: "HTML", hint: "A standalone web page you can open anywhere" },
   { value: "pdf", label: "PDF", hint: "Opens the print dialog — choose “Save as PDF” there" },
+  { value: "opml", label: "OPML", hint: "An outline for Workflowy, Dynalist, OmniOutliner, Logseq …" },
 ];
 const WORKSPACE_FORMATS: { value: WorkspaceExportFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "ZIP with .md and .csv files, sub-pages in folders, assets/" },
@@ -199,7 +200,7 @@ const WORKSPACE_FORMATS: { value: WorkspaceExportFormat; label: string; hint: st
 /** Export-Dialog: mit `pageID` die Seite, sonst der ganze Workspace. */
 export function ExportDialog({ client, pageID, onClose }: { client: StoreClient; pageID?: string; onClose: () => void }) {
   const formats = pageID ? PAGE_FORMATS : WORKSPACE_FORMATS;
-  const [format, setFormat] = useState<WorkspaceExportFormat | "pdf">("markdown");
+  const [format, setFormat] = useState<WorkspaceExportFormat | PageFormat>("markdown");
   const [subpages, setSubpages] = useState(false);
   const [images, setImages] = useState<"embed" | "folder">("embed");
   const [busy, setBusy] = useState(false);
@@ -217,7 +218,7 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
       }
       // HTML: Stylesheet aus den Tokens; eine Seite bettet Bilder ein (oder legt sie in assets/), der Workspace legt sie in assets/.
       const html = format === "html" ? { css: exportStylesheet(), ...(pageID ? { subpages, images } : {}) } : undefined;
-      const file = pageID ? await client.exportPage(pageID, format as ExportFormat, html) : await client.exportWorkspace(format as WorkspaceExportFormat, html);
+      const file = pageID ? await client.exportPage(pageID, format as PageExportFormat, html) : await client.exportWorkspace(format as WorkspaceExportFormat, html);
       download(file);
       setResult({ ok: true, text: file.summary });
     } catch (e) {

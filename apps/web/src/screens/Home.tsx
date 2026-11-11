@@ -160,7 +160,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
             <SegmentedControlItem value="month" label="Month" />
           </SegmentedControl>
           <span className="home-mono" data-testid="home-cost">{model ? costLine(model, frame) : "…"}</span>
-          <span className="t-meta home-legend">left: done · top: now · right: planned · inner ring: running now</span>
+          <span className="grow" />
           <span className="home-status t-meta" data-testid="home-server">
             <span className={`dot ${synced ? "synced-dot" : state.status.state === "error" ? "error-dot" : ""}`} aria-hidden="true" />
             {synced ? "Server connected" : SYNC_LABEL[state.status.state]}

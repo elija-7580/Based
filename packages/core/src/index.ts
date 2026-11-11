@@ -52,6 +52,10 @@ export { decodeCSV, decodeInlineMarkdown, encodeCSV, guardCSVFormula, encodeInli
 export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.js";
 export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
+export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
+export { EnexImporter, enexDate, enmlToHTML, parseEnex, type EnexNote, type EnexResource } from "./interop/enex-import.js";
+export { md5Hex } from "./interop/md5.js";
+export { exportOPML, importOPML, parseOPML, type OutlineNode as OPMLOutline } from "./interop/opml.js";
 export { encodeURLPath, MarkdownExporter, markdownFileName, visiblePropertyIDs as exportVisiblePropertyIDs } from "./interop/markdown-export.js";
 export type { MarkdownExporterOptions, PageLink } from "./interop/markdown-export.js";
 export { toRichText, runsOf, replaceInRichText } from "./interop/runs.js";

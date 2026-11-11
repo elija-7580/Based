@@ -3,11 +3,17 @@
 // nie im Klartext im localStorage, nie in Logs, nie im Worker. Hier wird nichts ins Netz geschickt: die Engines
 // rufen den eingestellten Anbieter erst auf, wenn der Nutzer eine Nachricht sendet.
 // Modellnamen sind nicht fest verdrahtet: der Nutzer trägt die Modelle seines Anbieters ein.
-import { AnthropicProvider, OLLAMA_BASE_URL, OpenAIProvider, type AIProvider, type PermissionMode } from "@based/brain";
+// BSD-257: „ChatGPT“ ist kein API-Anbieter: Based nutzt den Login der offiziellen Codex-CLI auf dem based-server
+// (ACP-Sitzung, BSD-223). Kein Schlüssel, kein OAuth-Client, nichts Geheimes im Browser; die Modelle sind die
+// Stufen Low/Auto/High (BSD-242).
+import {
+  AnthropicProvider, CHATGPT_MODELS, CodexChatEngine, CodingClient, isComputeLevel, ModelEngine, OLLAMA_BASE_URL, OpenAIProvider,
+  type AIProvider, type ChatEngine, type PermissionMode, type ToolHost, type ToolPolicy,
+} from "@based/brain";
 import type { SecretStore } from "../shell/secrets.js";
-import { secretVault } from "../shell/storage.js";
+import { secretVault, syncConfig } from "../shell/storage.js";
 
-export type ProviderKind = "anthropic" | "openai" | "ollama" | "compatible";
+export type ProviderKind = "anthropic" | "openai" | "ollama" | "compatible" | "chatgpt";
 
 export interface ProviderInfo {
   kind: ProviderKind;
@@ -18,6 +24,8 @@ export interface ProviderInfo {
   needsKey: boolean;
   /** Der Schlüssel ist freiwillig (lokale/eigene Server). */
   optionalKey?: boolean;
+  /** Läuft über den verbundenen based-server (ChatGPT über Codex), nicht über eine Anbieter-Adresse. */
+  viaServer?: boolean;
   modelsPlaceholder: string;
 }
 
@@ -25,6 +33,7 @@ export const PROVIDERS: readonly ProviderInfo[] = [
   { kind: "anthropic", name: "Anthropic", hint: "Claude models with your own API key", defaultBaseURL: "https://api.anthropic.com", needsKey: true, modelsPlaceholder: "Model ids from your Anthropic console, comma-separated" },
   { kind: "openai", name: "OpenAI", hint: "GPT models with your own API key", defaultBaseURL: "https://api.openai.com/v1", needsKey: true, modelsPlaceholder: "Model ids from your OpenAI account, comma-separated" },
   { kind: "ollama", name: "Ollama", hint: "Models running on this computer — nothing leaves it", defaultBaseURL: OLLAMA_BASE_URL, needsKey: false, modelsPlaceholder: "Names from “ollama list”, comma-separated" },
+  { kind: "chatgpt", name: "ChatGPT", hint: "Use your ChatGPT plan through the official Codex CLI on your based-server. You sign in with `codex login` there — Based never sees or stores your login.", defaultBaseURL: "", needsKey: false, viaServer: true, modelsPlaceholder: "" },
   { kind: "compatible", name: "OpenAI-compatible server", hint: "LM Studio, OpenRouter, vLLM or any server with a /chat/completions endpoint", defaultBaseURL: "", needsKey: false, optionalKey: true, modelsPlaceholder: "Model ids your server offers, comma-separated" },
 ];
 
@@ -61,7 +70,7 @@ export interface AiState {
 }
 
 const STORAGE_KEY = "based.ai";
-const KINDS: ProviderKind[] = ["anthropic", "openai", "ollama", "compatible"];
+const KINDS: ProviderKind[] = ["anthropic", "openai", "ollama", "chatgpt", "compatible"];
 const secretName = (kind: ProviderKind) => "ai:" + kind;
 
 export const emptySettings = (): AiSettings => ({
@@ -90,7 +99,7 @@ function sanitize(raw: unknown): AiSettings {
     const p = r.providers?.[k];
     if (!p || typeof p !== "object") continue;
     if (typeof p.baseURL === "string") out.providers[k].baseURL = p.baseURL;
-    if (Array.isArray(p.models)) out.providers[k].models = p.models.filter((m): m is string => typeof m === "string" && m !== "");
+    if (Array.isArray(p.models)) out.providers[k].models = p.models.filter((m): m is string => typeof m === "string" && m !== "" && (k !== "chatgpt" || isComputeLevel(m)));
   }
   if (typeof r.model === "string") out.model = r.model;
   if (r.permission === "ask" || r.permission === "askEdits" || r.permission === "free" || r.permission === "plan") out.permission = r.permission;
@@ -101,6 +110,21 @@ function sanitize(raw: unknown): AiSettings {
 export interface AiConfigOptions {
   storage?: Pick<Storage, "getItem" | "setItem"> | undefined;
   secrets?: () => SecretStore;
+  /** Verbundener based-server (für ChatGPT über Codex); Standard: Einstellungen → Sync & server. */
+  server?: () => { url: string; token: string } | undefined;
+}
+
+/** Was eine Engine außer dem Modell braucht. */
+export interface EngineOptions {
+  tools?: ToolHost | undefined;
+  policy?: ToolPolicy | undefined;
+  system?: string | undefined;
+  maxSteps?: number | undefined;
+  maxTokensPerReply?: number | undefined;
+  /** Chat bzw. Auftrag: Folge-Turns nutzen dieselbe Codex-Sitzung. */
+  key?: string | undefined;
+  fetch?: typeof globalThis.fetch | undefined;
+  wrapProvider?: ((p: AIProvider) => AIProvider) | undefined;
 }
 
 function browserStorage(): Storage | undefined {
@@ -116,17 +140,21 @@ export class AiConfig {
   private listeners = new Set<() => void>();
   private readonly storage: Pick<Storage, "getItem" | "setItem"> | undefined;
   private readonly secretStore: () => SecretStore;
+  private readonly server: () => { url: string; token: string } | undefined;
+  /** Chat → Codex-Sitzung auf dem Server (nur für diese Seite; nach Neuladen beginnt eine neue mit Transkript). */
+  private readonly codexSessions = new Map<string, string>();
 
   constructor(opts: AiConfigOptions = {}) {
     this.storage = "storage" in opts ? opts.storage : browserStorage();
     this.secretStore = opts.secrets ?? secretVault;
+    this.server = opts.server ?? (() => { const c = syncConfig.get(); return c?.url ? { url: c.url, token: c.token } : undefined; });
     let raw: unknown;
     try {
       raw = JSON.parse(this.storage?.getItem(STORAGE_KEY) ?? "null");
     } catch {
       raw = undefined;
     }
-    this.state = { settings: sanitize(raw), hasKey: { anthropic: false, openai: false, ollama: false, compatible: false }, loaded: false };
+    this.state = { settings: sanitize(raw), hasKey: { anthropic: false, openai: false, ollama: false, chatgpt: false, compatible: false }, loaded: false };
   }
 
   getState = (): AiState => this.state;
@@ -154,6 +182,7 @@ export class AiConfig {
   async load(): Promise<void> {
     const hasKey = { ...this.state.hasKey };
     for (const k of KINDS) {
+      if (providerInfo(k).viaServer) continue;
       try {
         hasKey[k] = await this.secretStore().hasSecret(secretName(k));
       } catch {
@@ -213,7 +242,7 @@ export class AiConfig {
     const { settings, hasKey } = this.state;
     return KINDS.flatMap((kind) => {
       const p = settings.providers[kind];
-      const usable = p.baseURL.trim() !== "" && (!providerInfo(kind).needsKey || hasKey[kind]);
+      const usable = providerInfo(kind).viaServer ? this.server() !== undefined : p.baseURL.trim() !== "" && (!providerInfo(kind).needsKey || hasKey[kind]);
       return p.models.map((model) => ({ ref: `${kind}/${model}`, kind, model, usable }));
     });
   }
@@ -224,8 +253,38 @@ export class AiConfig {
     return all.find((m) => m.ref === this.state.settings.model) ?? all[0];
   }
 
+  /** BSD-257: ChatGPT (über Codex) ein- oder ausschalten; eingeschaltet wird es das gewählte Modell. */
+  setChatGPT(on: boolean) {
+    this.setProvider("chatgpt", { models: on ? [...CHATGPT_MODELS] : [] });
+    if (on) this.setModel("chatgpt/auto");
+  }
+
+  /** Client für den verbundenen based-server (ChatGPT-Status); `undefined` ohne Verbindung. */
+  codingClient(fetch?: typeof globalThis.fetch): CodingClient | undefined {
+    const s = this.server();
+    return s ? new CodingClient({ ...s, ...(fetch ? { fetch } : {}) }) : undefined;
+  }
+
+  /** Engine für ein Modell: API-Anbieter → ModelEngine, ChatGPT → Codex-Sitzung auf dem Server. */
+  async engine(choice: ModelChoice, o: EngineOptions = {}): Promise<ChatEngine> {
+    if (choice.kind === "chatgpt") {
+      const backend = this.codingClient(o.fetch);
+      if (!backend) throw new Error("ChatGPT runs through Codex on your based-server. Connect one in Settings → Sync & server.");
+      const level = isComputeLevel(choice.model) ? choice.model : "auto";
+      return new CodexChatEngine({ backend, level, sessions: this.codexSessions, key: o.key, policy: o.policy, system: o.system });
+    }
+    let provider = await this.provider(choice, o.fetch);
+    if (o.wrapProvider) provider = o.wrapProvider(provider);
+    return new ModelEngine({
+      provider, model: choice.model,
+      ...(o.tools ? { tools: o.tools } : {}), ...(o.policy ? { policy: o.policy } : {}), ...(o.system ? { system: o.system } : {}),
+      ...(o.maxSteps ? { maxSteps: o.maxSteps } : {}), ...(o.maxTokensPerReply ? { maxTokensPerReply: o.maxTokensPerReply } : {}),
+    });
+  }
+
   /** Anbieter für ein Modell bauen (liest dafür den Schlüssel aus der Ablage). */
   async provider(choice: ModelChoice, fetch?: typeof globalThis.fetch): Promise<AIProvider> {
+    if (choice.kind === "chatgpt") throw new Error("ChatGPT runs as a Codex session, not as an API provider.");
     const p = this.state.settings.providers[choice.kind];
     const key = (await this.key(choice.kind)) ?? "";
     const f = fetch ? { fetch: (url: string, init: RequestInit) => fetch(url, init) } : {};

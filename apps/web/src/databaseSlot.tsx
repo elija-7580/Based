@@ -2,7 +2,8 @@
 // der Shell (showTitle aus), Inline-Datenbanken im Editor mit Titel und begrenzter Höhe.
 // Zeilen öffnen je Ansicht als Side Peek, Center Peek oder ganze Seite (database/RowPeek.tsx); die Formular-Ansicht
 // kommt aus Astryx-Formkomponenten (database/FormView.tsx).
-import { useContext, useMemo, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { attachWheelPassThrough } from "./database/wheelPassThrough.js";
 import { weekStartPref } from "./shell/storage.js";
 import { plainText } from "@based/core";
 import { DatabaseView, type FormRenderProps, type PeekOptions, type RowActions } from "@based/database-ui";
@@ -48,8 +49,10 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     const a = assets();
     return a ? { upload: async (f: File) => (await a.uploadFile(f)).slice(ASSET_URL_PREFIX.length), open: (id: string) => a.resolveFileUrl(ASSET_URL_PREFIX + id) } : undefined;
   }, []);
+  const wrap = useRef<HTMLDivElement>(null);
+  useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
-    <div className={fullPage ? "shell-database full" : "shell-database inline"}>
+    <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
       <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} />
     </div>
   );

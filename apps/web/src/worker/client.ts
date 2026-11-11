@@ -13,7 +13,7 @@ import {
   type WireRecord,
 } from "@based/core";
 import type { ImportPayload } from "./importer.js";
-import type { ExportFile, ExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
+import type { ExportFile, PageExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
 import type { AgentAction } from "./agents.js";
 import type { JSONValue, SearchFilters, SearchSort } from "@based/core";
@@ -292,7 +292,7 @@ export class StoreClient {
     return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
   }
 
-  exportPage(pageID: string, format: ExportFormat, html?: HTMLExportChoice): Promise<ExportFile> {
+  exportPage(pageID: string, format: PageExportFormat, html?: HTMLExportChoice): Promise<ExportFile> {
     return this.request<ExportFile>({ type: "exportPage", pageID, format, ...(html ? { html } : {}) });
   }
 

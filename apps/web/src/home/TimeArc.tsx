@@ -13,7 +13,7 @@ import { when } from "./hooks.js";
 
 /** Kartengrößen in Pixeln (CSS übernimmt sie über style). */
 export const SIZES = {
-  done: { w: 208, h: 60 },
+  done: { w: 236, h: 60 },
   planned: { w: 208, h: 40 },
   ring: { w: 200, h: 72 },
   apex: { w: 316, h: 124 },
@@ -69,7 +69,10 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Pro
     const all = [...blocked, ...ringBoxes, ...done.placed.map((p) => p.box), ...planned.placed.map((p) => p.box)];
     const endOffset = u(SIZES.done).h / 2 + 14 * k;
     const ticks = visibleTicks(arcTicks(g, frame, endOffset), all, { w: 44 * k, h: 16 * k });
-    return { g, apexBox, ring, done, planned, ticks, endOffset };
+    // „Running“ am Fuß des inneren Rings, wenn dort keine Karte liegt.
+    const ringFoot = { x: g.cx - g.innerR, y: g.cy + endOffset };
+    const ringCaption = model.running.length > 0 && visibleTicks([{ t: -1, label: "Running", at: ringFoot, now: false }], all, { w: 64 * k, h: 16 * k }).length > 0 ? ringFoot : undefined;
+    return { g, apexBox, ring, done, planned, ticks, endOffset, ringCaption };
   }, [model, frame, nowMs, width]);
 
   const { g } = layout;
@@ -83,14 +86,18 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Pro
   const right = { x: g.cx + g.r, y: left.y };
 
   return (
-    <section ref={ref} className="arc-stage" style={{ height: (g.height / g.width) * width }} aria-label="Time arc" data-testid="time-arc" data-frame={frame}>
+    <section ref={ref} className="arc-stage" style={{ height: (g.height / g.width) * width }} aria-label="Time arc: finished work on the left, now on top, planned on the right, running agents on the inner ring" data-testid="time-arc" data-frame={frame}>
       <svg className="arc-svg" viewBox={`0 0 ${g.width} ${g.height}`} preserveAspectRatio="none" aria-hidden="true">
         <path className="arc-line" d={arcPath(g)} />
         <path className="arc-ring" d={arcPath(g, g.innerR)} />
       </svg>
       {layout.ticks.map((t) => (
-        <span key={t.t} className="arc-tick" data-now={t.now ? "" : undefined} style={{ left: pct(t.at.x, g.width), top: pct(t.at.y, g.height) }}>{t.label}</span>
+        <span key={t.t} className="arc-tick" data-now={t.now ? "" : undefined} data-end={t.t === 0 ? "done" : t.t === 1 ? "planned" : undefined} style={{ left: pct(t.at.x, g.width), top: pct(t.at.y, g.height) }}>
+          {/* Die Legende steht am Bogen selbst: links erledigt, rechts geplant. */}
+          {t.t === 0 ? <span className="arc-caption">Done</span> : null}{t.label}{t.t === 1 ? <span className="arc-caption">Planned</span> : null}
+        </span>
       ))}
+      {layout.ringCaption ? <span className="arc-tick" data-end="running" style={{ left: pct(layout.ringCaption.x, g.width), top: pct(layout.ringCaption.y, g.height) }}><span className="arc-caption">Running</span></span> : null}
       {earlier > 0 ? <span className="arc-more" style={{ left: pct(left.x, g.width), top: pct(left.y, g.height) }}>{`+${earlier} earlier`}</span> : null}
       {later > 0 ? <span className="arc-more" style={{ left: pct(right.x, g.width), top: pct(right.y, g.height) }}>{`+${later} later`}</span> : null}
 
@@ -135,7 +142,7 @@ function DoneCard({ card: c, style, titleOf, nowMs, ...h }: { card: ArcCard; sty
         <span className="t1" title={`${c.title} · ${when(c.atMs, nowMs)}`}>{c.title}</span>
       </span>
       <span className="arc-row">
-        <span className="t2" title={c.detail}>{c.detail ?? ""}</span>
+        <span className="t2" title={c.detail}><span className="home-mono arc-time">{when(c.atMs, nowMs)}</span>{c.detail ?? ""}</span>
         <span className="arc-card-actions">
           {page ? <button type="button" className="arc-link" onClick={() => h.onOpenPage(page)}>Open page</button> : null}
           {c.runID ? <button type="button" className="arc-link" onClick={() => h.onOpenRun(c.runID!)}>Details</button> : null}

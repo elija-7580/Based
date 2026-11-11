@@ -3,7 +3,7 @@
 // Swift-App transkribiert auf dem Gerät (Parakeet); ein Anbieter-Format für Audio gibt es in der Vorlage nicht.
 // Tests/E2E setzen über `globalThis.__basedMeeting` einen festen Transcriber und eine ScriptedEngine ein.
 import {
-  FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, ModelEngine, ScriptedEngine,
+  FixedTranscriber, MEETING_SUMMARY_SYSTEM, MeetingRecorder, ScriptedEngine,
   type CapturedTrack, type ChatEngine, type FixedLine, type ScriptStep, type Transcriber,
 } from "@based/brain";
 import { meetingInfo, type WorkspaceStore } from "@based/core";
@@ -53,8 +53,7 @@ export function createMeetingHost(client: StoreClient): MeetingHost {
       if (script) return new ScriptedEngine({ script, label: "Scripted" });
       const choice = config.activeModel();
       if (!choice) return undefined;
-      const provider = await config.provider(choice);
-      return new ModelEngine({ provider, model: choice.model, system: MEETING_SUMMARY_SYSTEM, maxSteps: 2 });
+      return config.engine(choice, { system: MEETING_SUMMARY_SYSTEM, maxSteps: 2, policy: { mode: "plan" } });
     },
   });
   recorder.subscribe(notify);

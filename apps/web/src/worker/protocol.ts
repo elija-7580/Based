@@ -3,7 +3,7 @@
 // Worker als Transaktionen ausführt. Alles hier ist strukturiert klonbar (keine Klassen, keine Funktionen).
 import type { Block, DropZone, GraphFilter, HistoryStats, HistoryVersion, Outline, PageGraph, RecordKeyString, SearchFilters, SearchSort, WireRecord } from "@based/core";
 import type { ImportPayload } from "./importer.js";
-import type { ExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
+import type { PageExportFormat, HTMLExportChoice, WorkspaceExportFormat } from "./interop.js";
 import type { ChatAction } from "./chat.js";
 import type { AgentAction } from "./agents.js";
 import type { BrainAction } from "./brain.js";
@@ -163,7 +163,7 @@ export type Request =
   /** BSD-254: eine Datei eines laufenden Imports sofort ablegen (vorläufige ID → Hash; `commitImport` schreibt um). */
   | { type: "importAsset"; assetID: string; name: string; mime?: string; bytes: Uint8Array }
   /** Exporte (Antwort: ExportFile). */
-  | { type: "exportPage"; pageID: string; format: ExportFormat; html?: HTMLExportChoice }
+  | { type: "exportPage"; pageID: string; format: PageExportFormat; html?: HTMLExportChoice }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat; html?: HTMLExportChoice }
   /** Druckansicht einer Seite (Antwort: PrintDocument). */
   | { type: "printPage"; pageID: string; css?: string }

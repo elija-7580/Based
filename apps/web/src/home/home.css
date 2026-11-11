@@ -164,3 +164,9 @@
   .arc-card { transition: none; }
 }
 :root[data-calm] .pulse { animation: none; }
+
+/* Legende am Bogen statt im Kopf: „Done“ links, „Planned“ rechts, „Running“ am inneren Ring; Zeit auf erledigten Karten. */
+.arc-caption { font-family: var(--font-ui, inherit); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); color: var(--ink); }
+.arc-tick[data-end="done"] .arc-caption { margin-right: var(--space-2); }
+.arc-tick[data-end="planned"] .arc-caption { margin-left: var(--space-2); }
+.arc-time { margin-right: var(--space-2); }
