@@ -199,3 +199,33 @@ describe("ask --wait und Sandbox-Shell (Server mit Läufen, gemockt)", () => {
     expect(shellCommand("local:/srv/ws/p", "r")).toBe('cd /srv/ws/p && exec "${SHELL:-/bin/sh}"');
   });
 });
+
+describe("BSD-319: based reports", () => {
+  it("listet Berichte aus ~/.config/based/reports ohne Server, neueste zuerst, überspringt Fremdes", async () => {
+    const home = mkdtempSync(join(tmpdir(), "based-reports-"));
+    try {
+      const dir = join(home, ".config", "based", "reports");
+      const put = (id: string, body: unknown, shot = false) => {
+        mkdirSync(join(dir, id), { recursive: true });
+        writeFileSync(join(dir, id, "report.json"), typeof body === "string" ? body : JSON.stringify(body));
+        if (shot) writeFileSync(join(dir, id, "screenshot.png"), "png");
+      };
+      put("20261111-170000-aaaa", { format: "based-bug-report", id: "20261111-170000-aaaa", createdAt: "2026-11-11T17:00:00.000Z", note: "Older", realText: false, recording: { events: [1, 2] }, layout: { issues: [] } });
+      put("20261111-180000-bbbb", { format: "based-bug-report", id: "20261111-180000-bbbb", createdAt: "2026-11-11T18:00:00.000Z", note: "White box over the selected block", realText: false, screenshot: "screenshot.png", recording: { events: [1, 2, 3] }, layout: { issues: [{}] } }, true);
+      put("broken", "{not json");
+      put("other", { format: "something-else" });
+      const r = await run(["reports"], {}, home);
+      expect(r.code).toBe(0);
+      expect(r.out.indexOf("White box")).toBeLessThan(r.out.indexOf("Older"));
+      expect(r.out).toContain("3 events, 1 layout issue, screenshot");
+      expect(r.out).toContain(join(dir, "20261111-180000-bbbb"));
+      expect(r.out).not.toContain("broken");
+      const j = await run(["reports", "--json", "--limit", "1"], {}, home);
+      expect(JSON.parse(j.out)).toHaveLength(1);
+      expect((await run(["reports"], {}, join(home, "nobody"))).out).toContain("No problem reports");
+      expect(() => parseArgs(["reports", "x"])).toThrow("takes no arguments");
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+});

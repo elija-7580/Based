@@ -1,0 +1,3894 @@
+{
+ "format": "based-bug-report",
+ "version": 1,
+ "id": "20261111-163245-7365",
+ "createdAt": "2026-11-11T16:32:45.758Z",
+ "note": "Sample: typing, bold, list, heading, paste, click and backspace",
+ "realText": false,
+ "app": {
+  "shell": "web",
+  "commit": "c2ba051",
+  "platform": "Windows",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36"
+ },
+ "env": {
+  "width": 1280,
+  "height": 820,
+  "dpr": 1,
+  "zoom": 1,
+  "theme": "light",
+  "route": "page-"
+ },
+ "state": {
+  "menus": [],
+  "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+  "doc": {
+   "type": "doc",
+   "content": [
+    {
+     "type": "blockGroup",
+     "content": [
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxx xxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "a003e0fb-77b7-43b5-afb3-874a82a11801"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxx xxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx xx!"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "c46c998a-4da0-405c-aa7b-432338dbd427"
+       },
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "45627992-77d8-465d-a52b-b815f1fd8ebc"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "blocks": [
+   {
+    "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "a003e0fb-77b7-43b5-afb3-874a82a11801",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx xx!",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "c46c998a-4da0-405c-aa7b-432338dbd427",
+    "type": "heading",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left",
+     "level": 1,
+     "isToggleable": false
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "45627992-77d8-465d-a52b-b815f1fd8ebc",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx: xxxx xxx xxxxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   }
+  ],
+  "sel": {
+   "type": "text",
+   "anchor": 42,
+   "head": 42
+  },
+  "focus": "div.tiptap.ProseMirror[role=textbox]"
+ },
+ "layout": {
+  "items": [
+   {
+    "kind": "block",
+    "label": "paragraph #dc86db67-a52d-4f3d-82d9-d1617f37184e",
+    "rect": {
+     "x": 462,
+     "y": 231,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #a003e0fb-77b7-43b5-afb3-874a82a11801",
+    "rect": {
+     "x": 462,
+     "y": 261,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6",
+    "rect": {
+     "x": 462,
+     "y": 291,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "heading #c46c998a-4da0-405c-aa7b-432338dbd427",
+    "rect": {
+     "x": 462,
+     "y": 321,
+     "w": 720,
+     "h": 49
+    }
+   },
+   {
+    "kind": "block",
+    "label": "paragraph #45627992-77d8-465d-a52b-b815f1fd8ebc",
+    "rect": {
+     "x": 462,
+     "y": 370,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "floating",
+    "label": "div.sidebar-resize[role=separator]#sidebar-resize",
+    "rect": {
+     "x": 224,
+     "y": 0,
+     "w": 8,
+     "h": 820
+    },
+    "z": "2",
+    "position": "absolute"
+   },
+   {
+    "kind": "floating",
+    "label": "header.topbar.t-desc",
+    "rect": {
+     "x": 232,
+     "y": 12,
+     "w": 1036,
+     "h": 56
+    },
+    "z": "5",
+    "position": "sticky",
+    "opaque": true
+   },
+   {
+    "kind": "floating",
+    "label": "nav.bx-outline#page-outline",
+    "rect": {
+     "x": 1214,
+     "y": 393,
+     "w": 50,
+     "h": 34
+    },
+    "z": "15",
+    "position": "fixed"
+   },
+   {
+    "kind": "floating",
+    "label": "div.swipe-hint",
+    "rect": {
+     "x": 232,
+     "y": 0,
+     "w": 1048,
+     "h": 820
+    },
+    "z": "8",
+    "position": "absolute"
+   },
+   {
+    "kind": "focus",
+    "label": "div.tiptap.ProseMirror[role=textbox]",
+    "rect": {
+     "x": 406,
+     "y": 231,
+     "w": 832,
+     "h": 199
+    }
+   }
+  ],
+  "issues": []
+ },
+ "recording": {
+  "events": [
+   {
+    "kind": "checkpoint",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 3,
+     "head": 3
+    },
+    "t": 1794414764759
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 822,
+    "y": 246,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794414764872
+   },
+   {
+    "kind": "focus",
+    "target": "div.tiptap.ProseMirror[role=textbox]",
+    "t": 1794414764876
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 822,
+    "y": 246,
+    "button": 0,
+    "detail": 0,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794414764877
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "X",
+    "mods": {},
+    "t": 1794414764889
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414764895
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414764907
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 3,
+      "to": 3,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 4,
+     "head": 4
+    },
+    "t": 1794414764908
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764912
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764912
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764917
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 4,
+      "to": 4,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 5,
+     "head": 5
+    },
+    "t": 1794414764917
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764920
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764920
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764923
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 5,
+      "to": 5,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 6,
+     "head": 6
+    },
+    "t": 1794414764923
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764924
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764925
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764926
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 6,
+      "to": 6,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 7,
+     "head": 7
+    },
+    "t": 1794414764927
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764928
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764928
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764930
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 7,
+      "to": 7,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 8,
+     "head": 8
+    },
+    "t": 1794414764930
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414764933
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414764933
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764936
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 8,
+      "to": 8,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 9,
+     "head": 9
+    },
+    "t": 1794414764936
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764937
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764937
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764938
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 9,
+      "to": 9,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 10,
+     "head": 10
+    },
+    "t": 1794414764939
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764940
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764940
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764943
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 10,
+      "to": 10,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 11,
+     "head": 11
+    },
+    "t": 1794414764943
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764944
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764945
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764946
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 11,
+      "to": 11,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 12,
+     "head": 12
+    },
+    "t": 1794414764946
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764949
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764950
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764951
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 12,
+      "to": 12,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 13,
+     "head": 13
+    },
+    "t": 1794414764951
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764952
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764953
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764954
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 13,
+      "to": 13,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794414764954
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Shift",
+    "code": "ShiftLeft",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794414764957
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Home",
+    "code": "Home",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794414764958
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Control",
+    "code": "ControlLeft",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794414764961
+   },
+   {
+    "kind": "checkpoint",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794414764961
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "b",
+    "code": "KeyB",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794414764961
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794414764967
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414764969
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794414764975
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 14,
+      "to": 14,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794414764976
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "-",
+    "mods": {},
+    "t": 1794414764978
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "-",
+    "t": 1794414764978
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414764981
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "-"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794414764982
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414764986
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414764986
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764988
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794414764988
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 133,
+    "origin": "y-sync$",
+    "t": 1794414764991
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 20
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 17,
+      "to": 19,
+      "gapFrom": 18,
+      "gapTo": 18,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794414764991
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "X",
+    "mods": {},
+    "t": 1794414764992
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414764992
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414764994
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794414764994
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764995
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414764995
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414764996
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794414764996
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414764999
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765000
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765001
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 20,
+      "to": 20,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 21,
+     "head": 21
+    },
+    "t": 1794414765001
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765003
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765003
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765004
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 21,
+      "to": 21,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 22,
+     "head": 22
+    },
+    "t": 1794414765004
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765005
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765005
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765006
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 22,
+      "to": 22,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 23,
+     "head": 23
+    },
+    "t": 1794414765007
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414765010
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414765010
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765011
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 23,
+      "to": 23,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 24,
+     "head": 24
+    },
+    "t": 1794414765011
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765012
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765012
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765013
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 24,
+      "to": 24,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 25,
+     "head": 25
+    },
+    "t": 1794414765013
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765016
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765016
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765017
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 25,
+      "to": 25,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 26,
+     "head": 26
+    },
+    "t": 1794414765017
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765019
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765019
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765020
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 26,
+      "to": 26,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 27,
+     "head": 27
+    },
+    "t": 1794414765020
+   },
+   {
+    "kind": "checkpoint",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "a003e0fb-77b7-43b5-afb3-874a82a11801"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 27,
+     "head": 27
+    },
+    "t": 1794414765021
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765021
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765021
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765022
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 27,
+      "to": 27,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 28,
+     "head": 28
+    },
+    "t": 1794414765023
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414765025
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794414765027
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 28,
+      "to": 28,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "a003e0fb-77b7-43b5-afb3-874a82a11801"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 32,
+     "head": 32
+    },
+    "t": 1794414765027
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "X",
+    "mods": {},
+    "t": 1794414765029
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414765029
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414765032
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 32,
+      "to": 32,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 33,
+     "head": 33
+    },
+    "t": 1794414765032
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765039
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765040
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765041
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 33,
+      "to": 33,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 34,
+     "head": 34
+    },
+    "t": 1794414765041
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765043
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765043
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765044
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 34,
+      "to": 34,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 35,
+     "head": 35
+    },
+    "t": 1794414765044
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765046
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765046
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765049
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 35,
+      "to": 35,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 36,
+     "head": 36
+    },
+    "t": 1794414765049
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765053
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765053
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765055
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 36,
+      "to": 36,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "t": 1794414765055
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765057
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765057
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765059
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 37,
+      "to": 37,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 38,
+     "head": 38
+    },
+    "t": 1794414765059
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414765060
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414765061
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765062
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 38,
+      "to": 38,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 39,
+     "head": 39
+    },
+    "t": 1794414765062
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765069
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765069
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765071
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 39,
+      "to": 39,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 40,
+     "head": 40
+    },
+    "t": 1794414765072
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765073
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765073
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765075
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 40,
+      "to": 40,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794414765075
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765077
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765077
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765078
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414765079
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765083
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765083
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765085
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 42,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794414765085
+   },
+   {
+    "kind": "checkpoint",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "a003e0fb-77b7-43b5-afb3-874a82a11801"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794414765094
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414765094
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794414765097
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 43,
+      "to": 43,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414765097
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414765101
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 126,
+    "origin": "y-sync$",
+    "t": 1794414765103
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414765103
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "#",
+    "mods": {},
+    "t": 1794414765105
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "#",
+    "t": 1794414765105
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414765108
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "#"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794414765108
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414765109
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414765109
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765111
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794414765111
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 164,
+    "origin": "y-sync$",
+    "t": 1794414765118
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 49
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414765118
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "X",
+    "mods": {},
+    "t": 1794414765124
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414765124
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414765127
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794414765127
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765128
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765129
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765130
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794414765130
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765133
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765133
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765135
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 49,
+      "to": 49,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 50,
+     "head": 50
+    },
+    "t": 1794414765135
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765136
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765137
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765138
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 50,
+      "to": 50,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 51,
+     "head": 51
+    },
+    "t": 1794414765138
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765139
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765139
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765140
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 51,
+      "to": 51,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 52,
+     "head": 52
+    },
+    "t": 1794414765141
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765142
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765142
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765143
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 52,
+      "to": 52,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 53,
+     "head": 53
+    },
+    "t": 1794414765143
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765145
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765145
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765147
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 53,
+      "to": 53,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 54,
+     "head": 54
+    },
+    "t": 1794414765147
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414765153
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794414765155
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 54,
+      "to": 54,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "c46c998a-4da0-405c-aa7b-432338dbd427"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 58,
+     "head": 58
+    },
+    "t": 1794414765156
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "X",
+    "mods": {},
+    "t": 1794414765158
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414765158
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414765160
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 58,
+      "to": 58,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 59,
+     "head": 59
+    },
+    "t": 1794414765160
+   },
+   {
+    "kind": "checkpoint",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "dc86db67-a52d-4f3d-82d9-d1617f37184e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "a003e0fb-77b7-43b5-afb3-874a82a11801"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "20c928dd-cb5f-4f90-b7d6-d3b0be1ee3c6"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "c46c998a-4da0-405c-aa7b-432338dbd427"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "45627992-77d8-465d-a52b-b815f1fd8ebc"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "X"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 59,
+     "head": 59
+    },
+    "t": 1794414765162
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765162
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765162
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765163
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 59,
+      "to": 59,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 60,
+     "head": 60
+    },
+    "t": 1794414765163
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765168
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765168
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765170
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 60,
+      "to": 60,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 61,
+     "head": 61
+    },
+    "t": 1794414765170
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765171
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765171
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765172
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 61,
+      "to": 61,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 62,
+     "head": 62
+    },
+    "t": 1794414765173
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765174
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765174
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765175
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 62,
+      "to": 62,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 63,
+     "head": 63
+    },
+    "t": 1794414765175
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "x",
+    "mods": {},
+    "t": 1794414765177
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414765177
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765178
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 63,
+      "to": 63,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 64,
+     "head": 64
+    },
+    "t": 1794414765178
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": ":",
+    "mods": {},
+    "t": 1794414765184
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": ":",
+    "t": 1794414765185
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765186
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 64,
+      "to": 64,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": ":"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 65,
+     "head": 65
+    },
+    "t": 1794414765186
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": " ",
+    "mods": {},
+    "t": 1794414765193
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414765193
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765195
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 65,
+      "to": 65,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 66,
+     "head": 66
+    },
+    "t": 1794414765196
+   },
+   {
+    "kind": "paste",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "plain": "xxxx xxx xxxxxxxxx",
+    "files": 0,
+    "t": 1794414765222
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 35,
+    "origin": "y-sync$",
+    "t": 1794414765233
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 66,
+      "to": 66,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "xxxx xxx xxxxxxxxx"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 84,
+     "head": 84
+    },
+    "meta": [
+     "paste",
+     "uiEvent:paste"
+    ],
+    "t": 1794414765233
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 533,
+    "y": 306,
+    "button": 0,
+    "detail": 0,
+    "target": "p.bn-inline-content",
+    "t": 1794414765303
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 533,
+    "y": 306,
+    "button": 0,
+    "detail": 0,
+    "target": "p.bn-inline-content",
+    "t": 1794414765304
+   },
+   {
+    "kind": "select",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "cause": "pointer",
+    "t": 1794414765310
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "meta": [
+     "pointer"
+    ],
+    "t": 1794414765310
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794414765318
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794414765324
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "deleteContentBackward",
+    "t": 1794414765327
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794414765329
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 43
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414765330
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794414765336
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "deleteContentBackward",
+    "t": 1794414765336
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794414765338
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 42
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794414765338
+   },
+   {
+    "kind": "key",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "key": "!",
+    "mods": {},
+    "t": 1794414765348
+   },
+   {
+    "kind": "input",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "inputType": "insertText",
+    "data": "!",
+    "t": 1794414765348
+   },
+   {
+    "kind": "yjs",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414765350
+   },
+   {
+    "kind": "tr",
+    "root": "C6C267FB-F248-45C3-AD6B-CDCFBDE8CBEA",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "!"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414765350
+   }
+  ]
+ },
+ "log": [
+  {
+   "at": 1794414763639,
+   "level": "info",
+   "message": "start · Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.8127.18 Safari/537.36"
+  },
+  {
+   "at": 1794414763640,
+   "level": "info",
+   "message": "boot: scripts loaded +482 ms"
+  },
+  {
+   "at": 1794414763644,
+   "level": "info",
+   "message": "boot: shell started +486 ms"
+  },
+  {
+   "at": 1794414763658,
+   "level": "info",
+   "message": "boot: settings read +500 ms"
+  },
+  {
+   "at": 1794414763740,
+   "level": "info",
+   "message": "boot: first render +582 ms"
+  },
+  {
+   "at": 1794414764150,
+   "level": "info",
+   "message": "boot: store answered +992 ms"
+  },
+  {
+   "at": 1794414764150,
+   "level": "info",
+   "message": "status: starting"
+  },
+  {
+   "at": 1794414764167,
+   "level": "info",
+   "message": "status: local"
+  },
+  {
+   "at": 1794414764171,
+   "level": "info",
+   "message": "boot: store ready +1013 ms (1 pages)"
+  }
+ ]
+}

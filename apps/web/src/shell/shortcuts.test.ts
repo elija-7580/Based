@@ -13,6 +13,9 @@ describe("Tastaturkürzel (BSD-204)", () => {
     expect(matchShortcut(key("n", { meta: false, ctrl: true }))).toEqual({ kind: "palette" });
     expect(matchShortcut(key("˜", { alt: true, code: "KeyN" }))).toEqual({ kind: "newPage" });
     expect(matchShortcut(key("L", { shift: true, code: "KeyL" }))).toEqual({ kind: "toggleTheme" });
+    // BSD-319: ⇧⌘B meldet ein Problem (ohne ⇧ bleibt ⌘B beim Editor: fett)
+    expect(matchShortcut(key("B", { shift: true, code: "KeyB" }))).toEqual({ kind: "reportProblem" });
+    expect(matchShortcut(key("b", { code: "KeyB" }))).toBeUndefined();
     expect(matchShortcut(key(","))).toEqual({ kind: "settings" });
     expect(matchShortcut(key("t"))).toEqual({ kind: "newTab" });
     expect(matchShortcut(key("w"))).toEqual({ kind: "closeTab" });

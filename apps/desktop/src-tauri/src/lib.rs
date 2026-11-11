@@ -11,6 +11,8 @@ const CLOSE_TAB: &str = "close-tab";
 const INSTALL_CLI: &str = "install-cli";
 /// ⇧⌘W: Fenster ausblenden – die App läuft weiter, Klick aufs Dock-Symbol holt es zurück (wie Notion).
 const CLOSE_WINDOW: &str = "close-window";
+/// BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – das Fenster vorn friert seinen Zustand ein (`desktop://report-problem`).
+const REPORT_PROBLEM: &str = "report-problem";
 
 fn show_main(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -26,6 +28,9 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
+        // BSD-319: Fehlerberichte nach ~/.config/based/reports (Rechte nur dort, capabilities/default.json) und im Finder zeigen.
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_opener::init())
         .menu(|app| {
             let name = app.package_info().name.clone();
             let about = AboutMetadata { name: Some(name.clone()), ..Default::default() };
@@ -76,7 +81,13 @@ pub fn run() {
                     &MenuItem::with_id(app, CLOSE_WINDOW, "Close Window", true, Some("CmdOrCtrl+Shift+W"))?,
                 ],
             )?;
-            Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu])
+            let help_menu = Submenu::with_items(
+                app,
+                "Help",
+                true,
+                &[&MenuItem::with_id(app, REPORT_PROBLEM, "Report a Problem…", true, Some("CmdOrCtrl+Shift+B"))?],
+            )?;
+            Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu, &help_menu])
         })
         .on_menu_event(|app, event| {
             // BSD-202: Seiten können in eigenen Fenstern liegen – das Menü wirkt auf das Fenster vorn.
@@ -87,6 +98,8 @@ pub fn run() {
             } else if event.id() == INSTALL_CLI {
                 show_main(app);
                 let _ = app.emit_to("main", "desktop://install-cli", ());
+            } else if event.id() == REPORT_PROBLEM {
+                let _ = app.emit_to(window.label(), "desktop://report-problem", ());
             } else if event.id() == CLOSE_TAB {
                 let _ = app.emit_to(window.label(), "desktop://close-tab", ());
             } else if event.id() == CLOSE_WINDOW {

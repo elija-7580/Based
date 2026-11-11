@@ -15,7 +15,9 @@ export type CLICommand =
   | { name: "tools" }
   | { name: "sandboxShell"; runID: string }
   | { name: "login"; url: string }
-  | { name: "config" };
+  | { name: "config" }
+  /** BSD-319: Fehlerberichte der Mac-App (lokal, ohne Server). */
+  | { name: "reports"; limit?: number };
 
 export interface CLIOptions {
   url?: string;
@@ -49,6 +51,7 @@ Usage:
   based sandbox shell <run-id>
   based login --url <https://server>          (reads the token from stdin)
   based config
+  based reports [--limit N]                   (problem reports from ⇧⌘B, no server needed)
 
 Options (any command):
   --url <url>          Server URL (default: BASED_URL, then the config file)
@@ -180,6 +183,12 @@ export function parseArgs(argv: string[]): { command: CLICommand; options: CLIOp
       if (!query) throw new CLIError("`based search` needs a text", 2);
       const limit = positive("--limit");
       return done({ name: "search", query, ...(limit ? { limit } : {}) });
+    }
+    case "reports": {
+      only(["--limit"]);
+      if (args.length > 0) throw new CLIError("`based reports` takes no arguments", 2);
+      const limit = positive("--limit");
+      return done({ name: "reports", ...(limit ? { limit } : {}) });
     }
     case "inbox":
     case "tools":

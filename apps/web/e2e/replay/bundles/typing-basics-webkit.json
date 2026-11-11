@@ -1,0 +1,4133 @@
+{
+ "format": "based-bug-report",
+ "version": 1,
+ "id": "20261111-163252-027a",
+ "createdAt": "2026-11-11T16:32:52.044Z",
+ "note": "Sample: typing, bold, list, heading, paste, click and backspace",
+ "realText": false,
+ "app": {
+  "shell": "web",
+  "commit": "c2ba051",
+  "platform": "Linux x86_64",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+ },
+ "env": {
+  "width": 1280,
+  "height": 820,
+  "dpr": 2,
+  "zoom": 1,
+  "theme": "light",
+  "route": "page-"
+ },
+ "state": {
+  "menus": [],
+  "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+  "doc": {
+   "type": "doc",
+   "content": [
+    {
+     "type": "blockGroup",
+     "content": [
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "marks": [
+            {
+             "type": "bold"
+            }
+           ],
+           "text": "Xxxxx xxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "f4a97f42-002f-4e19-af7c-406126208612"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxx xxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx xx!"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+       },
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "blocks": [
+   {
+    "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxxx",
+      "styles": {
+       "bold": true
+      }
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "f4a97f42-002f-4e19-af7c-406126208612",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx xx!",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "6ad33309-cc22-4e82-94f3-725196e7d21f",
+    "type": "heading",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left",
+     "level": 1,
+     "isToggleable": false
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx: xxxx xxx xxxxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   }
+  ],
+  "sel": {
+   "type": "text",
+   "anchor": 42,
+   "head": 42
+  },
+  "focus": "div.tiptap.ProseMirror[role=textbox]"
+ },
+ "layout": {
+  "items": [
+   {
+    "kind": "block",
+    "label": "paragraph #1dd58718-86cb-455c-a9a1-13dd32ab4e6e",
+    "rect": {
+     "x": 462,
+     "y": 233,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #f4a97f42-002f-4e19-af7c-406126208612",
+    "rect": {
+     "x": 462,
+     "y": 263,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #b220d9b5-d736-4735-b8a7-6f9491ae8e34",
+    "rect": {
+     "x": 462,
+     "y": 293,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "heading #6ad33309-cc22-4e82-94f3-725196e7d21f",
+    "rect": {
+     "x": 462,
+     "y": 323,
+     "w": 720,
+     "h": 49
+    }
+   },
+   {
+    "kind": "block",
+    "label": "paragraph #09d5a9e1-0f7e-494b-8360-9b829e4f4490",
+    "rect": {
+     "x": 462,
+     "y": 372,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "floating",
+    "label": "div.sidebar-resize[role=separator]#sidebar-resize",
+    "rect": {
+     "x": 224,
+     "y": 0,
+     "w": 8,
+     "h": 820
+    },
+    "z": "2",
+    "position": "absolute"
+   },
+   {
+    "kind": "floating",
+    "label": "header.topbar.t-desc",
+    "rect": {
+     "x": 232,
+     "y": 12,
+     "w": 1036,
+     "h": 56
+    },
+    "z": "5",
+    "position": "sticky",
+    "opaque": true
+   },
+   {
+    "kind": "floating",
+    "label": "nav.bx-outline#page-outline",
+    "rect": {
+     "x": 1214,
+     "y": 393,
+     "w": 50,
+     "h": 34
+    },
+    "z": "15",
+    "position": "fixed"
+   },
+   {
+    "kind": "floating",
+    "label": "div.swipe-hint",
+    "rect": {
+     "x": 232,
+     "y": 0,
+     "w": 1048,
+     "h": 820
+    },
+    "z": "8",
+    "position": "absolute"
+   },
+   {
+    "kind": "focus",
+    "label": "div.tiptap.ProseMirror[role=textbox]",
+    "rect": {
+     "x": 406,
+     "y": 233,
+     "w": 832,
+     "h": 199
+    }
+   }
+  ],
+  "issues": []
+ },
+ "recording": {
+  "events": [
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 3,
+     "head": 3
+    },
+    "t": 1794414769364
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 822,
+    "y": 248,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794414770046
+   },
+   {
+    "kind": "focus",
+    "target": "div.tiptap.ProseMirror[role=textbox]",
+    "t": 1794414770051
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 822,
+    "y": 248,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794414770052
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "X",
+    "mods": {},
+    "t": 1794414770061
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414770071
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770081
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 3,
+      "to": 3,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 4,
+     "head": 4
+    },
+    "t": 1794414770084
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770090
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770091
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770096
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 4,
+      "to": 4,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 5,
+     "head": 5
+    },
+    "t": 1794414770097
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770099
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770100
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770103
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 5,
+      "to": 5,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 6,
+     "head": 6
+    },
+    "t": 1794414770104
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770106
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770107
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770110
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 6,
+      "to": 6,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 7,
+     "head": 7
+    },
+    "t": 1794414770111
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770113
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770114
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770116
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 7,
+      "to": 7,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 8,
+     "head": 8
+    },
+    "t": 1794414770117
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770119
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770119
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770122
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 8,
+      "to": 8,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 9,
+     "head": 9
+    },
+    "t": 1794414770123
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770125
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770125
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770130
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 9,
+      "to": 9,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 10,
+     "head": 10
+    },
+    "t": 1794414770131
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770141
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770143
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770147
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 10,
+      "to": 10,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 11,
+     "head": 11
+    },
+    "t": 1794414770149
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770151
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770152
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770155
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 11,
+      "to": 11,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 12,
+     "head": 12
+    },
+    "t": 1794414770156
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770157
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770158
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770161
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 12,
+      "to": 12,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 13,
+     "head": 13
+    },
+    "t": 1794414770161
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770163
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770164
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770166
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 13,
+      "to": 13,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794414770166
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Shift",
+    "code": "ShiftLeft",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794414770171
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Home",
+    "code": "Home",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794414770172
+   },
+   {
+    "kind": "select",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "cause": "pointer",
+    "t": 1794414770175
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794414770175
+   },
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794414770478
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Control",
+    "code": "ControlLeft",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794414770478
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "b",
+    "code": "KeyB",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794414770483
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 41,
+    "origin": "y-sync$",
+    "t": 1794414770491
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "addMark",
+      "mark": {
+       "type": "bold"
+      },
+      "from": 3,
+      "to": 14
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794414770491
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794414770505
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794414770508
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414770520
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794414770527
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 14,
+      "to": 14,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794414770528
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "-",
+    "mods": {},
+    "t": 1794414770539
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "-",
+    "t": 1794414770540
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770543
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "-"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794414770544
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770546
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770546
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770550
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794414770550
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 133,
+    "origin": "y-sync$",
+    "t": 1794414770554
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 20
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 17,
+      "to": 19,
+      "gapFrom": 18,
+      "gapTo": 18,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794414770554
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "X",
+    "mods": {},
+    "t": 1794414770558
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414770559
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770563
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794414770563
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770578
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770579
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770581
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794414770581
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770585
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770586
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770588
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 20,
+      "to": 20,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 21,
+     "head": 21
+    },
+    "t": 1794414770588
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770590
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770591
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770593
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 21,
+      "to": 21,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 22,
+     "head": 22
+    },
+    "t": 1794414770593
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770605
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770606
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770608
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 22,
+      "to": 22,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 23,
+     "head": 23
+    },
+    "t": 1794414770608
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770609
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770610
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770612
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 23,
+      "to": 23,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 24,
+     "head": 24
+    },
+    "t": 1794414770612
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770624
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770625
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770626
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 24,
+      "to": 24,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 25,
+     "head": 25
+    },
+    "t": 1794414770627
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770629
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770630
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770632
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 25,
+      "to": 25,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 26,
+     "head": 26
+    },
+    "t": 1794414770632
+   },
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 26,
+     "head": 26
+    },
+    "t": 1794414770633
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770633
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770633
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770635
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 26,
+      "to": 26,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 27,
+     "head": 27
+    },
+    "t": 1794414770635
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770637
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770638
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770639
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 27,
+      "to": 27,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 28,
+     "head": 28
+    },
+    "t": 1794414770640
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414770653
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794414770659
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 28,
+      "to": 28,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 32,
+     "head": 32
+    },
+    "t": 1794414770659
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "X",
+    "mods": {},
+    "t": 1794414770663
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414770664
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770667
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 32,
+      "to": 32,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 33,
+     "head": 33
+    },
+    "t": 1794414770668
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770669
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770670
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770671
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 33,
+      "to": 33,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 34,
+     "head": 34
+    },
+    "t": 1794414770672
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770673
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770673
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770675
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 34,
+      "to": 34,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 35,
+     "head": 35
+    },
+    "t": 1794414770675
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770677
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770678
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770679
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 35,
+      "to": 35,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 36,
+     "head": 36
+    },
+    "t": 1794414770679
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770682
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770682
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770684
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 36,
+      "to": 36,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "t": 1794414770684
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770685
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770686
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770688
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 37,
+      "to": 37,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 38,
+     "head": 38
+    },
+    "t": 1794414770688
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770689
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770690
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770691
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 38,
+      "to": 38,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 39,
+     "head": 39
+    },
+    "t": 1794414770692
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770693
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770693
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770695
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 39,
+      "to": 39,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 40,
+     "head": 40
+    },
+    "t": 1794414770695
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770697
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770697
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770699
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 40,
+      "to": 40,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794414770699
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770708
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770708
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770710
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414770710
+   },
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414770711
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770711
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770712
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770714
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 42,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794414770714
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414770721
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794414770724
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 43,
+      "to": 43,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414770724
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414770726
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 126,
+    "origin": "y-sync$",
+    "t": 1794414770730
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414770730
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "#",
+    "mods": {},
+    "t": 1794414770732
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "#",
+    "t": 1794414770732
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770738
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "#"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794414770739
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770741
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770741
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770744
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794414770744
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 164,
+    "origin": "y-sync$",
+    "t": 1794414770757
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 49
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794414770757
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "X",
+    "mods": {},
+    "t": 1794414770779
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414770781
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770784
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794414770785
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770789
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770790
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770792
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794414770792
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770793
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770794
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770796
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 49,
+      "to": 49,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 50,
+     "head": 50
+    },
+    "t": 1794414770796
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770797
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770798
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770799
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 50,
+      "to": 50,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 51,
+     "head": 51
+    },
+    "t": 1794414770800
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770801
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770801
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770803
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 51,
+      "to": 51,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 52,
+     "head": 52
+    },
+    "t": 1794414770803
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770804
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770805
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770806
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 52,
+      "to": 52,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 53,
+     "head": 53
+    },
+    "t": 1794414770807
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770808
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770809
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770810
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 53,
+      "to": 53,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 54,
+     "head": 54
+    },
+    "t": 1794414770810
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794414770812
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794414770816
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 54,
+      "to": 54,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 58,
+     "head": 58
+    },
+    "t": 1794414770816
+   },
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 58,
+     "head": 58
+    },
+    "t": 1794414770818
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "X",
+    "mods": {},
+    "t": 1794414770818
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794414770819
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794414770821
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 58,
+      "to": 58,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 59,
+     "head": 59
+    },
+    "t": 1794414770822
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770823
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770824
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770830
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 59,
+      "to": 59,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 60,
+     "head": 60
+    },
+    "t": 1794414770830
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770831
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770832
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770833
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 60,
+      "to": 60,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 61,
+     "head": 61
+    },
+    "t": 1794414770833
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770835
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770835
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770837
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 61,
+      "to": 61,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 62,
+     "head": 62
+    },
+    "t": 1794414770837
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770838
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770839
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770840
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 62,
+      "to": 62,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 63,
+     "head": 63
+    },
+    "t": 1794414770840
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "x",
+    "mods": {},
+    "t": 1794414770847
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794414770848
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770849
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 63,
+      "to": 63,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 64,
+     "head": 64
+    },
+    "t": 1794414770849
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": ":",
+    "mods": {},
+    "t": 1794414770851
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": ":",
+    "t": 1794414770851
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770853
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 64,
+      "to": 64,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": ":"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 65,
+     "head": 65
+    },
+    "t": 1794414770854
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": " ",
+    "mods": {},
+    "t": 1794414770860
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794414770860
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414770863
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 65,
+      "to": 65,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 66,
+     "head": 66
+    },
+    "t": 1794414770864
+   },
+   {
+    "kind": "paste",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "plain": "xxxx xxx xxxxxxxxx",
+    "files": 0,
+    "t": 1794414770873
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 35,
+    "origin": "y-sync$",
+    "t": 1794414770881
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 66,
+      "to": 66,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "xxxx xxx xxxxxxxxx"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 84,
+     "head": 84
+    },
+    "meta": [
+     "paste",
+     "uiEvent:paste"
+    ],
+    "t": 1794414770882
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 533,
+    "y": 308,
+    "button": 0,
+    "detail": 1,
+    "target": "p.bn-inline-content",
+    "t": 1794414771593
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 533,
+    "y": 308,
+    "button": 0,
+    "detail": 1,
+    "target": "p.bn-inline-content",
+    "t": 1794414771595
+   },
+   {
+    "kind": "select",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "cause": "pointer",
+    "t": 1794414771598
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "meta": [
+     "pointer"
+    ],
+    "t": 1794414771598
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794414771604
+   },
+   {
+    "kind": "select",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "cause": "pointer",
+    "t": 1794414771610
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794414771610
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794414771612
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "deleteContentBackward",
+    "t": 1794414771616
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794414771620
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 43
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414771621
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794414771624
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "deleteContentBackward",
+    "t": 1794414771625
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794414771628
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 42
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794414771628
+   },
+   {
+    "kind": "checkpoint",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794414771630
+   },
+   {
+    "kind": "key",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "key": "!",
+    "mods": {},
+    "t": 1794414771630
+   },
+   {
+    "kind": "input",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "inputType": "insertText",
+    "data": "!",
+    "t": 1794414771631
+   },
+   {
+    "kind": "yjs",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794414771633
+   },
+   {
+    "kind": "tr",
+    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "!"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794414771634
+   }
+  ]
+ },
+ "log": [
+  {
+   "at": 1794414767378,
+   "level": "info",
+   "message": "start · Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+  },
+  {
+   "at": 1794414767379,
+   "level": "info",
+   "message": "boot: scripts loaded +528 ms"
+  },
+  {
+   "at": 1794414767406,
+   "level": "info",
+   "message": "boot: shell started +554 ms"
+  },
+  {
+   "at": 1794414767502,
+   "level": "info",
+   "message": "boot: settings read +651 ms"
+  },
+  {
+   "at": 1794414767659,
+   "level": "info",
+   "message": "boot: first render +808 ms"
+  },
+  {
+   "at": 1794414768601,
+   "level": "info",
+   "message": "boot: store answered +1750 ms"
+  },
+  {
+   "at": 1794414768601,
+   "level": "info",
+   "message": "status: starting"
+  },
+  {
+   "at": 1794414768616,
+   "level": "info",
+   "message": "status: local"
+  },
+  {
+   "at": 1794414768619,
+   "level": "info",
+   "message": "boot: store ready +1768 ms (1 pages)"
+  }
+ ]
+}

@@ -16,7 +16,9 @@ export type ShortcutAction =
   | { kind: "forward" }
   /** BSD-206: Suchen in der Seite (⌘F), nächste/vorige Fundstelle (⌘G / ⇧⌘G). */
   | { kind: "find" }
-  | { kind: "findStep"; delta: 1 | -1 };
+  | { kind: "findStep"; delta: 1 | -1 }
+  /** BSD-319: „Problem melden“ (⇧⌘B). */
+  | { kind: "reportProblem" };
 
 /** App → Seite: ⌘F/⌘G. Die Seite ruft `preventDefault()`, wenn sie die Taste nimmt. */
 export const FIND_EVENT = "based:find";
@@ -41,6 +43,7 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
   if (e.shiftKey) {
     if (code === "KeyL" || k === "l") return { kind: "toggleTheme" };
     if (code === "KeyG" || k === "g") return { kind: "findStep", delta: -1 };
+    if (code === "KeyB" || k === "b") return { kind: "reportProblem" };
     if (code === "BracketLeft" || code === "BracketRight") return { kind: "cycleTab", delta: code === "BracketRight" ? 1 : -1 };
     return undefined;
   }

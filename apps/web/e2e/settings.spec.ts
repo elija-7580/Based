@@ -108,7 +108,7 @@ test("Account und Diagnostics zeigen echten Gerätezustand", async ({ page }) =>
   await open(page, "prefs-account");
   await expect(page.getByTestId("device-id")).not.toHaveText("not assigned yet");
   await nav(page).getByRole("button", { name: "Diagnostics" }).click();
-  await expect(page.getByTestId("settings-section-diagnostics")).toContainText("Web browser");
+  await expect(page.getByTestId("settings-section-diagnostics-status")).toContainText("Web browser");
   await page.getByRole("button", { name: "Open design kit" }).click();
   await expect(page.getByTestId("astryx-kit")).toBeVisible();
 });
@@ -123,8 +123,10 @@ test("Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalt
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t: string) => { (globalThis as unknown as { __copied: string[] }).__copied.push(t); } } });
   });
   await open(page, "prefs-diagnostics");
-  const section = page.getByTestId("settings-section-diagnostics");
-  await expect(section.getByTestId("diagnostics-last-session")).toContainText("didn't close normally");
+  // BSD-319: Diagnostics in Gruppen – vorige Sitzung unter „Problems“, Log und Bericht unter „Log“.
+  await expect(page.getByTestId("settings-section-diagnostics-problems")).toContainText("didn't close normally");
+  await expect(page.getByTestId("diagnostics-last-session")).toContainText("Ended unexpectedly");
+  const section = page.getByTestId("settings-section-diagnostics-log");
   await expect(section.getByTestId("diagnostics-log")).toContainText("start");
   // Ein Fehler mit Token und Inhalt landet geschwärzt im Log.
   await page.evaluate(() => setTimeout(() => { throw new Error("failed with Bearer abc123 on “Secret page”"); }));

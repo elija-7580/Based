@@ -630,3 +630,17 @@ button.row:hover, a.row:hover { background: var(--bg); }
   :is(input, textarea, [contenteditable]:not([contenteditable="false"])) {
   -webkit-user-select: text; user-select: text;
 }
+
+/* BSD-319: Entwickler-Ansicht (Settings → Diagnostics → For developers). Blockgrenzen und Fokus nur per outline (kein
+   Einfluss aufs Layout); Ebenen und Ereignisse in einer Schicht, die keine Klicks fängt. */
+[data-dev-view] .bn-block-outer { outline: 1px dashed color-mix(in srgb, var(--marker-strong) 55%, transparent); outline-offset: -1px; }
+[data-dev-view] .bn-block-outer[data-id]:hover { outline-style: solid; }
+[data-dev-view] :focus { outline: 2px solid var(--marker-strong) !important; outline-offset: 1px; }
+.dev-overlay { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; -webkit-user-select: none; user-select: none; }
+.dev-layer { position: fixed; outline: 1px solid var(--marker-strong); background: color-mix(in srgb, var(--marker) 12%, transparent); }
+.dev-layer-tag { position: absolute; top: 0; left: 0; transform: translateY(-100%); padding: 0 var(--space-1); background: var(--marker-strong); color: var(--bg);
+  font: var(--type-meta-weight) var(--type-meta-size)/1.4 var(--font-mono); white-space: nowrap; border-radius: var(--radius-xs) var(--radius-xs) 0 0; }
+.dev-events { position: fixed; right: var(--space-3); bottom: var(--space-3); width: min(360px, 40vw); padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent); box-shadow: var(--shadow-float); font: var(--type-meta-size)/1.5 var(--font-mono); color: var(--ink-2); }
+.dev-events-head { font-family: inherit; color: var(--muted); margin-bottom: var(--space-1); }
+.dev-event { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

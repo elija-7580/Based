@@ -24,6 +24,7 @@
     "@blocknote/react": "0.57.0",
     "prosemirror-model": "1.25.13",
     "prosemirror-state": "1.4.4",
+    "prosemirror-transform": "1.12.5",
     "prosemirror-view": "1.42.9",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -157,7 +157,7 @@ export { graphemes, firstGrapheme, graphemeCount } from "./graphemes.js";
 export { BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, contentBlocks, describeButtonAction, effectiveButtonActions, isKnownButtonAction, runButton, setButton } from "./store/button-ops.js";
 export type { ButtonAction, ButtonActionKind, ButtonEffect, ButtonPause, OpenMode, RunButtonOptions } from "./store/button-ops.js";
 export {
-  beginSession, buildReport, DiagnosticsLog, endSession, formatEntry, heartbeat, LOG_LIMIT, previousSessionNotice, redact, SESSION_KEY, startStallDetector,
+  beginSession, buildReport, DiagnosticsLog, endSession, formatEntry, heartbeat, LOG_LIMIT, previousSessionNotice, redact, redactSecrets, SESSION_KEY, startStallDetector,
   type DiagnosticsEntry, type DiagnosticsLevel, type DiagnosticsStorage, type ReportFacts, type SessionRecord, type StallDetectorOptions,
 } from "./diagnostics.js";
 export {
@@ -165,3 +165,9 @@ export {
   type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
 } from "./whiteboard/model.js";
 export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";
+export {
+  BUNDLE_FORMAT, BUNDLE_VERSION, CHECKPOINT_EVERY, InputRecorder, RECORDER_LIMIT, RECORDER_WINDOW_MS, STRUCTURAL_KEYS,
+  buildBugBundle, bundleID, comboFor, exportEvent, layoutIssues, mapStrings, normalizeDoc, parseBugBundle, replayPlan, scrambleDeep, scrambleHTML, scrambleText, summarizeBundle,
+  type BugApp, type BugBundle, type BugBundleInput, type BugBundleSummary, type BugEnv, type BugState, type InputRecorderOptions, type LayoutIssue, type LayoutItem,
+  type Lazy, type Mods, type RecordedEvent, type RecordedInput, type Rect, type ReplayAction, type ReplayPlan, type SelectionInfo,
+} from "./bugReport.js";
