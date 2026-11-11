@@ -23,26 +23,10 @@ packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[9
 packages/sync test: [2m      Tests [22m [1m[32m45 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (48)[39m
 packages/brain test: [2m      Tests [22m [1m[32m383 passed[39m[22m[90m (383)[39m
 packages/editor test: [2m      Tests [22m [1m[32m77 passed[39m[22m[90m (77)[39m
-apps/web test: [2m      Tests [22m [1m[32m172 passed[39m[22m[90m (172)[39m
 apps/server test: [2m      Tests [22m [1m[32m115 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (116)[39m
+apps/web test: [2m      Tests [22m [1m[32m172 passed[39m[22m[90m (172)[39m
 apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
 --- e2e
-    Error Context: test-results/unlinked--Titel-fertig-get-cf7f1-neu-angelegt-BSD-90-Teil-2--chromium/error-context.md
-
-  5) [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-
-    Error: expect(locator).toHaveAttribute(expected) failed
-
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').filter({ hasText: 'Project Airship' })
-    Expected: "true"
-    Received: ""
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').filter({ hasText: 'Project Airship' }) with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('.bx-mention[data-kind=page]').filter({ hasText: 'Project Airship' })
-        13 × locator resolved to <span role="link" tabindex="-1" data-kind="page" class="bx-mention" data-page="771851AB-F1BE-4BE3-AF96-6953536B15D0">…</span>
-           - unexpected value "null"
 
 
       310 |   await command(page, { op: "trash", ids: [zeppelin] });
@@ -56,14 +40,30 @@ apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
 
     Error Context: test-results/editor-parity--und-erwähne-8255a-ichtbar-Papierkorb-markiert-webkit/error-context.md
 
-  5 failed
-    [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+  3) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
+
+    Error: expect(received).toBeLessThan(expected)
+
+    Expected: < 34
+    Received:   43
+
+      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
+      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
+    > 144 |   expect(r.p95).toBeLessThan(34);
+          |                 ^
+      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
+      146 | });
+      147 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
+
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+
+  3 failed
     [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
-    [chromium] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
-    [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) 
     [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   20 skipped
-  341 passed (14.4m)
+  345 passed (19.6m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
