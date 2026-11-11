@@ -93,6 +93,8 @@ export type Command =
   | { op: "renameWorkspace"; name: string }
   /** BSD-205: Emoji des Workspaces (ohne = entfernen). */
   | { op: "setWorkspaceIcon"; icon?: string }
+  /** BSD-90: eine unverlinkte Erwähnung zur Seiten-Erwähnung machen. */
+  | { op: "linkMention"; blockID: string; start: number; length: number; pageID: string }
   | { op: "setTeamspaceIcon"; id: string; icon?: string }
   | { op: "deleteTeamspace"; id: string }
   | { op: "undo" }
@@ -143,6 +145,16 @@ export interface PageInfo {
 export interface SyncedRecords {
   found: boolean;
   records: WireRecord[];
+}
+
+/** BSD-90: eine unverlinkte Erwähnung mit dem Titel der Seite, in der sie steht. */
+export interface UnlinkedMentionInfo {
+  blockID: string;
+  pageID: string;
+  pageTitle: string;
+  snippet: string;
+  start: number;
+  length: number;
 }
 
 /** BSD-281: ein Meeting für den Library-Reiter „Meetings“. */
@@ -214,6 +226,8 @@ export type Request =
   | { type: "listDatabases"; query: string }
   /** BSD-281: alle Meeting-Blöcke (Antwort: MeetingListItem[], neueste zuerst). */
   | { type: "meetings" }
+  /** BSD-90: Stellen, an denen der Titel der Seite als reiner Text vorkommt (Antwort: UnlinkedMentionInfo[]). */
+  | { type: "unlinkedMentions"; pageID: string }
   /** BSD-278: fällige, offene Datenbank-Zeilen im Fenster (Antwort: DueItem[] aus @based/brain/home). */
   | { type: "dueItems"; fromMs: number; toMs: number }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
