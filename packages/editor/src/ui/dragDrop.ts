@@ -201,6 +201,27 @@ export function indicatorFor(zone: DropZone, t: DropTarget, x: number): Rect {
   return { left, right: Math.max(left + 24, rect.right), top: rect.bottom, bottom: rect.bottom + 3 };
 }
 
+/** BSD-249 Teil 2: Auto-Scroll beim Ziehen – Abstand zum Rand, ab dem gescrollt wird, und Schritt je dragover (px). */
+export const EDGE_ZONE = 56;
+const EDGE_MAX_STEP = 28;
+
+/** Schritt für den Zeiger bei `y` in einem Bereich [top, bottom]: negativ nach oben, positiv nach unten, 0 in der Mitte. */
+export function edgeScrollStep(y: number, top: number, bottom: number): number {
+  const into = y < top + EDGE_ZONE ? top + EDGE_ZONE - y : y > bottom - EDGE_ZONE ? -(y - (bottom - EDGE_ZONE)) : 0;
+  if (into === 0) return 0;
+  const step = Math.min(EDGE_MAX_STEP, 4 + Math.abs(into) / 2);
+  return into > 0 ? -Math.round(step) : Math.round(step);
+}
+
+/** Nächster scrollbare Vorfahre (sonst das Dokument). */
+function scrollParent(el: HTMLElement): HTMLElement | undefined {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = globalThis.getComputedStyle?.(p).overflowY;
+    if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
+  }
+  return (globalThis.document?.scrollingElement as HTMLElement | null) ?? undefined;
+}
+
 interface PMNode { attrs: Record<string, unknown>; type: { name: string } }
 interface DragView { dragging: unknown; dom: HTMLElement; state: { selection: { node?: PMNode; nodes?: PMNode[] } } }
 export interface BlockDropHost extends DropEditor {
@@ -214,7 +235,11 @@ export interface BlockDropHost extends DropEditor {
  * Hängt das Ziehen an den Editor: beim Überfahren Zone + Hinweis, beim Ablegen ausführen (BlockNotes eigenes Ablegen
  * fällt dann aus). Gibt das Abmelden zurück.
  */
-export function attachBlockDrop(host: BlockDropHost, container: HTMLElement, show: (r: Rect | undefined) => void, handleBlock: () => string | undefined = () => undefined): () => void {
+export function attachBlockDrop(
+  host: BlockDropHost, container: HTMLElement, show: (r: Rect | undefined) => void, handleBlock: () => string | undefined = () => undefined,
+  /** BSD-249 Teil 2: Blockauswahl (Esc, Rechteck, ⇧-Klick); liegt der gefasste Block darin, wandert die ganze Auswahl. */
+  blockSelection: () => readonly string[] = () => [],
+): () => void {
   // Die ProseMirror-Ansicht entsteht erst nach dem Einhängen (bei Kollaboration auch später): erst beim Ereignis holen.
   const viewOf = () => host.prosemirrorView;
   let current: DropZone | undefined;
@@ -225,6 +250,8 @@ export function attachBlockDrop(host: BlockDropHost, container: HTMLElement, sho
     const ids = nodes.map((n) => n.attrs.id).filter((id): id is string => typeof id === "string" && id !== "");
     // Gefasst wurde der Block am Griff; eine Mehrfachauswahl zählt nur, wenn er darin liegt.
     const grabbed = handleBlock();
+    const picked = blockSelection();
+    if (grabbed && picked.length > 1 && picked.includes(grabbed)) return [...picked];
     if (grabbed && !ids.includes(grabbed)) return [grabbed];
     return ids.length ? ids : [host.getTextCursorPosition().block.id];
   };
@@ -233,9 +260,18 @@ export function attachBlockDrop(host: BlockDropHost, container: HTMLElement, sho
     show(undefined);
     globalThis.document?.documentElement.removeAttribute("data-bx-dropzone");
   };
+  const autoScroll = (e: DragEvent) => {
+    const el = scrollParent(container);
+    if (!el) return;
+    const isDoc = el === globalThis.document?.scrollingElement;
+    const r = isDoc ? { top: 0, bottom: globalThis.innerHeight } : el.getBoundingClientRect();
+    const step = edgeScrollStep(e.clientY, r.top, r.bottom);
+    if (step) el.scrollTop += step;
+  };
   const over = (e: DragEvent) => {
     const view = viewOf();
     if (!view?.dragging) return reset();
+    autoScroll(e);
     const root = view.dom;
     const ids = dragged(view);
     const t = targetAt(root, globalThis.document?.elementFromPoint(e.clientX, e.clientY) ?? null, new Set(ids), { x: e.clientX, y: e.clientY });

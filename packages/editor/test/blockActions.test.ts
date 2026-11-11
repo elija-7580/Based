@@ -7,7 +7,7 @@ import { MemoryPersistence, plainText, WorkspaceStore, type Block, type WireReco
 import { CUSTOM } from "../src/mapping/bn.js";
 import { basedSchema, createConverter, type BasedEditor } from "../src/schema/schema.js";
 import { singleURL } from "../src/ui/paste.js";
-import { applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, rangeIDs, stepRange, toggleAll, type SelectionEditor, TURN_INTO, turnInto, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
+import { applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isDuplicable, moveBlocksToPage, moveTargetAllowed, rangeIDs, stepRange, toggleAll, type SelectionEditor, TURN_INTO, turnInto, turnIntoEquation, turnIntoPage, type ActionEditor } from "../src/ui/blockActions.js";
 import { DocSession } from "../src/yjs/session.js";
 
 const converter = createConverter();
@@ -101,6 +101,25 @@ describe("Blockaktionen", () => {
     expect(s.blocks.get("b")?.type).toBe("callout");
     expect(plainText(s.blocks.get("b")?.text)).toBe("Zwei");
     expect(canTurnInto(a.getBlock("sub")!)).toBe(false);
+  });
+
+  it("Turn into → Block equation: Text wird TeX, Unterblöcke bleiben dahinter erhalten; Nicht-Text bleibt", async () => {
+    const s = store();
+    const session = new DocSession(s, "p", { converter, debounceMs: 0 });
+    const ed = mount(session);
+    await tick();
+    const a = ed as unknown as ActionEditor;
+    a.updateBlock("b", { content: "E = mc^2" });
+    expect(turnIntoEquation(a, [a.getBlock("b")!, a.getBlock("sub")!])).toBe(1);
+    session.flush();
+    const eq = s.blocks.get("b")!;
+    expect(eq.type).toBe("equation");
+    expect(eq.props?.expression).toBe("E = mc^2");
+    expect(eq.text).toBeUndefined();
+    const live = s.children("b:p").filter((id) => !s.blocks.get(id)?.trashedAt);
+    const kid = live[live.indexOf("b") + 1]!;
+    expect(plainText(s.blocks.get(kid)?.text)).toBe("Kind");
+    expect(s.children("b:b").filter((id) => !s.blocks.get(id)?.trashedAt)).toEqual([]);
   });
 
   it("Turn into → Page: Text wird Titel, Kinder werden Inhalt der Unterseite, an derselben Stelle", async () => {

@@ -6,6 +6,17 @@
 .sidebar-footer { flex: none; display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--line); }
 .sidebar-footer .nav-item { min-height: var(--space-6); }
 .sidebar .synced { margin-top: 0; padding-block: var(--space-2); }
+/* BSD-281: Fuß als Icon-Zeile neben dem Sync-Status (FOOTER_STYLE in shell/sidebarNav.ts) */
+.sidebar-footer.icons { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.sidebar-footer.icons .synced { padding-inline: var(--space-3) 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.nav-icons { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; }
+.nav-icon { position: relative; color: var(--ink-2); }
+.nav-icon[aria-current="page"] { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-panel); }
+.nav-icon-badge {
+  position: absolute; top: 0; right: 0; transform: translate(30%, -30%); min-width: var(--space-4); height: var(--space-4); padding: 0 var(--space-1);
+  border-radius: var(--radius-pill); background: var(--surface-raised); font-size: var(--type-meta-size); line-height: var(--space-4); text-align: center; color: var(--ink-2);
+}
+.menu-label { display: block; padding: var(--space-1) var(--space-3); color: var(--muted); }
 
 .move-list { display: flex; flex-direction: column; gap: var(--space-3); max-height: 46vh; overflow-y: auto; }
 .move-tile {
@@ -18,3 +29,15 @@
 .export-options .t-desc { color: var(--muted); }
 /* Menü einer Zeile offen: Aktionen sichtbar lassen, auch wenn der Zeiger ins Menü wandert */
 .tree-row:has([aria-expanded="true"]) .tree-actions { display: inline-flex; }
+/* BSD-281: laufende Aufnahme oben in der Seitenleiste */
+.rec-pill {
+  display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-2); padding: 0 var(--space-3); min-height: var(--space-6);
+  border: 0; border-radius: var(--radius-pill); background: var(--bg); box-shadow: var(--shadow-control); color: var(--ink); font: inherit; font-weight: var(--weight-heading); text-align: left;
+}
+.rec-pill:hover { box-shadow: var(--shadow-panel); }
+.rec-pill:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.rec-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--danger); flex: none; animation: rec-pulse 1.6s var(--ease-out) infinite; }
+.rec-pill[data-paused] .rec-dot { background: var(--muted); animation: none; }
+.rec-time { margin-left: auto; color: var(--muted); }
+@keyframes rec-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }

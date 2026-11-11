@@ -2,7 +2,8 @@
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 // BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { Icon } from "../icons.js";
+import { Icon, type IconName } from "../icons.js";
+import { matchCommands, type NavCommand } from "../shell/sidebarNav.js";
 import { DATE_OPTIONS, SORT_OPTIONS, toSearchFilters, type QuickFindFilters } from "../shell/quickFindFilters.js";
 import type { RecentEntry } from "../shell/storage.js";
 import type { StoreClient } from "../worker/client.js";
@@ -16,9 +17,11 @@ interface Props {
   currentPage?: { id: string; title: string } | undefined;
   onOpen: (id: string) => void;
   onClose: () => void;
+  /** BSD-281: Befehle („All tasks“, „Graph“, „Settings“ …) – alles bleibt über ⌘K erreichbar. */
+  onCommand?: (id: string) => void;
 }
 
-export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose }: Props) {
+export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose, onCommand }: Props) {
   const [filters, setFilters] = useState<QuickFindFilters>({ titleOnly: false, inPage: false, date: "any", sort: "bestMatch" });
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<QuickFindHit[] | undefined>();
@@ -52,10 +55,15 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
     };
   }, [client, query, filters, currentPage?.id]);
 
-  const items: QuickFindHit[] = hits ?? recent.filter((r) => titles.has(r.id)).slice(0, 8).map((r) => ({ pageID: r.id, title: titles.get(r.id)!, path: "", kind: "page" }));
+  const pages: QuickFindHit[] = hits ?? recent.filter((r) => titles.has(r.id)).slice(0, 8).map((r) => ({ pageID: r.id, title: titles.get(r.id)!, path: "", kind: "page" }));
+  const commands: NavCommand[] = onCommand ? matchCommands(query) : [];
+  // Befehle stehen vor den Seiten; die Auswahl läuft über beide
+  const items: (QuickFindHit | { command: NavCommand })[] = [...commands.map((c) => ({ command: c })), ...pages];
   const open = (i: number) => {
     const it = items[i];
-    if (it) onOpen(it.pageID);
+    if (!it) return;
+    if ("command" in it) onCommand?.(it.command.id);
+    else onOpen(it.pageID);
   };
 
   return (
@@ -110,9 +118,15 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
             <Icon name="chevron" size={14} />
           </label>
         </div>
-        <div className="qf-head t-meta">{hits ? (hits.length ? "Best matches" : "") : items.length ? "Recent" : ""}</div>
+        <div className="qf-head t-meta">{hits ? (items.length ? "Best matches" : "") : pages.length ? "Recent" : ""}</div>
         <ul id={listID} role="listbox" aria-label="Results" className="qf-list" data-took={took === undefined ? undefined : took.toFixed(1)}>
-          {items.map((h, i) => (
+          {items.map((h, i) => "command" in h ? (
+            <li key={"cmd:" + h.command.id} id={`${listID}-${i}`} role="option" aria-selected={i === selected} className="qf-item" data-testid="qf-command"
+              onMouseMove={() => setSelected(i)} onClick={() => open(i)}>
+              <span className="tile"><Icon name={COMMAND_ICON[h.command.id] ?? "right"} size={18} /></span>
+              <span className="grow"><strong>{h.command.label}</strong><span className="t-desc qf-path"> — {h.command.id === "meeting" ? "Command" : "Go to"}</span></span>
+            </li>
+          ) : (
             <li
               key={h.pageID}
               id={`${listID}-${i}`}
@@ -130,12 +144,14 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
               </span>
             </li>
           ))}
-          {hits && hits.length === 0 ? <li className="qf-none t-desc">No results</li> : null}
+          {hits && hits.length === 0 && commands.length === 0 ? <li className="qf-none t-desc">No results</li> : null}
         </ul>
       </div>
     </div>
   );
 }
+
+const COMMAND_ICON: Record<string, IconName> = { home: "home", chat: "chat", tasks: "agent", coding: "terminal", graph: "graph", meetings: "mic", meeting: "plus", library: "library", trash: "trash", settings: "settings" };
 
 /** Suchbegriffe im Snippet markieren (Groß/klein egal). */
 function Highlight({ text, query }: { text: string; query: string }) {

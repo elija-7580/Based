@@ -11,6 +11,7 @@ import { ImportDialog } from "./components/ImportExport.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
+import { Meetings } from "./screens/Meetings.js";
 import { TabBar } from "./components/TabBar.js";
 import { Graph } from "./screens/Graph.js";
 import { Home } from "./screens/Home.js";
@@ -170,9 +171,11 @@ export function App({ client, history }: { client: StoreClient; history: History
   } else if (route.name === "project") {
     screen = <ProjectDetailScreen key={route.id} client={client} state={state} projectID={route.id} showDetails={appearance.agentDetails} onNavigate={navigate} onOpenPage={openPage} />;
   } else if (route.name === "library") {
-    screen = <Library client={client} state={state} onOpenPage={openPage} />;
+    screen = <Library client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
   } else if (route.name === "graph") {
-    screen = <Graph client={client} state={state} onOpenPage={openPage} />;
+    screen = <Graph client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} />;
+  } else if (route.name === "meetings") {
+    screen = <Meetings client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} onNewMeeting={() => void newMeeting()} />;
   } else if (route.name === "settings") {
     screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
   } else {
@@ -181,7 +184,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   return (
     <div className="shell" data-testid="based-root" data-ready={state.ready ? "" : undefined}>
-      <Sidebar client={client} state={state} route={route} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} />
+      <Sidebar client={client} state={state} route={route} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} advanced={appearance.agentDetails} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
         <div className="panel">{screen}</div>
@@ -193,7 +196,12 @@ export function App({ client, history }: { client: StoreClient; history: History
       <ChatDock client={client} history={history} route={route} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
-      {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)} /> : null}
+      {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
+        onCommand={(id) => {
+          setQuickFind(false);
+          if (id === "meeting") void newMeeting();
+          else if (id === "home" || id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
+        }} /> : null}
     </div>
   );
 }

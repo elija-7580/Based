@@ -46,3 +46,5 @@
 }
 .gx-side, .gx-side h2, .gx-title h1 { color: var(--ink); }
 .gx-result { color: var(--ink); }
+/* BSD-281: Reiter Pages/Graph oben links (der Titelbereich lässt sonst Klicks zur Fläche durch) */
+.gx-title > :first-child:not(h1) { pointer-events: auto; align-self: center; }

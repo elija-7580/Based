@@ -144,6 +144,50 @@ test("Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach 
   await expect.poll(() => parentOf(page, "Delta")).toBe("Beta");
 });
 
+test("Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt", async ({ page }) => {
+  await setup(page);
+  // Beta und Gamma als Blockauswahl
+  await content(page, "Beta").click();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(page.locator(".bx-doc[data-block-selection]").first()).toHaveAttribute("data-block-selection", /^\S+ \S+$/);
+  // am Griff von Beta fassen und hinter Omega fallen lassen: beide wandern mit, Reihenfolge bleibt
+  await dragBlock(page, "Beta", "Omega", (b) => ({ x: b.x + 4, y: b.y + b.height - 3 }));
+  await expect.poll(() => topOrder(page)).toEqual(["Alpha", "Delta", "Omega", "Beta", "Gamma"]);
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect.poll(() => topOrder(page)).toEqual(["Alpha", "Beta", "Gamma", "Delta", "Omega"]);
+});
+
+test("Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter", async ({ page }) => {
+  await createPage(page, "Long");
+  await openPage(page, "Long");
+  await editor(page).locator(".bn-block-content").first().click();
+  for (let i = 1; i <= 40; i++) {
+    await page.keyboard.type(`Line ${i}`);
+    if (i < 40) await page.keyboard.press("Enter");
+  }
+  // der scrollbare Bereich um den Editor
+  const scrollTop = () => page.evaluate(() => {
+    const el = [...document.querySelectorAll("*")].find((e) => e.scrollHeight > e.clientHeight + 200 && /(auto|scroll)/.test(getComputedStyle(e).overflowY));
+    if (!el) return -1;
+    return el.scrollTop;
+  });
+  await page.evaluate(() => { const el = [...document.querySelectorAll("*")].find((e) => e.scrollHeight > e.clientHeight + 200 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)); if (el) el.scrollTop = 0; });
+  expect(await scrollTop()).toBe(0);
+  await content(page, "Line 2").hover();
+  const handle = page.locator(".bn-side-menu [draggable=true]").first();
+  await expect(handle).toBeVisible();
+  const h = (await handle.boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2 + 6, h.y + h.height / 2 + 6, { steps: 6 });
+  const vh = page.viewportSize()!.height;
+  for (let i = 0; i < 30; i++) await page.mouse.move(400 + (i % 2), vh - 8, { steps: 1 });
+  const after = await scrollTop();
+  await page.mouse.up();
+  expect(after).toBeGreaterThan(100);
+});
+
 test("Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich", async ({ page }) => {
   await setup(page);
   // Delta an den rechten Rand von Alpha: zwei Spalten

@@ -68,11 +68,11 @@ Bold / italic / underline / strikethrough / code,editor,must,yes,yes,,yes
 Links in text (⌘K),editor,must,yes,yes,,yes
 Text color and background color,editor,must,yes,yes,,yes
 Block color,editor,should,yes,yes,,yes
-Turn into (any block type),editor,must,yes,yes,,partial: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout; Gleichung/Medien nicht
+Turn into (any block type),editor,must,yes,yes,,"yes: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout, Page und Block equation (BSD-249); Medien bietet Notion dort auch nicht an"
 Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)"
 Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete"
 Drag handle to reorder blocks,editor,must,yes,yes,,yes
-Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
+Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen (auch mehrere ausgewählte Blöcke, Auto-Scroll am Rand) – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
 Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown)"
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
 Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)"
@@ -186,7 +186,7 @@ Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11
 Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,partial: Number-Chart und Caption ja; Farbschema und Höhe fehlen
 Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding"
 Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes
-Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"yes: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings, Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden, Hover-Peek am linken Rand (BSD-203)"
+Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"yes: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings als Icon-Zeile neben dem Sync-Status, oben nur Search/Home/Chat, Einträge per Rechtsklick anpinnbar/ausblendbar, Graph und Meetings als Library-Reiter, Aufnahme-Pille oben, ⌘K-Befehle (BSD-281), Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden, Hover-Peek am linken Rand (BSD-203)"
 Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Share, Export, •••; AI-Knopf fehlt"
 Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token,"partial: Warnungsliste nach Datei-Import; kein kopierbarer Bericht, kein API-Import"
 Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later,partial: Name/Adresse/Koordinaten von Hand; keine Ortssuche

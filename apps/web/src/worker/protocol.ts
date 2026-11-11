@@ -141,6 +141,19 @@ export interface SyncedRecords {
   records: WireRecord[];
 }
 
+/** BSD-281: ein Meeting für den Library-Reiter „Meetings“. */
+export interface MeetingListItem {
+  meetingID: string;
+  pageID: string;
+  title: string;
+  pageTitle: string;
+  status: string;
+  /** ms seit 1970 (Beginn der Aufnahme, sonst Anlegen). */
+  atMs: number;
+  /** Sekunden, falls aufgenommen. */
+  duration?: number;
+}
+
 /** BSD-212: eine Datenbank für die Auswahl „Linked view of database“. */
 export interface DatabaseInfo {
   id: string;
@@ -195,6 +208,8 @@ export type Request =
   | { type: "includeDatabase"; pageID: string; databaseID: string }
   /** BSD-212: Datenbanken nach Titel (Antwort: DatabaseInfo[]). */
   | { type: "listDatabases"; query: string }
+  /** BSD-281: alle Meeting-Blöcke (Antwort: MeetingListItem[], neueste zuerst). */
+  | { type: "meetings" }
   /** BSD-278: fällige, offene Datenbank-Zeilen im Fenster (Antwort: DueItem[] aus @based/brain/home). */
   | { type: "dueItems"; fromMs: number; toMs: number }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */

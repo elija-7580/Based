@@ -137,3 +137,9 @@ export const weekStartPref = {
     return () => weekStartListeners.delete(fn);
   },
 };
+
+/** BSD-281: angepinnte und ausgeblendete Einträge der Seitenleiste (pro Gerät). */
+export const sidebarNavPrefs = {
+  get: (): unknown => read<unknown>("based.sidebar.nav", undefined),
+  set: (v: unknown) => write("based.sidebar.nav", v),
+};

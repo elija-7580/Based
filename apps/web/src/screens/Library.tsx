@@ -3,6 +3,7 @@
 // Vorlage: Swift App/Shared/Views/Library/LibraryView.swift. Die Einträge kommen aus dem Store-Worker
 // (`client.library()`), gefiltert und sortiert wird hier mit `filterLibrary` aus @based/core; die Liste ist
 // virtualisiert (nur sichtbare Zeilen im DOM).
+import { LibraryTabs } from "../components/LibraryTabs.js";
 import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { Button } from "@astryxdesign/core/Button";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
@@ -51,9 +52,11 @@ interface Props {
   client: StoreClient;
   state: ShellState;
   onOpenPage: (id: string) => void;
+  /** BSD-281: Reiter Pages/Graph. */
+  onSwitch?: (to: "library" | "graph" | "meetings") => void;
 }
 
-export function Library({ client, state, onOpenPage }: Props) {
+export function Library({ client, state, onOpenPage, onSwitch }: Props) {
   const [items, setItems] = useState<LibraryItem[] | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
   const [text, setText] = useState("");
@@ -191,6 +194,7 @@ export function Library({ client, state, onOpenPage }: Props) {
   return (
     <div className="lib" data-testid="library" data-count={rows.length} data-loaded={items ? "" : undefined}>
       <header className="lib-head">
+        {onSwitch ? <LibraryTabs value="library" onNavigate={onSwitch} /> : null}
         <h1 className="t-title">Library</h1>
         <p className="t-desc" role="status" aria-live="polite" data-testid="library-count">
           {items === undefined ? "Loading…" : filtered ? `${rows.length.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} items` : `${total.toLocaleString("en-US")} ${total === 1 ? "item" : "items"}`}

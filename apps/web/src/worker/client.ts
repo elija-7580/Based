@@ -15,6 +15,7 @@ import {
 import type { ImportPayload } from "./importer.js";
 import type { ExportFile, PageExportFormat, HTMLExportChoice, ImportSummary, PrintDocument, WorkspaceExportFormat } from "./interop.js";
 import type { DueItem } from "@based/brain/home";
+import type { MeetingListItem } from "./protocol.js";
 import type { AgentSnapshot, ChatInfo, ChatMeta, StoredChatEvent, ToolResult } from "@based/brain";
 import type { AgentAction } from "./agents.js";
 import type { JSONValue, SearchFilters, SearchSort } from "@based/core";
@@ -216,6 +217,11 @@ export class StoreClient {
   /** BSD-212: Datenbanken nach Titel (Auswahl „Linked view of database“). */
   listDatabases(query: string): Promise<DatabaseInfo[]> {
     return this.request({ type: "listDatabases", query });
+  }
+
+  /** BSD-281: alle Meetings (Library-Reiter „Meetings“). */
+  meetings(): Promise<MeetingListItem[]> {
+    return this.request({ type: "meetings" });
   }
 
   /** BSD-278: fällige Aufgaben aus den Datenbanken für den rechten Bogen der Startseite. */

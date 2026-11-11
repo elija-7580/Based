@@ -66,7 +66,10 @@ test("Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert", asyn
   await page.getByRole("button", { name: "Connect", exact: true }).click();
   await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "synced", { timeout: 20_000 });
 
-  await page.getByRole("button", { name: "Coding" }).click();
+  // BSD-281: Coding steht nur im erweiterten Agenten-Modus in der Leiste – sonst über ⌘K
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByLabel("Search pages").fill("coding");
+  await page.getByTestId("qf-command").filter({ hasText: "Coding" }).click();
   await expect(page.getByTestId("coding-screen")).toBeVisible();
   await page.getByLabel("Folder on the server").fill(root);
   await page.getByTestId("coding-start").click();
