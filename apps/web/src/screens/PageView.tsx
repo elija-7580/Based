@@ -111,7 +111,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
 
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const subpages = outline?.children[pageID]?.length ?? 0;
-  const dbID = page?.type === "databasePage" ? page.props?.databaseID : undefined;
+  // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
+  const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
 
   let body;
@@ -121,7 +122,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   else if (dbID) {
     const View = slots.DatabaseView;
     body = View
-      ? <View store={store} blockID={pageID} databaseID={dbID} readOnly={readOnly} onOpenPage={onOpenPage} />
+      ? <View store={store} blockID={pageID} databaseID={dbID} readOnly={readOnly} onOpenPage={onOpenPage} asPage />
       : <DatabasePlaceholder store={store} databaseID={dbID} title={title} />;
   } else {
     const Editor = slots.PageEditor;

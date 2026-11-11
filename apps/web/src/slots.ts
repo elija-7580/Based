@@ -29,6 +29,8 @@ export interface DatabaseViewProps {
   databaseID: string;
   readOnly: boolean;
   onOpenPage: (pageID: string) => void;
+  /** BSD-255: als eigene Seite offen (Datenbankseite oder Inline-Datenbank per „Open as full page“). */
+  asPage?: boolean;
 }
 
 export interface Slots {

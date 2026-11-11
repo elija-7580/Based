@@ -27,8 +27,9 @@ function peekStorage(blockID: string): NonNullable<PeekOptions["storage"]> {
 
 const renderForm = (p: FormRenderProps) => <FormView {...p} />;
 
-export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpenPage }: DatabaseViewProps) {
-  const fullPage = store.blocks.get(blockID)?.type === "databasePage";
+export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpenPage, asPage }: DatabaseViewProps) {
+  // Ganze Seite: Datenbankseite, oder eine Inline-Datenbank, die per „Open as full page“ als Seite offen ist (BSD-255).
+  const fullPage = store.blocks.get(blockID)?.type === "databasePage" || asPage === true;
   // BSD-205: Wochenbeginn aus Einstellungen → Language & region (sonst aus der Sprache des Systems).
   const weekStart = useSyncExternalStore(weekStartPref.subscribe, weekStartPref.get);
   const nested = useContext(InPeek);
@@ -53,7 +54,7 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
   useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
     <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} height={fullPage ? "100%" : "calc(var(--space-8) * 7)"} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // BSD-155: Tabelle – virtualisierte Zeilen (@tanstack/react-virtual), klebender Kopf mit Property-Menüs,
 // Spaltenbreite ziehen, Gruppen, „+ New“, Berechnungen in der Fußzeile, Tastatur (Pfeile, Enter, Tippen,
 // Entf), Agent-Strich für von Agenten geänderte Zeilen.
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { dbops, deleteRows, plainText,
   CALCULATION_LABELS, calculationOptions, calculationText, propertyOf, pv, setCalculation, setColumnWidth, setValue, valueCase,
@@ -9,8 +9,8 @@ import { dbops, deleteRows, plainText,
 } from "@based/core";
 import { CellEditor, isEditable } from "../cells/CellEditor.js";
 import { CellView } from "../cells/CellView.js";
-import { useDB } from "../context.js";
-import { columnWidth, flatten, MIN_COLUMN_WIDTH, nextRowIndex, type FlatItem } from "../logic/layout.js";
+import { InlineView, useDB } from "../context.js";
+import { columnWidth, flatten, limitRows, MIN_COLUMN_WIDTH, nextRowIndex, type FlatItem } from "../logic/layout.js";
 import { AddPropertyMenu, PropertyMenu } from "../menus/PropertyMenu.js";
 import { Icon, MenuItem, Popover, PROPERTY_ICONS, type Anchor } from "../ui.js";
 import { EmptyState, GroupHeader, groupProperty, RowMenu, useAddRow } from "./shared.js";
@@ -175,7 +175,11 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
   let to = from;
   while (to < widths.length && offsets[to]! < view_.left + view_.width + overscanPx) to++;
   const lead = offsets[from]! - GUTTER;
-  const items = useMemo(() => flatten(result, { collapsed, newRow: !locked }), [result, collapsed, locked]);
+  // BSD-255: inline in einer Seite nur die ersten Zeilen, „Load more“ holt die nächsten (kein eigener Scroller).
+  const inline = useContext(InlineView);
+  const [limit, setLimit] = useState(inline?.pageSize ?? Infinity);
+  const all = useMemo(() => flatten(result, { collapsed, newRow: !locked }), [result, collapsed, locked]);
+  const { items, hidden } = useMemo(() => (inline ? limitRows(all, limit) : { items: all, hidden: 0 }), [all, inline, limit]);
   const gp = groupProperty(db, view);
 
   const virtualizer = useVirtualizer({
@@ -398,6 +402,11 @@ export function TableLayout({ view, result, requestEdit }: { view: DatabaseView;
           );
         })}
       </div>
+      {hidden > 0 && inline && (
+        <button type="button" className="dbui-load-more" onClick={() => setLimit((l) => l + inline.pageSize)}>
+          Load more <span className="dbui-count">{Math.min(hidden, inline.pageSize)} of {hidden}</span>
+        </button>
+      )}
       {result.rows.length === 0 && <EmptyState>{view.filter?.items.length ? "No pages match the filters." : "No pages yet."}</EmptyState>}
       <div className="dbui-tfoot" style={{ width: total }} role="row" aria-label="Calculations">
         <div className="dbui-gutter" />

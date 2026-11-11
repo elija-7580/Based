@@ -577,3 +577,23 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 /* BSD-238: Fokusrahmen um die ganze Karte bzw. Zeile (wie Notion), nicht nur um den Titel. */
 .dbui-card:has(.dbui-card-open:focus-visible), .dbui-list-row:has(.dbui-list-title:focus-visible) { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
 .dbui-card-open:focus-visible, .dbui-list-title:focus-visible { outline: none; }
+
+/* BSD-255: inline in einer Seite – ruhig wie Notion: kein Kasten, linke Kante bündig mit dem Text, Tabelle ohne eigenen
+   senkrechten Scroller (seitlich scrollt sie innerhalb der Seite), Werkzeuge erst beim Überfahren oder mit Fokus. */
+.dbui-root.inline { background: transparent; }
+.dbui-root.inline .dbui-head { padding: 0; gap: var(--space-2); }
+.dbui-root.inline .dbui-body[data-view-type="table"] { flex: none; }
+.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { flex: none; overflow-y: hidden; overflow-x: auto; overscroll-behavior: auto; }
+.dbui-root.inline .dbui-body:not([data-view-type="table"]) { height: calc(var(--space-8) * 7); }
+.dbui-root.inline .dbui-actions, .dbui-root.inline .dbui-open-full { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.dbui-root.inline:hover .dbui-actions, .dbui-root.inline:focus-within .dbui-actions,
+.dbui-root.inline:hover .dbui-open-full, .dbui-root.inline:focus-within .dbui-open-full { opacity: 1; }
+.dbui-load-more {
+  display: flex; align-items: center; gap: var(--space-2); width: 100%; min-height: var(--dbui-row); padding: 0 var(--space-2);
+  border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--muted); text-align: left;
+}
+.dbui-load-more:hover { background: var(--surface-raised); color: var(--ink); }
+/* Inline: Namen bündig mit dem Seitentext, die Kästchen-Spalte hängt wie bei Notion in den linken Rand. */
+.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2))); }
+.dbui-root.inline .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin: 0; }
+.dbui-root.inline .dbui-load-more { padding-left: calc(var(--space-7) + var(--space-2) + var(--space-2)); }
