@@ -108,6 +108,11 @@ function PrivacySection({ client: store }: SettingsSectionProps) {
           description="Before anything goes to an AI provider — your message, pages, search results and tool output — Based replaces names, emails, phone numbers, IBANs, card numbers, addresses and keys with placeholders and puts the real values back into the answer. Models on this computer are left alone."
           value={r.enabled} onChange={(on) => update({ enabled: on })} labelPosition="start" labelSpacing="spread" width="100%"
         />
+        <Switch
+          label="Ask before sending sensitive details"
+          description="When your message contains details like these, Based shows what it found and lets you send anyway, redact and send, or use a model on this computer."
+          value={r.check === true} onChange={(on) => update({ check: on })} labelPosition="start" labelSpacing="spread" width="100%"
+        />
         <Text type="supporting" color="secondary">Detection runs on this device with rules and checksums. It is best effort, not a guarantee. Command-line agents (Claude Code, Codex) send text to their provider themselves — Based can only warn there.</Text>
       </Group>
       <Group>

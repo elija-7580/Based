@@ -9,6 +9,8 @@ export interface BrainSettings {
     kinds: RedactKind[];
     /** Weitere Namen, die immer geschwärzt werden (zusätzlich zu Memories vom Typ People). */
     names: string[];
+    /** BSD-184: vor dem Senden fragen, wenn sensible Stellen gefunden werden (opt-in). */
+    check?: boolean;
   };
   skills: { auto: boolean };
   memories: { suggest: boolean };
@@ -53,6 +55,7 @@ export function parseBrainSettings(v: unknown): BrainSettings {
       enabled: o.redact?.enabled === true,
       kinds,
       names: Array.isArray(o.redact?.names) ? o.redact.names.filter((n): n is string => typeof n === "string" && n.trim() !== "") : [],
+      ...(o.redact?.check === true ? { check: true } : {}),
     },
     skills: { auto: o.skills?.auto !== false },
     memories: { suggest: o.memories?.suggest === true },

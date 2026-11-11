@@ -97,6 +97,8 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
 
   const models = config.models().filter((m) => m.usable);
   const active = config.activeModel();
+  const localModel = models.find((m) => m.kind === "ollama");
+  const [submitRequest, setSubmitRequest] = useState(0);
   const computeLevel = config.getState().settings.compute;
   const computeLevelName = computeLevel ? ({ auto: "Auto", low: "Fast", high: "Deep" } as const)[computeLevel] : undefined;
   // BSD-242: Low/Auto/High vor den einzelnen Modellen (die Wahl eines Modells schaltet das Routing aus).
@@ -188,7 +190,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   }
                 />
               ) : null}
-              {brain ? <BrainComposerBar brain={brain} /> : null}
+              {brain ? <BrainComposerBar brain={brain} onDecided={() => setSubmitRequest((n) => n + 1)} onUseLocal={localModel ? () => config.setModel(localModel.ref) : undefined} /> : null}
               <div className="chat-composer">
                 <Composer
                   onDraftChange={brain ? (text) => brain.setDraft(text) : undefined}
@@ -196,7 +198,10 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   inputID={`chat-input-${mode}`}
                   autoFocus
                   placeholder={s.running ? "Queue a message for when Based is done" : "Ask your notes, or tell Based what to do"}
+                  submitRequest={submitRequest}
                   onSubmit={(text) => {
+                    // BSD-184: Privacy-Check (opt-in) – mit Treffern erst wählen lassen.
+                    if (brain && !brain.gate(text, controller.reach())) return false;
                     brain?.captureSend(text);
                     void controller.send(text);
                   }}

@@ -24,6 +24,19 @@ export function redactionPlan(enabled: boolean, reach: EngineReach): RedactionPl
   return reach === "cli" ? "warn" : "redact";
 }
 
+/**
+ * BSD-184: Privacy-Check vor dem Senden. Ohne Treffer, an ein lokales Modell oder mit eingeschaltetem Schwärzen geht
+ * die Nachricht direkt raus; sonst fragt Based (Trotzdem senden / Schwärzen und senden / Lokales Modell). Eine
+ * getroffene Wahl gilt für genau diese Nachricht.
+ */
+export type PrivacyGate = "send" | "redact" | "ask";
+export function privacyGate(o: { hits: number; reach: EngineReach; redactAlways: boolean; decision?: "raw" | "redact" | undefined }): PrivacyGate {
+  if (o.hits === 0 || o.reach === "local") return "send";
+  if (o.redactAlways || o.decision === "redact") return o.reach === "cli" ? "send" : "redact";
+  if (o.decision === "raw") return "send";
+  return "ask";
+}
+
 export const CLI_REDACT_WARNING = "Redaction is on, but this engine sends your text to its provider itself — Based can't redact it. Use an API model for private content.";
 
 export function redactMessages(r: Redactor, messages: readonly ChatMessage[]): ChatMessage[] {

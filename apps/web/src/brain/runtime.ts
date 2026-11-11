@@ -7,10 +7,10 @@
 // - BSD-163: Memory-Vorschläge nach dem Turn (opt-in), gespeichert wird erst nach „Save“; Zitate werden aufgelöst.
 import {
   BRAIN_TOOL_SPECS, CITATION_INSTRUCTION, citationMarkers, CLI_REDACT_WARNING, detectSensitive, exchangeText, MEMORY_EXTRACTOR_SYSTEM, memoryExtractorPrompt,
-  MIN_MEMORY_USER_CHARS, parseMemorySuggestions, RedactingEngine, RedactingProvider, redactionPlan, Redactor, skillsPrompt,
+  MIN_MEMORY_USER_CHARS, parseMemorySuggestions, privacyGate, RedactingEngine, RedactingProvider, redactionPlan, Redactor, skillsPrompt,
   type ChatEvent, type Detection, type PendingMemory, type SkillMatch, type SkillRouting, type StoredChatEvent, type ToolHost,
 } from "@based/brain";
-import type { ChatController, TurnContext, TurnPrep } from "../chat/controller.js";
+import type { ChatController, TurnContext, TurnPrep, TurnReach } from "../chat/controller.js";
 import type { ResolvedCitation } from "../worker/brain.js";
 import type { BrainClient } from "./client.js";
 import { brainSettings, type BrainSettingsStore } from "./settings.js";
@@ -35,6 +35,8 @@ export interface BrainChatState {
   redactOnce: boolean;
   /** Aufgelöste Zitate: "block:<id>" → Quelle oder null (gibt es nicht). */
   citations: ReadonlyMap<string, ResolvedCitation | null>;
+  /** BSD-184: Nachricht mit sensiblen Stellen wartet auf die Wahl (Trotzdem senden / Schwärzen / Lokales Modell). */
+  privacyCheck?: { text: string; hits: Detection[] } | undefined;
 }
 
 /** Ereignisse, die das Brain ins Transkript schreibt (unbekannte Typen: bleiben erhalten, werden nicht gezeichnet). */
@@ -136,6 +138,38 @@ export class BrainChat {
 
   setRedactOnce(on: boolean) {
     this.set({ redactOnce: on });
+  }
+
+  private decision: "raw" | "redact" | undefined;
+
+  /**
+   * BSD-184: Privacy-Check vor dem Senden (Einstellung „Ask before sending sensitive details“). `false` = nicht
+   * senden; der Hinweis zeigt die Treffer und die Wahl. Lokale Modelle und eingeschaltetes Schwärzen fragen nicht.
+   */
+  gate(text: string, reach: TurnReach): boolean {
+    const s = this.settings.getState().redact;
+    if (!s.check) return true;
+    const hits = detectSensitive(text, { names: [...this.names, ...s.names], kinds: new Set(s.kinds) });
+    const g = privacyGate({ hits: hits.length, reach, redactAlways: s.enabled || this.state.redactOnce, decision: this.decision });
+    this.decision = undefined;
+    if (g === "ask") {
+      this.set({ privacyCheck: { text, hits } });
+      return false;
+    }
+    if (g === "redact" && !s.enabled) this.set({ redactOnce: true });
+    if (this.state.privacyCheck) this.set({ privacyCheck: undefined });
+    return true;
+  }
+
+  /** Wahl im Hinweis; die nächste Sendung dieser Nachricht nimmt sie (ChatView löst das Senden aus). */
+  decide(d: "raw" | "redact") {
+    this.decision = d;
+    this.set({ privacyCheck: undefined });
+  }
+
+  dismissPrivacyCheck() {
+    this.decision = undefined;
+    this.set({ privacyCheck: undefined });
   }
 
   /** Vor dem Senden aufrufen: Chips und Redact-Wahl gehören zu dieser Nachricht. */

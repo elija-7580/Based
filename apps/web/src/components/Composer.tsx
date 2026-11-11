@@ -65,9 +65,11 @@ export interface ComposerProps {
   onDraftChange?: (text: string) => void;
   /** Unsichtbares Label des Felds (Standard „Ask Based“). */
   label?: string;
+  /** BSD-184: ändert sich der Wert, sendet das Feld seinen Text (nach einer Wahl im Privacy-Hinweis). */
+  submitRequest?: number;
 }
 
-export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange, label = "Ask Based" }: ComposerProps) {
+export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange, label = "Ask Based", submitRequest }: ComposerProps) {
   const [open, setOpen] = useState<Menu["key"] | null>(null);
   const [pickedState, setPicked] = useState<Record<Menu["key"], string>>({ agent: "Main", compute: "Auto", permission: "Ask before edits" });
   const picked = { ...pickedState, ...pickedProp };
@@ -87,6 +89,13 @@ export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled
     setText("");
     field.current?.focus();
   };
+
+  const lastRequest = useRef(submitRequest);
+  useEffect(() => {
+    if (submitRequest === undefined || submitRequest === lastRequest.current) return;
+    lastRequest.current = submitRequest;
+    submit();
+  }, [submitRequest]);
 
   // Feld wächst mit dem Text (bis zu einer Höhe, dann scrollt es).
   useEffect(() => {
