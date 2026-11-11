@@ -52,6 +52,10 @@ export async function replayReport(page: Page, json: unknown, opts: { mode?: "in
   await expect.poll(() => page.evaluate((root) => (globalThis as unknown as W).__basedReport.roots().includes(root), id), { timeout: 15_000 }).toBe(true);
   expect(await page.evaluate(([root, doc, sel]) => (globalThis as unknown as W).__basedReport.load(root as string, doc, sel), [id, plan.start.doc, plan.start.sel] as const)).toBe(true);
   // Eine neue Seite setzt den Fokus ins Titelfeld – erst wenn das durch ist, die Schreibmarke in den Editor.
+  // Nach dem Laden das Titelfeld verlassen (Escape/Blur), dann die Schreibmarke setzen und prüfen, dass sie bleibt.
+  await page.getByLabel("Page title").waitFor();
+  await page.waitForTimeout(500);
+  await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, plan.start.sel] as const);
   await page.waitForTimeout(300);
   await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, plan.start.sel] as const);
   await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".ProseMirror"))).toBe(true);
