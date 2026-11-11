@@ -220,6 +220,8 @@ export type Request =
   | { type: "brain"; action: BrainAction }
   /** BSD-220: gespeicherter Y-Zustand einer Dokument-Wurzel (Antwort: Uint8Array | null). */
   | { type: "ydocLoad"; rootID: string }
+  /** BSD-252: hat die Seite lokale Änderungen, die noch nicht beim Server sind? */
+  | { type: "pendingLocal"; rootID: string }
   /** BSD-220: Y-Zustand einer Dokument-Wurzel speichern (Antwort: true). */
   | { type: "ydocSave"; rootID: string; state: Uint8Array };
 

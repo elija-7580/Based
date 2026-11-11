@@ -62,7 +62,7 @@ import {
   type SearchOptions,
   type SearchSort,
 } from "@based/core";
-import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
+import { AssetError, AssetSync, MemoryAssetBlobStore, MemoryYDocStorage, PUSHED_KEY, SyncClient, type AssetBlobStore, type DeviceNodeStore, type SqlitePersistence, type YDocStorage } from "@based/sync";
 import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage, type ImportSummary } from "./interop.js";
 import type { ImportPayload } from "./importer.js";
@@ -215,12 +215,44 @@ export class StoreHost {
         case "agents": reply(this.agents.handle(msg.action)); break;
         case "brain": reply(this.brain.handle(msg.action)); break;
         case "ydocLoad": reply(this.ydocs.get(msg.rootID) ?? null); break;
+        case "pendingLocal": reply(this.pendingLocal(msg.rootID)); break;
         case "ydocSave": this.ydocs.put(msg.rootID, msg.state); reply(true); break;
       }
     } catch (e) {
       this.opts.post({ type: "reply", id: msg.id, ok: false, error: e instanceof Error ? e.message : String(e) });
     }
     this.flush();
+  }
+
+  /**
+   * BSD-252: lokale Änderungen an Blöcken dieser Seite (oder ihr selbst), die der Sync noch nicht gepusht hat. Ohne
+   * Server: keine (dann gibt es auch kein /collab). Sucht im Change-Log nach dem Push-Cursor.
+   */
+  private pendingLocal(rootID: string): boolean {
+    const ws = this.ws;
+    if (!ws || !this.sync) return false;
+    const store = ws.store;
+    const inRoot = (id: string): boolean => {
+      let cur: string | undefined = id;
+      for (let guard = 0; cur && guard < 256; guard++) {
+        if (cur === rootID) return true;
+        const b = store.blocks.get(cur);
+        if (!b || (isPageLike(b) && cur !== id)) return false; // eine andere Seite dazwischen: eigene Wurzel
+        cur = b.parent.startsWith("b:") ? b.parent.slice(2) : undefined;
+      }
+      return false;
+    };
+    let after = ws.persistence.metaInt(PUSHED_KEY);
+    for (;;) {
+      const page = ws.persistence.changes(after, 1000);
+      for (const e of page) {
+        if (!e.local || !e.key.startsWith("block:")) continue;
+        const id = e.key.slice(6);
+        if (e.deleted || inRoot(id)) return true;
+      }
+      if (page.length < 1000) return false;
+      after = page[page.length - 1]!.seq;
+    }
   }
 
   // MARK: Start

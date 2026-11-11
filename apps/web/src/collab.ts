@@ -32,9 +32,10 @@ export function connectHocuspocus(cfg: SyncConfig, name: string, doc: Y.Doc): Co
 }
 
 /** Binder für die Shell: verbindet nur, wenn ein Server eingestellt und Echtzeit-Text an ist. */
-export function createCollab(docStore: YDocStore, config: () => SyncConfig | undefined): CollabBinder {
+export function createCollab(docStore: YDocStore, config: () => SyncConfig | undefined, unsynced?: (rootID: string) => Promise<boolean>): CollabBinder {
   return new CollabBinder({
     docStore,
+    ...(unsynced ? { unsynced } : {}),
     syncTimeoutMs: 2500,
     // Offline nicht erst auf einen Abgleich warten (der Editor öffnete sonst verzögert); ein gespeicherter Stand vom
     // Server verbindet trotzdem – der Provider holt nach, sobald das Netz zurück ist.

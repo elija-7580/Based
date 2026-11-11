@@ -346,3 +346,20 @@ describe("Großer Import: Gegendruck und Abbruch (BSD-283)", () => {
     expect(await a.client.discardImport()).toBe(0);
   });
 });
+
+// BSD-252: Echtzeit-Text erst, wenn die lokalen Änderungen einer Seite gepusht sind.
+describe("pendingLocal (BSD-252)", () => {
+  it("lokale, nicht gepushte Änderung an einer Seite → true; nach dem Push false; ohne Server false", async () => {
+    const server = fakeServer();
+    server.state.offline = true;
+    const a = device(server.fetcher, { migrateDelayMs: 60_000 });
+    const { homePageID } = await a.client.init({});
+    expect(await a.client.pendingLocal(homePageID!)).toBe(false); // ohne Server kein /collab
+    await a.client.setSync(sync);
+    await expect.poll(() => a.client.pendingLocal(homePageID!)).toBe(true);
+    server.state.offline = false;
+    // Eine weitere Änderung stößt die nächste Runde an (die Wiederholung nach dem Netzfehler käme erst später).
+    await a.client.command({ op: "createPage", parent: homePageID!, title: "Child" });
+    await expect.poll(() => a.client.pendingLocal(homePageID!), { timeout: 8_000 }).toBe(false);
+  }, 15_000);
+});

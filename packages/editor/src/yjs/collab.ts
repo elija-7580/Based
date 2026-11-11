@@ -45,6 +45,12 @@ export interface CollabBinderOptions {
   syncTimeoutMs?: number;
   /** Offline und kein Stand vom Server: gar nicht erst verbinden (sofort ohne /collab öffnen). */
   online?: () => boolean;
+  /**
+   * BSD-252: Hat diese Wurzel lokale Änderungen, die der Server über Sync v2 noch nicht hat? Dann (ohne Stand vom
+   * Server) diesmal ohne /collab öffnen – das Y.Doc des Servers würde sie beim Ableiten der Records überschreiben.
+   * Sobald der Push durch ist, verbindet das nächste Öffnen.
+   */
+  unsynced?: (rootID: string) => Promise<boolean>;
 }
 
 export function fromServer(doc: Y.Doc): boolean {
@@ -97,6 +103,14 @@ export class CollabBinder implements CollabSource {
     if (!fromServer(doc) && this.opts.online && !this.opts.online()) {
       doc.destroy();
       return undefined;
+    }
+    if (!fromServer(doc) && this.opts.unsynced) {
+      let pending = true;
+      try { pending = await this.opts.unsynced(rootID); } catch { pending = true; }
+      if (pending) {
+        doc.destroy();
+        return undefined;
+      }
     }
     const conn = this.opts.connect(name, doc);
     if (!conn) {

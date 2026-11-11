@@ -117,6 +117,23 @@ describe("BSD-220 Teil 3: Gerät an /collab", () => {
     expect(connects).toBe(0);
   });
 
+  it("BSD-252: noch nicht gepushte lokale Änderungen ohne Server-Stand → ohne /collab öffnen, gar nicht verbinden", async () => {
+    let connects = 0;
+    const asked: string[] = [];
+    const binder = new CollabBinder({
+      connect: () => { connects++; return { synced: Promise.resolve(), destroy: () => undefined }; },
+      docStore: new MemoryYDocStore(),
+      unsynced: async (root) => { asked.push(root); return true; },
+    });
+    expect(await binder.open("P")).toBeUndefined();
+    expect(connects).toBe(0);
+    expect(asked).toEqual(["P"]);
+    // Fehler bei der Rückfrage zählt wie „noch offen“ (lieber ohne /collab als Text verlieren).
+    const failing = new CollabBinder({ connect: () => { connects++; return undefined; }, docStore: new MemoryYDocStore(), unsynced: async () => { throw new Error("worker gone"); } });
+    expect(await failing.open("P")).toBeUndefined();
+    expect(connects).toBe(0);
+  });
+
   it("gespeicherter Stand vom Server: sofort öffnen (offline), eine Verbindung je Wurzel", async () => {
     const docs = new MemoryYDocStore();
     const server = new Y.Doc();

@@ -34,7 +34,8 @@ export function connectEditor(client: StoreClient) {
   directory = new ShellPageDirectory(client);
   meeting = createMeetingHost(client);
   docStore = new WorkerYDocStore(client);
-  collab = createCollab(docStore, () => syncConfig.get());
+  // BSD-252: Seiten mit noch nicht gepushten Änderungen erst nach dem Push mit /collab öffnen (kein Verlust).
+  collab = createCollab(docStore, () => syncConfig.get(), (rootID) => client.pendingLocal(rootID));
 }
 
 function useRootTheme(): "light" | "dark" {
