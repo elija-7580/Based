@@ -21,6 +21,7 @@ import { toRichText } from "./runs.js";
 import { extractZip, ImportCancelled, isZip, type ZipLimits } from "./zip.js";
 import { markdownFileName } from "./markdown-export.js";
 import { findObsidianVault, ObsidianImporter } from "./obsidian-import.js";
+import { EnexImporter } from "./enex-import.js";
 
 export interface NotionImportOptions {
   /** Wohin Bilder und Dateien kommen; ohne Speicher bleiben nur externe URLs. */
@@ -61,6 +62,9 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   const md: ImportSource[] = [];
   // BSD-260: Obsidian-Vaults (Ordner mit `.obsidian/`) liest ein eigener Importer (Wikilinks, Einbettungen, Frontmatter).
   const vaults: { files: ImportFiles; vault: string; title: string | undefined }[] = [];
+  // BSD-260: Evernote-Notizbücher (.enex), auch in ZIPs und Ordnern.
+  const enex: { files: ImportFiles; path: string }[] = [];
+  const enexIn = (files: ImportFiles, dir: string) => files.walk(dir).filter((f) => extname(f).toLowerCase() === "enex");
   sources.forEach((src, i) => {
     const p = normalizePath(src.path);
     const ext = extname(p).toLowerCase();
@@ -71,6 +75,12 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const r = extractZip(zip, { limits: opts.zipLimits, isCancelled: opts.isCancelled, progress: (f) => progress((i + f * 0.5) / sources.length) });
       out.notes.push(`Unpacked ${basename(p)}: ${r.count} files`);
       for (const s of r.skipped) out.notes.push(`Skipped ${s}`);
+      const notebooks = enexIn(r.files, "");
+      if (notebooks.length > 0 && !containsExt(r.files, "", ["md", "csv", "html", "htm"])) {
+        for (const f of notebooks) enex.push({ files: r.files, path: f });
+        progress((i + 1) / sources.length * 0.5);
+        return;
+      }
       const vault = findObsidianVault(r.files, "");
       if (vault !== undefined) {
         vaults.push({ files: r.files, vault, title: vault === "" ? stripExtension(basename(p)) : undefined });
@@ -80,6 +90,10 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const hasHTML = containsExt(r.files, "", ["html", "htm"]);
       if (hasHTML) html.push({ files: r.files, path: "" });
       if (containsExt(r.files, "", ["md", "csv"]) || !hasHTML) md.push({ files: r.files, path: "" });
+    } else if (exists && ext === "enex") {
+      enex.push({ files: src.files, path: p });
+    } else if (exists && isDir(src.files, p) && enexIn(src.files, p).length > 0 && !containsExt(src.files, p, ["md", "csv", "html", "htm"])) {
+      for (const f of enexIn(src.files, p)) enex.push({ files: src.files, path: f });
     } else if (exists && isDir(src.files, p) && findObsidianVault(src.files, p) !== undefined) {
       vaults.push({ files: src.files, vault: findObsidianVault(src.files, p)!, title: undefined });
     } else if (exists && isDir(src.files, p) && containsExt(src.files, p, ["html", "htm"])) {
@@ -106,9 +120,18 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
     out.builder = builder;
   }
   if (md.length > 0) out.markdown = new MarkdownNotionImporter(opts).run(md);
-  for (const v of vaults) {
+  const extra: (() => { records: WireRecord[]; rootKeys: string[]; report: ImportReport })[] = [];
+  const common = { assets: opts.assets, now: opts.now, userID: opts.userID, isCancelled: opts.isCancelled };
+  for (const v of vaults) extra.push(() => new ObsidianImporter(v.files, v.vault, common).run(v.title, out.markdown?.rootKeys.at(-1)));
+  for (const e of enex) {
+    extra.push(() => {
+      const xml = e.files.readStrictText(e.path) ?? e.files.readText(e.path) ?? "";
+      return new EnexImporter(common).run(xml, stripExtension(basename(e.path)), out.markdown?.rootKeys.at(-1));
+    });
+  }
+  for (const run of extra) {
     const prev = out.markdown;
-    const r = new ObsidianImporter(v.files, v.vault, { assets: opts.assets, now: opts.now, userID: opts.userID, isCancelled: opts.isCancelled }).run(v.title, prev?.rootKeys.at(-1));
+    const r = run();
     if (!prev) out.markdown = r;
     else {
       prev.records.push(...r.records);
