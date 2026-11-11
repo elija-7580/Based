@@ -439,6 +439,12 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     selectBlocks(siblingSpan(parentOf, blocks[0]!.id, blocks[blocks.length - 1]!.id));
   };
   const lastSelectAll = useRef(0);
+  // BSD-289: „zweimal“ heißt direkt hintereinander – jeder Klick dazwischen (Formatleiste, AI-Box …) setzt es zurück.
+  useEffect(() => {
+    const reset = () => { lastSelectAll.current = 0; };
+    globalThis.document?.addEventListener("pointerdown", reset, true);
+    return () => globalThis.document?.removeEventListener("pointerdown", reset, true);
+  }, []);
   // Loslassen kann auch außerhalb des Rahmens passieren: am Dokument lauschen.
   const textToBlocksRef = useRef(textToBlocks);
   textToBlocksRef.current = textToBlocks;
@@ -530,8 +536,10 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
             }
           }
         }
-        // ⌘A zweimal (kurz hintereinander): alle Blöcke als Blockauswahl.
-        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "a") {
+        // ⌘A zweimal (kurz hintereinander, ohne andere Taste dazwischen): alle Blöcke als Blockauswahl.
+        const isSelectAll = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "a";
+        if (!isSelectAll && !["Meta", "Control", "Shift", "Alt"].includes(e.key)) lastSelectAll.current = 0;
+        if (isSelectAll) {
           const now = Date.now();
           if (now - lastSelectAll.current < 1500) {
             const all = editor.document;

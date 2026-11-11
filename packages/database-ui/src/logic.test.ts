@@ -206,6 +206,13 @@ describe("Inline-Tabelle: Zeilen begrenzen (BSD-255)", async () => {
     expect(r.hidden).toBe(1);
     expect(limitRows(items, 5)).toEqual({ items, hidden: 0 });
   });
+  it("Galerie: Kartenreihen zählen mit ihren Karten, die letzte Reihe wird gekürzt (BSD-255 Teil 2)", () => {
+    const cards = (k: string, ids: string[]) => ({ kind: "cards" as const, key: k, rows: ids.map((id) => ({ id }) as Block), groupID: null });
+    const items = [cards("c1", ["a", "b", "c"]), cards("c2", ["d", "e", "f"]), { kind: "new" as const, key: "n:", groupID: null }];
+    const r = limitRows(items, 4);
+    expect(r.items.map((i) => (i.kind === "cards" ? i.rows.map((x) => x.id).join("") : i.key))).toEqual(["abc", "d", "n:"]);
+    expect(r.hidden).toBe(2);
+  });
   it("mit Gruppen: Köpfe nur, solange noch Zeilen gezeigt werden", () => {
     const g = (id: string) => ({ kind: "group" as const, key: "g:" + id, group: { id } as never, collapsed: false });
     const items = [g("x"), row("a", "x"), row("b", "x"), { kind: "new" as const, key: "n:x", groupID: "x" }, g("y"), row("c", "y")];

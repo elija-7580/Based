@@ -13,11 +13,19 @@ export const COVER_COLORS: { id: string; label: string; css: string }[] = [
   { id: "orange", label: "Orange", css: "var(--status-blocked)" },
   { id: "default", label: "Plain", css: "var(--surface-raised)" },
 ];
-const GRADIENTS = ["var(--status-ready), var(--status-review)", "var(--status-neutral), var(--status-ready)", "var(--status-review), var(--status-blocked)", "var(--status-blocked), var(--status-neutral)"];
+/**
+ * BSD-201 Teil 3: Verläufe wie in der Swift-App (Covers.gradients, gleiche Reihenfolge = gleiche Nummer im Record),
+ * damit ein Cover auf jedem Gerät gleich aussieht. Die Farben sind Tokens (`--cover-gradient-<n>-from/-to`).
+ */
+export const COVER_GRADIENT_COUNT = 12;
+const gradientCss = (i: number) => {
+  const n = ((i % COVER_GRADIENT_COUNT) + COVER_GRADIENT_COUNT) % COVER_GRADIENT_COUNT;
+  return `linear-gradient(135deg, var(--cover-gradient-${n}-from), var(--cover-gradient-${n}-to))`;
+};
 
 export function coverBackground(c: PageCoverValue): string | undefined {
   if ("color" in c) return (COVER_COLORS.find((x) => x.id === c.color._0.replace(/Background$/, "")) ?? COVER_COLORS[4]!).css;
-  if ("gradient" in c) return `linear-gradient(135deg, ${GRADIENTS[Math.abs(c.gradient._0) % GRADIENTS.length]})`;
+  if ("gradient" in c) return gradientCss(c.gradient._0);
   return undefined;
 }
 
@@ -56,6 +64,12 @@ export function CoverPicker({ store, pageID, onClose, hasCover }: { store: Works
       <p className="menu-foot t-meta">Color</p>
       <div className="cover-swatches">
         {COVER_COLORS.map((c) => <button key={c.id} type="button" className="cover-swatch" aria-label={c.label} style={{ background: c.css }} onClick={() => set({ color: { _0: c.id } })} />)}
+      </div>
+      <p className="menu-foot t-meta">Gradient</p>
+      <div className="cover-swatches cover-gallery" role="group" aria-label="Gradients">
+        {Array.from({ length: COVER_GRADIENT_COUNT }, (_, i) => (
+          <button key={i} type="button" className="cover-swatch" aria-label={`Gradient ${i + 1}`} style={{ background: gradientCss(i) }} onClick={() => set({ gradient: { _0: i } })} />
+        ))}
       </div>
       <button type="button" className="menu-item" onClick={() => file.current?.click()}>Upload image…</button>
       <input ref={file} type="file" accept="image/*" hidden data-testid="cover-file" onChange={async (e) => {

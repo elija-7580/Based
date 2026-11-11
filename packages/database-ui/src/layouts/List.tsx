@@ -1,12 +1,12 @@
 // BSD-155: Liste und Galerie – virtualisiert (Zeilen bzw. Kartenreihen), mit Gruppen und „+ New“.
 import { cardKeys } from "../cardKeys.js";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { plainText, propertyOf, valueCase, type Block, type DatabaseView, type PropertySchema, type QueryResult } from "@based/core";
 import { CellView } from "../cells/CellView.js";
 import { CellEditor } from "../cells/CellEditor.js";
-import { useDB } from "../context.js";
-import { flatten, galleryColumns, type FlatItem } from "../logic/layout.js";
+import { InlineView, useDB } from "../context.js";
+import { flatten, galleryColumns, limitRows, type FlatItem } from "../logic/layout.js";
 import { hrefOf, optionTone, storedFiles } from "../logic/values.js";
 import { Icon, type Anchor } from "../ui.js";
 import { CardBody, cardProperties, EmptyState, GroupHeader, groupProperty, RowMenu, useAddRow } from "./shared.js";
@@ -35,7 +35,32 @@ function useMenus() {
   return { menu, setMenu, onMenu };
 }
 
-function Virtual({ items, estimate, render, label, testID }: {
+function Virtual(props: {
+  items: FlatItem[]; estimate: (it: FlatItem) => number; render: (it: FlatItem) => React.ReactNode; label: string; testID: string;
+}) {
+  // BSD-255 Teil 2: inline in einer Seite ohne eigenen Scroller – alles im Fluss der Seite, begrenzt mit „Load more“.
+  const inline = useContext(InlineView);
+  return inline ? <Flow {...props} pageSize={inline.pageSize} /> : <Scrolled {...props} />;
+}
+
+function Flow({ items: all, render, label, testID, pageSize }: { items: FlatItem[]; render: (it: FlatItem) => React.ReactNode; label: string; testID: string; pageSize: number }) {
+  const [limit, setLimit] = useState(pageSize);
+  const { items, hidden } = useMemo(() => limitRows(all, limit), [all, limit]);
+  return (
+    <div className="dbui-flow" data-testid={testID}>
+      <div className="dbui-vlist static" role="list" aria-label={label} onKeyDown={cardKeys}>
+        {items.map((it) => <div key={it.key} className="dbui-vitem static">{render(it)}</div>)}
+      </div>
+      {hidden > 0 ? (
+        <button type="button" className="dbui-load-more" onClick={() => setLimit((l) => l + pageSize)}>
+          Load more <span className="dbui-count">{Math.min(hidden, pageSize)} of {hidden}</span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function Scrolled({ items, estimate, render, label, testID }: {
   items: FlatItem[]; estimate: (it: FlatItem) => number; render: (it: FlatItem) => React.ReactNode; label: string; testID: string;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
