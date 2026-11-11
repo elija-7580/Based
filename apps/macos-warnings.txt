@@ -1,3 +1,12 @@
+App/Shared/Brain/BrainModel.swift:255:35: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+App/Shared/Brain/BrainModel.swift:504:44: warning: main actor-isolated class property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
+App/Shared/Brain/EnginePicker.swift:112:144: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+App/Shared/Brain/EnginePicker.swift:112:98: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+App/Shared/Brain/HappierModel.swift:129:70: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+App/Shared/Brain/HappierModel.swift:132:27: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+App/Shared/Brain/Secrets.swift:147:31: warning: 'SecKeychainSetUserInteractionAllowed' was deprecated in macOS 10.10: SecKeychain is deprecated
+App/Shared/Brain/Secrets.swift:155:31: warning: 'SecKeychainSetUserInteractionAllowed' was deprecated in macOS 10.10: SecKeychain is deprecated
+App/Shared/Meeting/MeetingService.swift:73:116: warning: will never be executed
 Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:332:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
 Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:335:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
 Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:338:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
