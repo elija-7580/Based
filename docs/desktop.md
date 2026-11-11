@@ -106,3 +106,29 @@ von denen Notion Dateien ausliefert (`*.notion.so`, `*.notion.com`, `*.notionuse
 `*.amazonaws.com`). Das Token liegt verschlüsselt in der Web-Ablage (`shell/secrets.ts`, Name `notion:token`), nie in
 Rust oder im localStorage. Ablauf: `apps/web/src/worker/notionApi.worker.ts` holt und übersetzt, der Hauptthread macht
 das HTTP (`shell/notionTransport.ts`), geschrieben wird im Store-Worker wie beim Datei-Import.
+
+## Lokaler Server und Kommandozeile (BSD-138)
+
+Ohne eigenen Server bringt die App einen kleinen based-server als Beilage mit (`bundle.externalBin`,
+`binaries/based-server`). Er läuft nur, wenn **Settings → Sync & server → Local server** eingeschaltet ist, und nur
+solange die App offen ist (endet er mit ihr, weil sein stdin zugeht).
+
+- **Nur dieser Rechner:** 127.0.0.1, Port 47821. Der Token wird von der App erzeugt, liegt in ihrer verschlüsselten
+  Ablage und geht über die Umgebung (`BASED_TOKEN`) an den Prozess, nie über die Kommandozeile.
+- **Für die CLI:** Der Server schreibt `~/.config/based/local.json` (Adresse, PID, Pfad der Token-Datei – ohne Token)
+  und `~/.config/based/local-token`, beide 0600, und räumt sie beim Beenden weg. `based` nimmt ihn, wenn kein anderer
+  Server eingestellt ist, oder mit `--local` ausdrücklich.
+- **Daten:** eigene Datenbank `local-server.sqlite` im App-Datenordner. „Use for sync“ verbindet diese App mit ihm
+  (wie mit jedem Server), damit `based` dieselben Seiten sieht.
+- **Coding-Agenten:** `--coding-root` ist das Home-Verzeichnis; der PATH kommt aus der Login-Shell (Homebrew, nvm),
+  damit `npx`, `codex`, `claude` gefunden werden. So läuft auch „ChatGPT über Codex“ (BSD-257) ohne Server.
+- **`based` installieren:** App-Menü → *Install Command Line Tool…* zeigt (und kopiert) den Befehl
+  `sudo ln -sf '/Applications/Based Next.app/Contents/MacOS/based-server' /usr/local/bin/based`. Als `based`
+  aufgerufen spielt die Beilage die CLI (eine Node-Laufzeit für beides).
+- **Rust:** nur das offizielle Shell-Plugin; Start/Stopp steuert `apps/web/src/desktop/localServer.ts`. Erlaubt ist
+  ausschließlich diese eine Beilage, nur im Hauptfenster (`capabilities/local-server.json`).
+
+Bauen: `pnpm --filter @based/desktop sidecar` (läuft vor `tauri dev`/`tauri build` automatisch) bündelt
+`apps/desktop/sidecar/entry.ts` mit esbuild und macht daraus eine Node-SEA (postject; macOS: Signatur entfernen,
+injizieren, ad hoc signieren) nach `src-tauri/binaries/based-server-<target-triple>`. Nur bündeln:
+`node apps/desktop/scripts/build-sidecar.mjs --bundle` (Ergebnis läuft mit `node dist-sidecar/based-server.cjs`).

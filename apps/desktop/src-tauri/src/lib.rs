@@ -7,10 +7,11 @@ use tauri::{Emitter, Manager};
 const CHECK_UPDATES: &str = "check-updates";
 /// ⌘W schließt den Tab, nie das Fenster (Web-Frontend: `desktop://close-tab`; der letzte Tab wird zur Startseite).
 const CLOSE_TAB: &str = "close-tab";
+/// BSD-138: „Install Command Line Tool…“ – das Web-Frontend zeigt den Befehl (`desktop://install-cli`).
+const INSTALL_CLI: &str = "install-cli";
 /// ⇧⌘W: Fenster ausblenden – die App läuft weiter, Klick aufs Dock-Symbol holt es zurück (wie Notion).
 const CLOSE_WINDOW: &str = "close-window";
 
-#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn show_main(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -24,6 +25,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_shell::init())
         .menu(|app| {
             let name = app.package_info().name.clone();
             let about = AboutMetadata { name: Some(name.clone()), ..Default::default() };
@@ -34,6 +36,7 @@ pub fn run() {
                 &[
                     &PredefinedMenuItem::about(app, None, Some(about))?,
                     &MenuItem::with_id(app, CHECK_UPDATES, "Check for Updates…", true, None::<&str>)?,
+                    &MenuItem::with_id(app, INSTALL_CLI, "Install Command Line Tool…", true, None::<&str>)?,
                     &PredefinedMenuItem::separator(app)?,
                     &PredefinedMenuItem::services(app, None)?,
                     &PredefinedMenuItem::separator(app)?,
@@ -81,6 +84,9 @@ pub fn run() {
             let Some(window) = front.or_else(|| app.get_webview_window("main")) else { return };
             if event.id() == CHECK_UPDATES {
                 let _ = app.emit_to("main", "desktop://check-updates", ());
+            } else if event.id() == INSTALL_CLI {
+                show_main(app);
+                let _ = app.emit_to("main", "desktop://install-cli", ());
             } else if event.id() == CLOSE_TAB {
                 let _ = app.emit_to(window.label(), "desktop://close-tab", ());
             } else if event.id() == CLOSE_WINDOW {

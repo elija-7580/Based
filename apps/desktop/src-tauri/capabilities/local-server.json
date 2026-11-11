@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "local-server",
+  "description": "BSD-138: nur das Hauptfenster darf die Beilage based-server starten, ihr stdin schreiben und sie beenden (lokaler Server für CLI und Coding-Agenten). Kein anderes Programm.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "binaries/based-server",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    },
+    "shell:allow-kill",
+    "shell:allow-stdin-write"
+  ]
+}

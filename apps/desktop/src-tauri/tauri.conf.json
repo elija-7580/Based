@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../../web/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "pnpm --filter @based/web dev",
-    "beforeBuildCommand": "pnpm --filter @based/web build"
+    "beforeDevCommand": "pnpm --filter @based/desktop sidecar && pnpm --filter @based/web dev",
+    "beforeBuildCommand": "pnpm --filter @based/desktop sidecar && pnpm --filter @based/web build"
   },
   "app": {
     "withGlobalTauri": false,
@@ -49,7 +49,10 @@
     "macOS": {
       "minimumSystemVersion": "13.0",
       "signingIdentity": "-"
-    }
+    },
+    "externalBin": [
+      "binaries/based-server"
+    ]
   },
   "plugins": {
     "updater": {

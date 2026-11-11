@@ -24,6 +24,16 @@ const fileMode = (p: string) => {
   }
 };
 
+/** Läuft ein Prozess noch? (Signal 0 prüft nur; EPERM heißt: läuft, gehört aber jemand anderem.) */
+const alive = (pid: number) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === "EPERM";
+  }
+};
+
 /** Token am Terminal ohne Echo lesen (wie `getpass`). */
 function promptHidden(label: string): Promise<string> {
   return new Promise((resolve) => {
@@ -100,7 +110,7 @@ export async function main(argv: string[], io: { env?: Record<string, string | u
       out(`Saved ${url} to ${path} (mode 600).`);
       return 0;
     }
-    const config = resolveConfig(options, { env, home, readFile, fileMode });
+    const config = resolveConfig(options, { env, home, readFile, fileMode, alive });
     if (command.name === "config") {
       out(`Server: ${config.url}\nToken:  from ${config.tokenSource}`);
       return 0;

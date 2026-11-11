@@ -2,11 +2,11 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createApp, silentLogger, type App } from "@based/server";
+import { createApp, localPaths, removeLocalDiscovery, silentLogger, writeLocalDiscovery, type App } from "@based/server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parseArgs } from "../src/args.js";
 import { BasedCLI, runSnapshot, shellCommand, type MCPSession } from "../src/cli.js";
-import { configFileContents, configPath, resolveConfig } from "../src/config.js";
+import { configFileContents, configPath, localConfig, resolveConfig } from "../src/config.js";
 import { connect, main } from "../src/main.js";
 
 const TOKEN = "cli-test-token-0123456789";
@@ -50,6 +50,59 @@ describe("Konfiguration", () => {
     expect(() => resolveConfig({ json: false, url: "http://based.example.com" }, io(cfg))).toThrow("https://");
     expect(() => resolveConfig({ json: false }, io(cfg, {}, { "/h/.config/based/config.json": 0o644 }))).toThrow("readable by others");
     expect(() => resolveConfig({ json: false }, io({}))).toThrow("No server configured");
+  });
+});
+
+describe("BSD-138: lokaler Server der Desktop-App", () => {
+  const disc = (d: object) => JSON.stringify({ v: 1, pid: 42, tokenFile: "/h/.config/based/local-token", ...d });
+  const io = (files: Record<string, string>, opts: { env?: Record<string, string>; modes?: Record<string, number>; alive?: boolean } = {}) =>
+    ({ env: opts.env ?? {}, home: "/h", readFile: (p: string) => files[p], fileMode: (p: string) => opts.modes?.[p], alive: () => opts.alive ?? true });
+  const local = { "/h/.config/based/local.json": disc({ url: "http://127.0.0.1:5123" }), "/h/.config/based/local-token": "tok\n" };
+
+  it("Fallback ohne eingestellten Server, --local erzwingt, eingestellter Server gewinnt sonst", () => {
+    expect(resolveConfig({ json: false }, io(local))).toEqual({ url: "http://127.0.0.1:5123", token: "tok", tokenSource: "desktop app (/h/.config/based/local-token)" });
+    const cfg = { ...local, "/h/.config/based/config.json": JSON.stringify({ url: "https://based.example.com", token: "file-token" }) };
+    expect(resolveConfig({ json: false }, io(cfg)).url).toBe("https://based.example.com");
+    expect(resolveConfig({ json: false, local: true }, io(cfg)).url).toBe("http://127.0.0.1:5123");
+    expect(resolveConfig({ json: false }, io(local, { env: { BASED_URL: "https://x.example" , BASED_TOKEN: "t" } })).url).toBe("https://x.example");
+  });
+
+  it("beendete App, fremde Adresse, offene Token-Datei, fehlende Dateien", () => {
+    expect(localConfig(io(local, { alive: false }))).toBeUndefined();
+    expect(() => resolveConfig({ json: false }, io(local, { alive: false }))).toThrow("Open the Based desktop app");
+    expect(() => resolveConfig({ json: false, local: true }, io({}))).toThrow("isn't running");
+    expect(() => localConfig(io({ ...local, "/h/.config/based/local.json": disc({ url: "http://evil.example:80" }) }))).toThrow("outside this computer");
+    expect(() => localConfig(io({ ...local, "/h/.config/based/local.json": disc({ url: "https://127.0.0.1:1" }) }))).toThrow("outside this computer");
+    expect(() => localConfig(io(local, { modes: { "/h/.config/based/local-token": 0o644 } }))).toThrow("readable by others");
+    expect(localConfig(io({ "/h/.config/based/local.json": "{" }))).toBeUndefined();
+    expect(localConfig(io({ "/h/.config/based/local.json": disc({ url: "http://127.0.0.1:1" }) }))).toBeUndefined();
+  });
+
+  it("--local mit --url wird abgelehnt", () => {
+    expect(() => parseArgs(["--local", "--url", "http://127.0.0.1:1", "tools"])).toThrow("--local");
+    expect(parseArgs(["--local", "tools"]).options.local).toBe(true);
+  });
+
+  it("echte Dateien: Server schreibt Discovery (0600, ohne Token), CLI findet ihn, Aufräumen nur durch den Besitzer", async () => {
+    const home = mkdtempSync(join(tmpdir(), "based-local-"));
+    try {
+      const port = Number(new URL(url).port);
+      const d = writeLocalDiscovery(home, { port, token: TOKEN, owner: "test" });
+      const p = localPaths(home);
+      expect(statSync(p.discovery).mode & 0o777).toBe(0o600);
+      expect(statSync(p.token).mode & 0o777).toBe(0o600);
+      expect(readFileSync(p.discovery, "utf8")).not.toContain(TOKEN);
+      expect(d.url).toBe(`http://127.0.0.1:${port}`);
+      const cfg = await run(["config"], {}, home);
+      expect(cfg.out).toBe(`Server: ${d.url}\nToken:  from desktop app (${p.token})`);
+      expect((await run(["tools"], {}, home)).code).toBe(0);
+      expect((await run(["--local", "tools"], { BASED_URL: "https://elsewhere.example" }, home)).code).toBe(0);
+      expect(removeLocalDiscovery(home, d.pid + 1)).toBe(false);
+      expect(removeLocalDiscovery(home, d.pid)).toBe(true);
+      expect((await run(["tools"], {}, home)).err).toContain("No server configured");
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
   });
 });
 

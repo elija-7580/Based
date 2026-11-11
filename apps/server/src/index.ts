@@ -14,3 +14,4 @@ export { Router } from "./router.js";
 export { createLogger, silentLogger, type Logger } from "./log.js";
 export { ShareService } from "./share.js";
 export { SandboxManager, DockerSandboxProvider, LocalSandboxProvider, SandboxEnvironmentPolicy } from "./sandbox.js";
+export { localPaths, newLocalToken, removeLocalDiscovery, writeLocalDiscovery, type LocalDiscovery } from "./local.js";
