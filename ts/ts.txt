@@ -1,4 +1,4 @@
-packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
@@ -18,26 +18,29 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1615 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1616)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m62 passed[39m[22m[90m (62)[39m
+packages/core test: [2m      Tests [22m [1m[32m1624 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1625)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
 packages/sync test: [2m      Tests [22m [1m[32m45 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (48)[39m
-packages/brain test: [2m      Tests [22m [1m[32m376 passed[39m[22m[90m (376)[39m
-packages/editor test: [2m      Tests [22m [1m[32m72 passed[39m[22m[90m (72)[39m
-apps/server test: [2m      Tests [22m [1m[32m107 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (108)[39m
-apps/web test: [2m      Tests [22m [1m[32m158 passed[39m[22m[90m (158)[39m
+packages/brain test: [2m      Tests [22m [1m[32m379 passed[39m[22m[90m (379)[39m
+packages/editor test: [2m      Tests [22m [1m[32m77 passed[39m[22m[90m (77)[39m
+apps/server test: [2m      Tests [22m [1m[32m112 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (113)[39m
+apps/web test: [2m      Tests [22m [1m[32m163 passed[39m[22m[90m (163)[39m
 apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
 --- e2e
-      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
-    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
-         |                            ^
-      90 | });
-      91 |
-      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
+    Test timeout of 120000ms exceeded.
 
-  24 failed
+    Error Context: test-results/sync-assets-Bild-auf-Gerät-31425--die-Datei-nicht-ladbar-ist-chromium/error-context.md
+
+    Error Context: test-results/sync-assets-Bild-auf-Gerät-31425--die-Datei-nicht-ladbar-ist-chromium/error-context.md
+
+  21) [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) 
+
+    Test timeout of 30000ms exceeded.
+
+    Error Context: test-results/theme-beim-Laden-gehen-kei-b6da8--fremde-Hosts-Stil-default--chromium/error-context.md
+
+  21 failed
     [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn ─
     [chromium] › e2e/coding.spec.ts:58:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert 
     [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen 
@@ -50,7 +53,6 @@ apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
     [chromium] › e2e/interop.spec.ts:183:1 › Word-Dokument (.docx) importieren (BSD-260) ───────────
     [chromium] › e2e/interop.spec.ts:200:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) 
     [chromium] › e2e/interop.spec.ts:233:1 › Export: Seite als Markdown, Workspace als Based-Archiv 
-    [chromium] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an 
     [chromium] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 
     [chromium] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis 
     [chromium] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
@@ -60,10 +62,8 @@ apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
     [chromium] › e2e/smoke.spec.ts:57:1 › Show agent details blendet Planer und Laufzeit auf Home ein 
     [chromium] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist 
     [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) 
-    [webkit] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an 
-    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
-  18 skipped
-  284 passed (18.8m)
+  20 skipped
+  309 passed (19.4m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
