@@ -3,7 +3,7 @@
 Based speaks the Model Context Protocol, so Claude Desktop, ChatGPT, Cursor, Claude Code, Codex and any other MCP
 client can do in the workspace what the user does in the app — and learn how Based works before they act.
 
-- **Implementation**: `Swift/BasedBrain/Sources/BasedBrain/MCP/MCPServer.swift` (JSON-RPC 2.0, transport-agnostic),
+- **Implementation**: `legacy/Swift/BasedBrain/Sources/BasedBrain/MCP/MCPServer.swift` (JSON-RPC 2.0, transport-agnostic),
   tools in `Agent/AgentTools.swift`, guide in `MCP/BasedGuide.swift`.
 - **TypeScript server** (`apps/server`, BSD-158): official MCP SDK, stdio and `POST /mcp`; so far the page tools
   (`search`, `read_page`, `list_pages`, `create_page`, `append_markdown`, `replace_page_content`, `update_page`,

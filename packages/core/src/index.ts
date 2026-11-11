@@ -28,7 +28,7 @@ export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";
 export type { HTMLExporterOptions } from "./interop/export.js";
 export { relationLimitViolations, setRelation } from "./store/relations.js";
-export { PRIVATE, createPage, createTeamspace, deleteForever, deleteTeamspace, duplicatePages, renameTeamspace, setTeamspaceIcon, dropPages, emptyTrash, insertPage, isDescendant, isPageLike, movePages, renamePage, restorePages, sameSection, sectionOf, setFavorite, sortKeys, subtree, trashPages, trashedPages } from "./store/pages.js";
+export { PRIVATE, topmost, createPage, createTeamspace, deleteForever, deleteTeamspace, duplicatePages, renameTeamspace, setTeamspaceIcon, dropPages, emptyTrash, insertPage, isDescendant, isPageLike, movePages, renamePage, restorePages, sameSection, sectionOf, setFavorite, sortKeys, subtree, trashPages, trashedPages } from "./store/pages.js";
 export { renameWorkspace, setWorkspaceIcon } from "./store/pages.js";
 export { linkUnlinkedMention, unlinkedMentions, type UnlinkedMention } from "./store/unlinked.js";
 export type { CreatePageOptions, DropZone, InsertPosition, PageDestination, SectionID } from "./store/pages.js";

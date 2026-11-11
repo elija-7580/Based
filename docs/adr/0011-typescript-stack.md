@@ -1,6 +1,6 @@
 # ADR 0011: Neustart auf TypeScript-Kern mit Tauri (Desktop) und Capacitor/Tauri (Mobil)
 
-- **Status:** akzeptiert (2026-11-09, Elija)
+- **Status:** umgesetzt (2026-11-11, BSD-168) · akzeptiert 2026-11-09 (Elija)
 - **Ersetzt:** ADR 0010 (Automerge als Text-CRDT). ADR 0001–0009 gelten inhaltlich weiter (Sync v2, Tombstones,
   Kollaboration vorbereiten, Haupt-Agent, Design-Tokens), werden aber im neuen Stack neu umgesetzt.
 - **Bezug:** `docs/sync-protocol.md`, `replica/features.csv`, ADR 0008
@@ -75,8 +75,12 @@ Auto-Update, (f) Mobil, (g) native Extras und Watch.
 
 ## Konsequenzen
 
-- Der Großteil von App, BasedCore und BasedBrain wird abgelöst; der Swift-Code bleibt bis zur Parität als
-  Referenz und Fixture-Quelle im Repo (`legacy/` nach dem Umzug).
+- Der Großteil von App, BasedCore und BasedBrain wird abgelöst; der Swift-Code bleibt als Referenz und
+  Fixture-Quelle im Repo. **Umgesetzt (BSD-168, 11.11.2026):** alle Must-Features der Mac-Beta in
+  `replica/features.csv` (Spalte `ts`) auf yes; Swift-App, Swift-Server und ihre Skripte liegen eingefroren in
+  `legacy/`; `deploy/` startet den TS-Server; CI baut die Swift-Apps nicht mehr und prüft nur noch, dass
+  `fixtures/` zum Swift-Code passt; die Swift-Releases (`release.yml`) sind abgeschaltet. Ein Migrationsassistent
+  (`based-cli export --records`) entfällt – entschieden von Elija: es gibt keine Daten, die nur in der Swift-App liegen.
 - Eine Oberfläche statt mehrerer; neue Features einmal bauen.
 - Kein Apple-Feel; Desktop-Start und RAM deutlich unter Electron.
 - Der Editor muss auf WebKit (iOS, Mac, Linux) und Chromium (Android, Windows) laufen; Playwright testet beide.

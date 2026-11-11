@@ -44,6 +44,31 @@ export function isDescendant(store: WorkspaceStore, id: string, ancestor: string
   return false;
 }
 
+/** Elternblock einer Seite oder Zeile (über die Datenbank), sonst undefined (oben im Arbeitsbereich). */
+function parentPage(store: WorkspaceStore, id: string): string | undefined {
+  const p = store.blocks.get(id)?.parent;
+  if (!p || p === "w") return undefined;
+  if (p.startsWith("b:")) return p.slice(2);
+  return store.databases.get(p.slice(2))?.blockID;
+}
+
+/**
+ * Nur die obersten: `ids` ohne die, deren Vorfahre auch in `ids` steht. Einmal die Vorfahren je ID hinauf
+ * (O(n · Tiefe)); vorher jeder gegen jeden (O(n² · Tiefe)) – bei „alles auswählen“ in der Library mit Tausenden
+ * Seiten mehrere Sekunden (Feedback 11. 11.).
+ */
+export function topmost(store: WorkspaceStore, ids: readonly string[]): string[] {
+  const set = new Set(ids);
+  return ids.filter((id) => {
+    let p = parentPage(store, id);
+    for (let n = 0; p && n < 10_000; n++) {
+      if (set.has(p)) return false;
+      p = parentPage(store, p);
+    }
+    return true;
+  });
+}
+
 /** Alles in einem Block, Datenbankzeilen eingeschlossen (Swift `descendants(of:includeRows:)`). */
 export function subtree(store: WorkspaceStore, id: string, includeRows = true): string[] {
   const out: string[] = [];
@@ -89,6 +114,8 @@ export interface CreatePageOptions {
   title?: string;
   position?: InsertPosition;
   id?: string;
+  /** BSD-168: Vorgaben für neue Seiten (Einstellungen → My settings → New pages), im selben Undo-Schritt. */
+  format?: { font?: "default" | "serif" | "mono"; smallText?: boolean; fullWidth?: boolean };
 }
 
 /** Neue leere Seite (Swift `createTopLevelPage` / `createPage`). */
@@ -105,6 +132,10 @@ export function insertPage(store: WorkspaceStore, tx: Tx, opts: CreatePageOption
   if (opts.title) b.text = opts.title;
   if (store.userID != null) b.createdBy = store.userID;
   if (!opts.parent && opts.section?.kind === "teamspace") b.props = { teamspace: opts.section.id };
+  const f = opts.format;
+  if (f && ((f.font && f.font !== "default") || f.smallText || f.fullWidth)) {
+    b.props = { ...(b.props ?? {}), format: { ...(f.font && f.font !== "default" ? { font: f.font } : {}), ...(f.smallText ? { smallText: true } : {}), ...(f.fullWidth ? { fullWidth: true } : {}) } };
+  }
   tx.put({ kind: "block", data: b });
   return id;
 }
@@ -130,7 +161,7 @@ export function renamePage(store: WorkspaceStore, id: string, title: string) {
 /** Seiten in den Papierkorb (darin liegende verschwinden mit). Gibt die verschobenen Wurzeln zurück. */
 export function trashPages(store: WorkspaceStore, ids: string[]): string[] {
   const unique = [...new Set(ids)].filter((id) => store.blocks.has(id) && !isTrashed(store, id));
-  const roots = unique.filter((id) => !unique.some((o) => o !== id && isDescendant(store, id, o)));
+  const roots = topmost(store, unique);
   if (roots.length === 0) return [];
   store.transact(roots.length === 1 ? "Move to Trash" : `Move ${roots.length} pages to Trash`, (tx) => {
     const now = store.now();
@@ -147,10 +178,21 @@ export function trashedPages(store: WorkspaceStore): Block[] {
 }
 
 /** Stempelt alles in einer wiederhergestellten Seite neu, damit sie gegen ein älteres „Endgültig löschen“ gewinnt. */
-function restampSubtree(store: WorkspaceStore, id: string, tx: Tx) {
+/** Ansichten je Block (einmal pro Vorgang statt einmal je Block über alle Ansichten). */
+function viewsByBlock(store: WorkspaceStore): Map<string, string[]> {
+  const m = new Map<string, string[]>();
+  for (const v of store.views.values()) {
+    const list = m.get(v.blockID);
+    if (list) list.push(v.id);
+    else m.set(v.blockID, [v.id]);
+  }
+  return m;
+}
+
+function restampSubtree(store: WorkspaceStore, id: string, tx: Tx, views = viewsByBlock(store)) {
   for (const d of [id, ...subtree(store, id)]) {
     if (d !== id) tx.restamp(keyOf("block", d));
-    for (const v of store.views.values()) if (v.blockID === d) tx.restamp(keyOf("view", v.id));
+    for (const v of views.get(d) ?? []) tx.restamp(keyOf("view", v));
     const db = store.blocks.get(d)?.props?.databaseID;
     if (db && store.databases.get(db)?.blockID === d) tx.restamp(keyOf("database", db));
   }
@@ -161,6 +203,7 @@ export function restorePages(store: WorkspaceStore, ids: string[]) {
   const roots = ids.filter((id) => store.blocks.get(id)?.trashedAt !== undefined);
   if (roots.length === 0) return;
   store.transact(roots.length === 1 ? "Restore" : `Restore ${roots.length} pages`, (tx) => {
+    const views = viewsByBlock(store);
     for (const id of roots) {
       const b = tx.block(id);
       if (!b) continue;
@@ -193,7 +236,7 @@ export function restorePages(store: WorkspaceStore, ids: string[]) {
           if (x.type === "databaseInline") x.type = "databasePage";
         }
       });
-      restampSubtree(store, id, tx);
+      restampSubtree(store, id, tx, views);
     }
   });
 }
@@ -203,18 +246,22 @@ export function deleteForever(store: WorkspaceStore, ids: string[]) {
   const present = ids.filter((id) => store.blocks.has(id));
   if (present.length === 0) return;
   store.transact("Delete forever", (tx) => {
-    // BSD-248: Relationen anderer Zeilen auf die entfernten Zeilen lösen (wie Swift removeSubtree).
+    // Alles, was wegfällt, einmal einsammeln (Teilbaum je oberster Seite, nicht doppelt) und die Ansichten einmal
+    // nach Block ordnen. Vorher lief jeder entfernte Block einmal über alle Ansichten und jeder Teilbaum zweimal:
+    // „Papierkorb leeren“ nach „alles löschen“ in einem echten Arbeitsbereich hing so lange (Feedback 11. 11.).
     const all = new Set<string>();
-    for (const id of present) for (const d of [id, ...subtree(store, id)]) all.add(d);
+    for (const id of topmost(store, present)) {
+      all.add(id);
+      for (const d of subtree(store, id)) all.add(d);
+    }
+    // BSD-248: Relationen anderer Zeilen auf die entfernten Zeilen lösen (wie Swift removeSubtree).
     unlinkRemovedRows(store, all, tx);
-    for (const id of present) {
-      if (!store.blocks.has(id)) continue; // schon mit einem anderen gelöscht
-      for (const d of [id, ...subtree(store, id)]) {
-        for (const v of [...store.views.values()]) if (v.blockID === d) tx.remove(keyOf("view", v.id));
-        const db = store.blocks.get(d)?.props?.databaseID;
-        if (db && store.databases.get(db)?.blockID === d) tx.remove(keyOf("database", db));
-        tx.remove(keyOf("block", d));
-      }
+    const views = viewsByBlock(store);
+    for (const d of all) {
+      for (const v of views.get(d) ?? []) tx.remove(keyOf("view", v));
+      const db = store.blocks.get(d)?.props?.databaseID;
+      if (db && store.databases.get(db)?.blockID === d) tx.remove(keyOf("database", db));
+      tx.remove(keyOf("block", d));
     }
     if (store.workspace.favorites.some((f) => !store.blocks.has(f))) {
       updateWorkspace(store, tx, (w) => { w.favorites = w.favorites.filter((f) => store.blocks.has(f)); });

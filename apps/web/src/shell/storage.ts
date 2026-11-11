@@ -169,6 +169,43 @@ export const weekStartPref = {
   },
 };
 
+/** Einfache Einstellung pro Gerät mit Benachrichtigung (für useSyncExternalStore). */
+function devicePref<T>(key: string, fallback: T, valid: (v: unknown) => v is T) {
+  const listeners = new Set<() => void>();
+  let cache: { v: T } | undefined;
+  return {
+    get: (): T => {
+      if (!cache) {
+        const v = read<unknown>(key, undefined);
+        cache = { v: valid(v) ? v : fallback };
+      }
+      return cache.v;
+    },
+    set: (v: T) => {
+      cache = { v };
+      write(key, v);
+      listeners.forEach((fn) => fn());
+    },
+    subscribe: (fn: () => void) => {
+      listeners.add(fn);
+      return () => void listeners.delete(fn);
+    },
+  };
+}
+
+export interface NewPageFormat { font: "default" | "serif" | "mono"; smallText: boolean; fullWidth: boolean }
+const isNewPageFormat = (v: unknown): v is NewPageFormat => {
+  const o = v as Partial<NewPageFormat> | undefined;
+  return !!o && typeof o === "object" && (o.font === "default" || o.font === "serif" || o.font === "mono") && typeof o.smallText === "boolean" && typeof o.fullWidth === "boolean";
+};
+/** BSD-168: Schrift, Small text und Full width für neue Seiten (Einstellungen → My settings → New pages). */
+export const newPageFormat = devicePref<NewPageFormat>("based.newPageFormat", { font: "default", smallText: false, fullWidth: false }, isNewPageFormat);
+const isBool = (v: unknown): v is boolean => typeof v === "boolean";
+/** BSD-168: Rechtschreibprüfung beim Schreiben (Standard an, wie Swift). */
+export const spellCheckPref = devicePref<boolean>("based.spellCheck", true, isBool);
+/** BSD-168: Desktop-App sucht beim Start nach Updates (Standard an). */
+export const autoUpdatePref = devicePref<boolean>("based.autoUpdateCheck", true, isBool);
+
 /** BSD-281: angepinnte und ausgeblendete Einträge der Seitenleiste (pro Gerät). */
 export const sidebarNavPrefs = {
   get: (): unknown => read<unknown>("based.sidebar.nav", undefined),

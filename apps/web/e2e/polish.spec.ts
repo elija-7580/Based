@@ -141,3 +141,46 @@ test("Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letz
   await panel.evaluate((el) => el.scrollTo(0, 0));
   await expect.poll(current).toBe("One");
 });
+
+// Feedback 11. 11. (Mac): „alle Seiten löschen“ in der Library und „Papierkorb leeren“ reagierten nicht. Die Arbeit
+// im Speicher ist jetzt linear (store-perf.test.ts); hier: die Oberfläche bleibt bedienbar und sagt, was läuft.
+test("Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die Oberfläche bleibt bedienbar", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<unknown> } } }).__based.client.command({ op: "seed", count: 1000 }));
+  await expect(page.getByRole("treeitem", { name: "Page 0001" })).toBeVisible();
+  // Hänger-Messer: größte Lücke zwischen zwei 20-ms-Ticks
+  await page.evaluate(() => { const g = globalThis as { __gap?: number }; g.__gap = 0; let last = performance.now(); setInterval(() => { const n = performance.now(); g.__gap = Math.max(g.__gap!, n - last - 20); last = n; }, 20); });
+  const gap = () => page.evaluate(() => { const g = globalThis as { __gap?: number }; const v = g.__gap ?? 0; g.__gap = 0; return Math.round(v); });
+  const steps: string[] = [];
+  const mark = async (name: string) => steps.push(`${name}: ${await gap()}`);
+  const trashCount = () => page.evaluate(() => (globalThis as unknown as { __based: { client: { getState(): { outline?: { trash: unknown[] } } } } }).__based.client.getState().outline?.trash.length ?? 0);
+
+  await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Library" }).click();
+  // Die Library lädt ihre Einträge nachträglich; vorher ist „Select all“ gesperrt.
+  await expect(page.getByRole("list", { name: "Library items" }).getByRole("listitem").first()).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("checkbox", { name: "Select all" }).click({ force: true });
+  await expect(page.getByTestId("library-selected")).toContainText(/\d{4} selected/);
+  await mark('await page.getByRole("checkbox", { name:');
+  await page.getByRole("button", { name: "Move to Trash" }).first().click();
+  await mark('await page.getByRole("button", { name: "');
+  await page.getByRole("button", { name: "Move to Trash" }).last().click();
+  await expect.poll(trashCount, { timeout: 60_000 }).toBeGreaterThanOrEqual(1000);
+  await expect(page.getByRole("treeitem", { name: "Page 0001" })).toHaveCount(0);
+  await mark('await expect(page.getByRole("treeitem", ');
+
+  await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: /^Trash/ }).click();
+  // nur eine Seite voll Zeilen im DOM, der Rest auf Wunsch
+  await expect(page.getByRole("list", { name: "Pages in Trash" }).getByRole("listitem")).toHaveCount(100);
+  await expect(page.getByTestId("trash-more")).toContainText(/\d+ more in Trash/);
+  await page.getByRole("button", { name: "Empty Trash" }).click();
+  await mark('await page.getByRole("button", { name: "');
+  await page.getByRole("button", { name: /^Delete \d+ forever$/ }).click();
+  await mark('await page.getByRole("button", { name: /');
+  await expect(page.getByTestId("trash-emptying")).toBeVisible();
+  await expect.poll(trashCount, { timeout: 60_000 }).toBe(0);
+  await expect(page.getByText("The Trash is empty.")).toBeVisible();
+  await mark('await expect(page.getByText("The Trash i');
+  for (const st of steps) expect(Number(st.split(": ").pop()), st).toBeLessThan(1000);
+});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchShortcut } from "./shortcuts.js";
+import { matchShortcut, parentPage } from "./shortcuts.js";
 
 const key = (key: string, mods: Partial<{ meta: boolean; ctrl: boolean; shift: boolean; alt: boolean; code: string }> = {}) => ({
   key, code: mods.code ?? "", metaKey: mods.meta ?? true, ctrlKey: mods.ctrl ?? false, shiftKey: mods.shift ?? false, altKey: mods.alt ?? false,
@@ -32,5 +32,17 @@ describe("Tastaturkürzel (BSD-204)", () => {
     expect(matchShortcut(key("0", { code: "Digit0" }))).toBeUndefined();
     expect(matchShortcut(key("k", { alt: true, code: "KeyK" }))).toBeUndefined();
     expect(matchShortcut(key("x", { shift: true, code: "KeyX" }))).toBeUndefined();
+  });
+});
+
+describe("⇧⌘U (BSD-168)", () => {
+  it("öffnet die Elternseite", () => {
+    expect(matchShortcut({ key: "U", code: "KeyU", metaKey: true, ctrlKey: false, shiftKey: true, altKey: false })).toEqual({ kind: "openParent" });
+    expect(matchShortcut({ key: "u", code: "KeyU", metaKey: true, ctrlKey: false, shiftKey: false, altKey: false })).toBeUndefined();
+    const outline = { nodes: { a: {}, b: { parent: "a" }, c: { parent: "gone" } } };
+    expect(parentPage(outline, "b")).toBe("a");
+    expect(parentPage(outline, "a")).toBeUndefined();
+    expect(parentPage(outline, "c")).toBeUndefined();
+    expect(parentPage(undefined, "b")).toBeUndefined();
   });
 });

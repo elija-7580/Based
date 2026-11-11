@@ -1,5 +1,5 @@
 // BSD-148: Datenmodell von Based als Zod-Schemas – das Wire-Format (Sync v2, docs/sync-protocol.md),
-// genau so, wie die Swift-App es schreibt. Abgeleitet aus Swift/BasedCore/Sources/BasedCore/Model/*.swift
+// genau so, wie die Swift-App es schreibt. Abgeleitet aus legacy/Swift/BasedCore/Sources/BasedCore/Model/*.swift
 // (Codable-Implementierungen); ab jetzt ist dieses Schema die Quelle für den TypeScript-Stack.
 //
 // Abgesichert durch fixtures/records/ (von `swift run based-fixtures` erzeugt):

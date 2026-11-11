@@ -3,8 +3,8 @@
 Der TypeScript-Server aus Phase 3 (BSD-158, ADR 0011). Er spricht dasselbe Sync-v2-Protokoll wie der Swift-
 `based-server` ([sync-protocol.md](sync-protocol.md)) auf demselben SQLite-Dateiformat und bietet MCP
 ([mcp.md](mcp.md)) und Echtzeit-Text über Hocuspocus (Yjs). Erster Schnitt: Sync, MCP-Seitenwerkzeuge, Hocuspocus.
-Dazu Teilen (Freigaben, Links, Publish to web, [sharing.md](sharing.md)) und Sandboxen pro Lauf. Agenten,
-Captures usw. bleiben vorerst beim Swift-Server (siehe „Offen“). Die Kommandozeile `based` liegt in `apps/cli`.
+Dazu Teilen (Freigaben, Links, Publish to web, [sharing.md](sharing.md)) und Sandboxen pro Lauf. Captures (`/capture`) gibt es nur im
+eingefrorenen Swift-Server (`legacy/`, siehe „Offen“). Die Kommandozeile `based` liegt in `apps/cli`.
 
 ## Starten
 
@@ -201,7 +201,7 @@ nicht umgesetzt.
   Principal) und 1024 insgesamt (`maxWaitsPerClient`, `maxWaits`); darüber `429` mit `Retry-After: 5` (der
   Sync-Client wartet dann mit Backoff).
 - Logs: JSONL auf stderr, nur Methode, Pfad ohne Query, Status, Dauer, Zähler – keine Titel, Texte, Tokens, Bodies.
-- Docker: `deploy/server-ts.Dockerfile` + `deploy/docker-compose.ts.yml` – läuft als Nutzer `node`, Dateisystem
+- Docker: `deploy/Dockerfile` + `deploy/docker-compose.yml` – läuft als Nutzer `node`, Dateisystem
   schreibgeschützt bis auf `/data` und `/tmp`, `cap_drop: ALL`, `no-new-privileges`, `HEALTHCHECK` auf `/health`,
   Backup-Dienst (`deploy/backup.sh`: täglich `sqlite3 .backup`, 7 Tage).
 
@@ -260,7 +260,7 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
 - `test/client-compat.test.ts`: `SyncClient` aus `packages/sync` gegen den Server über HTTP (Swift-Korpus
   byte-gleich, Offline, Tombstones, GC mit Full-Pull, Live über Long-Poll, falscher Token).
 - `ci/server/swift-client-compat.sh`: startet den TS-Server (Port 18120) und lässt den **unveränderten** Swift-
-  Client (`ServerSync`) über HTTP dagegen laufen: `Swift/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift`
+  Client (`ServerSync`) über HTTP dagegen laufen: `legacy/Swift/BasedBrain/Tests/BasedBrainTests/ExternalServerCompatTests.swift`
   (übersprungen ohne `BASED_COMPAT_SERVER_URL`/`_TOKEN`). Danach liest der TS-Client denselben Server
   (`test/external-mixed.test.ts`: alles, was Swift schrieb, ist im TS-Kern lesbar und byte-gleich). `--reference`
   wiederholt die Swift-Suite gegen den Swift-Server als Kontrolle. Braucht Swift 6.x unter Linux.
@@ -271,14 +271,10 @@ SWIFT_BIN=…/swift/usr/bin ci/server/swift-client-compat.sh [--skip-build] [--r
   „Open in Based“ (`--web-url`) gibt es (BSD-235 Teil 1), der Gast-Start im Web-Client fehlt (Teil 2) – bis dahin
   lesen Gäste im Browser und bearbeiten mit dem Token in Based. Eine Seite, die *in* den geteilten Bereich verschoben wird, kommt bei Gästen
   ohne ihren (unveränderten) Inhalt an, bis der sich ändert oder der Gast `/share/v1/snapshot` lädt (wie Swift).
-- **Deploy** (`deploy/`) ist unverändert und startet den Swift-Server. Umstieg: Dockerfile mit `node:22-slim`,
-  `pnpm deploy --filter @based/server` (oder ein esbuild-Bündel statt `tsx`), gleiche Variablen (`BASED_TOKEN`,
-  `BASED_DB=/data/based.sqlite`, `BASED_PORT`, `BASED_PUBLIC_URL`), gleiches Volume; Caddy leitet WebSockets ohne
-  Änderung weiter. Wichtig: **nie beide Server gleichzeitig auf dieselbe Datei** – jeder hält den Workspace im
-  Speicher. Umschalten = Swift-Container stoppen, TS-Container auf derselben Datei starten (gleiches Format); zurück
-  genauso. Was der TS-Server noch nicht kann (Agenten, Scheduler, Captures, Sessions, Teilen, Web-App `/app`),
-  fehlt dann – ein paralleler Betrieb nach Pfaden bräuchte zwei Workspaces, die sich gegenseitig per Sync v2
-  abgleichen (zwei `--node`-Kennungen).
+- **Deploy** (`deploy/`) startet seit BSD-168 diesen Server (`deploy/Dockerfile`, `deploy/docker-compose.yml`); der
+  Swift-Server liegt eingefroren in `legacy/deploy/`. Umschalten = Swift-Container stoppen, TS-Container auf derselben
+  Datei starten (gleiches Format); **nie beide Server gleichzeitig auf dieselbe Datei**. Was der TS-Server nicht kann
+  (Captures per `/capture`, Web-App `/app`), fehlt dann.
 - **MCP**: Agenten-, Projekt-, Capture- und Host-Werkzeuge, `ask_main_agent`, `resolve_inbox`, Prompts (Skills),
   `/mcp/session/<id>` mit Sitzungs-Tokens. Da sind: Seiten (inkl. `find_replace`, `move_page`, `duplicate_page`,
   `backlinks`, `set_favorite`, BSD-221 Teil 2), Datenbanken (Teil 1) und lesend `list_runs`, `get_run`, `inbox`

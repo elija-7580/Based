@@ -40,10 +40,10 @@ upload ────────────────┘     → partial / fin
 | Model, chunked transcript records, speakers, context, vocabulary, summary prompt, Markdown/HTML export, search | `BasedCore/Model/Meeting.swift`, `Store/MeetingOps.swift` | unit-tested on Linux (`MeetingTests`) |
 | Live utterance cutting for batch models | `BasedCore/Model/UtteranceChunker.swift` | |
 | Voice profiles (centroids, cosine matching, learning, local storage) | `BasedCore/Model/VoiceProfiles.swift` | `VoiceProfileTests` |
-| Capture: mic + Core Audio process tap (macOS 14.2+), mic with background audio (iPhone) | `App/Shared/Meeting/MeetingAudio.swift` | |
-| Recognition + diarization (FluidAudio: Parakeet TDT 0.6B v3, pyannote community-1) | `App/Shared/Meeting/MeetingEngine.swift` | models ~0.5 GB, downloaded once, run on the Neural Engine |
-| Recording lifecycle, final pass, summary | `App/Shared/Meeting/MeetingService.swift` | |
-| UI | `App/Shared/Meeting/MeetingBlockView.swift` | web client renders meetings read-only |
+| Capture: mic + Core Audio process tap (macOS 14.2+), mic with background audio (iPhone) | `legacy/App/Shared/Meeting/MeetingAudio.swift` | |
+| Recognition + diarization (FluidAudio: Parakeet TDT 0.6B v3, pyannote community-1) | `legacy/App/Shared/Meeting/MeetingEngine.swift` | models ~0.5 GB, downloaded once, run on the Neural Engine |
+| Recording lifecycle, final pass, summary | `legacy/App/Shared/Meeting/MeetingService.swift` | |
+| UI | `legacy/App/Shared/Meeting/MeetingBlockView.swift` | web client renders meetings read-only |
 
 The transcript is stored in `.transcript` chunk blocks of 40 segments, so live transcription rewrites (and syncs)
 one small record instead of the whole meeting.

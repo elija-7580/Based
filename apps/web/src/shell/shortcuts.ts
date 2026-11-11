@@ -14,6 +14,8 @@ export type ShortcutAction =
   | { kind: "tab"; index: number } // 0-basiert, -1 = letzter (⌘9 wie im Browser)
   | { kind: "back" }
   | { kind: "forward" }
+  /** BSD-168: ⇧⌘U öffnet die Elternseite (Swift „Open Parent Page“). */
+  | { kind: "openParent" }
   /** BSD-206: Suchen in der Seite (⌘F), nächste/vorige Fundstelle (⌘G / ⇧⌘G). */
   | { kind: "find" }
   | { kind: "findStep"; delta: 1 | -1 };
@@ -41,6 +43,7 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
   if (e.shiftKey) {
     if (code === "KeyL" || k === "l") return { kind: "toggleTheme" };
     if (code === "KeyG" || k === "g") return { kind: "findStep", delta: -1 };
+    if (code === "KeyU" || k === "u") return { kind: "openParent" };
     if (code === "BracketLeft" || code === "BracketRight") return { kind: "cycleTab", delta: code === "BracketRight" ? 1 : -1 };
     return undefined;
   }
@@ -56,4 +59,10 @@ export function matchShortcut(e: KeyLike): ShortcutAction | undefined {
   const digit = /^Digit([1-9])$/.exec(code)?.[1] ?? (/^[1-9]$/.test(k) ? k : undefined);
   if (digit) return { kind: "tab", index: digit === "9" ? -1 : Number(digit) - 1 };
   return undefined;
+}
+
+/** BSD-168: Ziel von ⇧⌘U – die Elternseite laut Seitenleisten-Struktur; oberste Seiten haben keine. */
+export function parentPage(outline: { nodes: Readonly<Record<string, { parent?: string | undefined } | undefined>> } | undefined, id: string): string | undefined {
+  const parent = outline?.nodes[id]?.parent;
+  return parent && outline?.nodes[parent] ? parent : undefined;
 }

@@ -8,11 +8,12 @@
 import type { ChatEngine, ToolPolicy } from "../engine.js";
 import { runTurn } from "../engine.js";
 import type { StoredChatEvent } from "../events.js";
+import { historyFromEvents } from "../history.js";
 import type { ToolCall } from "../messages.js";
 import { mayContinue, spentThisMonth } from "./budget.js";
 import { mainArgument, Permissions, targetPage } from "./permissions.js";
 import { PlanRecorder } from "../planmode.js";
-import { fromMs, isRunFinished, MAIN_AGENT_ID, toMs, type AgentData, type ProjectData, type Rec, type RunData, type ScheduleData } from "./records.js";
+import { fromMs, isRunFinished, MAIN_AGENT_ID, toMs, type AgentData, type ProjectData, type Rec, type RunApproval, type RunData, type ScheduleData } from "./records.js";
 import type { NewRun, RunPatch } from "./store.js";
 
 export interface AgentRunBackend {
@@ -26,6 +27,8 @@ export interface AgentRunBackend {
   claimSchedule(id: string, nowMs: number): Promise<boolean>;
   chatCreate(title: string): Promise<{ id: string }>;
   chatSave(id: string, base: number, events: StoredChatEvent[]): Promise<unknown>;
+  /** BSD-168: Transkript eines Laufs lesen, um nach einer Freigabe über einen Neustart hinweg fortzusetzen. */
+  chatLoad?(id: string): Promise<StoredChatEvent[]>;
   /** Update auf die Projektseite (Hauptagent schreibt Ergebnisse ins Projekt). */
   projectUpdate?(projectID: string, markdown: string): Promise<void>;
 }
@@ -67,6 +70,8 @@ export class AgentRunner {
   private readonly owner: string;
   private running = new Map<string, AbortController>();
   private approvals: { runID: string; call: ToolCall; resolve: (ok: boolean) => void }[] = [];
+  /** BSD-168: Freigaben aus Run-Records, deren Lauf in keinem lebenden Prozess mehr wartet (Neuladen, anderer Tab). */
+  private stored: PendingRunApproval[] = [];
 
   constructor(private readonly o: AgentRunnerOptions) {
     this.owner = o.owner ?? "agents-" + Math.random().toString(36).slice(2, 10);
@@ -75,7 +80,8 @@ export class AgentRunner {
   private now = () => (this.o.now ?? Date.now)();
 
   get pendingApprovals(): readonly PendingRunApproval[] {
-    return this.approvals.map(({ runID, call }) => ({ runID, call }));
+    const live = this.approvals.map(({ runID, call }) => ({ runID, call }));
+    return [...live, ...this.stored.filter((s) => !live.some((l) => l.runID === s.runID && l.call.id === s.call.id))];
   }
 
   get activeRuns(): string[] {
@@ -84,11 +90,37 @@ export class AgentRunner {
 
   approve(runID: string, callID: string, ok: boolean) {
     const a = this.approvals.find((x) => x.runID === runID && x.call.id === callID);
-    if (!a) return;
+    if (!a) {
+      void this.approveStored(runID, callID, ok);
+      return;
+    }
     this.approvals = this.approvals.filter((x) => x !== a);
-    void this.o.backend.updateRun(runID, { status: "running" });
+    void this.o.backend.updateRun(runID, { status: "running", approval: null });
     a.resolve(ok);
     this.o.onChange?.();
+  }
+
+  /**
+   * BSD-168: Freigabe für einen Lauf, dessen Prozess weg ist. Erlauben → der Lauf wird wieder eingereiht und setzt mit
+   * seinem Transkript fort (genau dieser Aufruf ist dann vorab erlaubt). Ablehnen → der Lauf endet mit Hinweis.
+   */
+  private async approveStored(runID: string, callID: string, ok: boolean) {
+    const s = this.stored.find((x) => x.runID === runID && x.call.id === callID);
+    if (!s) return;
+    this.stored = this.stored.filter((x) => x !== s);
+    this.o.onChange?.();
+    const b = this.o.backend;
+    const run = (await b.runs()).find((r) => r.id === runID);
+    if (!run || run.data.status !== "needsYou" || run.data.approval?.callID !== callID) return;
+    // Wartet der Lauf noch lebendig in einem anderen Tab, entscheidet der (sonst liefen zwei Engines).
+    const lease = run.data.lease;
+    if (lease && lease.owner !== this.owner && toMs(lease.until) >= this.now()) return;
+    if (!ok) {
+      await b.updateRun(runID, { status: "failed", result: `Stopped: you declined ${s.call.name}.`, approval: null, lease: null });
+      return;
+    }
+    await b.updateRun(runID, { status: "queued", approval: null, lease: null, resume: { ...run.data.approval, ok: true } });
+    void this.start(runID);
   }
 
   /** Lauf abbrechen (Stop an der Karte, oder sein Record ist weg, z. B. nach Undo). */
@@ -111,12 +143,34 @@ export class AgentRunner {
       if ((r.data.status !== "running" && r.data.status !== "needsYou") || this.running.has(r.id)) continue;
       const lease = r.data.lease;
       if (!lease || lease.owner === this.owner || toMs(lease.until) < this.now()) {
-        await this.o.backend.updateRun(r.id, { status: "failed", result: "Interrupted — Based was closed while this ran.", lease: null });
+        // BSD-168: wartet der Lauf auf eine Freigabe, bleibt er „Needs you“ – die Freigabe setzt ihn später fort.
+        if (r.data.status === "needsYou" && r.data.approval && this.o.approvals !== "deny") {
+          if (lease) await this.o.backend.updateRun(r.id, { lease: null });
+          continue;
+        }
+        await this.o.backend.updateRun(r.id, { status: "failed", result: "Interrupted — Based was closed while this ran.", lease: null, approval: null });
       }
     }
+    this.syncStored(runs);
     const queued = runs.filter((r) => r.data.status === "queued").sort((a, b) => a.data.startedAt - b.data.startedAt);
     const free = (this.o.concurrency ?? 2) - this.running.size;
     for (const r of queued.slice(0, Math.max(0, free))) void this.start(r.id);
+  }
+
+  /** Freigaben aus den Records, die gerade niemand in diesem Prozess hält (ohne Lease bzw. Lease abgelaufen). */
+  private syncStored(runs: readonly Rec<RunData>[]) {
+    const now = this.now();
+    const next: PendingRunApproval[] = [];
+    for (const r of runs) {
+      const a = r.data.approval;
+      if (r.data.status !== "needsYou" || !a || this.running.has(r.id)) continue;
+      if (r.data.lease && r.data.lease.owner !== this.owner && toMs(r.data.lease.until) >= now) continue;
+      next.push({ runID: r.id, call: { id: a.callID, name: a.name, arguments: a.arguments as ToolCall["arguments"] } });
+    }
+    const key = (l: readonly PendingRunApproval[]) => l.map((x) => x.runID + "/" + x.call.id).join(",");
+    if (key(next) === key(this.stored)) return;
+    this.stored = next;
+    this.o.onChange?.();
   }
 
   async fireSchedules(): Promise<number> {
@@ -150,6 +204,14 @@ export class AgentRunner {
       const project = run.data.projectID ? projects.find((p) => p.id === run.data.projectID) : undefined;
       const perms = Permissions.from(main.permissions.rules, main.permissions.mode).layered(project?.data.permissions);
       const plan = new PlanRecorder();
+      // BSD-168: nach einem Neustart erteilte Freigabe – genau dieser Aufruf (Name + Argumente) ist einmal erlaubt.
+      const resume = run.data.resume;
+      let preApproved: RunApproval | undefined = resume?.ok ? resume : undefined;
+      const sameCall = (a: RunApproval, c: ToolCall) => a.name === c.name && JSON.stringify(a.arguments) === JSON.stringify(c.arguments);
+      let chatID: string | undefined = resume ? run.data.chatID : undefined;
+      const prior: StoredChatEvent[] = resume && chatID && b.chatLoad ? await b.chatLoad(chatID).catch(() => []) : [];
+      const events: StoredChatEvent[] = [];
+      const transcript = () => [...prior, ...events];
       const policy: ToolPolicy = {
         mode: perms.mode,
         rules: async (call) => {
@@ -161,8 +223,17 @@ export class AgentRunner {
         onPlanned: plan.record,
         approve: (call) => new Promise<boolean>((resolve) => {
           if (abort.signal.aborted || this.o.approvals === "deny") return resolve(false);
+          if (preApproved && sameCall(preApproved, call)) {
+            preApproved = undefined;
+            return resolve(true);
+          }
           this.approvals.push({ runID, call, resolve });
-          void b.updateRun(runID, { status: "needsYou" });
+          // Stand des Gesprächs und die Frage am Run festhalten: übersteht Neuladen, jeder Tab kann freigeben.
+          const approval: RunApproval = { callID: call.id, name: call.name, arguments: call.arguments };
+          void (async () => {
+            if (chatID) await b.chatSave(chatID, 0, transcript()).catch(() => undefined);
+            await b.updateRun(runID, { status: "needsYou", approval });
+          })();
           this.o.onChange?.();
         }),
       };
@@ -171,13 +242,18 @@ export class AgentRunner {
         await b.updateRun(runID, { status: "failed", result: "No model is set up." });
         return;
       }
-      const chat = await b.chatCreate(run.name || "Agent run");
-      await b.updateRun(runID, { chatID: chat.id, model: engine.label });
+      if (!chatID) chatID = (await b.chatCreate(run.name || "Agent run")).id;
+      const chat = { id: chatID };
+      await b.updateRun(runID, { chatID: chat.id, model: engine.label, ...(resume ? { resume: null } : {}) });
       const spentBefore = spentThisMonth((await b.runs()).filter((r) => r.id !== runID), run.data.agentID ?? MAIN_AGENT_ID, this.now());
-      const events: StoredChatEvent[] = [{ type: "userMessage", text: run.data.instructions ?? run.name, at: this.now() }];
+      const prompt = resume
+        ? `The user approved ${resume.name} now (Based was restarted while you waited). Run it again with the same input and finish the task.`
+        : run.data.instructions ?? run.name;
+      events.push({ type: "userMessage", text: prompt, at: this.now() });
       let cost = run.data.costEUR, stopReason: string | undefined, final = "", failed: string | undefined;
       const instructions = [SUBAGENT_SYSTEM, project ? `Project: ${project.name}${project.data.goal ? ` — goal: ${project.data.goal}` : ""}` : ""].filter(Boolean).join("\n");
-      for await (const e of runTurn(engine, { prompt: run.data.instructions ?? run.name, system: instructions }, abort.signal)) {
+      const history = prior.length ? historyFromEvents(prior) : undefined;
+      for await (const e of runTurn(engine, { prompt, system: instructions, ...(history ? { history } : {}) }, abort.signal)) {
         events.push(e);
         if (e.type === "usage") {
           const updated = await b.updateRun(runID, { addUsage: { inputTokens: e.inputTokens, outputTokens: e.outputTokens, costUSD: e.costUSD ?? 0 } });
@@ -190,7 +266,7 @@ export class AgentRunner {
         } else if (e.type === "text") final = final ? final + "\n\n" + e.text : e.text;
         else if (e.type === "failed" && !e.stopped) failed = e.message;
       }
-      await b.chatSave(chat.id, 0, events).catch(() => undefined);
+      await b.chatSave(chat.id, 0, transcript()).catch(() => undefined);
       const planned = plan.steps.length ? `\nPlanned (not run, plan mode): ${plan.steps.map((x) => x.name).join(", ")}` : "";
       const result = stopReason ? `Stopped: ${stopReason}` : failed ? failed : ((final.trim().slice(0, 280) || "Done") + planned);
       const stillThere = (await b.runs()).find((r) => r.id === runID);

@@ -54,7 +54,17 @@ export interface RunData {
   subscriptionShare?: number;
   result?: string;
   lease?: { owner: string; until: number };
+  /** BSD-168: Aufruf, auf dessen Freigabe der Lauf wartet („Needs you“) – übersteht Neuladen und gilt auf jedem Tab. */
+  approval?: RunApproval;
+  /** BSD-168: Freigabe nach einem Neustart erteilt; der Lauf setzt mit seinem Transkript fort und darf genau diesen Aufruf. */
+  resume?: RunApproval & { ok: boolean };
   [key: string]: unknown;
+}
+
+export interface RunApproval {
+  callID: string;
+  name: string;
+  arguments: unknown;
 }
 
 export type ProjectStatus = "active" | "paused" | "done";

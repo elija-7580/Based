@@ -23,6 +23,7 @@ function backend(agents: AgentStore, store: WorkspaceStore): AgentRunBackend {
     createRun: (d) => a(() => agents.createRun(d)), main: () => a(() => agents.main()), projects: () => a(() => agents.projects()), schedules: () => a(() => agents.schedules()),
     claimSchedule: (id, n) => a(() => agents.claimSchedule(id, n)), chatCreate: (title) => a(() => chats.create({ title })), chatSave: (id, b, e) => a(() => chats.save(id, b, e)),
     projectUpdate: (id, md) => a(() => agents.projectUpdate(id, md)),
+    chatLoad: (id) => a(() => chats.load(id)),
   };
 }
 
@@ -191,6 +192,60 @@ describe("Unteragenten", () => {
     await p;
     expect(agents.run(asking.id)!.data.status).toBe("done");
     expect(changed).toBeGreaterThan(0);
+  });
+
+  it("Freigabe übersteht Neuladen (BSD-168): Frage am Run, nach Erlauben setzt der Lauf mit Transkript fort", async () => {
+    const { agents, store } = setup();
+    const tools = new WorkspaceTools(store);
+    const asking = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "Asks", instructions: "Make the page" });
+    const before = new AgentRunner({
+      backend: backend(agents, store), owner: "tab-1",
+      engine: ({ policy }) => new ScriptedEngine({ tools, policy, script: [{ tool: "create_page", input: { title: "Asked" } }, { text: "first" }] }),
+    });
+    void before.start(asking.id);
+    for (let i = 0; i < 100 && !agents.run(asking.id)!.data.approval; i++) await new Promise((r) => setTimeout(r, 2));
+    expect(agents.run(asking.id)!.data).toMatchObject({ status: "needsYou", approval: { name: "create_page", arguments: { title: "Asked" } } });
+
+    // „Neu geladen“: neuer Runner im selben Tab, der alte Prozess ist weg.
+    const after = new AgentRunner({
+      backend: backend(agents, store), owner: "tab-1",
+      engine: ({ policy }) => new ScriptedEngine({ tools, policy, script: [{ tool: "create_page", input: { title: "Asked" } }, { text: "Created Asked." }] }),
+    });
+    await after.tick();
+    expect(agents.run(asking.id)!.data.status).toBe("needsYou");
+    expect(after.pendingApprovals.map((a) => a.call.name)).toEqual(["create_page"]);
+    after.approve(asking.id, after.pendingApprovals[0]!.call.id, true);
+    for (let i = 0; i < 100 && agents.run(asking.id)!.data.status !== "done"; i++) await new Promise((r) => setTimeout(r, 2));
+    const r = agents.run(asking.id)!.data;
+    expect(r).toMatchObject({ status: "done", result: "Created Asked." });
+    expect(r.approval).toBeUndefined();
+    expect(r.resume).toBeUndefined();
+    expect([...store.blocks.values()].filter((b) => b.type === "page" && plainText(b.text) === "Asked")).toHaveLength(1);
+    const transcript = new ChatStore(store).load(r.chatID!);
+    const resumedWith = transcript.filter((e) => e.type === "userMessage").map((e) => (e as { text: string }).text).join(" | ");
+    expect(resumedWith).toContain("Make the page");
+    expect(resumedWith).toContain("approved create_page");
+    expect(after.pendingApprovals).toEqual([]);
+  });
+
+  it("gespeicherte Freigabe ablehnen beendet den Lauf mit Hinweis; lebender Lauf in anderem Tab bleibt dessen Sache", async () => {
+    const { agents, store, now } = setup();
+    const tools = new WorkspaceTools(store);
+    const asking = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "Asks", instructions: "x" });
+    const live = new AgentRunner({
+      backend: backend(agents, store), owner: "tab-1", now,
+      engine: ({ policy }) => new ScriptedEngine({ tools, policy, script: [{ tool: "create_page", input: { title: "No" } }, { text: "x" }] }),
+    });
+    void live.start(asking.id);
+    for (let i = 0; i < 100 && !agents.run(asking.id)!.data.approval; i++) await new Promise((r) => setTimeout(r, 2));
+    const other = new AgentRunner({ backend: backend(agents, store), owner: "tab-2", now, engine: () => undefined });
+    await other.tick();
+    expect(other.pendingApprovals).toEqual([]); // Lease von tab-1 läuft noch
+    const again = new AgentRunner({ backend: backend(agents, store), owner: "tab-1", now, engine: () => undefined });
+    await again.tick();
+    again.approve(asking.id, again.pendingApprovals[0]!.call.id, false);
+    for (let i = 0; i < 100 && agents.run(asking.id)!.data.status !== "failed"; i++) await new Promise((r) => setTimeout(r, 2));
+    expect(agents.run(asking.id)!.data).toMatchObject({ status: "failed", result: "Stopped: you declined create_page." });
   });
 
   it("unterbrochener Lauf (App zu) wird als fehlgeschlagen gemeldet, nicht wiederholt", async () => {

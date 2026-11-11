@@ -260,7 +260,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
-    ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL }) } : {}),
+    ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined }) } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
