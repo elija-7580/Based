@@ -8,7 +8,7 @@ import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange }
 import { isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
-import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, type GuestConfig, type GuestMe } from "./shell/guest.js";
+import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { StoreClient } from "./worker/client.js";
@@ -97,6 +97,7 @@ async function serverUsesPropertyRecords(url: string): Promise<boolean> {
 }
 
 function start(guest: GuestBoot | undefined) {
+  if (guest) setGuestAccess(guest.me);
   const devices = guest ? guestDeviceNode(guest.id) : deviceNode;
   const link = new StoreLink({
     ...browserLinkOptions(guest ? `based-guest-${guest.id}` : undefined),

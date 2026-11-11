@@ -18,6 +18,7 @@ import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText } from "../../shell/diagnostics.js";
 import { deviceNode, propertyRecordsSetting, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
@@ -197,7 +198,7 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
       <Row label="Trash" hint={trash ? `${count(trash, "page")} waiting in the Trash` : "The Trash is empty"}>
         <HStack gap={2}>
           <BasedButton label="Open Trash" variant="ghost" onClick={() => navigate({ name: "trash" })} />
-          <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} />
+          {mayDeleteForever() ? <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} /> : null}
         </HStack>
       </Row>
       <BasedConfirm open={confirm} onClose={() => setConfirm(false)} title="Empty the Trash?" description={`${count(trash, "page")} will be deleted for good. This can't be undone.`} actionLabel="Empty Trash" onConfirm={async () => { await client.command({ op: "emptyTrash" }); }} />

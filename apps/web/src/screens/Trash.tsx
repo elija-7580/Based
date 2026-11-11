@@ -2,20 +2,22 @@
 import { useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
+import { mayDeleteForever } from "../shell/guest.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 
 export function Trash({ client, state, onOpenPage }: { client: StoreClient; state: ShellState; onOpenPage: (id: string) => void }) {
   const entries = state.outline?.trash ?? [];
   const [confirm, setConfirm] = useState(false);
+  const forever = mayDeleteForever();
   return (
     <div className="content">
       <div className="column">
         <header className="trash-head">
           <div>
             <h1 className="t-title">Trash</h1>
-            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>Pages stay here until you delete them forever.</p>
+            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
           </div>
-          {entries.length ? (
+          {entries.length && forever ? (
             confirm ? (
               <span className="actions">
                 <button type="button" className="btn primary" onClick={() => { setConfirm(false); void client.command({ op: "emptyTrash" }); }}>
@@ -44,7 +46,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
                   <button type="button" className="btn" onClick={() => void client.command({ op: "restore", ids: [e.id] })}>
                     <Icon name="restore" size={16} />Restore
                   </button>
-                  <button type="button" className="btn ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })}>Delete forever</button>
+                  {forever ? <button type="button" className="btn ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })}>Delete forever</button> : null}
                 </li>
               );
             })}

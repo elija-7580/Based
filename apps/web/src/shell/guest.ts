@@ -88,3 +88,16 @@ export async function fetchGuestMe(cfg: GuestConfig, fetcher: typeof fetch = (..
 export function guestStartPage(cfg: GuestConfig, me: GuestMe | undefined): string | undefined {
   return cfg.page ?? me?.pages[0]?.id;
 }
+
+/**
+ * BSD-282: Endgültig löschen dürfen nur der Besitzer und Gäste mit „Full access“; „Can edit“ legt in den Papierkorb.
+ * Der Server lehnt es ohnehin ab, die Oberfläche bietet es dann gar nicht erst an.
+ */
+let deleteForeverAllowed = true;
+
+/** Nur im Gast-Modus aufrufen. Unbekannte Rolle (Server nicht erreichbar) zählt als „Can edit“. */
+export function setGuestAccess(me: Pick<GuestMe, "pages"> | undefined) {
+  deleteForeverAllowed = me !== undefined && me.pages.some((p) => p.role === "full");
+}
+
+export const mayDeleteForever = (): boolean => deleteForeverAllowed;

@@ -43,3 +43,16 @@ describe("Gast-Modus (BSD-235)", () => {
     expect(await fetchGuestMe(cfg, async () => { throw new TypeError("offline"); })).toBeUndefined();
   });
 });
+
+describe("BSD-282: endgültig löschen im Gast-Modus", () => {
+  it("nur mit „Full access“; unbekannte Rolle zählt als „Can edit“", async () => {
+    const { mayDeleteForever, setGuestAccess } = await import("./guest.js");
+    expect(mayDeleteForever()).toBe(true); // Besitzer
+    setGuestAccess({ pages: [{ id: "a", title: "A", role: "edit" }] });
+    expect(mayDeleteForever()).toBe(false);
+    setGuestAccess(undefined);
+    expect(mayDeleteForever()).toBe(false);
+    setGuestAccess({ pages: [{ id: "a", title: "A", role: "edit" }, { id: "b", title: "B", role: "full" }] });
+    expect(mayDeleteForever()).toBe(true);
+  });
+});

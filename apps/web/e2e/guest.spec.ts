@@ -95,3 +95,20 @@ test("Teil 3: widerrufener Link zeigt „This link no longer works“ statt eine
   await expect(page).not.toHaveURL(/guest=/);
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "", { timeout: 20_000 });
 });
+
+test("BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten", async ({ page }) => {
+  const link = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "edit" }) });
+  const { secret } = (await link.json()) as { secret: string };
+  await page.goto("/#/share/" + encodeURIComponent(`${serverURL}/s/${secret}`));
+  await expect(page).toHaveURL(/\?guest=[0-9a-f]{16}/);
+  await expect(page.getByTestId("page-content")).toContainText("Welcome to the shared wiki", { timeout: 20_000 });
+  const go = (r: unknown) => page.evaluate((route) => (globalThis as unknown as { __based: { history: { navigate(r: unknown): void } } }).__based.history.navigate(route), r);
+  // Einstellungen → Workspace: „Open Trash“ ja, „Empty Trash…“ nein
+  await go({ name: "settings", page: "workspace" });
+  await expect(page.getByRole("button", { name: "Open Trash" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Empty Trash…" })).toHaveCount(0);
+  // Papierkorb: Hinweis statt „endgültig löschen“
+  await go({ name: "trash" });
+  await expect(page.getByText("until the owner deletes them")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Delete .*forever|Empty Trash/ })).toHaveCount(0);
+});

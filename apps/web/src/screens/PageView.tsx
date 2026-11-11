@@ -16,6 +16,7 @@ import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
+import { mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
@@ -212,10 +213,12 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         <div className="trash-banner" role="status">
           <span>This page is in the Trash.</span>
           <button type="button" className="btn" onClick={() => void client.command({ op: "restore", ids: [pageID] })}>Restore</button>
-          <button type="button" className="btn ghost" onClick={() => {
-            void client.command({ op: "deleteForever", ids: [pageID] });
-            onNavigate({ name: "trash" });
-          }}>Delete forever</button>
+          {mayDeleteForever() ? (
+            <button type="button" className="btn ghost" onClick={() => {
+              void client.command({ op: "deleteForever", ids: [pageID] });
+              onNavigate({ name: "trash" });
+            }}>Delete forever</button>
+          ) : null}
         </div>
       ) : null}
       {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
