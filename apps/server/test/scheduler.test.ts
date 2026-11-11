@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { AgentStore, ChatStore, fromMs, MAIN_AGENT_ID, putRecord, RUN_TYPE, SCHEDULE_TYPE, listRecords, ScriptedEngine, WorkspaceTools, type RunData, type ScheduleData } from "@based/brain";
 import { serverModelFor } from "../src/agent-engine.js";
-import { startApp } from "./helpers.js";
+import { startApp, TOKEN } from "./helpers.js";
 
 const apps: { close(): Promise<void> }[] = [];
 afterEach(async () => { for (const a of apps.splice(0)) await a.close(); });
@@ -60,6 +60,8 @@ describe("Server-Scheduler (BSD-243)", () => {
     apps.push(app);
     const store = app.sync.store;
     expect(app.scheduler.executes).toBe(true);
+    const info = await fetch(`${app.url}/sync/v2/info`, { headers: { Authorization: `Bearer ${TOKEN}` } }).then((r) => r.json() as Promise<{ agents?: { runsOnServer?: boolean } }>);
+    expect(info.agents?.runsOnServer).toBe(true);
     new AgentStore(store, () => now).saveMain((d) => { d.permissions = { mode: "free", rules: "" }; });
     store.transact("s", (tx) => putRecord(store, tx, SCHEDULE_TYPE, "44444444-4444-4444-8444-444444444444", "Brief", { v: 1, when: "every 2h", prompt: "Write the morning brief", agentID: MAIN_AGENT_ID, enabled: true, nextAt: fromMs(now - 1000) }));
     expect(await app.scheduler.cycle()).toBe(1);
@@ -83,6 +85,8 @@ describe("Server-Scheduler (BSD-243)", () => {
     const app = await startApp({ nowMillis: () => now, scheduleEvery: false });
     apps.push(app);
     expect(app.scheduler.executes).toBe(false);
+    const info = await fetch(`${app.url}/sync/v2/info`, { headers: { Authorization: `Bearer ${TOKEN}` } }).then((r) => r.json() as Promise<{ agents?: { runsOnServer?: boolean } }>);
+    expect(info.agents?.runsOnServer).toBe(false);
     const store = app.sync.store;
     store.transact("s", (tx) => putRecord(store, tx, SCHEDULE_TYPE, "66666666-6666-4666-8666-666666666666", "Daily", { v: 1, when: "every 2h", prompt: "x", agentID: MAIN_AGENT_ID, enabled: true, nextAt: fromMs(now - 1000) }));
     expect(await app.scheduler.cycle()).toBe(1);
