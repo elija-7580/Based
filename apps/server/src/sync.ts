@@ -15,6 +15,17 @@ import {
 import { asInt, asText, decodeStamp, openWorkspace, SqlitePersistence, type SqlDatabase } from "@based/sync";
 
 export const PROTOCOL = 2;
+/** BSD-30: Protokoll mit der Record-Art `property` (Datenbank-Records ohne Property-Liste). */
+export const PROTOCOL_PROPERTY_RECORDS = 3;
+export const PROTOCOL_HEADER = "x-based-protocol";
+
+/** BSD-30: Client und Server sprechen nicht dasselbe Format. */
+export class ProtocolMismatch extends Error {
+  constructor(readonly status: 409 | 426, message: string, readonly protocol: number) {
+    super(message);
+    this.name = "ProtocolMismatch";
+  }
+}
 /** Tombstones bleiben so lange (Swift `SyncServer.tombstoneRetentionDays`). */
 export const TOMBSTONE_RETENTION_DAYS = 90;
 export const OLDEST_SEQ_KEY = "sync.oldestSeq";
@@ -22,7 +33,7 @@ export const MAX_PAGE = 5_000;
 export const DEFAULT_PAGE = 500;
 export const MAX_WAIT_SECONDS = 55;
 
-const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view"]);
+const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view", "property"]);
 
 /** Löschung auf dem Draht: `{kind, id, stamp?}`. */
 export interface WireDeletion {
@@ -107,6 +118,11 @@ export interface SyncServiceOptions {
   maxWaitsPerClient?: number;
   /** … und insgesamt (Standard 1024). Darüber: `WaitLimit` (HTTP 429 mit Retry-After). */
   maxWaits?: number;
+  /**
+   * BSD-30 (ADR 0014): Properties als eigene Records. Stellt die Datei beim Start um (Kopie vorher) und spricht dann
+   * Protokoll 3; Clients mit Protokoll 2 werden abgewiesen. Eine umgestellte Datei bleibt es auch ohne die Option.
+   */
+  propertyRecords?: boolean;
 }
 
 /** BSD-75: zu viele offene Long-Polls (je Client oder gesamt). */
@@ -128,8 +144,25 @@ export class SyncService {
   private readonly nowMillis: () => number;
   private closed = false;
 
+  /** 3, wenn der Workspace Properties als eigene Records führt, sonst 2. */
+  get protocol(): number {
+    return this.store.propertyRecords ? PROTOCOL_PROPERTY_RECORDS : PROTOCOL;
+  }
+
+  /**
+   * BSD-30: Passt das Protokoll des Clients (Header `X-Based-Protocol`, ohne Angabe 2)? Ein alter Client bekäme
+   * Datenbanken ohne Spalten und könnte das zurückschreiben; ein neuer Client verstünde einen alten Server nicht.
+   */
+  checkProtocol(header: string | string[] | undefined) {
+    const n = Number(Array.isArray(header) ? header[0] : header);
+    const client = Number.isInteger(n) && n > 0 ? n : PROTOCOL;
+    if (client === this.protocol) return;
+    if (client < this.protocol) throw new ProtocolMismatch(426, `This workspace needs a newer Based (sync protocol ${this.protocol}). Update the app.`, this.protocol);
+    throw new ProtocolMismatch(409, `This server still uses sync protocol ${this.protocol}. Switch the server to property records before this device syncs.`, this.protocol);
+  }
+
   constructor(readonly db: SqlDatabase, opts: SyncServiceOptions = {}) {
-    const ws = openWorkspace(db, { node: opts.node ?? "server" });
+    const ws = openWorkspace(db, { node: opts.node ?? "server", ...(opts.propertyRecords === undefined ? {} : { propertyRecords: opts.propertyRecords }) });
     this.store = ws.store;
     this.persistence = ws.persistence;
     this.nowMillis = opts.nowMillis ?? Date.now;
@@ -156,7 +189,7 @@ export class SyncService {
   }
 
   info() {
-    return { protocol: PROTOCOL, seq: this.seq, oldestSeq: this.oldestSeq };
+    return { protocol: this.protocol, seq: this.seq, oldestSeq: this.oldestSeq };
   }
 
   /** Push zusammenführen (Last-Writer-Wins). Ungestempelte Löschungen stempelt der Server beim Empfang. */

@@ -17,7 +17,7 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText } from "../../shell/diagnostics.js";
-import { deviceNode, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { deviceNode, propertyRecordsSetting, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
@@ -104,6 +104,7 @@ function SyncSection({ client, state }: SettingsSectionProps) {
     // erst gespeichert, dann verbunden: der Status in der Seitenleiste heißt dann auch „übersteht Neuladen“
     void syncConfig.flush().then(() => client.setSync(config));
   };
+  const [convert, setConvert] = useState(false);
   const disconnect = () => {
     syncConfig.set(undefined);
     setConnected(false);
@@ -137,6 +138,16 @@ function SyncSection({ client, state }: SettingsSectionProps) {
             value={collab} onChange={changeCollab} labelPosition="start" labelSpacing="spread" width="100%" />
         </VStack>
       </form>
+      <Row label="Database columns" hint={status.propertyRecords
+        ? "Each column is stored and synced on its own. Two devices can change different columns of the same database at the same time. Older versions of Based can't open this workspace any more."
+        : "Columns are stored together with their database. If two devices change different columns at the same time, one change is lost."}>
+        {status.propertyRecords
+          ? <Value testID="property-records-status">Synced one by one</Value>
+          : <BasedButton label="Convert…" onClick={() => setConvert(true)} />}
+      </Row>
+      <BasedConfirm open={convert} onClose={() => setConvert(false)} title="Store each column on its own?"
+        description="Based converts this workspace once and reloads. Rows and pages are not touched, and a copy of every database is kept. After this, older versions of Based and a server that has not been converted can't sync with this device. Convert the server first."
+        actionLabel="Convert and reload" onConfirm={() => { propertyRecordsSetting.set(true); location.reload(); }} />
     </Group>
   );
 }

@@ -67,6 +67,22 @@ without breaking older ones. Since BSD-25 the Swift clients do this:
 
 All requests send `Authorization: Bearer <token>`.
 
+### Protocol 3: database columns as records (BSD-30, ADR 0014)
+
+A server whose workspace was converted speaks protocol 3 (`"protocol": 3` in `info` and `/health`). The record
+set gains the kind `property` (id `<databaseID>/<propertyID>`, fields `databaseID`, `sk`, `schema`, `stamp`), and a
+`database` record then carries `properties: []`. Endpoints, cursors and merge rules are the same as in v2.
+
+Clients send their protocol in the header `X-Based-Protocol` (missing = 2) on every sync request. If it does not
+match the server's, nothing is exchanged:
+
+| client | server | reply                                                     |
+|--------|--------|-----------------------------------------------------------|
+| 2      | 3      | `426`, the client must be updated or converted            |
+| 3      | 2      | `409`, the server must be converted first                 |
+
+Convert the server first (`based-server --property-records`), then each device.
+
 ### `GET /sync/v2/info`
 
 ```json

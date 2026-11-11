@@ -14,7 +14,8 @@ function run(args: string[], env: Record<string, string> = {}) {
   const { BASED_TOKEN: _drop, ...rest } = process.env;
   void _drop;
   return spawn(join(root, "node_modules/.bin/tsx"), [join(root, "src/main.ts"), ...args], {
-    env: { ...rest, BASED_LOG_LEVEL: "info", ...env },
+    // altes Format, auch wenn die Suite mit BASED_PROPERTY_RECORDS=1 läuft (BSD-30; eigener Test unten)
+    env: { ...rest, BASED_LOG_LEVEL: "info", BASED_PROPERTY_RECORDS: "", ...env },
     stdio: ["ignore", "pipe", "pipe"],
   });
 }

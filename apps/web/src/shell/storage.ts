@@ -36,6 +36,15 @@ export const deviceNode = {
   set: (node: string) => write("based.device", node),
 };
 
+/**
+ * BSD-30 (ADR 0014): Dieses Gerät führt Properties als eigene Records. Einmal eingeschaltet, stellt der Worker die
+ * Datei beim nächsten Start um; die Datei bleibt danach umgestellt, auch wenn der Eintrag fehlt.
+ */
+export const propertyRecordsSetting = {
+  get: (): boolean => read<unknown>("based.propertyRecords", false) === true,
+  set: (on: boolean) => write("based.propertyRecords", on),
+};
+
 let secrets: SecretStore | undefined;
 const secretStore = () => (secrets ??= new SecretStore(typeof indexedDB === "undefined" ? memoryKV() : indexedDBKV()));
 /** Die verschlüsselte Ablage (IndexedDB; ohne IndexedDB nur für diese Sitzung im Speicher – nie Klartext im localStorage). */

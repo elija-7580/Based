@@ -432,19 +432,22 @@ export class PageReplica {
 
   constructor(private readonly client: StoreClient, data: PageRecords) {
     this.pageID = data.pageID;
-    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records) });
+    // BSD-30: gleiche Form wie der Worker – so schickt eine Schema-Änderung nur die geänderte Property zurück
+    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records), propertyRecords: data.propertyRecords === true });
     this.unobserve = this.store.observe((c) => {
       if (c.origin !== "local" && c.origin !== "undo" && c.origin !== "redo" && c.origin !== "derived") return;
       const upserts: WireRecord[] = [];
       const deletions: RecordKeyString[] = [];
-      for (const key of c.keys) {
+      // BSD-30: nur was wirklich geschrieben wurde (nicht die bloß benachrichtigte Datenbank einer Property)
+      const sent = c.notified?.length ? c.keys.filter((k) => !c.notified!.includes(k)) : c.keys;
+      for (const key of sent) {
         const r = this.store.record(key);
         if (r) upserts.push(structuredClone(r));
         else deletions.push(key);
         this.inflight.set(key, (this.inflight.get(key) ?? 0) + 1);
       }
       const done = () => {
-        for (const key of c.keys) {
+        for (const key of sent) {
           const n = (this.inflight.get(key) ?? 1) - 1;
           if (n <= 0) this.inflight.delete(key);
           else this.inflight.set(key, n);
@@ -485,6 +488,7 @@ export class PageReplica {
     for (const b of s.blocks.values()) gone.push(recordKey({ kind: "block", data: b }));
     for (const d of s.databases.values()) gone.push(recordKey({ kind: "database", data: d }));
     for (const v of s.views.values()) gone.push(recordKey({ kind: "view", data: v }));
+    for (const p of s.properties.values()) gone.push(recordKey({ kind: "property", data: p }));
     this.receive(records, gone.filter((k) => !have.has(k)));
   }
 

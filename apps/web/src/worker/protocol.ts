@@ -42,6 +42,8 @@ export interface StatusInfo {
   assets?: AssetsInfo;
   /** BSD-287: Zustand des Syncs selbst (auch wenn `state` „memory“ zeigt). */
   sync?: SyncState;
+  /** BSD-30: Der Workspace führt Properties als eigene Records (umgestellte Datei, Protokoll 3). */
+  propertyRecords?: boolean;
   /** BSD-286: Uhr dieses Geräts weicht von der Server-Uhr ab (Sekunden, Server minus Gerät); nur über der Grenze. */
   clockSkew?: number;
 }
@@ -127,6 +129,8 @@ export interface PageRecords {
   pageID: string;
   node: string;
   records: WireRecord[];
+  /** BSD-30: Der Worker führt Properties als eigene Records; die Replik muss es dann auch. */
+  propertyRecords?: boolean;
 }
 
 /** Eine Seite für Erwähnungen, das @-Menü und Backlinks (Titel, Icon, Papierkorb). */
@@ -181,7 +185,7 @@ export interface DatabaseInfo {
 }
 
 export type Request =
-  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string }
+  | { type: "init"; device?: string; sync?: SyncConfig; opfs?: string; propertyRecords?: boolean }
   | { type: "command"; command: Command }
   | { type: "search"; query: string; limit?: number; filters?: SearchFilters; sort?: SearchSort }
   | { type: "warmSearch" }

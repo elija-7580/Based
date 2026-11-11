@@ -6,9 +6,9 @@ export const SYNC_PROTOCOL_VERSION = 2;
 export const coreVersion = CORE_VERSION;
 
 export * from "./sql.js";
-export { CURRENT_SCHEMA_VERSION, MIGRATIONS, PersistenceError, migrate, schemaVersion } from "./migrations.js";
+export { CURRENT_SCHEMA_VERSION, MIGRATIONS, PROPERTY_RECORDS_SCHEMA_VERSION, PersistenceError, enablePropertyRecords, hasPropertyRecords, migrate, schemaVersion } from "./migrations.js";
 export type { Migration } from "./migrations.js";
-export { LOCAL_DERIVED, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode } from "./persistence.js";
+export { LOCAL_DERIVED, SqlitePersistence, decodeStamp, deviceNodeID, encodeStamp, openWorkspace, resolveNode, revertPropertyRecords } from "./persistence.js";
 export type { ChangeEntry, DeviceNodeStore, NodeResolution, UndecodableRow } from "./persistence.js";
 export { PULLED_KEY, PUSHED_KEY, SyncClient, SyncHTTPError, CLOCK_SKEW_LIMIT_MS, clockSkewFrom, decodeDeletions, decodeRecords } from "./client.js";
 export type { SyncClientOptions, SyncLog, SyncRoundResult, WireDeletion } from "./client.js";

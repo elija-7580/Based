@@ -8,23 +8,15 @@
 import { compareStamps, type Stamp } from "../hlc.js";
 import { plainText } from "../richtext.js";
 import { keysBetween } from "../sortkeys.js";
-import type { Block, Database, DatabaseView, PropertySchema, WireRecord } from "./records.js";
+import type { Block, Database, DatabaseView, PropertyRecord, PropertySchema, WireRecord } from "./records.js";
 
-/** Ein Record pro Property. `schema` ist die Property, wie sie bisher in `database.properties` stand (unbekannte Felder bleiben). */
-export interface PropertyRecord {
-  /** `<databaseID>:<propertyID>` – Property-IDs sind nur je Datenbank eindeutig (die Titel-Property heißt überall `title`). */
-  id: string;
-  databaseID: string;
-  /** Reihenfolge innerhalb der Datenbank (Sortierschlüssel wie bei Blöcken). */
-  sk: string;
-  schema: PropertySchema;
-  stamp: Stamp;
-}
+export type { PropertyRecord };
 
 /** Datenbank-Record im neuen Format: ohne Properties; `legacyProperties` ist die eingefrorene Liste von vor der Umstellung (Rückweg). */
 export type DatabaseCore = Database & { legacyProperties?: PropertySchema[] };
 
-export const propertyRecordID = (databaseID: string, propertyID: string) => `${databaseID}:${propertyID}`;
+/** `<databaseID>/<propertyID>` – kein Doppelpunkt, der trennt in Record-Schlüsseln Art und ID. */
+export const propertyRecordID = (databaseID: string, propertyID: string) => `${databaseID}/${propertyID}`;
 
 const byOrder = (a: PropertyRecord, b: PropertyRecord) => (a.sk !== b.sk ? (a.sk < b.sk ? -1 : 1) : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 

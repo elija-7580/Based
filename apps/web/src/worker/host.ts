@@ -93,7 +93,7 @@ export interface OpenedWorkspace {
 }
 
 export interface HostOptions {
-  open: (opts: { device: DeviceNodeStore; opfs?: string }) => Promise<OpenedWorkspace>;
+  open: (opts: { device: DeviceNodeStore; opfs?: string; propertyRecords?: boolean }) => Promise<OpenedWorkspace>;
   post: (e: Event) => void;
   fetch?: typeof fetch;
   online?: () => boolean;
@@ -180,7 +180,7 @@ export class StoreHost {
     const reply = (result: unknown) => this.opts.post({ type: "reply", id: msg.id, ok: true, result });
     try {
       switch (msg.type) {
-        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs)); break;
+        case "init": reply(await this.init(msg.device, msg.sync, msg.opfs, msg.propertyRecords)); break;
         case "command": reply(this.command(msg.command)); break;
         case "search": this.queueSearch(msg.id, msg.query, msg.limit ?? 30, msg.filters, msg.sort); break;
         case "warmSearch": this.searchIndex(); reply(true); break;
@@ -261,7 +261,7 @@ export class StoreHost {
 
   // MARK: Start
 
-  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined): Promise<InitResult> {
+  async init(device: string | undefined, sync: SyncConfig | undefined, opfs: string | undefined, propertyRecords?: boolean): Promise<InitResult> {
     if (this.ws) return { node: this.store.clock.node, persistent: this.ws.persistent, created: false };
     this.device = device;
     const deviceStore: DeviceNodeStore = {
@@ -271,7 +271,7 @@ export class StoreHost {
         this.opts.post({ type: "device", node });
       },
     };
-    this.ws = await this.opts.open(opfs === undefined ? { device: deviceStore } : { device: deviceStore, opfs });
+    this.ws = await this.opts.open({ device: deviceStore, ...(opfs === undefined ? {} : { opfs }), ...(propertyRecords ? { propertyRecords: true } : {}) });
     const store = this.ws.store;
     let homePageID: string | undefined;
     // Erststart ohne Daten und ohne Server: leerer Workspace mit einer Willkommensseite.
@@ -592,7 +592,14 @@ export class StoreHost {
 
   private belongsTo(key: RecordKeyString, pageID: string): boolean {
     const store = this.store;
-    const { kind, id } = parseKey(key);
+    let { kind, id } = parseKey(key);
+    // BSD-30: eine Property gehört dorthin, wo ihre Datenbank hingehört
+    if (kind === "property") {
+      const p = store.properties.get(id);
+      if (!p) return false;
+      kind = "database";
+      id = p.databaseID;
+    }
     const deps = this.syncedDeps.get(pageID);
     // BSD-212: verknüpfte Datenbanken (Record und Zeilen samt Inhalt).
     if (deps?.databases.size) {
@@ -622,7 +629,7 @@ export class StoreHost {
       if (!b) continue;
       out.push({ kind: "block", data: b });
       const db = b.props?.databaseID;
-      if (db && store.databases.get(db)?.blockID === id) out.push({ kind: "database", data: store.databases.get(db)! });
+      if (db && store.databases.get(db)?.blockID === id) out.push(...store.databaseRecords(db));
     }
     for (const v of store.views.values()) if (blockSet.has(v.blockID)) out.push({ kind: "view", data: v });
     return out;
@@ -674,9 +681,8 @@ export class StoreHost {
     const store = this.store;
     const out: WireRecord[] = [];
     for (const d of databaseIDs) {
-      const db = store.databases.get(d);
-      if (!db) continue;
-      out.push({ kind: "database", data: db });
+      if (!store.databases.has(d)) continue;
+      out.push(...store.databaseRecords(d));
       const ids: string[] = [];
       for (const row of store.children("d:" + d)) ids.push(row, ...subtree(store, row));
       out.push(...this.recordsFor(ids));
@@ -778,7 +784,7 @@ export class StoreHost {
     this.openPages.set(pageID, keys);
     this.syncedDeps.set(pageID, deps);
     this.history?.pageOpened(pageID);
-    return { pageID, node: store.clock.node, records };
+    return { pageID, node: store.clock.node, records, propertyRecords: store.propertyRecords };
   }
 
   // MARK: Seiten-Angaben, Seitensuche und Backlinks (Erwähnungen im Editor)
@@ -854,7 +860,7 @@ export class StoreHost {
       const upserts: WireRecord[] = [];
       const deletions: RecordKeyString[] = [];
       for (const key of this.indexDirty) {
-        const r = store.record(key);
+        const r = store.logicalRecord(key);
         if (r) upserts.push(r);
         else deletions.push(key);
       }
@@ -1116,6 +1122,7 @@ export class StoreHost {
     if (detail) s.detail = detail;
     if (state !== syncState) s.sync = syncState;
     if (this.sync?.clockSkew !== undefined) s.clockSkew = Math.round(this.sync.clockSkew / 1000);
+    if (store?.propertyRecords) s.propertyRecords = true;
     const a = this.assets?.status();
     if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {
       s.assets = { uploads: a.pending, downloads: a.downloading, failed: a.failed };

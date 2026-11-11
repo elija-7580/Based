@@ -14,20 +14,22 @@ const host = new StoreHost({
   post: (e: Event) => self.postMessage(e),
   online: () => self.navigator.onLine,
   importedAssets: new IDBAssetStore(),
-  async open({ device, opfs }) {
+  async open({ device, opfs, propertyRecords }) {
+    // BSD-30: nur einschalten, nie ausschalten – eine umgestellte Datei bleibt es (openWorkspace)
+    const mode = propertyRecords ? { propertyRecords: true } : {};
     if (opfs) {
       try {
         // Übernahme von einem geschlossenen Tab (tabs.ts): dessen Worker gibt die Datei erst kurz nach dem Lock frei.
         const db = await openWasmDatabase({ opfs, waitMs: 5000 });
-        return { ...openWorkspace(db, { device }), persistent: true, ...(await openHistory()), ...(await openAssets()), ...(await openYDocs()) };
+        return { ...openWorkspace(db, { device, ...mode }), persistent: true, ...(await openHistory()), ...(await openAssets()), ...(await openYDocs()) };
       } catch (e) {
         const note = `Not saved on this device: ${e instanceof Error ? e.message : String(e)}`;
         const db = await openWasmDatabase();
-        return { ...openWorkspace(db, { device }), persistent: false, note };
+        return { ...openWorkspace(db, { device, ...mode }), persistent: false, note };
       }
     }
     const db = await openWasmDatabase();
-    return { ...openWorkspace(db, { device }), persistent: false, note: "In memory only" };
+    return { ...openWorkspace(db, { device, ...mode }), persistent: false, note: "In memory only" };
   },
 });
 

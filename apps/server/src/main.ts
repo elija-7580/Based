@@ -8,6 +8,7 @@ import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition
 import { spawnAgent } from "@based/brain/acp-node";
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { revertPropertyRecords } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
 import { anthropicAgentEngine } from "./agent-engine.js";
@@ -25,6 +26,10 @@ export interface Options {
   host: string;
   token: string;
   node: string;
+  /** BSD-30: Workspace auf Properties als eigene Records umstellen (einmalig; danach Protokoll 3). */
+  propertyRecords: boolean;
+  /** BSD-30, Rückweg: die Datei zurück ins alte Format bringen und beenden. */
+  revertPropertyRecords: boolean;
   stdio: boolean;
   publicURL: string | undefined;
   /** BSD-235: Web-Client für den Gast-Modus („Open in Based“ auf Access-Links). */
@@ -47,7 +52,7 @@ export interface Options {
   local: boolean;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -57,6 +62,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     host: env.BASED_HOST ?? "0.0.0.0",
     token: env.BASED_TOKEN ?? "",
     node: env.BASED_NODE ?? "server",
+    propertyRecords: env.BASED_PROPERTY_RECORDS === "1",
+    revertPropertyRecords: false,
     stdio: false,
     publicURL: env.BASED_PUBLIC_URL,
     webURL: env.BASED_WEB_URL,
@@ -86,6 +93,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--host": o.host = value(a); break;
       case "--token": o.token = value(a); break;
       case "--node": o.node = value(a); break;
+      case "--property-records": o.propertyRecords = true; break;
+      case "--revert-property-records": o.revertPropertyRecords = true; break;
       case "--public-url": o.publicURL = value(a); break;
       case "--web-url": o.webURL = value(a); break;
       case "--assets": o.assetsDir = value(a); break;
@@ -200,6 +209,15 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     process.exit(2);
   }
 
+  if (opts.revertPropertyRecords) {
+    // BSD-30: Rückweg. Nur die Datei, kein Server; danach ohne --property-records starten.
+    const db = openNodeDatabase(opts.db);
+    const n = revertPropertyRecords(db);
+    db.close();
+    process.stderr.write(n > 0 ? `based-server: ${n} databases are back in the old format (${opts.db}).\n` : `based-server: ${opts.db} is in the old format already.\n`);
+    return;
+  }
+
   if (opts.stdio) {
     // stdio ist lokal (der Client startet den Prozess): kein Token nötig. stdout gehört dem Protokoll.
     const sync = new SyncService(openNodeDatabase(opts.db), { node: opts.node });
@@ -221,7 +239,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const bound: { port?: number } = {};
   const token = opts.token;
   const selfMcp = (): AcpMcpServer[] => (bound.port ? [{ name: "based", url: `http://${selfHost(opts.host)}:${bound.port}/mcp`, headers: { Authorization: `Bearer ${token}` } }] : []);
-  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
+  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, ...(opts.propertyRecords ? { propertyRecords: true } : {}), allowedOrigin: allowedOrigin(opts.publicURL),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).

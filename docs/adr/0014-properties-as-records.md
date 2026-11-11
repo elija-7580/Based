@@ -19,7 +19,7 @@ Facts the design rests on (checked in the code):
 
 ## Decision
 
-1. **New record kind `property`.** `id` is `<databaseID>:<propertyID>`. Fields: `databaseID`, `sk` (order,
+1. **New record kind `property`.** `id` is `<databaseID>/<propertyID>`. Fields: `databaseID`, `sk` (order,
    same sort keys as blocks), `schema` (the property exactly as it stood in the list, unknown fields kept),
    `stamp`.
 2. **The database record keeps everything else.** After the migration its `properties` list is empty and the
@@ -43,22 +43,33 @@ Facts the design rests on (checked in the code):
 ## Steps
 
 1. Pure model, checker and dry run: `packages/core/src/model/property-records.ts`, `based check <archive>`. **Done.**
-2. Store: record kind, composed view, diff on commit, remote merge per property record. Behind a switch.
-3. File migration (schema 4) with a copy of the file made first, and the same step on the server.
-4. Everything around it: sharing (a property has the role of its database), imports, archive format 3 with
-   reading of older archives, version history (older snapshots are converted on restore), MCP, CLI.
-5. Server: protocol 3 and the lock for protocol 2 clients.
-6. Dry run on a copy of the real workspace (Elija runs it).
-7. Switch-over with backup, server first, then devices.
-8. Cleanup after two weeks at the earliest: remove `legacyProperties`.
+2. Store: record kind, composed view (`store.databases`), diff on commit, remote merge per property record.
+   Behind the switch `propertyRecords` (off by default). **Done.**
+3. File migration: schema version 4 (`enablePropertyRecords`). Before anything is rewritten, the database
+   records are copied into the table `property_migration_backup` inside the same file; on Node the whole file is
+   copied as well. A file at version 4 always opens in the new format. The server runs the same step. **Done.**
+4. Everything around it. **Done:** sharing (a property record has the role of its database), search, the page
+   replica in the web app, MCP and CLI (they read the composed view). Archives stay in the portable old format
+   (version 2): `store.exportRecords()` writes databases with their property list, so older builds and the
+   importer keep working and no archive format 3 is needed. Version history stores blocks only and is not
+   affected.
+5. Server: protocol 3. Every sync request carries `X-Based-Protocol`. A protocol 2 client gets `426` from a
+   converted server, a protocol 3 client gets `409` from a server that is not converted yet. **Done.**
+6. Dry run on an export of the real workspace: `based check <export.based.zip>` (Elija runs it).
+7. Switch-over, server first (`based-server --property-records`), then each device (Settings → Sync & server →
+   Database columns → Convert…). Guests follow the server.
+8. Cleanup after two weeks at the earliest: remove `legacyProperties` and the backup table.
+9. Workspace lists (favourites, teamspaces) as finer records. **Open**, see decision 8.
 
 ## Consequences
 
 - One more record per column, none per row. Size is not a concern.
-- Until cleanup there are two ways back: turn the switch off and read `legacyProperties` (loses schema
-  changes made since, keeps all row values), or restore the file copy.
-- Version history holds snapshots in the old format. Restoring one must convert it, or it would bring the
-  old list back. This needs its own test in step 4.
+- The way back until cleanup: `based-server --revert-property-records` (in code: `revertPropertyRecords(db)`)
+  joins the property records back into their databases and sets the file to version 3. Schema changes made
+  since the switch are kept. The backup table and the file copy are the second line.
+- CI runs the unit tests twice, once per format (`BASED_PROPERTY_RECORDS=1`), until the old format is removed.
+- Tests that pin the old wire format on purpose (golden fixtures, client compatibility) set the switch off
+  themselves.
 - The Swift app cannot read the new format. It is frozen and serves as specification only.
 
 ## What this does not solve

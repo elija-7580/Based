@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { canonicalStringify, encodeRecord, keyOf, parseRecord, recordKey, type WireRecord, type WorkspaceStore } from "@based/core";
+import { canonicalStringify, encodeRecord, keyOf, parseRecord, recordKey, type WireRecord, WorkspaceStore } from "@based/core";
 import {
   CURRENT_SCHEMA_VERSION,
   openWorkspace,
@@ -19,6 +19,10 @@ import {
 import { openNodeDatabase } from "../src/drivers/node.js";
 import { openWasmDatabase } from "../src/drivers/wasm.js";
 import { FakeServer } from "./fake-server.js";
+
+// Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
+// BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
+WorkspaceStore.propertyRecordsByDefault = false;
 
 const corpusFile = fileURLToPath(new URL("../../../fixtures/records/corpus.jsonl", import.meta.url));
 // Ein Workspace pro Datei (BSD-23): der zweite Workspace-Record des Korpus gehört in keinen echten Workspace.

@@ -28,12 +28,12 @@ describe("aufteilen und zusammensetzen", () => {
 
   it("deterministisch: IDs aus Datenbank und Property, Stempel der Datenbank, Reihenfolge aus der Position", () => {
     const s = split(original), again = split(structuredClone(original));
-    expect(s.properties.map((r) => r.id)).toEqual(["db1:title", "db1:a", "db1:b", "db1:c"]);
+    expect(s.properties.map((r) => r.id)).toEqual(["db1/title", "db1/a", "db1/b", "db1/c"]);
     expect(s.properties.every((r) => compareStamps(r.stamp, original.stamp) === 0 && r.databaseID === "db1")).toBe(true);
     expect(s.properties.map((r) => r.sk)).toEqual([...s.properties.map((r) => r.sk)].sort());
     expect(new Set(s.properties.map((r) => r.sk)).size).toBe(4);
     expect(again).toEqual(s);
-    expect(propertyRecordID("db1", "title")).toBe("db1:title");
+    expect(propertyRecordID("db1", "title")).toBe("db1/title");
   });
 
   it("Kern ohne Properties, alte Liste eingefroren; zusammengesetzt wieder die ursprüngliche Datenbank", () => {
@@ -46,7 +46,7 @@ describe("aufteilen und zusammensetzen", () => {
     expect(joinDatabase(s.core, [...s.properties].reverse())).toEqual(original);
     expect(restoreLegacy(s.core)).toEqual(original);
     // Records einer anderen Datenbank zählen nicht
-    expect(joinDatabase(s.core, [...s.properties, { ...s.properties[1]!, id: "other:a", databaseID: "other" }])).toEqual(original);
+    expect(joinDatabase(s.core, [...s.properties, { ...s.properties[1]!, id: "other/a", databaseID: "other" }])).toEqual(original);
     // nichts hängt am Original (keine geteilten Objekte)
     s.properties[1]!.schema.name = "changed";
     expect(original.properties[1]!.name).toBe("Status");
@@ -85,10 +85,10 @@ describe("Unterschiede: nur Geändertes bekommt einen neuen Stempel", () => {
   it("eine Property umbenannt: genau ein Record", () => {
     const next = base.properties.map((p) => (p.id === "b" ? { ...p, name: "Renamed" } : p));
     const { diff, records: after } = apply(records, next, stamp(200));
-    expect(diff.upserts.map((r) => [r.id, r.stamp.millis, r.schema.name])).toEqual([["db1:b", 200, "Renamed"]]);
+    expect(diff.upserts.map((r) => [r.id, r.stamp.millis, r.schema.name])).toEqual([["db1/b", 200, "Renamed"]]);
     expect(diff.removed).toEqual([]);
-    expect(after.filter((r) => r.id !== "db1:b").every((r) => r.stamp.millis === 100)).toBe(true);
-    expect(diff.upserts[0]!.sk).toBe(records.find((r) => r.id === "db1:b")!.sk);
+    expect(after.filter((r) => r.id !== "db1/b").every((r) => r.stamp.millis === 100)).toBe(true);
+    expect(diff.upserts[0]!.sk).toBe(records.find((r) => r.id === "db1/b")!.sk);
   });
 
   it("neu am Ende, in der Mitte, am Anfang: ein Record, Schlüssel zwischen den Nachbarn", () => {
@@ -96,30 +96,30 @@ describe("Unterschiede: nur Geändertes bekommt einen neuen Stempel", () => {
       const next = [...base.properties];
       next.splice(at, 0, prop("new"));
       const { diff, records: after } = apply(records, next, stamp(200));
-      expect(diff.upserts.map((r) => r.id)).toEqual(["db1:new"]);
+      expect(diff.upserts.map((r) => r.id)).toEqual(["db1/new"]);
       expect(names(after)).toEqual(next.map((p) => p.id));
     }
   });
 
   it("entfernt: Record-ID in removed, sonst nichts", () => {
     const { diff, records: after } = apply(records, base.properties.filter((p) => p.id !== "c"), stamp(200));
-    expect(diff).toEqual({ upserts: [], removed: ["db1:c"] });
+    expect(diff).toEqual({ upserts: [], removed: ["db1/c"] });
     expect(names(after)).toEqual(["title", "a", "b", "d"]);
   });
 
   it("verschoben: nur die bewegte Property wird neu geschrieben (letzte nach vorn, erste nach hinten)", () => {
     const toFront = [base.properties[4]!, ...base.properties.slice(0, 4)];
     const f = apply(records, toFront, stamp(200));
-    expect(f.diff.upserts.map((r) => r.id)).toEqual(["db1:d"]);
+    expect(f.diff.upserts.map((r) => r.id)).toEqual(["db1/d"]);
     expect(names(f.records)).toEqual(["d", "title", "a", "b", "c"]);
     const toBack = [...base.properties.slice(1), base.properties[0]!];
     const b = apply(records, toBack, stamp(200));
-    expect(b.diff.upserts.map((r) => r.id)).toEqual(["db1:title"]);
+    expect(b.diff.upserts.map((r) => r.id)).toEqual(["db1/title"]);
     expect(names(b.records)).toEqual(["a", "b", "c", "d", "title"]);
   });
 
   it("Records anderer Datenbanken bleiben unberührt", () => {
-    const foreign: PropertyRecord = { id: "other:x", databaseID: "other", sk: "a0", schema: prop("x"), stamp: stamp(1) };
+    const foreign: PropertyRecord = { id: "other/x", databaseID: "other", sk: "a0", schema: prop("x"), stamp: stamp(1) };
     expect(diffProperties("db1", [...records, foreign], base.properties, stamp(200))).toEqual({ upserts: [], removed: [] });
   });
 
@@ -141,7 +141,7 @@ describe("Unterschiede: nur Geändertes bekommt einen neuen Stempel", () => {
       expect(new Set(recs.map((x) => x.sk)).size).toBe(recs.length);
       // nur was sich geändert oder bewegt hat, trägt den neuen Stempel
       const untouched = next.filter((p, i) => current[i] === p && current.length === next.length);
-      for (const p of untouched) if (op === 3) expect(recs.find((x) => x.id === "db1:" + p.id)!.stamp.millis).not.toBe(1000 + step);
+      for (const p of untouched) if (op === 3) expect(recs.find((x) => x.id === "db1/" + p.id)!.stamp.millis).not.toBe(1000 + step);
       current = next;
     }
   });
@@ -183,10 +183,10 @@ describe("zusammenführen: zwei Geräte ändern gleichzeitig verschiedene Spalte
 
   it("Löschen gegen Ändern: der spätere Stempel entscheidet", () => {
     const edited = apply(start.properties, base.properties.map((p) => (p.id === "notes" ? { ...p, name: "Kept" } : p)), stamp(300, "mac")).records;
-    const deletedEarlier = mergePropertyRecords(edited, [], new Map([["db1:notes", stamp(250, "phone")]]));
-    expect(deletedEarlier.some((r) => r.id === "db1:notes")).toBe(true);
-    const deletedLater = mergePropertyRecords(edited, [], new Map([["db1:notes", stamp(350, "phone")]]));
-    expect(deletedLater.some((r) => r.id === "db1:notes")).toBe(false);
+    const deletedEarlier = mergePropertyRecords(edited, [], new Map([["db1/notes", stamp(250, "phone")]]));
+    expect(deletedEarlier.some((r) => r.id === "db1/notes")).toBe(true);
+    const deletedLater = mergePropertyRecords(edited, [], new Map([["db1/notes", stamp(350, "phone")]]));
+    expect(deletedLater.some((r) => r.id === "db1/notes")).toBe(false);
   });
 
   it("zwei Geräte migrieren unabhängig, eines hat danach geändert: keine Dubletten, die Änderung bleibt", () => {
@@ -194,7 +194,7 @@ describe("zusammenführen: zwei Geräte ändern gleichzeitig verschiedene Spalte
     const changed = apply(deviceA, base.properties.map((p) => (p.id === "notes" ? { ...p, name: "After" } : p)), stamp(500, "mac")).records;
     const merged = mergePropertyRecords(deviceB, changed);
     expect(merged).toHaveLength(3);
-    expect(merged.find((r) => r.id === "db1:notes")!.schema.name).toBe("After");
+    expect(merged.find((r) => r.id === "db1/notes")!.schema.name).toBe("After");
     expect(mergePropertyRecords(changed, deviceB)).toEqual(merged);
   });
 });
@@ -202,7 +202,7 @@ describe("zusammenführen: zwei Geräte ändern gleichzeitig verschiedene Spalte
 describe("Prüfer und Probelauf", () => {
   function workspace() {
     let t = 0;
-    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence(), now: () => (t += 1) });
+    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence(), now: () => (t += 1), propertyRecords: false });
     const page = createPage(store, { title: "Home" });
     const clients = dbops.createDatabase(store, { parent: "b:" + page, title: "Clients" });
     const revenue = dbops.addProperty(store, clients.databaseID, "Revenue", "number")!;

@@ -15,7 +15,7 @@ import {
   type StoreOptions,
   type WireRecord,
 } from "@based/core";
-import { migrate, PersistenceError, setMeta } from "./migrations.js";
+import { CURRENT_SCHEMA_VERSION, enablePropertyRecords, hasPropertyRecords, migrate, PersistenceError, setMeta } from "./migrations.js";
 import { asInt, asText, first, utf8, type SqlDatabase } from "./sql.js";
 
 export interface ChangeEntry {
@@ -40,7 +40,7 @@ export interface UndecodableRow {
   error: string;
 }
 
-const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view"]);
+const KINDS = new Set<RecordKind>(["workspace", "block", "database", "view", "property"]);
 
 /** Stempel als JSON wie Swift `JSONEncoder` (Reihenfolge egal, Swift liest es zurück). */
 export const encodeStamp = (s: Stamp) => JSON.stringify({ millis: s.millis, counter: s.counter, node: s.node });
@@ -278,6 +278,11 @@ export function openWorkspace(
 ): { store: WorkspaceStore; persistence: SqlitePersistence } {
   const { device, onNodeRotated, node, ...rest } = opts;
   const persistence = new SqlitePersistence(db);
+  // BSD-30: Eine umgestellte Datei öffnet immer mit Property-Records, egal was eingestellt ist (sonst zeigten die
+  // Datenbanken keine Spalten). Eingeschaltet wird über die Option (oder die Vorgabe des Stores); zurück geht es
+  // nur ausdrücklich (`revertPropertyRecords`).
+  const propertyRecords = hasPropertyRecords(db) || (rest.propertyRecords ?? WorkspaceStore.propertyRecordsByDefault);
+  if (propertyRecords) enablePropertyRecords(db);
   let id = node;
   if (!id && device) {
     const r = deviceNodeID(persistence, device);
@@ -288,6 +293,40 @@ export function openWorkspace(
     id = persistence.meta("node") ?? newNode();
     if (!persistence.meta("node")) persistence.setMeta("node", id);
   }
-  const store = new WorkspaceStore({ ...rest, persistence, node: id });
+  const store = new WorkspaceStore({ ...rest, persistence, node: id, propertyRecords });
   return { store, persistence };
+}
+
+/**
+ * BSD-30, Rückweg: eine umgestellte Datei wieder ins alte Format bringen. Jede Datenbank bekommt ihre aktuelle
+ * Property-Liste zurück in den Record (nichts geht verloren, auch keine Schema-Änderung seit der Umstellung), die
+ * Property-Records und ihre Log-Einträge verschwinden, die Datei trägt wieder Version 3. Die Datenbank-Records
+ * gelten als lokale Änderung und gehen beim nächsten Sync an einen Server im alten Format. Gibt die Zahl der
+ * Datenbanken zurück. Nur ausführen, wenn Server und alle Geräte zurückgestellt werden.
+ */
+export function revertPropertyRecords(db: SqlDatabase): number {
+  if (!hasPropertyRecords(db)) return 0;
+  const { store } = openWorkspace(db, { node: "revert" });
+  const databases = store.exportRecords().filter((r) => r.kind === "database");
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    for (const r of databases) {
+      db.run("INSERT OR REPLACE INTO records(kind, id, data) VALUES(?, ?, ?)", [r.kind, r.data.id, utf8(canonicalStringify(r.data))]);
+      db.run("DELETE FROM changes WHERE kind = ? AND id = ?", [r.kind, r.data.id]);
+      db.run("INSERT INTO changes(kind, id, deleted, local, deleted_stamp) VALUES(?, ?, 0, 1, NULL)", [r.kind, r.data.id]);
+    }
+    db.run("DELETE FROM records WHERE kind = 'property'", []);
+    db.run("DELETE FROM changes WHERE kind = 'property'", []);
+    db.exec(`PRAGMA user_version = ${CURRENT_SCHEMA_VERSION}`);
+    db.exec("COMMIT");
+  } catch (e) {
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      // nichts offen
+    }
+    throw new PersistenceError(`reverting property records failed: ${String(e)}`, "migration");
+  }
+  setMeta(db, "propertyRecords.log", `reverted to v${CURRENT_SCHEMA_VERSION} at ${new Date().toISOString()}`);
+  return databases.length;
 }

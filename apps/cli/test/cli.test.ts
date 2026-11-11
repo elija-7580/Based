@@ -204,7 +204,7 @@ describe("ask --wait und Sandbox-Shell (Server mit Läufen, gemockt)", () => {
 describe("based check", () => {
   it("liest ein Based-Archiv, rechnet die Umstellung und meldet OK; kaputte Datei und Dubletten geben Fehler", async () => {
     const { createPage, dbops, MemoryPersistence, WorkspaceStore, writeArchive, writeArchivePackage } = await import("@based/core");
-    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence() });
+    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence(), propertyRecords: false });
     const page = createPage(store, { title: "Home" });
     const made = dbops.createDatabase(store, { parent: "b:" + page, title: "Tasks" });
     dbops.addProperty(store, made.databaseID, "Due", "date");
