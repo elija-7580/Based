@@ -20,3 +20,4 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0013](0013-main-agent-task-cards.md) | Hauptagent als Auftragskarten: Auftrag zuerst gespeichert, Plan per Schema aus festem Aktionskatalog, deterministischer Ausführer mit Undo und Sicherheitsstufen. |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".
+| [0014](0014-properties-as-records.md) | Datenbank-Properties als eigene Records: Record-Art `property`, Sicht im Store, deterministische Migration, alte Clients gesperrt (BSD-30). |

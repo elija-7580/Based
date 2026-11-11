@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "based – die Kommandozeile für einen Based-Server (MCP über Streamable HTTP)",
+  "description": "based \u2013 die Kommandozeile f\u00fcr einen Based-Server (MCP \u00fcber Streamable HTTP)",
   "bin": {
     "based": "./bin/based.js"
   },
@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@based/core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "tsx": "^4.23.15"
   },
