@@ -11,7 +11,7 @@
 // - .obsidian/, .trash/, Punkt-Dateien und .canvas werden übersprungen (Canvas mit Hinweis).
 import type { BlockProps, WireRecord } from "../model/records.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
-import { AssetRejected, emptyReport, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportReport } from "./builder.js";
+import { AssetRejected, emptyReport, importAssetFrom, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportReport } from "./builder.js";
 import { basename, comparePaths, dirname, extname, joinPath, normalizePath, stripExtension, type ImportFiles } from "./files.js";
 import { trimSpaces } from "./html.js";
 import { MarkdownImporter, type MarkdownBlock } from "./markdown.js";
@@ -254,10 +254,10 @@ export class ObsidianImporter {
     const cached = this.assetCache.get(path);
     if (cached) return { asset: cached };
     if (!this.opts.assets) return { url: basename(path) };
-    const data = this.files.read(path);
-    if (!data) { this.warn(`Couldn't read file “${this.rel(path)}”`); return { url: basename(path) }; }
     try {
-      const ref = this.opts.assets.importData(data, basename(path), mimeFor(extname(path)));
+      const files = this.files;
+      const ref = importAssetFrom(this.opts.assets, { size: files.size(path) ?? 0, load: () => files.read(path) }, basename(path), mimeFor(extname(path)));
+      if (!ref) { this.warn(`Couldn't read file “${this.rel(path)}”`); return { url: basename(path) }; }
       this.assetCache.set(path, ref);
       this.report.assets += 1;
       return { asset: ref };

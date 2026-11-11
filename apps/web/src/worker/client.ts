@@ -300,6 +300,11 @@ export class StoreClient {
     return this.request<boolean>(a.mime ? { type: "importAsset", assetID: a.id, name: a.name, mime: a.mime, bytes: a.data } : { type: "importAsset", assetID: a.id, name: a.name, bytes: a.data });
   }
 
+  /** BSD-283: abgebrochener Import – schon abgelegte, unbenutzte Dateien wieder entfernen. */
+  discardImport(): Promise<number> {
+    return this.request<number>({ type: "discardImport" });
+  }
+
   commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
     return this.request<ImportSummary>(parent ? { type: "commitImport", payload, parent } : { type: "commitImport", payload });
   }

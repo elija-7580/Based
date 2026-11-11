@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { crc32, MemoryAssetSink, writeZip, type ByteSource } from "@based/core";
 import { describe, expect, it } from "vitest";
-import { prepareFiles, StreamingAssetSink, type StreamedAsset } from "./importer.js";
+import { drainDeferred, prepareFiles, StreamingAssetSink, type StreamedAsset } from "./importer.js";
 
 const enc = new TextEncoder();
 
@@ -54,21 +54,26 @@ function virtualZip(entries: { name: string; size: number; fill: (offset: number
   return src;
 }
 
+function bigExport() {
+  const IMAGE = 10 << 20, COUNT = 100; // 100 × 10 MiB ≈ 1 GiB
+  const block = new Uint8Array(IMAGE);
+  for (let i = 0; i < IMAGE; i++) block[i] = (i * 2654435761) >>> 24;
+  block.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const crc = crc32(block);
+  const dir = "Big 0123456789abcdef0123456789abcdef";
+  const figures = Array.from({ length: COUNT }, (_, i) => `<figure id="b0000000-0000-4000-8000-${String(i).padStart(12, "0")}" class="image"><a href="${encodeURI(dir)}/img-${i}.png"><img src="${encodeURI(dir)}/img-${i}.png"/></a></figure>`).join("");
+  const html = enc.encode(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Big</title></head><body><article id="01234567-89ab-cdef-0123-456789abcdef" class="page sans"><header><h1 class="page-title">Big</h1></header><div class="page-body">${figures}</div></article></body></html>`);
+  const zip = virtualZip([
+    { name: `${dir}.html`, size: html.length, crc: crc32(html), fill: (o, out) => out.set(html.subarray(o, o + out.length)) },
+    ...Array.from({ length: COUNT }, (_, i) => ({ name: `${dir}/img-${i}.png`, size: IMAGE, crc, fill: (o: number, out: Uint8Array) => out.set(block.subarray(o, o + out.length)) })),
+  ]);
+  if (zip.size < 1_000_000_000) throw new Error("zu klein");
+  return { IMAGE, COUNT, zip };
+}
+
 describe("BSD-254: große Exporte", () => {
   it("künstliches 1-GB-ZIP: Speicherspitze weit unter der Dateigröße, alle Bilder einzeln weitergereicht", () => {
-    const IMAGE = 10 << 20, COUNT = 100; // 100 × 10 MiB ≈ 1 GiB
-    const block = new Uint8Array(IMAGE);
-    for (let i = 0; i < IMAGE; i++) block[i] = (i * 2654435761) >>> 24;
-    block.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    const crc = crc32(block);
-    const dir = "Big 0123456789abcdef0123456789abcdef";
-    const figures = Array.from({ length: COUNT }, (_, i) => `<figure id="b0000000-0000-4000-8000-${String(i).padStart(12, "0")}" class="image"><a href="${encodeURI(dir)}/img-${i}.png"><img src="${encodeURI(dir)}/img-${i}.png"/></a></figure>`).join("");
-    const html = enc.encode(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Big</title></head><body><article id="01234567-89ab-cdef-0123-456789abcdef" class="page sans"><header><h1 class="page-title">Big</h1></header><div class="page-body">${figures}</div></article></body></html>`);
-    const zip = virtualZip([
-      { name: `${dir}.html`, size: html.length, crc: crc32(html), fill: (o, out) => out.set(html.subarray(o, o + out.length)) },
-      ...Array.from({ length: COUNT }, (_, i) => ({ name: `${dir}/img-${i}.png`, size: IMAGE, crc, fill: (o: number, out: Uint8Array) => out.set(block.subarray(o, o + out.length)) })),
-    ]);
-    expect(zip.size).toBeGreaterThan(1_000_000_000);
+    const { IMAGE, COUNT, zip } = bigExport();
 
     const base = process.memoryUsage().arrayBuffers;
     let peak = 0, streamed = 0;
@@ -106,4 +111,31 @@ describe("BSD-254: große Exporte", () => {
     expect(b.assets).toBe(a.assets);
     expect(streamedFiles.map((f) => [f.name, f.data.length]).sort()).toEqual((a.files ?? []).map((f) => [f.name, f.data.length]).sort());
   });
+
+  it("BSD-283: langsamer Store-Worker – mit Gegendruck bleibt die Spitze beim Fenster, nicht bei der Dateigröße", async () => {
+    const { IMAGE, COUNT, zip } = bigExport();
+    const base = process.memoryUsage().arrayBuffers;
+    let peak = 0, streamed = 0, maxQueued = 0;
+    const sample = () => { peak = Math.max(peak, process.memoryUsage().arrayBuffers - base); };
+    const sink = new StreamingAssetSink(() => { throw new Error("Bilder sollen zurückgestellt werden"); }, { lazy: true });
+    const payload = prepareFiles([{ path: "Export.zip", source: zip }], { assets: sink, progress: sample });
+    sample();
+    expect(sink.deferred).toHaveLength(COUNT);
+    // Store-Worker: legt eine Datei nach der anderen ab, jede dauert einen Tick; bis dahin hält die Warteschlange sie.
+    const queue: Uint8Array[] = [];
+    let writer = Promise.resolve();
+    const unreadable = await drainDeferred(sink, (a) => {
+      queue.push(a.data);
+      maxQueued = Math.max(maxQueued, queue.length);
+      sample();
+      writer = writer.then(() => new Promise<void>((r) => setTimeout(r, 1))).then(() => { streamed += queue.shift()!.length; sample(); });
+      return writer;
+    });
+    expect(unreadable).toBe(0);
+    expect(streamed).toBe(COUNT * IMAGE);
+    expect(payload.assets).toBe(COUNT);
+    console.info(`BSD-283: 1-GB-ZIP mit langsamem Store-Worker, Spitze ArrayBuffer ${Math.round(peak / (1 << 20))} MiB, höchstens ${maxQueued} Dateien in der Warteschlange`);
+    expect(maxQueued).toBeLessThanOrEqual(4); // 32 MiB Fenster / 10 MiB je Bild
+    expect(peak).toBeLessThan(200 << 20);
+  }, 120_000);
 });

@@ -183,6 +183,36 @@ describe("Import", () => {
   });
 });
 
+describe("Import-Worker: Bestätigung und Abbruch (BSD-283)", () => {
+  it("bestätigt jede Datei erst nach dem Ablegen; Abbruch räumt auf, wenn alles Unterwegs angekommen ist", async () => {
+    const fns = new Set<(e: { data: ImportWorkerEvent }) => void>();
+    const got: unknown[] = [];
+    const w: ImportWorkerLike & { terminated?: boolean } = {
+      postMessage(m) {
+        got.push(m);
+        if ("files" in m) setTimeout(() => fns.forEach((fn) => fn({ data: { type: "asset", ack: true, asset: { id: "x1", name: "a.png", data: new Uint8Array(3) } } })));
+      },
+      addEventListener: (_t, fn) => fns.add(fn),
+      terminate() { this.terminated = true; },
+    };
+    let release!: () => void;
+    const stored = new Promise<void>((r) => (release = r));
+    const order: string[] = [];
+    const job = prepareInWorker([{ path: "a.md", data: new TextEncoder().encode("# A") }], () => undefined, () => w,
+      async () => { await stored; order.push("stored"); }, async () => { order.push("abandon"); });
+    await new Promise((r) => setTimeout(r, 5));
+    expect(got.filter((m) => (m as { type?: string }).type === "ack")).toEqual([]); // noch nicht abgelegt
+    release();
+    await new Promise((r) => setTimeout(r, 5));
+    expect(got).toContainEqual({ type: "ack", id: "x1" });
+    job.cancel();
+    await expect(job.result).rejects.toBeInstanceOf(ImportCancelledError);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(order).toEqual(["stored", "abandon"]);
+    expect(w.terminated).toBe(true);
+  });
+});
+
 describe("Export", () => {
   it("Seite als Markdown und HTML, Workspace als ZIP", async () => {
     const { client } = setup();

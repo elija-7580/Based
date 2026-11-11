@@ -168,15 +168,45 @@ export function referencedProperties(e: FormulaExpr, out = new Set<string>()): S
   return out;
 }
 
+/** BSD-17/BSD-271: so tief darf eine Formel verschachtelt sein (Parser und Baum; wie die Auswertung). */
+const MAX_NESTING = 200;
+
+/** Tiefe des Baums ohne Rekursion (ein tiefer Baum darf auch beim Messen keinen Stack-Überlauf auslösen). */
+function exprDepth(root: FormulaExpr): number {
+  let max = 0;
+  const stack: [FormulaExpr, number][] = [[root, 1]];
+  while (stack.length > 0) {
+    const [e, d] = stack.pop()!;
+    if (d > max) max = d;
+    switch (e.k) {
+      case "list": for (const x of e.items) stack.push([x, d + 1]); break;
+      case "call": for (const x of e.args) stack.push([x, d + 1]); break;
+      case "unary": stack.push([e.x, d + 1]); break;
+      case "binary": stack.push([e.a, d + 1], [e.b, d + 1]); break;
+      case "ternary": stack.push([e.c, d + 1], [e.a, d + 1], [e.b, d + 1]); break;
+      default: break;
+    }
+  }
+  return max;
+}
+
 class Parser {
   pos = 0;
+  private nesting = 0;
   constructor(private readonly tokens: Token[]) {}
+
+  /** BSD-17: tiefe Verschachtelung ist ein Formelfehler, kein Stack-Überlauf. */
+  private nested<T>(fn: () => T): T {
+    if (++this.nesting > MAX_NESTING) throw new FormulaError("Formula is too deeply nested");
+    try { return fn(); } finally { this.nesting--; }
+  }
 
   static parse(src: string): FormulaExpr {
     const p = new Parser(tokenize(src));
     if ((p.peek as Token).k === "eof") return { k: "string", v: "" };
     const e = p.expression();
     if ((p.peek as Token).k !== "eof") throw new FormulaError(`Unexpected ${p.describe(p.peek)}`);
+    if (exprDepth(e) > MAX_NESTING) throw new FormulaError("Formula is too deeply nested");
     return e;
   }
 
@@ -213,7 +243,7 @@ class Parser {
   }
 
   expression(): FormulaExpr {
-    return this.ternary();
+    return this.nested(() => this.ternary());
   }
   ternary(): FormulaExpr {
     const c = this.orExpr();
@@ -268,9 +298,9 @@ class Parser {
     }
   }
   unary(): FormulaExpr {
-    if (this.accept("-")) return { k: "unary", op: "-", x: this.unary() };
-    if (this.accept("+")) return this.unary();
-    if (this.accept("!") || this.acceptWord("not")) return { k: "unary", op: "not", x: this.unary() };
+    if (this.accept("-")) return { k: "unary", op: "-", x: this.nested(() => this.unary()) };
+    if (this.accept("+")) return this.nested(() => this.unary());
+    if (this.accept("!") || this.acceptWord("not")) return { k: "unary", op: "not", x: this.nested(() => this.unary()) };
     return this.power();
   }
   power(): FormulaExpr {
@@ -425,7 +455,7 @@ class Evaluator {
   eval(e: FormulaExpr): Value {
     this.depth++;
     try {
-      if (this.depth >= 200) throw new FormulaError("Formula is too deeply nested");
+      if (this.depth >= MAX_NESTING) throw new FormulaError("Formula is too deeply nested");
       switch (e.k) {
         case "number": return num(e.v);
         case "string": return str(e.v);

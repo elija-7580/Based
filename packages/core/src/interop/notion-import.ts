@@ -11,7 +11,7 @@ import { parseDate, parseSwiftDouble } from "../query/value.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
 import { ZERO_STAMP } from "../hlc.js";
 import type { WorkspaceStore } from "../store/store.js";
-import { AssetRejected, commitImport, emptyReport, ImportBuilder, looksLikeLocalFile, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
+import { AssetRejected, commitImport, importAssetFrom, emptyReport, ImportBuilder, looksLikeLocalFile, makeBlock, makeRecordID, mimeFor, type AssetRef, type AssetSink, type ImportBuilderWire, type ImportReport } from "./builder.js";
 import { basename, comparePaths, dirname, extname, ImportFiles, joinPath, normalizePath, stripExtension } from "./files.js";
 import { graphemes, trimSpaces } from "./html.js";
 import { removingPercentEncoding } from "./importids.js";
@@ -341,13 +341,13 @@ class MarkdownNotionImporter {
       return { url: src };
     }
     if (!this.opts.assets) return { url: src };
-    const data = this.files.read(u);
-    if (!data) {
-      this.warn(`Couldn't read file “${u}”`);
-      return { url: src };
-    }
     try {
-      const ref = this.opts.assets.importData(data, basename(u), mimeFor(extname(u)));
+      const files = this.files;
+      const ref = importAssetFrom(this.opts.assets, { size: files.size(u) ?? 0, load: () => files.read(u) }, basename(u), mimeFor(extname(u)));
+      if (!ref) {
+        this.warn(`Couldn't read file “${u}”`);
+        return { url: src };
+      }
       this.report.assets += 1;
       return { asset: ref };
     } catch (e) {

@@ -29,6 +29,24 @@ export const emptyReport = (): ImportReport => ({ pages: 0, databases: 0, rows: 
  * Shell speichert die gesammelten Bytes danach (z. B. OPFS/IndexedDB). */
 export interface AssetSink {
   importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef;
+  /**
+   * BSD-283: Datei erst später lesen. Der Sammler vergibt die Referenz sofort und lädt die Bytes, wenn er sie
+   * ablegen kann (Import-Worker mit Gegendruck). Ohne diese Methode liest der Import selbst und ruft `importData`.
+   */
+  importLazy?(file: LazyAsset, name: string, mime: string | undefined): AssetRef;
+}
+
+/** BSD-283: eine Datei, deren Größe bekannt ist und die erst beim Ablegen gelesen wird (`undefined` = unlesbar). */
+export interface LazyAsset {
+  size: number;
+  load(): Uint8Array | undefined;
+}
+
+/** BSD-283: Datei an den Sammler geben – mit `importLazy` ohne sie jetzt zu lesen. `undefined` = nicht lesbar. */
+export function importAssetFrom(sink: AssetSink, file: LazyAsset, name: string, mime: string | undefined): AssetRef | undefined {
+  if (sink.importLazy) return sink.importLazy(file, name, mime);
+  const data = file.load();
+  return data === undefined ? undefined : sink.importData(data, name, mime);
 }
 
 /** Sammelt Dateien im Speicher (ID wie Swift `FileAssetStore`: zufällige UUID). */
@@ -65,13 +83,24 @@ export function formatBytes(n: number): string {
 /** Lässt nur Dateien bis `maxBytes` durch; größere werden abgelehnt (`AssetRejected`) und in `skipped` gemerkt. */
 export class LimitedAssetSink implements AssetSink {
   readonly skipped: { name: string; size: number }[] = [];
-  constructor(private readonly inner: AssetSink, readonly maxBytes: number = DEFAULT_MAX_ASSET_BYTES) {}
-  importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef {
-    if (data.length > this.maxBytes) {
-      this.skipped.push({ name, size: data.length });
-      throw new AssetRejected(`Skipped “${name}” (${formatBytes(data.length)}): larger than the ${formatBytes(this.maxBytes)} limit for attached files`);
+  readonly importLazy?: (file: LazyAsset, name: string, mime: string | undefined) => AssetRef;
+  constructor(private readonly inner: AssetSink, readonly maxBytes: number = DEFAULT_MAX_ASSET_BYTES) {
+    if (inner.importLazy) {
+      this.importLazy = (file, name, mime) => {
+        this.check(file.size, name);
+        return inner.importLazy!(file, name, mime);
+      };
     }
+  }
+  importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef {
+    this.check(data.length, name);
     return this.inner.importData(data, name, mime);
+  }
+  private check(size: number, name: string) {
+    if (size > this.maxBytes) {
+      this.skipped.push({ name, size });
+      throw new AssetRejected(`Skipped “${name}” (${formatBytes(size)}): larger than the ${formatBytes(this.maxBytes)} limit for attached files`);
+    }
   }
 }
 
@@ -155,7 +184,7 @@ export function makeBlock(x: NewBlock, now: number): Block {
   return cleanBlock(b);
 }
 
-interface Pending { name: string; mime: string | undefined; data?: Uint8Array; load?: () => Uint8Array | undefined }
+interface Pending { name: string; mime: string | undefined; data?: Uint8Array; load?: () => Uint8Array | undefined; size?: number }
 
 /** `ImportBuilder` als reine Daten (`toWire`/`fromWire`). */
 export interface ImportBuilderWire {
@@ -314,7 +343,7 @@ export class ImportBuilder {
     const ref: AssetRef = { id: "pending-" + makeRecordID(), name, size };
     const m = mime ?? mimeFor(extensionOf(name));
     if (m !== undefined) ref.mime = m;
-    this.pendingAssets.set(ref.id, { name, mime: m, load });
+    this.pendingAssets.set(ref.id, { name, mime: m, load, size });
     this.assetByPath.set(key, ref);
     return ref;
   }
@@ -326,9 +355,12 @@ export class ImportBuilder {
     if (sink) {
       for (const [id, f] of this.pendingAssets) {
         try {
-          const data = f.data ?? f.load?.();
-          if (data === undefined) throw new Error("unreadable");
-          map.set(id, sink.importData(data, f.name, f.mime));
+          // BSD-283: lazy Dateien liest der Sammler selbst, wenn er sie ablegen kann (Gegendruck im Import-Worker).
+          const ref = f.data === undefined && f.load
+            ? importAssetFrom(sink, { size: f.size ?? 0, load: f.load }, f.name, f.mime)
+            : f.data !== undefined ? sink.importData(f.data, f.name, f.mime) : undefined;
+          if (ref === undefined) throw new Error("unreadable");
+          map.set(id, ref);
         } catch (e) {
           this.warnings.push(e instanceof AssetRejected ? e.message : `Couldn't copy file ${f.name}`);
         }

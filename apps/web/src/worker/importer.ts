@@ -11,9 +11,11 @@ import {
   preparedImportToWire,
   prepareImport,
   MemoryAssetSink,
+  mimeFor,
   type ArchiveReadResult,
   type AssetRef,
   type ByteSource,
+  type LazyAsset,
   type PreparedImportWire,
 } from "@based/core";
 
@@ -35,8 +37,22 @@ export interface StreamedAsset { id: string; name: string; mime?: string; data: 
  */
 export class StreamingAssetSink extends MemoryAssetSink {
   count = 0;
-  constructor(private readonly emit: (f: StreamedAsset) => void) {
+  /** BSD-283: Dateien, die erst nach der Vorbereitung gelesen und mit Gegendruck weitergegeben werden (`drainDeferred`). */
+  readonly deferred: { ref: AssetRef; size: number; load: () => Uint8Array | undefined }[] = [];
+  readonly importLazy?: (file: LazyAsset, name: string, mime: string | undefined) => AssetRef;
+  constructor(private readonly emit: (f: StreamedAsset) => void, opts: { lazy?: boolean } = {}) {
     super();
+    if (opts.lazy) {
+      this.importLazy = (file, name, mime) => {
+        const n = name === "" ? "file" : name;
+        const ref: AssetRef = { id: globalThis.crypto.randomUUID().toLowerCase(), name: n, size: file.size };
+        const m = mime ?? mimeFor(n.includes(".") ? n.split(".").pop()!.toLowerCase() : "");
+        if (m !== undefined) ref.mime = m;
+        this.count += 1;
+        this.deferred.push({ ref, size: file.size, load: file.load });
+        return ref;
+      };
+    }
   }
   override importData(data: Uint8Array, name: string, mime: string | undefined): AssetRef {
     const ref = super.importData(data, name, mime);
@@ -48,6 +64,40 @@ export class StreamingAssetSink extends MemoryAssetSink {
     this.count += 1;
     this.emit({ id: ref.id, name: ref.name, ...(ref.mime ? { mime: ref.mime } : {}), data });
   }
+}
+
+/** BSD-283: höchstens so viele Bytes bzw. Dateien sind zwischen Import-Worker und Store-Worker unterwegs. */
+export const DRAIN_WINDOW_BYTES = 32 * 1024 * 1024;
+export const DRAIN_WINDOW_FILES = 8;
+
+/**
+ * BSD-283: zurückgestellte Dateien lesen und weitergeben, mit Gegendruck: `send` ist erst erledigt, wenn der
+ * Store-Worker die Datei abgelegt hat; solange das Fenster voll ist, wird nichts Neues gelesen. So wächst der
+ * Speicher nicht mit der Größe des Exports. Gibt die Zahl der unlesbaren Dateien zurück.
+ */
+export async function drainDeferred(sink: StreamingAssetSink, send: (a: StreamedAsset) => Promise<unknown>,
+  opts: { windowBytes?: number; windowFiles?: number; progress?: (fraction: number) => void } = {}): Promise<number> {
+  const windowBytes = opts.windowBytes ?? DRAIN_WINDOW_BYTES, windowFiles = opts.windowFiles ?? DRAIN_WINDOW_FILES;
+  const total = sink.deferred.reduce((n, d) => n + d.size, 0) || 1;
+  const inFlight = new Set<Promise<unknown>>();
+  let bytes = 0, done = 0, unreadable = 0;
+  const items = sink.deferred.splice(0);
+  for (let i = 0; i < items.length; i++) {
+    const { ref, size: expected, load } = items[i]!;
+    items[i] = undefined as never; // Verweis auf die Ladefunktion freigeben
+    while (inFlight.size > 0 && (inFlight.size >= windowFiles || bytes + expected > windowBytes)) await Promise.race(inFlight);
+    let data: Uint8Array | undefined;
+    try { data = load(); } catch { data = undefined; }
+    if (data === undefined) { unreadable += 1; done += expected; continue; }
+    const size = data.length;
+    bytes += size;
+    const p: Promise<unknown> = send({ id: ref.id, name: ref.name, ...(ref.mime ? { mime: ref.mime } : {}), data })
+      .catch(() => undefined)
+      .finally(() => { inFlight.delete(p); bytes -= size; done += expected; opts.progress?.(Math.min(1, done / total)); });
+    inFlight.add(p);
+  }
+  await Promise.all(inFlight);
+  return unreadable;
 }
 
 const fileSize = (f: ImportFile) => (f.data ? f.data.length : f.source.size);

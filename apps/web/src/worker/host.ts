@@ -196,6 +196,7 @@ export class StoreHost {
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
         case "commitImport": reply(await this.commitImport(msg.payload, msg.parent)); break;
         case "importAsset": reply(await this.importAsset(msg.assetID, msg.bytes, msg.name, msg.mime)); break;
+        case "discardImport": reply(await this.discardImport()); break;
         case "exportPage": reply(await exportPage(this.store, msg.pageID, msg.format, this.exportAssets(), msg.html)); break;
         case "exportWorkspace": reply(await exportWorkspace(this.store, msg.format, this.exportAssets(), msg.html)); break;
         case "printPage": reply(await printPage(this.store, msg.pageID, this.exportAssets(), msg.css)); break;
@@ -921,17 +922,40 @@ export class StoreHost {
    */
   /** BSD-254: Dateien laufender Importe, schon abgelegt (vorläufige ID → Hash). */
   private importedAssetIDs = new Map<string, string>();
+  /** BSD-283: Hashes, die erst dieser Import auf das Gerät gebracht hat (nur die entfernt ein Abbruch). */
+  private importCreatedHashes = new Set<string>();
 
   private async importAsset(id: string, bytes: Uint8Array, name: string, mime?: string): Promise<boolean> {
     if (!this.assets) throw new Error("not initialised");
-    const ref = await this.assets.add(bytes, name, mime);
+    const { ref, created } = await this.assets.addTracked(bytes, name, mime);
     this.importedAssetIDs.set(id, ref.id);
+    if (created) this.importCreatedHashes.add(ref.id);
     return true;
+  }
+
+  /**
+   * BSD-283: Import abgebrochen oder gescheitert – die schon abgelegten Dateien wieder entfernen, soweit sie erst dieser
+   * Import gebracht hat und kein Record auf sie zeigt. Gibt die Zahl der entfernten Dateien zurück.
+   */
+  private async discardImport(): Promise<number> {
+    const created = this.importCreatedHashes;
+    this.importCreatedHashes = new Set();
+    this.importedAssetIDs.clear();
+    if (!this.assets || created.size === 0) return 0;
+    const used = assetIDsInStore(this.store);
+    let removed = 0;
+    for (const hash of created) {
+      if (used.has(hash)) continue;
+      await this.assets.discard(hash);
+      removed += 1;
+    }
+    return removed;
   }
 
   private async commitImport(payload: ImportPayload, parent?: string): Promise<ImportSummary> {
     const map = new Map<string, string>(this.importedAssetIDs);
     this.importedAssetIDs.clear();
+    this.importCreatedHashes.clear();
     let failed = 0;
     for (const f of payload.files ?? []) {
       try {

@@ -5,6 +5,7 @@ import {
   keyOf,
   parseKey,
   safeParseRecord,
+  StampClock,
   WorkspaceStore,
   type RecordKeyString,
   type RecordKind,
@@ -166,6 +167,7 @@ export class SyncService {
   /** Push nach dem Dekodieren (Teilen: die Freigabeprüfung filtert dazwischen). */
   pushDecoded(p: DecodedPush): PushReply {
     for (const k of p.deletions) if (!p.stamps.has(k)) p.stamps.set(k, this.store.clock.now());
+    this.restampFuture(p);
     this.adoptDeviceWorkspace(p.records);
     const merge = this.store.applyRemote(p.records, p.deletions, p.stamps);
     const newer: WireRecord[] = [];
@@ -177,6 +179,21 @@ export class SyncService {
     const deleted = [...merge.tombstoned.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([k, s]) => wireDeletion(k, s));
     this.wake();
     return { newer, seq: this.seq, deleted };
+  }
+
+  /**
+   * BSD-279: Ein Gerät mit vorgehender Uhr (mehr als `StampClock.maxDrift` = 1 h) würde mit seinem Stempel jede
+   * spätere Änderung aller anderen überstimmen, bis die Zeit ihn eingeholt hat – die Seite wäre für alle
+   * eingefroren. Solche Records und Löschungen bekommen deshalb den Stempel des Empfangs. Inhalt bleibt unverändert.
+   */
+  private restampFuture(p: DecodedPush) {
+    const limit = this.store.clock.wallClock() + StampClock.maxDrift;
+    for (let i = 0; i < p.records.length; i++) {
+      const r = p.records[i]!;
+      const s = r.data.stamp as Stamp | undefined;
+      if (s && s.millis > limit) p.records[i] = { ...r, data: { ...r.data, stamp: this.store.clock.now() } } as WireRecord;
+    }
+    for (const [k, s] of p.stamps) if (s.millis > limit) p.stamps.set(k, this.store.clock.now());
   }
 
   /**
