@@ -170,6 +170,23 @@ test("OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260)", a
   expect(xml).toContain('<outline text="Beta" _complete="true"/>');
 });
 
+test("Word-Dokument (.docx) importieren (BSD-260)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const docx = readFileSync(new URL("../../../fixtures/import/docx/pandoc-report.docx", import.meta.url));
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "report.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx });
+  await expect(dialog.getByTestId("import-summary")).toHaveText("Imported 1 page, 1 attached file.");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("treeitem", { name: "Quarterly report" }).click();
+  const content = page.getByTestId("page-content");
+  await expect(content.getByRole("heading", { name: "Summary" })).toBeVisible();
+  await expect(content).toContainText("Nested bullet");
+  await expect(content.locator("table")).toContainText("North");
+  await expect(content.locator("img").first()).toBeVisible();
+});
+
 test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
