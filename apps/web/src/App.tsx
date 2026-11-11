@@ -152,15 +152,18 @@ export function App({ client, history }: { client: StoreClient; history: History
         case "forward": history.forward(); break;
         case "openParent": {
           const r = history.route;
-          const parent = r.name === "page" ? parentPage(outlineRef.current, r.id) : undefined;
+          if (r.name !== "page") break;
+          const parent = parentPage(outlineRef.current, r.id);
           if (parent) navigate({ name: "page", id: parent });
+          // Datenbank-Zeilen stehen nicht in der Seitenleisten-Struktur: der Worker kennt ihre Datenbankseite.
+          else void client.command<string[]>({ op: "pageAncestors", id: r.id }).then((up) => { const p = up.at(-1); if (p) navigate({ name: "page", id: p }); });
           break;
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [history, newPage, setAppearance, navigate]);
+  }, [history, newPage, setAppearance, navigate, client]);
 
   // BSD-256: feste Reihenfolge, Ziffern 1–9 wählen direkt (1 Page, 2 AI chat, 3 Meeting notes, 4 Database).
   const commands: PaletteCommand[] = [
