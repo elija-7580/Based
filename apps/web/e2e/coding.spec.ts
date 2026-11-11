@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -155,6 +155,16 @@ test("BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich 
   // kein hängendes „… is thinking“ in einem abgeschlossenen Gespräch
   await expect(messages.getByText(/is thinking/)).toHaveCount(0);
 
+  // Live: schreibt das CLI im Terminal weiter, erscheint die neue Nachricht ohne Neuladen, mit „Live“-Marker
+  await expect(page.getByTestId("cli-chat-live")).toHaveCount(0);
+  appendFileSync(join(home, ".claude", "projects", "-p-web", "abc-1.jsonl"), "\n" + [
+    j({ type: "user", timestamp: "2026-11-01T10:01:00.000Z", message: { role: "user", content: "And how do I renew it?" } }),
+    j({ type: "assistant", timestamp: "2026-11-01T10:01:04.000Z", message: { role: "assistant", content: [{ type: "text", text: "Run the refresh script." }] } }),
+  ].join("\n"));
+  await expect(messages.getByText("And how do I renew it?")).toBeVisible({ timeout: 5000 });
+  await expect(messages.getByText("Run the refresh script.")).toBeVisible();
+  await expect(page.getByTestId("cli-chat-live")).toBeVisible();
+
   // Fortsetzen: der Agent „claude“ ist in diesem Test nicht eingerichtet → klare Meldung statt stillem Nichts
   await page.getByRole("button", { name: "Continue in Based" }).click();
   await expect(messages.getByRole("alert")).toContainText("Claude Code isn't set up as a coding agent here");
@@ -173,12 +183,17 @@ test("BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich 
       await page.getByRole("navigation", { name: "Workspace" }).getByRole("button", { name: "Chat" }).click();
       await page.getByTestId("cli-chats").getByText("Fix the login bug").click();
       await expect(page.getByTestId("cli-chat-messages").getByText("The token expired.")).toBeVisible();
+      // Zustand „Live“ mitfotografieren: das CLI schreibt gerade
+      appendFileSync(join(home, ".claude", "projects", "-p-web", "abc-1.jsonl"), "\n" + j({ type: "assistant", timestamp: "2026-11-01T10:02:00.000Z", message: { role: "assistant", content: [{ type: "text", text: `Still working (${theme}).` }] } }));
+      await expect(page.getByTestId("cli-chat-live")).toBeVisible({ timeout: 5000 });
       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
         await page.setViewportSize({ width: w, height: h });
         // nichts läuft waagrecht heraus, die Knöpfe bleiben ganz sichtbar
         const bar = (await page.getByTestId("cli-chat-bar").boundingBox())!;
         const go = (await page.getByRole("button", { name: "Continue in Based" }).boundingBox())!;
         expect(go.x + go.width).toBeLessThanOrEqual(bar.x + bar.width + 1);
+        const liveBox = (await page.getByTestId("cli-chat-live").boundingBox())!;
+        expect(liveBox.x + liveBox.width).toBeLessThanOrEqual(bar.x + bar.width + 1);
         expect(await page.getByTestId("chat-page").evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
         await page.screenshot({ path: join(screens, `web-chat-cli-${theme}${w === 1280 ? "" : `-${w}`}.png`) });
       }

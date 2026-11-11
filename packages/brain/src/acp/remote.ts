@@ -99,8 +99,16 @@ export class CodingClient {
     return (await this.request<{ sessions: CliSession[] }>("GET", `/coding/history?limit=${limit}`)).sessions;
   }
 
-  historyTranscript(tool: string, id: string): Promise<{ session: CliSession; events: StoredChatEvent[] }> {
+  historyTranscript(tool: string, id: string): Promise<{ session: CliSession; events: StoredChatEvent[]; size?: number }> {
     return this.request("GET", `/coding/history/${encodeURIComponent(tool)}/${encodeURIComponent(id)}`);
+  }
+
+  /**
+   * Live: wartet bis zu `waitMs`, ob das CLI weiterschreibt. `unchanged` = nichts Neues, sonst das ganze Transkript.
+   * `size` ist der nächste `since`.
+   */
+  watchTranscript(tool: string, id: string, since: number, waitMs = 25_000, signal?: AbortSignal): Promise<{ size: number; unchanged: true } | { session: CliSession; events: StoredChatEvent[]; size: number; unchanged?: undefined }> {
+    return this.request("GET", `/coding/history/${encodeURIComponent(tool)}/${encodeURIComponent(id)}?since=${since}&wait=${waitMs}`, undefined, signal);
   }
 
   doctor(): Promise<{ tools: DoctorTool[]; agents: AgentStatus[] }> {
