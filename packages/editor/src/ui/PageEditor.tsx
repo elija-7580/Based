@@ -30,7 +30,7 @@ import { acquireSession, releaseSession, type DocSession, type YDocStore } from 
 import type { CollabHandle, CollabSource } from "../yjs/collab.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
-import { mentionItems } from "./mentions.js";
+import { mentionItems, resolveWikilink, wikilinkBefore } from "./mentions.js";
 import { PageOutline } from "./Outline.js";
 import { handlePaste } from "./paste.js";
 import { lastCopiedSync, rememberSyncClipboard } from "./syncClipboard.js";
@@ -498,6 +498,22 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           return;
         }
         if (e.target !== editor.domElement) return; // eingebettete Editoren (Synced Block) haben ihren eigenen Rahmen
+        // BSD-90 Teil 2: „[[Titel]]“ fertig getippt → Seiten-Erwähnung (vorhandene Seite oder neu angelegt)
+        if (e.key === "]" && !e.metaKey && !e.ctrlKey && !e.altKey && editable) {
+          const view = editor.prosemirrorView;
+          const sel = view?.state.selection;
+          if (view && sel?.empty) {
+            const before = sel.$from.parent.textBetween(0, sel.$from.parentOffset, undefined, "\ufffc");
+            const title = wikilinkBefore(before);
+            if (title) {
+              e.preventDefault();
+              const len = before.length - before.lastIndexOf("[[");
+              view.dispatch(view.state.tr.delete(sel.from - len, sel.from));
+              void resolveWikilink(editor, title, mentionOptions);
+              return;
+            }
+          }
+        }
         if (urlMenu) {
           // Menü nach URL-Einfügen: Pfeile/Enter wählen, Esc und jede andere Taste schließen (getippt wird weiter).
           if (e.key === "ArrowDown" || e.key === "ArrowUp") {
