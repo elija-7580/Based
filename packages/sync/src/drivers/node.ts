@@ -24,6 +24,7 @@ export function openNodeDatabase(path = ":memory:"): SqlDatabase {
     exec: (sql) => db.exec(sql),
     run: (sql, params = []) => void prepare(sql).run(...(params as SQLInputValue[])),
     all: (sql, params = []) => prepare(sql).all(...(params as SQLInputValue[])) as SqlRow[],
+    backupIsComplete: true,
     backup(version) {
       if (path === ":memory:") return undefined;
       const target = `${path}.bak-v${version}`;

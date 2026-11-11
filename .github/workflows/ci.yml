@@ -45,7 +45,7 @@ jobs:
       - name: Typecheck, Lint, Tests (inkl. Fixture-Runner)
         run: |
           set -o pipefail
-          { pnpm -r typecheck && pnpm lint && pnpm -r test; } 2>&1 | tee ts.log
+          { pnpm -r typecheck && pnpm lint && pnpm -r test && BASED_PROPERTY_RECORDS=1 pnpm -r test; } 2>&1 | tee ts.log
       - name: Playwright (WebKit + Chromium)
         if: always()
         run: |

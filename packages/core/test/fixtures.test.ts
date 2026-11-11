@@ -6,6 +6,11 @@ import { parseRecord } from "../src/index.js";
 import { FIXTURES_DIR, loadFixtureFiles } from "./fixtures/load.js";
 import { DEVIATIONS } from "./fixtures/deviations.js";
 import { PORTS } from "./fixtures/ports.js";
+import { WorkspaceStore as PinnedStore } from "../src/index.js";
+
+// Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
+// BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
+PinnedStore.propertyRecordsByDefault = false;
 
 const files = loadFixtureFiles();
 const report = new Map<string, { passed: number; total: number; ported: boolean; deviations?: number }>();

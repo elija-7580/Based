@@ -107,10 +107,49 @@ export const MIGRATIONS: readonly Migration[] = [
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]!.version;
 
+/**
+ * BSD-30 (ADR 0014): Datei-Format mit Properties als eigenen Records. Kein Eintrag in `MIGRATIONS`, weil nicht jede
+ * Datei umgestellt wird – erst `enablePropertyRecords`. Eine umgestellte Datei trägt diese Version, damit ältere
+ * Apps (Swift, frühere Builds) sie nicht mehr öffnen: sie sähen Datenbanken ohne Spalten und könnten das zurückschreiben.
+ */
+export const PROPERTY_RECORDS_SCHEMA_VERSION = 4;
+
+export const hasPropertyRecords = (db: SqlDatabase) => schemaVersion(db) >= PROPERTY_RECORDS_SCHEMA_VERSION;
+
+/**
+ * Stellt die Datei auf Properties als eigene Records um (einmalig, ohne Rückfrage wiederholbar). Vorher: Kopie der
+ * Datei, wo die Plattform das kann, und in jedem Fall eine Kopie aller Datenbank-Records in `property_migration_backup`
+ * – das ist alles, was die Umstellung ändert (Zeilen, Blöcke und Ansichten fasst sie nicht an). Die Records selbst
+ * teilt der Store beim Öffnen auf.
+ */
+export function enablePropertyRecords(db: SqlDatabase): void {
+  const from = schemaVersion(db);
+  if (from >= PROPERTY_RECORDS_SCHEMA_VERSION) return;
+  const backupName = db.backupIsComplete ? db.backup?.(from) : undefined;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.exec("CREATE TABLE IF NOT EXISTS property_migration_backup (id TEXT PRIMARY KEY, data BLOB NOT NULL, at REAL NOT NULL)");
+    db.run("INSERT OR IGNORE INTO property_migration_backup(id, data, at) SELECT id, data, ? FROM records WHERE kind = 'database'", [Date.now() / 1000]);
+    db.exec(`PRAGMA user_version = ${PROPERTY_RECORDS_SCHEMA_VERSION}`);
+    db.exec("COMMIT");
+  } catch (e) {
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      // schon zurückgerollt
+    }
+    throw new PersistenceError(`enabling property records failed: ${String(e)}`, "migration");
+  }
+  if (backupName) setMeta(db, "propertyRecords.backup", backupName);
+  setMeta(db, "propertyRecords.log", `v${from} → v${PROPERTY_RECORDS_SCHEMA_VERSION} at ${new Date().toISOString()}`);
+}
+
 /** Bringt die Datei auf `CURRENT_SCHEMA_VERSION`. Eine neuere Datei wird nicht angefasst (`newerFormat`). */
 export function migrate(db: SqlDatabase, migrations: readonly Migration[] = MIGRATIONS): void {
   const from = schemaVersion(db);
   const target = migrations[migrations.length - 1]?.version ?? 0;
+  // BSD-30: eine auf Property-Records umgestellte Datei ist bekannt und braucht keine weitere Migration
+  if (from === PROPERTY_RECORDS_SCHEMA_VERSION && migrations === MIGRATIONS) return;
   if (from > target) {
     throw new PersistenceError(`based.sqlite has format v${from}, this version of Based knows up to v${target}`, "newerFormat");
   }

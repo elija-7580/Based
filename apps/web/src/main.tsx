@@ -7,7 +7,7 @@ import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
-import { deviceNode, guestDeviceNode, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
+import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
@@ -86,6 +86,16 @@ function showGuestRevoked() {
   );
 }
 
+/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: nein. */
+async function serverUsesPropertyRecords(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${url.replace(/\/+$/, "")}/health`);
+    return r.ok && ((await r.json()) as { protocol?: unknown }).protocol === 3;
+  } catch {
+    return false;
+  }
+}
+
 function start(guest: GuestBoot | undefined) {
   const devices = guest ? guestDeviceNode(guest.id) : deviceNode;
   const link = new StoreLink({
@@ -100,8 +110,9 @@ function start(guest: GuestBoot | undefined) {
       const device = devices.get();
       const sync = await syncConfig.load();
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
-      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}) };
-      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}) };
+      // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
+      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync && (await serverUsesPropertyRecords(sync.url)) ? { propertyRecords: true } : {}) };
+      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}) };
     },
   });
   const client = new StoreClient(link);

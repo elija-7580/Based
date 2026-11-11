@@ -15,6 +15,12 @@ export interface SqlDatabase {
    * Gibt den Namen der Sicherung zurück; `undefined` = nichts zu sichern (z. B. In-Memory).
    */
   backup?(version: number): string | undefined;
+  /**
+   * `backup` ist fertig, wenn es zurückkehrt (Datei auf der Platte). Im Browser (OPFS) wird die Kopie nicht
+   * abgewartet; die Umstellung auf Property-Records (BSD-30) verlässt sich dort auf die Kopie der Datenbank-Records
+   * in der Datei selbst (`property_migration_backup`).
+   */
+  backupIsComplete?: boolean;
   close(): void;
 }
 

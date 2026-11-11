@@ -1,3 +1,4 @@
+import { WorkspaceStore } from "@based/core";
 // Testserver auf einem freien Port (das Betriebssystem wählt ihn).
 import { createApp, type App, type AppOptions } from "../src/app.js";
 import { silentLogger } from "../src/log.js";
@@ -15,12 +16,15 @@ export async function startApp(opts: Partial<AppOptions> = {}): Promise<App & { 
 
 export const auth = { Authorization: `Bearer ${TOKEN}` };
 
+/** BSD-30: Läuft die Suite im neuen Format (BASED_PROPERTY_RECORDS=1), sprechen die Helfer Protokoll 3. */
+export const protocolHeader = (): Record<string, string> => (WorkspaceStore.propertyRecordsByDefault ? { "X-Based-Protocol": "3" } : {});
+
 export async function get(url: string, headers: Record<string, string> = auth) {
-  const r = await fetch(url, { headers });
+  const r = await fetch(url, { headers: { ...protocolHeader(), ...headers } });
   return { status: r.status, body: (await r.json().catch(() => undefined)) as Record<string, unknown> | undefined, headers: r.headers };
 }
 
 export async function post(url: string, body: unknown, headers: Record<string, string> = auth) {
-  const r = await fetch(url, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) });
+  const r = await fetch(url, { method: "POST", headers: { ...protocolHeader(), ...headers, "Content-Type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) });
   return { status: r.status, body: (await r.json().catch(() => undefined)) as Record<string, unknown> | undefined };
 }

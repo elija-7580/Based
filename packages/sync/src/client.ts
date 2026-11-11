@@ -77,7 +77,7 @@ export interface SyncRoundResult {
   fullPull: boolean;
 }
 
-const KINDS = new Set(["workspace", "block", "database", "view"]);
+const KINDS = new Set(["workspace", "block", "database", "view", "property"]);
 
 /** Liest Record-Listen Eintrag für Eintrag: ein unlesbarer wird übersprungen und gemeldet, der Rest angewendet. */
 export function decodeRecords(list: unknown, log?: SyncLog): WireRecord[] {
@@ -159,7 +159,8 @@ export class SyncClient {
   private async request<T>(method: "GET" | "POST", path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
     const init: RequestInit = {
       method,
-      headers: { Authorization: `Bearer ${this.opts.token}`, ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+      // BSD-30: Protokoll 3, wenn dieser Store Properties als eigene Records führt – der Server weist das andere ab
+      headers: { Authorization: `Bearer ${this.opts.token}`, "X-Based-Protocol": this.store.propertyRecords ? "3" : "2", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
     };
     if (body !== undefined) init.body = JSON.stringify(body);
     if (signal) init.signal = signal;
@@ -204,7 +205,7 @@ export class SyncClient {
       const r = await this.syncOnce();
       this.lastError = undefined;
       this.lastSync = Date.now();
-      this.opts.onStatus?.(`Synced · live (protocol v2)${r.received > 0 ? ` · ${r.received} changes` : ""}`);
+      this.opts.onStatus?.(`Synced · live (protocol v${this.store.propertyRecords ? 3 : 2})${r.received > 0 ? ` · ${r.received} changes` : ""}`);
     } catch (e) {
       this.lastError = e instanceof Error ? e.message : String(e);
       this.opts.log?.("error", `Sync error: ${this.lastError}`);

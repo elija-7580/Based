@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { loadArchive, propertyRecords } from "@based/core";
 import { CLIError, parseArgs, VERSION } from "./args.js";
 import { BasedCLI, type MCPSession } from "./cli.js";
 import { checkURL, configFileContents, configPath, resolveConfig } from "./config.js";
@@ -109,6 +110,30 @@ export async function main(argv: string[], io: { env?: Record<string, string | u
       writeFileSync(path, configFileContents(url, token), { mode: 0o600 });
       out(`Saved ${url} to ${path} (mode 600).`);
       return 0;
+    }
+    if (command.name === "check") {
+      // BSD-30: Archiv lesen, Umstellung nur rechnen, Bericht ausgeben. Schreibt nichts, spricht mit keinem Server.
+      let bytes: Uint8Array;
+      try {
+        bytes = readFileSync(command.path);
+      } catch {
+        throw new CLIError(`can't read ${command.path}`);
+      }
+      const started = Date.now();
+      let loaded: ReturnType<typeof loadArchive>;
+      try {
+        loaded = loadArchive(bytes);
+      } catch (e) {
+        throw new CLIError(e instanceof Error ? e.message : String(e));
+      }
+      const report = propertyRecords.dryRunMigration(loaded.read.records);
+      if (options.json) out(JSON.stringify({ ...report, unreadableRecords: loaded.read.skipped, ms: Date.now() - started }));
+      else {
+        out(`Archive: ${command.path} (${loaded.read.records.length} records, ${loaded.read.skipped} unreadable)`);
+        out(propertyRecords.formatMigrationReport(report));
+        out(`Time: ${Date.now() - started} ms`);
+      }
+      return report.ok ? 0 : 1;
     }
     const config = resolveConfig(options, { env, home, readFile, fileMode, alive });
     if (command.name === "config") {

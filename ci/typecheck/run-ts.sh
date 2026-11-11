@@ -11,5 +11,7 @@ pnpm install --frozen-lockfile
 pnpm -r typecheck
 pnpm lint
 pnpm -r test
+# BSD-30: dieselben Tests noch einmal im neuen Format (Spalten als eigene Records).
+BASED_PROPERTY_RECORDS=1 pnpm -r test
 if [[ "${1:-}" == "--e2e" ]]; then CI=1 pnpm --filter @based/web e2e; fi
 echo "ts OK"

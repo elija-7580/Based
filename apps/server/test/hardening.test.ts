@@ -3,6 +3,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { WireRecord } from "@based/core";
 import { createLogger } from "../src/log.js";
 import { auth, post, startApp } from "./helpers.js";
+import { WorkspaceStore as PinnedStore } from "@based/core";
+
+// Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
+// BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
+PinnedStore.propertyRecordsByDefault = false;
 
 const page = (id: string, text: string, millis = 1000): WireRecord => ({
   kind: "block",

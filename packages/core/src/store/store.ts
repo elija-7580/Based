@@ -5,7 +5,8 @@
 import { canonicalStringify } from "../json.js";
 import { compareStamps, StampClock, ZERO_STAMP, type Stamp } from "../hlc.js";
 import { keyBetween, keysBetween } from "../sortkeys.js";
-import type { Block, Database, DatabaseView, RecordKind, WireRecord, Workspace } from "../model/records.js";
+import { diffProperties } from "../model/property-records.js";
+import type { Block, Database, DatabaseView, PropertyRecord, PropertySchema, RecordKind, WireRecord, Workspace } from "../model/records.js";
 
 export type RecordKeyString = `${RecordKind}:${string}`;
 export const keyOf = (kind: RecordKind, id: string): RecordKeyString => `${kind}:${id}`;
@@ -90,6 +91,11 @@ export class StoreReadOnlyError extends Error {
 export interface StoreChange {
   keys: RecordKeyString[];
   origin: ChangeOrigin;
+  /**
+   * BSD-30: Schlüssel in `keys`, die nur zur Benachrichtigung dabei sind – die Datenbank einer geänderten Property.
+   * Ihr eigener Record wurde nicht geschrieben; wer Records weiterreicht (Replik, Sync), überspringt sie.
+   */
+  notified?: RecordKeyString[];
 }
 
 export interface RemoteMergeResult {
@@ -125,6 +131,11 @@ export class Tx {
   preserveTimestamps = false;
   readonly tombstoneStamps = new Map<RecordKeyString, Stamp>();
   readonly forced = new Set<RecordKeyString>();
+  /**
+   * BSD-30: Die Records dieser Transaktion tragen schon ihre Stempel (Sync, Import, Editor-Replik). Eine Datenbank
+   * im alten Format (Properties im Record) wird dann je Property nach Last-Writer-Wins eingearbeitet statt blind.
+   */
+  lww = false;
 
   constructor(private readonly store: WorkspaceStore) {}
 
@@ -138,13 +149,70 @@ export class Tx {
     return this.store.blocks.get(id);
   }
   put(r: WireRecord) {
+    // BSD-30: Wer eine Datenbank mit ihrer Property-Liste schreibt (alle Aufrufer, Importe, alte Archive), bekommt
+    // sie in Kern + Property-Records zerlegt. Nur ein Record mit leerer Liste ist schon der Kern.
+    if (r.kind === "database" && this.store.propertyRecords && r.data.properties.length > 0) {
+      const ids = new Set(r.data.properties.map((p) => p.id));
+      if (ids.size === r.data.properties.length) return this.putDatabaseWithProperties(r.data);
+      // Zwei Properties mit derselben ID lassen sich nicht aufteilen, ohne eine zu verlieren. Eine Datenbank, die
+      // so gespeichert ist, bleibt im alten Format; in eine schon aufgeteilte darf so etwas nicht hineingeschrieben werden.
+      if (this.store.propertyRecordsOf(r.data.id).length > 0) throw new Error(`BSD-30: database ${r.data.id} would get two properties with the same id`);
+    }
+    this.putRaw(r);
+  }
+  private putRaw(r: WireRecord) {
     this.touch(recordKey(r));
     this.store._set(structuredClone(r));
   }
   remove(key: RecordKeyString) {
     if (!this.store.record(key)) return;
+    // BSD-30: eine Datenbank nimmt lokal ihre Property-Records mit (vom Sync kommen deren Löschungen einzeln)
+    if (this.store.propertyRecords && !this.lww && key.startsWith("database:")) {
+      for (const p of this.store.propertyRecordsOf(parseKey(key).id)) this.removeRaw(keyOf("property", p.id));
+    }
+    this.removeRaw(key);
+  }
+  private removeRaw(key: RecordKeyString) {
+    if (!this.store.record(key)) return;
     this.touch(key);
     this.store._remove(key);
+  }
+
+  /**
+   * BSD-30 (ADR 0014): Datenbank mit Property-Liste → Kern + Property-Records. Geschrieben wird nur, was sich
+   * geändert oder bewegt hat; der Kern nur, wenn sich an ihm etwas geändert hat (das erkennt `commit`).
+   */
+  private putDatabaseWithProperties(db: Database) {
+    const store = this.store;
+    const key = keyOf("database", db.id);
+    const stored = store.record(key) as { kind: "database"; data: Database & { legacyProperties?: PropertySchema[] } } | undefined;
+    // Stand vor der Umstellung (Properties noch im gespeicherten Record): die alte Liste einfrieren – der Rückweg.
+    const migrating = stored !== undefined && stored.data.properties.length > 0;
+    const diff = diffProperties(db.id, store.propertyRecordsOf(db.id), db.properties, db.stamp);
+    for (const rec of diff.upserts) {
+      const k = keyOf("property", rec.id);
+      if (this.lww) {
+        const old = store.properties.get(rec.id);
+        if (old && compareStamps(old.stamp, rec.stamp) >= 0) continue;
+        const ts = old ? undefined : store.persistence?.tombstone(k);
+        if (ts && compareStamps(ts, rec.stamp) >= 0) continue;
+      }
+      this.putRaw({ kind: "property", data: rec });
+    }
+    for (const id of diff.removed) {
+      const k = keyOf("property", id);
+      if (this.lww) {
+        const old = store.properties.get(id);
+        if (old && compareStamps(old.stamp, db.stamp) > 0) continue;
+        this.tombstoneStamps.set(k, db.stamp);
+      }
+      this.removeRaw(k);
+    }
+    const core: Database & { legacyProperties?: PropertySchema[] } = { ...structuredClone(db), properties: [] };
+    const frozen = migrating ? stored.data.properties : stored?.data.legacyProperties;
+    if (frozen !== undefined) core.legacyProperties = structuredClone(frozen);
+    else delete core.legacyProperties;
+    this.putRaw({ kind: "database", data: core });
   }
   update(id: string, f: (b: Block) => void) {
     const b = this.store.blocks.get(id);
@@ -166,12 +234,31 @@ export interface StoreOptions {
   /** Aktuelle Zeit als Swift-Datum (Sekunden seit 2001); für Tests austauschbar. */
   now?: () => number;
   userID?: string | null;
+  /**
+   * BSD-30 (ADR 0014): Properties als eigene Records. `databases` zeigt weiter Datenbanken mit ihrer Property-Liste
+   * (aus Kern + Property-Records zusammengesetzt); gespeichert und gesynct werden Kern und Property-Records einzeln.
+   * Beim Öffnen werden Datenbanken im alten Format umgestellt (deterministisch, siehe `splitDatabase`).
+   */
+  propertyRecords?: boolean;
 }
 
 export class WorkspaceStore {
   readonly blocks = new Map<string, Block>();
+  /** Datenbanken, wie die App sie liest: immer mit `properties`. */
   readonly databases = new Map<string, Database>();
   readonly views = new Map<string, DatabaseView>();
+  /**
+   * BSD-30: Vorgabe für Stores ohne ausdrückliche Angabe. Die Umgebungsvariable BASED_PROPERTY_RECORDS=1 schaltet
+   * sie ein – so läuft die ganze Testsuite auch im neuen Format (ci/typecheck/run-ts.sh).
+   */
+  static propertyRecordsByDefault = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.BASED_PROPERTY_RECORDS === "1";
+  /** BSD-30: Property-Records (nur mit `propertyRecords`). */
+  readonly properties = new Map<string, PropertyRecord>();
+  readonly propertyRecords: boolean;
+  /** BSD-30: gespeicherte Datenbank-Records ohne Properties (nur mit `propertyRecords`). */
+  private cores = new Map<string, Database>();
+  private propertyIndex = new Map<string, Set<string>>();
+  private composing = true;
   workspace: Workspace;
   readonly clock: StampClock;
   readonly persistence: Persistence | undefined;
@@ -194,16 +281,78 @@ export class WorkspaceStore {
     this.clock = new StampClock(opts.node);
     this.now = opts.now ?? swiftNow;
     this.userID = opts.userID === undefined ? "me" : opts.userID;
+    this.propertyRecords = opts.propertyRecords ?? WorkspaceStore.propertyRecordsByDefault;
     let ws: Workspace | undefined;
+    this.composing = false;
     for (const r of opts.persistence?.loadAll() ?? []) {
       if (r.kind === "workspace") {
         if (!ws || r.data.id === WORKSPACE_ID) ws = r.data;
       } else this._set(r);
+      // Die Uhr setzt hinter dem Gespeicherten fort: eine lokale Änderung ist sonst (gleiche Millisekunde, zurück
+      // gestellte Systemuhr) älter gestempelt als der Stand, den sie ändert, und verliert gegen dessen Wiederkehr.
+      this.clock.observe(stampOf(r));
     }
+    this.composing = true;
+    if (this.propertyRecords) for (const id of this.cores.keys()) this.compose(id);
     const t = this.now();
     this.workspace = ws ?? { id: WORKSPACE_ID, name: "My Workspace", favorites: [], createdAt: t, updatedAt: t, stamp: { ...ZERO_STAMP } };
     this.rebuildChildIndex();
+    if (this.propertyRecords) this.migrateToPropertyRecords();
   }
+
+  // MARK: Properties als eigene Records (BSD-30)
+
+  /** Property-Records einer Datenbank in ihrer Reihenfolge. */
+  propertyRecordsOf(databaseID: string): PropertyRecord[] {
+    const ids = this.propertyIndex.get(databaseID);
+    if (!ids || ids.size === 0) return [];
+    const out: PropertyRecord[] = [];
+    for (const id of ids) {
+      const r = this.properties.get(id);
+      if (r) out.push(r);
+    }
+    return out.sort((a, b) => (a.sk !== b.sk ? (a.sk < b.sk ? -1 : 1) : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+
+  /** Sicht einer Datenbank neu zusammensetzen: Kern + Property-Records (vor der Umstellung: die Liste im Record). */
+  private compose(databaseID: string) {
+    if (!this.composing) return;
+    const core = this.cores.get(databaseID);
+    if (!core) {
+      this.databases.delete(databaseID);
+      return;
+    }
+    const records = this.propertyRecordsOf(databaseID);
+    const { legacyProperties: _frozen, ...rest } = core as Database & { legacyProperties?: unknown };
+    this.databases.set(databaseID, { ...rest, properties: records.length > 0 || core.properties.length === 0 ? records.map((r) => r.schema) : core.properties } as Database);
+  }
+
+  /**
+   * Datenbanken im alten Format umstellen. Deterministisch (IDs aus Datenbank- und Property-ID, Stempel der
+   * Datenbank, Reihenfolge aus der Liste): jedes Gerät kommt zum selben Ergebnis, spätere Änderungen gewinnen.
+   * Die alte Liste bleibt im Kern als `legacyProperties`. Gibt die Zahl der umgestellten Datenbanken zurück.
+   */
+  migrateToPropertyRecords(): number {
+    const old = [...this.cores.values()].filter((d) => d.properties.length > 0);
+    if (old.length === 0) return 0;
+    // Zwei Properties mit derselben ID lassen sich nicht aufteilen, ohne eine zu verlieren: die Datenbank bleibt, wie sie ist.
+    const fit = old.filter((d) => new Set(d.properties.map((p) => p.id)).size === d.properties.length);
+    this.unsplittable = old.filter((d) => !fit.includes(d)).map((d) => d.id);
+    if (fit.length === 0) return 0;
+    const tx = new Tx(this);
+    tx.lww = true;
+    try {
+      for (const d of fit) tx.put({ kind: "database", data: d });
+    } catch (e) {
+      this.rollback(tx);
+      throw e;
+    }
+    // wie ein Import: Stempel bleiben, gespeichert als lokale Änderung (jedes Gerät schickt dieselben Records)
+    if (!this.commit(tx, "Properties as records", undefined, "import", false, false)) throw new StoreReadOnlyError(this.writeFailure?.message ?? "write failed");
+    return fit.length;
+  }
+  /** Datenbanken, die nicht umgestellt werden konnten (doppelte Property-ID); sie bleiben im alten Format lesbar. */
+  unsplittable: string[] = [];
 
   // MARK: Lesen
 
@@ -211,18 +360,60 @@ export class WorkspaceStore {
     const { kind, id } = parseKey(key);
     switch (kind) {
       case "block": { const d = this.blocks.get(id); return d && { kind, data: d }; }
-      case "database": { const d = this.databases.get(id); return d && { kind, data: d }; }
+      case "database": { const d = this.propertyRecords ? this.cores.get(id) : this.databases.get(id); return d && { kind, data: d }; }
       case "view": { const d = this.views.get(id); return d && { kind, data: d }; }
       case "workspace": return this.workspace.id === id ? { kind, data: this.workspace } : undefined;
+      case "property": { const d = this.properties.get(id); return d && { kind, data: d }; }
+      default: return undefined;
     }
+  }
+
+  /**
+   * Record, wie die App ihn liest: eine Datenbank mit ihren Properties (BSD-30). Für Suche, Anzeige und alles, was
+   * den Inhalt braucht; `record` liefert, was gespeichert und gesynct wird.
+   */
+  logicalRecord(key: RecordKeyString): WireRecord | undefined {
+    if (this.propertyRecords && key.startsWith("database:")) {
+      const d = this.databases.get(parseKey(key).id);
+      return d && { kind: "database", data: d };
+    }
+    return this.record(key);
+  }
+
+  /** Alle gespeicherten Records einer Datenbank: der Datenbank-Record und (BSD-30) ihre Property-Records. */
+  databaseRecords(databaseID: string): WireRecord[] {
+    const db = this.record(keyOf("database", databaseID));
+    if (!db) return [];
+    return this.propertyRecords ? [db, ...this.propertyRecordsOf(databaseID).map((data) => ({ kind: "property", data }) as const)] : [db];
+  }
+
+  /**
+   * Alle Records in der Austauschform (Archiv, Export): Datenbanken mit ihrer Property-Liste, keine Property-Records.
+   * Das Archivformat bleibt damit dasselbe, egal wie der Store speichert (BSD-30). Der Stempel einer Datenbank ist
+   * der neueste aus Kern und Properties, damit ein Import sie als so aktuell behandelt, wie sie ist.
+   */
+  exportRecords(): WireRecord[] {
+    if (!this.propertyRecords) return this.allRecords().filter((r) => r.kind !== "property");
+    const databases = [...this.databases.values()].map((d) => {
+      let stamp = d.stamp;
+      for (const p of this.propertyRecordsOf(d.id)) if (compareStamps(p.stamp, stamp) > 0) stamp = p.stamp;
+      return { kind: "database", data: stamp === d.stamp ? d : { ...d, stamp } } as const;
+    });
+    return [
+      { kind: "workspace", data: this.workspace },
+      ...[...this.blocks.values()].map((data) => ({ kind: "block", data }) as const),
+      ...databases,
+      ...[...this.views.values()].map((data) => ({ kind: "view", data }) as const),
+    ];
   }
 
   allRecords(): WireRecord[] {
     return [
       { kind: "workspace", data: this.workspace },
       ...[...this.blocks.values()].map((data) => ({ kind: "block", data }) as const),
-      ...[...this.databases.values()].map((data) => ({ kind: "database", data }) as const),
+      ...[...(this.propertyRecords ? this.cores : this.databases).values()].map((data) => ({ kind: "database", data }) as const),
       ...[...this.views.values()].map((data) => ({ kind: "view", data }) as const),
+      ...[...this.properties.values()].map((data) => ({ kind: "property", data }) as const),
     ];
   }
 
@@ -287,9 +478,28 @@ export class WorkspaceStore {
         }
         break;
       }
-      case "database": this.databases.set(r.data.id, r.data); break;
+      case "database":
+        if (this.propertyRecords) {
+          this.cores.set(r.data.id, r.data);
+          this.compose(r.data.id);
+        } else this.databases.set(r.data.id, r.data);
+        break;
       case "view": this.views.set(r.data.id, r.data); break;
       case "workspace": this.workspace = r.data; break;
+      case "property": {
+        // Ohne `propertyRecords` nur aufbewahrt (nichts geht verloren), nicht ausgewertet.
+        const old = this.properties.get(r.data.id);
+        if (old && old.databaseID !== r.data.databaseID) this.propertyIndex.get(old.databaseID)?.delete(old.id);
+        this.properties.set(r.data.id, r.data);
+        let ids = this.propertyIndex.get(r.data.databaseID);
+        if (!ids) this.propertyIndex.set(r.data.databaseID, (ids = new Set()));
+        ids.add(r.data.id);
+        if (this.propertyRecords) {
+          if (old && old.databaseID !== r.data.databaseID) this.compose(old.databaseID);
+          this.compose(r.data.databaseID);
+        }
+        break;
+      }
     }
   }
 
@@ -300,8 +510,17 @@ export class WorkspaceStore {
       const old = this.blocks.get(id);
       if (old) this.unindex(old);
       this.blocks.delete(id);
-    } else if (kind === "database") this.databases.delete(id);
-    else if (kind === "view") this.views.delete(id);
+    } else if (kind === "database") {
+      this.cores.delete(id);
+      this.databases.delete(id);
+    } else if (kind === "view") this.views.delete(id);
+    else if (kind === "property") {
+      const old = this.properties.get(id);
+      if (!old) return;
+      this.properties.delete(id);
+      this.propertyIndex.get(old.databaseID)?.delete(id);
+      if (this.propertyRecords) this.compose(old.databaseID);
+    }
   }
 
   /** Sortiert einfügen (binäre Suche statt Neusortieren: Laden und große Pulls blieben sonst quadratisch). */
@@ -349,6 +568,7 @@ export class WorkspaceStore {
    */
   transact<T>(name: string, body: (tx: Tx) => T, opts: { coalesce?: string; undoable?: boolean; keepStamps?: boolean; derived?: boolean } = {}): T {
     const tx = new Tx(this);
+    tx.lww = opts.keepStamps === true;
     try {
       const result = body(tx);
       // BSD-220 `derived`: aus einem /collab-Y.Doc abgeleitet (nie rückgängig, nicht pushen); gestempelt wie sonst auch.
@@ -380,7 +600,7 @@ export class WorkspaceStore {
         if (this.userID == null) delete c.data.updatedBy;
         else c.data.updatedBy = this.userID;
       }
-    } else c.data.updatedAt = now;
+    } else if (c.kind !== "property") c.data.updatedAt = now;
     return c;
   }
 
@@ -447,7 +667,22 @@ export class WorkspaceStore {
     }
     this.revision += 1;
     if (this.observers.size > 0) {
-      const change: StoreChange = { keys: [...upserts.map(recordKey), ...deletions], origin };
+      const keys = [...upserts.map(recordKey), ...deletions];
+      const notified: RecordKeyString[] = [];
+      // BSD-30: Wer auf eine Datenbank hört, erfährt auch von Änderungen an ihren Properties.
+      if (this.propertyRecords) {
+        const seen = new Set(keys);
+        for (const [k, snap] of [...after, ...before]) {
+          if (snap?.kind !== "property") continue;
+          const dbKey = keyOf("database", snap.data.databaseID);
+          if (k !== dbKey && !seen.has(dbKey)) {
+            seen.add(dbKey);
+            keys.push(dbKey);
+            notified.push(dbKey);
+          }
+        }
+      }
+      const change: StoreChange = notified.length > 0 ? { keys, origin, notified } : { keys, origin };
       for (const fn of this.observers) fn(change);
     }
     return true;
@@ -554,6 +789,7 @@ export class WorkspaceStore {
    */
   applyRemote(records: WireRecord[], deletions: RecordKeyString[] = [], deletionStamps = new Map<RecordKeyString, Stamp>(), force?: ReadonlySet<RecordKeyString>): RemoteMergeResult {
     const tx = new Tx(this);
+    tx.lww = true;
     const stale: RecordKeyString[] = [];
     const tombstoned = new Map<RecordKeyString, Stamp>();
     for (const r of records) {

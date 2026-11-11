@@ -512,7 +512,8 @@ export function searchDeltaFrom(store: WorkspaceStore, change: StoreChange): Sea
   const deletions: RecordKeyString[] = [];
   for (const key of change.keys) {
     if (!key.startsWith("block:") && !key.startsWith("database:")) continue;
-    const r = store.record(key);
+    // BSD-30: der Index braucht die Datenbank mit ihren Properties
+    const r = store.logicalRecord(key);
     if (r) upserts.push(r);
     else deletions.push(key);
   }
