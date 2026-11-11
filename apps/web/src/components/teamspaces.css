@@ -8,7 +8,10 @@
 .sidebar .synced { margin-top: 0; padding-block: var(--space-2); }
 /* BSD-281: Fuß als Icon-Zeile neben dem Sync-Status (FOOTER_STYLE in shell/sidebarNav.ts) */
 .sidebar-footer.icons { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.sidebar-footer.icons .synced { padding-inline: var(--space-3) 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* Der Status gibt nach (kürzt mit …), die Icons bleiben immer ganz sichtbar – auch bei schmaler Seitenleiste. */
+.sidebar-footer.icons .synced { padding-inline: var(--space-3) 0; flex: 1 1 0; min-width: 0; overflow: hidden; }
+.synced-text { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.brand .ws-icon + .sidebar-hide { margin-left: var(--space-1); }
 .nav-icons { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; }
 .nav-icon { position: relative; color: var(--ink-2); }
 .nav-icon[aria-current="page"] { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-panel); }

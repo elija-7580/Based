@@ -102,7 +102,9 @@ export interface NavCommand {
 }
 
 export const NAV_COMMANDS: readonly NavCommand[] = [
-  { id: "home", label: "Home", keywords: ["start", "arc"] },
+  { id: "home", label: "Home", keywords: ["start"] },
+  // immer das Dashboard (Zeitbogen), auch wenn als Home eine Seite gewählt ist
+  { id: "dashboard", label: "Dashboard", keywords: ["arc", "agents", "overview", "home dashboard"] },
   { id: "chat", label: "Chat", keywords: ["ask", "ai"] },
   { id: "tasks", label: "All tasks", keywords: ["tasks", "agents", "inbox"] },
   { id: "coding", label: "Coding", keywords: ["code", "agent", "terminal"] },

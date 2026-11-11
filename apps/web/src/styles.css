@@ -77,7 +77,10 @@ input::placeholder { color: var(--muted); }
 .sidebar-show { position: fixed; top: var(--space-4); left: var(--space-4); z-index: 31; }
 [data-shell="desktop"] .sidebar-show { left: calc(var(--space-8) + var(--space-7)); top: var(--space-3); }
 .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3) var(--space-4); }
-.brand img { width: var(--icon-md); height: var(--icon-md); }
+.brand img { width: var(--icon-md); height: var(--icon-md); flex: none; }
+/* Ausblenden-Knopf rechts in der Kopfzeile der Seitenleiste: ruhig, beim Überfahren der Leiste deutlicher */
+.sidebar-hide { margin-left: auto; flex: none; opacity: 0.55; transition: opacity var(--duration-fast) var(--ease-out); }
+.sidebar:hover .sidebar-hide, .sidebar-hide:focus-visible { opacity: 1; }
 .brand .on-dark { display: none; }
 [data-theme="dark"] .brand .on-light { display: none; }
 [data-theme="dark"] .brand .on-dark { display: block; }

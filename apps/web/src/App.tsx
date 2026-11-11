@@ -21,7 +21,7 @@ import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
-import { recentPages, type RecentEntry } from "./shell/storage.js";
+import { homeTarget, recentPages, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
@@ -66,6 +66,13 @@ export function App({ client, history }: { client: StoreClient; history: History
   // ⌘-Klick / Mittelklick: in einem neuen Tab im Hintergrund (shell/newTabIntent.ts)
   const navigate = useCallback((r: Route) => (wantsNewTab() ? void history.openTab(r, { background: true }) : history.navigate(r)), [history]);
   const openPage = useCallback((id: string) => navigate({ name: "page", id }), [navigate]);
+  // Home kann eine Seite sein (Einstellungen → My settings → Home, oder Rechtsklick → „Set as Home“); sonst das Dashboard.
+  const homeChoice = useSyncExternalStore(startPage.subscribe, startPage.get);
+  const homePage = (() => {
+    const t = homeTarget(homeChoice, state.outline ? { has: (id) => Boolean(state.outline!.nodes[id]) && !state.outline!.trash.some((x) => x.id === id) } : undefined);
+    return t.name === "page" ? t.id : undefined;
+  })();
+  const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
   useEffect(() => installNewTabIntent(), []);
   // BSD-244: Maustasten 4/5, ⌘←/⌘→ und Wischen; der Hinweis am Rand folgt dem Finger ohne React-Render.
   const swipeHint = useRef<HTMLDivElement>(null);
@@ -189,7 +196,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   return (
     <div className="shell" data-testid="based-root" data-ready={state.ready ? "" : undefined}>
-      <Sidebar client={client} state={state} route={route} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} advanced={appearance.agentDetails} />
+      <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} advanced={appearance.agentDetails} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
         <div className="panel"><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
@@ -205,7 +212,9 @@ export function App({ client, history }: { client: StoreClient; history: History
         onCommand={(id) => {
           setQuickFind(false);
           if (id === "meeting") void newMeeting();
-          else if (id === "home" || id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
+          else if (id === "home") goHome();
+          else if (id === "dashboard") navigate({ name: "home" });
+          else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>
   );

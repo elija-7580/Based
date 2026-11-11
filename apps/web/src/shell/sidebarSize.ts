@@ -54,7 +54,14 @@ export function applySidebar(width: number, hidden: boolean, root: HTMLElement |
   else delete root.dataset.sidebar;
 }
 
-/** ⌘\ bzw. Strg+\ (ohne weitere Modifikatoren). */
-export function isSidebarToggle(e: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey" | "shiftKey">): boolean {
-  return (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key === "\\";
+/**
+ * ⌘\ bzw. Strg+\. Auf Tastaturen ohne eigene \-Taste (z. B. Deutsch: ⌥⇧7) zählt die Taste an derselben Stelle
+ * (dort „#“) – erkannt über `code`, also unabhängig von der Belegung. ⌥ oder ⇧ gelten nur, wenn sie nötig sind, um
+ * „\“ überhaupt zu tippen.
+ */
+export function isSidebarToggle(e: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey" | "shiftKey"> & { code?: string }): boolean {
+  if (!(e.metaKey || e.ctrlKey)) return false;
+  if (e.code === "Backslash") return !e.altKey && !e.shiftKey;
+  // ohne `code` (Tests, alte Umgebungen) oder auf einer anderen Taste: das Zeichen selbst
+  return e.key === "\\" && (e.code === undefined || e.code === "" ? !e.altKey && !e.shiftKey : true);
 }

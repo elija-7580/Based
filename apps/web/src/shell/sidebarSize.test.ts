@@ -16,4 +16,12 @@ describe("sidebarSize", () => {
     expect(isSidebarToggle({ ...k, metaKey: true, shiftKey: true })).toBe(false);
     expect(isSidebarToggle(k)).toBe(false);
   });
+
+  it("deutsche Tastatur: ⌘# (Taste an der Stelle von \\) und ⌘⌥⇧7 schalten um", () => {
+    const k = { key: "#", code: "Backslash", metaKey: true, ctrlKey: false, altKey: false, shiftKey: false };
+    expect(isSidebarToggle(k)).toBe(true);
+    expect(isSidebarToggle({ ...k, key: "\\", code: "Digit7", altKey: true, shiftKey: true })).toBe(true);
+    expect(isSidebarToggle({ ...k, key: "7", code: "Digit7" })).toBe(false);
+    expect(isSidebarToggle({ ...k, shiftKey: true })).toBe(false);
+  });
 });

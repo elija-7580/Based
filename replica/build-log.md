@@ -585,3 +585,12 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - Schicht B (Oberfläche): 278, 281 Teil 1/2, 249 Teil 2, 289 (P0), 201 Teil 3, 255 Teil 2, 238 Teil 3, 205 Teil 3, 225 Teil 2, 293, 280 Teil 1, 270 Teil 1, 216 Teil 1–3, 90 Teil 1/2, 262 Teil 1, 101.
 - Hauptlauf-Fixes beim Merge: Lint (57d48a5), features.csv-Merge mit neuer Spalte `beta`.
 - Tests am Ende: core 1624, brain 379, web 163, server 112, editor 77, database-ui 64, sync 45, cli 11; E2E voll 305/308 (Rest unter Last wackelig, einzeln grün).
+
+## Feedback 11.11. (Fable, tagsüber) — Graph, Seitenleiste, Home, CLI
+
+- Graph (BSD-262): Plätze werden je Knoten gemerkt statt je Bild. Kommt eine Seite dazu, bleiben alle bekannten Knoten stehen (`ForceLayout` `keepKnown`), nur die neue sucht sich einen Platz; ein Teilbild (Filter) verdrängt die übrigen Plätze nicht; verlässt man den Graph, bevor er ruht, rechnet der Worker zu Ende und merkt das Ergebnis; ein noch rechnendes Layout wird durch neue Daten nicht mehr eingefroren.
+- Seitenleiste: Icon-Zeile im Fuß bleibt bei jeder Breite sichtbar (der Status kürzt mit …); sichtbarer Knopf „Hide sidebar“ in der Kopfzeile; Kürzel über die Tastenposition (deutsche Tastatur: ⌘#, auch ⌘⌥⇧7).
+- Home kann eine Seite sein: Einstellungen → Home oder Rechtsklick → „Set as Home“; „Home“ in der Seitenleiste und ⌘K führen dorthin, „Dashboard“ in ⌘K zeigt weiter den Zeitbogen.
+- CLI (BSD-138) von `nightly/2026-11-10-a4` nach main geholt: lag seit dem 10.11. auf dem Branch, die DMG enthielt sie nie. Rust-Build über den Desktop-Workflow geprüft (siehe Notion).
+- Tests: web layoutClient 5, sidebarSize 3; E2E `feedback-1111.spec.ts` (4 Fälle, Chromium + WebKit).
+

@@ -12,6 +12,11 @@ export interface LayoutOptions {
   gravity?: number;
   /** Startwert der „Temperatur“ (bei bekannten Positionen kleiner wählen). */
   alpha?: number;
+  /**
+   * Knoten mit bekanntem Platz (`initial`) bleiben genau dort; nur neue Knoten suchen sich ihren Platz. So bleibt
+   * ein gemerktes Bild stehen, wenn Seiten dazukommen. `release()` (z. B. beim Ziehen) hebt das auf.
+   */
+  keepKnown?: boolean;
 }
 
 export interface Point { x: number; y: number }
@@ -40,6 +45,8 @@ export class ForceLayout {
   readonly gravity: number;
   /** Festgehaltener Knoten (wird gezogen). */
   pinned = -1;
+  /** 1 = Knoten bleibt an seinem Platz (`keepKnown`). */
+  private frozen: Uint8Array | undefined;
   // Raster (wiederverwendet)
   private cellHead = new Int32Array(0);
   private readonly cellNext: Int32Array;
@@ -94,7 +101,17 @@ export class ForceLayout {
         this.y[to] = this.y[from]! + Math.sin(angle) * this.linkDistance;
       }
     }
+    if (opts.keepKnown && initial && known > 0 && known < n) {
+      const frozen = new Uint8Array(n);
+      for (let i = 0; i < n; i++) frozen[i] = initial.has(ids[i]!) ? 1 : 0;
+      this.frozen = frozen;
+    }
     this.alpha = opts.alpha ?? (n > 0 && known === n ? 0.05 : known > 0 ? 0.15 : 1);
+  }
+
+  /** Alle Knoten dürfen sich wieder bewegen (nach `keepKnown`). */
+  release() {
+    this.frozen = undefined;
   }
 
   get count(): number {
@@ -187,8 +204,9 @@ export class ForceLayout {
 
     // Schwerkraft, Dämpfung, Bewegung
     const g = this.gravity * a;
+    const frozen = this.frozen;
     for (let i = 0; i < n; i++) {
-      if (i === this.pinned) { vx[i] = 0; vy[i] = 0; continue; }
+      if (i === this.pinned || frozen?.[i]) { vx[i] = 0; vy[i] = 0; continue; }
       vx[i] = (vx[i]! - x[i]! * g) * 0.6;
       vy[i] = (vy[i]! - y[i]! * g) * 0.6;
       // Schrittweite begrenzen: ein Ausreißer springt nicht aus dem Bild

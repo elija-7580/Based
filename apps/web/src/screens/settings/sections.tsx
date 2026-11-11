@@ -331,27 +331,24 @@ function AboutSection() {
 
 const HOME = "__home";
 
-/** Startseite: wohin neue Tabs, der Start der App und das Schließen des letzten Tabs führen. */
+/** Home: wohin „Home“ in der Seitenleiste, neue Tabs, der Start der App und das Schließen des letzten Tabs führen. */
 function StartPageSection({ state }: SettingsSectionProps) {
-  const [value, setValue] = useState(() => startPage.get() ?? HOME);
+  const value = useSyncExternalStore(startPage.subscribe, startPage.get) ?? HOME;
   const nodes = state.outline?.nodes ?? {};
+  const trashed = new Set((state.outline?.trash ?? []).map((t) => t.id));
   const pages = Object.entries(nodes)
-    .filter(([, n]) => n.kind === "page" || n.kind === "database")
+    .filter(([id, n]) => (n.kind === "page" || n.kind === "database") && !trashed.has(id))
     .map(([id]) => ({ value: id, label: state.titles.get(id) || "Untitled" }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const known = value === HOME || pages.some((p) => p.value === value);
   return (
     <Group>
-      <Row label="Open on start" hint="New tabs, app start and closing the last tab lead here">
+      <Row label="Home" hint="Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home. The dashboard stays reachable with ⌘K → Dashboard.">
         <Selector
-          label="Start page"
+          label="Home"
           value={known ? value : HOME}
-          onChange={(v) => {
-            const next = v ?? HOME;
-            setValue(next);
-            startPage.set(next === HOME ? undefined : next);
-          }}
-          options={[{ value: HOME, label: "Home" }, ...pages]}
+          onChange={(v) => startPage.set(!v || v === HOME ? undefined : v)}
+          options={[{ value: HOME, label: "Dashboard" }, ...pages]}
         />
       </Row>
     </Group>
@@ -366,7 +363,7 @@ export function registerBuiltinSettings() {
   registered = true;
   registerSettingsSection({ id: "device", page: "account", title: "This device", order: 10, component: DeviceSection });
   registerSettingsSection({ id: "appearance", page: "my-settings", title: "Appearance", order: 10, component: AppearanceSection });
-  registerSettingsSection({ id: "start-page", page: "my-settings", title: "Start page", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
+  registerSettingsSection({ id: "start-page", page: "my-settings", title: "Home", order: 20, component: StartPageSection, provides: ["Home page and start page"] });
   registerSettingsSection({ id: "workspace", page: "workspace", title: "Workspace", order: 10, component: WorkspaceSection });
   registerSettingsSection({ id: "language", page: "language", title: "Week", order: 10, component: LanguageSection, provides: ["Start week on Monday"] });
   registerSettingsSection({ id: "import-export", page: "import", title: "Import & export", order: 10, component: ImportSection });

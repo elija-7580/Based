@@ -105,14 +105,33 @@ export const recentPages = {
   },
 };
 
-/** Selbst gewählte Startseite (Einstellungen → My settings): eine Seiten-ID oder `undefined` für Home. */
+/**
+ * Selbst gewähltes Home (Einstellungen → My settings, oder Rechtsklick auf eine Seite → „Set as Home“): eine Seiten-ID
+ * oder `undefined` für das Dashboard. „Home“ in der Seitenleiste, neue Tabs und der App-Start führen dorthin.
+ */
+const startPageListeners = new Set<() => void>();
 export const startPage = {
   get: (): string | undefined => {
     const v = read<unknown>("based.startPage", undefined);
     return typeof v === "string" && v ? v : undefined;
   },
-  set: (id: string | undefined) => write("based.startPage", id),
+  set: (id: string | undefined) => {
+    write("based.startPage", id);
+    startPageListeners.forEach((f) => f());
+  },
+  subscribe: (f: () => void) => {
+    startPageListeners.add(f);
+    return () => void startPageListeners.delete(f);
+  },
 };
+
+/**
+ * Wohin „Home“ führt: die gewählte Seite, solange es sie gibt (nicht gelöscht, nicht im Papierkorb), sonst das
+ * Dashboard. `live` = IDs der vorhandenen Seiten; fehlt es (Workspace lädt noch), gilt die Wahl.
+ */
+export function homeTarget(chosen: string | undefined, live?: { has(id: string): boolean }): { name: "page"; id: string } | { name: "home" } {
+  return chosen && (!live || live.has(chosen)) ? { name: "page", id: chosen } : { name: "home" };
+}
 
 export const expandedPages = {
   get: (): Set<string> => new Set(read<string[]>("based.expanded", [])),

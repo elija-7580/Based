@@ -13,7 +13,7 @@ import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./Te
 import { routeToHash, type Route } from "../shell/router.js";
 import { openPageWindow } from "../desktop.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
-import { collapsedSections, expandedPages, sidebarNavPrefs } from "../shell/storage.js";
+import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
@@ -49,6 +49,9 @@ interface Props {
   client: StoreClient;
   state: ShellState;
   route: Route;
+  /** Als Home gewählte Seite (sonst führt Home zum Dashboard). */
+  homePage?: string | undefined;
+  onHome?: () => void;
   onNavigate: (r: Route) => void;
   onOpenPage: (id: string) => void;
   onNewPage: (opts?: { parent?: string; section?: string }) => Promise<string | undefined>;
@@ -63,7 +66,7 @@ interface Menu {
   y: number;
 }
 
-export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPage, onQuickFind, advanced = false }: Props) {
+export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, advanced = false }: Props) {
   const { outline, titles, status } = state;
   const [expanded, setExpanded] = useState<Set<string>>(expandedPages.get);
   const [collapsed, setCollapsed] = useState<Set<string>>(collapsedSections.get);
@@ -341,7 +344,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   type NavEntry = { id: NavID; name: string; icon: IconName; cut?: IconName; active: boolean; key?: string; badge?: string; go: () => void };
   const entries: Record<NavID, NavEntry> = {
     search: { id: "search", name: "Search", icon: "search", active: false, key: keyLabel("k"), go: onQuickFind },
-    home: { id: "home", name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home", go: () => onNavigate({ name: "home" }) },
+    home: { id: "home", name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home" || (homePage !== undefined && route.name === "page" && route.id === homePage), go: onHome ?? (() => onNavigate({ name: "home" })) },
     chat: { id: "chat", name: "Chat", icon: "chat", active: route.name === "chat", key: keyLabel("j"), go: () => onNavigate({ name: "chat" }) },
     tasks: { id: "tasks", name: "Tasks", icon: "agent", active: route.name === "tasks", go: () => onNavigate({ name: "tasks" }) },
     coding: { id: "coding", name: "Coding", icon: "terminal", active: route.name === "coding", go: () => onNavigate({ name: "coding" }) },
@@ -373,8 +376,10 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   const syncStatus = (
     <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-sync={status.sync ?? status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
       <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
-      {SYNC_LABEL[status.state]}
-      {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
+      <span className="synced-text">
+        {SYNC_LABEL[status.state]}
+        {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
+      </span>
     </div>
   );
   const menuSection = menu ? outline?.nodes[menu.id]?.section : undefined;
@@ -384,7 +389,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
     {hidden ? (
       <>
         <div className="sidebar-peek-zone" aria-hidden="true" data-testid="sidebar-peek-zone" onMouseEnter={peekOpen} onMouseLeave={peekClose} />
-        <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title="Show sidebar (⌘\)" data-testid="sidebar-show"
+        <button type="button" className="sidebar-show icon-btn ghost" aria-label="Show sidebar" title={`Show sidebar (${keyLabel("\\")})`} data-testid="sidebar-show"
           onMouseEnter={peekOpen} onMouseLeave={peekClose} onClick={() => {
             sidebarSize.setHidden(false);
             setHidden(false);
@@ -400,6 +405,15 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         <img className="on-dark" src={markDark} alt="" />
         <span className="wordmark">based</span>
         {outline?.workspaceIcon ? <span className="ws-icon" data-testid="workspace-icon-badge" title={outline.workspaceName} aria-label={`Workspace ${outline.workspaceName}`}>{outline.workspaceIcon}</span> : null}
+        {/* sichtbarer Knopf zum Ausblenden – das Kürzel allein findet niemand (und ⌘\ gibt es nicht auf jeder Tastatur) */}
+        <button type="button" className="sidebar-hide icon-btn ghost" data-testid="sidebar-hide"
+          aria-label={hidden ? "Keep sidebar open" : "Hide sidebar"} title={hidden ? "Keep sidebar open" : `Hide sidebar (${keyLabel("\\")})`}
+          onClick={() => {
+            sidebarSize.setHidden(!hidden);
+            setHidden(!hidden);
+          }}>
+          <Icon name="sidebar" size={18} />
+        </button>
       </div>
       <RecordingPill onOpenPage={onOpenPage} />
       {layout.top.map((id) => navButton(entries[id]))}
@@ -457,6 +471,8 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
           onMove={() => setMoving([menu.id])}
           onDuplicate={() => void client.command({ op: "duplicate", ids: [menu.id] })}
           onOpenWindow={() => void openPageWindow(routeToHash({ name: "page", id: menu.id }), titles.get(menu.id) ?? "")}
+          isHome={homePage === menu.id}
+          onHome={(on) => startPage.set(on ? menu.id : undefined)}
           quickMoves={(outline?.nodes[menu.id]?.parent === undefined ? outline?.sections ?? [] : []).filter((x) => x.id !== menuSection).map((x) => ({ id: x.id, label: `Move to ${x.name}` }))}
           onQuickMove={(section) => void client.command({ op: "moveToSection", ids: [menu.id], section })}
           onTrash={() => {
@@ -482,7 +498,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         aria-valuemax={SIDEBAR_MAX}
         aria-valuenow={width}
         tabIndex={0}
-        title="Drag to resize · click to hide (⌘\)"
+        title={`Drag to resize · click to hide (${keyLabel("\\")})`}
         data-testid="sidebar-resize"
         onPointerDown={(e) => {
           drag.current = { x: e.clientX, w: width };
@@ -755,7 +771,7 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
   );
 }
 
-function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, quickMoves, onQuickMove }: {
+function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, isHome, onHome, quickMoves, onQuickMove }: {
   menu: Menu;
   favorite: boolean;
   canNest: boolean;
@@ -768,6 +784,9 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   onDuplicate: () => void;
   /** BSD-202: in eigenem Fenster (Hülle) bzw. neuem Browser-Fenster. */
   onOpenWindow: () => void;
+  /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
+  isHome: boolean;
+  onHome: (on: boolean) => void;
   /** Direkt in einen anderen Abschnitt (Private, Teamspaces) – nur für Seiten der obersten Ebene. */
   quickMoves: { id: string; label: string }[];
   onQuickMove: (section: string) => void;
@@ -801,6 +820,7 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
+      {item(isHome ? "Use dashboard as Home" : "Set as Home", "home", () => onHome(!isHome))}
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}
