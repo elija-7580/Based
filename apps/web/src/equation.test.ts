@@ -1,8 +1,10 @@
 // BSD-10: KaTeX offline – rendert ohne Netz, Fehler kommen als Meldung zurück, Schriften liegen im Paket.
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { describe, expect, it } from "vitest";
-import { renderTeX } from "./equation.js";
+import { beforeAll, describe, expect, it } from "vitest";
+import { loadTeX, renderTeX } from "./equation.js";
+
+beforeAll(() => loadTeX());
 
 describe("renderTeX", () => {
   it("Block und inline", () => {

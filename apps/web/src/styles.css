@@ -583,3 +583,4 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .field textarea.notion-links { resize: vertical; min-height: calc(var(--space-8) + var(--space-4)); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg); color: var(--ink); font: inherit; font-size: var(--type-description-size); }
 .notion-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); }
 .notion-ok { margin: 0; color: var(--ink); }
+.screen-loading { flex: 1; min-height: var(--space-8); }
