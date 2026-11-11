@@ -115,6 +115,10 @@ Resource) und lädt nichts herunter. Fehlt Node oder ist es zu alt, sagt sie das
 
 - **Node finden:** über die Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`), damit
   Homebrew/nvm gefunden werden.
+- **Gespräche aus Claude Code und Codex (BSD-251):** läuft der lokale Server, zeigt der Chat sie als eigene Gruppe
+  „Claude Code & Codex“ (lesen, „Continue in Based“, Terminal-Befehl kopieren), und Coding benutzt ihn ohne
+  „Use for sync“. Im Chat und in Coding gibt es dafür einen Knopf, der den lokalen Server einschaltet. Der Server
+  lässt Anfragen aus dem Fenster der App zu (`BASED_APP_ORIGIN`, nur Tauri/Loopback) – der Token bleibt Pflicht.
 - **Local server (an/aus):** startet `node based-server.cjs desktop` mit `BASED_ACTION=local` – nur 127.0.0.1,
   Port 47821, eigene Datenbank `local-server.sqlite` im App-Datenordner. Der Token wird von der App erzeugt, liegt in
   ihrer verschlüsselten Ablage und geht über die Umgebung an den Prozess, nie über die Kommandozeile. Der Server

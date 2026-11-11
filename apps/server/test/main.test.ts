@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { allowedOrigin, parseOptions } from "../src/main.js";
+import { allowedOrigin, localAppOrigin, parseOptions } from "../src/main.js";
 import { health } from "../src/index.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -31,6 +31,11 @@ describe("Start", () => {
     expect(() => parseOptions(["--port", "x"], {})).toThrow(/port/);
     expect(allowedOrigin("https://based.example.com/app")).toBe("https://based.example.com");
     expect(allowedOrigin("ftp://x")).toBeUndefined();
+    // BSD-251: der lokale Server lässt nur das Fenster der Desktop-App zu, nie eine fremde Website
+    expect(localAppOrigin("tauri://localhost")).toBe("tauri://localhost");
+    expect(localAppOrigin("http://tauri.localhost")).toBe("http://tauri.localhost");
+    expect(localAppOrigin("http://localhost:1420")).toBe("http://localhost:1420");
+    for (const bad of [undefined, "", "https://evil.example", "tauri://evil", "http://localhost:1420/path", "file://", "null"]) expect(localAppOrigin(bad)).toBeUndefined();
   });
 
   it("ohne Token: Exit-Code 2, kein Lauschen", async () => {

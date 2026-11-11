@@ -1,7 +1,7 @@
 // BSD-138: based-server --local als Sidecar der Desktop-App: nur Loopback, freier Port, Discovery-Datei für die
 // CLI (0600, ohne Token), Ende mit stdin (die Hülle ist weg) räumt die Dateien weg.
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,9 +32,12 @@ describe("BSD-138 based-server --local", () => {
     const home = mkdtempSync(join(tmpdir(), "based-local-home-"));
     const data = mkdtempSync(join(tmpdir(), "based-local-db-"));
     try {
-      const child = spawn("pnpm", ["exec", "tsx", "src/main.ts", "--local", "--db", join(data, "local.sqlite")], {
+      // BSD-251: wie die Desktop-App startet – mit Coding-Ordner und der Herkunft ihres Fensters
+      mkdirSync(join(home, ".claude", "projects", "-p"), { recursive: true });
+      writeFileSync(join(home, ".claude", "projects", "-p", "c1.jsonl"), JSON.stringify({ type: "user", sessionId: "c1", cwd: "/p", timestamp: "2026-11-01T10:00:01.000Z", message: { role: "user", content: "hi from the terminal" } }));
+      const child = spawn("pnpm", ["exec", "tsx", "src/main.ts", "--local", "--db", join(data, "local.sqlite"), "--coding-root", home], {
         cwd: serverDir,
-        env: { ...process.env, HOME: home, BASED_TOKEN: "sidecar-token-0123456789", BASED_LOG_LEVEL: "warning", BASED_LOCAL_OWNER: "test" },
+        env: { ...process.env, HOME: home, BASED_TOKEN: "sidecar-token-0123456789", BASED_LOG_LEVEL: "warning", BASED_LOCAL_OWNER: "test", BASED_APP_ORIGIN: "tauri://localhost" },
         stdio: ["pipe", "pipe", "inherit"],
       });
       const ready = await new Promise<{ url: string; pid: number }>((resolve, reject) => {
@@ -59,6 +62,18 @@ describe("BSD-138 based-server --local", () => {
       expect(health.ok).toBe(true);
       const unauth = await fetch(`${ready.url}/sync/pull`);
       expect(unauth.status).toBe(401);
+
+      // BSD-251: das Fenster der App (tauri://localhost) darf – Preflight und Anfrage –, eine fremde Seite nicht
+      const pre = await fetch(`${ready.url}/coding/history`, { method: "OPTIONS", headers: { Origin: "tauri://localhost", "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization" } });
+      expect(pre.status).toBe(204);
+      expect(pre.headers.get("access-control-allow-origin")).toBe("tauri://localhost");
+      expect(pre.headers.get("access-control-allow-headers")).toContain("Authorization");
+      const hist = await fetch(`${ready.url}/coding/history`, { headers: { Origin: "tauri://localhost", Authorization: "Bearer sidecar-token-0123456789" } });
+      expect(hist.headers.get("access-control-allow-origin")).toBe("tauri://localhost");
+      expect(((await hist.json()) as { sessions: { tool: string; title: string }[] }).sessions).toMatchObject([{ tool: "claude", title: "hi from the terminal" }]);
+      const evil = await fetch(`${ready.url}/coding/history`, { method: "OPTIONS", headers: { Origin: "https://evil.example", "Access-Control-Request-Method": "GET" } });
+      expect(evil.headers.get("access-control-allow-origin")).toBeNull();
+      expect((await fetch(`${ready.url}/coding/history`, { headers: { Origin: "tauri://localhost" } })).status).toBe(401);
 
       const exited = new Promise<number | null>((resolve) => child.once("exit", (code) => resolve(code)));
       child.stdin!.end();

@@ -594,3 +594,12 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - CLI (BSD-138) von `nightly/2026-11-10-a4` nach main geholt: lag seit dem 10.11. auf dem Branch, die DMG enthielt sie nie. Rust-Build über den Desktop-Workflow geprüft (siehe Notion).
 - Tests: web layoutClient 5, sidebarSize 3; E2E `feedback-1111.spec.ts` (4 Fälle, Chromium + WebKit).
 
+## BSD-251 (Teil): Gespräche aus Claude Code und Codex in Based, ohne eigenen Server (Fable, 11.11.)
+
+- Fehler behoben: der lokale Server der Desktop-App hatte keine CORS-Freigabe für das Fenster der App – Coding, CLI-Verlauf und „Use for sync“ wären dort an jeder Anfrage gescheitert. Jetzt `BASED_APP_ORIGIN` (nur Tauri/Loopback), Test mit echtem Prozess.
+- Coding und CLI-Verlauf nehmen den lokalen Server, unabhängig vom Sync; leerer Zustand mit „Turn on“.
+- Chat: Gruppe „Claude Code & Codex“ unter den Chats, Gespräch lesen, „Continue in Based“, Terminal-Befehl kopieren.
+- Fehler behoben: die Claude-Zusammenfassung ließ in jedem gelesenen Gespräch dauerhaft „… is thinking“ stehen.
+- Tests: server local/main, web connection, brain acp-history, E2E coding.spec (Chromium + WebKit); Screenshots web-chat-cli-*.
+- Checkliste: geprüft Chat mit CLI-Gespräch in 1280 × 820, 900 × 600, 1728 × 1000, hell und dunkel; behoben Kopfzeile bricht um statt die Herkunft zu verdrängen, linke Kante auf der Linie der Nachrichten; offen „Import chats from the Mac…“ ist in der Chat-Liste gekürzt (eigener Eintrag). Nicht am Mac geprüft.
+
