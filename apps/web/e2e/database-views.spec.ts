@@ -487,6 +487,50 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
+test("BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.evaluate(() => (globalThis as unknown as { __based: { client: { command(c: unknown): Promise<string> } } }).__based.client.command({ op: "createDatabase", title: "Other source" }));
+  await seedDatabase(page, {
+    title: "Board room",
+    properties: [{ id: "title", name: "Name", type: "title" }, status],
+    rows: [{ title: "A", values: { st: { status: { _0: "todo" } } } }],
+    views: [{ id: "vd", name: "Dashboard", type: "dashboard", extra: { dashboard: { rows: [] } } }],
+  });
+  const dash = page.getByTestId("dashboard");
+  const add = async (type: string, source?: string) => {
+    await dash.getByRole("button", { name: "Add widget" }).click();
+    if (source) await page.getByTestId("widget-source").filter({ hasText: source }).click();
+    await page.getByTestId(`add-widget-${type}`).click();
+  };
+  await add("table");
+  await add("list", "Other source");
+  const rows = dash.getByTestId("dashboard-row");
+  await expect(rows).toHaveCount(2);
+  await expect(dash.getByTestId("dashboard-widget")).toHaveCount(2);
+  // zweites Widget (aus „Other source“) in die Zeile darüber → eine Zeile mit zwei Widgets
+  await dash.getByTestId("widget-actions").nth(1).click();
+  await page.getByTestId("widget-move-up").click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first().getByTestId("dashboard-widget")).toHaveCount(2);
+  // Breite und Zeilenhöhe
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-width-4").click();
+  await expect(dash.locator(".dbui-dash-cell").first()).toHaveAttribute("data-width", "4");
+  const body = dash.locator(".dbui-widget-body").first();
+  const before = (await body.boundingBox())!.height;
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("row-height-large").click();
+  await expect.poll(async () => (await body.boundingBox())!.height).toBeGreaterThan(before + 100);
+  // links/rechts tauschen, dann entfernen
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-move-right").click();
+  await expect(dash.locator(".dbui-dash-cell").nth(1)).toHaveAttribute("data-width", "4");
+  await dash.getByTestId("widget-actions").first().click();
+  await page.getByTestId("widget-remove").click();
+  await expect(dash.getByTestId("dashboard-widget")).toHaveCount(1);
+});
+
 test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

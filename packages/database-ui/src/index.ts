@@ -8,6 +8,7 @@ export { RowProperties } from "./RowProperties.js";
 export { OPEN_MODE_LABELS, openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek } from "./logic/peek.js";
 export type { OpenMode, PeekPosition, PeekState } from "./logic/peek.js";
 export { ViewBody, useQuery } from "./ViewBody.js";
+export type { DatabaseSource } from "./context.js";
 export { DBContext, ShellSlots, useDatabaseContext, useDatabaseVersion, useDB } from "./context.js";
 export type { DBContextValue, FileHost, FormRenderProps, RowActions } from "./context.js";
 export {

@@ -58,11 +58,17 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     const client = editorClient();
     return client ? { write: (system: string, prompt: string, signal: AbortSignal) => chatController(client).write(system, prompt, signal), available: () => chatController(client).canWrite() } : undefined;
   }, []);
+  // BSD-216: andere Datenbanken als Dashboard-Quelle (wie „Linked view of database“ im Editor)
+  const databases = useMemo(() => {
+    const client = editorClient();
+    const pageID = store.blocks.get(blockID)?.type === "databasePage" ? blockID : store.containingPage(blockID) ?? blockID;
+    return client ? { list: async () => (await client.listDatabases("")).map((d) => ({ id: d.id, title: d.title })), include: (id: string) => client.includeDatabase(pageID, id) } : undefined;
+  }, [store, blockID]);
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
     <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} databases={databases} />
     </div>
   );
 }
