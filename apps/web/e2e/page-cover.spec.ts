@@ -97,3 +97,38 @@ test("Bild als Seiten-Icon hochladen", async ({ page }) => {
   await page.getByTestId("icon-file").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: PNG });
   await expect(page.getByTestId("page-icon-image")).toBeVisible();
 });
+
+test("Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen", async ({ page, browserName }) => {
+  await newPage(page);
+  await page.getByLabel("Page title").fill("Gradient cover");
+  await page.locator(".page-head").hover();
+  await page.getByRole("button", { name: "Add cover" }).click();
+  const picker = page.getByTestId("cover-picker");
+  await expect(picker.getByRole("group", { name: "Gradients" }).getByRole("button")).toHaveCount(12);
+  await picker.getByRole("button", { name: "Gradient 5" }).click();
+  const cover = page.getByTestId("page-cover");
+  await expect(cover).toHaveAttribute("style", /cover-gradient-4-from/);
+  // die Farbe kommt wirklich an (Token aufgelöst, kein leerer Hintergrund)
+  await expect.poll(() => cover.evaluate((el) => getComputedStyle(el).backgroundImage)).toMatch(/linear-gradient/);
+  // Neuladen nur in Chromium: WebKit hat OPFS nur in einem dauerhaften Profil (hier ein frisches)
+  if (browserName !== "chromium") return;
+  await page.waitForTimeout(600);
+  await page.reload();
+  await expect(page.getByTestId("page-cover")).toHaveAttribute("style", /cover-gradient-4-from/);
+});
+
+for (const theme of ["light", "dark"] as const) {
+  test(`Screenshot Cover-Galerie (${theme})`, async ({ page, browserName }) => {
+    test.skip(browserName !== "chromium", "Screenshots nur einmal");
+    await page.addInitScript((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+    await newPage(page);
+    await page.getByLabel("Page title").fill("Gradient cover");
+    await page.locator(".page-head").hover();
+    await page.getByRole("button", { name: "Add cover" }).click();
+    await page.getByTestId("cover-picker").getByRole("button", { name: "Gradient 8" }).click();
+    await page.getByTestId("page-cover").hover();
+    await page.getByTestId("page-cover").getByRole("button", { name: "Change cover" }).click();
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: `../../docs/design/screens/web-cover-gallery-${theme}.png` });
+  });
+}
