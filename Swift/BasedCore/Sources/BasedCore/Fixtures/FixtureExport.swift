@@ -28,6 +28,7 @@ public enum FixtureExport {
         files["undo-remote/undo-remote.json"] = try pretty(ExtraFixtures.undoRemote())
         files["archive/archive.json"] = try pretty(ImportFixtures.archive())
         files["history/history.json"] = try pretty(HistoryFixtures.all())
+        files["dbops/dbops.json"] = try pretty(DatabaseOpsFixtures.all())
         if includeTimeZoneDependent {
             files["formulas/formulas.utc.json"] = try pretty(CoreFixtures.formulas(utc: true))
             files["queries/queries.utc.json"] = try pretty(StoreFixtures.queries())

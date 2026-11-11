@@ -12,6 +12,7 @@ import { expect } from "vitest";
 import { archivePort, exportPort, importPort, reimport } from "./import-ports.js";
 import { historyPort } from "./history-port.js";
 import { notionAPIPort } from "./notion-api-port.js";
+import { dbopsPort } from "./dbops-port.js";
 
 /** Ein Port darf asynchron sein (BSD-217: Notion-API-Import über eine Fake-API). */
 export type Port = (input: FixtureCase["input"], meta: Record<string, unknown>) => unknown;
@@ -234,4 +235,4 @@ const clipboard: Port = (raw, meta) => {
   return { html, reparsed: new ClipboardHTMLImporter().parse(html).map(importedJSON) };
 };
 
-export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard, reimport, import: importPort, export: exportPort, archive: archivePort, history: historyPort, "notion-api": notionAPIPort };
+export const PORTS: Record<string, Port | undefined> = { hlc, sortkeys, merge, "undo-remote": undoRemote, formulas, queries, values, conversion, search, clipboard, reimport, import: importPort, export: exportPort, archive: archivePort, history: historyPort, "notion-api": notionAPIPort, dbops: dbopsPort };

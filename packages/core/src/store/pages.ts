@@ -5,7 +5,7 @@ import { keyBetween, keysBetween } from "../sortkeys.js";
 import { isTrashed } from "../query/engine.js";
 import type { Block, Workspace } from "../model/records.js";
 import { canonicalStringify } from "../json.js";
-import { valuesMatchingSchema } from "./database-ops.js";
+import { unlinkRemovedRows, valuesMatchingSchema } from "./database-ops.js";
 import { keyOf, type Tx, type WorkspaceStore } from "./store.js";
 
 /** Seitenleisten-Abschnitt einer Seite oben: ein Teamspace oder „Private“. */
@@ -203,6 +203,10 @@ export function deleteForever(store: WorkspaceStore, ids: string[]) {
   const present = ids.filter((id) => store.blocks.has(id));
   if (present.length === 0) return;
   store.transact("Delete forever", (tx) => {
+    // BSD-248: Relationen anderer Zeilen auf die entfernten Zeilen lösen (wie Swift removeSubtree).
+    const all = new Set<string>();
+    for (const id of present) for (const d of [id, ...subtree(store, id)]) all.add(d);
+    unlinkRemovedRows(store, all, tx);
     for (const id of present) {
       if (!store.blocks.has(id)) continue; // schon mit einem anderen gelöscht
       for (const d of [id, ...subtree(store, id)]) {
