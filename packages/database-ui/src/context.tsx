@@ -86,3 +86,11 @@ export function useDatabaseContext(store: WorkspaceStore, databaseID: string, op
     store, engine, version, db, locked: readOnly === true || db.locked === true, onOpenPage, isAgentEdit: isAgentEdit ?? defaultIsAgentEdit, weekStart, rowActions,
   }, [store, engine, version, db, readOnly, onOpenPage, isAgentEdit, weekStart, rowActions]);
 }
+
+/**
+ * BSD-255: Die Datenbank steht inline in einer Seite – ohne eigenen senkrechten Scroller, Zeilen begrenzt mit
+ * „Load more“ (wie Notion). `null` = ganze Seite oder Peek.
+ */
+export const InlineView = createContext<{ pageSize: number } | null>(null);
+/** Zeilen je Seite einer Inline-Tabelle (Notions Standard „Load limit“ für Inline-Datenbanken liegt bei 10–25). */
+export const INLINE_PAGE_SIZE = 25;

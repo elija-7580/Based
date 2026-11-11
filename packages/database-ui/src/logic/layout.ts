@@ -68,3 +68,32 @@ export function nextRowIndex(items: FlatItem[], from: number, dir: 1 | -1): numb
   for (let i = from + dir; i >= 0 && i < items.length; i += dir) if (items[i]!.kind === "row") return i;
   return -1;
 }
+
+/**
+ * BSD-255: Inline-Tabellen zeigen nur die ersten `limit` Zeilen (über alle Gruppen); Gruppenköpfe ohne gezeigte Zeile
+ * und die „New“-Zeilen verborgener Gruppen fallen weg. `hidden` = wie viele Zeilen „Load more“ noch bringt.
+ */
+export function limitRows(items: readonly FlatItem[], limit: number): { items: FlatItem[]; hidden: number } {
+  const total = items.filter((it) => it.kind === "row").length;
+  if (total <= limit) return { items: [...items], hidden: 0 };
+  const out: FlatItem[] = [];
+  let shown = 0;
+  for (const it of items) {
+    if (it.kind === "row") {
+      if (shown >= limit) continue;
+      shown++;
+      out.push(it);
+    } else if (it.kind === "group") {
+      if (shown < limit) out.push(it);
+    } else if (shown < limit) out.push(it);
+  }
+  // Leere Gruppenköpfe am Ende (deren Zeilen alle verborgen sind) weglassen
+  while (out.length && out[out.length - 1]!.kind === "group") out.pop();
+  // „New“ der letzten gezeigten Gruppe bleibt, damit man auch bei langen Tabellen Zeilen anlegen kann.
+  const last = out[out.length - 1];
+  if (last && last.kind === "row") {
+    const add = items.find((it) => it.kind === "new" && it.groupID === last.groupID);
+    if (add) out.push(add);
+  }
+  return { items: out, hidden: total - shown };
+}

@@ -5,7 +5,7 @@ import {
   addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
-import { DBContext, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps, type RowActions } from "./context.js";
+import { DBContext, INLINE_PAGE_SIZE, InlineView, ShellSlots, useDatabaseContext, useDB, type FileHost, type FormRenderProps, type RowActions } from "./context.js";
 import { countConditions, describeCondition, topConditions } from "./logic/filters.js";
 import { openModeOf, parsePeek, peekPosition, peekShortcut, restorePeek, rowOrder, serializePeek, type OpenMode, type PeekState } from "./logic/peek.js";
 import { FilterEditor } from "./menus/FilterEditor.js";
@@ -66,6 +66,11 @@ export interface DatabaseViewProps {
   showTitle?: boolean | undefined;
   /** Höhe des Ganzen (Standard 100 % des Elternelements); die Ansicht scrollt darin. */
   height?: number | string | undefined;
+  /**
+   * BSD-255: inline in einer Seite – kein Rahmen, kein eigener senkrechter Scroller in Tabelle (Zeilen mit „Load more“),
+   * Werkzeuge erst beim Überfahren, „Open as full page“ über `onOpenPage(blockID)`. Andere Ansichten behalten eine Höhe.
+   */
+  inline?: boolean | undefined;
   className?: string | undefined;
   /** Formular-Ansicht aus dem Komponenten-Baukasten der Shell (Astryx); ohne das ein Hinweis. */
   renderForm?: ((p: FormRenderProps) => ReactNode) | undefined;
@@ -238,7 +243,7 @@ function Peek({ state, view, search, options, onChange }: { state: PeekState; vi
 /** `onOpenPage` der Shell (im Kontext steckt die Variante, die Zeilen als Peek öffnet). */
 const OuterOpenPage = createContext<((rowID: string) => void) | undefined>(undefined);
 
-function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: { blockID: string; viewID: string | undefined; onViewChange: ((id: string) => void) | undefined; showTitle: boolean; peek: PeekOptions | undefined }) {
+function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, inline }: { blockID: string; viewID: string | undefined; onViewChange: ((id: string) => void) | undefined; showTitle: boolean; peek: PeekOptions | undefined; inline?: boolean | undefined }) {
   const ctx = useDB();
   const { store, db, version } = ctx;
   const views = useMemo(() => {
@@ -300,6 +305,11 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: 
         <div className="dbui-toolbar">
           <Tabs views={views} active={active} onSelect={select} blockID={blockID} />
           <Toolbar view={active} search={search} setSearch={setSearch} onNew={onNew} />
+          {inline && outerOpen ? (
+            <button type="button" className="dbui-icon-btn dbui-open-full" aria-label="Open as full page" title="Open as full page" onClick={() => outerOpen(blockID)}>
+              <Icon name="open" size={14} />
+            </button>
+          ) : null}
         </div>
       </div>
       <div className="dbui-body" role="tabpanel" aria-label={active.name} data-view-type={active.type}>
@@ -321,15 +331,18 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions }: 
 export function DatabaseView(props: DatabaseViewProps) {
   const { store, databaseID } = props;
   const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart, rowActions: props.rowActions });
-  const style = { height: props.height ?? "100%" };
+  const style = { height: props.height ?? (props.inline ? "auto" : "100%") };
+  const inline = useMemo(() => (props.inline ? { pageSize: INLINE_PAGE_SIZE } : null), [props.inline]);
   const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files }), [props.renderForm, props.files]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (
     <DBContext.Provider value={ctx}>
       <ShellSlots.Provider value={slots}>
-      <div className={"dbui-root" + (props.className ? " " + props.className : "")} style={style} data-testid="database-view">
-        <Inner blockID={props.blockID ?? ctx.db.blockID} viewID={props.viewID} onViewChange={props.onViewChange} showTitle={props.showTitle !== false} peek={props.peek} />
+      <InlineView.Provider value={inline}>
+      <div className={"dbui-root" + (props.inline ? " inline" : "") + (props.className ? " " + props.className : "")} style={style} data-testid="database-view">
+        <Inner blockID={props.blockID ?? ctx.db.blockID} viewID={props.viewID} onViewChange={props.onViewChange} showTitle={props.showTitle !== false} peek={props.peek} inline={props.inline} />
       </div>
+      </InlineView.Provider>
       </ShellSlots.Provider>
     </DBContext.Provider>
   );

@@ -195,3 +195,22 @@ describe("Pfeiltasten zwischen Karten (BSD-238)", () => {
     expect(nearestInDirection(grid[2]!, grid, "down")).toBe(-1);
   });
 });
+
+describe("Inline-Tabelle: Zeilen begrenzen (BSD-255)", async () => {
+  const { limitRows } = await import("./logic/layout.js");
+  const row = (id: string, g: string | null = null) => ({ kind: "row" as const, key: "r:" + id, row: { id } as Block, groupID: g });
+  it("ohne Gruppen: erste n Zeilen und „New“, Rest gezählt", () => {
+    const items = [row("a"), row("b"), row("c"), { kind: "new" as const, key: "n:", groupID: null }];
+    const r = limitRows(items, 2);
+    expect(r.items.map((i) => i.key)).toEqual(["r:a", "r:b", "n:"]);
+    expect(r.hidden).toBe(1);
+    expect(limitRows(items, 5)).toEqual({ items, hidden: 0 });
+  });
+  it("mit Gruppen: Köpfe nur, solange noch Zeilen gezeigt werden", () => {
+    const g = (id: string) => ({ kind: "group" as const, key: "g:" + id, group: { id } as never, collapsed: false });
+    const items = [g("x"), row("a", "x"), row("b", "x"), { kind: "new" as const, key: "n:x", groupID: "x" }, g("y"), row("c", "y")];
+    const r = limitRows(items, 2);
+    expect(r.items.map((i) => i.key)).toEqual(["g:x", "r:a", "r:b", "n:x"]);
+    expect(r.hidden).toBe(1);
+  });
+});
