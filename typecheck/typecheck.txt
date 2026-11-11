@@ -1,10 +1,10 @@
 	 Executed 0 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
 	 Executed 0 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
-◇ Test failedCancelledAndTimeoutExitNonZero() started.
 ◇ Test failedSubagentLandsInInbox() started.
-✔ Test failedCancelledAndTimeoutExitNonZero() passed after 0.113 seconds.
-✔ Test failedSubagentLandsInInbox() passed after 3.999 seconds.
-✔ Test run with 417 tests in 99 suites passed after 6.336 seconds.
+◇ Test failedCancelledAndTimeoutExitNonZero() started.
+✔ Test failedCancelledAndTimeoutExitNonZero() passed after 0.131 seconds.
+✔ Test failedSubagentLandsInInbox() passed after 5.337 seconds.
+✔ Test run with 417 tests in 99 suites passed after 7.456 seconds.
 typecheck OK
 --- iOS
 typecheck OK
