@@ -95,3 +95,8 @@
 /* Herkunft (Werkzeug · Ordner · Zeit): bekommt eine eigene Zeile, wenn neben den Knöpfen kein Platz mehr ist */
 .chat-cli-origin { flex: 1 1 calc(var(--page-measure) / 3); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-mono); }
 .chat-cli-actions { display: inline-flex; gap: var(--space-2); flex: none; }
+/* Live-Marker: Gespräch läuft gerade im Terminal (Marker-Farbe = das eine Signal der Designsprache) */
+.chat-cli-live { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; color: var(--ink-2); }
+.chat-cli-live-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--marker-strong); animation: chat-cli-pulse 1.6s ease-in-out infinite; }
+@keyframes chat-cli-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .chat-cli-live-dot { animation: none; } }

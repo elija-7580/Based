@@ -3,6 +3,8 @@
 // mitlesen und Freigaben beantworten kann. Aus, solange der Server ohne `--coding-root` startet.
 import { agentStatus, chatgptStatus, CodingError, isComputeLevel, toolCatalog, unapprovedKeys, type CodexLogin, type CodingSessions } from "@based/brain";
 import { claudeLoggedIn, codexLoginState, probeTools, toolVersion, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
+import { stat } from "node:fs/promises";
+import type { CliSession } from "@based/brain";
 import type { Logger } from "./log.js";
 import { error, json, type RouteResult, type Router } from "./router.js";
 
@@ -29,6 +31,22 @@ async function guarded(f: () => Promise<RouteResult> | RouteResult): Promise<Rou
 }
 
 /** `wait` in ms aus der Query (0…25 s). */
+async function fileSize(path: string): Promise<number | undefined> {
+  try { return (await stat(path)).size; } catch { return undefined; }
+}
+
+/** Wartet bis zu `ms`, ob die Datei über `since` Bytes wächst (Prüfung alle 300 ms – zuverlässig auch bei Anhängen). */
+async function waitForGrowth(path: string, since: number, ms: number, signal: AbortSignal | undefined): Promise<number | undefined> {
+  const end = Date.now() + ms;
+  let size: number | undefined = since;
+  while (Date.now() < end && !signal?.aborted) {
+    await new Promise((r) => setTimeout(r, Math.min(300, Math.max(0, end - Date.now()))));
+    size = await fileSize(path);
+    if (size !== since) return size;
+  }
+  return size;
+}
+
 function waitParam(url: URL, max: number): number {
   const raw = Number(url.searchParams.get("wait") ?? 0);
   return Number.isFinite(raw) && raw > 0 ? Math.min(raw, max) : 0;
@@ -119,10 +137,28 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
     const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit") ?? 400) || 400), 2000);
     return json({ sessions: await scanCliSessions(host.home, limit) });
   });
-  router.add("GET", "/coding/history/:tool/:id", async ({ params }) => {
-    const found = (await scanCliSessions(host.home, 100_000)).find((x) => x.tool === params.tool && x.id === params.id);
-    if (!found) return error("conversation not found", 404);
-    return json({ session: found, events: await readCliTranscript(found) });
+  // Live: `?since=<Bytes>&wait=<ms>` wartet, bis die Datei über `since` hinaus wächst (das CLI schreibt gerade), und
+  // liefert dann das neue Transkript. `size` ist der nächste `since`. Ohne `since` sofort (wie bisher).
+  const files = new Map<string, CliSession>();
+  router.add("GET", "/coding/history/:tool/:id", async ({ params, url, signal }) => {
+    const key = `${params.tool}:${params.id}`;
+    let found = files.get(key);
+    if (!found) {
+      found = (await scanCliSessions(host.home, 100_000)).find((x) => x.tool === params.tool && x.id === params.id);
+      if (!found) return error("conversation not found", 404);
+      if (files.size > 200) files.clear();
+      files.set(key, found);
+    }
+    const rawSince = url.searchParams.get("since");
+    const since = rawSince === null || rawSince === "" ? undefined : Number(rawSince);
+    let size = await fileSize(found.file);
+    if (size === undefined) { files.delete(key); return error("conversation not found", 404); }
+    if (since !== undefined && Number.isFinite(since) && size === since) {
+      size = await waitForGrowth(found.file, since, waitParam(url, longPollMs), signal);
+      if (size === since) return json({ size, unchanged: true });
+    }
+    const session = size !== found.sizeBytes ? { ...found, updatedAt: Date.now(), sizeBytes: size } : found;
+    return json({ session, events: await readCliTranscript(found), size });
   });
 
   // MARK: Setup-Doctor

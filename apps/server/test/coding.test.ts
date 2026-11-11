@@ -1,7 +1,7 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server – anlegen, Prompt, Ereignisse per Long-Poll, Freigabe
 // aus der Inbox von einem anderen „Gerät“, Abbruch, Agentenwechsel, Grenzen (Ordner, nur Owner). Gegen den
 // Fake-ACP-Agenten aus packages/brain/test/fixtures.
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -172,6 +172,16 @@ describe("/coding", () => {
     const t = await get(`${url}/coding/history/claude/c1`);
     expect((t.body!.events as { type: string }[]).map((e) => e.type)).toEqual(["userMessage", "text", "result"]);
     expect((await get(`${url}/coding/history/claude/nope`)).status).toBe(404);
+    // Live: ohne Änderung wartet die Anfrage und meldet „unchanged“; hängt das CLI etwas an, kommt es sofort
+    const size = t.body!.size as number;
+    expect(size).toBeGreaterThan(0);
+    const quiet = await get(`${url}/coding/history/claude/c1?since=${size}&wait=400`);
+    expect(quiet.body).toEqual({ size, unchanged: true });
+    const waiting = get(`${url}/coding/history/claude/c1?since=${size}&wait=5000`);
+    setTimeout(() => appendFileSync(join(home, ".claude", "projects", "-p", "c1.jsonl"), "\n" + JSON.stringify({ type: "user", timestamp: "2026-11-01T10:00:05Z", message: { role: "user", content: "more" } })), 200);
+    const grown = await waiting;
+    expect(grown.body!.size).toBeGreaterThan(size);
+    expect((grown.body!.events as { type: string }[]).filter((e) => e.type === "userMessage")).toHaveLength(2);
     const d = await get(`${url}/coding/doctor`);
     expect((d.body!.tools as { id: string; path?: string }[]).find((x) => x.id === "codex")!.path).toBe(join(bin, "codex"));
     expect(d.body!.agents).toEqual([expect.objectContaining({ id: "fake", state: "ready" })]);

@@ -31,7 +31,9 @@ export function CliChatList({ current, onOpen }: { current: string | undefined; 
     load();
     // Neue Gespräche aus dem Terminal tauchen auf, sobald man zu Based zurückkommt.
     window.addEventListener("focus", load);
-    return () => { alive = false; window.removeEventListener("focus", load); };
+    // … und während Based offen ist alle 10 s (neue Gespräche, neue Titel, Reihenfolge)
+    const timer = setInterval(() => { if (document.visibilityState === "visible") load(); }, 10_000);
+    return () => { alive = false; clearInterval(timer); window.removeEventListener("focus", load); };
   }, [key]);
 
   if (!connection) {
@@ -71,15 +73,44 @@ export function CliChatView({ session, connection }: { session: CliSession; conn
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const model = codingModelFor(connection);
+  // Live: läuft das Gespräch im Terminal weiter, kommt jede neue Zeile sofort dazu (Long-Poll auf die Datei).
+  const [live, setLive] = useState(false);
   useEffect(() => {
-    let alive = true;
+    const stop = new AbortController();
     setItems(undefined);
     setError(undefined);
-    model.client.historyTranscript(session.tool, session.id).then(
-      (r) => { if (alive) setItems(foldTranscript(r.events).items); },
-      (e: unknown) => { if (alive) setError(codingErrorMessage(e)); },
-    );
-    return () => { alive = false; };
+    setLive(false);
+    void (async () => {
+      let size: number | undefined;
+      try {
+        const r = await model.client.historyTranscript(session.tool, session.id);
+        if (stop.signal.aborted) return;
+        setItems(foldTranscript(r.events).items);
+        size = r.size;
+      } catch (e) {
+        if (!stop.signal.aborted) setError(codingErrorMessage(e));
+        return;
+      }
+      if (size === undefined) return; // älterer Server ohne Live
+      let quietSince = Date.now();
+      while (!stop.signal.aborted) {
+        try {
+          const r = await model.client.watchTranscript(session.tool, session.id, size, 25_000, stop.signal);
+          if (stop.signal.aborted) return;
+          if (!r.unchanged) {
+            setItems(foldTranscript(r.events).items);
+            quietSince = Date.now();
+          }
+          size = r.size;
+          // „Live“, solange in den letzten zwei Minuten geschrieben wurde
+          setLive(Date.now() - quietSince < 120_000 && quietSince !== 0);
+        } catch {
+          if (stop.signal.aborted) return;
+          await new Promise((res) => setTimeout(res, 3000));
+        }
+      }
+    })();
+    return () => stop.abort();
   }, [model, session.tool, session.id]);
 
   const resume = async () => {
@@ -110,6 +141,7 @@ export function CliChatView({ session, connection }: { session: CliSession; conn
     <>
       <div className="chat-cli-bar" data-testid="cli-chat-bar">
         <span className="t-meta chat-cli-origin" title={session.cwd}>{[TOOL[session.tool], session.cwd, relative(new Date(session.updatedAt))].filter(Boolean).join(" · ")}</span>
+        {live ? <span className="chat-cli-live t-meta" data-testid="cli-chat-live" role="status"><span className="chat-cli-live-dot" aria-hidden="true" />Live</span> : null}
         <span className="chat-cli-actions">
           <Button size="sm" variant="ghost" label={copied ? "Copied" : "Copy terminal command"} onClick={() => void copy()} />
           <Button size="sm" variant="primary" label={busy ? "Opening…" : "Continue in Based"} isDisabled={busy} onClick={() => void resume()} />
