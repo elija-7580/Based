@@ -1,5 +1,5 @@
-packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -17,13 +17,13 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1563 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1564)[39m
+packages/core test: [2m      Tests [22m [1m[32m1571 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1572)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m56 passed[39m[22m[90m (56)[39m
 packages/sync test: [2m      Tests [22m [1m[32m41 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (44)[39m
-packages/brain test: [2m      Tests [22m [1m[32m371 passed[39m[22m[90m (371)[39m
+packages/brain test: [2m      Tests [22m [1m[32m376 passed[39m[22m[90m (376)[39m
 packages/editor test: [2m      Tests [22m [1m[32m70 passed[39m[22m[90m (70)[39m
-apps/web test: [2m      Tests [22m [1m[32m141 passed[39m[22m[90m (141)[39m
-apps/server test: [2m      Tests [22m [1m[32m94 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (95)[39m
+apps/server test: [2m      Tests [22m [1m[32m97 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (98)[39m
+apps/web test: [2m      Tests [22m [1m[32m147 passed[39m[22m[90m (147)[39m
 apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
 --- e2e
   6) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ─────────────
@@ -56,13 +56,13 @@ apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
 
   6 failed
     [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen 
-    [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
-    [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
     [chromium] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an 
+    [chromium] › e2e/shell-layout.spec.ts:104:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
     [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+    [webkit] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an 
     [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
   14 skipped
-  264 passed (9.5m)
+  266 passed (12.5m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
