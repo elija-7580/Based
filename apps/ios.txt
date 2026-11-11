@@ -1,14 +1,14 @@
 ** BUILD FAILED **
 error: unable to attach DB: error: accessing build database "build/Build/Intermediates.noindex/XCBuildData/build.db": database is locked Possibly there are two concurrent builds running in the same filesystem location.
 --- Ende des Logs
-  h: https://github.com/rarestype/h @ 1.0.1
-  swift-png: https://github.com/tayloraswift/swift-png @ 4.5.2
-  SwiftTerm: https://github.com/migueldeicaza/SwiftTerm @ 1.99.1
   FluidAudio: https://github.com/FluidInference/FluidAudio @ 0.18.3
-  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.10.1
-  swift-argument-parser: https://github.com/apple/swift-argument-parser @ 1.8.2
-  BasedCore: Swift/BasedCore
   BasedBrain: Swift/BasedBrain
+  h: https://github.com/rarestype/h @ 1.0.1
+  Sparkle: https://github.com/sparkle-project/Sparkle @ 2.10.1
+  SwiftTerm: https://github.com/migueldeicaza/SwiftTerm @ 1.99.1
+  BasedCore: Swift/BasedCore
+  swift-png: https://github.com/tayloraswift/swift-png @ 4.5.2
+  swift-argument-parser: https://github.com/apple/swift-argument-parser @ 1.8.2
 
 ComputePackagePrebuildTargetDependencyGraph
 
@@ -54,9 +54,9 @@ GatherProvisioningInputs
 
 CreateBuildDescription
 
-ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c++ -c /dev/null
-
 ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c++ -c /dev/null
 
 ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c -c /dev/null
 
@@ -66,14 +66,14 @@ ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/acto
 
 ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
 
-ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch x86_64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c++ -c /dev/null
-
 ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch x86_64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch x86_64 -isysroot /Applications/Xcode_26.3.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.2.sdk -x c++ -c /dev/null
 
 ExecuteExternalTool /Applications/Xcode_26.3.app/Contents/Developer/usr/bin/actool --version --output-format xml1
 
-Build description signature: 571b0f506576202dcd87651dbca5c94e
-Build description path: build/Build/Intermediates.noindex/XCBuildData/571b0f506576202dcd87651dbca5c94e.xcbuilddata
+Build description signature: 36e41c9d1fd5f637190782f53d923311
+Build description path: build/Build/Intermediates.noindex/XCBuildData/36e41c9d1fd5f637190782f53d923311.xcbuilddata
 error: unable to attach DB: error: accessing build database "build/Build/Intermediates.noindex/XCBuildData/build.db": database is locked Possibly there are two concurrent builds running in the same filesystem location.
 ** BUILD FAILED **
 
