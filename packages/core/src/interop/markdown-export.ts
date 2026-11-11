@@ -62,7 +62,7 @@ export interface MarkdownExporterOptions {
 /** YAML-Skalar: einfache Wörter roh, sonst als JSON-String (gültiges YAML). */
 export function yamlScalar(v: string | number | boolean): string {
   if (typeof v !== "string") return String(v);
-  return /^[\p{L}\p{N}][\p{L}\p{N} _.\/-]*$/u.test(v) && !/^(true|false|null|yes|no|on|off|~)$/i.test(v) && !/^[\d.+-]+$/.test(v) && v.trim() === v ? v : JSON.stringify(v);
+  return /^[\p{L}\p{N}][\p{L}\p{N} _./-]*$/u.test(v) && !/^(true|false|null|yes|no|on|off|~)$/i.test(v) && !/^[\d.+-]+$/.test(v) && v.trim() === v ? v : JSON.stringify(v);
 }
 
 const isoDate = (swiftSeconds: number, withTime: boolean) => {
