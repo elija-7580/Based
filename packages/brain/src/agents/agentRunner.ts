@@ -33,6 +33,8 @@ export interface AgentRunBackend {
 export interface AgentEngineRequest {
   model?: string | undefined;
   policy: ToolPolicy;
+  /** BSD-250: Projekt des Laufs – sein Connection-Scope gilt zusätzlich zu dem des Agenten. */
+  project?: ProjectData | undefined;
 }
 
 export interface PendingRunApproval {
@@ -165,7 +167,7 @@ export class AgentRunner {
           this.o.onChange?.();
         }),
       };
-      const engine = await this.o.engine({ model: run.data.model, policy });
+      const engine = await this.o.engine({ model: run.data.model, policy, ...(project ? { project: project.data } : {}) });
       if (!engine) {
         await b.updateRun(runID, { status: "failed", result: "No model is set up." });
         return;

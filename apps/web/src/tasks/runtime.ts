@@ -5,7 +5,7 @@
 // Modelle – deterministisch, ohne Netz.
 import {
   AgentRunner, combineToolHosts, RulesPlannerEngine, ScriptedEngine, TaskRunner,
-  type AgentData, type AgentRunBackend, type ChatEngine, type PlanningContext, type ScriptStep, type TaskBackend, type TaskView, type ToolHost,
+  type AgentData, type AgentRunBackend, type ProjectData, type ChatEngine, type PlanningContext, type ScriptStep, type TaskBackend, type TaskView, type ToolHost,
 } from "@based/brain";
 import { aiConfig, splitModelRef, type AiConfig } from "../chat/aiConfig.js";
 import type { StoreClient } from "../worker/client.js";
@@ -152,7 +152,7 @@ export class TasksRuntime {
     };
   }
 
-  private async agentEngine(req: { model?: string | undefined; policy: Parameters<ConstructorParameters<typeof AgentRunner>[0]["engine"]>[0]["policy"] }): Promise<ChatEngine | undefined> {
+  private async agentEngine(req: { model?: string | undefined; policy: Parameters<ConstructorParameters<typeof AgentRunner>[0]["engine"]>[0]["policy"]; project?: ProjectData | undefined }): Promise<ChatEngine | undefined> {
     if (this.agentOverride) return this.agentOverride(req);
     const base = this.toolHost();
     await this.catalog?.catch(() => undefined);
@@ -160,7 +160,9 @@ export class TasksRuntime {
     const mcp = mcpRuntime(this.client);
     await mcp.ready();
     const main = await this.client.agents<AgentData>({ op: "main" }).catch(() => undefined);
-    const extra = mcp.tools(main ? { agent: main } : { agent: { v: 1, kind: "main", permissions: { mode: "askEdits", rules: "" } } });
+    // BSD-250: Projekt-Scope des Laufs gilt zusätzlich (nur Connections, die Agent und Projekt erlauben).
+    const agent: AgentData = main ?? { v: 1, kind: "main", permissions: { mode: "askEdits", rules: "" } };
+    const extra = mcp.tools(req.project ? { agent, project: req.project } : { agent });
     const tools = extra ? combineToolHosts(base, extra) : base;
     return this.modelEngine(req.model, { tools, policy: req.policy });
   }

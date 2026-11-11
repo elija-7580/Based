@@ -145,15 +145,18 @@ describe("Unteragenten", () => {
     agents.saveMain((d) => { d.permissions.mode = "free"; d.eurPerUSD = 1; });
     const run = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "Research", instructions: "Write findings", projectID: proj.id });
     const tools = new WorkspaceTools(store);
+    const seenProjects: (string | undefined)[] = [];
     const runner = new AgentRunner({
       backend: backend(agents, store),
-      engine: ({ policy }) => new ScriptedEngine({ tools, policy, script: [
+      engine: ({ policy, project }) => { seenProjects.push(project?.status); return new ScriptedEngine({ tools, policy, script: [
         { tool: "create_page", input: { title: "Findings", markdown: "- one" } },
         { event: { type: "usage", inputTokens: 100, outputTokens: 50, costUSD: 0.05 } },
         { text: "Created Findings." },
-      ] }),
+      ] }); },
     });
     await runner.start(run.id);
+    // BSD-250: die Engine bekommt das Projekt (für dessen Connection-Scope).
+    expect(seenProjects).toEqual(["active"]);
     const r = agents.run(run.id)!.data;
     expect(r).toMatchObject({ status: "done", result: "Created Findings.", costEUR: 0.05 });
     expect(new ChatStore(store).load(r.chatID!).some((e) => e.type === "toolResult")).toBe(true);
