@@ -1,25 +1,3 @@
-App/Shared/Brain/BrainModel.swift:255:35: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
-App/Shared/Brain/BrainModel.swift:504:44: warning: main actor-isolated class property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
-App/Shared/Brain/EnginePicker.swift:112:144: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
-App/Shared/Brain/EnginePicker.swift:112:98: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
-App/Shared/Brain/HappierModel.swift:129:70: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
-App/Shared/Brain/HappierModel.swift:132:27: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
-App/Shared/Brain/Secrets.swift:147:31: warning: 'SecKeychainSetUserInteractionAllowed' was deprecated in macOS 10.10: SecKeychain is deprecated
-App/Shared/Brain/Secrets.swift:155:31: warning: 'SecKeychainSetUserInteractionAllowed' was deprecated in macOS 10.10: SecKeychain is deprecated
-App/Shared/Meeting/MeetingService.swift:73:116: warning: will never be executed
-Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:332:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
-Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:335:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
-Swift/BasedBrain/Sources/BasedBrain/Agent/ChatEngine.swift:338:19: warning: converting non-Sendable function value to '@Sendable (String) -> [ChatEvent]' may introduce data races
-Swift/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:234:58: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Agent/HappierRuntime.swift:248:106: warning: reference to captured var 'def' in concurrently-executing code; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:59:14: warning: instance method 'lock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:60:34: warning: instance method 'unlock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Agent/ShellEnvironment.swift:61:14: warning: instance method 'unlock' is unavailable from asynchronous contexts; Use async-safe scoped locking instead; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:254:33: warning: result of call to 'run(resultType:body:)' is unused
-Swift/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:265:33: warning: result of call to 'run(resultType:body:)' is unused
-Swift/BasedBrain/Sources/BasedBrain/Server/ServerRoutes.swift:201:81: warning: main actor-isolated static property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
-Swift/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:158:1: warning: extension declares a conformance of imported type 'Record' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'BasedCore' introduce this conformance in the future
-Swift/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:292:72: warning: main actor-isolated static property 'tombstoneRetentionDays' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
 Swift/BasedCore/Sources/BasedCore/Diagnostics/StackSampler.swift:201:25: warning: will never be executed
 Swift/BasedCore/Sources/BasedCore/Store/PageOps.swift:290:5: warning: 'public' modifier is redundant for instance method declared in a public extension
 Swift/BasedCore/Sources/BasedCore/Store/PageOps.swift:317:5: warning: 'public' modifier is redundant for property declared in a public extension
