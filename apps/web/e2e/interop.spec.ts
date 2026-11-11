@@ -168,6 +168,16 @@ test("OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260)", a
   const xml = readFileSync((await file.path())!, "utf8");
   expect(xml).toContain('<outline text="Alpha">');
   expect(xml).toContain('<outline text="Beta" _complete="true"/>');
+  // BSD-260 Teil 6: dieselbe Seite als Word-Dokument
+  // Der Dialog bleibt nach dem Export offen
+  const exp2 = page.getByRole("dialog", { name: "Export page" });
+  if (!(await exp2.isVisible())) await page.getByRole("button", { name: "Export", exact: true }).click();
+  await exp2.getByRole("radio", { name: /Word/ }).click();
+  const [doc] = await Promise.all([page.waitForEvent("download"), exp2.getByRole("button", { name: "Export", exact: true }).click()]);
+  expect(doc.suggestedFilename()).toBe("Outline.docx");
+  const bytes = readFileSync((await doc.path())!);
+  expect(bytes.subarray(0, 2).toString()).toBe("PK");
+  expect(bytes.includes(Buffer.from("word/document.xml"))).toBe(true);
 });
 
 test("Word-Dokument (.docx) importieren (BSD-260)", async ({ page }) => {

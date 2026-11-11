@@ -5,6 +5,7 @@ import {
   commitPreparedImport,
   exportAssetRefs,
   exportPageHTML,
+  exportDocx,
   exportOPML,
   exportPageJSON,
   exportWorkspaceHTML,
@@ -44,7 +45,7 @@ export interface ImportSummary {
 export type ExportFormat = "markdown" | "html";
 export type WorkspaceExportFormat = ExportFormat | "archive";
 /** Nur für einzelne Seiten (BSD-260): Gliederung als OPML. */
-export type PageExportFormat = ExportFormat | "opml" | "json";
+export type PageExportFormat = ExportFormat | "opml" | "json" | "docx";
 
 /** Wahl beim HTML-Export. */
 export interface HTMLExportChoice {
@@ -124,6 +125,12 @@ export async function exportPage(store: WorkspaceStore, pageID: string, format: 
   if (format === "opml") {
     const r = exportOPML(store, pageID);
     return { name: r.name, mime: "text/x-opml;charset=utf-8", data: enc.encode(r.xml), summary: `Exported “${r.name}”.` };
+  }
+  if (format === "docx") {
+    // BSD-260 Teil 6: Bilder eingebettet (soweit auf diesem Gerät vorhanden).
+    const files = await loadAssets(assets, exportAssetRefs(store, [pageID], false));
+    const r = exportDocx(store, pageID, { assetBytes: (ref) => files.get(ref.id) });
+    return { name: r.name, mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", data: r.data, summary: `Exported “${r.name}”.` };
   }
   if (format === "html") {
     const files = await loadAssets(assets, exportAssetRefs(store, [pageID], choice.subpages === true));
