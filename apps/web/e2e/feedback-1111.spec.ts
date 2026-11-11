@@ -44,6 +44,9 @@ test("Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sid
   await page.getByTestId("sidebar-show").click();
   await expect(nav(page)).toBeVisible();
   await expect(page.getByTestId("sidebar-hide")).toBeVisible();
+  // Der Zeiger steht noch dort, wo „Show sidebar“ war: am linken Rand zeigt die ausgeblendete Leiste sich schwebend
+  // (BSD-203), sobald der Browser nach dem Umbau ein mouseenter nachliefert. Für diesen Test weg vom Rand.
+  await page.mouse.move(700, 450);
   // deutsche Belegung: die Taste an der Stelle von \ liefert „#“
   await page.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "#", code: "Backslash", metaKey: true, bubbles: true })));
   await expect(nav(page)).toBeHidden();

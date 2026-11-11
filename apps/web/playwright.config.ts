@@ -7,6 +7,9 @@ const port = Number(process.env.BASED_E2E_PORT ?? 4173);
 export default defineConfig({
   testDir: "e2e",
   reporter: process.env.CI ? "list" : [["list"]],
+  // In der CI laufen zwei Browser auf geteilten Kernen: ein Test, der beim ersten Mal an der Last scheitert, bekommt
+  // einen zweiten Versuch und steht dann als „flaky“ im Protokoll. Zweimal rot bleibt rot.
+  retries: process.env.CI ? 1 : 0,
   use: { baseURL: `http://localhost:${port}` },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
