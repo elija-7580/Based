@@ -1,0 +1,8 @@
+Swift/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:254:33: warning: result of call to 'run(resultType:body:)' is unused
+Swift/BasedBrain/Sources/BasedBrain/Import/NotionAPIImport.swift:265:33: warning: result of call to 'run(resultType:body:)' is unused
+Swift/BasedBrain/Sources/BasedBrain/Server/ServerRoutes.swift:201:81: warning: main actor-isolated static property 'captureSorterName' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode
+Swift/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:158:1: warning: extension declares a conformance of imported type 'Record' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'BasedCore' introduce this conformance in the future
+Swift/BasedBrain/Sources/BasedBrain/Sync/SyncServer.swift:292:72: warning: main actor-isolated static property 'tombstoneRetentionDays' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+Swift/BasedCore/Sources/BasedCore/Diagnostics/StackSampler.swift:201:25: warning: will never be executed
+Swift/BasedCore/Sources/BasedCore/Store/PageOps.swift:290:5: warning: 'public' modifier is redundant for instance method declared in a public extension
+Swift/BasedCore/Sources/BasedCore/Store/PageOps.swift:317:5: warning: 'public' modifier is redundant for property declared in a public extension
