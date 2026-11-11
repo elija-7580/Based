@@ -1,18 +1,50 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "local-server",
-  "description": "BSD-138: nur das Hauptfenster darf die Beilage based-server starten, ihr stdin schreiben und sie beenden (lokaler Server für CLI und Coding-Agenten). Kein anderes Programm.",
+  "description": "BSD-138: nur das Hauptfenster; genau zwei feste Aufrufe über die Login-Shell (PATH wie im Terminal): Node suchen (`command -v node && node --version`) und das beiliegende Bundle mit dieser Node starten (`exec node \"$BASED_BUNDLE\" desktop`, was zu tun ist steht in BASED_ACTION). Keine freien Argumente, kein anderes Programm.",
   "windows": [
     "main"
   ],
   "permissions": [
     {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "based-node-probe",
+          "cmd": "/bin/zsh",
+          "args": [
+            "-ilc",
+            "command -v node && node --version"
+          ]
+        },
+        {
+          "name": "based-node-run",
+          "cmd": "/bin/zsh",
+          "args": [
+            "-ilc",
+            "exec node \"$BASED_BUNDLE\" desktop"
+          ]
+        }
+      ]
+    },
+    {
       "identifier": "shell:allow-spawn",
       "allow": [
         {
-          "name": "binaries/based-server",
-          "sidecar": true,
-          "args": true
+          "name": "based-node-probe",
+          "cmd": "/bin/zsh",
+          "args": [
+            "-ilc",
+            "command -v node && node --version"
+          ]
+        },
+        {
+          "name": "based-node-run",
+          "cmd": "/bin/zsh",
+          "args": [
+            "-ilc",
+            "exec node \"$BASED_BUNDLE\" desktop"
+          ]
         }
       ]
     },

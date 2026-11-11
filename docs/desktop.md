@@ -109,26 +109,26 @@ das HTTP (`shell/notionTransport.ts`), geschrieben wird im Store-Worker wie beim
 
 ## Lokaler Server und Kommandozeile (BSD-138)
 
-Ohne eigenen Server bringt die App einen kleinen based-server als Beilage mit (`bundle.externalBin`,
-`binaries/based-server`). Er läuft nur, wenn **Settings → Sync & server → Local server** eingeschaltet ist, und nur
-solange die App offen ist (endet er mit ihr, weil sein stdin zugeht).
+Beides ist **Opt-in** (Settings → Sync & server → „Local server & command line“) und braucht **Node.js ≥ 22** auf
+dem Mac. Die App bringt keine eigene Node-Laufzeit mit, nur ein JavaScript-Bundle (`based-server.cjs`, ~8 MB, als
+Resource) und lädt nichts herunter. Fehlt Node oder ist es zu alt, sagt sie das mit Installationsbefehl.
 
-- **Nur dieser Rechner:** 127.0.0.1, Port 47821. Der Token wird von der App erzeugt, liegt in ihrer verschlüsselten
-  Ablage und geht über die Umgebung (`BASED_TOKEN`) an den Prozess, nie über die Kommandozeile.
-- **Für die CLI:** Der Server schreibt `~/.config/based/local.json` (Adresse, PID, Pfad der Token-Datei – ohne Token)
-  und `~/.config/based/local-token`, beide 0600, und räumt sie beim Beenden weg. `based` nimmt ihn, wenn kein anderer
-  Server eingestellt ist, oder mit `--local` ausdrücklich.
-- **Daten:** eigene Datenbank `local-server.sqlite` im App-Datenordner. „Use for sync“ verbindet diese App mit ihm
-  (wie mit jedem Server), damit `based` dieselben Seiten sieht.
-- **Coding-Agenten:** `--coding-root` ist das Home-Verzeichnis; der PATH kommt aus der Login-Shell (Homebrew, nvm),
-  damit `npx`, `codex`, `claude` gefunden werden. So läuft auch „ChatGPT über Codex“ (BSD-257) ohne Server.
-- **`based` installieren:** App-Menü → *Install Command Line Tool…* zeigt (und kopiert) den Befehl
-  `sudo ln -sf '/Applications/Based Next.app/Contents/MacOS/based-server' /usr/local/bin/based`. Als `based`
-  aufgerufen spielt die Beilage die CLI (eine Node-Laufzeit für beides).
-- **Rust:** nur das offizielle Shell-Plugin; Start/Stopp steuert `apps/web/src/desktop/localServer.ts`. Erlaubt ist
-  ausschließlich diese eine Beilage, nur im Hauptfenster (`capabilities/local-server.json`).
+- **Node finden:** über die Login-Shell wie im Terminal (`/bin/zsh -ilc 'command -v node && node --version'`), damit
+  Homebrew/nvm gefunden werden.
+- **Local server (an/aus):** startet `node based-server.cjs desktop` mit `BASED_ACTION=local` – nur 127.0.0.1,
+  Port 47821, eigene Datenbank `local-server.sqlite` im App-Datenordner. Der Token wird von der App erzeugt, liegt in
+  ihrer verschlüsselten Ablage und geht über die Umgebung an den Prozess, nie über die Kommandozeile. Der Server
+  schreibt `~/.config/based/local.json` (ohne Token) und `~/.config/based/local-token` (beide 0600) und räumt sie
+  beim Beenden weg; er endet mit der App (stdin zu). „Use for sync“ verbindet diese App mit ihm, damit `based`
+  dieselben Seiten sieht. Coding-Agenten laufen mit `--coding-root` = Home und dem PATH der Login-Shell.
+- **Command line tool (Install…/Uninstall):** legt einen kleinen Starter an (Standard `~/.local/bin/based`, Ort
+  wählbar; Hinweis, wenn der Ordner nicht im PATH ist), der das Bundle mit genau dieser Node startet. Überschreibt
+  keine fremde Datei und entfernt nur den eigenen Starter (Kennzeichen-Zeile). `based` nimmt den lokalen Server,
+  wenn kein anderer eingestellt ist, oder mit `--local`.
+- **Rust:** nur das offizielle Shell-Plugin. `capabilities/local-server.json` erlaubt im Hauptfenster genau zwei
+  feste Aufrufe (Node suchen; `exec node "$BASED_BUNDLE" desktop`), ohne freie Argumente; was zu tun ist, steht in
+  `BASED_ACTION`. Das App-Menü „Install Command Line Tool…“ zeigt nur den Weg in die Einstellungen.
 
-Bauen: `pnpm --filter @based/desktop sidecar` (läuft vor `tauri dev`/`tauri build` automatisch) bündelt
-`apps/desktop/sidecar/entry.ts` mit esbuild und macht daraus eine Node-SEA (postject; macOS: Signatur entfernen,
-injizieren, ad hoc signieren) nach `src-tauri/binaries/based-server-<target-triple>`. Nur bündeln:
-`node apps/desktop/scripts/build-sidecar.mjs --bundle` (Ergebnis läuft mit `node dist-sidecar/based-server.cjs`).
+Bauen: `pnpm --filter @based/desktop sidecar` (läuft vor `tauri dev`/`tauri build` automatisch, auch unter Linux)
+bündelt `apps/desktop/sidecar/entry.ts` mit esbuild nach `apps/desktop/dist-sidecar/based-server.cjs`. Ausprobieren
+ohne App: `node apps/desktop/dist-sidecar/based-server.cjs cli --help`.

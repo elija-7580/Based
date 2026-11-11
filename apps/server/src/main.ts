@@ -184,15 +184,15 @@ function sandboxManager(opts: Options): SandboxManager {
   return new SandboxManager(opts.sandbox === "docker" ? new DockerSandboxProvider({ snapshotDirectory }) : new LocalSandboxProvider({ snapshotDirectory }));
 }
 
-export async function main() {
+export async function main(argv: string[] = process.argv.slice(2)) {
   const log = createLogger({ minimum: parseLogLevel(process.env.BASED_LOG_LEVEL) ?? "info" });
   let opts: Options;
   try {
-    if (process.argv.includes("-h") || process.argv.includes("--help")) {
+    if (argv.includes("-h") || argv.includes("--help")) {
       process.stdout.write(USAGE + "\n");
       return;
     }
-    opts = parseOptions(process.argv.slice(2), process.env);
+    opts = parseOptions(argv, process.env);
   } catch (e) {
     process.stderr.write(`${e instanceof Error ? e.message : String(e)}\n${USAGE}\n`);
     process.exit(2);

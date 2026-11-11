@@ -91,22 +91,10 @@ export async function startDesktop(onCloseTab?: () => void) {
   if (main) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }
 
-/** BSD-138: Befehl zum Installieren von `based` zeigen (und in die Zwischenablage legen). */
+/** BSD-138: „Install Command Line Tool…“ – zeigt, wo das geht (Opt-in in den Einstellungen). */
 async function showCliInstall() {
-  const [{ localServer }, dialog] = await Promise.all([import("./desktop/localServer.js"), import("@tauri-apps/plugin-dialog")]);
-  const install = await localServer().cliInstall();
-  if (!install) return;
-  try {
-    await navigator.clipboard.writeText(install.command);
-  } catch {
-    // ohne Zwischenablage: der Befehl steht im Dialog
-  }
-  const on = localServer().getState().enabled;
-  await dialog.message(
-    `Run this in Terminal (copied to the clipboard):\n\n${install.command}\n\nThen \`based --help\`. ` +
-      (on ? "The local server is on, so `based` works while Based Next is open." : "Turn on Settings → Sync & server → Local server so `based` works without a server."),
-    { title: "Install Command Line Tool", kind: "info" },
-  );
+  const dialog = await import("@tauri-apps/plugin-dialog");
+  await dialog.message("Open Settings → Sync & server → “Local server & command line” and choose Install… there. It needs Node.js 22 or newer on this Mac; Based doesn't download anything.", { title: "Install Command Line Tool", kind: "info" });
 }
 
 /** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */
