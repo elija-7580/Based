@@ -20,6 +20,8 @@ export interface PageEditorProps {
   readOnly: boolean;
   /** Link auf eine andere Seite öffnen (Erwähnung, Unterseite, Link-to-page). */
   onOpenPage: (pageID: string) => void;
+  /** BSD-101: zu diesem Block springen (Link auf einen Block). */
+  focusBlock?: string | undefined;
 }
 
 export interface DatabaseViewProps {

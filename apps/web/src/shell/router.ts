@@ -18,7 +18,8 @@ export type Route =
   /** Agent-Detail (ein Lauf) und Projekt-Detail der Startseite (BSD-133). */
   | { name: "agent"; id: string }
   | { name: "project"; id: string }
-  | { name: "page"; id: string };
+  /** BSD-101: `block` = Sprungziel auf der Seite („Copy link to block“). */
+  | { name: "page"; id: string; block?: string };
 
 export function routeToHash(r: Route): string {
   switch (r.name) {
@@ -33,13 +34,16 @@ export function routeToHash(r: Route): string {
     case "coding": return "coding";
     case "agent": return "agent-" + r.id;
     case "project": return "project-" + r.id;
-    case "page": return "page-" + r.id;
+    case "page": return "page-" + r.id + (r.block ? "/" + r.block : "");
   }
 }
 
 export function routeFromHash(hash: string): Route {
   const h = hash.replace(/^#\/?/, "");
-  if (h.startsWith("page-") && h.length > 5) return { name: "page", id: decodeURIComponent(h.slice(5)) };
+  if (h.startsWith("page-") && h.length > 5) {
+    const [id, block] = h.slice(5).split("/");
+    return { name: "page", id: decodeURIComponent(id!), ...(block ? { block: decodeURIComponent(block) } : {}) };
+  }
   if (h.startsWith("agent-") && h.length > 6) return { name: "agent", id: decodeURIComponent(h.slice(6)) };
   if (h.startsWith("project-") && h.length > 8) return { name: "project", id: decodeURIComponent(h.slice(8)) };
   if (h.startsWith("prefs-") && h.length > 6) return { name: "settings", page: decodeURIComponent(h.slice(6)) };

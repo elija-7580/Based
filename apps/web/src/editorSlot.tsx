@@ -2,6 +2,7 @@
 // Inline-Datenbanken rendert der DatabaseView-Steckplatz (sobald @based/database-ui eingesteckt ist), Gleichungen
 // KaTeX offline (BSD-10, src/equation.tsx). Erwähnungen, Seitensuche und Backlinks kommen aus dem Store-Worker
 // (shell/pageDirectory.ts); Synced Blocks von anderen Seiten holt `loadSynced` in die Seiten-Replik.
+import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState } from "react";
 import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { assets } from "./assetBridge.js";
@@ -51,7 +52,14 @@ function useRootTheme(): "light" | "dark" {
   return theme;
 }
 
-export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEditorProps) {
+// BSD-101: Link auf einen Block dieser Seite (öffnet die Seite und springt hin)
+const blockLink = (pageID: string) => (blockID: string) => {
+  const u = new URL(location.href);
+  u.hash = routeToHash({ name: "page", id: pageID, block: blockID });
+  return u.toString();
+};
+
+export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
   const renderDatabase = (p: DatabaseRenderProps) => {
@@ -74,7 +82,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage }: PageEdi
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   return (
     <div className="shell-editor">
-      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
+      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
         {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}

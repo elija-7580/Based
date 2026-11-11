@@ -201,3 +201,12 @@ function fakeWindow(hash = "") {
   };
   return { win, entries, popTo };
 }
+
+describe("Block-Links (BSD-101)", () => {
+  it("#page-<id>/<block> hin und zurück; ohne Block wie bisher", async () => {
+    const { routeFromHash, routeToHash } = await import("./router.js");
+    expect(routeFromHash("#page-P1/B2")).toEqual({ name: "page", id: "P1", block: "B2" });
+    expect(routeToHash({ name: "page", id: "P1", block: "B2" })).toBe("page-P1/B2");
+    expect(routeFromHash("#page-P1")).toEqual({ name: "page", id: "P1" });
+  });
+});

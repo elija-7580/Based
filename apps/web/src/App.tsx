@@ -162,7 +162,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       </div></div>
     );
   } else if (route.name === "page") {
-    screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} />;
+    screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} focusBlock={route.block} />;
   } else if (route.name === "trash") {
     screen = <Trash client={client} state={state} onOpenPage={openPage} />;
   } else if (route.name === "chat") {

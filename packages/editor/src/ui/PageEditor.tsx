@@ -54,6 +54,10 @@ export interface PageEditorProps {
    * Liefert `false`, wenn es ihn nicht gibt. Ohne: der Store muss ihn schon enthalten.
    */
   loadSynced?: (sourceID: string) => Promise<boolean>;
+  /** BSD-101: Link auf einen Block (für „Copy link to block“). Ohne: kein Menüpunkt. */
+  blockLink?: ((blockID: string) => string) | undefined;
+  /** BSD-101: zu diesem Block springen und ihn kurz hervorheben (Link auf einen Block geöffnet). */
+  focusBlock?: string | undefined;
   /** Schwebende Gliederung am rechten Rand (Standard: an; pro Seite über `props.format.hideOutline` abschaltbar). */
   outline?: boolean;
   /** Ablage der Y-Zustände; ohne: im Speicher (pro Store). */
@@ -161,6 +165,25 @@ export function PageEditor(props: PageEditorProps) {
   useEffect(() => () => {
     if (timer.current !== undefined) clearTimeout(timer.current);
   }, []);
+  // BSD-101: Link auf einen Block geöffnet – sobald er gezeichnet ist, hinscrollen und kurz hervorheben
+  const focusBlock = props.focusBlock;
+  // ProseMirror setzt fremde Attribute an seinen Knoten zurück: die Hervorhebung kommt als Stilregel am Rahmen
+  const [flashID, setFlashID] = useState<string | undefined>();
+  useEffect(() => {
+    if (!focusBlock || !container) return;
+    let tries = 0;
+    let flash: ReturnType<typeof setTimeout> | undefined;
+    const t = setInterval(() => {
+      const el = container.querySelector<HTMLElement>(`.bn-block-outer[data-id="${CSS.escape(focusBlock)}"]`);
+      if (!el && ++tries < 60) return;
+      clearInterval(t);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      setFlashID(focusBlock);
+      flash = setTimeout(() => setFlashID(undefined), 1600);
+    }, 50);
+    return () => { clearInterval(t); if (flash) clearTimeout(flash); };
+  }, [focusBlock, container]);
   const [move, setMove] = useState<MoveRequest | undefined>();
   const [link, setLink] = useState<LinkRequest | undefined>();
   const [aiReq, setAIReq] = useState<AIRequest | undefined>();
@@ -190,13 +213,14 @@ export function PageEditor(props: PageEditorProps) {
     if (!ok || !insertLinkedView(req.editor, req.session, db.id)) notify("Couldn’t link that database.");
   };
   return (
-    <div className={"bx-editor " + (className ?? "")} data-page={pageID} ref={setContainer} onKeyDown={(e) => {
+    <div className={"bx-editor " + (className ?? "")} data-page={pageID} data-flash-block={flashID} ref={setContainer} onKeyDown={(e) => {
       // ⌘⌥T / Ctrl+Alt+T: alle Toggles der Seite auf- bzw. zuklappen (wie Notion).
       if ((e.metaKey || e.ctrlKey) && e.altKey && !e.shiftKey && e.code === "KeyT") {
         e.preventDefault();
         if (container) toggleAll(container);
       }
     }}>
+      {flashID ? <style>{`.bx-editor [data-id="${CSS.escape(flashID)}"] > .bn-block { background: var(--selected); border-radius: var(--radius-xs); }`}</style> : null}
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
       {aiReq && props.ai ? <AIBox ai={props.ai} req={aiReq} onClose={() => { setAIReq(undefined); aiReq.editor.focus(); }} /> : null}
       {link ? <DatabasePicker source={databases} onClose={() => setLink(undefined)} onPick={(d) => void pickDatabase(link, d)} /> : null}
@@ -632,7 +656,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} />} />} />
+          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} />
           <FormattingToolbarController formattingToolbar={() => (
             <FormattingToolbar>
               {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
@@ -788,7 +812,7 @@ function AskAIButton({ onAsk }: { onAsk: () => void }) {
 
 // MARK: Block-Menü mit „Copy and sync“
 
-function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void }) {
+function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void; blockLink?: ((id: string) => string) | undefined; notify: (m: string) => void }) {
   return (
     <DragHandleMenu>
       <TurnIntoItem session={props.session} />
@@ -797,6 +821,7 @@ function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly Bl
       <CopyMarkdownItem session={props.session} />
       <BlockColorsItem>Colors</BlockColorsItem>
       <CopyAndSyncItem session={props.session} />
+      {props.blockLink ? <CopyLinkItem link={props.blockLink} notify={props.notify} /> : null}
       <RemoveBlockItem>Delete</RemoveBlockItem>
     </DragHandleMenu>
   );
@@ -890,6 +915,22 @@ function TurnIntoItem(props: { session: DocSession }) {
         </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
+  );
+}
+
+/** BSD-101: „Copy link to block“ – Link auf genau diesen Block in die Zwischenablage. */
+function CopyLinkItem(props: { link: (id: string) => string; notify: (m: string) => void }) {
+  const Components = useComponentsContext()!;
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  if (!block) return null;
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+      const url = props.link(block.id);
+      void Promise.resolve(globalThis.navigator?.clipboard?.writeText(url)).then(() => props.notify("Link to block copied"), () => props.notify("Couldn’t copy the link"));
+    }}>
+      Copy link to block
+    </Components.Generic.Menu.Item>
   );
 }
 
