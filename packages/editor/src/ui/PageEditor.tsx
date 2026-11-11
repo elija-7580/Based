@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, 
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
 import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
+import { hasText, MARQUEE_MIN, marqueeRange, rectFrom, siblingSpan } from "./blockSelect.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
@@ -368,6 +369,88 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     }
     editor.focus();
   };
+  // BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke, ⇧-Klick, ⌘A zweimal.
+  const [marquee, setMarquee] = useState<Rect | undefined>();
+  const parentOf = (id: string) => editor.getParentBlock(id) as { id: string } | undefined;
+  const blockAt = (el: EventTarget | null): string | undefined => {
+    const outer = (el as Element | null)?.closest?.(".bn-block-outer[data-id]");
+    return outer && outer.closest(".bn-editor") === editor.domElement ? outer.getAttribute("data-id") ?? undefined : undefined;
+  };
+  const startMarquee = (e: { clientX: number; clientY: number }) => {
+    const root = editor.domElement;
+    if (!root) return;
+    const from = { x: e.clientX, y: e.clientY };
+    let started = false;
+    const top = () => [...root.querySelectorAll(":scope > .bn-block-group > .bn-block-outer[data-id]")].map((o) => {
+      const r = o.getBoundingClientRect();
+      return { id: o.getAttribute("data-id")!, top: r.top, bottom: r.bottom };
+    });
+    const move = (ev: MouseEvent) => {
+      const r = rectFrom(from, { x: ev.clientX, y: ev.clientY });
+      if (!started && r.right - r.left < MARQUEE_MIN && r.bottom - r.top < MARQUEE_MIN) return;
+      started = true;
+      ev.preventDefault();
+      setMarquee(r);
+      const hit = marqueeRange(r, top());
+      if (hit) selectBlocks(hit);
+      else setRange(undefined);
+    };
+    const up = () => {
+      globalThis.removeEventListener("mousemove", move);
+      globalThis.removeEventListener("mouseup", up);
+      setMarquee(undefined);
+    };
+    globalThis.addEventListener("mousemove", move);
+    globalThis.addEventListener("mouseup", up);
+  };
+  /**
+   * Ziehen aus dem Text: sobald die Spanne einen Block ohne Text (Bild, Trenner, Datenbank …) berührt, wird daraus eine
+   * Blockauswahl (wie Notion). Browser (vor allem WebKit) verlieren die Textauswahl sonst an solchen Blöcken.
+   */
+  const trackPress = (startID: string) => {
+    let blockMode = false;
+    const move = (ev: MouseEvent) => {
+      if ((ev.buttons & 1) === 0) return up();
+      const el = globalThis.document?.elementFromPoint(ev.clientX, ev.clientY) ?? null;
+      const cur = blockAt(el);
+      if (!cur || (cur === startID && !blockMode)) return;
+      const span = siblingSpan(parentOf, startID, cur);
+      const ids = rangeIDs(sel, span);
+      if (!blockMode && ids.every((id) => hasText(editor.getBlock(id) ?? {}))) return;
+      blockMode = true;
+      globalThis.getSelection?.()?.removeAllRanges();
+      selectBlocks(span);
+    };
+    const up = () => {
+      globalThis.removeEventListener("mousemove", move);
+      globalThis.removeEventListener("mouseup", up);
+    };
+    globalThis.addEventListener("mousemove", move);
+    globalThis.addEventListener("mouseup", up);
+  };
+  /** Nach einer Mausauswahl über mehrere Blöcke: liegt ein Block ohne Text darin, wird es eine Blockauswahl. */
+  const textToBlocks = () => {
+    const view = editor.prosemirrorView;
+    if (!view || view.state.selection.empty) return;
+    const blocks = editor.getSelection()?.blocks ?? [];
+    if (blocks.length < 2 || blocks.every((b) => hasText(b))) return;
+    selectBlocks(siblingSpan(parentOf, blocks[0]!.id, blocks[blocks.length - 1]!.id));
+  };
+  const lastSelectAll = useRef(0);
+  // Loslassen kann auch außerhalb des Rahmens passieren: am Dokument lauschen.
+  const textToBlocksRef = useRef(textToBlocks);
+  textToBlocksRef.current = textToBlocks;
+  const rangeRef = useRef(range);
+  rangeRef.current = range;
+  useEffect(() => {
+    const up = (e: MouseEvent) => {
+      if (e.button !== 0 || rangeRef.current || !editor.domElement?.contains(globalThis.document?.getSelection()?.anchorNode ?? null)) return;
+      // WebKit meldet die Auswahl an ProseMirror erst nach dem Loslassen (selectionchange): kurz warten.
+      setTimeout(() => textToBlocksRef.current(), 60);
+    };
+    globalThis.document?.addEventListener("mouseup", up);
+    return () => globalThis.document?.removeEventListener("mouseup", up);
+  }, [editor]);
   const chooseURL = (choice: URLChoice) => {
     if (urlMenu) applyURLChoice(actions, urlMenu.blockID, urlMenu.url, choice);
     setURLMenu(undefined);
@@ -377,9 +460,13 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     if (!range) return;
     const mod = e.metaKey || e.ctrlKey;
     const blocks = selected.map((id) => actions.getBlock(id)).filter((b): b is BlockLike => b !== undefined);
-    if (e.key === "Escape") leaveSelection();
+    if (e.key === "Escape") leaveSelection(range.head); // Schreibmarke ans Ende statt Textauswahl (sonst bleibt die Formatleiste)
     else if (e.key === "ArrowUp" || e.key === "ArrowDown") selectBlocks(stepRange(sel, range, e.key === "ArrowUp" ? -1 : 1, e.shiftKey));
     else if (e.key === "Enter") leaveSelection(range.head);
+    else if (mod && e.key.toLowerCase() === "a") {
+      const all = editor.document;
+      if (all.length) selectBlocks({ anchor: all[0]!.id, head: all[all.length - 1]!.id });
+    }
     else if (editable && (e.key === "Backspace" || e.key === "Delete")) {
       const before = editor.getPrevBlock(selected[0]!)?.id;
       editor.removeBlocks(selected);
@@ -441,6 +528,21 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
             }
           }
         }
+        // ⌘A zweimal (kurz hintereinander): alle Blöcke als Blockauswahl.
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "a") {
+          const now = Date.now();
+          if (now - lastSelectAll.current < 1500) {
+            const all = editor.document;
+            if (all.length) {
+              e.preventDefault();
+              e.stopPropagation();
+              lastSelectAll.current = 0;
+              selectBlocks({ anchor: all[0]!.id, head: all[all.length - 1]!.id });
+              return;
+            }
+          }
+          lastSelectAll.current = now;
+        }
         // Esc: Blockauswahl (nicht, solange ein Menü offen ist – das schließt Esc selbst).
         if (e.key === "Escape" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.nativeEvent.isComposing && !globalThis.document?.querySelector(".bn-suggestion-menu")) {
           const ids = targetBlocks(actions, caretBlockID(editor)).map((b) => b.id);
@@ -451,9 +553,43 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
             selectBlocks({ anchor: first, head: last });
           }
         }
-      }} onMouseDownCapture={() => {
+      }} onMouseDownCapture={(e) => {
+        if (e.button !== 0) return;
+        const id = blockAt(e.target);
+        // ⇧-Klick erweitert eine Blockauswahl bis zum geklickten Block.
+        if (range && e.shiftKey && id) {
+          e.preventDefault();
+          e.stopPropagation();
+          selectBlocks(siblingSpan(parentOf, range.anchor, id));
+          return;
+        }
         if (range) setRange(undefined);
+        if (id && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) trackPress(id);
+        // Im leeren Rand neben dem Text (links/rechts der Blöcke, nicht auf Griff oder Menü): Rechteck-Auswahl.
+        const root = editor.domElement;
+        const t = e.target as Element;
+        if (editable && root && (t === root || t === docRef.current) && !id) {
+          const first = root.querySelector(".bn-block-content")?.getBoundingClientRect();
+          if (first && (e.clientX < first.left || e.clientX > first.right)) {
+            e.preventDefault();
+            startMarquee(e);
+          }
+        }
+      }} onCopy={(e) => {
+        if (!range || e.target !== e.currentTarget) return;
+        e.preventDefault();
+        e.clipboardData.setData("text/plain", blocksAsMarkdown(session, selected));
+      }} onCut={(e) => {
+        if (!range || e.target !== e.currentTarget) return;
+        e.preventDefault();
+        e.clipboardData.setData("text/plain", blocksAsMarkdown(session, selected));
+        if (editable) {
+          const before = editor.getPrevBlock(selected[0]!)?.id;
+          editor.removeBlocks(selected);
+          leaveSelection(before);
+        }
       }}>
+        {marquee ? <div className="bx-marquee" aria-hidden="true" style={{ left: marquee.left, top: marquee.top, width: marquee.right - marquee.left, height: marquee.bottom - marquee.top }} /> : null}
         {urlMenu ? (
           <div className="bx-url-menu" role="menu" aria-label="Paste as" style={{ left: urlMenu.x, top: urlMenu.y }} onMouseDown={(e) => e.preventDefault()}>
             {URL_CHOICES.map((c, i) => (
