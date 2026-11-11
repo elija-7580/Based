@@ -68,11 +68,11 @@ Bold / italic / underline / strikethrough / code,editor,must,yes,yes,,yes
 Links in text (⌘K),editor,must,yes,yes,,yes
 Text color and background color,editor,must,yes,yes,,yes
 Block color,editor,should,yes,yes,,yes
-Turn into (any block type),editor,must,yes,yes,,partial: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout; Gleichung/Medien nicht
+Turn into (any block type),editor,must,yes,yes,,"yes: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout, Page und Block equation (BSD-249); Medien bietet Notion dort auch nicht an"
 Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)"
 Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete"
 Drag handle to reorder blocks,editor,must,yes,yes,,yes
-Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
+Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen (auch mehrere ausgewählte Blöcke, Auto-Scroll am Rand) – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
 Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown)"
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
 Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)"

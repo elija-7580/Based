@@ -132,3 +132,16 @@ describe("Ablegen", () => {
     expect(kids(s, "b:p")).toEqual(["a", "b", "sub", "d"]);
   });
 });
+
+describe("Auto-Scroll beim Ziehen (BSD-249 Teil 2)", () => {
+  it("scrollt nur am Rand, schneller je näher, höchstens 28 px je Schritt", async () => {
+    const { edgeScrollStep, EDGE_ZONE } = await import("../src/ui/dragDrop.js");
+    expect(edgeScrollStep(400, 0, 800)).toBe(0);
+    expect(edgeScrollStep(EDGE_ZONE + 1, 0, 800)).toBe(0);
+    expect(edgeScrollStep(EDGE_ZONE - 10, 0, 800)).toBe(-9);
+    expect(edgeScrollStep(0, 0, 800)).toBe(-28);
+    expect(edgeScrollStep(800 - EDGE_ZONE + 10, 0, 800)).toBe(9);
+    expect(edgeScrollStep(900, 0, 800)).toBe(28);
+    expect(edgeScrollStep(110, 100, 900)).toBeLessThan(0);
+  });
+});
