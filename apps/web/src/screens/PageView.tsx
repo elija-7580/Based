@@ -159,7 +159,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             </button>
             <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
             {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}
-            <button type="button" className="icon-btn ghost" aria-label="Ask AI" title="Ask AI (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
+            <button type="button" className="icon-btn ghost" aria-label="AI chat" title="AI chat (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
               <Icon name="chat" size={18} filled={chatOpen} />
             </button>
             <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
