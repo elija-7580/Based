@@ -10,6 +10,7 @@ import { isRunFinished, toMs, type AgentData, type ProjectData, type Rec, type R
 import type { AgentSnapshot, TaskView } from "../agents/store.js";
 import { isFinished, needsUser, type TaskData } from "../agents/task.js";
 import { FRAME_SPAN_MS, type Frame } from "./arc.js";
+import type { DueItem } from "./due.js";
 
 const DAY = 86_400_000;
 
@@ -156,7 +157,8 @@ export function composerTask(tasks: readonly TaskView[], runs: readonly Rec<RunD
 
 export interface ArcCard {
   id: string;
-  kind: "task" | "run" | "schedule";
+  /** „due“: fällige Zeile aus einer Datenbank (BSD-278); „group“: mehrere Erledigte eines Projekts gebündelt. */
+  kind: "task" | "run" | "schedule" | "due" | "group";
   title: string;
   /** Zeit, nach der die Karte auf dem Bogen liegt (ms). */
   atMs: number;
@@ -168,6 +170,11 @@ export interface ArcCard {
   runID?: string;
   projectID?: string;
   canUndo?: boolean;
+  /** Fällige Zeile: ganztägig bzw. Zeitpunkt schon vorbei (liegt dann auf „now“). */
+  allDay?: boolean;
+  overdue?: boolean;
+  /** Gebündelte Karte: die einzelnen Erledigten (neueste zuerst). */
+  items?: ArcCard[];
 }
 
 export interface RingCard {
@@ -243,6 +250,8 @@ export interface HomeInput {
   /** Auftrag am Composer (erscheint nicht noch einmal auf dem Bogen). */
   composerID?: string;
   projectName?: (id: string) => string | undefined;
+  /** BSD-278: fällige Zeilen aus den Datenbanken (dueItems im Worker). */
+  due?: readonly DueItem[];
 }
 
 export function homeModel(i: HomeInput): HomeModel {
@@ -277,15 +286,21 @@ export function homeModel(i: HomeInput): HomeModel {
     if (r?.data.projectID) n.projectID = r.data.projectID;
     needsYou.push(n);
   }
+  const askingTasks = new Set<string>();
   for (const t of s.tasks) {
-    if (t.id !== i.composerID && needsUser(t.data.state)) needsYou.push({ kind: "task", id: "task:" + t.id, taskID: t.id, card: taskCard(t, s.runs, name) });
+    if (t.id !== i.composerID && needsUser(t.data.state)) {
+      needsYou.push({ kind: "task", id: "task:" + t.id, taskID: t.id, card: taskCard(t, s.runs, name) });
+      askingTasks.add(t.id);
+    }
   }
+  // BSD-278: was oben als „Needs you“ steht, kreist nicht zusätzlich im inneren Ring
+  const asking = (r: Rec<RunData>) => i.approvals.some((a) => a.runID === r.id) || (r.data.taskID !== undefined && askingTasks.has(r.data.taskID) && r.data.kind === "main");
   for (const r of s.runs) {
     const d = r.data;
     if (d.kind === "chat") continue;
     if (d.kind === "main") {
       // Hauptagent: nur, solange er einen Auftrag versteht, der nicht am Composer steht
-      if (d.status === "running" && d.taskID !== i.composerID) running.push(ringCard(r));
+      if (d.status === "running" && d.taskID !== i.composerID && !asking(r)) running.push(ringCard(r));
       continue;
     }
     if (isRunFinished(d.status)) {
@@ -299,7 +314,7 @@ export function homeModel(i: HomeInput): HomeModel {
       done.push(c);
     } else if (d.status === "needsYou" && !i.approvals.some((a) => a.runID === r.id) && !(i.active ?? []).includes(r.id)) {
       needsYou.push({ kind: "stale", id: "stale:" + r.id, runID: r.id, title: d.title || r.name });
-    } else running.push(ringCard(r));
+    } else if (!asking(r)) running.push(ringCard(r));
   }
   running.sort((a, b) => a.startedMs - b.startedMs || (a.id < b.id ? -1 : 1));
 
@@ -311,20 +326,57 @@ export function homeModel(i: HomeInput): HomeModel {
     if (sc.data.taskID) c.taskID = sc.data.taskID;
     planned.push(c);
   }
-  const inDone = done.filter((c) => c.atMs >= nowMs - span);
+  for (const d of i.due ?? []) {
+    // ganztägig heute bzw. Uhrzeit vorbei: auf „now“, damit es rechts neben dem Scheitel bleibt
+    const overdue = d.dueMs < nowMs;
+    const c: ArcCard = { id: "due:" + d.rowID, kind: "due", title: d.title, atMs: Math.max(d.dueMs, nowMs), detail: d.databaseTitle, state: "planned", pageID: d.rowID };
+    if (d.allDay) c.allDay = true;
+    if (overdue && !d.allDay) c.overdue = true;
+    planned.push(c);
+  }
+  const inDone = groupByProject(done.filter((c) => c.atMs >= nowMs - span), name);
   const inPlanned = planned.filter((c) => c.atMs <= nowMs + span);
   const from = frameStart(frame, nowMs);
   const costEUR = s.runs.reduce((n, r) => (toMs(r.data.startedAt) >= from ? n + (r.data.costEUR || 0) : n), 0);
   const m: HomeModel = {
     done: inDone.sort((a, b) => b.atMs - a.atMs), planned: inPlanned.sort((a, b) => a.atMs - b.atMs), running, needsYou,
-    earlier: done.length - inDone.length, later: planned.length - inPlanned.length,
+    earlier: done.filter((c) => c.atMs < nowMs - span).length, later: planned.length - inPlanned.length,
     costEUR: Math.round(costEUR * 10_000) / 10_000,
-    empty: s.tasks.length === 0 && s.runs.filter((r) => r.data.kind !== "chat").length === 0 && s.schedules.length === 0,
+    empty: s.tasks.length === 0 && s.runs.filter((r) => r.data.kind !== "chat").length === 0 && s.schedules.length === 0 && (i.due?.length ?? 0) === 0,
   };
   const sub = (s.main as AgentData).subscription;
   if (sub?.share !== undefined) m.subscription = { name: sub.name, share: sub.share };
   return m;
 }
+
+/** BSD-278: Erledigtes desselben Projekts (ab zwei Karten) zu einer aufklappbaren Karte „Publit · 3 done“ bündeln. */
+export function groupByProject(cards: readonly ArcCard[], projectName: (id: string) => string | undefined): ArcCard[] {
+  const byProject = new Map<string, ArcCard[]>();
+  for (const c of cards) if (c.projectID) byProject.set(c.projectID, [...(byProject.get(c.projectID) ?? []), c]);
+  const out: ArcCard[] = [];
+  const grouped = new Set<string>();
+  for (const c of cards) {
+    const members = c.projectID ? byProject.get(c.projectID)! : undefined;
+    if (!members || members.length < 2) {
+      out.push(c);
+      continue;
+    }
+    if (grouped.has(c.projectID!)) continue;
+    grouped.add(c.projectID!);
+    const items = [...members].sort((a, b) => b.atMs - a.atMs);
+    const ok = items.filter((x) => x.state === "done").length;
+    const failed = items.length - ok;
+    out.push({
+      id: "group:" + c.projectID, kind: "group", title: `${projectName(c.projectID!) ?? "Project"} · ${ok} done`, atMs: items[0]!.atMs,
+      state: ok > 0 ? "done" : "failed", projectID: c.projectID!, items,
+      ...(failed > 0 ? { detail: `${failed} not done` } : {}),
+    });
+  }
+  return out;
+}
+
+/** BSD-278: Kosten im Kopf nur, wenn etwas angefallen ist oder die Agent-Details eingeschaltet sind. */
+export const showCost = (m: Pick<HomeModel, "costEUR" | "subscription">, showDetails: boolean): boolean => showDetails || m.costEUR > 0;
 
 function ringCard(r: Rec<RunData>): RingCard {
   const d = r.data;
@@ -367,7 +419,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function greetingSentence(m: HomeModel, nowMs: number, titleOf: (pageID: string) => string | undefined = () => undefined): Segment[] {
   if (m.empty) return [{ text: "Nothing is running yet. Write what's on your mind below — it becomes a card, and Based files it." }];
   const today = startOfDay(nowMs);
-  const doneToday = m.done.filter((c) => c.atMs >= today && c.state === "done");
+  const doneToday = m.done.flatMap((c) => c.items ?? [c]).filter((c) => c.atMs >= today && c.state === "done");
   const out: Segment[] = [];
   const page = doneToday.find((c) => c.pageID && titleOf(c.pageID));
   if (page) {
@@ -379,7 +431,9 @@ export function greetingSentence(m: HomeModel, nowMs: number, titleOf: (pageID: 
   if (working > 0) out.push({ text: `${out.length ? "; " : ""}${plural(working, "agent is", "agents are")} working` });
   if (m.needsYou.length > 0) out.push({ text: `${out.length ? "; " : ""}${m.needsYou.length === 1 ? "one thing needs" : `${m.needsYou.length} things need`} you` });
   const next = m.planned[0];
-  if (next) {
+  if (next && next.kind === "due" && (next.allDay || next.overdue)) {
+    out.push({ text: `${out.length ? "; " : ""}due today: ${next.title}` });
+  } else if (next) {
     const d = new Date(next.atMs);
     const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     out.push({ text: `${out.length ? "; " : ""}next up at ${hhmm}: ${next.title}` });

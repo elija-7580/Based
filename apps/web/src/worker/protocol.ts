@@ -96,7 +96,9 @@ export type Command =
   /** Testdaten: `count` Seiten mit je einem Absatz (E2E, Messungen). */
   | { op: "seed"; count: number; prefix?: string }
   /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen. */
-  | { op: "seedDatabase"; count: number };
+  | { op: "seedDatabase"; count: number }
+  /** BSD-278 (Tests): Datenbank „Due tasks“ (Status + Datum) mit offenen und erledigten Zeilen für heute. */
+  | { op: "seedDueTasks" };
 
 export interface QuickFindHit {
   pageID: string;
@@ -193,6 +195,8 @@ export type Request =
   | { type: "includeDatabase"; pageID: string; databaseID: string }
   /** BSD-212: Datenbanken nach Titel (Antwort: DatabaseInfo[]). */
   | { type: "listDatabases"; query: string }
+  /** BSD-278: fällige, offene Datenbank-Zeilen im Fenster (Antwort: DueItem[] aus @based/brain/home). */
+  | { type: "dueItems"; fromMs: number; toMs: number }
   /** Chats, Transkripte und Agent-Werkzeuge (BSD-159, worker/chat.ts). */
   | { type: "chat"; action: ChatAction }
   /** Aufträge, Runs, Projekte, Zeitpläne des Hauptagenten (BSD-195/196/160, worker/agents.ts). */

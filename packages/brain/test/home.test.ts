@@ -4,8 +4,9 @@
 import { MemoryPersistence, WorkspaceStore } from "@based/core";
 import { describe, expect, it } from "vitest";
 import { AgentStore, fromMs, MAIN_AGENT_ID, type AgentSnapshot, type Rec, type RunData, type ScheduleData, type TaskData, type TaskView } from "../src/index.js";
+import { createDatabase, keysBetween } from "@based/core";
 import {
-  agentDetail, arcGeometry, arcPath, arcPoint, arcTicks, composerTask, costLine, frameStart, greetingSentence, homeModel, overlaps, placeSide,
+  agentDetail, dueItems, groupByProject, showCost, arcGeometry, arcPath, arcPoint, arcTicks, composerTask, costLine, frameStart, greetingSentence, homeModel, overlaps, placeSide,
   projectDetail, ringLayout, taskCard, timeToT, visibleTicks, type HomeModel,
 } from "../src/home/index.js";
 
@@ -195,7 +196,8 @@ describe("Startseite: Bogen, Kopf, Begrüßung", () => {
     expect(m.done.map((c) => c.id)).toEqual(["task:page", "run:finished"]);
     expect(m.done[0]!.pageID).toBe("p1");
     expect(m.earlier).toBe(1);
-    expect(m.running.map((r) => r.runID)).toEqual(["research", "waiting", "main-other"]);
+    // BSD-278: „waiting“ steht oben als Needs you und nicht zusätzlich im Ring
+    expect(m.running.map((r) => r.runID)).toEqual(["research", "main-other"]);
     expect(m.running[0]!.share).toBeCloseTo(0.3);
     expect(m.needsYou.map((n) => n.kind)).toEqual(["approval", "task"]);
     expect(m.planned.map((c) => c.title)).toEqual(["brief"]);
@@ -299,5 +301,96 @@ describe("Detailseiten", () => {
     expect(taskCard(s.tasks[0]!, s.runs).phase).toBe("understanding");
     const m2 = homeModel({ snapshot: s, approvals: [], nowMs: NOW, frame: "today" });
     expect(m2.running.map((r) => r.kind)).toEqual(["main"]);
+  });
+});
+
+describe("BSD-278: Startseite – Ring ohne Doppelkarte, fällige Aufgaben, Erledigtes nach Projekt, Kosten", () => {
+  it("Hauptagent eines Auftrags mit Rückfrage und Lauf mit Freigabe stehen nur oben, nicht im Ring", () => {
+    const s = snap({
+      tasks: [task("ask", { state: "question", question: { text: "Which?", options: ["A"] } })],
+      runs: [run("main-ask", { kind: "main", taskID: "ask" }), run("sub", { status: "needsYou" }), run("free")],
+    });
+    const m = homeModel({ snapshot: s, approvals: [{ runID: "sub", callID: "c", name: "create_page" }], active: ["sub"], nowMs: NOW, frame: "today" });
+    expect(m.needsYou.map((n) => n.id)).toEqual(["approval:sub:c", "task:ask"]);
+    expect(m.running.map((r) => r.runID)).toEqual(["free"]);
+  });
+
+  it("Erledigtes desselben Projekts wird ab zwei Karten gebündelt, neueste zuerst; Einzelne bleiben", () => {
+    const s = snap({
+      projects: [{ id: "pub", name: "Publit", data: { v: 1 } as never, createdAt: 0, updatedAt: 0 }],
+      tasks: [
+        task("a", { state: "done", at: NOW - hour, projectID: "pub" }),
+        task("b", { state: "done", at: NOW - 2 * hour, projectID: "pub" }),
+        task("c", { state: "failed", at: NOW - 3 * hour, projectID: "pub" }),
+        task("solo", { state: "done", at: NOW - 30 * min }),
+      ],
+    });
+    const m = homeModel({ snapshot: s, approvals: [], nowMs: NOW, frame: "today" });
+    expect(m.done.map((c) => c.id)).toEqual(["task:solo", "group:pub"]);
+    const g = m.done[1]!;
+    expect(g).toMatchObject({ kind: "group", title: "Publit · 2 done", atMs: NOW - hour, detail: "1 not done", projectID: "pub" });
+    expect(g.items!.map((c) => c.id)).toEqual(["task:a", "task:b", "task:c"]);
+    // Begrüßung zählt die Einzelnen in der Gruppe
+    expect(greetingSentence(m, NOW).map((x) => x.text).join("")).toContain("Based finished 3 tasks today");
+    // eine einzelne Projektkarte bleibt einzeln
+    expect(groupByProject([{ id: "x", kind: "task", title: "x", atMs: 1, state: "done", projectID: "p" }], () => "P").map((c) => c.kind)).toEqual(["task"]);
+  });
+
+  it("Kosten im Kopf nur bei > 0 oder mit Agent-Details", () => {
+    expect(showCost({ costEUR: 0 }, false)).toBe(false);
+    expect(showCost({ costEUR: 0 }, true)).toBe(true);
+    expect(showCost({ costEUR: 0.002 }, false)).toBe(true);
+  });
+
+  it("fällige Zeilen liegen rechts: ganztägig/überfällig auf now, Zeitpunkt in der Zukunft an seiner Zeit; Begrüßung nennt sie", () => {
+    const due = [
+      { rowID: "r1", title: "Pay rent", databaseID: "d", databaseTitle: "Tasks", dueMs: new Date(2026, 10, 10).getTime(), allDay: true },
+      { rowID: "r2", title: "Call", databaseID: "d", databaseTitle: "Tasks", dueMs: NOW - hour, allDay: false },
+      { rowID: "r3", title: "Ship", databaseID: "d", databaseTitle: "Tasks", dueMs: NOW + 2 * hour, allDay: false },
+    ];
+    const m = homeModel({ snapshot: snap(), approvals: [], nowMs: NOW, frame: "today", due });
+    expect(m.empty).toBe(false);
+    expect(m.planned.map((c) => [c.id, c.atMs - NOW, c.allDay ?? false, c.overdue ?? false])).toEqual([
+      ["due:r1", 0, true, false], ["due:r2", 0, false, true], ["due:r3", 2 * hour, false, false],
+    ]);
+    expect(m.planned[0]).toMatchObject({ kind: "due", pageID: "r1", detail: "Tasks", state: "planned" });
+    expect(greetingSentence(m, NOW).map((x) => x.text).join("")).toBe("Due today: Pay rent.");
+  });
+
+  it("dueItems: Datenbanken mit Datum + Status/Checkbox; erledigte, Vorlagen, Papierkorb, ohne Datum und außerhalb des Fensters fallen weg", () => {
+    let t = 0;
+    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence(), now: () => (t += 1) });
+    const mk = (title: string, props: { id: string; name: string; type: string }[]) => {
+      const made = createDatabase(store, { parent: "w", title, viewType: "board", sampleRows: 0, undoable: false });
+      const db = structuredClone(store.databases.get(made.databaseID)!);
+      if (props.some((p) => p.type === "checkbox")) db.properties = db.properties.filter((p) => p.type !== "status");
+      db.properties.push(...props);
+      store.transact("schema", (tx) => tx.put({ kind: "database", data: db }), { undoable: false });
+      return store.databases.get(made.databaseID)!;
+    };
+    const day = new Date(NOW);
+    day.setHours(0, 0, 0, 0);
+    const from = day.getTime(), to = NOW + 6 * hour;
+    const withStatus = mk("Tasks", [{ id: "due", name: "Due", type: "date" }]);
+    const st = withStatus.properties.find((p) => p.type === "status")!;
+    const [open, , done] = st.options!.map((o) => o.id);
+    const boxes = mk("Chores", [{ id: "when", name: "When", type: "date" }, { id: "ok", name: "Done", type: "checkbox" }]);
+    const noDate = mk("Notes", []);
+    const rows: [string, string, Record<string, unknown>, Record<string, unknown>?][] = [
+      [withStatus.id, "Pay rent", { [st.id]: { status: { _0: open } }, due: { date: { _0: { start: fromMs(from), includeTime: false } } } }],
+      [withStatus.id, "Finished", { [st.id]: { status: { _0: done } }, due: { date: { _0: { start: fromMs(from), includeTime: false } } } }],
+      [withStatus.id, "Next week", { due: { date: { _0: { start: fromMs(NOW + 100 * hour), includeTime: true } } } }],
+      [withStatus.id, "Template", { due: { date: { _0: { start: fromMs(NOW), includeTime: true } } } }, { isTemplate: true }],
+      [boxes.id, "Water plants", { ok: { checkbox: { _0: false } }, when: { date: { _0: { start: fromMs(NOW + hour), includeTime: true } } } }],
+      [boxes.id, "Taken out", { ok: { checkbox: { _0: true } }, when: { date: { _0: { start: fromMs(NOW + hour), includeTime: true } } } }],
+      [noDate.id, "No date", {}],
+    ];
+    const keys = keysBetween(rows.length, undefined, undefined);
+    store.transact("rows", (tx) => rows.forEach(([db, text, values, props], i) => tx.put({ kind: "block", data: {
+      id: "row" + i, type: "page", parent: "d:" + db, sk: keys[i]!, text, createdAt: 0, updatedAt: 0, values: values as never, ...(props ? { props } : {}),
+    } })), { undoable: false });
+    const got = dueItems(store, from, to);
+    expect(got.map((d) => [d.title, d.databaseTitle, d.allDay])).toEqual([["Pay rent", "Tasks", true], ["Water plants", "Chores", false]]);
+    expect(got[0]!.dueMs).toBe(from);
   });
 });

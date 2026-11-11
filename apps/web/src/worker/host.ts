@@ -70,6 +70,7 @@ import { PageHistory } from "./history.js";
 import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
+import { dueItems } from "@based/brain/home";
 import type { AssetGetResult, AssetInfo, Command, DatabaseInfo, Event, GraphResult, HistoryAction, InitResult, PageInfo, QuickFindHit, RequestMessage, SearchResult, StatusInfo, SyncConfig, SyncState, SyncedRecords } from "./protocol.js";
 
 export interface OpenedWorkspace {
@@ -187,6 +188,7 @@ export class StoreHost {
         case "includeSynced": reply(this.includeSynced(msg.pageID, msg.source)); break;
         case "includeDatabase": reply(this.includeDatabase(msg.pageID, msg.databaseID)); break;
         case "listDatabases": reply(this.listDatabases(msg.query)); break;
+        case "dueItems": reply(dueItems(this.store, msg.fromMs, msg.toMs)); break;
         case "applyLocal": this.applyLocal(msg.upserts, msg.deletions, msg.derived === true); reply(true); break;
         case "setSync": this.startSync(msg.sync); reply(true); break;
         case "syncNow": await this.sync?.syncNow(); reply(true); break;
@@ -325,6 +327,7 @@ export class StoreHost {
       case "redo": return store.redo().name;
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
       case "seedDatabase": return this.seedDatabase(c.count);
+      case "seedDueTasks": return this.seedDueTasks();
     }
   }
 
@@ -392,6 +395,36 @@ export class StoreHost {
       for (let i = 0; i < count; i++) {
         tx.put({ kind: "block", data: { id: crypto.randomUUID().toUpperCase(), type: "page", parent: "d:" + db.id, sk: keys[i]!, text: `Row ${i + 1}`, createdAt: now, updatedAt: now } });
       }
+    }, { undoable: false });
+    return made.blockID;
+  }
+
+  private seedDueTasks(): string {
+    const store = this.store;
+    const made = createDatabase(store, { parent: "w", title: "Due tasks", viewType: "board", sampleRows: 0, undoable: false });
+    const db = structuredClone(store.databases.get(made.databaseID)!);
+    const status = db.properties.find((p) => p.type === "status")!;
+    const date = { id: crypto.randomUUID(), name: "Due", type: "date" };
+    db.properties.push(date);
+    const [open, , done] = status.options!.map((o) => o.id);
+    const day = new Date();
+    day.setHours(0, 0, 0, 0);
+    const sw = (ms: number) => (ms - 978_307_200_000) / 1000;
+    const rows: [string, number, boolean, string][] = [
+      ["Pay rent", sw(day.getTime()), false, open!],
+      ["Call the dentist", sw(day.getTime()), false, done!],
+      ["Ship the release", sw(Date.now() + 2 * 3_600_000), true, open!],
+    ];
+    const keys = keysBetween(rows.length, undefined, undefined);
+    store.transact("Seed due tasks", (tx) => {
+      tx.put({ kind: "database", data: db });
+      const now = store.now();
+      rows.forEach(([text, start, includeTime, option], i) => {
+        tx.put({ kind: "block", data: {
+          id: crypto.randomUUID().toUpperCase(), type: "page", parent: "d:" + db.id, sk: keys[i]!, text, createdAt: now, updatedAt: now,
+          values: { [status.id]: { status: { _0: option } }, [date.id]: { date: { _0: { start, includeTime } } } },
+        } });
+      });
     }, { undoable: false });
     return made.blockID;
   }
