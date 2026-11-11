@@ -1,230 +1,230 @@
-feature,area,priority,original,clone,notes,ts
-Create / rename / delete pages,pages,must,yes,yes,,yes
-Nested subpages (page inside page),pages,must,yes,yes,,yes
-Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)"
-Page icon (uploaded image),pages,could,yes,yes,,"yes (BSD-201): Upload image im Icon-Menü, gespeichert wie Swift PageIcon.asset"
-Page cover (gallery / color / gradient),pages,should,yes,yes,,"yes (BSD-201): Farben (Token-Töne) und die 12 Verläufe der Swift-App als Galerie (gleiche Nummern, Tokens cover-gradient-*)"
-Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition wie Notion (Klick, ziehen, Save/Cancel), Höhe per Unterkante ziehen (pro Seite, nur TS), Remove"
-Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)"
-Small text,pages,should,yes,yes,,yes (BSD-201)
-Full width,pages,should,yes,yes,,yes (BSD-201)
-Lock page,pages,should,yes,yes,,"yes (BSD-201: Editor, Titel und Datenbank schreibgeschützt, Unlock-Knopf)"
-Duplicate page,pages,must,yes,yes,,"yes (Pass 30: Seitenmenü Duplicate, Library-Bulk)"
-Move page to another page,pages,must,yes,yes,,"yes (Pass 30: Move-to-Dialog, Ziehen, Teamspaces)"
-Trash with restore and delete forever,pages,must,yes,yes,,yes
-Favorites,navigation,must,yes,yes,,yes
-Sidebar page tree with expand/collapse,navigation,must,yes,yes,,yes
-Drag and drop pages in sidebar,navigation,should,yes,yes,,yes
-Breadcrumbs,navigation,should,yes,yes,,yes
-Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)",yes
-Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system,"partial: neuer Tab per ⌘-Klick/Mittelklick; „Open in new window“ (Seitenmenü, Seitenleiste) – Tauri-Fenster page-*, Mac-Test offen (BSD-202)"
-Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs",yes
-Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)",yes
-Recent pages in search,search,should,yes,yes,,yes
-Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope"
-Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende; BSD-90: unverlinkte Erwähnungen mit „Link“)"
-Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page)"
-Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)"
-Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung"
-Link to page block,linking,should,yes,yes,,yes
-Copy link to block / page (deep link),linking,should,yes,yes,,no
-Text block,blocks,must,yes,yes,,yes
-Heading 1/2/3,blocks,must,yes,yes,,yes
-Heading 4,blocks,could,yes,yes,,yes
-Bulleted list,blocks,must,yes,yes,,yes
-Numbered list (1. a. i. by depth),blocks,must,yes,yes,,"yes (BSD-210: 1. → a. → i. je Ebene, CSS-Zähler)"
-To-do list,blocks,must,yes,yes,,yes
-Toggle list,blocks,must,yes,yes,,yes
-Toggle headings,blocks,should,yes,yes,,yes
-Quote,blocks,must,yes,yes,,yes
-Callout with icon and color,blocks,must,yes,yes,,"yes (BSD-210: Emoji-Picker mit Suche, Random, Remove)"
-Divider,blocks,must,yes,yes,,yes
-Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …),"yes (BSD-209: Sprachwahl, Hervorhebung offline mit dem Swift-Hervorheber aus @based/core)"
-Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network,yes
-Inline equation,blocks,should,yes,partial,inline TeX kept as monospace chip,yes
-Image block (upload / link) with caption,blocks,must,yes,yes,,partial: Upload über BSD-78 (Datei-Blöcke im Editor); Bild-Picker-Feinschliff offen
-Video / audio blocks,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, Anzeige offline, E2E)"
-File block,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, offline, E2E)"
-PDF block,blocks,could,yes,yes,,"yes (BSD-208: Upload oder Link, Anzeige im Block; Record wie Swift mit asset)"
-Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,partial: Karte mit URL bzw. importiertem Titel; kein Abruf von Titel/Vorschau
-Embed (web),blocks,could,yes,yes,,"yes (BSD-209): YouTube (ohne Cookies), Vimeo, Loom, Figma, CodePen, Spotify, Google Maps eingebettet (iframe, sandbox); andere Seiten als Link-Karte"
-Table of contents,blocks,should,yes,yes,,yes
-Breadcrumb block,blocks,could,yes,yes,,yes
-Columns (2-5),blocks,should,yes,yes,,"yes (BSD-210: 2–5 Spalten per Slash, Breite ziehen oder per Pfeiltasten, gespeichert als ratio)"
-Simple table block,blocks,should,yes,partial,plain-text cells; header row/col toggles,yes
-Synced block,blocks,could,yes,partial,"Copy and sync + paste on another page, unsync, original-in-Trash notice (BSD-41); same block twice on one page refused (editor tracks text fields by block ID)","yes (Pass 30: Copy and sync über Seiten, Unsync, Original im Papierkorb; doppelt auf einer Seite abgelehnt)"
-Button block,blocks,could,yes,partial,block exists; actions limited,"yes (BSD-210): Beschriftung und Schritte einrichten (Insert blocks mit Vorlage, Add page to, Open page, Open added page, Open link, Show confirmation), Klick führt aus wie Swift ButtonOps; Peek-Modus öffnet noch als ganze Seite"
-Tabs block,blocks,could,yes,no,,no
-Child page block in content,blocks,must,yes,yes,,yes
-Slash command menu with search,editor,must,yes,yes,,yes
-Markdown block shortcuts (# - * + 1. [] > ``` ---),editor,must,yes,yes,,yes
-Inline Markdown (** * ` ~),editor,must,yes,yes,,yes
-Enter splits block / continues lists,editor,must,yes,yes,,yes
-Backspace at start merges / turns into text,editor,must,yes,yes,,yes
-Tab / Shift-Tab indent and outdent,editor,must,yes,yes,,yes
-Arrow keys move between blocks,editor,must,yes,yes,,yes
-Soft line break (Shift-Enter),editor,must,yes,yes,,yes
-Bold / italic / underline / strikethrough / code,editor,must,yes,yes,,yes
-Links in text (⌘K),editor,must,yes,yes,,yes
-Text color and background color,editor,must,yes,yes,,yes
-Block color,editor,should,yes,yes,,yes
-Turn into (any block type),editor,must,yes,yes,,"yes: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout, Page und Block equation (BSD-249); Medien bietet Notion dort auch nicht an"
-Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)"
-Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete"
-Drag handle to reorder blocks,editor,must,yes,yes,,yes
-Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen (auch mehrere ausgewählte Blöcke, Auto-Scroll am Rand) – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt"
-Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown)"
-Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes
-Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)"
-Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes
-Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,yes (BSD-207: ⌘⌥T / Ctrl+Alt+T)
-Undo / redo for text and structure,editor,must,yes,yes,,yes
-Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30 Markdown; BSD-211: strukturiertes HTML aus Notion/Google Docs/Web über den Kern-Importer, Fixtures auch durch den Editor-Pfad)"
-Paste URL as bookmark / mention / link,editor,could,yes,yes,,yes (BSD-211: nackte URL in leeren Absatz → Menü Link / Bookmark / Embed; Seiten-Erwähnung über Notion-/Based-Links)
-Copy blocks as Markdown,editor,should,yes,yes,,"yes (BSD-211: Blockmenü „Copy as Markdown“ über den Markdown-Exporter des Kerns, mit Kindern und eigenen Blöcken)"
-Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search","yes: ⌘F find bar with count, Enter/⇧Enter, ⌘G/⇧⌘G, matches across formatting via CSS highlights (BSD-206); in databases it searches the rendered rows"
-Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)"
-Word / character count,editor,could,yes,yes,,yes: words · characters in the ••• page menu (BSD-206)
-Placeholders per block type,editor,should,yes,yes,,yes
-Database inline,databases,must,yes,yes,,"yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an; BSD-255: ruhig ohne Kasten, Tabelle ohne eigenen senkrechten Scroller mit Load more, Werkzeuge beim Überfahren, Open as full page; Liste, Galerie, Board wachsen mit der Seite, Load more auch je Board-Spalte)"
-Database full page,databases,must,yes,yes,,yes
-Linked database view,databases,should,yes,yes,,"yes: /Linked view of database wählt eine Datenbank (auch von anderen Seiten), eigene Ansicht, bleibt live (BSD-212)"
-Table view,databases,must,yes,yes,,yes
-Board view (group by select/status),databases,must,yes,yes,,yes
-List view,databases,should,yes,yes,,yes
-Gallery view with card preview,databases,should,yes,yes,,yes
-Calendar view,databases,should,yes,partial,"month grid, drag to reschedule; no week view",yes
-Timeline view,databases,could,yes,partial,simplified bars; no dependencies,yes
-Chart view,databases,could,yes,yes,see Chart view row (Pass 8),yes
-Form view,databases,could,yes,yes,Pass 11: questions from properties; submit adds a row,"yes (Pass 30: Fragen aus Properties, Pflicht, Prüfung je Typ, Absenden legt Zeile an)"
-Feed / map views,databases,could,yes,partial,map view in Pass 12; feed view open,partial: Map offline (Pass 30); Feed fehlt
-Multiple views per database,databases,must,yes,yes,,yes
-Filters (and/or groups),databases,must,yes,yes,,yes
-Sorts (multi-key),databases,must,yes,yes,,yes
-Group by / hide empty groups,databases,should,yes,yes,,yes
-Sub-groups,databases,could,yes,no,,no
-Column calculations,databases,should,yes,yes,,yes
-Property visibility and order per view,databases,must,yes,yes,,yes
-Row opens as page (side peek / center / full),databases,must,yes,yes,,yes (Pass 30: Side/Center Peek/Full page pro Ansicht)
-Database templates,databases,should,yes,yes,,"yes: New ▾ – aus Vorlage oder leer, Vorlage anlegen/bearbeiten/als Standard/löschen (BSD-212)"
-Sub-items and dependencies,databases,could,yes,no,,no
-Property: title / text / number,properties,must,yes,yes,,yes
-Property: select / multi-select,properties,must,yes,yes,,yes
-Property: status,properties,must,yes,yes,,yes
-Property: date (range / time),properties,must,yes,yes,,yes
-Property: checkbox,properties,must,yes,yes,,yes
-Property: url / email / phone,properties,must,yes,yes,,yes
-Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),"yes (BSD-216): „Me“, Auswahl aus schon verwendeten Namen der Datenbank und den People des Agent Brain, neue Namen per Eingabe"
-Property: files & media,properties,should,yes,yes,,"yes (BSD-208: Links und Upload in den Asset-Speicher, Wert wie Swift mit asset; Öffnen als Blob)"
-Property: created / edited time and by,properties,must,yes,yes,,yes
-Property: unique ID,properties,could,yes,yes,,yes
-Property: formula (Formula 2.0),properties,should,yes,partial,"Formula 2.0 core: arithmetic, text, dates, lists, if/ifs, prop(); not every builtin",yes
-Property: relation,properties,should,yes,yes,,yes
-Property: rollup,properties,should,yes,yes,,yes
-Property: button,properties,could,yes,partial,property exists; no automations,partial: Property anlegbar; Zelle ohne Aktion
-Property: place / verification,properties,could,yes,partial,place: address text; verification: flag only,partial: Place mit Name/Adresse/Koordinaten (von Hand); Verification nur Anzeige
-Number formats,properties,should,yes,yes,,yes
-Change property type with value conversion,properties,should,yes,yes,,yes
-Sync between Mac and iPhone,sync,must,yes,partial,"Server sync v2 is the primary channel (BSD-28, ADR 0001); iCloud is an opt-in experimental switch. Stamped tombstones (BSD-24), orphan rescue + 90-day tombstone GC (BSD-104), unknown fields kept (BSD-25); untested between real devices",partial: Sync v2 zwischen Web/Desktop und Server; iPhone-Client fehlt (Phase 5 mobil)
-Offline editing,sync,must,yes,yes,local-first,yes
-Conflict handling,sync,must,yes,partial,"HLC LWW per record + fractional ordering; stamped deletions (newer edit/restore wins, BSD-24); undo skips records changed remotely (BSD-27); text CRDT proposed (ADR 0010, Automerge) but not integrated","partial: HLC-LWW je Record, Sortierschlüssel, Tombstones, Undo gegen Remote und Sync-Client vorhanden; Server-Brücke Y.Doc ↔ Records unter /collab (BSD-220 Teil 1: Server füllt einmal, materialisiert Y-Änderungen, übernimmt Records; Offline-Konflikt im selben Absatz mergt); Y-Stände im Web-Client dauerhaft in ydocs.sqlite (BSD-220 Teil 2); Web-Client an /collab als „Real-time text (beta)“, Standard aus (Teil 3: Abstammung, abgeleitete Records nicht gepusht, E2E zwei Geräte); Synced-Block-Originale über /collab live (BSD-252); Seiten mit noch nicht gepushten Änderungen öffnen erst nach dem Push mit /collab (BSD-252, kein Verlust beim Einschalten); Server stempelt Records/Löschungen mehr als 1 h in der Zukunft beim Empfang neu (BSD-279); Client erkennt eine falsche Geräte-Uhr am Date-Header, warnt in Sync & server/Diagnose und stempelt mit Server-Zeit (BSD-286)"
-Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested","partial: BSD-78 inhaltsadressiert über Server-Sync (Upload, Lazy-Download, Status); Import-Dateien gehen jetzt ebenfalls über den Sync, alte werden einmalig migriert (BSD-230), Aufräumen auf Geräten fehlt"
-Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now,no
-Page history / versions,history,should,yes,no,,yes
-Comments and discussions,collaboration,should,yes,no,,no
-Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view","partial: Rollen/Vererbung, Access-Links, Einladungen, Widerruf, gefilterter Pull/Push im TS-Server (hineinbewegte oder neu freigegebene Seiten kommen mit Inhalt, BSD-284), Share-Panel; Gast-Modus im Web: Link öffnet eigenen Gast-Store (Speicher, eigener Lock/Kanal/Gerät), Sync mit dem Link-Geheimnis, Start auf der geteilten Seite (BSD-235 Teil 2), widerrufener Link zeigt „This link no longer works“ (Teil 3); Nur-Lesen-Oberfläche und Universal Links fehlen"
-Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included","yes (Pass 30: /p/<id> server-gerendert, Token-Styles, CSP, HTML-Blöcke in Sandbox; Publish/Unpublish im Share-Panel)"
-Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended",yes (BSD-254: große Exporte ≥ 500 MB werden aus der Datei gelesen statt ganz geladen; Anhänge gehen einzeln in den Asset-Speicher; 1-GB-Test: Spitze ~70 MiB; BSD-283: Gegendruck zum Store-Worker (32-MiB-Fenster), Abbruch entfernt schon abgelegte neue Dateien)
-Import Markdown files,import,must,yes,yes,,yes
-Export page as Markdown,export,must,yes,yes,,yes
-Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft)
-Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)"
-Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, F6 (BSD-204/238); ⇧⌘U fehlt; im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab"
-Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Workspace-Name und -Icon (BSD-205); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Workspace-Name, Wochenbeginn (BSD-205), Rest „Not available yet“"
-iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil)
-iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil)
-iPad layout,mobile,could,yes,partial,runs; layout not tuned,no (Phase 5 mobil)
-Share extension (save to Based),mobile,could,yes,partial,"BSD-11/131: iOS Share Extension target (shared links/text → Captures via App Group); not embedded yet, App Group capability to enable on the Mac (BSD-141)",no (Phase 5 mobil)
-Widgets,mobile,could,yes,partial,BSD-11/131: iOS widgets Capture / Running now / Needs you (snapshot via App Group); not embedded yet (BSD-141),no (Phase 5 mobil)
-Notion AI,ai,could,yes,skip,out of scope,n/a
-Integrations / connections marketplace,integrations,could,yes,skip,their network is not part of the product you can rebuild,n/a
-Floating page outline (right rail),pages,should,yes,yes,hover to expand; per-page toggle,"yes (Pass 30: Gliederung rechts, Hover, Klick scrollt, pro Seite abschaltbar)"
-AI chat over workspace (Notion AI),ai,should,yes,yes,⌘J; Anthropic/OpenAI/Ollama/Apple Intelligence; tools over pages & databases,"yes (Pass 30: BSD-159, BYOK Anthropic/OpenAI-kompatibel/Ollama, Werkzeuge über Seiten und Datenbanken; echte Anbieter ungeprüft)"
-AI memories (one page per topic),ai,should,yes,yes,"Memories database in Agent Brain; suggestions from chats into the Inbox, saved only after confirmation (BSD-59)","yes (Pass 30: Memories-Datenbank, Vorschläge erst nach Save, opt-in)"
-Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; SKILL.md import/export and mirror to ~/.claude/skills (BSD-60),"yes (Pass 30: Skills-Datenbank, SKILL.md/ZIP-Import/Export, Router mit Chips)"
-Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)","partial: Server legt fällige Läufe aller Agenten als Runs an und führt sie mit BASED_ANTHROPIC_API_KEY selbst aus, auch bei geschlossener App (BSD-243); ohne Schlüssel, sobald die App offen ist; Zeitplan-UI je Agent fehlt"
-MCP server for external AI clients,ai,should,yes,yes,"stdio + Streamable HTTP; version negotiation, projects/runs/inbox/main-agent tools, paging, docs/mcp.md (BSD-58); permission rules apply (BSD-98)","partial: stdio und Streamable HTTP mit Seiten-Werkzeugen (suchen, lesen, anlegen, ändern, Papierkorb) und Datenbank-Werkzeugen (list_databases, database_schema, query_database, add_row, update_row; BSD-221 Teil 1), Seiten-Extras (Teil 2), Läufe/Inbox lesend (list_runs, get_run, inbox; Teil 3a), Projekte (list_projects, get_project, create_project, update_project_status; Teil 3c/3d); Hauptagent, resolve_inbox, Skills als Prompts und Berechtigungsregeln fehlen"
-Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device,"yes (BSD-225): Property-Menü „Autofill with AI“ für Text, Select, Status, Multi-Select, Checkbox mit dem eingestellten Modell, ein Undo-Schritt, abbrechbar"
-Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1","partial: core (crawler, mapper, views, formulas, files, re-import) + dialog ""Connect Notion directly"" (token encrypted on device, check, links or everything shared, progress, cancel, copy report); runs in its own worker, HTTP via Tauri plugin in the desktop app (BSD-217). Not yet run against the real Notion API on a Mac; browser tab cannot reach the API (CORS)"
-Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,yes
-Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes
-HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",partial: /html und Sprache HTML mit Vorschau im abgeschotteten iframe (BSD-209); Mermaid fehlt
-Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,"partial: ACP-Kern in @based/brain, Sitzungen über den TS-Server (/coding, --coding-root, eigene Agenten per --coding-agents) und Ansicht #coding im Web (starten, Prompt, Stopp, Modus, beenden; BSD-223); lokal ohne Server (Desktop-Sidecar) fehlt"
-Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); Coding-Agent-Freigaben über den Server auf jedem Gerät in #coding (alle Optionen des Agenten, BSD-223); Freigaben der Web-Agenten gehen beim Neuladen verloren"
-Switch agent mid-session,ai,should,no,yes,transcript hand-off,"yes (BSD-223: „Switch agent…“ in #coding startet eine neue Sitzung, die das Transkript der alten bekommt)"
-E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no
-MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,"partial: Einstellungen → Connections (Katalog GitHub/Linear + eigene Streamable-HTTP-Server, Token verschlüsselt, an/aus, für Agenten), Werkzeuge mcp__<name>__<tool> im Chat und für den Hauptagenten mit Freigabe (BSD-222); OAuth-Anmeldung (Notion, Slack, Drive, Sentry) und stdio-Server (Desktop) fehlen"
-Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-first equivalents for billing/people,"partial: 17 Seiten, Registry für Abschnitte; viele Seiten noch „Not available yet“"
-Export all workspace content,app,should,yes,yes,Markdown + CSV tree,yes
-Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug,"yes (BSD-215, Linux-Container): 50 000 Zeilen laden 1,4 s, Sync einspielen 1,1 s, Abfrage mit Filter/Sortierung/Gruppen 0,3 s, aus dem Cache 0,02 ms, SQLite laden 0,5 s; Web: Tabelle öffnen 0,9 s (Chromium)/2,1 s (WebKit), Zelle ändern 0,1–0,2 s; Tests mit Grenzwerten"
-UI test suite,app,should,n/a,yes,XCUITest macOS + iOS,n/a
-Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import,"partial (BSD-204/256): Page, AI chat, Meeting notes, Database, Import; Ziffern 1–9 wählen direkt; Agent session fehlt"
-AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or floating on narrow windows; full-page chat; history,"yes (Pass 30: ⌘J-Panel mit ziehbarer Breite, Vollseite #chat)"
-Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete","yes: ⇧-Klick Bereich, ⇧⌥-Klick/⇧Leertaste einzeln; Favorit, Duplizieren, Verschieben, Papierkorb (BSD-203; ⌘-Klick bleibt neuer Tab)"
-Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete","yes: Tabelle – Kästchen, ⇧-Klick Bereich, alle wählen; in Tabs öffnen, Links kopieren, duplizieren, löschen (je ein Undo-Schritt, BSD-213); Board/Liste noch ohne"
-Peek navigation (prev/next row),databases,should,yes,yes,⌃⇧↑/↓ in side/center peek; open in new tab,yes (Pass 30: ⌃⇧↑/↓ und Knöpfe in Ansichts-Reihenfolge)
-Import HTML export,import,should,yes,yes,"lossless NotionHTMLImporter: page header, all blocks, colors, columns, tables, database property types/colors/relations; unknown markup kept as HTML block",yes
-Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcript view, inline permission prompts, shift+tab modes, SwiftTerm terminal (macOS)","partial: #coding zeigt das Transkript wie der Chat (Thinking, Werkzeuge mit Diff, Plan, Verbrauch), Freigaben oben, Modus-Auswahl, Stopp (BSD-223); Slash-Befehle, @Dateien, ⇧Tab und echtes Terminal fehlen"
-CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal,"yes (BSD-223: #coding → CLI history, nach Projekt gruppiert, Transkript lesen, Fortsetzen in Based oder per Terminal-Befehl; Server-Rechner)"
-Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning","partial: #coding → Setup (CLIs mit Pfad/Version, Login, Befehl zum Beheben, Test per ACP-Handshake; BSD-223); prüft den Server-Rechner, nicht den lokalen"
-"Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D",no
-"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,"via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps","yes via the API import (BSD-217): filters, sorts, groups, layouts, dashboards; E2E against fixture routes. HTML/ZIP export carries no views"
-Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; blocks edited or added in Based are kept via import fingerprints (BSD-32); removed untouched content → trash; original timestamps and authors kept,partial: für Datei-Exporte (HTML/Markdown) über stabile Import-IDs; Re-Import über die Notion-API fehlt
-Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression",no
-Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store,partial: Anhänge aus Notion-Export-ZIP übernommen (Pass 30); API-Import fehlt
-Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import,"yes (BSD-216): Widgets hinzufügen (Quelle: diese oder andere Datenbank), verschieben (links/rechts, Zeile darüber/darunter), Breite, Zeilenhöhe, entfernen"
-Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,"yes (BSD-216): Number-Chart, Caption, Farbschema (Auto, Colorful, eine Farbe) und Höhe (Small–Extra large, wie Swift)"
-Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding"
-Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes
-Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"yes: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings als Icon-Zeile neben dem Sync-Status, oben nur Search/Home/Chat, Einträge per Rechtsklick anpinnbar/ausblendbar, Graph und Meetings als Library-Reiter, Aufnahme-Pille oben, ⌘K-Befehle (BSD-281), Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden, Hover-Peek am linken Rand (BSD-203)"
-Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Share, Export, •••; AI-Knopf fehlt"
-Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token,"partial: Warnungsliste nach Datei-Import; kein kopierbarer Bericht, kein API-Import"
-Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later,partial: Name/Adresse/Koordinaten von Hand; keine Ortssuche
-Sub-agents (agents start agents),agents,should,n/a,yes,"Pass 12: spawn_agent / wait_for_agents / message_agent / stop_agent MCP tools, depth 3, fan-out 8, results reported to parent",no
-Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / agent, drag & drop, inline approvals",no
-Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector",no
-Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12,no
-CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml updated for Swift 6.2 container, both packages, typecheck, cache (BSD-22); still needs one manual copy to .github/workflows (BSD-13)",yes
-Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice","yes (BSD-227: Settings → Diagnostics → Copy diagnostics, mit Log und voriger Sitzung, geschwärzt)"
-Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a
-Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)"
-Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: mouse buttons 4/5, trackpad swipe with edge hint, ⌘←/⌘→ (Alt+←/→ off Apple) outside text, ⌘[ ⌘] (BSD-244); history menu on the arrows missing"
-Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())"
-Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,"yes (BSD-225): Leertaste auf leerer Zeile (wenn ein Modell eingerichtet ist) oder /Ask AI; Vorschau → Insert / Try again / Discard, ein Undo-Schritt; jede Engine aus BSD-159"
-Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"yes: Ask AI (Improve, Fix spelling, Make shorter, Summarize, eigene Anweisung → Replace/Insert below; BSD-225), Turn into, B/I/U/S/Code, Link, Farbe"
-Lossless workspace archive export/import,export,should,no,yes,.based.zip v2 with asset bytes and zip-slip protection; .based.jsonl v1 still read/written (BSD-67); restored archives are pushed to the server (BSD-26),yes
-Web client,platforms,should,yes,partial,"based-server /app: tree + pages over sync v2, live updates, plain-text editing",yes
-AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)","partial: Aufnahme (Mikrofon, Tab-Audio in Chromium), Notizen mit Zeit, Wiedergabe, Zusammenfassung mit [m:ss]; keine Transkription, keine Sprechertrennung"
-Agent runs as records (Runs database),agents,must,n/a,yes,"BSD-43: every chat turn, coding session, sub-agent and scheduled run is a row; list_runs/get_run","yes (Pass 30: BSD-160, Records für Chat-Turn/Hauptagent/Unteragent/Zeitplan)"
-Projects database,agents,should,n/a,yes,BSD-44 (+BSD-102 dedupe across devices): sessions and runs linked; AI sidebar section,partial: Projekte als Records mit Updates auf der Projektseite; keine Datenbank-Ansicht
-Main agent with sub-agents,agents,should,n/a,partial,"BSD-52/105: one thread, delegate/check_runs/report, heartbeat, ⌘J opens it, coding jobs via Claude Code/Codex; iPhone via server open (BSD-116)","partial: Auftragskarten, Plan per Schema, Unteragenten (BSD-195/196/160); kein Heartbeat, keine Coding-Agenten"
-Auto model routing Low/Auto/High,ai,should,n/a,partial,BSD-49: rule-based routes; classifier/runtime fallback in BSD-97,no
-Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115","yes (BSD-245: Modi Ask / Ask before edits / Work freely / Plan first – Plan sammelt Änderungen, „Run plan“ führt sie aus; Regeln global/Projekt mit Pfad-Mustern Tool(path:Projekte/**), gelten im Chat und für Agenten; Pfad-Regeln für Auftragspläne des Hauptagenten noch ohne Pfad)"
-"Streaming, retry and context compaction for API models",ai,must,n/a,yes,"BSD-46/47/48: SSE streaming, retry before first token, auto-continue, compaction above 75%, prompt queue","yes (Pass 30: SSE-Streaming, Retry vor erstem Token, Fortsetzen, Kompaktierung)"
-Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)","partial: Docker-CLI + lokal, Allowlist, Snapshots, Aufräumen, /sandbox-Routen; Docker ungeprüft, keine Laufzeit pro Lauf"
-Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108,"partial: Startseite nach Mockup v10 auf echten Records (Zeitbogen, Auftragskarten, Agent-/Projekt-Detail; fällige Datenbank-Aufgaben rechts, Erledigtes nach Projekt gebündelt, BSD-278); Redact/Skill-Chips an der Karte, Pause, Mobile/Watch fehlen"
-Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief",no
-Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111/113: Captures DB, Sort captures agent (auto:low), iPhone shortcuts (untested), POST /capture incl. audio, Mac hot key ⌥⇧Space + menu bar (BSD-64), Apple Watch app (BSD-66)",no
-CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118,"partial: apps/cli über MCP (page/search/tools); ask/runs/inbox erst, wenn der TS-Server sie anbietet; keine Installation aus der App"
-Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block","yes (Pass 30: [[block:id]] → nummerierte Quellen, Klick springt)"
-Schema version + migrations for based.sqlite,app,must,n/a,yes,"BSD-23: PRAGMA user_version, numbered migrations, backup before migrating, refuses newer files (now v3)",yes
-Visible save errors (no silent in-memory fallback),app,must,n/a,yes,"BSD-15: rollback + read-only banner + storage error screen; undecodable records kept frozen, never synced as deletions (BSD-16)","yes (BSD-287: „Not saved“ bleibt in der Seitenleiste, auch wenn der Sync läuft; Sync-Zustand im Tooltip)"
-Related pages (by meaning),search,could,n/a,yes,"BSD-62: on-device sentence embeddings (embeddings.sqlite, not synced), end of page + agents' search tool","partial: lokaler TF-IDF-Index nur als Agent-Werkzeug; keine Anzeige, kein Embedding-Modell"
-Sign in with ChatGPT (Codex CLI login) for chat and agents,ai,should,n/a,no,"BSD-257: no own OAuth client, no stored credentials; uses the official Codex CLI login over ACP","partial: Anbieter ChatGPT in Agents & AI (Status über `codex login status`, Low/Auto/High = Codex-Denkstufe), Chat, Aufträge, Meeting-Zusammenfassung und Ask AI laufen als Codex-Sitzung auf dem based-server mit Workspace-MCP; Login-Knopf im Desktop-Terminal und echter Login am Mac offen (BSD-257)"
-Import Obsidian vault,import,should,n/a,no,"BSD-260: folder or .zip; folders and folder notes as pages, [[wikilinks]] (alias, heading, path, frontmatter aliases) as mentions, ![[embeds]] as image/PDF/audio/video/file blocks, frontmatter kept, comments and block ids removed, callouts","yes (BSD-260 Teil 1: Kern-Importer mit Tests, im Import-Dialog über den bestehenden Weg; Frontmatter als yaml-Codeblock, nicht als Properties; Canvas übersprungen)"
-Import Evernote (.enex),import,should,n/a,no,"BSD-260: notebook → database (tags, created, updated, source, author), ENML content, images/PDF/files by MD5 hash, old and new to-dos, encrypted text noted","yes (BSD-260 Teil 2: Kern-Importer mit Tests, .enex auch in ZIP/Ordner; Bildgrößen und Notiz-Links (evernote:///) nicht übernommen)"
-OPML import and export,import,could,n/a,no,"BSD-260: outlines from Workflowy, Dynalist, OmniOutliner, Logseq, feed lists; page export as OPML 2.0","yes (BSD-260 Teil 3: Import als Seite mit verschachtelter Liste, _note/_complete/Links; Export einer Seite als OPML im Export-Dialog; Rundreise getestet)"
-Import Word (.docx),import,should,n/a,no,"BSD-260: headings, bold/italic/underline/strike/code, links, nested and numbered lists, quotes, code blocks, tables, images; title from document properties","yes (BSD-260 Teil 4: Kern-Importer mit eigenem kleinem XML-Leser, getestet mit pandoc- und LibreOffice-Dateien; Kommentare, Fußnoten, Textfelder und Farben nicht übernommen)"
-Export page as Word (.docx),export,should,n/a,no,"BSD-260: title, headings, bold/italic/underline/strike/code, links, nested bullet and numbered lists, to-dos, quotes, code, tables, embedded images","yes (BSD-260 Teil 6: Kern-Exporter; Rundreise über den eigenen Import, geprüft mit pandoc und LibreOffice; Unterseiten/Datenbanken als Titelzeile)"
-Import JSON / JSON Lines,import,could,n/a,no,"BSD-260: Based page JSON (round trip with the JSON export); a list of objects or JSON Lines becomes a database","yes (BSD-260 Teil 7: Seiten-JSON mit geprüften Eigenschaften, neue IDs; Tabellen über den CSV-Import; anderes JSON wie Swift übersprungen)"
-Export Markdown with front matter and page JSON,import,should,n/a,no,"BSD-260: optional YAML front matter (title, icon, created, updated, database properties) for Obsidian & Co.; page as JSON (blocks, rich text, properties, database rows)","yes (BSD-260 Teil 5: Option im Export-Dialog für Seite und Workspace; Seite als JSON; Standard-Markdown unverändert)"
+feature,area,priority,original,clone,notes,ts,beta
+Create / rename / delete pages,pages,must,yes,yes,,yes,beta
+Nested subpages (page inside page),pages,must,yes,yes,,yes,beta
+Page icon (emoji),pages,must,yes,yes,,"yes (BSD-201: über dem Titel, Emoji-Picker mit Suche, Random, Remove)",beta
+Page icon (uploaded image),pages,could,yes,yes,,"yes (BSD-201): Upload image im Icon-Menü, gespeichert wie Swift PageIcon.asset",beta
+Page cover (gallery / color / gradient),pages,should,yes,yes,,"yes (BSD-201): Farben (Token-Töne) und die 12 Verläufe der Swift-App als Galerie (gleiche Nummern, Tokens cover-gradient-*)",beta
+Page cover (upload / link / reposition),pages,could,yes,partial,upload + link; no reposition,"yes (BSD-201): Bild hochladen, Bild-Link, Reposition wie Notion (Klick, ziehen, Save/Cancel), Höhe per Unterkante ziehen (pro Seite, nur TS), Remove",beta
+Page font (default / serif / mono),pages,should,yes,yes,,"yes (BSD-201: Seitenmenü, Systemschriften)",beta
+Small text,pages,should,yes,yes,,yes (BSD-201),beta
+Full width,pages,should,yes,yes,,yes (BSD-201),beta
+Lock page,pages,should,yes,yes,,"yes (BSD-201: Editor, Titel und Datenbank schreibgeschützt, Unlock-Knopf)",beta
+Duplicate page,pages,must,yes,yes,,"yes (Pass 30: Seitenmenü Duplicate, Library-Bulk)",beta
+Move page to another page,pages,must,yes,yes,,"yes (Pass 30: Move-to-Dialog, Ziehen, Teamspaces)",beta
+Trash with restore and delete forever,pages,must,yes,yes,,yes,beta
+Favorites,navigation,must,yes,yes,,yes,beta
+Sidebar page tree with expand/collapse,navigation,must,yes,yes,,yes,beta
+Drag and drop pages in sidebar,navigation,should,yes,yes,,yes,beta
+Breadcrumbs,navigation,should,yes,yes,,yes,beta
+Back / forward history,navigation,must,yes,yes,"back/forward across sidebar roots and stack (⌘[ ⌘], toolbar on Mac)",yes,beta
+Open page in new window (Mac),navigation,should,yes,partial,open in new tab from search/peek/context menu; separate windows via system,"partial: neuer Tab per ⌘-Klick/Mittelklick; „Open in new window“ (Seitenmenü, Seitenleiste) – Tauri-Fenster page-*, Mac-Test offen (BSD-202)",beta
+Tabs (Mac),navigation,could,yes,yes,"in-app tab strip (⌘T, ⌘W, ⌃Tab, ⌘1–9, drag to reorder) + native window tabs",yes,beta
+Quick Find search (titles + content),search,must,yes,yes,"search off the main thread with a precomputed index, cancelled on new input (BSD-137); by meaning too (BSD-62)",yes,beta
+Recent pages in search,search,should,yes,yes,,yes,beta
+Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope",beta
+Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende; BSD-90: unverlinkte Erwähnungen mit „Link“)",beta
+Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page)",beta
+Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)",beta
+Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung",beta
+Link to page block,linking,should,yes,yes,,yes,beta
+Copy link to block / page (deep link),linking,should,yes,yes,,no,beta
+Text block,blocks,must,yes,yes,,yes,beta
+Heading 1/2/3,blocks,must,yes,yes,,yes,beta
+Heading 4,blocks,could,yes,yes,,yes,beta
+Bulleted list,blocks,must,yes,yes,,yes,beta
+Numbered list (1. a. i. by depth),blocks,must,yes,yes,,"yes (BSD-210: 1. → a. → i. je Ebene, CSS-Zähler)",beta
+To-do list,blocks,must,yes,yes,,yes,beta
+Toggle list,blocks,must,yes,yes,,yes,beta
+Toggle headings,blocks,should,yes,yes,,yes,beta
+Quote,blocks,must,yes,yes,,yes,beta
+Callout with icon and color,blocks,must,yes,yes,,"yes (BSD-210: Emoji-Picker mit Suche, Random, Remove)",beta
+Divider,blocks,must,yes,yes,,yes,beta
+Code block with language + syntax highlight,blocks,must,yes,yes,language picker + SyntaxHighlighter (keywords/strings/comments/numbers/types/functions; Swift JS/TS Python Go Rust SQL Bash …),"yes (BSD-209: Sprachwahl, Hervorhebung offline mit dem Swift-Hervorheber aus @based/core)",beta
+Block equation (KaTeX),blocks,should,yes,partial,TeX rendered via MathJax in WebView; needs network,yes,beta
+Inline equation,blocks,should,yes,partial,inline TeX kept as monospace chip,yes,beta
+Image block (upload / link) with caption,blocks,must,yes,yes,,partial: Upload über BSD-78 (Datei-Blöcke im Editor); Bild-Picker-Feinschliff offen,beta
+Video / audio blocks,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, Anzeige offline, E2E)",beta
+File block,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, offline, E2E)",beta
+PDF block,blocks,could,yes,yes,,"yes (BSD-208: Upload oder Link, Anzeige im Block; Record wie Swift mit asset)",beta
+Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,partial: Karte mit URL bzw. importiertem Titel; kein Abruf von Titel/Vorschau,beta
+Embed (web),blocks,could,yes,yes,,"yes (BSD-209): YouTube (ohne Cookies), Vimeo, Loom, Figma, CodePen, Spotify, Google Maps eingebettet (iframe, sandbox); andere Seiten als Link-Karte",beta
+Table of contents,blocks,should,yes,yes,,yes,beta
+Breadcrumb block,blocks,could,yes,yes,,yes,beta
+Columns (2-5),blocks,should,yes,yes,,"yes (BSD-210: 2–5 Spalten per Slash, Breite ziehen oder per Pfeiltasten, gespeichert als ratio)",beta
+Simple table block,blocks,should,yes,partial,plain-text cells; header row/col toggles,yes,beta
+Synced block,blocks,could,yes,partial,"Copy and sync + paste on another page, unsync, original-in-Trash notice (BSD-41); same block twice on one page refused (editor tracks text fields by block ID)","yes (Pass 30: Copy and sync über Seiten, Unsync, Original im Papierkorb; doppelt auf einer Seite abgelehnt)",beta
+Button block,blocks,could,yes,partial,block exists; actions limited,"yes (BSD-210): Beschriftung und Schritte einrichten (Insert blocks mit Vorlage, Add page to, Open page, Open added page, Open link, Show confirmation), Klick führt aus wie Swift ButtonOps; Peek-Modus öffnet noch als ganze Seite",beta
+Tabs block,blocks,could,yes,no,,no,beta
+Child page block in content,blocks,must,yes,yes,,yes,beta
+Slash command menu with search,editor,must,yes,yes,,yes,beta
+Markdown block shortcuts (# - * + 1. [] > ``` ---),editor,must,yes,yes,,yes,beta
+Inline Markdown (** * ` ~),editor,must,yes,yes,,yes,beta
+Enter splits block / continues lists,editor,must,yes,yes,,yes,beta
+Backspace at start merges / turns into text,editor,must,yes,yes,,yes,beta
+Tab / Shift-Tab indent and outdent,editor,must,yes,yes,,yes,beta
+Arrow keys move between blocks,editor,must,yes,yes,,yes,beta
+Soft line break (Shift-Enter),editor,must,yes,yes,,yes,beta
+Bold / italic / underline / strikethrough / code,editor,must,yes,yes,,yes,beta
+Links in text (⌘K),editor,must,yes,yes,,yes,beta
+Text color and background color,editor,must,yes,yes,,yes,beta
+Block color,editor,should,yes,yes,,yes,beta
+Turn into (any block type),editor,must,yes,yes,,"yes: Blockmenü „Turn into“ für alle Textblöcke inkl. Callout, Page und Block equation (BSD-249); Medien bietet Notion dort auch nicht an",beta
+Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder werden Inhalt)",beta
+Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete",beta
+Drag handle to reorder blocks,editor,must,yes,yes,,yes,beta
+Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen (auch mehrere ausgewählte Blöcke, Auto-Scroll am Rand) – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt",beta
+Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown)",beta
+Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes,beta
+Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)",beta
+Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes,beta
+Expand / collapse all toggles (⌘⌥T),editor,could,yes,yes,,yes (BSD-207: ⌘⌥T / Ctrl+Alt+T),beta
+Undo / redo for text and structure,editor,must,yes,yes,,yes,beta
+Paste Markdown / multi-line as blocks,editor,must,yes,yes,,"yes (Pass 30 Markdown; BSD-211: strukturiertes HTML aus Notion/Google Docs/Web über den Kern-Importer, Fixtures auch durch den Editor-Pfad)",beta
+Paste URL as bookmark / mention / link,editor,could,yes,yes,,yes (BSD-211: nackte URL in leeren Absatz → Menü Link / Bookmark / Embed; Seiten-Erwähnung über Notion-/Based-Links),beta
+Copy blocks as Markdown,editor,should,yes,yes,,"yes (BSD-211: Blockmenü „Copy as Markdown“ über den Markdown-Exporter des Kerns, mit Kindern und eigenen Blöcken)",beta
+Find in page,editor,could,yes,yes,"⌘F find bar, ⌘G / ⇧⌘G, scrolls to and selects the block; ⌘F in databases focuses search","yes: ⌘F find bar with count, Enter/⇧Enter, ⌘G/⇧⌘G, matches across formatting via CSS highlights (BSD-206); in databases it searches the rendered rows",beta
+Emoji picker with search,editor,should,yes,yes,,"partial: Emoji-Picker mit Suche für Callout-Icons (BSD-210, Katalog aus Swift in @based/core); Seiten-Icons fehlen (BSD-201)",beta
+Word / character count,editor,could,yes,yes,,yes: words · characters in the ••• page menu (BSD-206),beta
+Placeholders per block type,editor,should,yes,yes,,yes,beta
+Database inline,databases,must,yes,yes,,"yes (10.11.: „/Database – Inline“ legt Datenbank mit Ansicht und Beispielzeilen an; BSD-255: ruhig ohne Kasten, Tabelle ohne eigenen senkrechten Scroller mit Load more, Werkzeuge beim Überfahren, Open as full page; Liste, Galerie, Board wachsen mit der Seite, Load more auch je Board-Spalte)",beta
+Database full page,databases,must,yes,yes,,yes,beta
+Linked database view,databases,should,yes,yes,,"yes: /Linked view of database wählt eine Datenbank (auch von anderen Seiten), eigene Ansicht, bleibt live (BSD-212)",beta
+Table view,databases,must,yes,yes,,yes,beta
+Board view (group by select/status),databases,must,yes,yes,,yes,beta
+List view,databases,should,yes,yes,,yes,beta
+Gallery view with card preview,databases,should,yes,yes,,yes,beta
+Calendar view,databases,should,yes,partial,"month grid, drag to reschedule; no week view",yes,beta
+Timeline view,databases,could,yes,partial,simplified bars; no dependencies,yes,beta
+Chart view,databases,could,yes,yes,see Chart view row (Pass 8),yes,beta
+Form view,databases,could,yes,yes,Pass 11: questions from properties; submit adds a row,"yes (Pass 30: Fragen aus Properties, Pflicht, Prüfung je Typ, Absenden legt Zeile an)",beta
+Feed / map views,databases,could,yes,partial,map view in Pass 12; feed view open,partial: Map offline (Pass 30); Feed fehlt,beta
+Multiple views per database,databases,must,yes,yes,,yes,beta
+Filters (and/or groups),databases,must,yes,yes,,yes,beta
+Sorts (multi-key),databases,must,yes,yes,,yes,beta
+Group by / hide empty groups,databases,should,yes,yes,,yes,beta
+Sub-groups,databases,could,yes,no,,no,beta
+Column calculations,databases,should,yes,yes,,yes,beta
+Property visibility and order per view,databases,must,yes,yes,,yes,beta
+Row opens as page (side peek / center / full),databases,must,yes,yes,,yes (Pass 30: Side/Center Peek/Full page pro Ansicht),beta
+Database templates,databases,should,yes,yes,,"yes: New ▾ – aus Vorlage oder leer, Vorlage anlegen/bearbeiten/als Standard/löschen (BSD-212)",beta
+Sub-items and dependencies,databases,could,yes,no,,no,beta
+Property: title / text / number,properties,must,yes,yes,,yes,beta
+Property: select / multi-select,properties,must,yes,yes,,yes,beta
+Property: status,properties,must,yes,yes,,yes,beta
+Property: date (range / time),properties,must,yes,yes,,yes,beta
+Property: checkbox,properties,must,yes,yes,,yes,beta
+Property: url / email / phone,properties,must,yes,yes,,yes,beta
+Property: person,properties,should,yes,partial,single user: me; local users only (single-user app),"yes (BSD-216): „Me“, Auswahl aus schon verwendeten Namen der Datenbank und den People des Agent Brain, neue Namen per Eingabe",beta
+Property: files & media,properties,should,yes,yes,,"yes (BSD-208: Links und Upload in den Asset-Speicher, Wert wie Swift mit asset; Öffnen als Blob)",beta
+Property: created / edited time and by,properties,must,yes,yes,,yes,beta
+Property: unique ID,properties,could,yes,yes,,yes,beta
+Property: formula (Formula 2.0),properties,should,yes,partial,"Formula 2.0 core: arithmetic, text, dates, lists, if/ifs, prop(); not every builtin",yes,beta
+Property: relation,properties,should,yes,yes,,yes,beta
+Property: rollup,properties,should,yes,yes,,yes,beta
+Property: button,properties,could,yes,partial,property exists; no automations,partial: Property anlegbar; Zelle ohne Aktion,beta
+Property: place / verification,properties,could,yes,partial,place: address text; verification: flag only,partial: Place mit Name/Adresse/Koordinaten (von Hand); Verification nur Anzeige,beta
+Number formats,properties,should,yes,yes,,yes,beta
+Change property type with value conversion,properties,should,yes,yes,,yes,beta
+Sync between Mac and iPhone,sync,must,yes,partial,"Server sync v2 is the primary channel (BSD-28, ADR 0001); iCloud is an opt-in experimental switch. Stamped tombstones (BSD-24), orphan rescue + 90-day tombstone GC (BSD-104), unknown fields kept (BSD-25); untested between real devices",partial: Sync v2 zwischen Web/Desktop und Server; iPhone-Client fehlt (Phase 5 mobil),after
+Offline editing,sync,must,yes,yes,local-first,yes,beta
+Conflict handling,sync,must,yes,partial,"HLC LWW per record + fractional ordering; stamped deletions (newer edit/restore wins, BSD-24); undo skips records changed remotely (BSD-27); text CRDT proposed (ADR 0010, Automerge) but not integrated","partial: HLC-LWW je Record, Sortierschlüssel, Tombstones, Undo gegen Remote und Sync-Client vorhanden; Server-Brücke Y.Doc ↔ Records unter /collab (BSD-220 Teil 1: Server füllt einmal, materialisiert Y-Änderungen, übernimmt Records; Offline-Konflikt im selben Absatz mergt); Y-Stände im Web-Client dauerhaft in ydocs.sqlite (BSD-220 Teil 2); Web-Client an /collab als „Real-time text (beta)“, Standard aus (Teil 3: Abstammung, abgeleitete Records nicht gepusht, E2E zwei Geräte); Synced-Block-Originale über /collab live (BSD-252); Seiten mit noch nicht gepushten Änderungen öffnen erst nach dem Push mit /collab (BSD-252, kein Verlust beim Einschalten); Server stempelt Records/Löschungen mehr als 1 h in der Zukunft beim Empfang neu (BSD-279); Client erkennt eine falsche Geräte-Uhr am Date-Header, warnt in Sync & server/Diagnose und stempelt mit Server-Zeit (BSD-286)",after
+Attachments sync,sync,should,yes,partial,"CKAsset records implemented, untested","partial: BSD-78 inhaltsadressiert über Server-Sync (Upload, Lazy-Download, Status); Import-Dateien gehen jetzt ebenfalls über den Sync, alte werden einmalig migriert (BSD-230), Aufräumen auf Geräten fehlt",after
+Real-time multi-user collaboration,sync,could,yes,no,single user across own devices for now,no,after
+Page history / versions,history,should,yes,no,,yes,beta
+Comments and discussions,collaboration,should,yes,no,,no,after
+Sharing and permissions,collaboration,could,yes,partial,"based-server: Full access / Can edit / Can comment / Can view on a page and everything inside it; access links, single-use invites, revoke, expiry; sync filtered by role (docs/sharing.md). No comment model yet, so Can comment = Can view","partial: Rollen/Vererbung, Access-Links, Einladungen, Widerruf, gefilterter Pull/Push im TS-Server (hineinbewegte oder neu freigegebene Seiten kommen mit Inhalt, BSD-284), Share-Panel; Gast-Modus im Web: Link öffnet eigenen Gast-Store (Speicher, eigener Lock/Kanal/Gerät), Sync mit dem Link-Geheimnis, Start auf der geteilten Seite (BSD-235 Teil 2), widerrufener Link zeigt „This link no longer works“ (Teil 3); Nur-Lesen-Oberfläche und Universal Links fehlen",after
+Publish to web,collaboration,could,yes,yes,"/p/<id>: server-rendered, read-only, sub-pages included","yes (Pass 30: /p/<id> server-gerendert, Token-Styles, CSP, HTML-Blöcke in Sandbox; Publish/Unpublish im Share-Panel)",after
+Import Notion export (Markdown & CSV),import,must,yes,yes,"the downloaded .zip directly (nested Part-N zips), folders, Markdown/CSV and HTML exports; runs in background with progress; Markdown loses formatting → HTML export / API recommended","yes (BSD-254: große Exporte ≥ 500 MB werden aus der Datei gelesen statt ganz geladen; Anhänge gehen einzeln in den Asset-Speicher; 1-GB-Test: Spitze ~70 MiB; BSD-283: Gegendruck zum Store-Worker (32-MiB-Fenster), Abbruch entfernt schon abgelegte neue Dateien)",beta
+Import Markdown files,import,must,yes,yes,,yes,beta
+Export page as Markdown,export,must,yes,yes,,yes,beta
+Export as HTML / PDF,export,should,yes,yes,"HTML: page (⇧⌥⌘E, page/sidebar menu) or whole workspace (Settings → Export) via HTMLExporter; live HTML blocks in sandboxed iframes, Mermaid, MathJax; PDF still missing",yes (Pass 30: HTML Seite/Workspace als ZIP mit Dateien; PDF über Druckansicht – Druckdialog ungeprüft),beta
+Dark mode (system + toggle),app,must,yes,yes,,"yes (Pass 30: Light/Dark/System, Astryx-Theme folgt)",beta
+Keyboard shortcuts: ⌘N ⌘P ⌘\ ⌘[ ⌘] ⇧⌘L,app,must,yes,yes,"⌘N palette, ⌥⌘N page, ⌘K/⌘P search, ⌘F, ⌘J, ⌘T/⌘W, ⌘\, ⌘[ ⌘], ⇧⌘L, ⇧⌘U, ⌘1–9","partial: ⌘K/⌘P, ⌘N Palette „New…“, ⌥⌘N, ⌘,, ⌘\, ⌘J, ⌘T/⌘W, ⌘1–9, ⌘[ ⌘], ⇧⌘[ ⇧⌘], ⇧⌘L, F6 (BSD-204/238); ⇧⌘U fehlt; im Browser-Tab fängt der Browser ⌘N/⌘T/⌘W/⌘1–9 ab",beta
+Settings,app,must,yes,yes,,"partial: 17 Seiten im Notion-Stil (Astryx); Workspace-Name und -Icon (BSD-205); Appearance, Sync, Import/Export, General, Account, Updates, Diagnostics, About, Agents & AI (Modelle/Schlüssel) echt, Workspace-Name, Wochenbeginn (BSD-205), Rest „Not available yet“",beta
+iPhone keyboard toolbar,mobile,must,yes,yes,,no (Phase 5 mobil),after
+iPhone long-press block menu,mobile,must,yes,yes,,no (Phase 5 mobil),after
+iPad layout,mobile,could,yes,partial,runs; layout not tuned,no (Phase 5 mobil),after
+Share extension (save to Based),mobile,could,yes,partial,"BSD-11/131: iOS Share Extension target (shared links/text → Captures via App Group); not embedded yet, App Group capability to enable on the Mac (BSD-141)",no (Phase 5 mobil),after
+Widgets,mobile,could,yes,partial,BSD-11/131: iOS widgets Capture / Running now / Needs you (snapshot via App Group); not embedded yet (BSD-141),no (Phase 5 mobil),after
+Notion AI,ai,could,yes,skip,out of scope,n/a,beta
+Integrations / connections marketplace,integrations,could,yes,skip,their network is not part of the product you can rebuild,n/a,labs
+Floating page outline (right rail),pages,should,yes,yes,hover to expand; per-page toggle,"yes (Pass 30: Gliederung rechts, Hover, Klick scrollt, pro Seite abschaltbar)",beta
+AI chat over workspace (Notion AI),ai,should,yes,yes,⌘J; Anthropic/OpenAI/Ollama/Apple Intelligence; tools over pages & databases,"yes (Pass 30: BSD-159, BYOK Anthropic/OpenAI-kompatibel/Ollama, Werkzeuge über Seiten und Datenbanken; echte Anbieter ungeprüft)",beta
+AI memories (one page per topic),ai,should,yes,yes,"Memories database in Agent Brain; suggestions from chats into the Inbox, saved only after confirmation (BSD-59)","yes (Pass 30: Memories-Datenbank, Vorschläge erst nach Save, opt-in)",beta
+Skills (reusable instructions),ai,should,yes,yes,Skills database; MCP prompts; SKILL.md import/export and mirror to ~/.claude/skills (BSD-60),"yes (Pass 30: Skills-Datenbank, SKILL.md/ZIP-Import/Export, Router mit Chips)",beta
+Custom agents on schedule,ai,should,yes,yes,"Agents database; server runs schedules by default, run marker prevents double runs, monthly € budget per agent from runs (BSD-51); daily brief agent (BSD-57)","partial: Server legt fällige Läufe aller Agenten als Runs an und führt sie mit BASED_ANTHROPIC_API_KEY selbst aus, auch bei geschlossener App (BSD-243); ohne Schlüssel, sobald die App offen ist; Zeitplan-UI je Agent fehlt",labs
+MCP server for external AI clients,ai,should,yes,yes,"stdio + Streamable HTTP; version negotiation, projects/runs/inbox/main-agent tools, paging, docs/mcp.md (BSD-58); permission rules apply (BSD-98)","partial: stdio und Streamable HTTP mit Seiten-Werkzeugen (suchen, lesen, anlegen, ändern, Papierkorb) und Datenbank-Werkzeugen (list_databases, database_schema, query_database, add_row, update_row; BSD-221 Teil 1), Seiten-Extras (Teil 2), Läufe/Inbox lesend (list_runs, get_run, inbox; Teil 3a), Projekte (list_projects, get_project, create_project, update_project_status; Teil 3c/3d); Hauptagent, resolve_inbox, Skills als Prompts und Berechtigungsregeln fehlen",labs
+Autofill properties with AI,databases,should,yes,yes,property menu; Apple Intelligence preferred on device,"yes (BSD-225): Property-Menü „Autofill with AI“ für Text, Select, Status, Multi-Select, Checkbox mit dem eingestellten Modell, ein Undo-Schritt, abbrechbar",beta
+Import from Notion API (live),import,should,n/a,yes,"File → Import from Notion…: links or everything shared; pages, all block types, databases (all property types, views, filters, sorts, groups), rows with content, relations, rollups, formulas, files; brain 1:1","partial: core (crawler, mapper, views, formulas, files, re-import) + dialog ""Connect Notion directly"" (token encrypted on device, check, links or everything shared, progress, cancel, copy report); runs in its own worker, HTTP via Tauri plugin in the desktop app (BSD-217). Not yet run against the real Notion API on a Mac; browser tab cannot reach the API (CORS)",beta
+Self-hosted server sync,sync,should,no,yes,based-server; works alongside iCloud,yes,after
+Chart view (bar/line/area/pie/donut),databases,should,yes,yes,ChartLayout + ChartData; aggregates; date buckets,yes,beta
+HTML / Mermaid block preview,blocks,should,partial,yes,"/html and /mermaid in the slash menu; code block language html/mermaid → sandboxed WKWebView, Code | Preview",partial: /html und Sprache HTML mit Vorschau im abgeschotteten iframe (BSD-209); Mermaid fehlt,beta
+Coding-agent sessions (Happier / ACP),ai,must,no,yes,Claude Code / Codex / Gemini …; local or via daemon,"partial: ACP-Kern in @based/brain, Sitzungen über den TS-Server (/coding, --coding-root, eigene Agenten per --coding-agents) und Ansicht #coding im Web (starten, Prompt, Stopp, Modus, beenden; BSD-223); lokal ohne Server (Desktop-Sidecar) fehlt",labs
+Approval inbox for agents,ai,must,no,yes,session/request_permission → Inbox; any device,"partial: Needs-you auf der Startseite, im Agent-Detail und in #tasks (Allow/Always/No); Coding-Agent-Freigaben über den Server auf jedem Gerät in #coding (alle Optionen des Agenten, BSD-223); Freigaben der Web-Agenten gehen beim Neuladen verloren",beta
+Switch agent mid-session,ai,should,no,yes,transcript hand-off,"yes (BSD-223: „Switch agent…“ in #coding startet eine neue Sitzung, die das Transkript der alten bekommt)",labs
+E2E encrypted transcripts,ai,should,no,yes,ChaCha20-Poly1305; key pairing,no,after
+MCP connections (GitHub/Slack/Drive/Linear/Notion …),integrations,must,yes,yes,catalogue + custom; tools exposed to brain and agents,"partial: Einstellungen → Connections (Katalog GitHub/Linear + eigene Streamable-HTTP-Server, Token verschlüsselt, an/aus, für Agenten), Werkzeuge mcp__<name>__<tool> im Chat und für den Hauptagenten mit Freigabe (BSD-222); OAuth-Anmeldung (Notion, Slack, Drive, Sentry) und stdio-Server (Desktop) fehlen",labs
+Notion-style settings (account/workspace),app,should,yes,yes,15 pages; local-first equivalents for billing/people,"partial: 17 Seiten, Registry für Abschnitte; viele Seiten noch „Not available yet“",beta
+Export all workspace content,app,should,yes,yes,Markdown + CSV tree,yes,beta
+Large database performance (50k rows),databases,must,yes,yes,1.7 s insert / 0.5 s query / cached 10 µs on Linux debug,"yes (BSD-215, Linux-Container): 50 000 Zeilen laden 1,4 s, Sync einspielen 1,1 s, Abfrage mit Filter/Sortierung/Gruppen 0,3 s, aus dem Cache 0,02 ms, SQLite laden 0,5 s; Web: Tabelle öffnen 0,9 s (Chromium)/2,1 s (WebKit), Zelle ändern 0,1–0,2 s; Tests mit Grenzwerten",beta
+UI test suite,app,should,n/a,yes,XCUITest macOS + iOS,n/a,beta
+Command palette (⌘N new…),app,should,yes,yes,page / AI chat / meeting notes / database / agent session / import,"partial (BSD-204/256): Page, AI chat, Meeting notes, Database, Import; Ziffern 1–9 wählen direkt; Agent session fehlt",beta
+AI chat as right-side panel,ai,should,yes,yes,⌘J docked panel (resizable) or floating on narrow windows; full-page chat; history,"yes (Pass 30: ⌘J-Panel mit ziehbarer Breite, Vollseite #chat)",beta
+Sidebar multi-select & bulk actions,pages,should,yes,yes,"⌘/⇧-click; move, duplicate, favorite, delete","yes: ⇧-Klick Bereich, ⇧⌥-Klick/⇧Leertaste einzeln; Favorit, Duplizieren, Verschieben, Papierkorb (BSD-203; ⌘-Klick bleibt neuer Tab)",beta
+Database row multi-select & bulk actions,databases,should,yes,yes,"checkbox gutter, ⇧-click range, select all; open in tabs, copy links, duplicate, delete","yes: Tabelle – Kästchen, ⇧-Klick Bereich, alle wählen; in Tabs öffnen, Links kopieren, duplizieren, löschen (je ein Undo-Schritt, BSD-213); Board/Liste noch ohne",beta
+Peek navigation (prev/next row),databases,should,yes,yes,⌃⇧↑/↓ in side/center peek; open in new tab,yes (Pass 30: ⌃⇧↑/↓ und Knöpfe in Ansichts-Reihenfolge),beta
+Import HTML export,import,should,yes,yes,"lossless NotionHTMLImporter: page header, all blocks, colors, columns, tables, database property types/colors/relations; unknown markup kept as HTML block",yes,beta
+Coding-agent console (Claude Code style) + real terminal,ai,must,no,yes,"transcript view, inline permission prompts, shift+tab modes, SwiftTerm terminal (macOS)","partial: #coding zeigt das Transkript wie der Chat (Thinking, Werkzeuge mit Diff, Plan, Verbrauch), Freigaben oben, Modus-Auswahl, Stopp (BSD-223); Slash-Befehle, @Dateien, ⇧Tab und echtes Terminal fehlen",labs
+CLI session history (Claude Code / Codex),ai,should,no,yes,~/.claude/projects and ~/.codex sessions grouped by project; resume in terminal,"yes (BSD-223: #coding → CLI history, nach Projekt gruppiert, Transkript lesen, Fortsetzen in Based oder per Terminal-Befehl; Server-Rechner)",labs
+Agent setup doctor,ai,should,no,yes,"finds claude/codex/node via login shell, login check, test buttons, sandbox warning","partial: #coding → Setup (CLIs mit Pfad/Version, Login, Befehl zum Beheben, Test per ACP-Handshake; BSD-223); prüft den Server-Rechner, nicht den lokalen",labs
+"Diagnostics: logs, hang watchdog, crash report, layout audit",app,should,n/a,yes,"rotating JSON log, main-thread hang detection, previous-crash alert, overlap/clipping audit; ⌥⇧⌘D",no,beta
+"Notion import keeps views (filters, sorts, group by, layout)",import,should,n/a,yes,"via Notion API 2026-03-11 views incl. dashboards (widgets), forms and maps","yes via the API import (BSD-217): filters, sorts, groups, layouts, dashboards; E2E against fixture routes. HTML/ZIP export carries no views",beta
+Re-import from Notion updates in place,import,should,n/a,yes,stable Notion ids; blocks edited or added in Based are kept via import fingerprints (BSD-32); removed untouched content → trash; original timestamps and authors kept,partial: für Datei-Exporte (HTML/Markdown) über stabile Import-IDs; Re-Import über die Notion-API fehlt,beta
+Notion formulas imported live,import,should,n/a,partial,"translated to Based formula when all functions supported, else values + original expression",no,beta
+Copy Notion-hosted files on import,import,should,n/a,yes,signed S3 URLs downloaded into the asset store,partial: Anhänge aus Notion-Export-ZIP übernommen (Pass 30); API-Import fehlt,beta
+Dashboard view (widgets from several databases),databases,should,yes,yes,Pass 11: 12-column rows (max 4 widgets); add / resize / move / change source; Notion API import,"yes (BSD-216): Widgets hinzufügen (Quelle: diese oder andere Datenbank), verschieben (links/rechts, Zeile darüber/darunter), Breite, Zeilenhöhe, entfernen",beta
+Number chart + caption / color theme / height,databases,could,yes,yes,Pass 11,"yes (BSD-216): Number-Chart, Caption, Farbschema (Auto, Colorful, eine Farbe) und Höhe (Small–Extra large, wie Swift)",beta
+Map view,databases,could,yes,yes,"Pass 12: MapKit pins, geocoding, place search; Notion API map_by + place values","partial: offline-Karte mit Natural-Earth-Küsten, Pins, Cluster, Pan/Zoom; keine Kacheln, kein Geocoding",beta
+Notion-style window chrome (tabs in title bar),shell,must,yes,yes,Pass 11: hidden title bar; traffic lights centred; drag / double-click zoom,yes,beta
+Sidebar: hover chevron / ••• / +; drag to reorder or nest; resize; ⌘\ collapse + hover peek,shell,must,yes,yes,Pass 11 custom sidebar (macOS),"yes: Hover-Aktionen, Ziehen, Teamspaces/Private, Footer Library·Trash·Settings als Icon-Zeile neben dem Sync-Status, oben nur Search/Home/Chat, Einträge per Rechtsklick anpinnbar/ausblendbar, Graph und Meetings als Library-Reiter, Aufnahme-Pille oben, ⌘K-Befehle (BSD-281), Breite ziehbar (gemerkt), ⌘\ ein-/ausblenden, Hover-Peek am linken Rand (BSD-203)",beta
+Page top bar: breadcrumb / Edited / Share / AI / favorite / •••,shell,must,yes,yes,Pass 11,"partial: Breadcrumb, Speicherstatus, Favorit, Share, Export, •••; AI-Knopf fehlt",beta
+Import diagnostic report,import,should,n/a,yes,Pass 11: failed request + warnings; no token,"partial: Warnungsliste nach Datei-Import; kein kopierbarer Bericht, kein API-Import",beta
+Place property (name / address / coordinates),databases,should,yes,yes,Pass 12: place search (MapKit) or typed text geocoded later,partial: Name/Adresse/Koordinaten von Hand; keine Ortssuche,beta
+Sub-agents (agents start agents),agents,should,n/a,yes,"Pass 12: spawn_agent / wait_for_agents / message_agent / stop_agent MCP tools, depth 3, fan-out 8, results reported to parent",no,labs
+Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / agent, drag & drop, inline approvals",no,labs
+Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector",no,labs
+Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12,no,labs
+CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml updated for Swift 6.2 container, both packages, typecheck, cache (BSD-22); still needs one manual copy to .github/workflows (BSD-13)",yes,beta
+Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice","yes (BSD-227: Settings → Diagnostics → Copy diagnostics, mit Log und voriger Sitzung, geschwärzt)",beta
+Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a,beta
+Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)",beta
+Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: mouse buttons 4/5, trackpad swipe with edge hint, ⌘←/⌘→ (Alt+←/→ off Apple) outside text, ⌘[ ⌘] (BSD-244); history menu on the arrows missing",beta
+Agent Brain can't be deleted,ai,must,n/a,yes,store-level protected ids; trashed or deleted parts are restored / recreated on launch and when the dashboard opens,"yes (Pass 30: Löschschutz im Worker, repair())",beta
+Inline AI on an empty line (space → Ask AI to write),ai,should,yes,yes,InlineAIBox: preview → Insert / Try again / Discard; any engine,"yes (BSD-225): Leertaste auf leerer Zeile (wenn ein Modell eingerichtet ist) oder /Ask AI; Vorschau → Insert / Try again / Discard, ein Undo-Schritt; jede Engine aus BSD-159",beta
+Formatting toolbar over selection,editor,must,yes,yes,Ask AI · Turn into · B I U S code · link · colour (macOS),"yes: Ask AI (Improve, Fix spelling, Make shorter, Summarize, eigene Anweisung → Replace/Insert below; BSD-225), Turn into, B/I/U/S/Code, Link, Farbe",beta
+Lossless workspace archive export/import,export,should,no,yes,.based.zip v2 with asset bytes and zip-slip protection; .based.jsonl v1 still read/written (BSD-67); restored archives are pushed to the server (BSD-26),yes,beta
+Web client,platforms,should,yes,partial,"based-server /app: tree + pages over sync v2, live updates, plain-text editing",yes,after
+AI meeting notes (/meet),ai,should,yes,yes,"mic + system audio as separate tracks, on-device Parakeet v3 (25 languages) live + final pass, pyannote speaker separation, click-to-play timestamps, context, AI summary via BYOK / CLI engine, opt-in voice profiles (docs/meeting-notes.md)","partial: Aufnahme (Mikrofon, Tab-Audio in Chromium), Notizen mit Zeit, Wiedergabe, Zusammenfassung mit [m:ss]; keine Transkription, keine Sprechertrennung",labs
+Agent runs as records (Runs database),agents,must,n/a,yes,"BSD-43: every chat turn, coding session, sub-agent and scheduled run is a row; list_runs/get_run","yes (Pass 30: BSD-160, Records für Chat-Turn/Hauptagent/Unteragent/Zeitplan)",beta
+Projects database,agents,should,n/a,yes,BSD-44 (+BSD-102 dedupe across devices): sessions and runs linked; AI sidebar section,partial: Projekte als Records mit Updates auf der Projektseite; keine Datenbank-Ansicht,labs
+Main agent with sub-agents,agents,should,n/a,partial,"BSD-52/105: one thread, delegate/check_runs/report, heartbeat, ⌘J opens it, coding jobs via Claude Code/Codex; iPhone via server open (BSD-116)","partial: Auftragskarten, Plan per Schema, Unteragenten (BSD-195/196/160); kein Heartbeat, keine Coding-Agenten",beta
+Auto model routing Low/Auto/High,ai,should,n/a,partial,BSD-49: rule-based routes; classifier/runtime fallback in BSD-97,no,beta
+Permission modes and rules (Claude Code style),ai,must,n/a,partial,"BSD-50/98: Ask/Accept edits/Plan/Allow everything, allow/ask/deny rules global→project→agent, approval card in API chat, MCP path; rest BSD-115","yes (BSD-245: Modi Ask / Ask before edits / Work freely / Plan first – Plan sammelt Änderungen, „Run plan“ führt sie aus; Regeln global/Projekt mit Pfad-Mustern Tool(path:Projekte/**), gelten im Chat und für Agenten; Pfad-Regeln für Auftragspläne des Hauptagenten noch ohne Pfad)",labs
+"Streaming, retry and context compaction for API models",ai,must,n/a,yes,"BSD-46/47/48: SSE streaming, retry before first token, auto-continue, compaction above 75%, prompt queue","yes (Pass 30: SSE-Streaming, Retry vor erstem Token, Fortsetzen, Kompaktierung)",beta
+Server sandbox per run,agents,should,n/a,partial,"BSD-53: SandboxProvider (Docker CLI + local), env allowlist, snapshots; untested with real Docker (BSD-106)","partial: Docker-CLI + lokal, Allowlist, Snapshots, Aufräumen, /sandbox-Routen; Docker ungeprüft, keine Laufzeit pro Lauf",labs
+Home page with sun/orbits and main agent,agents,should,n/a,partial,BSD-55 after approved mockup; detail views + animation in BSD-108,"partial: Startseite nach Mockup v10 auf echten Records (Zeitbogen, Auftragskarten, Agent-/Projekt-Detail; fällige Datenbank-Aufgaben rechts, Erledigtes nach Projekt gebündelt, BSD-278); Redact/Skill-Chips an der Karte, Pause, Mobile/Watch fehlen",beta
+Setup in one minute,ai,should,n/a,yes,"BSD-56: account choice, install/login, say hello; sets main agent + daily brief",no,beta
+Capture database + nightly sorting,agents,should,n/a,partial,"BSD-63/65/111/113: Captures DB, Sort captures agent (auto:low), iPhone shortcuts (untested), POST /capture incl. audio, Mac hot key ⌥⇧Space + menu bar (BSD-64), Apple Watch app (BSD-66)",no,labs
+CLI 'based',app,could,n/a,partial,BSD-54: talks to server via MCP; tokens never on the command line; install from app in BSD-118,"partial: apps/cli über MCP (page/search/tools); ask/runs/inbox erst, wenn der TS-Server sie anbietet; keine Installation aus der App",labs
+Citations in workspace answers,ai,should,yes,yes,"BSD-61: [[block:id]] markers rendered as numbered sources, click jumps to block","yes (Pass 30: [[block:id]] → nummerierte Quellen, Klick springt)",beta
+Schema version + migrations for based.sqlite,app,must,n/a,yes,"BSD-23: PRAGMA user_version, numbered migrations, backup before migrating, refuses newer files (now v3)",yes,beta
+Visible save errors (no silent in-memory fallback),app,must,n/a,yes,"BSD-15: rollback + read-only banner + storage error screen; undecodable records kept frozen, never synced as deletions (BSD-16)","yes (BSD-287: „Not saved“ bleibt in der Seitenleiste, auch wenn der Sync läuft; Sync-Zustand im Tooltip)",beta
+Related pages (by meaning),search,could,n/a,yes,"BSD-62: on-device sentence embeddings (embeddings.sqlite, not synced), end of page + agents' search tool","partial: lokaler TF-IDF-Index nur als Agent-Werkzeug; keine Anzeige, kein Embedding-Modell",beta
+Sign in with ChatGPT (Codex CLI login) for chat and agents,ai,should,n/a,no,"BSD-257: no own OAuth client, no stored credentials; uses the official Codex CLI login over ACP","partial: Anbieter ChatGPT in Agents & AI (Status über `codex login status`, Low/Auto/High = Codex-Denkstufe), Chat, Aufträge, Meeting-Zusammenfassung und Ask AI laufen als Codex-Sitzung auf dem based-server mit Workspace-MCP; Login-Knopf im Desktop-Terminal und echter Login am Mac offen (BSD-257)",beta
+Import Obsidian vault,import,should,n/a,no,"BSD-260: folder or .zip; folders and folder notes as pages, [[wikilinks]] (alias, heading, path, frontmatter aliases) as mentions, ![[embeds]] as image/PDF/audio/video/file blocks, frontmatter kept, comments and block ids removed, callouts","yes (BSD-260 Teil 1: Kern-Importer mit Tests, im Import-Dialog über den bestehenden Weg; Frontmatter als yaml-Codeblock, nicht als Properties; Canvas übersprungen)",beta
+Import Evernote (.enex),import,should,n/a,no,"BSD-260: notebook → database (tags, created, updated, source, author), ENML content, images/PDF/files by MD5 hash, old and new to-dos, encrypted text noted","yes (BSD-260 Teil 2: Kern-Importer mit Tests, .enex auch in ZIP/Ordner; Bildgrößen und Notiz-Links (evernote:///) nicht übernommen)",beta
+OPML import and export,import,could,n/a,no,"BSD-260: outlines from Workflowy, Dynalist, OmniOutliner, Logseq, feed lists; page export as OPML 2.0","yes (BSD-260 Teil 3: Import als Seite mit verschachtelter Liste, _note/_complete/Links; Export einer Seite als OPML im Export-Dialog; Rundreise getestet)",beta
+Import Word (.docx),import,should,n/a,no,"BSD-260: headings, bold/italic/underline/strike/code, links, nested and numbered lists, quotes, code blocks, tables, images; title from document properties","yes (BSD-260 Teil 4: Kern-Importer mit eigenem kleinem XML-Leser, getestet mit pandoc- und LibreOffice-Dateien; Kommentare, Fußnoten, Textfelder und Farben nicht übernommen)",beta
+Export page as Word (.docx),export,should,n/a,no,"BSD-260: title, headings, bold/italic/underline/strike/code, links, nested bullet and numbered lists, to-dos, quotes, code, tables, embedded images","yes (BSD-260 Teil 6: Kern-Exporter; Rundreise über den eigenen Import, geprüft mit pandoc und LibreOffice; Unterseiten/Datenbanken als Titelzeile)",beta
+Import JSON / JSON Lines,import,could,n/a,no,"BSD-260: Based page JSON (round trip with the JSON export); a list of objects or JSON Lines becomes a database","yes (BSD-260 Teil 7: Seiten-JSON mit geprüften Eigenschaften, neue IDs; Tabellen über den CSV-Import; anderes JSON wie Swift übersprungen)",beta
+Export Markdown with front matter and page JSON,import,should,n/a,no,"BSD-260: optional YAML front matter (title, icon, created, updated, database properties) for Obsidian & Co.; page as JSON (blocks, rich text, properties, database rows)","yes (BSD-260 Teil 5: Option im Export-Dialog für Seite und Workspace; Seite als JSON; Standard-Markdown unverändert)",beta
