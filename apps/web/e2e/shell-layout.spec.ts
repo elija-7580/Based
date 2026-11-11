@@ -100,3 +100,32 @@ test("Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite", as
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   await expect(page.getByTestId("based-root")).toBeVisible();
 });
+
+test("Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.)", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await ready(page);
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "New page" }).first().click();
+  const editor = page.locator(".bn-editor[contenteditable='true']");
+  await expect(editor).toBeVisible();
+  await editor.click();
+  await page.keyboard.type("/database");
+  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  const db = page.locator(".shell-database.inline");
+  await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+  // Seite länger machen als das Fenster
+  await page.locator(".page-title").click();
+  for (let i = 0; i < 30; i++) await page.keyboard.press("Enter");
+  await page.setViewportSize({ width: 1200, height: 420 });
+  const scroller = await db.evaluateHandle((el) => {
+    let p: HTMLElement | null = el.parentElement;
+    while (p) { const s = getComputedStyle(p); if ((s.overflowY === "auto" || s.overflowY === "scroll") && p.scrollHeight > p.clientHeight) return p; p = p.parentElement; }
+    return document.scrollingElement as HTMLElement;
+  });
+  await db.scrollIntoViewIfNeeded();
+  const before = await scroller.evaluate((el) => (el as HTMLElement).scrollTop);
+  const box = (await db.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
+  await page.mouse.wheel(0, 200);
+  await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
+});

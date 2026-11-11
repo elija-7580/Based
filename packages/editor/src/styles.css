@@ -37,6 +37,12 @@
   padding-inline: var(--space-8);
 }
 .bx-editor [data-content-type="heading"] { font-family: var(--font-head); font-weight: var(--weight-heading); color: var(--ink); }
+/* Überschriften kleiner als der Seitentitel (Elija 11.11.: „H1 war größer als der Titel“). Verhältnis wie Notion
+   (Titel 40 : H1 30 : H2 24 : H3 20), relativ zu --size-title, damit es mit Default/Bold/Compact mitgeht.
+   Überschreibt BlockNotes --level (3em/2em/1.3em vom Absatz-Schriftgrad). */
+.bx-editor .bn-block-content[data-content-type="heading"] { --level: calc(var(--size-title) * 0.75); }
+.bx-editor .bn-block-content[data-content-type="heading"][data-level="2"] { --level: calc(var(--size-title) * 0.62); }
+.bx-editor .bn-block-content[data-content-type="heading"][data-level="3"] { --level: calc(var(--size-title) * 0.53); }
 .bx-editor code, .bx-editor .bn-inline-content code, .bx-tex { font-family: var(--font-mono); font-size: var(--type-code-size); }
 .bx-editor [data-content-type="codeBlock"] { border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); }
 .bx-editor [data-content-type="codeBlock"] code, .bx-editor [data-content-type="codeBlock"] pre { color: var(--ink); background: none; }

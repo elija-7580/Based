@@ -97,14 +97,19 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
   if (!cover) return null;
   const pos = draft ?? position;
   const scale = liveHeight ?? coverHeight(store, pageID);
-  const save = () => { if (draft !== undefined) setCoverPosition(store, pageID, draft); setEditing(false); setDraft(undefined); };
-  const cancel = () => { setEditing(false); setDraft(undefined); };
+  // Position und Höhe gehören zum Bearbeiten-Modus: „Save position“ speichert beides, „Cancel“ verwirft beides.
+  const save = () => {
+    if (draft !== undefined) setCoverPosition(store, pageID, draft);
+    if (liveHeight !== undefined) setCoverHeight(store, pageID, liveHeight);
+    setEditing(false); setDraft(undefined); setLiveHeight(undefined);
+  };
+  const cancel = () => { setEditing(false); setDraft(undefined); setLiveHeight(undefined); };
   return (
     <div className="page-cover" data-testid="page-cover"
       style={{ ["--cover-scale" as string]: String(scale), ...(image ? {} : { background: coverBackground(cover) }) }}
       data-repositioning={editing ? "" : undefined}
       onPointerDown={(e) => {
-        if (!editing || e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
+        if (!editing || !image || e.button !== 0 || (e.target as HTMLElement).closest("button")) return;
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
         drag.current = { y: e.clientY, pos, id: e.pointerId };
@@ -118,7 +123,7 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
       onPointerUp={(e) => { if (drag.current?.id === e.pointerId) drag.current = undefined; }}
       onPointerCancel={() => { drag.current = undefined; }}>
       {image && url ? <img src={url} alt="" draggable={false} style={{ objectPosition: `center ${(pos * 100).toFixed(1)}%` }} /> : null}
-      {editing ? <div className="page-cover-hint t-meta" aria-live="polite">Drag image to reposition</div> : null}
+      {editing ? <div className="page-cover-hint t-meta" aria-live="polite">{image ? "Drag image to reposition · drag the bottom edge to resize" : "Drag the bottom edge to resize"}</div> : null}
       {!readOnly ? (
         <div className="page-cover-actions" data-visible={editing ? "" : undefined}>
           {editing ? (
@@ -129,20 +134,20 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
           ) : (
             <>
               <button type="button" className="btn" onClick={() => setPicker((o) => !o)}>Change cover</button>
-              {image ? <button type="button" className="btn" onClick={() => { setPicker(false); setEditing(true); }}>Reposition</button> : null}
+              <button type="button" className="btn" onClick={() => { setPicker(false); setEditing(true); }}>{image ? "Reposition" : "Resize"}</button>
             </>
           )}
         </div>
       ) : null}
-      {!readOnly ? (
+      {!readOnly && editing ? (
         <div className="page-cover-resize" role="separator" aria-orientation="horizontal" aria-label="Cover height" data-testid="cover-resize"
           tabIndex={0} aria-valuemin={COVER_HEIGHT_MIN} aria-valuemax={COVER_HEIGHT_MAX} aria-valuenow={scale}
           onKeyDown={(e) => {
             if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
             e.preventDefault();
-            setCoverHeight(store, pageID, scale + (e.key === "ArrowDown" ? 0.1 : -0.1));
+            setLiveHeight(Math.min(COVER_HEIGHT_MAX, Math.max(COVER_HEIGHT_MIN, scale + (e.key === "ArrowDown" ? 0.1 : -0.1))));
           }}
-          onDoubleClick={() => setCoverHeight(store, pageID, 1)}
+          onDoubleClick={() => setLiveHeight(1)}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             e.preventDefault(); e.stopPropagation();
@@ -159,10 +164,8 @@ export function PageCoverBand({ store, pageID, readOnly, position }: { store: Wo
             const r = resize.current;
             if (!r || r.id !== e.pointerId) return;
             resize.current = undefined;
-            if (liveHeight !== undefined) setCoverHeight(store, pageID, liveHeight);
-            setLiveHeight(undefined);
           }}
-          onPointerCancel={() => { resize.current = undefined; setLiveHeight(undefined); }} />
+          onPointerCancel={() => { resize.current = undefined; }} />
       ) : null}
       {picker ? <CoverPicker store={store} pageID={pageID} hasCover onClose={() => setPicker(false)} /> : null}
     </div>

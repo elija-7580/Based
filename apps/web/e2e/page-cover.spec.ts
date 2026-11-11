@@ -39,7 +39,7 @@ test("Cover: Farbe, Bild hochladen, verschieben, entfernen", async ({ page }) =>
   };
   await cover.hover();
   await cover.getByRole("button", { name: "Reposition" }).click();
-  await expect(cover.getByText("Drag image to reposition")).toBeVisible();
+  await expect(cover.getByText(/Drag image to reposition/)).toBeVisible();
   await dragCover();
   await expect(img).not.toHaveAttribute("style", /center 50/);
   await cover.getByRole("button", { name: "Cancel" }).click();
@@ -49,23 +49,39 @@ test("Cover: Farbe, Bild hochladen, verschieben, entfernen", async ({ page }) =>
   await cover.getByRole("button", { name: "Reposition" }).click();
   await dragCover();
   await cover.getByRole("button", { name: "Save position" }).click();
-  await expect(cover.getByText("Drag image to reposition")).toHaveCount(0);
+  await expect(cover.getByText(/Drag image to reposition/)).toHaveCount(0);
   await expect(img).not.toHaveAttribute("style", /center 50/);
   const saved = await img.getAttribute("style");
   await page.keyboard.press("Escape");
   await expect(img).toHaveAttribute("style", saved!);
 
-  // Höhe: Unterkante ziehen (Elija 11.11.), bleibt nach dem Loslassen; Doppelklick setzt zurück.
+  // Höhe (Elija 11.11.): Griff an der Unterkante nur im Bearbeiten-Modus; Save speichert, Cancel verwirft.
   const before = (await cover.boundingBox())!.height;
+  await expect(page.getByTestId("cover-resize")).toHaveCount(0);
+  const dragHandle = async () => {
+    const h = (await page.getByTestId("cover-resize").boundingBox())!;
+    await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 + 120, { steps: 6 });
+    await page.mouse.up();
+  };
   await cover.hover();
-  const handle = page.getByTestId("cover-resize");
-  const h = (await handle.boundingBox())!;
-  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 + 120, { steps: 6 });
-  await page.mouse.up();
+  await cover.getByRole("button", { name: "Reposition" }).click();
+  await dragHandle();
   await expect.poll(async () => (await cover.boundingBox())!.height).toBeGreaterThan(before + 60);
+  await cover.getByRole("button", { name: "Cancel" }).click();
+  await expect.poll(async () => Math.round((await cover.boundingBox())!.height)).toBe(Math.round(before));
+  await cover.hover();
+  await cover.getByRole("button", { name: "Reposition" }).click();
+  await dragHandle();
+  await cover.getByRole("button", { name: "Save position" }).click();
+  await expect(page.getByTestId("cover-resize")).toHaveCount(0);
+  await expect.poll(async () => (await cover.boundingBox())!.height).toBeGreaterThan(before + 60);
+  await cover.hover();
+  await cover.getByRole("button", { name: "Reposition" }).click();
+  const handle = page.getByTestId("cover-resize");
   await handle.dblclick();
+  await cover.getByRole("button", { name: "Save position" }).click();
   await expect.poll(async () => Math.round((await cover.boundingBox())!.height)).toBe(Math.round(before));
 
   await cover.hover();
