@@ -1098,7 +1098,10 @@ export class StoreHost {
     if (store?.isReadOnly) {
       state = "readonly";
       detail = store.writeFailure?.message;
-    } else if (this.ws && !this.ws.persistent && state !== "error" && state !== "starting") {
+    } else if (this.ws && !this.ws.persistent && (state === "error" || state === "offline")) {
+      // Sync-Fehler/Offline haben Vorrang im Text; „nur im Speicher“ steht im Detail (Tooltip) dahinter.
+      detail = [detail, this.ws.note ?? "In memory only"].filter(Boolean).join(" · ");
+    } else if (this.ws && !this.ws.persistent && state !== "starting") {
       // BSD-287 (Swift BSD-15): nur im Speicher bleibt sichtbar, auch wenn der Sync läuft – sonst stünde „Synced“
       // da, und Änderungen ohne Netz gingen beim Schließen still verloren. Der Sync-Zustand steht im Detail.
       const sync = state === "memory" ? undefined : state;
