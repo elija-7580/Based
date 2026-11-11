@@ -195,7 +195,7 @@ Agent Kanban board,agents,should,n/a,yes,"Pass 12: group by status / project / a
 Agent canvas (what runs in which project),agents,should,n/a,yes,"Pass 12: project swimlanes, parent → sub-agent tree, live edges, zoom, inspector",no
 Claude-Code-style console (slash commands / @files / diffs / status line),agents,should,n/a,yes,Pass 12,no
 CI build on every push,infra,should,n/a,partial,"ci/github-actions-ci.yml updated for Swift 6.2 container, both packages, typecheck, cache (BSD-22); still needs one manual copy to .github/workflows (BSD-13)",yes
-Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice",no
+Copy logs (diagnostic report to clipboard),app,should,n/a,yes,"Pass 13: report with facts, previous run, hangs + stacks, breadcrumbs, log; menu, Help command, crash notice","yes (BSD-227: Settings → Diagnostics → Copy diagnostics, mit Log und voriger Sitzung, geschwärzt)"
 Hang stack sampling (where the main thread is stuck),app,should,n/a,partial,Pass 13: Mach suspend + frame-pointer walk + dladdr/demangle; ongoing freezes saved in the crash marker,n/a
 Choose Home page,shell,should,yes,yes,"any page as Home (page/sidebar menu, Settings → Home, chooser); overview moved to the top of Library","yes (10.11.: Einstellungen → Start page; gilt für App-Start, neue Tabs, letzten Tab schließen)"
 Back/forward with mouse buttons & swipe,shell,should,yes,yes,"mouse buttons 4/5, trackpad swipe, ⌘←/⌘→ outside text, ⌘[ ⌘], arrows with history menu (Mac title bar, iOS toolbar)","partial: mouse buttons 4/5, trackpad swipe with edge hint, ⌘←/⌘→ (Alt+←/→ off Apple) outside text, ⌘[ ⌘] (BSD-244); history menu on the arrows missing"

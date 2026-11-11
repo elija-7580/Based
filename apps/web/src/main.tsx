@@ -23,8 +23,11 @@ import { connectAssets } from "./assetBridge.js";
 import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
+import { diagnosticsLog, installDiagnostics } from "./shell/diagnostics.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
+// BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
+installDiagnostics();
 
 // Vor dem ersten Rendern setzen, damit Dunkel nicht hell aufblitzt.
 applyAppearance(appearanceStore.get());
@@ -43,6 +46,17 @@ const link = new StoreLink({
   },
 });
 const client = new StoreClient(link);
+// BSD-227: Wechsel des Sync-/Speicherzustands ins Diagnose-Log (Zustand und Fehlertext, geschwärzt).
+{
+  let last = "";
+  client.subscribe(() => {
+    const st = client.getState().status;
+    const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}`;
+    if (line === last) return;
+    last = line;
+    diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" ? "warning" : "info", `status: ${line}`);
+  });
+}
 connectEditor(client);
 link.onReconnect = () => void client.resync();
 client.onDevice = deviceNode.set;
