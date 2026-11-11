@@ -254,12 +254,29 @@ export class AssetSync {
    * (`id` = SHA-256; dieselben Bytes ergeben dieselbe Referenz).
    */
   async add(bytes: Uint8Array, name: string, mime?: string): Promise<StoredAsset> {
+    return (await this.addTracked(bytes, name, mime)).ref;
+  }
+
+  /** Wie `add`; `created` = die Bytes lagen vorher nicht auf diesem Gerät (BSD-283: nur solche darf ein Abbruch entfernen). */
+  async addTracked(bytes: Uint8Array, name: string, mime?: string): Promise<{ ref: StoredAsset; created: boolean }> {
     const hash = await sha256Hex(bytes);
-    if (!(await this.blobs.has(hash))) await this.blobs.put(hash, bytes);
+    const created = !(await this.blobs.has(hash));
+    if (created) await this.blobs.put(hash, bytes);
     this.enqueue(hash, bytes.length);
     const ref: StoredAsset = { id: hash, name: name || "file", size: bytes.length };
     if (mime) ref.mime = mime;
-    return ref;
+    return { ref, created };
+  }
+
+  /**
+   * BSD-283: Datei eines abgebrochenen Imports wieder entfernen (lokal und aus der Upload-Warteschlange). Der Aufrufer
+   * stellt sicher, dass kein Record darauf zeigt. Schon hochgeladene Bytes bleiben auf dem Server (kein Löschweg).
+   */
+  async discard(hash: string) {
+    const before = this.queue.length;
+    this.queue = this.queue.filter((q) => q.hash !== hash);
+    if (this.queue.length !== before) { this.saveQueue(); this.emit(); }
+    await this.blobs.delete(hash);
   }
 
   /** Einen lokal vorhandenen Blob (erneut) zum Hochladen vormerken. */

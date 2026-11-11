@@ -8,7 +8,7 @@ import { StoreClient } from "./client.js";
 import { readFileSync } from "node:fs";
 import { assetIDsInStore, makeBlock, MemoryAssetSink } from "@based/core";
 import { MemoryAssetStore } from "./assets.js";
-import { prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
+import { drainDeferred, prepareFiles, StreamingAssetSink, type ImportFile } from "./importer.js";
 import { StoreHost } from "./host.js";
 import type { Endpoint, Event, RequestMessage, StatusInfo } from "./protocol.js";
 
@@ -261,5 +261,88 @@ describe("Dateien aus Importen (BSD-230)", () => {
     expect(got.ok && new Uint8Array(got.bytes)).toEqual(data);
     await expect.poll(() => server.blobs.has(hash)).toBe(true);
     expect(await a.host.migrateImportedAssets()).toBe(0);
+  });
+});
+
+// BSD-283: Gegendruck zwischen Import-Worker und Store-Worker, Aufräumen nach Abbruch.
+describe("Großer Import: Gegendruck und Abbruch (BSD-283)", () => {
+  type Blobs = { has(hash: string): Promise<boolean> };
+  const blobsOf = (h: StoreHost) => (h as unknown as { assets: { blobs: Blobs; queued: readonly { hash: string }[] } }).assets;
+
+  it("Lazy-Sammler liest Dateien erst beim Abarbeiten; Fenster begrenzt Bytes und Dateien unterwegs", async () => {
+    const sink = new StreamingAssetSink(() => { throw new Error("nichts sofort senden"); }, { lazy: true });
+    let loads = 0;
+    for (let i = 0; i < 20; i++) sink.importLazy!({ size: 10, load: () => { loads += 1; return new Uint8Array(10).fill(i); } }, `f${i}.png`, undefined);
+    expect(loads).toBe(0);
+    expect(sink.count).toBe(20);
+    const pending: (() => void)[] = [];
+    let inFlight = 0, maxInFlight = 0, acked = 0, maxAhead = 0;
+    const draining = drainDeferred(sink, () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      return new Promise<void>((resolve) => pending.push(() => { inFlight -= 1; acked += 1; resolve(); }));
+    }, { windowBytes: 30, windowFiles: 8 });
+    for (let round = 0; round < 40 && (pending.length > 0 || loads < 20); round++) {
+      await new Promise((r) => setTimeout(r, 0));
+      maxAhead = Math.max(maxAhead, loads - acked);
+      pending.shift()?.();
+    }
+    expect(await draining).toBe(0);
+    expect(loads).toBe(20);
+    expect(maxInFlight).toBeLessThanOrEqual(3); // 30 Bytes / 10 Bytes je Datei
+    expect(maxAhead).toBeLessThanOrEqual(3); // gelesen wird erst, wenn Platz im Fenster ist
+    expect(sink.deferred).toEqual([]);
+  });
+
+  it("Unlesbare Dateien werden gezählt, nicht gesendet", async () => {
+    const sink = new StreamingAssetSink(() => undefined, { lazy: true });
+    sink.importLazy!({ size: 5, load: () => undefined }, "a.png", undefined);
+    sink.importLazy!({ size: 5, load: () => { throw new Error("kaputt"); } }, "b.png", undefined);
+    sink.importLazy!({ size: 5, load: () => new Uint8Array(5) }, "c.png", undefined);
+    const sent: string[] = [];
+    expect(await drainDeferred(sink, async (a) => { sent.push(a.name); })).toBe(2);
+    expect(sent).toEqual(["c.png"]);
+  });
+
+  it("Notion-Export: Dateien gehen zurückgestellt durch, Records zeigen auf sie; Größenlimit greift vor dem Lesen", async () => {
+    const emitted: string[] = [];
+    const sink = new StreamingAssetSink((a) => emitted.push(a.id), { lazy: true });
+    const payload = prepareFiles(notionExport(), { assets: sink });
+    expect(emitted).toEqual([]);
+    expect(sink.deferred.length).toBe(payload.assets);
+    expect(payload.assets).toBeGreaterThan(0);
+    const tiny = new StreamingAssetSink(() => undefined, { lazy: true });
+    const limited = prepareFiles(notionExport(), { assets: tiny, maxAssetBytes: 1 });
+    expect(tiny.deferred.length).toBe(0);
+    expect(JSON.stringify(limited.notion)).toContain("larger than the");
+  });
+
+  it("Abbruch: schon abgelegte neue Dateien werden entfernt, vorher vorhandene und benutzte bleiben", async () => {
+    const server = fakeServer();
+    server.state.offline = true;
+    const a = device(server.fetcher, { migrateDelayMs: 60_000 });
+    await a.client.init({ sync });
+    // Erster Import vollständig: seine Dateien sind benutzt.
+    const first = new StreamingAssetSink(() => undefined, { lazy: true });
+    const p1 = prepareFiles(notionExport(), { assets: first });
+    await drainDeferred(first, (f) => a.client.importAsset({ ...f, data: f.data.slice() }));
+    await a.client.commitImport(structuredClone(p1));
+    const used = [...assetIDsInStore(a.host.ws!.store)];
+    expect(used.length).toBeGreaterThan(0);
+    // Zweiter Import (dieselben Dateien + eine neue), dann Abbruch.
+    const second = new StreamingAssetSink(() => undefined, { lazy: true });
+    prepareFiles(notionExport(), { assets: second });
+    const extra = png(123);
+    second.importLazy!({ size: extra.length, load: () => extra }, "neu.png", undefined);
+    await drainDeferred(second, (f) => a.client.importAsset({ ...f, data: f.data.slice() }));
+    const extraHash = await sha256Hex(extra);
+    const assets = blobsOf(a.host);
+    expect(await assets.blobs.has(extraHash)).toBe(true);
+    expect(await a.client.discardImport()).toBe(1);
+    expect(await assets.blobs.has(extraHash)).toBe(false);
+    expect(assets.queued.map((q) => q.hash)).not.toContain(extraHash);
+    for (const id of used) expect(await assets.blobs.has(id)).toBe(true);
+    // Nichts mehr zu tun.
+    expect(await a.client.discardImport()).toBe(0);
   });
 });

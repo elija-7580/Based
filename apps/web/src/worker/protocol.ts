@@ -162,6 +162,8 @@ export type Request =
   | { type: "commitImport"; payload: ImportPayload; parent?: string }
   /** BSD-254: eine Datei eines laufenden Imports sofort ablegen (vorläufige ID → Hash; `commitImport` schreibt um). */
   | { type: "importAsset"; assetID: string; name: string; mime?: string; bytes: Uint8Array }
+  /** BSD-283: abgebrochener Import – schon abgelegte Dateien wieder entfernen (nur neue, nur unbenutzte). */
+  | { type: "discardImport" }
   /** Exporte (Antwort: ExportFile). */
   | { type: "exportPage"; pageID: string; format: PageExportFormat; html?: HTMLExportChoice }
   | { type: "exportWorkspace"; format: WorkspaceExportFormat; html?: HTMLExportChoice }
