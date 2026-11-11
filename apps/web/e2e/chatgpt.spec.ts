@@ -70,7 +70,7 @@ test("ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn", async ({ page }
   await page.getByLabel("Server URL").fill(serverURL);
   await page.getByLabel("Token").fill(TOKEN);
   await page.getByRole("button", { name: "Connect", exact: true }).click();
-  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-state", "synced", { timeout: 20_000 });
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
 
   await nav.getByRole("button", { name: "Agents & AI", exact: true }).click();
   await section.getByRole("radio", { name: "ChatGPT" }).click();

@@ -103,6 +103,32 @@ test("privacy redact: placeholders go to the engine, the answer gets the real va
   await redactFlow(page);
 });
 
+test("privacy check (BSD-184): hits shown before sending; redact and send, or send anyway", async ({ page }) => {
+  await fresh(page);
+  await page.goto("/#prefs-agents");
+  await page.getByRole("switch", { name: "Ask before sending sensitive details" }).check();
+  await page.goto("/#home");
+  await openChat(page);
+  await page.evaluate(() => (globalThis as unknown as { __basedBrain: { useEcho(): void } }).__basedBrain.useEcho());
+  const seen = () => page.evaluate(() => (globalThis as unknown as { __basedBrain: { seen: string[] } }).__basedBrain.seen);
+  const msg = "Please mail anna.schmidt@example.org, IBAN DE89 3704 0044 0532 0130 00";
+  await input(page).fill(msg);
+  await input(page).press("Enter");
+  const check = panel(page).getByTestId("privacy-check");
+  await expect(check).toContainText("2 sensitive details");
+  await expect(check).not.toContainText("anna.schmidt@example.org");
+  await expect(input(page)).toHaveValue(msg);
+  expect(await seen()).toEqual([]);
+  await check.getByRole("button", { name: "Redact and send" }).click();
+  await expect(panel(page).getByTestId("assistant-message").last()).toHaveAttribute("data-done", "");
+  expect((await seen()).at(-1)).toBe("Please mail <EMAIL_1>, IBAN <IBAN_1>");
+  await expect(input(page)).toHaveValue("");
+  await input(page).fill("Call +49 30 1234567 please");
+  await input(page).press("Enter");
+  await check.getByRole("button", { name: "Send anyway" }).click();
+  await expect.poll(async () => (await seen()).at(-1)).toBe("Call +49 30 1234567 please");
+});
+
 async function citationFlow(page: Page): Promise<string> {
   await openChat(page);
   // Seite mit zwei Blöcken über das Agent-Werkzeug anlegen und die Block-IDs lesen (wie ein Agent es täte).

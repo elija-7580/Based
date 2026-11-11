@@ -7,8 +7,8 @@
 // (ACP-Sitzung, BSD-223). Kein Schlüssel, kein OAuth-Client, nichts Geheimes im Browser; die Modelle sind die
 // Stufen Low/Auto/High (BSD-242).
 import {
-  AnthropicProvider, CHATGPT_MODELS, CodexChatEngine, CodingClient, isComputeLevel, ModelEngine, OLLAMA_BASE_URL, OpenAIProvider,
-  type AIProvider, type ChatEngine, type PermissionMode, type ToolHost, type ToolPolicy,
+  AnthropicProvider, CHATGPT_MODELS, CodexChatEngine, CodingClient, isComputeLevel, ModelEngine, OLLAMA_BASE_URL, OpenAIProvider, routeModel,
+  type AIProvider, type ChatEngine, type ComputeLevel, type PermissionMode, type RouteDecision, type RouteTask, type ToolHost, type ToolPolicy,
 } from "@based/brain";
 import type { SecretStore } from "../shell/secrets.js";
 import { secretVault, syncConfig } from "../shell/storage.js";
@@ -52,6 +52,8 @@ export interface AiSettings {
   permission: PermissionMode;
   /** BSD-245: Modus vor dem Plan-Modus. */
   planReturn?: PermissionMode;
+  /** BSD-242: Low/Auto/High wählt das Modell je Aufgabe (packages/brain routeModel); ohne: das gewählte Modell. */
+  compute?: ComputeLevel;
 }
 
 export interface ModelChoice {
@@ -104,6 +106,7 @@ function sanitize(raw: unknown): AiSettings {
   if (typeof r.model === "string") out.model = r.model;
   if (r.permission === "ask" || r.permission === "askEdits" || r.permission === "free" || r.permission === "plan") out.permission = r.permission;
   if (r.planReturn === "ask" || r.planReturn === "askEdits" || r.planReturn === "free") out.planReturn = r.planReturn;
+  if (isComputeLevel(r.compute)) out.compute = r.compute;
   return out;
 }
 
@@ -217,11 +220,35 @@ export class AiConfig {
     }
   }
 
+  /** Ein bestimmtes Modell wählen – schaltet Low/Auto/High aus (genaue Wahl gewinnt immer). */
   setModel(ref: string | undefined) {
     const next = { ...this.state.settings };
     if (ref) next.model = ref;
     else delete next.model;
+    delete next.compute;
     this.save(next);
+  }
+
+  /** BSD-242: Low/Auto/High einschalten (`undefined` = wieder das gewählte Modell). */
+  setCompute(level: ComputeLevel | undefined) {
+    const next = { ...this.state.settings };
+    if (level) next.compute = level;
+    else delete next.compute;
+    this.save(next);
+  }
+
+  /**
+   * BSD-242: Modell für eine Aufgabe. Mit Low/Auto/High nach `routeModel` (Anbieter des gewählten Modells zuerst),
+   * sonst das gewählte Modell. ChatGPT (Codex) hat eigene Stufen und bleibt außen vor.
+   */
+  modelFor(task: RouteTask): { choice: ModelChoice | undefined; route?: RouteDecision } {
+    const level = this.state.settings.compute;
+    const active = this.activeModel();
+    if (!level) return { choice: active };
+    const usable = this.models().filter((m) => m.usable && m.kind !== "chatgpt");
+    if (usable.length === 0) return { choice: active };
+    const route = routeModel(task, level, usable.map((m) => ({ ref: m.ref, ...(m.kind === "ollama" ? { onDevice: true } : {}) })), { defaultModel: active?.kind === "chatgpt" ? undefined : active?.ref });
+    return { choice: usable.find((m) => m.ref === route.model) ?? active, route };
   }
 
   setPermission(permission: PermissionMode) {

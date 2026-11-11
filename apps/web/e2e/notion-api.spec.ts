@@ -81,7 +81,9 @@ test("Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur un
 
   // Struktur: Seite mit Spalten (30/70), Unterseite, Datenbank mit ihren Ansichten
   await expect(page.getByLabel("Page title")).toHaveValue("Project Hub");
-  const editor = page.locator(".bn-editor");
+  // Die Seite hat einen Synced Block: dessen Original bekommt einen eigenen (verschachtelten) Editor, sobald es
+  // geladen ist – je nach Zeitpunkt 1 bis 3 Editoren (BSD-294). Geprüft wird der Editor der Seite selbst.
+  const editor = page.locator(".bn-editor").first();
   await expect(editor).toBeVisible();
   await expect(editor.locator("[data-content-type=column], .bn-block-column, [data-node-type=column]").first()).toBeVisible();
   await expect(page.getByRole("treeitem", { name: "Project Hub", exact: true })).toBeVisible();

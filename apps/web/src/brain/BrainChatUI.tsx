@@ -15,12 +15,31 @@ export const BrainChatContext = createContext<BrainChat | undefined>(undefined);
 
 // MARK: Composer
 
-export function BrainComposerBar({ brain }: { brain: BrainChat }) {
+export function BrainComposerBar({ brain, onDecided, onUseLocal }: { brain: BrainChat; onDecided?: () => void; onUseLocal?: (() => void) | undefined }) {
   const s = useSyncExternalStore(brain.subscribe, brain.getState);
   const settings = useSyncExternalStore(brain.settings.subscribe, brain.settings.getState);
   const alts = brain.alternatives();
   const showSkills = settings.skills.auto && (s.chips.length > 0 || (s.routing?.candidates.length ?? 0) > 0);
   const sensitive = s.sensitive.length;
+  const check = s.privacyCheck;
+  if (check) {
+    // BSD-184: vor dem Senden – Treffer zeigen und wählen lassen.
+    const mask = (v: string) => (v.length <= 4 ? "•".repeat(v.length) : v.slice(0, 2) + "•".repeat(Math.min(8, v.length - 4)) + v.slice(-2));
+    return (
+      <div className="brain-bar">
+        <div className="brain-sensitive" data-testid="privacy-check" role="alert">
+          <Icon name="lock" size={14} />
+          <span className="t-desc">
+            {check.hits.length} sensitive detail{check.hits.length === 1 ? "" : "s"}: {check.hits.slice(0, 4).map((h) => `${REDACT_KIND_LABELS[h.kind] ?? h.kind} ${mask(h.value)}`).join(", ")}{check.hits.length > 4 ? " …" : ""}
+          </span>
+          <Button size="sm" variant="secondary" label="Redact and send" onClick={() => { brain.decide("redact"); onDecided?.(); }} />
+          <Button size="sm" variant="ghost" label="Send anyway" onClick={() => { brain.decide("raw"); onDecided?.(); }} />
+          {onUseLocal ? <Button size="sm" variant="ghost" label="Use local model" onClick={() => { brain.decide("raw"); onUseLocal(); onDecided?.(); }} /> : null}
+          <Button size="sm" variant="ghost" label="Cancel" onClick={() => brain.dismissPrivacyCheck()} />
+        </div>
+      </div>
+    );
+  }
   if (!showSkills && sensitive === 0) return null;
   const willRedact = settings.redact.enabled || s.redactOnce;
   return (

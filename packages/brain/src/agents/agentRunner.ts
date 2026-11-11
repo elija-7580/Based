@@ -4,7 +4,7 @@
 // Budget: Überschreitet der Lauf seine Obergrenze oder das Monatsbudget des Agenten, wird er gestoppt.
 // Berechtigungen: Modus + Regeln des Agenten, geschichtet mit dem Projekt; fragepflichtige Aufrufe warten als
 // „Needs you“ am Run, bis jemand an der Karte erlaubt oder ablehnt.
-// Zeitpläne laufen hier nur, solange die App offen ist (Server-Zeitpläne: später, nicht in diesem Branch).
+// Zeitpläne: in der App, solange sie offen ist; auf dem Server (BSD-243) mit eigenem Runner, wenn dort ein Modell eingerichtet ist.
 import type { ChatEngine, ToolPolicy } from "../engine.js";
 import { runTurn } from "../engine.js";
 import type { StoredChatEvent } from "../events.js";
@@ -33,6 +33,8 @@ export interface AgentRunBackend {
 export interface AgentEngineRequest {
   model?: string | undefined;
   policy: ToolPolicy;
+  /** BSD-250: Projekt des Laufs – sein Connection-Scope gilt zusätzlich zu dem des Agenten. */
+  project?: ProjectData | undefined;
 }
 
 export interface PendingRunApproval {
@@ -52,6 +54,11 @@ export interface AgentRunnerOptions {
   isWrite?: (name: string) => boolean;
   /** BSD-245: Pfade einer Seite für Pfad-Regeln (`pagePathCandidates` dort, wo der Store liegt). */
   pathOf?: (pageID: string) => Promise<readonly string[]> | readonly string[];
+  /**
+   * BSD-243: Was mit fragepflichtigen Aufrufen geschieht. „wait“ (Standard, App): der Lauf wartet als „Needs you“.
+   * „deny“ (Server ohne Oberfläche): sofort abgelehnt – niemand könnte sie dort erlauben.
+   */
+  approvals?: "wait" | "deny";
 }
 
 export const SUBAGENT_SYSTEM = "You are a sub-agent of Based's main agent. Do the task below with the workspace tools, then reply with a short result (what you did, which pages). Stay within the task.";
@@ -113,19 +120,13 @@ export class AgentRunner {
   }
 
   async fireSchedules(): Promise<number> {
+    // Gleiche Regel wie der Server-Scheduler (BSD-243): wer den Termin weiterschiebt (claim), legt den Lauf an.
     const now = this.now();
     let fired = 0;
     for (const s of await this.o.backend.schedules()) {
       if (!s.data.enabled || s.data.nextAt === undefined) continue;
       if (!(await this.o.backend.claimSchedule(s.id, now))) continue;
-      const main = await this.o.backend.main();
-      const spent = spentThisMonth(await this.o.backend.runs(), s.data.agentID, now);
-      const exhausted = main.monthlyBudgetEUR !== undefined && spent >= main.monthlyBudgetEUR;
-      await this.o.backend.createRun({
-        kind: "schedule", status: exhausted ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
-        ...(s.data.projectID ? { projectID: s.data.projectID } : {}), ...(s.data.taskID ? { taskID: s.data.taskID } : {}),
-        ...(exhausted ? { result: `Skipped: monthly budget used up (${spent.toFixed(2)} € of ${main.monthlyBudgetEUR!.toFixed(2)} €)` } : {}),
-      });
+      await this.o.backend.createRun(scheduledRun(s, await this.o.backend.main(), await this.o.backend.runs(), now));
       fired += 1;
     }
     return fired;
@@ -159,13 +160,13 @@ export class AgentRunner {
         // Plan-Modus: Schreibschritte sammeln; sie stehen danach im Ergebnis des Laufs.
         onPlanned: plan.record,
         approve: (call) => new Promise<boolean>((resolve) => {
-          if (abort.signal.aborted) return resolve(false);
+          if (abort.signal.aborted || this.o.approvals === "deny") return resolve(false);
           this.approvals.push({ runID, call, resolve });
           void b.updateRun(runID, { status: "needsYou" });
           this.o.onChange?.();
         }),
       };
-      const engine = await this.o.engine({ model: run.data.model, policy });
+      const engine = await this.o.engine({ model: run.data.model, policy, ...(project ? { project: project.data } : {}) });
       if (!engine) {
         await b.updateRun(runID, { status: "failed", result: "No model is set up." });
         return;
@@ -209,3 +210,18 @@ export class AgentRunner {
 }
 
 export const runIsActive = (r: RunData) => !isRunFinished(r.status);
+
+/**
+ * BSD-243: Lauf für einen fälligen Zeitplan (nach `claimSchedule`). Gemeinsame Regel für die App (AgentRunner) und
+ * den Server-Scheduler: Monatsbudget des Agenten aufgebraucht → „cancelled“ mit Grund, sonst „queued“. Verpasste
+ * Termine holt `claimSchedule` höchstens einmal nach (es schiebt `nextAt` auf den nächsten künftigen Termin).
+ */
+export function scheduledRun(s: Rec<ScheduleData>, main: AgentData, runs: readonly Rec<RunData>[], nowMs: number): NewRun {
+  const spent = spentThisMonth(runs, s.data.agentID, nowMs);
+  const exhausted = main.monthlyBudgetEUR !== undefined && spent >= main.monthlyBudgetEUR;
+  return {
+    kind: "schedule", status: exhausted ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
+    ...(s.data.projectID ? { projectID: s.data.projectID } : {}), ...(s.data.taskID ? { taskID: s.data.taskID } : {}),
+    ...(exhausted ? { result: `Skipped: monthly budget used up (${spent.toFixed(2)} € of ${main.monthlyBudgetEUR!.toFixed(2)} €)` } : {}),
+  };
+}

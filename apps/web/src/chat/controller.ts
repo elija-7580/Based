@@ -51,6 +51,8 @@ export interface ChatViewState {
   ready: boolean;
   /** BSD-245: im Plan-Modus gesammelte Schritte des letzten Turns (bis „Run plan“ oder „Dismiss“). */
   plan: { chatID: string; steps: PlannedStep[] } | undefined;
+  /** BSD-242: Modell, das Low/Auto/High für den letzten Turn gewählt hat. */
+  lastRoute?: { model: string | undefined; level: string; reason: string } | undefined;
 }
 
 /** BSD-245: Regeln (global, Pfade) für Werkzeugaufrufe im Chat; je Turn neu geholt. */
@@ -250,13 +252,16 @@ export class ChatController {
     return extra ? combineToolHosts(base, extra) : base;
   }
 
-  private async engine(ctx: EngineContext, prep?: TurnPrep, system?: string): Promise<ChatEngine | undefined> {
+  private async engine(ctx: EngineContext, prep?: TurnPrep, system?: string, prompt?: string): Promise<ChatEngine | undefined> {
     if (this.override) {
       const e = await this.override(ctx);
       return e && prep?.wrapEngine ? prep.wrapEngine(e) : e;
     }
     const cfg = this.o.config;
-    const choice = cfg?.activeModel();
+    // BSD-242: Low/Auto/High wählt das Modell je Aufgabe; die Wahl steht am Chat (lastRoute).
+    const routed = prompt !== undefined && cfg ? cfg.modelFor({ text: prompt }) : undefined;
+    if (routed?.route) this.set({ lastRoute: { model: routed.choice?.ref, level: routed.route.level, reason: routed.route.reason } });
+    const choice = routed?.choice ?? cfg?.activeModel();
     if (!cfg || !choice) return undefined;
     // BSD-257: ChatGPT (Codex) ist eine Engine ohne Anbieter-Schnittstelle (wie eine CLI) → wrapEngine.
     const e = await cfg.engine(choice, { tools: ctx.tools, policy: ctx.policy, system, key: ctx.chatID, fetch: this.o.fetch, wrapProvider: prep?.wrapProvider });
@@ -425,7 +430,7 @@ export class ChatController {
     }
     let engine: ChatEngine | undefined;
     try {
-      engine = await this.engine({ tools, policy, chatID: id }, prep, undefined);
+      engine = await this.engine({ tools, policy, chatID: id }, prep, undefined, text);
     } catch (e) {
       turn.push({ type: "failed", message: message(e) });
     }

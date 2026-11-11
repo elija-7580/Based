@@ -77,6 +77,35 @@ describe("ChatController", () => {
 });
 
 describe("AiConfig", () => {
+  it("BSD-242: Low/Auto/High wählt das Modell je Aufgabe; genaue Wahl schaltet es aus; alte Einstellungen lesbar", async () => {
+    const local = new Map<string, string>();
+    const storage = { getItem: (k: string) => local.get(k) ?? null, setItem: (k: string, v: string) => void local.set(k, v) };
+    const secrets = new SecretStore(memoryKV());
+    const cfg = new AiConfig({ storage, secrets: () => secrets });
+    cfg.setProvider("anthropic", { models: ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-1"] });
+    await cfg.setKey("anthropic", "sk-x");
+    cfg.setModel("anthropic/claude-sonnet-4-5");
+    expect(cfg.modelFor({ text: "hi" }).choice?.ref).toBe("anthropic/claude-sonnet-4-5"); // ohne Stufe: gewähltes Modell
+    cfg.setCompute("low");
+    const low = cfg.modelFor({ text: "Tell me something about the history of cats" });
+    expect(low.route?.level).toBe("low");
+    expect(low.choice?.ref).toBe("anthropic/claude-haiku-4-5");
+    cfg.setCompute("high");
+    expect(cfg.modelFor({ text: "Tell me something about the history of cats" }).choice?.ref).toBe("anthropic/claude-opus-4-1");
+    // Code-Aufgabe: auch bei Low mindestens das mittlere Modell (Route „code“)
+    cfg.setCompute("low");
+    expect(cfg.modelFor({ text: "Fix the failing test in src/app.ts" }).choice?.ref).toBe("anthropic/claude-sonnet-4-5");
+    cfg.setCompute("high");
+    // übersteht Neuladen
+    const again = new AiConfig({ storage, secrets: () => secrets });
+    await again.load();
+    expect(again.getState().settings.compute).toBe("high");
+    // genaue Wahl gewinnt
+    again.setModel("anthropic/claude-sonnet-4-5");
+    expect(again.getState().settings.compute).toBeUndefined();
+    expect(again.modelFor({ text: "x" }).route).toBeUndefined();
+  });
+
   it("Schlüssel nur verschlüsselt, Modelle frei eintragbar, aktives Modell", async () => {
     const kv = memoryKV();
     const local = new Map<string, string>();

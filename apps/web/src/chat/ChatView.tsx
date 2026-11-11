@@ -7,7 +7,7 @@ import { HStack } from "@astryxdesign/core/Layout";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { List, ListItem } from "@astryxdesign/core/List";
-import type { ChatInfo, PermissionMode } from "@based/brain";
+import type { ChatInfo, ComputeLevel, PermissionMode } from "@based/brain";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Composer, type ComposerOption } from "../components/Composer.js";
 import { Icon } from "../icons.js";
@@ -97,7 +97,18 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
 
   const models = config.models().filter((m) => m.usable);
   const active = config.activeModel();
-  const computeOptions: ComposerOption[] = models.map((m) => ({ name: m.ref, desc: m.kind === "ollama" ? "On this computer" : m.kind === "chatgpt" ? "Your ChatGPT plan via Codex" : "Your API key", icon: m.kind === "ollama" ? "fast" : "model" }));
+  const localModel = models.find((m) => m.kind === "ollama");
+  const [submitRequest, setSubmitRequest] = useState(0);
+  const computeLevel = config.getState().settings.compute;
+  const computeLevelName = computeLevel ? ({ auto: "Auto", low: "Fast", high: "Deep" } as const)[computeLevel] : undefined;
+  // BSD-242: Low/Auto/High vor den einzelnen Modellen (die Wahl eines Modells schaltet das Routing aus).
+  const LEVELS: { name: string; level: ComputeLevel; desc: string; icon: ComposerOption["icon"] }[] = [
+    { name: "Auto", level: "auto", desc: "Picks a model per task", icon: "auto" },
+    { name: "Fast", level: "low", desc: "Smallest model, quick answers", icon: "fast" },
+    { name: "Deep", level: "high", desc: "Strongest model, long reasoning", icon: "deep" },
+  ];
+  const levelOptions: ComposerOption[] = models.length > 1 ? LEVELS.map((l) => ({ name: l.name, desc: l.desc, icon: l.icon })) : [];
+  const computeOptions: ComposerOption[] = [...levelOptions, ...models.map((m) => ({ name: m.ref, desc: m.kind === "ollama" ? "On this computer" : m.kind === "chatgpt" ? "Your ChatGPT plan via Codex" : "Your API key", icon: (m.kind === "ollama" ? "fast" : "model") as ComposerOption["icon"] }))];
   const permissionOptions: ComposerOption[] = PERMISSIONS.map((p) => ({ name: p.name, desc: p.desc, icon: p.mode === "free" ? "free" : p.mode === "ask" || p.mode === "plan" ? "ask" : "perm" }));
   const permissionName = PERMISSIONS.find((p) => p.mode === ai.settings.permission)?.name ?? "Ask before edits";
 
@@ -179,7 +190,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   }
                 />
               ) : null}
-              {brain ? <BrainComposerBar brain={brain} /> : null}
+              {brain ? <BrainComposerBar brain={brain} onDecided={() => setSubmitRequest((n) => n + 1)} onUseLocal={localModel ? () => config.setModel(localModel.ref) : undefined} /> : null}
               <div className="chat-composer">
                 <Composer
                   onDraftChange={brain ? (text) => brain.setDraft(text) : undefined}
@@ -187,7 +198,10 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   inputID={`chat-input-${mode}`}
                   autoFocus
                   placeholder={s.running ? "Queue a message for when Based is done" : "Ask your notes, or tell Based what to do"}
+                  submitRequest={submitRequest}
                   onSubmit={(text) => {
+                    // BSD-184: Privacy-Check (opt-in) – mit Treffern erst wählen lassen.
+                    if (brain && !brain.gate(text, controller.reach())) return false;
                     brain?.captureSend(text);
                     void controller.send(text);
                   }}
@@ -197,10 +211,12 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
                   hide={["agent"]}
                   options={{ compute: computeOptions.length > 0 ? computeOptions : [{ name: "Set up a model…", desc: "Add a key or a local model", icon: "pick" }], permission: permissionOptions }}
                   foot={{ compute: "Models come from your providers in chat settings.", permission: "Every change by Based is one undo step." }}
-                  picked={{ compute: active?.ref ?? (s.ready ? "Scripted" : "No model"), permission: permissionName }}
+                  picked={{ compute: computeLevelName ? `${computeLevelName}${s.lastRoute?.model ? ` · ${s.lastRoute.model}` : ""}` : active?.ref ?? (s.ready ? "Scripted" : "No model"), permission: permissionName }}
                   onPick={(key, name) => {
                     if (key === "compute") {
-                      if (models.some((m) => m.ref === name)) config.setModel(name);
+                      const lvl = LEVELS.find((l) => l.name === name);
+                      if (lvl) config.setCompute(lvl.level);
+                      else if (models.some((m) => m.ref === name)) config.setModel(name);
                       else setPane("settings");
                     } else if (key === "permission") {
                       const p = PERMISSIONS.find((x) => x.name === name);

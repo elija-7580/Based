@@ -1,9 +1,9 @@
 // BSD-221 Teil 3a: Läufe (BSD-160-Records) und die Inbox für MCP – damit `based runs`, `based run <id>` und
 // `based inbox` gegen den TS-Server funktionieren. Nur lesen; das Format folgt dem, was die CLI erwartet
 // (`runSnapshot`: erste Zeile „- [Status] …“, Abschnitte „Result:“, „Sub-runs:“; „Sandbox: …“ falls vorhanden).
-import { getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type RunData, type RunStatus } from "@based/brain";
+import { AgentStore, getRecord, listRecords, PROJECT_TYPE, RUN_TYPE, toMs, type ProjectData, type ProjectStatus, type RunData, type RunStatus } from "@based/brain";
 import { titleOf, type WorkspaceStore } from "@based/core";
-import { ToolError } from "./pages.js";
+import { PAGE_URI, ToolError } from "./pages.js";
 
 export const RUN_STATUS_LABEL: Record<RunStatus, string> = { queued: "Queued", running: "Running", needsYou: "Needs you", done: "Done", failed: "Failed", cancelled: "Cancelled" };
 
@@ -94,4 +94,44 @@ export function getProjectText(store: WorkspaceStore, id: string): string {
   const runs = listRecords<RunData>(store, RUN_TYPE).filter((r) => r.data.projectID === p.id).sort((a, b) => b.data.startedAt - a.data.startedAt);
   if (runs.length > 0) out.push("", "Recent runs:", ...runs.slice(0, 10).map(line));
   return out.join("\n");
+}
+
+// MARK: Projekte schreiben (BSD-221 Teil 3d; Swift AgentTools create_project/update_project_status)
+
+function projectStatus(s: string | undefined): ProjectStatus | undefined {
+  if (s === undefined || s.trim() === "") return undefined;
+  const st = PROJECT_STATUSES.find((x) => x === s.trim().toLowerCase());
+  if (!st) throw new ToolError(`Unknown status '${s}'`);
+  return st;
+}
+
+const projectNamed = (store: WorkspaceStore, name: string) => listRecords<ProjectData>(store, PROJECT_TYPE).find((x) => x.name.toLowerCase() === name.toLowerCase());
+
+/** Projekt anlegen (mit Projektseite); gleicher Name (ohne Groß/klein) → nichts anlegen. */
+export function createProjectText(store: WorkspaceStore, o: { name: string; goal?: string | undefined; status?: string | undefined }, now: () => number = Date.now): string {
+  const name = o.name.trim();
+  if (!name) throw new ToolError("name is required");
+  const existing = projectNamed(store, name);
+  if (existing) return `A project named ${existing.name} already exists (id: ${existing.id}) — nothing created.`;
+  const status = projectStatus(o.status) ?? "active";
+  const agents = new AgentStore(store, now);
+  const goal = o.goal?.trim();
+  const p = agents.createProject(name, goal ? { goal } : {});
+  if (status !== "active") agents.updateProject(p.id, { status });
+  agents.projectUpdate(p.id, goal ? `Project created. Goal: ${goal}` : "Project created.");
+  const page = getRecord<ProjectData>(store, PROJECT_TYPE, p.id)?.data.pageID;
+  return `Created project [${name}](${PAGE_URI}${page ?? p.id}) (id: ${p.id}, ${status}).`;
+}
+
+/** Datiertes Update auf die Projektseite, optional mit neuem Status. */
+export function updateProjectStatusText(store: WorkspaceStore, o: { project: string; update: string; status?: string | undefined }, now: () => number = Date.now): string {
+  const p = getRecord<ProjectData>(store, PROJECT_TYPE, o.project) ?? projectNamed(store, o.project);
+  if (!p) throw new ToolError(`No project ${o.project}. Use list_projects.`);
+  const status = projectStatus(o.status);
+  const update = o.update.trim();
+  if (!update) throw new ToolError("update is required");
+  const agents = new AgentStore(store, now);
+  if (status) agents.updateProject(p.id, { status });
+  agents.projectUpdate(p.id, update);
+  return `Posted update to ${p.name}${status ? ` (status ${status})` : ""}.`;
 }

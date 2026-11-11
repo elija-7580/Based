@@ -4,7 +4,7 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { parseKey } from "@based/core";
+import { parseKey, type WorkspaceStore } from "@based/core";
 import { type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, parseRange, referencedAssets } from "./assets.js";
@@ -13,11 +13,12 @@ import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
-import type { CodingSessions } from "@based/brain";
+import type { AgentRunnerOptions, CodingSessions } from "@based/brain";
 import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
+import { Scheduler } from "./scheduler.js";
 import { principalOf, registerShareRoutes } from "./share-routes.js";
 import { BadRequest, WaitLimit, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
@@ -47,6 +48,10 @@ export interface AppOptions extends SyncServiceOptions {
   codingHost?: CodingHost | undefined;
   /** BSD-235: Adresse des Web-Clients; Access-Links bieten dann „Open in Based“ (Gast-Modus) an. */
   webURL?: string | undefined;
+  /** BSD-243: Abstand der Zeitplan-Prüfung in ms (Standard 30 000; `false` = aus). */
+  scheduleEvery?: number | false;
+  /** BSD-243 Teil 2: Modell für Läufe auf dem Server (ohne: Läufe warten auf eine offene App). */
+  agentEngine?: ((store: WorkspaceStore) => AgentRunnerOptions["engine"]) | undefined;
 }
 
 export interface App {
@@ -57,6 +62,8 @@ export interface App {
   pages: Pages;
   /** Freigaben, Links, Veröffentlichen (docs/sharing.md). */
   share: ShareService;
+  /** BSD-243: fällige Zeitpläne → Run-Records, auch ohne offene App. */
+  scheduler: Scheduler;
   collab: Collab;
   router: Router;
   server: Server;
@@ -90,6 +97,10 @@ export function createApp(opts: AppOptions): App {
   const pages = new Pages(sync.store);
   const share = new ShareService(sync.store, sync.persistence, opts.nowMillis);
   share.onScopeChange = () => sync.wake();
+  const scheduler = new Scheduler(sync.store, { log, ...(opts.nowMillis ? { now: opts.nowMillis } : {}), ...(opts.scheduleEvery ? { intervalMs: opts.scheduleEvery } : {}),
+    ...(opts.agentEngine ? { engine: opts.agentEngine(sync.store) } : {}) });
+  if (opts.agentEngine) log.info("scheduler: runs execute on the server");
+  if (opts.scheduleEvery !== false) scheduler.start();
   const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t) });
   const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
@@ -309,6 +320,7 @@ export function createApp(opts: AppOptions): App {
     collectAssets,
     pages,
     share,
+    scheduler,
     collab,
     router,
     server,
@@ -329,6 +341,7 @@ export function createApp(opts: AppOptions): App {
       opts.coding?.closeAll();
       sync.close(); // offene Long-Polls antworten sofort
       share.close();
+      scheduler.stop();
       pages.dispose();
       await collab.close();
       await new Promise<void>((resolve) => {

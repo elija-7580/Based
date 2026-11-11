@@ -3,3 +3,4 @@
 // package.json, Bedingung `types`), weil die BlockNote-Typen nicht mit exactOptionalPropertyTypes kompilieren.
 export * from "./headless-shared.js";
 export { createConverter } from "./schema/schema.js";
+export { addObject, BOARD_META, BOARD_OBJECTS, BOARD_VERSION, bringToFront, readBoard, removeObjects, updateObject } from "./whiteboard/yboard.js";

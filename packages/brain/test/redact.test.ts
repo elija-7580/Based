@@ -141,3 +141,16 @@ describe("redaction in the engine layer", () => {
     expect(events.filter((e) => e.type === "textDelta").map((e) => (e as { text: string }).text).join("")).toBe("You wrote: Call Jonas Weber at +49 30 1234567");
   });
 });
+
+import { privacyGate } from "../src/redact/wrap.js";
+describe("privacyGate (BSD-184)", () => {
+  it("kein Treffer oder lokal → senden; Schwärzen an → schwärzen; sonst fragen; Wahl gilt", () => {
+    expect(privacyGate({ hits: 0, reach: "external", redactAlways: false })).toBe("send");
+    expect(privacyGate({ hits: 2, reach: "local", redactAlways: false })).toBe("send");
+    expect(privacyGate({ hits: 2, reach: "external", redactAlways: false })).toBe("ask");
+    expect(privacyGate({ hits: 2, reach: "external", redactAlways: true })).toBe("redact");
+    expect(privacyGate({ hits: 2, reach: "external", redactAlways: false, decision: "redact" })).toBe("redact");
+    expect(privacyGate({ hits: 2, reach: "external", redactAlways: false, decision: "raw" })).toBe("send");
+    expect(privacyGate({ hits: 2, reach: "cli", redactAlways: false, decision: "redact" })).toBe("send");
+  });
+});
