@@ -12,6 +12,8 @@ import type { PermissionMode } from "../engine.js";
 import { pathWithin, normalizePath, type AcpMcpServer, type AgentDefinition } from "./agents.js";
 import type { AcpClient } from "./client.js";
 import { AcpEngine } from "./engine.js";
+import { withCodexEffort } from "./chatgpt.js";
+import type { ComputeLevel } from "../routing.js";
 import { PermissionInbox, type InboxItem } from "./inbox.js";
 
 export type CodingSessionState = "starting" | "idle" | "running" | "failed" | "closed";
@@ -45,6 +47,8 @@ export interface CodingSessionsOptions {
   /** Nur in diesen Ordnern dürfen Sitzungen laufen. */
   roots: readonly string[];
   mcpServers?: () => readonly AcpMcpServer[];
+  /** BSD-257: MCP-Server für Chat-Sitzungen (z. B. die Werkzeuge des Workspaces über /mcp). */
+  chatMcpServers?: () => readonly AcpMcpServer[];
   /** Globale Regeln (Text wie in den Einstellungen). */
   rules?: () => string | undefined;
   now?: () => number;
@@ -104,6 +108,9 @@ export class CodingSessions {
 
   get inboxVersion(): number { return this.inboxVer; }
 
+  /** Erlaubte Ordner (der erste dient Chat-Sitzungen als Arbeitsordner, BSD-257). */
+  get roots(): readonly string[] { return this.o.roots; }
+
   agents(): AgentDefinition[] {
     return this.o.agents().filter((a) => a.enabled);
   }
@@ -118,8 +125,10 @@ export class CodingSessions {
   }
 
   /** Sitzung anlegen und Agenten starten. `handoffFrom`: Verlauf dieser Sitzung geht an den neuen Agenten. */
-  async create(input: { agentId: string; cwd: string; mode?: string | undefined; resume?: string | undefined; handoffFrom?: string | undefined }): Promise<CodingSessionView> {
-    const agent = this.agents().find((a) => a.id === input.agentId);
+  async create(input: { agentId: string; cwd: string; mode?: string | undefined; resume?: string | undefined; handoffFrom?: string | undefined; effort?: ComputeLevel | undefined; purpose?: "chat" | "coding" | undefined }): Promise<CodingSessionView> {
+    const found = this.agents().find((a) => a.id === input.agentId);
+    // BSD-257: Denkstufe (Low/Auto/High) als Codex-Konfig-Override; andere Agenten bleiben gleich.
+    const agent = found ? withCodexEffort(found, input.effort) : undefined;
     if (!agent) throw new CodingError(`unknown or disabled agent: ${input.agentId}`, 400);
     if (!input.cwd.startsWith("/")) throw new CodingError("cwd must be an absolute path", 400);
     const cwd = normalizePath(input.cwd);
@@ -140,7 +149,7 @@ export class CodingSessions {
         agent,
         connect: async () => proc.client,
         cwd,
-        mcpServers: this.o.mcpServers?.() ?? [],
+        mcpServers: [...(this.o.mcpServers?.() ?? []), ...(input.purpose === "chat" ? this.o.chatMcpServers?.() ?? [] : [])],
         resumeSessionId: input.resume,
         inbox: this.inbox,
         permissions,

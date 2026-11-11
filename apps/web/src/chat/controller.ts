@@ -3,7 +3,7 @@
 // während einer laufenden Antwort ein (PromptQueue), speichert den laufenden Turn gedrosselt als Records (BSD-77)
 // und fragt bei Schreib-Werkzeugen nach Freigabe (Permission-Pille). Ohne DOM, damit es in Vitest läuft.
 import {
-  combineToolHosts, foldTranscript, historyFromEvents, ModelEngine, PlanRecorder, PromptQueue, runPlan, runTurn,
+  combineToolHosts, foldTranscript, historyFromEvents, PlanRecorder, PromptQueue, runPlan, runTurn,
   type PlannedStep, type RuleEffect,
   type AIProvider, type ChatEngine, type ChatEvent, type ChatInfo, type PermissionMode, type QueuedPrompt, type RunningTurn, type StoredChatEvent, type ToolCall, type ToolHost, type ToolPolicy,
 } from "@based/brain";
@@ -25,6 +25,8 @@ export interface ChatBackend {
 export interface EngineContext {
   tools: ToolHost;
   policy: ToolPolicy;
+  /** Chat dieses Turns (ChatGPT/Codex: Folge-Turns in derselben Sitzung). */
+  chatID?: string | undefined;
 }
 
 /** Baut die Engine für einen Turn; `undefined` = kein Modell eingerichtet. */
@@ -256,9 +258,9 @@ export class ChatController {
     const cfg = this.o.config;
     const choice = cfg?.activeModel();
     if (!cfg || !choice) return undefined;
-    let provider = await cfg.provider(choice, this.o.fetch);
-    if (prep?.wrapProvider) provider = prep.wrapProvider(provider);
-    return new ModelEngine({ provider, model: choice.model, tools: ctx.tools, policy: ctx.policy, ...(system ? { system } : {}) });
+    // BSD-257: ChatGPT (Codex) ist eine Engine ohne Anbieter-Schnittstelle (wie eine CLI) → wrapEngine.
+    const e = await cfg.engine(choice, { tools: ctx.tools, policy: ctx.policy, system, key: ctx.chatID, fetch: this.o.fetch, wrapProvider: prep?.wrapProvider });
+    return choice.kind === "chatgpt" && prep?.wrapEngine ? prep.wrapEngine(e) : e;
   }
 
   /** Wohin das eingestellte Modell spricht. */
@@ -267,6 +269,7 @@ export class ChatController {
     const choice = this.o.config?.activeModel();
     if (!choice) return "external";
     if (choice.kind === "ollama") return "local";
+    if (choice.kind === "chatgpt") return "external";
     const base = this.o.config?.getState().settings.providers[choice.kind]?.baseURL ?? "";
     return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(base) ? "local" : "external";
   }
@@ -289,10 +292,16 @@ export class ChatController {
       const cfg = this.o.config;
       const choice = cfg?.activeModel();
       if (!cfg || !choice) throw new Error("No model is set up. Add a provider and a model in Settings → Agents & AI.");
+      if (choice.kind === "chatgpt") return this.oneShot(await cfg.engine(choice, { policy: { mode: "plan" }, fetch: this.o.fetch }), system, prompt, signal);
       const provider = await cfg.provider(choice, this.o.fetch);
       const r = await provider.stream([{ role: "system", content: system }, { role: "user", content: prompt }], { model: choice.model, tools: [], maxTokens: 2048, signal });
       return r.message.content;
     }
+    return this.oneShot(engine, system, prompt, signal);
+  }
+
+  /** Ein Turn ohne Werkzeuge; Text der letzten Antwort (Fehler als Ausnahme). */
+  private async oneShot(engine: ChatEngine, system: string, prompt: string, signal: AbortSignal): Promise<string> {
     let text = "";
     for await (const e of runTurn(engine, { prompt, system }, signal)) {
       if (e.type === "text") text = (e as Extract<ChatEvent, { type: "text" }>).text;
@@ -306,6 +315,8 @@ export class ChatController {
     const cfg = this.o.config;
     const choice = cfg?.activeModel();
     if (!cfg || !choice) throw new Error("No model is set up.");
+    // BSD-257: keine Codex-Sitzung je Nebenaufruf (Memory-Vorschläge) – der Hook überspringt das still.
+    if (choice.kind === "chatgpt") throw new Error("Memory suggestions need an API model.");
     let provider = await cfg.provider(choice, this.o.fetch);
     if (wrap) provider = wrap(provider);
     const r = await provider.stream([{ role: "system", content: system }, { role: "user", content: prompt }], { model: choice.model, tools: [], maxTokens: 1024 });
@@ -414,7 +425,7 @@ export class ChatController {
     }
     let engine: ChatEngine | undefined;
     try {
-      engine = await this.engine({ tools, policy }, prep, undefined);
+      engine = await this.engine({ tools, policy, chatID: id }, prep, undefined);
     } catch (e) {
       turn.push({ type: "failed", message: message(e) });
     }
