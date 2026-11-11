@@ -41,3 +41,5 @@
 .rec-time { margin-left: auto; color: var(--muted); }
 @keyframes rec-pulse { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
+/* BSD-205: Icon des Workspaces neben der Wortmarke */
+.brand .ws-icon { margin-left: auto; font-size: var(--type-ui-size); line-height: 1; }

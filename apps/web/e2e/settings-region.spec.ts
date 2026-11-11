@@ -49,3 +49,20 @@ test("Workspace-Name in Einstellungen → General", async ({ page }) => {
   await page.goto("/#prefs-workspace");
   await expect(page.getByTestId("workspace-name").getByRole("textbox")).toHaveValue("Acme Notes");
 });
+
+test("Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205)", async ({ page, browserName }) => {
+  await ready(page);
+  await page.goto("/#prefs-workspace");
+  const icons = page.getByTestId("workspace-icon");
+  await icons.getByRole("button", { name: "Icon 🚀" }).click();
+  await expect(icons.getByRole("button", { name: "Icon 🚀" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("workspace-icon-badge")).toHaveText("🚀");
+  if (browserName === "chromium") {
+    await page.waitForTimeout(500);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.getByTestId("workspace-icon-badge")).toHaveText("🚀");
+  }
+  await page.getByTestId("workspace-icon").getByRole("button", { name: "No icon" }).click();
+  await expect(page.getByTestId("workspace-icon-badge")).toHaveCount(0);
+});
