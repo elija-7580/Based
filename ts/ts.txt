@@ -1,5 +1,5 @@
-packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -17,52 +17,52 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1547 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1548)[39m
+packages/core test: [2m      Tests [22m [1m[32m1563 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1564)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m54 passed[39m[22m[90m (54)[39m
 packages/sync test: [2m      Tests [22m [1m[32m41 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (44)[39m
-packages/brain test: [2m      Tests [22m [1m[32m366 passed[39m[22m[90m (366)[39m
-packages/editor test: [2m      Tests [22m [1m[32m63 passed[39m[22m[90m (63)[39m
-apps/web test: [2m      Tests [22m [1m[32m136 passed[39m[22m[90m (136)[39m
-apps/server test: [2m      Tests [22m [1m[32m87 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (88)[39m
+packages/brain test: [2m      Tests [22m [1m[32m371 passed[39m[22m[90m (371)[39m
+packages/editor test: [2m      Tests [22m [1m[32m68 passed[39m[22m[90m (68)[39m
+apps/web test: [2m      Tests [22m [1m[32m141 passed[39m[22m[90m (141)[39m
+apps/server test: [2m      Tests [22m [1m[32m93 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (94)[39m
 apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
 --- e2e
-  ✓  255 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.4s)
-  ✓  256 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.5s)
-  ✓  257 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (1.9s)
-  ✓  258 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.0s)
+  ✓  264 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.8s)
+  ✓  267 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.7s)
+  ✓  268 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.6s)
+  -  270 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  271 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  269 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (3.9s)
+  ✓  272 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.2s)
+  ✓  273 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
+  ✓  274 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.5s)
+  ✓  275 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.0s)
+  ✓  276 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
 
 
-  1) [chromium] › e2e/editor-parity.spec.ts:512:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) 
+  1) [chromium] › e2e/shell-layout.spec.ts:104:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
 
-    Test timeout of 120000ms exceeded.
+    Error: expect(received).toBeGreaterThan(expected)
 
-    Error: locator.hover: Target page, context or browser has been closed
-    Call log:
-      - waiting for getByRole('menuitem', { name: 'Turn into' })
-        - locator resolved to <div id="_r_18_" tabindex="-1" role="menuitem" aria-haspopup="menu" aria-expanded="false" class="bn-ak-menu-item bn-menu-item">…</div>
-      - attempting hover action
-        - waiting for element to be visible and stable
-        - element is not stable
-      - retrying hover action
-        - waiting for element to be visible and stable
-      - element was detached from the DOM, retrying
+    Expected: > 280
+    Received:   230
 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-      536 |
-      537 |   await blockMenu(page, "Gamma becomes a page");
-    > 538 |   await page.getByRole("menuitem", { name: "Turn into" }).hover();
-          |                                                           ^
-      539 |   await page.getByRole("menuitem", { name: "Page", exact: true }).click();
-      540 |   await expect(editor(page).locator(".bx-pagelink-title", { hasText: "Gamma becomes a page" })).toBeVisible();
-      541 |   await expect(editor(page).getByText("Gamma becomes a page")).toHaveCount(1);
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:538:59
+      128 |   await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
+      129 |   await page.mouse.wheel(0, 200);
+    > 130 |   await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
+          |                                                                                     ^
+      131 | });
+      132 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-layout.spec.ts:130:85
 
-    Error Context: test-results/editor-parity-Blockmenü-Mo-3d38a-into-→-Page-BSD-207-Teil-2--chromium/error-context.md
+    Error Context: test-results/shell-layout-Rad-über-eine-a5bc3-e-Seite-weiter-Elija-11-11--chromium/error-context.md
 
   1 failed
-    [chromium] › e2e/editor-parity.spec.ts:512:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) 
+    [chromium] › e2e/shell-layout.spec.ts:104:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
   14 skipped
-  243 passed (11.4m)
+  261 passed (11.1m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
