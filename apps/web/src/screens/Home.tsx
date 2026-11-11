@@ -5,7 +5,9 @@
 // Ablauf beim Senden: Eingabe wird zur Karte → „versteht“ (Skelett) → Plan → die Karte fliegt in den inneren Ring
 // bzw. ins Ziel auf dem Bogen (FLIP, nur Position und Deckkraft, 180 ms; bei „reduzierter Bewegung“ ohne Flug).
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
-import { composerTask, costLine, greetingSentence, greetingWord, homeModel, taskCard, type Frame, type NeedsYou } from "@based/brain/home";
+import {
+  composerTask, costLine, FRAME_SPAN_MS, frameStart, greetingSentence, greetingWord, homeModel, showCost, taskCard, type DueItem, type Frame, type NeedsYou,
+} from "@based/brain/home";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { chatController, openChatPanel } from "../chat/runtime.js";
 import { Composer } from "../components/Composer.js";
@@ -56,11 +58,22 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
   const projectName = (id: string) => snap?.projects.find((p) => p.id === id)?.name;
   const titleOf = (id: string) => state.titles.get(id);
 
+  // BSD-278: fällige Aufgaben aus den Datenbanken (rechter Bogen); neu bei Zeitrahmen, Minute und Änderungen an Titeln/Outline
+  const [due, setDue] = useState<readonly DueItem[]>([]);
+  const minute = Math.floor(now / 60_000);
+  useEffect(() => {
+    if (!state.ready) return;
+    let live = true;
+    const at = minute * 60_000;
+    client.dueItems(frameStart("today", at), at + 60_000 + FRAME_SPAN_MS[frame]).then((d) => { if (live) setDue(d); }, () => undefined);
+    return () => { live = false; };
+  }, [state.ready, client, frame, minute, state.titles, state.outline]);
+
   const composer = useMemo(() => (snap ? composerTask(snap.tasks, snap.runs, now, dismissed) : {}), [snap, now, dismissed]);
   const composerView = composer.id && snap ? taskCard(snap.tasks.find((t) => t.id === composer.id)!, snap.runs, projectName) : undefined;
   const model = useMemo(
-    () => (snap ? homeModel({ snapshot: snap, approvals: ui.approvals, active: ui.active, nowMs: now, frame, ...(composer.id ? { composerID: composer.id } : {}) }) : undefined),
-    [snap, ui, now, frame, composer.id],
+    () => (snap ? homeModel({ snapshot: snap, approvals: ui.approvals, active: ui.active, nowMs: now, frame, due, ...(composer.id ? { composerID: composer.id } : {}) }) : undefined),
+    [snap, ui, now, frame, composer.id, due],
   );
 
   // Erledigte Karte nach der Haltezeit pünktlich wegschicken
@@ -159,7 +172,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
             <SegmentedControlItem value="week" label="Week" />
             <SegmentedControlItem value="month" label="Month" />
           </SegmentedControl>
-          <span className="home-mono" data-testid="home-cost">{model ? costLine(model, frame) : "…"}</span>
+          {model && showCost(model, showDetails) ? <span className="home-mono" data-testid="home-cost">{costLine(model, frame)}</span> : null}
           <span className="grow" />
           <span className="home-status t-meta" data-testid="home-server">
             <span className={`dot ${synced ? "synced-dot" : state.status.state === "error" ? "error-dot" : ""}`} aria-hidden="true" />
