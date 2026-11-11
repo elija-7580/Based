@@ -21,7 +21,7 @@ import { hasText, MARQUEE_MIN, marqueeRange, rectFrom, siblingSpan } from "./blo
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
-  applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_PAGE, turnInto,
+  applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_EQUATION, TURN_INTO_PAGE, turnInto, turnIntoEquation,
   turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor, type URLChoice,
 } from "./blockActions.js";
 import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "./MovePicker.js";
@@ -345,10 +345,12 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
   const [docEl, setDocEl] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!editable || !docEl) return;
-    return attachBlockDrop(editor as unknown as BlockDropHost, docEl, setDropRect, () => sideBlockRef.current);
+    return attachBlockDrop(editor as unknown as BlockDropHost, docEl, setDropRect, () => sideBlockRef.current, () => selectedRef.current);
   }, [editor, editable, docEl]);
   const sel = editor as unknown as SelectionEditor;
   const selected = range ? rangeIDs(sel, range) : [];
+  const selectedRef = useRef<readonly string[]>([]);
+  selectedRef.current = selected;
   const selectBlocks = (r: BlockRange | undefined) => {
     setRange(r);
     if (!r) return;
@@ -856,6 +858,9 @@ function TurnIntoItem(props: { session: DocSession }) {
             {o.label}
           </Components.Generic.Menu.Item>
         ))}
+        <Components.Generic.Menu.Item key={TURN_INTO_EQUATION.key} className="bn-menu-item" onClick={() => turnIntoEquation(a, targetBlocks(a, current.id))}>
+          {TURN_INTO_EQUATION.label}
+        </Components.Generic.Menu.Item>
         <Components.Generic.Menu.Item key={TURN_INTO_PAGE.key} className="bn-menu-item" onClick={() => void turnIntoPage(a, props.session, current.id)}>
           {TURN_INTO_PAGE.label}
         </Components.Generic.Menu.Item>

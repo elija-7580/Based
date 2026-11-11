@@ -502,6 +502,25 @@ test("Blockmenü: Turn into, Duplicate und ⌘D (BSD-207)", async ({ page }) => 
   await expect(editor(page).locator("h2", { hasText: "Launch plan" })).toHaveCount(3);
 });
 
+test("Blockmenü: Turn into → Block equation (BSD-249 Teil 2)", async ({ page }) => {
+  await createPage(page, "Equation turn");
+  await openPage(page, "Equation turn");
+  await caretInLastLine(page);
+  await page.keyboard.type("a^2 + b^2 = c^2");
+  await settled(page);
+  const block = editor(page).locator(".bn-block-content", { hasText: "a^2 + b^2 = c^2" }).first();
+  await block.hover();
+  await page.locator(".bn-side-menu [draggable=true]").first().click();
+  await page.getByRole("menuitem", { name: "Turn into" }).hover();
+  await page.getByRole("menuitem", { name: "Block equation" }).click();
+  const eq = editor(page).locator(".bx-equation").first();
+  await expect(eq).toBeVisible();
+  await expect(eq.locator(".katex").first()).toBeVisible();
+  await settled(page);
+  await page.reload();
+  await expect(editor(page).locator(".bx-equation .katex").first()).toBeVisible();
+});
+
 /** Blockmenü am Block mit diesem Text öffnen. */
 async function blockMenu(page: Page, text: string) {
   const block = editor(page).locator(".bn-block-content", { hasText: text }).first();

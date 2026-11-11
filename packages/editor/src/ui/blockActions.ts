@@ -122,6 +122,31 @@ export function turnInto(editor: ActionEditor, blocks: readonly BlockLike[], o: 
   return n;
 }
 
+/** BSD-249 Teil 2: „Turn into → Block equation“ (wie Notion): der Text wird zum TeX der Gleichung. */
+export const TURN_INTO_EQUATION: TurnIntoOption = { key: "equation", label: "Block equation", type: CUSTOM.equation };
+
+/** Reiner Text des Inline-Inhalts (Text, Links; Erwähnungen über ihren sichtbaren Text, falls vorhanden). */
+export function inlineText(content: unknown): string {
+  if (!Array.isArray(content)) return "";
+  return content.map((c: { type?: string; text?: string; content?: unknown; props?: { text?: string } }) =>
+    typeof c.text === "string" ? c.text : c.type === "link" ? inlineText(c.content) : c.props?.text ?? "").join("");
+}
+
+/**
+ * Wandelt Textblöcke in Block-Gleichungen um (ein Undo-Schritt je Block). Gleichungen haben keine Kinder: die
+ * Unterblöcke bleiben erhalten und stehen direkt dahinter (wie Notion). Gibt die Zahl der umgewandelten Blöcke zurück.
+ */
+export function turnIntoEquation(editor: ActionEditor, blocks: readonly BlockLike[]): number {
+  let n = 0;
+  for (const b of blocks) {
+    if (!canTurnInto(b)) continue;
+    const eq = { id: b.id, type: CUSTOM.equation, props: { expression: inlineText(b.content).trim() } };
+    editor.replaceBlocks([b.id], [eq, ...b.children]);
+    n++;
+  }
+  return n;
+}
+
 const newID = () => globalThis.crypto.randomUUID().toUpperCase();
 
 /**
