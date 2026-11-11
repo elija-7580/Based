@@ -100,6 +100,36 @@ test("Import eines Notion-HTML-Exports (ZIP) legt die Seiten an", async ({ page 
   await expect(page.getByTestId("page-content")).toContainText("Purple line");
 });
 
+test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await expect(dialog).toContainText("Obsidian vault");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const vault = zip([
+    { path: "Garden/.obsidian/app.json", data: Buffer.from("{}") },
+    { path: "Garden/Welcome.md", data: Buffer.from("---\ntags: [start]\n---\nGo to [[Ideas/Seeds|my seeds]].\n\n![[pixel.png]]\n") },
+    { path: "Garden/Ideas/Seeds.md", data: Buffer.from("Tomato seeds from [[Welcome]].") },
+    { path: "Garden/assets/pixel.png", data: png },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Garden.zip", mimeType: "application/zip", buffer: vault });
+  await expect(dialog.getByTestId("import-summary")).toHaveText("Imported 4 pages, 1 attached file.");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("treeitem", { name: "Garden" })).toBeVisible();
+  const hits = await quickFind(page, "Tomato seeds");
+  await expect(hits.first()).toContainText("Seeds");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Seeds");
+  // Erwähnung [[Welcome]] führt zur Seite
+  await page.getByTestId("page-content").getByText("Welcome").first().click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome");
+  const content = page.getByTestId("page-content");
+  await expect(content).toContainText("Go to 📄Seeds"); // Erwähnung zeigt den Seitentitel
+  await expect(content).not.toContainText("[[");
+  await expect(content.locator("img").first()).toBeVisible();
+});
+
 test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
