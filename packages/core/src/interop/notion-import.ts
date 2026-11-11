@@ -23,6 +23,7 @@ import { markdownFileName } from "./markdown-export.js";
 import { findObsidianVault, ObsidianImporter } from "./obsidian-import.js";
 import { EnexImporter } from "./enex-import.js";
 import { importOPML } from "./opml.js";
+import { DocxImporter } from "./docx-import.js";
 
 export interface NotionImportOptions {
   /** Wohin Bilder und Dateien kommen; ohne Speicher bleiben nur externe URLs. */
@@ -63,9 +64,9 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   const md: ImportSource[] = [];
   // BSD-260: Obsidian-Vaults (Ordner mit `.obsidian/`) liest ein eigener Importer (Wikilinks, Einbettungen, Frontmatter).
   const vaults: { files: ImportFiles; vault: string; title: string | undefined }[] = [];
-  // BSD-260: Evernote-Notizbücher (.enex) und Gliederungen (.opml), auch in ZIPs und Ordnern.
+  // BSD-260: Evernote-Notizbücher (.enex), Gliederungen (.opml) und Word-Dokumente (.docx), auch in ZIPs und Ordnern.
   const enex: { files: ImportFiles; path: string }[] = [];
-  const enexIn = (files: ImportFiles, dir: string) => files.walk(dir).filter((f) => ["enex", "opml"].includes(extname(f).toLowerCase()));
+  const enexIn = (files: ImportFiles, dir: string) => files.walk(dir).filter((f) => ["enex", "opml", "docx"].includes(extname(f).toLowerCase()));
   sources.forEach((src, i) => {
     const p = normalizePath(src.path);
     const ext = extname(p).toLowerCase();
@@ -91,7 +92,7 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
       const hasHTML = containsExt(r.files, "", ["html", "htm"]);
       if (hasHTML) html.push({ files: r.files, path: "" });
       if (containsExt(r.files, "", ["md", "csv"]) || !hasHTML) md.push({ files: r.files, path: "" });
-    } else if (exists && (ext === "enex" || ext === "opml")) {
+    } else if (exists && (ext === "enex" || ext === "opml" || ext === "docx")) {
       enex.push({ files: src.files, path: p });
     } else if (exists && isDir(src.files, p) && enexIn(src.files, p).length > 0 && !containsExt(src.files, p, ["md", "csv", "html", "htm"])) {
       for (const f of enexIn(src.files, p)) enex.push({ files: src.files, path: f });
@@ -126,8 +127,14 @@ export function prepareImport(sources: ImportSource[], opts: NotionImportOptions
   for (const v of vaults) extra.push(() => new ObsidianImporter(v.files, v.vault, common).run(v.title, out.markdown?.rootKeys.at(-1)));
   for (const e of enex) {
     extra.push(() => {
-      const xml = e.files.readStrictText(e.path) ?? e.files.readText(e.path) ?? "";
       const title = stripExtension(basename(e.path));
+      if (extname(e.path).toLowerCase() === "docx") {
+        const src = e.files.source(e.path);
+        if (!src) throw new Error(`Couldn't read ${basename(e.path)}`);
+        const doc = extractZip(src, { limits: opts.zipLimits, isCancelled: opts.isCancelled });
+        return new DocxImporter(doc.files, "", common).run(title, out.markdown?.rootKeys.at(-1));
+      }
+      const xml = e.files.readStrictText(e.path) ?? e.files.readText(e.path) ?? "";
       if (extname(e.path).toLowerCase() === "opml") return importOPML(xml, title, { now: opts.now, userID: opts.userID, afterKey: out.markdown?.rootKeys.at(-1) });
       return new EnexImporter(common).run(xml, title, out.markdown?.rootKeys.at(-1));
     });

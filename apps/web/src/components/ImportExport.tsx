@@ -115,13 +115,13 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
   return (
     <Dialog title={phase.k === "notion" ? "Import from Notion" : "Import"} onClose={onClose} busy={busy}>
       <input ref={files} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Choose files to import"
-        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.jsonl,.enex,.opml" onChange={(e) => void start(e.target.files)} />
+        accept=".zip,.html,.htm,.md,.markdown,.csv,.txt,.jsonl,.enex,.opml,.docx" onChange={(e) => void start(e.target.files)} />
       <input ref={folder} type="file" className="sr-only" tabIndex={-1} aria-label="Choose a folder to import"
         {...{ webkitdirectory: "" }} onChange={(e) => void start(e.target.files)} />
       {phase.k === "pick" || phase.k === "error" ? (
         <>
           <p className="t-desc">
-            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
+            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Word documents (.docx), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
             Importing the same Notion export again updates those pages and keeps what you changed in Based.
           </p>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}
