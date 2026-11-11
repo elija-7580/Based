@@ -10,6 +10,8 @@ import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
+import { anthropicAgentEngine } from "./agent-engine.js";
+import type { WorkspaceStore } from "@based/core";
 import { DockerSandboxProvider, LocalSandboxProvider, SandboxManager } from "./sandbox.js";
 import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
@@ -207,6 +209,8 @@ async function main() {
   const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
+    // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
+    ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL }) } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),

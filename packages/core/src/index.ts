@@ -160,3 +160,8 @@ export {
   beginSession, buildReport, DiagnosticsLog, endSession, formatEntry, heartbeat, LOG_LIMIT, previousSessionNotice, redact, SESSION_KEY, startStallDetector,
   type DiagnosticsEntry, type DiagnosticsLevel, type DiagnosticsStorage, type ReportFacts, type SessionRecord, type StallDetectorOptions,
 } from "./diagnostics.js";
+export {
+  WB_KINDS, backZ, bounds, danglingConnectors, frontZ, parseWBObject, sortByZ, wbFields,
+  type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
+} from "./whiteboard/model.js";
+export { decodeInk, encodeInk, INK_SCALE, INK_VERSION, InkFormatError, type InkPoint } from "./whiteboard/ink.js";

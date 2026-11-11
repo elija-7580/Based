@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { getProjectText, getRunText, inboxText, listProjectsText, listRunsText } from "./runs.js";
+import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -16,7 +16,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
-- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`.
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
@@ -97,6 +97,23 @@ export function createMcpServer(pages: Pages): McpServer {
     "get_project",
     { description: "One project: status, goal, budget, project page and recent runs (by id or name)", inputSchema: { project_id: z.string() }, annotations: { readOnlyHint: true } },
     guarded(({ project_id }: { project_id: string }) => text(getProjectText(pages.store, project_id))),
+  );
+  // BSD-221 Teil 3d: Projekte schreiben (Namen und Argumente wie Swift AgentTools)
+  server.registerTool(
+    "create_project",
+    {
+      description: "Create a project (with an overview page for dated updates). Use it when the user starts a new goal that will have several chats, runs or pages; check list_projects first so you don't create a duplicate.",
+      inputSchema: { name: z.string().describe("Short project name"), goal: z.string().optional().describe("One sentence: what done looks like"), status: z.string().optional().describe("Optional: Active (default) | Paused | Done") },
+    },
+    guarded(({ name, goal, status }: { name: string; goal?: string | undefined; status?: string | undefined }) => text(createProjectText(pages.store, { name, goal, status }))),
+  );
+  server.registerTool(
+    "update_project_status",
+    {
+      description: "Post a short dated update to a project's page, optionally changing its status. Use it after finishing something worth knowing in a project.",
+      inputSchema: { project: z.string().describe("Project id or name"), update: z.string().describe("What happened, one or two sentences"), status: z.string().optional().describe("Optional: Active | Paused | Done") },
+    },
+    guarded(({ project, update, status }: { project: string; update: string; status?: string | undefined }) => text(updateProjectStatusText(pages.store, { project, update, status }))),
   );
 
   // MARK: Datenbanken (BSD-221)
