@@ -4,6 +4,8 @@ import { Link } from "@astryxdesign/core/Link";
 import { Selector } from "@astryxdesign/core/Selector";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Switch } from "@astryxdesign/core/Switch";
+import { ToggleButton } from "@astryxdesign/core/ToggleButton";
+import { TEAMSPACE_ICONS } from "../../components/TeamspaceDialog.js";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
@@ -166,6 +168,14 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
     <Group>
       <Row label="Name" hint="Used for exports and shown to people you share with">
         <WorkspaceName name={state.outline?.workspaceName ?? ""} onRename={(name) => void client.command({ op: "renameWorkspace", name })} />
+      </Row>
+      <Row label="Icon" hint="Shown next to the workspace name; syncs to every device">
+        <HStack gap={1} wrap="wrap" role="group" aria-label="Workspace icon" data-testid="workspace-icon">
+          <ToggleButton label="No icon" isPressed={!state.outline?.workspaceIcon} onPressedChange={() => void client.command({ op: "setWorkspaceIcon" })}>–</ToggleButton>
+          {TEAMSPACE_ICONS.map((e) => (
+            <ToggleButton key={e} label={`Icon ${e}`} isPressed={state.outline?.workspaceIcon === e} onPressedChange={() => void client.command({ op: "setWorkspaceIcon", icon: e })}>{e}</ToggleButton>
+          ))}
+        </HStack>
       </Row>
       <Row label="Contents" hint="Pages and databases outside the Trash">
         <Value testID="workspace-counts">{count(nodes.filter((n) => n.kind === "page").length, "page")} · {count(nodes.filter((n) => n.kind === "database").length, "database")}</Value>

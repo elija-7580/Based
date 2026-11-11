@@ -487,6 +487,71 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
+test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const area = { id: "ar", name: "Area", type: "select", options: [{ id: "w", name: "Work", color: "blue" }, { id: "h", name: "Home", color: "green" }] };
+  await seedDatabase(page, {
+    title: "Fill",
+    properties: [{ id: "title", name: "Name", type: "title" }, area],
+    rows: [{ title: "Prepare the quarterly report" }, { title: "Water the plants" }],
+    views: [{ id: "vt", name: "Table", type: "table" }],
+  });
+  await page.waitForFunction(() => "__basedChat" in globalThis);
+  await page.evaluate(() => (globalThis as unknown as { __basedChat: { useScript(s: unknown, d: number): void } }).__basedChat.useScript([[{ text: "Work" }], [{ text: "Home" }]], 0));
+  await page.getByRole("columnheader", { name: /Area/ }).getByRole("button").first().click();
+  await page.getByTestId("property-autofill").click();
+  const cell = (row: string) => page.locator(".dbui-vrow", { hasText: row });
+  await expect(cell("quarterly report")).toContainText("Work");
+  await expect(cell("Water the plants")).toContainText("Home");
+  // BSD-293: ⌘Z nimmt das ganze Autofill in einem Schritt zurück, ⇧⌘Z stellt es wieder her
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(cell("quarterly report")).not.toContainText("Work");
+  await expect(cell("Water the plants")).not.toContainText("Home");
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(cell("quarterly report")).toContainText("Work");
+  await expect(cell("Water the plants")).toContainText("Home");
+  // im Titelfeld bleibt ⌘Z das Undo des Feldes
+  await page.getByLabel("Page title").focus();
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(cell("quarterly report")).toContainText("Work");
+});
+
+test("BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const now = new Date();
+  let mon = 2;
+  while (new Date(now.getFullYear(), now.getMonth(), mon).getDay() !== 1) mon++;
+  const day = (d: number) => ({ dt: { date: { _0: { start: (new Date(now.getFullYear(), now.getMonth(), d).getTime() - 978_307_200_000) / 1000, includeTime: false } } } });
+  await seedDatabase(page, {
+    title: "Dates",
+    properties: [{ id: "title", name: "Name", type: "title" }, { id: "dt", name: "Date", type: "date" }],
+    // Montag/Dienstag liegen bei Wochenstart Sonntag wie Montag in derselben Zeile; C3 eine Woche unter C2
+    rows: [{ title: "C1", values: day(mon) }, { title: "C2", values: day(mon + 1) }, { title: "C3", values: day(mon + 8) }],
+    views: [{ id: "vc", name: "Calendar", type: "calendar", extra: { datePropertyID: "dt" } }, { id: "vt", name: "Timeline", type: "timeline", extra: { datePropertyID: "dt" } }],
+  });
+  const entry = (t: string) => page.locator(".dbui-cal-entry", { hasText: t }).first();
+  await expect(entry("C1")).toBeVisible();
+  await entry("C1").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(entry("C2")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(entry("C3")).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(entry("C2")).toBeFocused();
+
+  await page.getByRole("tab", { name: "Timeline" }).click();
+  const bar = (t: string) => page.locator(".dbui-tl-bar", { hasText: t }).first();
+  await expect(bar("C1")).toBeAttached();
+  await bar("C1").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(bar("C2")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(bar("C3")).toBeFocused();
+});
+
 test("BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

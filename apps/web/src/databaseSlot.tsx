@@ -13,6 +13,8 @@ import { InPeek, RowPeek } from "./database/RowPeek.js";
 import { asNewTabs, wantsNewTab } from "./shell/newTabIntent.js";
 import { routeToHash } from "./shell/router.js";
 import { assets } from "./assetBridge.js";
+import { chatController } from "./chat/runtime.js";
+import { editorClient } from "./editorSlot.js";
 import { ASSET_URL_PREFIX } from "@based/editor";
 import type { DatabaseViewProps } from "./slots.js";
 
@@ -50,11 +52,16 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     const a = assets();
     return a ? { upload: async (f: File) => (await a.uploadFile(f)).slice(ASSET_URL_PREFIX.length), open: (id: string) => a.resolveFileUrl(ASSET_URL_PREFIX + id) } : undefined;
   }, []);
+  // BSD-225 Teil 2: „Autofill with AI“ im Property-Menü über das eingestellte Modell (wie „Ask AI“ im Editor)
+  const ai = useMemo(() => {
+    const client = editorClient();
+    return client ? { write: (system: string, prompt: string, signal: AbortSignal) => chatController(client).write(system, prompt, signal), available: () => chatController(client).canWrite() } : undefined;
+  }, []);
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
     <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} />
     </div>
   );
 }

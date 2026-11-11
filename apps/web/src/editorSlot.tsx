@@ -25,6 +25,8 @@ let meeting: WebMeetingHost | undefined;
 
 /** BSD-281: die Aufnahme-Pille in der Seitenleiste liest den Zustand der laufenden Aufnahme. */
 export const meetingHost = (): WebMeetingHost | undefined => meeting;
+/** BSD-225 Teil 2: Store-Client für Datenbank-Autofill (gleiches Modell wie „Ask AI“ im Editor). */
+export const editorClient = (): StoreClient | undefined => shellClient;
 let docStore: WorkerYDocStore | undefined;
 let collab: CollabBinder | undefined;
 

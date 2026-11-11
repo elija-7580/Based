@@ -397,6 +397,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         <img className="on-light" src={markLight} alt="" />
         <img className="on-dark" src={markDark} alt="" />
         <span className="wordmark">based</span>
+        {outline?.workspaceIcon ? <span className="ws-icon" data-testid="workspace-icon-badge" title={outline.workspaceName} aria-label={`Workspace ${outline.workspaceName}`}>{outline.workspaceIcon}</span> : null}
       </div>
       <RecordingPill onOpenPage={onOpenPage} />
       {layout.top.map((id) => navButton(entries[id]))}

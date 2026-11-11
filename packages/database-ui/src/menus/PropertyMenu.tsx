@@ -1,7 +1,7 @@
 // BSD-155: Menü einer Property (Spaltenkopf): umbenennen, Typ ändern (mit Verlust-Warnung über
 // conversionLoss), Einstellungen je Typ (Optionen, Zahlformat, Formel, Relation, Rollup, Datum, ID),
 // sortieren, filtern, gruppieren, verstecken, duplizieren, löschen.
-import { useState } from "react";
+import { useContext, useRef, useState } from "react";
 import {
   ADDABLE_PROPERTY_TYPES, CALCULATION_LABELS, ENUMS, NUMBER_FORMAT_LABELS, NUMBER_FORMATS, PROPERTY_TYPE_LABELS, addOption, addProperty,
   changePropertyType, conversionLoss, deleteOption, deleteProperty, duplicateProperty, filledCellCount, makeRelationTwoWay, plainText,
@@ -9,7 +9,8 @@ import {
   setSorts, titleOf, updateOption, updateProperty, wouldCreateRollupCycle,
   type DatabaseView, type PropertySchema,
 } from "@based/core";
-import { useDB } from "../context.js";
+import { ShellSlots, useDB } from "../context.js";
+import { AUTOFILL_TYPES, runAutofill, type AutofillProgress } from "../logic/autofill.js";
 import { addItem, conditionItem, EMPTY_FILTER, newCondition } from "../logic/filters.js";
 import { Confirm, Icon, MenuItem, MenuLabel, MenuSeparator, OptionPill, PROPERTY_ICONS, Popover, type Anchor } from "../ui.js";
 import { useResultType } from "./FilterEditor.js";
@@ -180,6 +181,9 @@ export function PropertyMenu({ p, view, anchor, onClose }: { p: PropertySchema; 
   const [confirm, setConfirm] = useState<{ message: string; label: string; run: () => void } | null>(null);
   const [name, setName] = useState(p.name);
   const isTitle = p.type === "title";
+  const { ai } = useContext(ShellSlots);
+  const [fill, setFill] = useState<AutofillProgress | null>(null);
+  const abort = useRef<AbortController | null>(null);
   const pickType = (type: string) => {
     if (type === p.type) return setPage("main");
     const loss = conversionLoss(store, db.id, p.id, type);
@@ -215,6 +219,20 @@ export function PropertyMenu({ p, view, anchor, onClose }: { p: PropertySchema; 
             <>
               <MenuSeparator />
               <MenuItem icon={<Icon name="plus" />} onClick={() => { addProperty(store, db.id, "Property", "text", { after: p.id, showIn: view.id }); onClose(); }}>Insert right</MenuItem>
+              {AUTOFILL_TYPES.has(p.type) && ai?.available() ? (
+                fill ? (
+                  <MenuItem icon={<Icon name="close" />} onClick={() => abort.current?.abort()} testID="property-autofill-stop">
+                    {`Filling ${fill.done} of ${fill.total}… Stop`}
+                  </MenuItem>
+                ) : (
+                  <MenuItem icon={<Icon name="sparkle" />} testID="property-autofill" onClick={() => {
+                    const c = new AbortController();
+                    abort.current = c;
+                    setFill({ done: 0, total: 0, filled: 0 });
+                    void runAutofill(store, db, p, ai, c.signal, setFill).finally(() => { setFill(null); onClose(); });
+                  }}>Autofill with AI</MenuItem>
+                )
+              ) : null}
               {!isTitle && <MenuItem icon={<Icon name="copy" />} onClick={() => { duplicateProperty(store, db.id, p.id); onClose(); }}>Duplicate property</MenuItem>}
               {!isTitle && <MenuItem icon={<Icon name="trash" />} danger onClick={remove} testID="property-delete">Delete property</MenuItem>}
             </>

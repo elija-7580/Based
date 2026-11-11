@@ -89,6 +89,8 @@ export type Command =
   | { op: "createTeamspace"; name: string; icon?: string }
   | { op: "renameTeamspace"; id: string; name: string }
   | { op: "renameWorkspace"; name: string }
+  /** BSD-205: Emoji des Workspaces (ohne = entfernen). */
+  | { op: "setWorkspaceIcon"; icon?: string }
   | { op: "setTeamspaceIcon"; id: string; icon?: string }
   | { op: "deleteTeamspace"; id: string }
   | { op: "undo" }
