@@ -12,6 +12,37 @@ function insertMention(editor: BasedEditor, kind: string, value: string, text: s
   editor.insertInlineContent([{ type: INLINE.mention, props: { kind, value, text } } as never, " "], { updateSelection: true });
 }
 
+/** BSD-90 Teil 2: Text vor der Schreibmarke endet auf „[[Titel]“ (das zweite „]“ kommt gerade) → Titel, sonst nichts. */
+export function wikilinkBefore(text: string): string | undefined {
+  const m = /\[\[([^[\]\n]{1,200})\]$/.exec(text);
+  const t = m?.[1]?.trim();
+  return t ? t : undefined;
+}
+
+/**
+ * „[[Titel]]“ fertig getippt (wie Obsidian): Seite mit genau diesem Titel erwähnen, sonst anlegen und erwähnen; ohne
+ * Seitenverzeichnis bleibt der Text stehen.
+ */
+export async function resolveWikilink(editor: BasedEditor, title: string, opts: Pick<MentionMenuOptions, "pages" | "selfID">): Promise<"linked" | "created" | "text"> {
+  const lower = title.toLowerCase();
+  let found: PageRef[] = [];
+  try {
+    found = await opts.pages.search(title);
+  } catch { /* Suche nicht erreichbar */ }
+  const hit = found.find((p) => !p.trashed && !p.missing && (p.title || "").trim().toLowerCase() === lower);
+  if (hit) {
+    insertMention(editor, "page", hit.id, hit.title || title);
+    return "linked";
+  }
+  const id = opts.pages.create ? await opts.pages.create(title).catch(() => undefined) : undefined;
+  if (id) {
+    insertMention(editor, "page", id, title);
+    return "created";
+  }
+  editor.insertInlineContent([`[[${title}]]`] as never, { updateSelection: true });
+  return "text";
+}
+
 const icon = (p: PageRef) => (isEmojiIcon(p.icon) ? p.icon : p.kind === "database" ? "▦" : "📄");
 
 export interface MentionMenuOptions {

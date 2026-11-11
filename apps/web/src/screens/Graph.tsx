@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
-import { startLayout, type GraphLayout } from "../worker/layoutClient.js";
+import { forgetPositions, rememberPositions, startLayout, type GraphLayout } from "../worker/layoutClient.js";
 import type { GraphResult } from "../worker/protocol.js";
 import "./graph.css";
 
@@ -255,6 +255,8 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
       if (s.layout.settled !== settledRef.current) {
         settledRef.current = s.layout.settled;
         setSettled(settledRef.current);
+        // BSD-262: fertiges Layout merken, damit das nächste Öffnen sofort dasselbe Bild zeigt
+        if (settledRef.current) rememberPositions(s.layout.positions());
       }
       if (!dirty.current) return;
       dirty.current = false;
@@ -276,6 +278,12 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
         if (!s || i === undefined) return undefined;
         const v = view.current;
         return { x: s.layout.x[i]! * v.k + v.x, y: s.layout.y[i]! * v.k + v.y };
+      },
+      /** Lage im Layout (ohne Ansicht) – BSD-262: bleibt beim erneuten Öffnen gleich. */
+      layoutPosition(id: string) {
+        const s = scene.current;
+        const i = s?.index.get(id);
+        return s && i !== undefined ? { x: s.layout.x[i]!, y: s.layout.y[i]! } : undefined;
       },
     };
     return () => {
@@ -381,6 +389,18 @@ export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
           <IconButton label="Zoom in" size="sm" icon={<Icon name="plus" size={16} />} onClick={() => zoomBy(1.4)} />
           <IconButton label="Zoom out" size="sm" icon={<span className="gx-minus" aria-hidden="true" />} onClick={() => zoomBy(1 / 1.4)} />
           <Button label="Fit" size="sm" onClick={() => { autoFit.current = true; fit(); }} />
+          {/* BSD-262: gemerktes Layout verwerfen und neu anordnen */}
+          <Button label="Re-layout" size="sm" onClick={() => {
+            if (!result) return;
+            forgetPositions();
+            const prev = scene.current?.layout;
+            scene.current = buildScene(result.graph, undefined);
+            prev?.dispose();
+            settledRef.current = scene.current.layout.settled;
+            setSettled(settledRef.current);
+            autoFit.current = true;
+            dirty.current = true;
+          }} />
         </div>
         <div ref={wrapRef} className="gx-canvas">
           <canvas

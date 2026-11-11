@@ -40,7 +40,7 @@ self.addEventListener("message", (e: MessageEvent<LayoutWorkerRequest>) => {
     generation = m.generation;
     const initial = new Map<string, { x: number; y: number }>();
     if (m.initial) for (let i = 0; i < m.initial.ids.length; i++) initial.set(m.initial.ids[i]!, { x: m.initial.x[i]!, y: m.initial.y[i]! });
-    layout = new ForceLayout(m.ids, m.links, {}, initial.size ? initial : undefined);
+    layout = new ForceLayout(m.ids, m.links, m.alpha !== undefined ? { alpha: m.alpha } : {}, initial.size ? initial : undefined);
     send();
     kick();
   } else if (m.type === "pin" && layout && m.generation === generation) {

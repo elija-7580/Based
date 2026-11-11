@@ -3,7 +3,7 @@
 import { ForceLayout, layoutBounds, nodeAtPoint } from "@based/core";
 
 export type LayoutWorkerRequest =
-  | { type: "start"; generation: number; ids: string[]; links: [number, number][]; initial?: { ids: string[]; x: Float32Array; y: Float32Array } }
+  | { type: "start"; generation: number; ids: string[]; links: [number, number][]; initial?: { ids: string[]; x: Float32Array; y: Float32Array }; alpha?: number }
   /** Knoten festhalten und dorthin setzen (Ziehen); `index` −1 lässt los. */
   | { type: "pin"; generation: number; index: number; x: number; y: number };
 
@@ -41,14 +41,55 @@ function sharedWorker(): Worker | undefined {
   }
 }
 
-/** Startet ein Layout für `ids`/`links`, bekannte Knoten behalten ihren Platz aus `previous`. */
+// BSD-262 Teil 1: das zuletzt fertige Layout merken (im Speicher und pro Gerät im localStorage), damit der Graph beim
+// nächsten Öffnen sofort dasselbe Bild zeigt; nur neue Knoten werden eingepasst, „Re-layout“ fängt neu an.
+type Positions = { ids: string[]; x: Float32Array; y: Float32Array };
+const LAYOUT_KEY = "based.graph.positions";
+let remembered: Positions | undefined;
+
+export function rememberPositions(p: Positions) {
+  remembered = p;
+  try {
+    const r = (a: Float32Array) => Array.from(a, (v) => Math.round(v * 10) / 10);
+    globalThis.localStorage?.setItem(LAYOUT_KEY, JSON.stringify({ ids: p.ids, x: r(p.x), y: r(p.y) }));
+  } catch { /* nur für diese Sitzung */ }
+}
+
+export function recalledPositions(): Positions | undefined {
+  if (remembered) return remembered;
+  try {
+    const raw = globalThis.localStorage?.getItem(LAYOUT_KEY);
+    if (!raw) return undefined;
+    const v = JSON.parse(raw) as { ids?: unknown; x?: unknown; y?: unknown };
+    if (!Array.isArray(v.ids) || !Array.isArray(v.x) || !Array.isArray(v.y) || v.x.length !== v.ids.length || v.y.length !== v.ids.length) return undefined;
+    remembered = { ids: v.ids.map(String), x: Float32Array.from(v.x as number[]), y: Float32Array.from(v.y as number[]) };
+    return remembered;
+  } catch {
+    return undefined;
+  }
+}
+
+export function forgetPositions() {
+  remembered = undefined;
+  try { globalThis.localStorage?.removeItem(LAYOUT_KEY); } catch { /* egal */ }
+}
+
+/** Kennt das gemerkte Layout jeden Knoten? Dann startet das Layout ruhend (Bild bleibt genau so). */
+export const coversAll = (ids: readonly string[], p: Positions | undefined) => {
+  if (!p || ids.length === 0) return false;
+  const known = new Set(p.ids);
+  return ids.every((id) => known.has(id));
+};
+
+/** Startet ein Layout für `ids`/`links`, bekannte Knoten behalten ihren Platz aus `previous` (sonst aus dem gemerkten). */
 export function startLayout(ids: string[], links: [number, number][], previous: GraphLayout | undefined, useWorker = true): GraphLayout {
-  const initial = previous?.positions();
+  const initial = previous?.positions() ?? recalledPositions();
+  const still = coversAll(ids, initial);
   const w = useWorker ? sharedWorker() : undefined;
   if (!w) {
     const map = new Map<string, { x: number; y: number }>();
     if (initial) initial.ids.forEach((id, i) => map.set(id, { x: initial.x[i]!, y: initial.y[i]! }));
-    const l = new ForceLayout(ids, links, {}, map.size ? map : undefined);
+    const l = new ForceLayout(ids, links, still ? { alpha: 0 } : {}, map.size ? map : undefined);
     let changed = true;
     return {
       ids,
@@ -67,7 +108,8 @@ export function startLayout(ids: string[], links: [number, number][], previous: 
   const gen = ++generation;
   // bis die ersten Positionen kommen: bekannte Plätze, sonst Ursprung (der Worker meldet sofort nach dem Start)
   let x: Float32Array = new Float32Array(ids.length), y: Float32Array = new Float32Array(ids.length);
-  let settled = false;
+  // gemerktes Layout deckt alles ab: sofort ruhend (kein Neuaufbau, kein Springen)
+  let settled = still;
   let changed = true;
   if (initial) {
     const at = new Map(initial.ids.map((id, i) => [id, i]));
@@ -95,7 +137,7 @@ export function startLayout(ids: string[], links: [number, number][], previous: 
     positions: () => ({ ids: [...ids], x: x.slice(), y: y.slice() }),
     dispose() { listeners.delete(gen); },
   };
-  const req: LayoutWorkerRequest = { type: "start", generation: gen, ids, links, ...(initial ? { initial } : {}) };
+  const req: LayoutWorkerRequest = { type: "start", generation: gen, ids, links, ...(initial ? { initial } : {}), ...(still ? { alpha: 0 } : {}) };
   w.postMessage(req);
   return layout;
 }
