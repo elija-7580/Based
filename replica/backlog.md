@@ -1,12 +1,26 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 25 (Lauf 2026-11-09, Abschnitt direkt unten; davor Pass 24); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 32 (Nachtlauf 2026-11-11, TS-Stack, Abschnitt direkt unten; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
 > Wichtig: Bis Pass 10 kompilierte die App in Xcode nicht (3 Fehler aus Pass 8/9, jetzt behoben). Alles
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
 > geprüft. `bash ci/typecheck/run.sh` prüft `App/Shared` unter Linux gegen SwiftUI/AppKit/MapKit-Stubs.
+
+## Nachtlauf 2026-11-11 (Pass 32, TS-Stack)
+Zwei Schichten (A Kern & Server, B Oberfläche) 05:07–08:49, alles auf `main` = d108cc5. Nach jedem Merge geprüft: `pnpm -r typecheck`, `pnpm lint`, `pnpm -r test` (core 1624, brain 379, web 163, server 112, editor 77, database-ui 64, sync 45, cli 11), Playwright gezielt bzw. voll (zuletzt voll 305/308, Rest einzeln grün). Mac-Abnahme offen für die mit „Mac-Test“ markierten Einträge (Anleitung im Notion-Backlog).
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| Datensicherheit / Sync | ✅ | BSD-279 Zukunftsstempel, 271 Swift-P0s im TS-Kern belegt, 284/285 Gast-Sync, 286 falsche Uhr, 287 Nur-Speicher-Modus sichtbar, 248 DB-Fixtures (24/24, Fehler in unlinkRemovedRows behoben) |
+| Import/Export | 🟡 | BSD-283 Gegendruck großer Import (Mac-Test), 260 Teil 6/7 (docx-Export, JSON/JSONL-Import) |
+| Server/MCP/Agenten | 🟡 | BSD-221 Teil 3a–3d, 243 Teil 1–3a (Zeitpläne auf dem Server), 250 Teil 1/2, 242 Teil 2 (Mac-Test), 184 Privacy-Check, 227 Diagnose, 235 Teil 2/3 Gast-Modus, 252 Teil 1/2 Echtzeit-Text |
+| Startseite / Shell | 🟡 | BSD-278 Startseite, 281 Seitenleiste neu (Mac-Test), 238 Tastatur fertig, 205 Teil 3, 270 ⌘-Halten (Mac-Test), 280 Teil 1 Bundle-Budget, 262 Teil 1 Graph-Layout |
+| Editor | 🟡 | BSD-249 fertig, 258 Mausauswahl, 289 (P0), 201 Teil 3 Cover-Galerie, 90 Wikilinks fertig, 101 Link zu Block; 209 blockiert (Lizenz-/Netzfrage) |
+| Datenbanken | 🟡 | BSD-255 Teil 1/2 Inline (Mac-Test), 225 Autofill, 293 ⌘Z in Ansichten, 216 Teil 1–3 Dashboard/Chart/Personen |
+| Whiteboard | 🟡 | BSD-263 Datenmodell, Yjs-Schema, Tinten-Codec (ohne Oberfläche) |
+| Tests | ✅ | BSD-294 notion-api-E2E, 295 Quick-Find-Zeitmessung robust, 292 Spalte beta in features.csv |
 
 ## Lauf 2026-11-09 (Pass 25)
 Endstand der Nacht (Pass 24) per Fast-Forward auf GitHub-main gebracht (c65b2fe), danach zwei Schichten bis 14:10, alles auf `main` = GitHub. Unter Linux/Swift 6.2 nach jedem Merge geprüft (sauberer Build): BasedCore 322, BasedBrain 408 Tests grün; `ci/typecheck/run.sh`, `run.sh --ios` (neu, BSD-95) und `run-watch.sh` (neu, BSD-66) je 0 Fehler. Auf dem Mac nicht geprüft; Klick-Anleitungen in den Backlog-Einträgen.

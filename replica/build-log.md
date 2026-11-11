@@ -577,3 +577,11 @@ ChangeLogTests, BulkLoadTests, SyntaxHighlighterTests).
 - Welle 2 (`run2/*`): BSD-195/196/160 (Aufträge, Plan per Schema, Runs/Projekte/Rechte/Budget), BSD-198/199/163 (Skill-Router, Redact-Regeln, Agent Brain), BSD-161 (Sandbox, CLI `based`) + Teilen/Publish to web, Meeting Notes (`/meet` ohne Transkription), Startseite nach Mockup v10 (BSD-162/197/133).
 - Beim Zusammenführen: zwei Asset-Speicher (Import: IndexedDB/Record-ID, Sync: OPFS/SHA-256) laufen über den Store-Worker; IndexedDB-Schreiben wartet jetzt auf das Transaktionsende (importierte Bilder fehlten gelegentlich).
 - Tests am Ende: core 1479, brain 309, web 91, server 63, cli 10 u. a.; E2E 138 in Chromium + WebKit.
+
+## Pass 32 — Nachtlauf 2026-11-11 (TS-Stack, zwei Schichten)
+
+- Reste der Vornacht nach main: BSD-221 Teil 3a, 258, 255 Teil 1, 261. BSD-138 (lokaler Server als Sidecar) bleibt auf `nightly/2026-11-10-a4` bis zum Mac-Test.
+- Schicht A (Kern & Server): 279, 283, 271, 284, 286, 285, 260 Teil 6/7, 248, 227, 235 Teil 2/3, 252 Teil 1/2, 221 Teil 3b–3d, 287, 250 Teil 1/2, 242 Teil 2, 184, 294, 243 Teil 1–3a, 263, 295, 292.
+- Schicht B (Oberfläche): 278, 281 Teil 1/2, 249 Teil 2, 289 (P0), 201 Teil 3, 255 Teil 2, 238 Teil 3, 205 Teil 3, 225 Teil 2, 293, 280 Teil 1, 270 Teil 1, 216 Teil 1–3, 90 Teil 1/2, 262 Teil 1, 101.
+- Hauptlauf-Fixes beim Merge: Lint (57d48a5), features.csv-Merge mit neuer Spalte `beta`.
+- Tests am Ende: core 1624, brain 379, web 163, server 112, editor 77, database-ui 64, sync 45, cli 11; E2E voll 305/308 (Rest unter Last wackelig, einzeln grün).
