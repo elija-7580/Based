@@ -113,6 +113,31 @@ test("Account und Diagnostics zeigen echten Gerätezustand", async ({ page }) =>
   await expect(page.getByTestId("astryx-kit")).toBeVisible();
 });
 
+test("Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token", async ({ page }) => {
+  // Vorige Sitzung ohne sauberes Ende (Tab abgestürzt): Marke vor dem Start setzen, nur beim ersten Laden.
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("based.diagnostics.session", JSON.stringify({ startedAt: 1_700_000_000_000, lastBeat: 1_700_000_060_000, clean: false, stalls: 2, log: [{ at: 1_700_000_050_000, level: "error", message: "boom before crash" }] }));
+    (globalThis as unknown as { __copied: string[] }).__copied = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t: string) => { (globalThis as unknown as { __copied: string[] }).__copied.push(t); } } });
+  });
+  await open(page, "prefs-diagnostics");
+  const section = page.getByTestId("settings-section-diagnostics");
+  await expect(section.getByTestId("diagnostics-last-session")).toContainText("didn't close normally");
+  await expect(section.getByTestId("diagnostics-log")).toContainText("start");
+  // Ein Fehler mit Token und Inhalt landet geschwärzt im Log.
+  await page.evaluate(() => setTimeout(() => { throw new Error("failed with Bearer abc123 on “Secret page”"); }));
+  await expect(section.getByTestId("diagnostics-log")).toContainText("Bearer ‹redacted›");
+  await section.getByRole("button", { name: "Copy diagnostics" }).click();
+  await expect(section.getByRole("button", { name: "Copied" })).toBeVisible();
+  const report = await page.evaluate(() => (globalThis as unknown as { __copied: string[] }).__copied.at(-1) ?? "");
+  expect(report).toContain("ended unexpectedly");
+  expect(report).toContain("boom before crash");
+  expect(report).not.toContain("abc123");
+  expect(report).not.toContain("Secret page");
+});
+
 test("Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen", async ({ page }) => {
   await open(page, "prefs-people");
   await expect(page.getByTestId("settings-missing").getByText("Members", { exact: true })).toBeVisible();

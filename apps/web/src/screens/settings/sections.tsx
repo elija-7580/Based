@@ -9,13 +9,14 @@ import { TEAMSPACE_ICONS } from "../../components/TeamspaceDialog.js";
 import { Text } from "@astryxdesign/core/Text";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { BasedButton, BasedConfirm, BasedField } from "@based/ui/astryx";
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import type { Appearance } from "../../appearance.js";
 import { ExportDialog, ImportDialog } from "../../components/ImportExport.js";
 import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
+import { diagnosticsLog, diagnosticsReport, previousSessionText } from "../../shell/diagnostics.js";
 import { deviceNode, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
@@ -278,22 +279,31 @@ function UpdatesSection() {
 function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   const s = state.status;
   const [copied, setCopied] = useState(false);
-  const lines = [
-    `sync: ${s.state}${s.detail ? ` (${s.detail})` : ""}`,
-    `storage: ${s.persistent ? "persistent" : "memory"}`,
-    ...(s.clockSkew !== undefined ? [`clock: ${clockSkewText(s.clockSkew)}`] : []),
-    `device: ${deviceNode.get() ?? "-"}`,
-    `shell: ${isTauri() ? "desktop" : "web"}`,
-    `pages: ${Object.keys(state.outline?.nodes ?? {}).length}, trash: ${state.outline?.trash.length ?? 0}`,
-  ];
-  const copy = () => void navigator.clipboard?.writeText(lines.join("\n")).then(() => setCopied(true), () => setCopied(false));
+  const facts = {
+    sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
+    storage: s.persistent ? "persistent" : "memory",
+    clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
+    device: deviceNode.get() ?? "-",
+    shell: isTauri() ? "desktop" : "web",
+    pages: Object.keys(state.outline?.nodes ?? {}).length,
+    trash: state.outline?.trash.length ?? 0,
+  };
+  const log = useSyncExternalStore(diagnosticsLog.subscribe, diagnosticsLog.getSnapshot);
+  const notice = previousSessionText();
+  const copy = () => void navigator.clipboard?.writeText(diagnosticsReport(facts)).then(() => setCopied(true), () => setCopied(false));
   return (
     <Group>
       <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
       <Row label="Storage"><Value>{s.persistent ? "Persistent (OPFS)" : "Memory only"}</Value></Row>
       {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
       <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
-      <Row label="Report" hint="State of this device as text — contains no page content">
+      {notice ? <Row label="Last session"><Value testID="diagnostics-last-session">{notice}</Value></Row> : null}
+      <Row label="Log" hint="Recent events on this device, newest last — no page content">
+        <VStack gap={1} data-testid="diagnostics-log">
+          {log.length === 0 ? <Value>—</Value> : log.slice(-8).map((e, i) => <Value key={i} mono>{`${new Date(e.at).toLocaleTimeString()} ${e.level} ${e.message}`}</Value>)}
+        </VStack>
+      </Row>
+      <Row label="Report" hint="State of this device, the previous session and the log as text — contains no page content">
         <BasedButton label={copied ? "Copied" : "Copy diagnostics"} onClick={copy} />
       </Row>
       <Row label="Design kit" hint="Buttons, dialog, menu and form fields in the Based theme">

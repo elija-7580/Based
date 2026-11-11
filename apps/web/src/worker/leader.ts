@@ -362,8 +362,9 @@ export class StoreLink implements Endpoint<Event, RequestMessage> {
 }
 
 /** Im Browser: Web Locks + BroadcastChannel, wenn vorhanden. */
-export function browserLinkOptions(): Pick<StoreLinkOptions, "locks" | "channel"> {
+export function browserLinkOptions(name = "based-store"): Pick<StoreLinkOptions, "locks" | "channel"> {
   const locks = (globalThis.navigator as Navigator | undefined)?.locks as LockManagerLike | undefined;
-  const channel = typeof BroadcastChannel === "function" ? () => new BroadcastChannel("based-store") as unknown as ChannelLike : undefined;
+  // BSD-235: ein Gast-Tab hat eigenen Kanal und Lock (sonst redete er mit dem Store-Tab des Besitzers).
+  const channel = typeof BroadcastChannel === "function" ? () => new BroadcastChannel(name) as unknown as ChannelLike : undefined;
   return { locks, channel };
 }

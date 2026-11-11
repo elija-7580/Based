@@ -155,3 +155,7 @@ export { assetIDsInStore, remapAssetRefs, remapStoreAssets } from "./interop/ass
 export { graphemes, firstGrapheme, graphemeCount } from "./graphemes.js";
 export { BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, contentBlocks, describeButtonAction, effectiveButtonActions, isKnownButtonAction, runButton, setButton } from "./store/button-ops.js";
 export type { ButtonAction, ButtonActionKind, ButtonEffect, ButtonPause, OpenMode, RunButtonOptions } from "./store/button-ops.js";
+export {
+  beginSession, buildReport, DiagnosticsLog, endSession, formatEntry, heartbeat, LOG_LIMIT, previousSessionNotice, redact, SESSION_KEY, startStallDetector,
+  type DiagnosticsEntry, type DiagnosticsLevel, type DiagnosticsStorage, type ReportFacts, type SessionRecord, type StallDetectorOptions,
+} from "./diagnostics.js";
