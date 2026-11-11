@@ -6,6 +6,7 @@ import {
   exportAssetRefs,
   exportPageHTML,
   exportOPML,
+  exportPageJSON,
   exportWorkspaceHTML,
   importArchiveRecords,
   planWorkspaceExport,
@@ -43,7 +44,7 @@ export interface ImportSummary {
 export type ExportFormat = "markdown" | "html";
 export type WorkspaceExportFormat = ExportFormat | "archive";
 /** Nur für einzelne Seiten (BSD-260): Gliederung als OPML. */
-export type PageExportFormat = ExportFormat | "opml";
+export type PageExportFormat = ExportFormat | "opml" | "json";
 
 /** Wahl beim HTML-Export. */
 export interface HTMLExportChoice {
@@ -53,6 +54,8 @@ export interface HTMLExportChoice {
   images?: "embed" | "folder";
   /** Stylesheet aus den Design-Tokens (der Hauptthread baut es, der Worker hat kein DOM). */
   css?: string;
+  /** BSD-260: Markdown mit YAML-Frontmatter (Titel, Zeiten, Properties) für Obsidian & Co. */
+  frontmatter?: boolean;
 }
 
 /** Druckansicht einer Seite (für `print()` im Hauptthread). */
@@ -114,6 +117,10 @@ function htmlFile(r: HTMLExportResult, name = r.name): ExportFile {
 export async function exportPage(store: WorkspaceStore, pageID: string, format: PageExportFormat, assets?: AssetStore, choice: HTMLExportChoice = {}): Promise<ExportFile> {
   const page = store.blocks.get(pageID);
   if (!page) throw new Error("This page doesn't exist.");
+  if (format === "json") {
+    const r = exportPageJSON(store, pageID);
+    return { name: r.name, mime: "application/json;charset=utf-8", data: enc.encode(r.json), summary: `Exported “${r.name}”.` };
+  }
   if (format === "opml") {
     const r = exportOPML(store, pageID);
     return { name: r.name, mime: "text/x-opml;charset=utf-8", data: enc.encode(r.xml), summary: `Exported “${r.name}”.` };
@@ -122,7 +129,7 @@ export async function exportPage(store: WorkspaceStore, pageID: string, format: 
     const files = await loadAssets(assets, exportAssetRefs(store, [pageID], choice.subpages === true));
     return htmlFile(exportPageHTML(store, pageID, { ...choice, readAsset: (ref) => files.get(ref.id) }));
   }
-  const plan = planWorkspaceExport(store, [page], format);
+  const plan = planWorkspaceExport(store, [page], format, { frontmatter: choice.frontmatter === true });
   const file = plan.files[0];
   if (!file) throw new Error("Nothing to export.");
   const name = file.path.split("/").at(-1)!;
@@ -150,7 +157,7 @@ export async function exportWorkspace(store: WorkspaceStore, format: WorkspaceEx
     const files = await loadAssets(assets, exportAssetRefs(store, pages, true));
     return htmlFile(exportWorkspaceHTML(store, { ...choice, readAsset: (ref) => files.get(ref.id) }), `Based Export HTML ${today()}.zip`);
   }
-  const plan = planWorkspaceExport(store, topLevelPages(store), format);
+  const plan = planWorkspaceExport(store, topLevelPages(store), format, { frontmatter: choice.frontmatter === true });
   const files = await loadAssets(assets, plan.assets.map((a) => a.ref));
   const { zip, report } = writeExportZip(plan, (ref: AssetRef) => files.get(ref.id));
   const summary = [`Exported ${count(report.pages, "page")}${report.assets > 0 ? ` and ${count(report.assets, "file")}` : ""}.`, missingNote(report.failures.length)].filter(Boolean).join(" ");

@@ -94,6 +94,8 @@ export interface ExportPlanOptions {
   print?: boolean | undefined;
   /** Datei einbetten statt nach `assets/` zu legen: liefert eine `data:`-URL oder `undefined` (dann `assets/`). */
   embedAsset?: ((ref: AssetRef, page: string) => string | undefined) | undefined;
+  /** BSD-260: Markdown mit YAML-Frontmatter (Titel, Zeiten, Properties). */
+  frontmatter?: boolean | undefined;
 }
 
 /** Rendert `pages` und ihre Unterseiten (rekursiv) in einen Plan (Swift `WorkspaceExporter.plan`). */
@@ -153,7 +155,7 @@ export function planWorkspaceExport(store: WorkspaceStore, pages: Block[], forma
     if (format === "html") {
       text = exportHTMLPage(new HTMLExporter(store, { pageLink, assetLink }), id, { css: opts.css, print: opts.print });
     } else {
-      const e = new MarkdownExporter(store, { pageLink, assetLink });
+      const e = new MarkdownExporter(store, { pageLink, assetLink, frontmatter: opts.frontmatter });
       if (page.type === "databasePage" || page.type === "databaseInline") {
         const db = page.props?.databaseID !== undefined ? store.databases.get(page.props.databaseID) : undefined;
         text = db ? e.csv(db.id) : "";

@@ -190,6 +190,7 @@ const PAGE_FORMATS: { value: PageFormat; label: string; hint: string }[] = [
   { value: "html", label: "HTML", hint: "A standalone web page you can open anywhere" },
   { value: "pdf", label: "PDF", hint: "Opens the print dialog — choose “Save as PDF” there" },
   { value: "opml", label: "OPML", hint: "An outline for Workflowy, Dynalist, OmniOutliner, Logseq …" },
+  { value: "json", label: "JSON", hint: "Structured data for scripts and other apps (blocks, properties, rows)" },
 ];
 const WORKSPACE_FORMATS: { value: WorkspaceExportFormat; label: string; hint: string }[] = [
   { value: "markdown", label: "Markdown", hint: "ZIP with .md and .csv files, sub-pages in folders, assets/" },
@@ -203,6 +204,7 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
   const [format, setFormat] = useState<WorkspaceExportFormat | PageFormat>("markdown");
   const [subpages, setSubpages] = useState(false);
   const [images, setImages] = useState<"embed" | "folder">("embed");
+  const [frontmatter, setFrontmatter] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | undefined>();
   const labelID = useId();
@@ -217,7 +219,7 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
         return;
       }
       // HTML: Stylesheet aus den Tokens; eine Seite bettet Bilder ein (oder legt sie in assets/), der Workspace legt sie in assets/.
-      const html = format === "html" ? { css: exportStylesheet(), ...(pageID ? { subpages, images } : {}) } : undefined;
+      const html = format === "html" ? { css: exportStylesheet(), ...(pageID ? { subpages, images } : {}) } : format === "markdown" && frontmatter ? { frontmatter: true } : undefined;
       const file = pageID ? await client.exportPage(pageID, format as PageExportFormat, html) : await client.exportWorkspace(format as WorkspaceExportFormat, html);
       download(file);
       setResult({ ok: true, text: file.summary });
@@ -249,6 +251,11 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
             <SegmentedControlItem value="folder" label="In an assets folder" />
           </SegmentedControl>
           <p className="t-desc">{zip ? "You get a ZIP with the page" + (subpages ? ", its sub-pages" : "") + (images === "folder" ? " and an assets folder." : ".") : "You get one .html file. Attached files that can't be embedded (PDF, video) come along in a ZIP."}</p>
+        </div>
+      ) : null}
+      {format === "markdown" ? (
+        <div className="export-options" data-testid="markdown-export-options">
+          <CheckboxInput label="Properties as YAML front matter" description="Title, dates and properties at the top of each file — for Obsidian and other Markdown tools." value={frontmatter} onChange={setFrontmatter} />
         </div>
       ) : null}
       {result ? <p role={result.ok ? "status" : "alert"} className={result.ok ? "t-desc" : "dialog-error"} data-testid="export-result">{result.text}</p> : null}
