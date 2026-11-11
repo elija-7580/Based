@@ -42,7 +42,7 @@ describe("Seitenleiste: Einträge", () => {
     expect(matchCommands("")).toEqual([]);
     expect(matchCommands("ta").map((c) => c.id)).toEqual(["tasks"]);
     expect(matchCommands("graph").map((c) => c.id)).toEqual(["graph"]);
-    expect(matchCommands("meet").map((c) => c.id)).toEqual(["meeting"]);
+    expect(matchCommands("meet").map((c) => c.id)).toEqual(["meetings", "meeting"]);
     expect(matchCommands("cod").map((c) => c.id)).toEqual(["coding"]);
     expect(matchCommands("prefer").map((c) => c.id)).toEqual(["settings"]);
   });

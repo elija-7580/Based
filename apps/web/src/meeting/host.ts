@@ -20,7 +20,12 @@ export interface MeetingTestHooks {
   useSummaryScript(steps: ScriptStep[] | undefined): void;
 }
 
-export function createMeetingHost(client: StoreClient): MeetingHost {
+/** BSD-281: dazu die Seite der laufenden Aufnahme (Pille oben in der Seitenleiste). */
+export interface WebMeetingHost extends MeetingHost {
+  recordingPage(): string | undefined;
+}
+
+export function createMeetingHost(client: StoreClient): WebMeetingHost {
   let transcriber: Transcriber | undefined;
   let script: ScriptStep[] | undefined;
   const urls = new Map<string, string>();
@@ -72,8 +77,10 @@ export function createMeetingHost(client: StoreClient): MeetingHost {
 
   // Die Aufnahme läuft weiter, wenn die Seite geschlossen wird: solange hält der Dienst die Seiten-Replik offen.
   let held: PageReplica | undefined;
+  let heldPage: string | undefined;
   const hold = async (store: WorkspaceStore, meetingID: string): Promise<WorkspaceStore> => {
     const page = store.containingPage(meetingID);
+    heldPage = page;
     if (!page) return store;
     try {
       const r = await client.openPage(page);
@@ -86,6 +93,7 @@ export function createMeetingHost(client: StoreClient): MeetingHost {
   const release = () => {
     held?.close();
     held = undefined;
+    heldPage = undefined;
   };
 
   const hooks: MeetingTestHooks = {
@@ -112,6 +120,7 @@ export function createMeetingHost(client: StoreClient): MeetingHost {
       listeners.add(fn);
       return () => void listeners.delete(fn);
     },
+    recordingPage: () => (recorder.getState().recording ? heldPage : undefined),
     canRecord: canRecordAudio,
     canCaptureSystemAudio,
     hasTranscriber: () => transcriber !== undefined,

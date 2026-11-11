@@ -151,7 +151,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   );
 }
 
-const COMMAND_ICON: Record<string, IconName> = { home: "home", chat: "chat", tasks: "agent", coding: "terminal", graph: "graph", meeting: "mic", library: "library", trash: "trash", settings: "settings" };
+const COMMAND_ICON: Record<string, IconName> = { home: "home", chat: "chat", tasks: "agent", coding: "terminal", graph: "graph", meetings: "mic", meeting: "plus", library: "library", trash: "trash", settings: "settings" };
 
 /** Suchbegriffe im Snippet markieren (Groß/klein egal). */
 function Highlight({ text, query }: { text: string; query: string }) {
