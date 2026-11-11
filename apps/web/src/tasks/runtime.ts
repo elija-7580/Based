@@ -4,7 +4,7 @@
 // Haken für Tests/E2E (`globalThis.__basedTasks`): Scripted-Planer (Regeln) und Skripte für Unteragenten statt echter
 // Modelle – deterministisch, ohne Netz.
 import {
-  AgentRunner, combineToolHosts, ModelEngine, RulesPlannerEngine, ScriptedEngine, TaskRunner,
+  AgentRunner, combineToolHosts, RulesPlannerEngine, ScriptedEngine, TaskRunner,
   type AgentData, type AgentRunBackend, type ChatEngine, type PlanningContext, type ScriptStep, type TaskBackend, type TaskView, type ToolHost,
 } from "@based/brain";
 import { aiConfig, splitModelRef, type AiConfig } from "../chat/aiConfig.js";
@@ -171,8 +171,8 @@ export class TasksRuntime {
     const wanted = ref ? models.find((m) => m.ref === ref || (splitModelRef(ref) === undefined && m.model === ref)) : undefined;
     const choice = wanted ?? this.config.activeModel();
     if (!choice) return undefined;
-    const provider = await this.config.provider(choice);
-    return new ModelEngine({ provider, model: choice.model, ...(extra ? { tools: extra.tools, policy: extra.policy } : {}), ...(maxTokens ? { maxTokensPerReply: maxTokens } : {}) });
+    // BSD-257: ChatGPT (Codex) läuft als Sitzung auf dem Server; API-Modelle als ModelEngine.
+    return this.config.engine(choice, { ...(extra ? { tools: extra.tools, policy: extra.policy } : {}), maxTokensPerReply: maxTokens });
   }
 
   // MARK: Tests/E2E

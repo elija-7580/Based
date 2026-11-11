@@ -1,8 +1,8 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server (nur Owner). Die Logik liegt in `@based/brain`
 // (`CodingSessions`); hier nur HTTP. Ereignisse und Freigabe-Inbox per Long-Poll (wie /sync/pull), damit jedes Gerät
 // mitlesen und Freigaben beantworten kann. Aus, solange der Server ohne `--coding-root` startet.
-import { agentStatus, CodingError, unapprovedKeys, type CodingSessions } from "@based/brain";
-import { claudeLoggedIn, probeTools, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
+import { agentStatus, chatgptStatus, CodingError, isComputeLevel, toolCatalog, unapprovedKeys, type CodexLogin, type CodingSessions } from "@based/brain";
+import { claudeLoggedIn, codexLoginState, probeTools, toolVersion, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
 import type { Logger } from "./log.js";
 import { error, json, type RouteResult, type Router } from "./router.js";
 
@@ -58,7 +58,9 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
     const b = parse(body);
     const agentId = str(b.agent), cwd = str(b.cwd);
     if (!agentId || !cwd) return error("agent and cwd are required", 400);
-    const view = await coding.create({ agentId, cwd, mode: str(b.mode), resume: str(b.resume), handoffFrom: str(b.handoffFrom) });
+    const effort = isComputeLevel(b.effort) ? b.effort : undefined;
+    const purpose = b.purpose === "chat" ? "chat" as const : undefined;
+    const view = await coding.create({ agentId, cwd, mode: str(b.mode), resume: str(b.resume), handoffFrom: str(b.handoffFrom), effort, purpose });
     log.info("coding session", { agent: agentId, state: view.state, handoff: view.handoffFrom !== undefined });
     return json(view, view.state === "failed" ? 502 : 201);
   }));
@@ -127,6 +129,8 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
   router.add("GET", "/coding/doctor", async () => {
     const tools = await probeTools(host.env);
     const loggedIn = await claudeLoggedIn(host.home, approvedValues(host, "claude"));
+    const codexPath = tools.find((t) => t.id === "codex")?.path;
+    const codexLogin: CodexLogin | undefined = codexPath ? await codexLoginState(codexPath, host.env) : undefined;
     const found = new Set<string>();
     for (const a of coding.agents()) if (await which(a.command, host.env)) found.add(a.command);
     const agents = coding.agents().map((a) => agentStatus(a, tools, {
@@ -134,8 +138,17 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
       unapprovedKeys: (id) => unapprovedKeys(id, host.env, host.approvedEnv[id] ?? []),
       found: (c) => found.has(c),
       approveHint: (id, names) => `BASED_CODING_ENV="${id}=${[...(host.approvedEnv[id] ?? []), ...names].join(",")}" (restart the server)`,
+      codexLogin,
     }));
     return json({ tools, agents });
+  });
+
+  // MARK: BSD-257 „Mit ChatGPT anmelden“: Codex-Login für Chat und Agenten (Based liest keine Token)
+  router.add("GET", "/coding/chatgpt", async () => {
+    const path = await which("codex", host.env);
+    const [version, login] = path ? await Promise.all([toolVersion(path, host.env), codexLoginState(path, host.env)]) : [undefined, "none" as CodexLogin];
+    const install = toolCatalog(process.platform).find((t) => t.id === "codex")?.install ?? "npm install -g @openai/codex";
+    return json(chatgptStatus({ agentEnabled: coding.agents().some((a) => a.id === "codex"), path, version, login, cwd: coding.roots[0], install }));
   });
   router.add("POST", "/coding/doctor/:agent/test", async ({ params }) => {
     const agent = coding.agents().find((a) => a.id === params.agent);

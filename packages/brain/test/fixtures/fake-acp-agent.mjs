@@ -1,6 +1,7 @@
 // BSD-223: Fake-ACP-Agent für Tests (stdio, zeilenweises JSON-RPC). Verhalten nach Prompt-Text:
 // "hello" → Text in zwei Stücken + Verbrauch; "edit <pfad>" → Tool-Call, Freigabe, fs/write, Diff;
 // "read <pfad>" → fs/read; "wait" → wartet auf session/cancel; "plan" → Plan; "env" → meldet Umgebungsnamen;
+// "mcp" → Namen der MCP-Server der Sitzung; "args" → eigene Startargumente;
 // sonst: wiederholt die empfangenen Prompt-Blöcke als JSON.
 import { createInterface } from "node:readline";
 
@@ -16,7 +17,8 @@ async function prompt(p) {
   const sid = p.sessionId;
   const s = sessions.get(sid);
   const blocks = p.prompt;
-  const t = blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+  // Nur der letzte Absatz zählt als Befehl (Based kann Anweisungen/Transkript davorsetzen, BSD-257).
+  const t = blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n").split("\n\n").at(-1) ?? "";
   if (t === "hello") {
     update(sid, { sessionUpdate: "agent_thought_chunk", content: { type: "text", text: "thinking…" } });
     text(sid, "Hi ");
@@ -59,6 +61,14 @@ async function prompt(p) {
   }
   if (t === "plan") {
     update(sid, { sessionUpdate: "plan", entries: [{ content: "Look", status: "completed", priority: "high" }, { content: "Fix", status: "pending", priority: "high" }] });
+    return { stopReason: "end_turn" };
+  }
+  if (t === "mcp") {
+    text(sid, JSON.stringify((s.mcp ?? []).map((m) => m.name)));
+    return { stopReason: "end_turn" };
+  }
+  if (t === "args") {
+    text(sid, JSON.stringify(process.argv.slice(2)));
     return { stopReason: "end_turn" };
   }
   if (t === "env") {

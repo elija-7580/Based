@@ -10,6 +10,7 @@ import { claudeCliSession, cliTranscript, codexCliSession, type CliSession } fro
 import type { StoredChatEvent } from "../events.js";
 import { AcpClient, type AcpClientOptions, type AcpFileSystem } from "./client.js";
 import { JsonRpcPeer } from "./jsonrpc.js";
+import { parseCodexLoginStatus, type CodexLogin } from "./chatgpt.js";
 
 export const nodeFileSystem: AcpFileSystem = {
   read: (p) => fsp.readFile(p, "utf8"),
@@ -119,6 +120,20 @@ export async function claudeLoggedIn(home: string, approvedEnv: Readonly<Record<
   const exists = await fsp.access(join(home, ".claude", ".credentials.json")).then(() => true, () => false);
   const claudeJson = await fsp.readFile(join(home, ".claude.json"), "utf8").catch(() => undefined);
   return claudeLoginFrom({ credentials: exists, claudeJson }, approvedEnv);
+}
+
+/**
+ * BSD-257: Login der Codex-CLI über `codex login status` (höchstens 8 s, gefilterte Umgebung plus `CODEX_HOME`).
+ * Based liest dabei keine Token-Datei; es zählt nur, was die CLI selbst meldet.
+ */
+export function codexLoginState(path: string, env: Readonly<Record<string, string | undefined>> = process.env, timeoutMs = 8000): Promise<CodexLogin> {
+  return new Promise((resolve) => {
+    execFile(path, ["login", "status"], { timeout: timeoutMs, env: childEnvironment(env, { agentId: "codex" }), shell: process.platform === "win32" }, (err, stdout, stderr) => {
+      const code = err ? (typeof (err as { code?: unknown }).code === "number" ? ((err as { code: number }).code) : null) : 0;
+      if (err && (err as { killed?: boolean }).killed) return resolve("unknown");
+      resolve(parseCodexLoginStatus(`${stdout ?? ""}\n${stderr ?? ""}`, code));
+    });
+  });
 }
 
 /** Agent starten und den ACP-Handshake abwarten (beweist die ganze Kette). */

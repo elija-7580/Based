@@ -6,8 +6,8 @@ import { Button } from "@astryxdesign/core/Button";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
-import type { PermissionMode } from "@based/brain";
-import { useState, useSyncExternalStore } from "react";
+import { codingErrorMessage, type ChatGPTStatus, type PermissionMode } from "@based/brain";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { aiConfig, parseModelList, PROVIDERS, providerInfo, type AiConfig, type ProviderKind } from "./aiConfig.js";
 import "./chat.css";
 
@@ -59,6 +59,7 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
         {PROVIDERS.map((x) => <SegmentedControlItem key={x.kind} value={x.kind} label={x.kind === "compatible" ? "Other" : x.name} />)}
       </SegmentedControl>
       <p className="t-desc">{info.hint}{kind === "ollama" ? " Ollama must allow this app's address (OLLAMA_ORIGINS)." : ""}</p>
+      {info.viaServer ? <ChatGPTPanel config={config} on={p.models.length > 0} /> : (
       <form className="fields" onSubmit={(e) => { e.preventDefault(); void save(); }}>
         {info.needsKey || info.optionalKey ? (
           <TextInput
@@ -79,6 +80,7 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
           {saved ? <span className="t-meta" role="status">{saved}</span> : null}
         </div>
       </form>
+      )}
       <div className="fields">
         <span className="setting-label" id="ai-permission">What Based may do alone</span>
         <SegmentedControl label="What Based may do alone" value={state.settings.permission} onChange={(v) => config.setPermission(v as PermissionMode)} size="sm" layout={compact ? "fill" : "hug"}>
@@ -87,5 +89,41 @@ export function AiSettingsSection({ config = aiConfig(), compact = false }: { co
         <p className="t-desc">{PERMISSIONS.find((x) => x.mode === state.settings.permission)?.desc}</p>
       </div>
     </section>
+  );
+}
+
+/**
+ * BSD-257: ChatGPT über die Codex-CLI des based-servers. Zeigt nur, was der Server über `codex login status` meldet,
+ * und den Befehl zum Beheben; die Anmeldung selbst macht `codex login` im Terminal (Based sieht keine Token).
+ */
+function ChatGPTPanel({ config, on }: { config: AiConfig; on: boolean }) {
+  const [status, setStatus] = useState<ChatGPTStatus | undefined>();
+  const [error, setError] = useState<string | undefined>();
+  const [n, setN] = useState(0);
+  const client = config.codingClient();
+  useEffect(() => {
+    if (!client) return;
+    let alive = true;
+    setError(undefined);
+    client.chatgpt().then((s) => { if (alive) setStatus(s); }, (e: unknown) => { if (alive) { setStatus(undefined); setError(codingErrorMessage(e)); } });
+    return () => { alive = false; };
+  }, [n, !!client]); // neu prüfen nur auf Knopfdruck
+  if (!client) {
+    return <p className="t-desc" data-testid="chatgpt-status" data-state="no-server">Connect a based-server in Settings → Sync & server first. Codex runs there, signed in with your ChatGPT account.</p>;
+  }
+  const state = status?.ready ? "ready" : status ? "needs-setup" : error ? "error" : "checking";
+  return (
+    <div className="fields" data-testid="chatgpt-status" data-state={state}>
+      <p className="t-desc" role="status">{status?.summary ?? error ?? "Checking Codex on the server…"}</p>
+      {status?.fix ? <p className="t-desc">Run on the server: <code className="ai-command">{status.fix}</code></p> : null}
+      <p className="t-desc">Low, Auto and High in the chat pick how hard Codex thinks. Codex can use your workspace through Based's MCP tools.</p>
+      <div className="ai-actions">
+        {on
+          ? <Button variant="ghost" label="Turn off ChatGPT" onClick={() => config.setChatGPT(false)} />
+          : <Button variant="primary" label="Use ChatGPT" isDisabled={!status?.ready} onClick={() => config.setChatGPT(true)} />}
+        <Button variant="ghost" label="Check again" onClick={() => setN((x) => x + 1)} />
+        {on ? <span className="t-meta">In use</span> : null}
+      </div>
+    </div>
   );
 }

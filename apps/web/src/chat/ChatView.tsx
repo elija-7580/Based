@@ -97,7 +97,7 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
 
   const models = config.models().filter((m) => m.usable);
   const active = config.activeModel();
-  const computeOptions: ComposerOption[] = models.map((m) => ({ name: m.ref, desc: m.kind === "ollama" ? "On this computer" : "Your API key", icon: m.kind === "ollama" ? "fast" : "model" }));
+  const computeOptions: ComposerOption[] = models.map((m) => ({ name: m.ref, desc: m.kind === "ollama" ? "On this computer" : m.kind === "chatgpt" ? "Your ChatGPT plan via Codex" : "Your API key", icon: m.kind === "ollama" ? "fast" : "model" }));
   const permissionOptions: ComposerOption[] = PERMISSIONS.map((p) => ({ name: p.name, desc: p.desc, icon: p.mode === "free" ? "free" : p.mode === "ask" || p.mode === "plan" ? "ask" : "perm" }));
   const permissionName = PERMISSIONS.find((p) => p.mode === ai.settings.permission)?.name ?? "Ask before edits";
 

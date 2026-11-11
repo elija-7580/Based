@@ -5,6 +5,8 @@ import type { CodingSessionState, CodingSessionView } from "./sessions.js";
 import type { InboxItem } from "./inbox.js";
 import type { CliSession } from "./history.js";
 import type { AgentStatus, DoctorTool } from "./doctor.js";
+import type { ChatGPTStatus } from "./chatgpt.js";
+import type { ComputeLevel } from "../routing.js";
 
 export class CodingAPIError extends Error {
   constructor(readonly status: number, message: string) {
@@ -54,7 +56,7 @@ export class CodingClient {
   }
 
   /** Neue Sitzung; schlägt der Start fehl, kommt die Sitzung mit `state: "failed"` und `error` zurück. */
-  create(input: { agent: string; cwd: string; mode?: string; resume?: string; handoffFrom?: string }): Promise<CodingSessionView> {
+  create(input: { agent: string; cwd: string; mode?: string; resume?: string; handoffFrom?: string; effort?: ComputeLevel; purpose?: "chat" | "coding" }): Promise<CodingSessionView> {
     return this.request("POST", "/coding/sessions", input);
   }
 
@@ -103,6 +105,11 @@ export class CodingClient {
 
   doctor(): Promise<{ tools: DoctorTool[]; agents: AgentStatus[] }> {
     return this.request("GET", "/coding/doctor");
+  }
+
+  /** BSD-257: Ist Codex auf dem Server installiert und mit ChatGPT angemeldet? */
+  chatgpt(): Promise<ChatGPTStatus> {
+    return this.request("GET", "/coding/chatgpt");
   }
 
   testAgent(agentId: string): Promise<{ ok: boolean; message: string }> {

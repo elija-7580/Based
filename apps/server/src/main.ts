@@ -4,7 +4,7 @@
 // Konfiguration auch über BASED_TOKEN, BASED_DB, BASED_PORT, BASED_HOST, BASED_NODE, BASED_PUBLIC_URL,
 // BASED_LOG_LEVEL, BASED_CODING_ROOTS (Ordner mit „:“ getrennt), BASED_CODING_ENV. Ohne Token startet der HTTP-Server nicht (Exit-Code 2).
 import { readFileSync } from "node:fs";
-import { CodingSessions, DEFAULT_AGENTS, type AgentDefinition } from "@based/brain";
+import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition } from "@based/brain";
 import { spawnAgent } from "@based/brain/acp-node";
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -138,14 +138,22 @@ export function mergeAgents(defaults: readonly AgentDefinition[], extra: unknown
 }
 
 /** Coding-Agenten (Standard plus `--coding-agents`); Prozesse über `@based/brain/acp-node`. */
-function codingSessions(opts: Options, log: Logger): CodingSessions {
+function codingSessions(opts: Options, log: Logger, self: () => AcpMcpServer[] = () => []): CodingSessions {
   const agents = opts.codingAgents ? mergeAgents(DEFAULT_AGENTS, JSON.parse(readFileSync(opts.codingAgents, "utf8")) as unknown) : [...DEFAULT_AGENTS];
   return new CodingSessions({
     agents: () => agents,
     roots: opts.codingRoots,
+    // BSD-257: Chat-Sitzungen (ChatGPT über Codex) bekommen die Werkzeuge des Workspaces über das eigene /mcp.
+    chatMcpServers: self,
     connect: (agent, cwd, roots, permissions) =>
       spawnAgent(agent, { cwd, allowedRoots: roots, permissions, approvedEnv: opts.codingEnv[agent.id] ?? [], onLog: (l) => log.debug("coding agent stderr", { agent: agent.id, bytes: l.length }) }),
   });
+}
+
+/** Adresse, unter der der Server sich selbst erreicht (Wildcard → Loopback). */
+export function selfHost(host: string): string {
+  if (host === "0.0.0.0" || host === "::" || host === "") return "127.0.0.1";
+  return host.includes(":") ? `[${host}]` : host;
 }
 
 /** Origin (scheme://host[:port]) von BASED_PUBLIC_URL, der einzige mit CORS-Zugriff. */
@@ -193,15 +201,19 @@ async function main() {
   }
   if (opts.token.length < 16) log.warning("token is shorter than 16 characters");
 
+  const bound: { port?: number } = {};
+  const token = opts.token;
+  const selfMcp = (): AcpMcpServer[] => (bound.port ? [{ name: "based", url: `http://${selfHost(opts.host)}:${bound.port}/mcp`, headers: { Authorization: `Bearer ${token}` } }] : []);
   const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
-    ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),
+    ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log, selfMcp), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),
   });
   const { port } = await app.listen(opts.port, opts.host);
+  bound.port = port;
   log.info("based-server listening", { host: opts.host, port, db: opts.db, routes: app.router.routes.length, impl: "ts" });
 
   let stopping = false;

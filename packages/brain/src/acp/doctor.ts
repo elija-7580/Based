@@ -1,6 +1,7 @@
 // BSD-223 Teil 3: Setup-Doctor (Port von Swift `AgentDoctor`): Welche CLIs sind da, ist man angemeldet, und was
 // genau fehlt – mit einem Befehl zum Beheben. Rein: die Hülle liefert die Funde (`probeTools` in `acp/stdio.ts`).
 import { looksSecret, type AgentDefinition } from "./agents.js";
+import type { CodexLogin } from "./chatgpt.js";
 
 export interface DoctorToolSpec { id: string; name: string; required: boolean; purpose: string; install: string; docs: string }
 
@@ -44,6 +45,8 @@ export interface StatusContext {
   found: (command: string) => boolean;
   /** Wie man Variablen freigibt (Server: `BASED_CODING_ENV=…`). */
   approveHint: (agentId: string, names: string[]) => string;
+  /** BSD-257: Ergebnis von `codex login status` (fehlt = nicht geprüft). */
+  codexLogin?: CodexLogin | undefined;
 }
 
 /** Zustand eines konfigurierten Agenten anhand der gefundenen Werkzeuge. */
@@ -67,6 +70,12 @@ export function agentStatus(def: AgentDefinition, tools: readonly DoctorTool[], 
     }
     const cli = tool(def.id);
     if (cli && !cli.path) return { ...base, state: "missing", summary: `The ${cli.name} CLI is not installed – the ACP adapter needs it and its login.`, fix: cli.install, driver: "ACP adapter" };
+    if (def.id === "codex" && ctx.codexLogin === "none") {
+      const key = ctx.unapprovedKeys("codex")[0];
+      if (key) return { ...base, state: "needsLogin", summary: `Codex found. ${key} is set but not passed to Codex – allow it for this agent, or run \`codex login\` and sign in with ChatGPT.`, fix: ctx.approveHint("codex", [key]), driver: "ACP adapter" };
+      return { ...base, state: "needsLogin", summary: "Codex found, but it is not signed in. Run `codex login` in a terminal and choose “Sign in with ChatGPT”.", fix: "codex login", driver: "ACP adapter" };
+    }
+    if (def.id === "codex" && ctx.codexLogin === "chatgpt") return { ...base, state: "ready", summary: `Codex${cli?.version ? ` ${cli.version}` : ""} found and signed in with ChatGPT.`, fix: undefined, driver: "ACP adapter" };
     return { ...base, state: "ready", summary: "Ready (npx downloads the ACP adapter on first start).", fix: undefined, driver: "ACP adapter" };
   }
   if (ctx.found(def.command)) return { ...base, state: "ready", summary: `${def.command} found.`, fix: undefined, driver: "ACP" };

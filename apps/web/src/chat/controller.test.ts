@@ -106,4 +106,34 @@ describe("AiConfig", () => {
     await again.setKey("anthropic", undefined);
     expect(await again.key("anthropic")).toBeUndefined();
   });
+
+  it("BSD-257: ChatGPT über Codex – alte Einstellungen lesbar, nur mit Server nutzbar, Engine statt Anbieter", async () => {
+    const local = new Map<string, string>();
+    // Stand vor BSD-257: ohne „chatgpt“-Eintrag
+    local.set("based.ai", JSON.stringify({ v: 1, providers: { anthropic: { baseURL: "https://api.anthropic.com", models: ["m"] } }, model: "anthropic/m", permission: "free" }));
+    const storage = { getItem: (k: string) => local.get(k) ?? null, setItem: (k: string, v: string) => void local.set(k, v) };
+    const secrets = new SecretStore(memoryKV());
+    const conn: { server?: { url: string; token: string } } = {};
+    const cfg = new AiConfig({ storage, secrets: () => secrets, server: () => conn.server });
+    expect(cfg.getState().settings.permission).toBe("free");
+    expect(cfg.getState().settings.providers.chatgpt.models).toEqual([]);
+    cfg.setChatGPT(true);
+    expect(cfg.models().filter((m) => m.kind === "chatgpt")).toEqual([
+      { ref: "chatgpt/auto", kind: "chatgpt", model: "auto", usable: false },
+      { ref: "chatgpt/low", kind: "chatgpt", model: "low", usable: false },
+      { ref: "chatgpt/high", kind: "chatgpt", model: "high", usable: false },
+    ]);
+    conn.server = { url: "http://127.0.0.1:1", token: "t" };
+    expect(cfg.activeModel()?.ref).toBe("chatgpt/auto");
+    await expect(cfg.provider(cfg.activeModel()!)).rejects.toThrow(/Codex/);
+    const calls: string[] = [];
+    const e = await cfg.engine(cfg.models().find((m) => m.ref === "chatgpt/high")!, { fetch: (async (u: string) => { calls.push(u); return new Response(""); }) as typeof fetch });
+    expect(e.label).toBe("ChatGPT (Codex, high)");
+    expect(calls).toEqual([]);
+    // unbekannte Stufen fallen beim Laden weg
+    local.set("based.ai", JSON.stringify({ v: 1, providers: { chatgpt: { baseURL: "", models: ["auto", "gpt-9"] } }, permission: "ask" }));
+    expect(new AiConfig({ storage, secrets: () => secrets }).getState().settings.providers.chatgpt.models).toEqual(["auto"]);
+    cfg.setChatGPT(false);
+    expect(cfg.models().some((m) => m.kind === "chatgpt")).toBe(false);
+  });
 });
