@@ -904,6 +904,7 @@ export class StoreHost {
       token: cfg.token,
       ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),
       onStatus: (s) => this.onSyncStatus(s),
+      onClockSkew: () => this.postStatus(),
       // Dateien vor den Records, die sie nennen (soweit das Netz mitspielt).
       beforePush: async () => {
         await this.assets?.flush();
@@ -1065,6 +1066,7 @@ export class StoreHost {
     }
     const s: StatusInfo = { state, persistent: this.ws?.persistent ?? false, canUndo: store?.canUndo ?? false, canRedo: store?.canRedo ?? false };
     if (detail) s.detail = detail;
+    if (this.sync?.clockSkew !== undefined) s.clockSkew = Math.round(this.sync.clockSkew / 1000);
     const a = this.assets?.status();
     if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {
       s.assets = { uploads: a.pending, downloads: a.downloading, failed: a.failed };

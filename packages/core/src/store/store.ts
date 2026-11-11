@@ -548,7 +548,11 @@ export class WorkspaceStore {
   // MARK: Remote
 
   /** Records eines anderen Geräts einspielen (Last-Writer-Wins pro Record, gestempelte Tombstones). */
-  applyRemote(records: WireRecord[], deletions: RecordKeyString[] = [], deletionStamps = new Map<RecordKeyString, Stamp>()): RemoteMergeResult {
+  /**
+   * `force` (BSD-285): Records, die der Server abgelehnt hat (Freigabe ohne Bearbeiten-Recht) – seine Kopie gilt,
+   * auch wenn die lokale Version einen neueren Stempel trägt; die lokale Änderung käme sonst nie an und bliebe stehen.
+   */
+  applyRemote(records: WireRecord[], deletions: RecordKeyString[] = [], deletionStamps = new Map<RecordKeyString, Stamp>(), force?: ReadonlySet<RecordKeyString>): RemoteMergeResult {
     const tx = new Tx(this);
     const stale: RecordKeyString[] = [];
     const tombstoned = new Map<RecordKeyString, Stamp>();
@@ -559,13 +563,13 @@ export class WorkspaceStore {
       const local = this.record(key);
       if (local) {
         if (same(local, r)) continue;
-        if (compareStamps(stampOf(local), stampOf(r)) > 0) {
+        if (!force?.has(key) && compareStamps(stampOf(local), stampOf(r)) > 0) {
           stale.push(key);
           continue;
         }
       } else {
         const ts = this.persistence?.tombstone(key);
-        if (ts && compareStamps(ts, stampOf(r)) >= 0) {
+        if (ts && !force?.has(key) && compareStamps(ts, stampOf(r)) >= 0) {
           tombstoned.set(key, ts); // hier gelöscht, nachdem diese Version entstand: bleibt gelöscht
           continue;
         }

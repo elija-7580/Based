@@ -4,6 +4,7 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { parseKey } from "@based/core";
 import { type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { ASSET_CHUNK_LIMIT, ASSET_HASH, AssetError, AssetStore, parseRange, referencedAssets } from "./assets.js";
@@ -88,6 +89,7 @@ export function createApp(opts: AppOptions): App {
   const sync = new SyncService(db, opts);
   const pages = new Pages(sync.store);
   const share = new ShareService(sync.store, sync.persistence, opts.nowMillis);
+  share.onScopeChange = () => sync.wake();
   const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t) });
   const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
@@ -125,7 +127,8 @@ export function createApp(opts: AppOptions): App {
       const p = principalOf(caller);
       const { rejected, ...reply } = share.push(p, sync, decodePush(parseJSON(body)));
       if (rejected.length > 0) log.info("share: rejected records from a shared principal", { count: rejected.length });
-      return json(reply);
+      // BSD-285: abgelehnte Records eigens nennen – das Gerät übernimmt die Server-Kopie dann trotz eigenem Stempel.
+      return json(rejected.length > 0 ? { ...reply, rejected: rejected.map((k) => parseKey(k)) } : reply);
     }), { bodyLimit: LARGE_BODY_LIMIT, access: "shared" });
   router.add("GET", "/sync/v2/wait", async ({ url, signal, caller }) => {
     let after: number, timeout: number;
@@ -325,6 +328,7 @@ export function createApp(opts: AppOptions): App {
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();
       sync.close(); // offene Long-Polls antworten sofort
+      share.close();
       pages.dispose();
       await collab.close();
       await new Promise<void>((resolve) => {
