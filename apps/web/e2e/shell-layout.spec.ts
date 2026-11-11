@@ -95,7 +95,9 @@ test("Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite", as
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   const pageID = decodeURIComponent(new URL(page.url()).hash.replace(/^#\/?page-/, ""));
   await page.evaluate((v) => localStorage.setItem("based.startPage", JSON.stringify(v)), pageID);
-  await page.getByRole("button", { name: "Graph" }).click();
+  // BSD-281: Graph ist ein Reiter der Library
+  await page.getByRole("button", { name: "Library" }).click();
+  await page.getByRole("radiogroup", { name: "Library view" }).getByRole("radio", { name: "Graph" }).click();
   await page.keyboard.press("ControlOrMeta+w");
   await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
   await expect(page.getByTestId("based-root")).toBeVisible();

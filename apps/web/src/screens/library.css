@@ -34,3 +34,5 @@ button.lib-title:hover .lib-title-text { text-decoration: underline; text-underl
 }
 .lib-head h1 { color: var(--ink); }
 .lib-bulk strong { color: var(--ink); }
+/* BSD-281: Reiter Pages/Graph über dem Titel */
+.lib-head > :first-child:not(h1) { flex-basis: 100%; max-width: max-content; }
