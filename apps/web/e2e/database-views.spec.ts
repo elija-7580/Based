@@ -487,7 +487,7 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
-test("BSD-225 Teil 2: Property per AI ausfüllen (Skript-Engine)", async ({ page }) => {
+test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });
   const area = { id: "ar", name: "Area", type: "select", options: [{ id: "w", name: "Work", color: "blue" }, { id: "h", name: "Home", color: "green" }] };
@@ -504,7 +504,18 @@ test("BSD-225 Teil 2: Property per AI ausfüllen (Skript-Engine)", async ({ page
   const cell = (row: string) => page.locator(".dbui-vrow", { hasText: row });
   await expect(cell("quarterly report")).toContainText("Work");
   await expect(cell("Water the plants")).toContainText("Home");
-  // Ein Undo-Schritt ist im Unit-Test geprüft (autofill.test.ts); ⌘Z in Datenbank-Ansichten fehlt noch (eigener Eintrag).
+  // BSD-293: ⌘Z nimmt das ganze Autofill in einem Schritt zurück, ⇧⌘Z stellt es wieder her
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(cell("quarterly report")).not.toContainText("Work");
+  await expect(cell("Water the plants")).not.toContainText("Home");
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(cell("quarterly report")).toContainText("Work");
+  await expect(cell("Water the plants")).toContainText("Home");
+  // im Titelfeld bleibt ⌘Z das Undo des Feldes
+  await page.getByLabel("Page title").focus();
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(cell("quarterly report")).toContainText("Work");
 });
 
 test("BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken", async ({ page }) => {

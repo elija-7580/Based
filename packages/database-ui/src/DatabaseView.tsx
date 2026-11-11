@@ -337,6 +337,20 @@ export function DatabaseView(props: DatabaseViewProps) {
   const style = { height: props.height ?? (props.inline ? "auto" : "100%") };
   const inline = useMemo(() => (props.inline ? { pageSize: INLINE_PAGE_SIZE } : null), [props.inline]);
   const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files, ai: props.ai }), [props.renderForm, props.files, props.ai]);
+  // BSD-293: ⌘Z/⇧⌘Z (⌘Y) für Änderungen in der Datenbank, solange der Fokus nicht in einem Textfeld oder Editor liegt.
+  // Mehrere Ansichten derselben Seite teilen den Store: die erste nimmt die Taste (preventDefault), die anderen nicht.
+  useEffect(() => {
+    if (props.readOnly) return;
+    const onKey = (e: KeyboardEvent) => {
+      const k = undoKey(e);
+      if (!k || e.defaultPrevented || isEditable(e.target)) return;
+      e.preventDefault();
+      if (k === "undo") store.undo();
+      else store.redo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [store, props.readOnly]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (
     <DBContext.Provider value={ctx}>
@@ -349,4 +363,19 @@ export function DatabaseView(props: DatabaseViewProps) {
       </ShellSlots.Provider>
     </DBContext.Provider>
   );
+}
+
+/** ⌘Z → undo, ⇧⌘Z oder ⌘Y → redo (Strg statt ⌘ außerhalb von Apple). */
+export function undoKey(e: { key: string; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean }): "undo" | "redo" | undefined {
+  if (!(e.metaKey || e.ctrlKey) || e.altKey) return undefined;
+  const k = e.key.toLowerCase();
+  if (k === "z") return e.shiftKey ? "redo" : "undo";
+  if (k === "y" && !e.shiftKey) return "redo";
+  return undefined;
+}
+
+/** Textfelder und Editoren behalten ihr eigenes Undo. */
+function isEditable(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null;
+  return !!el && typeof el.closest === "function" && !!el.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']");
 }

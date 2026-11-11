@@ -56,3 +56,15 @@ describe("Autofill: alle Zeilen, ein Undo-Schritt", () => {
     expect(store.blocks.get(rows[0]!)!.values?.s).toEqual({ select: { _0: "o1" } });
   });
 });
+
+describe("⌘Z in Datenbank-Ansichten (BSD-293)", () => {
+  it("⌘Z = undo, ⇧⌘Z / ⌘Y = redo, Strg ebenso; sonst nichts", async () => {
+    const { undoKey } = await import("./DatabaseView.js");
+    const k = (key: string, o: Partial<{ metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean }> = {}) => undoKey({ key, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, ...o });
+    expect(k("z", { metaKey: true })).toBe("undo");
+    expect(k("Z", { metaKey: true, shiftKey: true })).toBe("redo");
+    expect(k("y", { ctrlKey: true })).toBe("redo");
+    expect(k("z")).toBeUndefined();
+    expect(k("z", { metaKey: true, altKey: true })).toBeUndefined();
+  });
+});
