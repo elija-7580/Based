@@ -600,3 +600,18 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .notion-options { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-5); }
 .notion-ok { margin: 0; color: var(--ink); }
 .screen-loading { flex: 1; min-height: var(--space-8); }
+
+/* Die Oberfläche ist kein Text: Beschriftungen von Seitenleiste, Tabs, Menüs, Knöpfen und Schaltern lassen sich nicht
+   markieren oder kopieren (Ziehen, Doppelklick, ⌘A). Inhalte bleiben markierbar – Seiten, Datenbankzellen, Chat,
+   Fehlermeldungen, Code – ebenso alles, worin man tippt. Bewusst als Ausschlussliste der Bedienelemente statt als
+   „alles aus, Inhalte an“: so kann kein Inhalt versehentlich unkopierbar werden. */
+:is(.sidebar, .tabbar, .settings-nav, .qf, .sidebar-footer, .key-badge, nav, button, summary, label,
+  [role="navigation"], [role="button"], [role="tab"], [role="tablist"], [role="toolbar"], [role="menu"], [role="menubar"],
+  [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"], [role="listbox"], [role="option"],
+  [role="radiogroup"], [role="radio"], [role="switch"], [role="tree"], [role="treeitem"], [role="tooltip"]) {
+  -webkit-user-select: none; user-select: none;
+}
+:is(.sidebar, .tabbar, .settings-nav, .qf, nav, button, summary, label, [role="menu"], [role="listbox"], [role="toolbar"], [role="tree"], [role="treeitem"])
+  :is(input, textarea, [contenteditable]:not([contenteditable="false"])) {
+  -webkit-user-select: text; user-select: text;
+}

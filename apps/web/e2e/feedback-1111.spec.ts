@@ -122,3 +122,33 @@ test("Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue such
   const again = await pos(page, fresh);
   expect(Math.abs(again!.x - np!.x)).toBeLessThan(0.5);
 });
+
+test("Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon", async ({ page }) => {
+  await ready(page);
+  const id = await command<string>(page, { op: "createPage", title: "Copy me" });
+  const selected = () => page.evaluate(() => String(getSelection()));
+  const select = (css: string) => page.locator(css).first().evaluate((el) => getComputedStyle(el).userSelect || getComputedStyle(el).webkitUserSelect);
+
+  // Abschnittstitel, Seitenzeile, Navigation, Fuß: Dreifachklick und „alles markieren“ nehmen nichts davon mit
+  const section = nav(page).getByText("Private", { exact: true });
+  await section.click({ clickCount: 3 });
+  expect(await selected()).toBe("");
+  expect(await select(".sidebar")).toBe("none");
+  expect(await select(".sidebar-footer")).toBe("none");
+  await page.evaluate(() => getSelection()!.selectAllChildren(document.body));
+  const all = await selected();
+  for (const label of ["Search", "Home", "Chat", "Private", "Favorites"]) expect(all).not.toContain(label);
+
+  // Einstellungen: Navigation nicht, Eingabefelder schon
+  await nav(page).getByRole("group", { name: "Workspace tools" }).getByRole("button", { name: "Settings" }).click();
+  expect(await select(".settings-nav")).toBe("none");
+
+  // Seite: Inhalt bleibt markierbar; das Suchfeld (liegt in einem Bedienelement) auch
+  await page.goto(`/#page-${id}`);
+  await expect(page.getByTestId("page-content")).toBeVisible();
+  expect(await select("[data-testid=page-content]")).not.toBe("none");
+  await page.keyboard.press("ControlOrMeta+k");
+  const field = page.getByLabel("Search pages");
+  await expect(field).toBeVisible();
+  expect(await field.evaluate((el) => getComputedStyle(el).userSelect || getComputedStyle(el).webkitUserSelect)).not.toBe("none");
+});
