@@ -29,6 +29,8 @@ interface Props {
   history: History;
   onOpenPage: (id: string) => void;
   onNavigate: (r: Route) => void;
+  /** BSD-101: Sprungziel aus einem Block-Link. */
+  focusBlock?: string | undefined;
 }
 
 const noop = () => () => undefined;
@@ -37,7 +39,7 @@ function useRevision(store: WorkspaceStore | undefined) {
   return useSyncExternalStore(store ? (fn) => store.observe(() => fn()) : noop, () => store?.revision ?? -1);
 }
 
-export function PageView({ client, state, pageID, history, onOpenPage, onNavigate }: Props) {
+export function PageView({ client, state, pageID, history, onOpenPage, onNavigate, focusBlock }: Props) {
   const [replica, setReplica] = useState<PageReplica | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
   const [exporting, setExporting] = useState(false);
@@ -127,7 +129,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   } else {
     const Editor = slots.PageEditor;
     body = Editor
-      ? <Editor store={store} pageID={pageID} readOnly={readOnly} onOpenPage={onOpenPage} />
+      ? <Editor store={store} pageID={pageID} readOnly={readOnly} onOpenPage={onOpenPage} focusBlock={focusBlock} />
       : <BlockView store={store} pageID={pageID} readOnly={readOnly} onOpenPage={onOpenPage} />;
   }
 

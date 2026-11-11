@@ -27,7 +27,7 @@ Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensu
 Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)"
 Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung"
 Link to page block,linking,should,yes,yes,,yes
-Copy link to block / page (deep link),linking,should,yes,yes,,no
+Copy link to block / page (deep link),linking,should,yes,yes,,"yes (BSD-101): Blockmenü „Copy link to block“ (#page-<id>/<block>), Öffnen scrollt zum Block und hebt ihn kurz hervor"
 Text block,blocks,must,yes,yes,,yes
 Heading 1/2/3,blocks,must,yes,yes,,yes
 Heading 4,blocks,could,yes,yes,,yes
