@@ -41,6 +41,8 @@ const secretStore = () => (secrets ??= new SecretStore(typeof indexedDB === "und
 /** Die verschlüsselte Ablage (IndexedDB; ohne IndexedDB nur für diese Sitzung im Speicher – nie Klartext im localStorage). */
 export const secretVault = (): SecretStore => secretStore();
 let syncCache: SyncConfig | undefined;
+/** BSD-235: im Gast-Tab nie den Klartext-Eintrag des Besitzers aus localStorage übernehmen (und dort löschen). */
+let noMigrate = false;
 let syncWrite: Promise<void> = Promise.resolve();
 
 /**
@@ -62,7 +64,7 @@ export const syncConfig = {
     try {
       await syncWrite;
       const s = secretStore();
-      await s.migrate(storage());
+      if (!noMigrate) await s.migrate(storage());
       syncCache = await s.getSync();
     } catch {
       // IndexedDB nicht nutzbar (manche privaten Fenster): alter Eintrag gilt für diese Sitzung
@@ -72,9 +74,10 @@ export const syncConfig = {
     return syncCache;
   },
   /** Für Tests: anderen Speicher verwenden. */
-  _use(store: SecretStore) {
+  _use(store: SecretStore, opts: { noMigrate?: boolean } = {}) {
     secrets = store;
     syncCache = undefined;
+    noMigrate = opts.noMigrate === true;
   },
 };
 
@@ -143,3 +146,9 @@ export const sidebarNavPrefs = {
   get: (): unknown => read<unknown>("based.sidebar.nav", undefined),
   set: (v: unknown) => write("based.sidebar.nav", v),
 };
+
+/** BSD-235: eigene Gerätekennung je Gast-Zugang (nie die des Besitzers: gleiche Kennung = gleiche Stempel). */
+export const guestDeviceNode = (id: string) => ({
+  get: (): string | undefined => read<string | undefined>(`based.guest.${id}.device`, undefined),
+  set: (node: string) => write(`based.guest.${id}.device`, node),
+});
