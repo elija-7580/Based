@@ -1,5 +1,5 @@
-packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 packages/ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -18,51 +18,51 @@ packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1563 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1564)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m54 passed[39m[22m[90m (54)[39m
+packages/database-ui test: [2m      Tests [22m [1m[32m56 passed[39m[22m[90m (56)[39m
 packages/sync test: [2m      Tests [22m [1m[32m41 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (44)[39m
 packages/brain test: [2m      Tests [22m [1m[32m371 passed[39m[22m[90m (371)[39m
-packages/editor test: [2m      Tests [22m [1m[32m68 passed[39m[22m[90m (68)[39m
+packages/editor test: [2m      Tests [22m [1m[32m70 passed[39m[22m[90m (70)[39m
 apps/web test: [2m      Tests [22m [1m[32m141 passed[39m[22m[90m (141)[39m
-apps/server test: [2m      Tests [22m [1m[32m93 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (94)[39m
-apps/cli test: [2m      Tests [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+apps/server test: [2m      Tests [22m [1m[32m94 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (95)[39m
+apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
 --- e2e
-  ✓  264 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.8s)
-  ✓  267 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.7s)
-  ✓  268 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (4.6s)
-  -  270 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  271 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  269 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (3.9s)
-  ✓  272 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.2s)
-  ✓  273 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
-  ✓  274 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.5s)
-  ✓  275 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.0s)
-  ✓  276 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.1s)
+  6) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ─────────────
 
+    Error: expect(received).toEqual(expected) // deep equality
 
-  1) [chromium] › e2e/shell-layout.spec.ts:104:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
+    - Expected  - 1
+    + Received  + 0
 
-    Error: expect(received).toBeGreaterThan(expected)
-
-    Expected: > 280
-    Received:   230
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
 
     Call Log:
     - Timeout 5000ms exceeded while waiting on the predicate
 
-      128 |   await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
-      129 |   await page.mouse.wheel(0, 200);
-    > 130 |   await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
-          |                                                                                     ^
-      131 | });
-      132 |
-        at /home/runner/work/Based/Based/apps/web/e2e/shell-layout.spec.ts:130:85
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shell-layout-Rad-über-eine-a5bc3-e-Seite-weiter-Elija-11-11--chromium/error-context.md
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
-  1 failed
-    [chromium] › e2e/shell-layout.spec.ts:104:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
+  6 failed
+    [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen 
+    [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+    [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
+    [chromium] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an 
+    [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
   14 skipped
-  261 passed (11.1m)
+  264 passed (9.5m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
