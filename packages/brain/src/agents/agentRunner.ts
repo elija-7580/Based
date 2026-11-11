@@ -4,7 +4,7 @@
 // Budget: Überschreitet der Lauf seine Obergrenze oder das Monatsbudget des Agenten, wird er gestoppt.
 // Berechtigungen: Modus + Regeln des Agenten, geschichtet mit dem Projekt; fragepflichtige Aufrufe warten als
 // „Needs you“ am Run, bis jemand an der Karte erlaubt oder ablehnt.
-// Zeitpläne laufen hier nur, solange die App offen ist (Server-Zeitpläne: später, nicht in diesem Branch).
+// Zeitpläne: in der App, solange sie offen ist; auf dem Server (BSD-243) mit eigenem Runner, wenn dort ein Modell eingerichtet ist.
 import type { ChatEngine, ToolPolicy } from "../engine.js";
 import { runTurn } from "../engine.js";
 import type { StoredChatEvent } from "../events.js";
@@ -54,6 +54,11 @@ export interface AgentRunnerOptions {
   isWrite?: (name: string) => boolean;
   /** BSD-245: Pfade einer Seite für Pfad-Regeln (`pagePathCandidates` dort, wo der Store liegt). */
   pathOf?: (pageID: string) => Promise<readonly string[]> | readonly string[];
+  /**
+   * BSD-243: Was mit fragepflichtigen Aufrufen geschieht. „wait“ (Standard, App): der Lauf wartet als „Needs you“.
+   * „deny“ (Server ohne Oberfläche): sofort abgelehnt – niemand könnte sie dort erlauben.
+   */
+  approvals?: "wait" | "deny";
 }
 
 export const SUBAGENT_SYSTEM = "You are a sub-agent of Based's main agent. Do the task below with the workspace tools, then reply with a short result (what you did, which pages). Stay within the task.";
@@ -155,7 +160,7 @@ export class AgentRunner {
         // Plan-Modus: Schreibschritte sammeln; sie stehen danach im Ergebnis des Laufs.
         onPlanned: plan.record,
         approve: (call) => new Promise<boolean>((resolve) => {
-          if (abort.signal.aborted) return resolve(false);
+          if (abort.signal.aborted || this.o.approvals === "deny") return resolve(false);
           this.approvals.push({ runID, call, resolve });
           void b.updateRun(runID, { status: "needsYou" });
           this.o.onChange?.();

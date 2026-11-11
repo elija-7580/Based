@@ -167,8 +167,14 @@ ein eigenes `/collab`-Dokument (`page:<id>`, BSD-252); Kopien nicht.
 `src/scheduler.ts` prüft alle 30 s (`scheduleEvery`) die Zeitplan-Records aller Agenten und legt fällige Läufe als
 Run-Records an (`queued`; Monatsbudget aufgebraucht → `cancelled` mit Grund) – dieselbe Regel wie die App
 (`claimSchedule` + `scheduledRun` aus `@based/brain`). Wer den Termin zuerst weiterschiebt, legt den Lauf an; verpasste
-Termine werden höchstens einmal nachgeholt. Ausgeführt werden die Läufe von der App (AgentRunner), sobald sie offen ist;
-der Server selbst ruft (noch) keine Modelle auf.
+Termine werden höchstens einmal nachgeholt.
+
+Ausführen: Ist `BASED_ANTHROPIC_API_KEY` gesetzt (optional `BASED_AGENT_MODEL`, Standard `claude-sonnet-5-5`), führt der
+Server wartende Läufe selbst aus – derselbe `AgentRunner` wie in der App (Lease am Run-Record, Besitzer `server`; ist die
+App zugleich offen, übernimmt nur einer), mit den Workspace-Werkzeugen über den Server-Store. Ergebnis, Verbrauch und
+Transkript (Chat) landen wie in der App am Run. Fragepflichtige Aufrufe („Ask before edits“, `ask`-Regeln) werden auf dem
+Server abgelehnt, weil dort niemand erlauben kann; MCP-Connections der Agenten laufen nur in der App. Ohne Schlüssel
+bleiben Läufe `queued`, bis die App sie ausführt.
 
 ## Sandbox pro Lauf (BSD-161)
 
