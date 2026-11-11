@@ -55,3 +55,28 @@ test("Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht m
   expect(bg).toBe(selected);
   expect(color).toBe(ink);
 });
+
+test("Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  const status = page.getByTestId("sync-status");
+  const text = status.locator(".synced-text");
+  const set = (state: string, label: string) => status.evaluate((el, [s, l]) => {
+    el.setAttribute("data-state", s!);
+    el.querySelector(".synced-text")!.textContent = l!;
+  }, [state, label]);
+  const width = () => text.evaluate((el) => el.getBoundingClientRect().width);
+
+  for (const [state, label] of [["local", "On this device"], ["synced", "Synced"]] as const) {
+    await set(state, label);
+    expect(await width(), state).toBeLessThanOrEqual(1);
+    await expect(status.locator(".dot")).toBeVisible();
+    await expect(status).toHaveText(label); // bleibt für Screenreader lesbar
+    await expect(status).toHaveAttribute("title", /.+/);
+  }
+  for (const [state, label] of [["memory", "Not saved"], ["offline", "Offline"], ["error", "Sync error"], ["readonly", "Read-only"], ["syncing", "Syncing…"], ["starting", "Opening…"]] as const) {
+    await set(state, label);
+    await expect(text, state).toBeVisible();
+    expect(await text.evaluate((el) => el.scrollWidth <= el.clientWidth), `${state} ungekürzt`).toBe(true);
+  }
+});

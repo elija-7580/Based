@@ -11,6 +11,13 @@
 /* Der Status gibt nach (kürzt mit …), die Icons bleiben immer ganz sichtbar – auch bei schmaler Seitenleiste. */
 .sidebar-footer.icons .synced { padding-inline: var(--space-3) 0; flex: 1 1 0; min-width: 0; overflow: hidden; }
 .synced-text { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* BSD-308: Im ruhigen Zustand (On this device, Synced) steht in der Icon-Zeile nur der Punkt; der Text bleibt für
+   Screenreader und im Tooltip. Text erscheint, sobald etwas Aufmerksamkeit braucht (Not saved, Offline, Sync error,
+   Read-only, Syncing…, Opening…) oder Dateien hochgeladen werden. */
+.sidebar-footer.icons .synced:is([data-state="local"], [data-state="synced"]):not([data-assets]) .synced-text {
+  position: absolute; width: 1px; height: 1px; flex: none; clip: rect(0 0 0 0);
+}
+.sidebar-footer.icons .synced { min-height: var(--space-5); }
 .brand .ws-icon + .sidebar-hide { margin-left: var(--space-1); }
 .nav-icons { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; }
 .nav-icon { position: relative; color: var(--ink-2); }
