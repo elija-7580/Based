@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE } from "@based/brain";
+import { listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status"].sort(),
     );
   });
 
@@ -312,3 +312,23 @@ describe("MCP: Projekte (BSD-221 Teil 3c)", () => {
   });
 });
 
+describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
+  it("create_project (Duplikat, Status, Seite), update_project_status (Name, Status, Update auf der Seite)", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    let r = textOf(await call("create_project", { name: "Publit", goal: "Launch the beta" }));
+    expect(r).toMatch(/^Created project \[Publit\]\(based:\/\/page\/[0-9a-f-]+\) \(id: [0-9a-f-]+, active\)\.$/i);
+    expect(textOf(await call("create_project", { name: "publit" }))).toContain("already exists");
+    expect(listRecords<ProjectData>(store, PROJECT_TYPE)).toHaveLength(1);
+    await call("create_project", { name: "Old", status: "Done" });
+    expect(textOf(await call("list_projects", { status: "active" }))).not.toContain("Old");
+    expect((await call("create_project", { name: "X", status: "Someday" })).isError).toBe(true);
+    r = textOf(await call("update_project_status", { project: "publit", update: "Beta shipped", status: "Done" }));
+    expect(r).toBe("Posted update to Publit (status done).");
+    const p = listRecords<ProjectData>(store, PROJECT_TYPE).find((x) => x.name === "Publit")!;
+    expect(p.data.status).toBe("done");
+    expect(app.pages.read(p.data.pageID!)).toContain("Beta shipped");
+    expect((await call("update_project_status", { project: "Publit", update: "x", status: "weird" })).isError).toBe(true);
+    expect((await call("update_project_status", { project: "nope", update: "x" })).isError).toBe(true);
+  });
+});
