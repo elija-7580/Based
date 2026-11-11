@@ -7,6 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
+import { getRunText, inboxText, listRunsText } from "./runs.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -15,6 +16,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
 
@@ -64,6 +66,27 @@ export function createMcpServer(pages: Pages): McpServer {
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;
   const dbs = new Databases(pages.store);
   const values = z.record(z.string(), z.string()).describe("Property name → plain text value (empty string clears; options by name; multi-select comma-separated; dates YYYY-MM-DD)");
+
+  // MARK: Läufe und Inbox (BSD-221 Teil 3a; BSD-160-Records, nur lesen)
+  server.registerTool(
+    "list_runs",
+    {
+      description: "Agent runs (chat turns, main agent, sub-agents, schedules), newest first, with status, kind, start time and cost",
+      inputSchema: { status: z.string().optional().describe("Queued, Running, Needs you, Done, Failed or Cancelled"), limit },
+      annotations: { readOnlyHint: true },
+    },
+    guarded(({ status, limit: n }: { status?: string | undefined; limit?: number | undefined }) => text(listRunsText(pages.store, { status, limit: n }))),
+  );
+  server.registerTool(
+    "get_run",
+    { description: "One run: status, agent, times, usage and cost, instructions, result and sub-runs", inputSchema: { run_id: z.string() }, annotations: { readOnlyHint: true } },
+    guarded(({ run_id }: { run_id: string }) => text(getRunText(pages.store, run_id))),
+  );
+  server.registerTool(
+    "inbox",
+    { description: "What needs the user: runs waiting for an answer or approval", inputSchema: {}, annotations: { readOnlyHint: true } },
+    guarded(() => text(inboxText(pages.store))),
+  );
 
   // MARK: Datenbanken (BSD-221)
   server.registerTool(
