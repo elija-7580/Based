@@ -1,5 +1,6 @@
 // BSD-155: Einstieg – eine Datenbank mit ihren Ansichten als Tabs, Filter-Chips, Sortierung, Suche,
 // Ansichts-Einstellungen und „New“. Eingehängt in Seiten (inline) oder als ganze Seite.
+import type { AutofillWriter } from "./logic/autofill.js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
@@ -56,6 +57,8 @@ export interface DatabaseViewProps {
   isAgentEdit?: ((row: Block) => boolean) | undefined;
   /** BSD-208: Asset-Speicher für Datei-Uploads in der Files-&-Media-Property; ohne: nur Links. */
   files?: FileHost | undefined;
+  /** BSD-225 Teil 2: Modell für „Autofill with AI“ im Property-Menü (fehlt = kein Menüpunkt). */
+  ai?: AutofillWriter | undefined;
   /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
   weekStart?: number | undefined;
   /** BSD-213: Sammelaktionen der Shell für ausgewählte Zeilen (in Tabs öffnen, Links kopieren). */
@@ -333,7 +336,7 @@ export function DatabaseView(props: DatabaseViewProps) {
   const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart, rowActions: props.rowActions });
   const style = { height: props.height ?? (props.inline ? "auto" : "100%") };
   const inline = useMemo(() => (props.inline ? { pageSize: INLINE_PAGE_SIZE } : null), [props.inline]);
-  const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files }), [props.renderForm, props.files]);
+  const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files, ai: props.ai }), [props.renderForm, props.files, props.ai]);
   if (!ctx) return <div className="dbui-root dbui-empty" style={style} role="status">Database not found.</div>;
   return (
     <DBContext.Provider value={ctx}>

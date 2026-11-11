@@ -487,6 +487,26 @@ test("Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blo
   await expect(page.getByRole("row", { name: /Alpha/ }).getByRole("button", { name: "report.txt" })).toBeVisible();
 });
 
+test("BSD-225 Teil 2: Property per AI ausfüllen (Skript-Engine)", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const area = { id: "ar", name: "Area", type: "select", options: [{ id: "w", name: "Work", color: "blue" }, { id: "h", name: "Home", color: "green" }] };
+  await seedDatabase(page, {
+    title: "Fill",
+    properties: [{ id: "title", name: "Name", type: "title" }, area],
+    rows: [{ title: "Prepare the quarterly report" }, { title: "Water the plants" }],
+    views: [{ id: "vt", name: "Table", type: "table" }],
+  });
+  await page.waitForFunction(() => "__basedChat" in globalThis);
+  await page.evaluate(() => (globalThis as unknown as { __basedChat: { useScript(s: unknown, d: number): void } }).__basedChat.useScript([[{ text: "Work" }], [{ text: "Home" }]], 0));
+  await page.getByRole("columnheader", { name: /Area/ }).getByRole("button").first().click();
+  await page.getByTestId("property-autofill").click();
+  const cell = (row: string) => page.locator(".dbui-vrow", { hasText: row });
+  await expect(cell("quarterly report")).toContainText("Work");
+  await expect(cell("Water the plants")).toContainText("Home");
+  // Ein Undo-Schritt ist im Unit-Test geprüft (autofill.test.ts); ⌘Z in Datenbank-Ansichten fehlt noch (eigener Eintrag).
+});
+
 test("BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

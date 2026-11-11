@@ -1,5 +1,6 @@
 // BSD-155: Zustand einer Datenbank-Ansicht: Store, QueryEngine, Version (nur Änderungen der eigenen
 // Datenbank bzw. ihrer Relationsziele zählen – watchDatabase), Sperre und Rückrufe der Shell.
+import type { AutofillWriter } from "./logic/autofill.js";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { QueryEngine, watchDatabase, weekStartForLocale, type Block, type Database, type DatabaseView, type WorkspaceStore } from "@based/core";
 import { defaultIsAgentEdit } from "./logic/values.js";
@@ -47,7 +48,7 @@ export interface FileHost {
   open: (assetID: string) => Promise<string>;
 }
 
-export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined }>({});
+export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined; ai?: AutofillWriter | undefined }>({});
 
 export function useDB(): DBContextValue {
   const c = useContext(DBContext);
