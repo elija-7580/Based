@@ -1,8 +1,8 @@
 // BSD-281 (entschieden von Elija am 11.11.): Einträge der Seitenleiste. Oben fest Search, Home, Chat; unten Library,
 // Trash, Settings als Icon-Zeile neben dem Sync-Status; Tasks, Graph und Coding stehen nicht mehr in der Leiste
 // (Tasks über „All tasks“ auf der Startseite, Graph als Reiter in der Library, Coding nur im erweiterten
-// Agenten-Modus = „Show agent details“). Jeder Eintrag lässt sich per Rechtsklick oben anpinnen oder ausblenden; das
-// gilt pro Gerät (localStorage). Alles bleibt über ⌘K erreichbar (NAV_COMMANDS). Rein, ohne DOM.
+// Agenten-Modus = „Show agent details“). Jeder Eintrag lässt sich per Rechtsklick oben anpinnen oder ausblenden und per
+// Ziehen umsortieren oder zwischen oben und Fuß verschieben (moveNav); das gilt pro Gerät (localStorage). Alles bleibt über ⌘K erreichbar (NAV_COMMANDS). Rein, ohne DOM.
 
 export type NavID = "search" | "home" | "chat" | "tasks" | "coding" | "graph" | "library" | "trash" | "settings";
 
@@ -36,6 +36,11 @@ export interface NavPrefs {
   pinned: NavID[];
   /** Ausgeblendet (weder oben noch unten). */
   hidden: NavID[];
+  /** Vom Stammplatz oben in den Fuß gezogen (Search, Home, Chat). */
+  lowered?: NavID[];
+  /** Eigene Reihenfolge oben bzw. im Fuß (durch Ziehen); was hier fehlt, steht in der Standardreihenfolge dahinter. */
+  order?: NavID[];
+  footerOrder?: NavID[];
 }
 
 export const EMPTY_NAV_PREFS: NavPrefs = { pinned: [], hidden: [] };
@@ -44,10 +49,14 @@ const KNOWN = new Set<string>(NAV.map((n) => n.id));
 
 /** Gespeicherte Wahl säubern (unbekannte oder doppelte IDs fallen weg). */
 export function cleanNavPrefs(v: unknown): NavPrefs {
-  const o = (v && typeof v === "object" ? v : {}) as { pinned?: unknown; hidden?: unknown };
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
   const list = (x: unknown) => [...new Set(Array.isArray(x) ? x.filter((s): s is NavID => typeof s === "string" && KNOWN.has(s)) : [])];
   const hidden = list(o.hidden);
-  return { pinned: list(o.pinned).filter((id) => !hidden.includes(id)), hidden };
+  const pinned = list(o.pinned).filter((id) => !hidden.includes(id));
+  const lowered = list(o.lowered).filter((id) => !hidden.includes(id) && !pinned.includes(id));
+  const order = list(o.order);
+  const footerOrder = list(o.footerOrder);
+  return { pinned, hidden, ...(lowered.length ? { lowered } : {}), ...(order.length ? { order } : {}), ...(footerOrder.length ? { footerOrder } : {}) };
 }
 
 /** Darf der Eintrag überhaupt erscheinen? Coding nur im erweiterten Agenten-Modus. */
@@ -58,12 +67,20 @@ export interface NavLayout {
   footer: NavID[];
 }
 
+/** Nach eigener Reihenfolge sortieren; Einträge ohne Platz darin bleiben in ihrer Reihenfolge dahinter. */
+function sorted(ids: NavID[], order: readonly NavID[] | undefined): NavID[] {
+  if (!order?.length) return ids;
+  const at = (id: NavID) => { const i = order.indexOf(id); return i < 0 ? order.length : i; };
+  return ids.map((id, i) => ({ id, i })).sort((a, b) => at(a.id) - at(b.id) || a.i - b.i).map((x) => x.id);
+}
+
 export function navLayout(prefs: NavPrefs, opts: { advanced: boolean }): NavLayout {
   const shown = (id: NavID) => navAvailable(id, opts) && !prefs.hidden.includes(id);
-  const top = NAV.filter((n) => n.home === "top" && shown(n.id)).map((n) => n.id);
+  const lowered = prefs.lowered ?? [];
+  const top = NAV.filter((n) => n.home === "top" && shown(n.id) && !lowered.includes(n.id)).map((n) => n.id);
   for (const id of prefs.pinned) if (shown(id) && !top.includes(id)) top.push(id);
-  const footer = NAV.filter((n) => n.home === "footer" && shown(n.id) && !top.includes(n.id)).map((n) => n.id);
-  return { top, footer };
+  const footer = NAV.filter((n) => (n.home === "footer" || lowered.includes(n.id)) && shown(n.id) && !top.includes(n.id)).map((n) => n.id);
+  return { top: sorted(top, prefs.order), footer: sorted(footer, prefs.footerOrder) };
 }
 
 /** Wo steht der Eintrag gerade? */
@@ -72,24 +89,53 @@ export function navPlace(id: NavID, prefs: NavPrefs, opts: { advanced: boolean }
   return l.top.includes(id) ? "top" : l.footer.includes(id) ? "footer" : "none";
 }
 
-/** Oben anpinnen (holt ihn auch aus „ausgeblendet“ zurück). */
+const without = (list: readonly NavID[] | undefined, id: NavID) => (list ?? []).filter((x) => x !== id);
+/** Felder für eigene Reihenfolge und „in den Fuß gezogen“ mitnehmen (leere fallen weg). */
+function keep(prefs: NavPrefs, lowered: NavID[]): Pick<NavPrefs, "lowered" | "order" | "footerOrder"> {
+  return { ...(lowered.length ? { lowered } : {}), ...(prefs.order?.length ? { order: prefs.order } : {}), ...(prefs.footerOrder?.length ? { footerOrder: prefs.footerOrder } : {}) };
+}
+
+/** Oben anpinnen (holt ihn auch aus „ausgeblendet“ und aus dem Fuß zurück). */
 export function pinNav(prefs: NavPrefs, id: NavID): NavPrefs {
-  return { pinned: [...prefs.pinned.filter((x) => x !== id), id], hidden: prefs.hidden.filter((x) => x !== id) };
+  const home = NAV.find((n) => n.id === id)?.home;
+  const pinned = home === "top" ? without(prefs.pinned, id) : [...without(prefs.pinned, id), id];
+  return { pinned, hidden: without(prefs.hidden, id), ...keep(prefs, without(prefs.lowered, id)) };
 }
 
 /** Lösen: zurück an seinen Stammplatz (oben feste bleiben oben, Fuß-Einträge gehen zurück in den Fuß). */
 export function unpinNav(prefs: NavPrefs, id: NavID): NavPrefs {
-  return { pinned: prefs.pinned.filter((x) => x !== id), hidden: prefs.hidden };
+  return { pinned: without(prefs.pinned, id), hidden: prefs.hidden, ...keep(prefs, prefs.lowered ?? []) };
 }
 
 export function hideNav(prefs: NavPrefs, id: NavID): NavPrefs {
-  return { pinned: prefs.pinned.filter((x) => x !== id), hidden: [...prefs.hidden.filter((x) => x !== id), id] };
+  return { pinned: without(prefs.pinned, id), hidden: [...without(prefs.hidden, id), id], ...keep(prefs, without(prefs.lowered, id)) };
 }
 
 /** Wieder zeigen: an seinem Stammplatz, bzw. oben angepinnt, wenn er keinen hat (Tasks, Graph, Coding). */
 export function showNav(prefs: NavPrefs, id: NavID): NavPrefs {
-  const next = { pinned: prefs.pinned, hidden: prefs.hidden.filter((x) => x !== id) };
+  const next: NavPrefs = { pinned: prefs.pinned, hidden: without(prefs.hidden, id), ...keep(prefs, prefs.lowered ?? []) };
   return NAV.find((n) => n.id === id)?.home === "none" ? pinNav(next, id) : next;
+}
+
+/**
+ * Ziehen: `id` nach oben oder in den Fuß, vor `before` (ohne `before` ans Ende). Legt die Reihenfolge beider Listen
+ * fest und merkt, was dadurch seinen Stammplatz verlassen hat.
+ */
+export function moveNav(prefs: NavPrefs, id: NavID, to: "top" | "footer", before: NavID | undefined, opts: { advanced: boolean }): NavPrefs {
+  if (before === id) return prefs;
+  const shownPrefs: NavPrefs = { ...prefs, hidden: without(prefs.hidden, id) };
+  const l = navLayout(shownPrefs, opts);
+  const top = l.top.filter((x) => x !== id);
+  const footer = l.footer.filter((x) => x !== id);
+  const list = to === "top" ? top : footer;
+  const at = before ? list.indexOf(before) : -1;
+  list.splice(at < 0 ? list.length : at, 0, id);
+  const home = (x: NavID) => NAV.find((n) => n.id === x)?.home;
+  const pinned = top.filter((x) => home(x) !== "top");
+  const lowered = footer.filter((x) => home(x) !== "footer");
+  // Angepinntes, das gerade nicht erscheinen darf (Coding ohne Agenten-Modus), bleibt angepinnt.
+  for (const x of prefs.pinned) if (x !== id && !pinned.includes(x) && !top.includes(x) && !footer.includes(x) && !shownPrefs.hidden.includes(x)) pinned.push(x);
+  return { pinned, hidden: shownPrefs.hidden, ...(lowered.length ? { lowered } : {}), order: top, footerOrder: footer };
 }
 
 // MARK: ⌘K – alles bleibt erreichbar

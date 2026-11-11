@@ -14,7 +14,7 @@ import { routeToHash, type Route } from "../shell/router.js";
 import { openPageWindow } from "../desktop.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
-import { cleanNavPrefs, FOOTER_STYLE, hideNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
+import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import { meetingHost } from "../editorSlot.js";
@@ -26,6 +26,7 @@ import type { SyncState } from "../worker/protocol.js";
 const FILLABLE = new Set<IconName>(["home", "graph", "trash", "chat", "settings", "library", "search"]);
 const PRIVATE = "private";
 const DRAG_TYPE = "application/x-based-page";
+const NAV_DRAG_TYPE = "application/x-based-nav";
 
 /** Zeilenhöhe aus dem Token (`--space-6`), damit Virtualisierung und CSS übereinstimmen. */
 function rowHeight(): number {
@@ -358,16 +359,54 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     e.preventDefault();
     setNavMenu({ id, x: e.clientX, y: e.clientY });
   };
+  // Einträge ziehen: umsortieren und zwischen oben und Fuß verschieben (pro Gerät gemerkt, wie Anpinnen/Ausblenden).
+  const navDragging = useRef<NavID | undefined>(undefined);
+  const [navDrop, setNavDrop] = useState<{ id: NavID; side: "before" | "after" } | undefined>();
+  const navDrag = (id: NavID, list: "top" | "footer") => ({
+    draggable: true,
+    onDragStart: (e: DragEvent<HTMLElement>) => {
+      navDragging.current = id;
+      e.dataTransfer.setData(NAV_DRAG_TYPE, id);
+      e.dataTransfer.effectAllowed = "move";
+    },
+    onDragEnd: () => {
+      navDragging.current = undefined;
+      setNavDrop(undefined);
+    },
+    onDragOver: (e: DragEvent<HTMLElement>) => {
+      if (!navDragging.current || navDragging.current === id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const r = e.currentTarget.getBoundingClientRect();
+      // oben stehen die Einträge untereinander, im Fuß (Icon-Zeile) nebeneinander
+      const first = list === "top" || FOOTER_STYLE !== "icons" ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
+      const side = first ? "before" : "after";
+      if (navDrop?.id !== id || navDrop.side !== side) setNavDrop({ id, side });
+    },
+    onDragLeave: () => setNavDrop((d) => (d?.id === id ? undefined : d)),
+    onDrop: (e: DragEvent<HTMLElement>) => {
+      const moved = navDragging.current;
+      const side = navDrop?.id === id ? navDrop.side : "before";
+      navDragging.current = undefined;
+      setNavDrop(undefined);
+      if (!moved || moved === id) return;
+      e.preventDefault();
+      const ids = list === "top" ? layout.top : layout.footer;
+      const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
+      changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced }));
+    },
+  });
+  const dropClass = (id: NavID) => (navDrop?.id === id ? ` nav-drop-${navDrop.side}` : "");
   const navButton = (n: NavEntry) => (
-    <button key={n.id} type="button" className="nav-item" aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)}>
+    <button key={n.id} type="button" className={"nav-item" + dropClass(n.id)} aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "top")}>
       <Icon name={n.icon} filled={n.active && FILLABLE.has(n.icon)} {...(n.cut ? { cut: n.cut } : {})} />
       {n.name}
       {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key t-data">{n.key}</span> : null}
     </button>
   );
   const iconButton = (n: NavEntry) => (
-    <button key={n.id} type="button" className="icon-btn ghost nav-icon" aria-label={n.badge ? `${n.name}, ${n.badge} pages` : n.name} title={n.key ? `${n.name} (${n.key})` : n.name}
-      aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)}>
+    <button key={n.id} type="button" className={"icon-btn ghost nav-icon" + dropClass(n.id)} aria-label={n.badge ? `${n.name}, ${n.badge} pages` : n.name} title={n.key ? `${n.name} (${n.key})` : n.name}
+      aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)} {...navDrag(n.id, "footer")}>
       <Icon name={n.icon} size={18} filled={n.active && FILLABLE.has(n.icon)} />
       {n.badge ? <span className="nav-icon-badge" aria-hidden="true">{n.badge}</span> : null}
       {n.key ? <span className="key-badge above" aria-hidden="true">{n.key}</span> : null}
@@ -441,7 +480,9 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       {navMenu ? (
         <NavMenu menu={navMenu} place={navPlace(navMenu.id, navPrefs, { advanced })} advanced={advanced} prefs={navPrefs} onClose={() => setNavMenu(undefined)}
           onPin={() => changeNav((p) => pinNav(p, navMenu.id))} onUnpin={() => changeNav((p) => unpinNav(p, navMenu.id))} onHide={() => changeNav((p) => hideNav(p, navMenu.id))}
-          onToggle={(id, on) => changeNav((p) => (on ? showNav(p, id) : hideNav(p, id)))} />
+          onToggle={(id, on) => changeNav((p) => (on ? showNav(p, id) : hideNav(p, id)))}
+          onLower={() => changeNav((p) => moveNav(p, navMenu.id, "footer", undefined, { advanced }))}
+          onReset={() => changeNav(() => ({ pinned: [], hidden: [] }))} />
       ) : null}
       {menu && picked.size > 1 && picked.has(menu.id) ? (
         <BulkMenu
@@ -710,7 +751,7 @@ function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
 }
 
 /** BSD-281: Rechtsklick auf einen Eintrag der Leiste – oben anpinnen/lösen, ausblenden, und alle Einträge ein-/ausblenden. */
-function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide, onToggle }: {
+function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide, onToggle, onLower, onReset }: {
   menu: { id: NavID; x: number; y: number };
   place: "top" | "footer" | "none";
   advanced: boolean;
@@ -720,6 +761,8 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
   onUnpin: () => void;
   onHide: () => void;
   onToggle: (id: NavID, on: boolean) => void;
+  onLower: () => void;
+  onReset: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -756,6 +799,7 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
     <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={{ left: menu.x, top: menu.y }} data-testid="nav-menu" onKeyDown={keyNav}>
       {place !== "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onPin)}><Icon name="plus" size={16} />Pin to top</button> : null}
       {place === "top" && pinned ? <button type="button" role="menuitem" className="menu-item" onClick={run(onUnpin)}><Icon name="back" size={16} />{def.home === "footer" ? "Move back to the bottom" : "Unpin from top"}</button> : null}
+      {place === "top" && def.home === "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onLower)}><Icon name="back" size={16} />Move to the bottom</button> : null}
       <button type="button" role="menuitem" className="menu-item" onClick={run(onHide)}><Icon name="close" size={16} />Hide from sidebar</button>
       <div className="menu-sep" role="separator" />
       <span className="menu-label t-meta">Show in sidebar</span>
@@ -767,6 +811,12 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
           </button>
         );
       })}
+      {prefs.pinned.length || prefs.hidden.length || prefs.lowered?.length || prefs.order?.length || prefs.footerOrder?.length ? (
+        <>
+          <div className="menu-sep" role="separator" />
+          <button type="button" role="menuitem" className="menu-item" onClick={run(onReset)}><Icon name="restore" size={16} />Reset sidebar</button>
+        </>
+      ) : null}
     </div>
   );
 }
