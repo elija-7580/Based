@@ -433,7 +433,7 @@ export class PageReplica {
   constructor(private readonly client: StoreClient, data: PageRecords) {
     this.pageID = data.pageID;
     // BSD-30: gleiche Form wie der Worker – so schickt eine Schema-Änderung nur die geänderte Property zurück
-    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records), propertyRecords: data.propertyRecords === true });
+    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records), propertyRecords: data.propertyRecords === true, resumeClock: false });
     this.unobserve = this.store.observe((c) => {
       if (c.origin !== "local" && c.origin !== "undo" && c.origin !== "redo" && c.origin !== "derived") return;
       const upserts: WireRecord[] = [];

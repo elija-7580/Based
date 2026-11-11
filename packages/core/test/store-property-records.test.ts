@@ -325,3 +325,17 @@ describe("Umstellung beim Öffnen", () => {
     expect(s.allRecords().some((r) => r.kind === "property")).toBe(false);
   });
 });
+
+describe("Uhr beim Öffnen", () => {
+  it("setzt hinter den gespeicherten Stempeln fort; mit resumeClock: false (Seitenreplik) nicht", () => {
+    const a = device("a", { split: false });
+    const page = createPage(a.store, { title: "Home" });
+    const future = { millis: Date.now() + 60_000, counter: 7, node: "a" };
+    const records = a.store.allRecords().map((r) => structuredClone(r));
+    for (const r of records) if (r.kind === "block" && r.data.id === page) r.data.stamp = future;
+    const resumed = new WorkspaceStore({ node: "a", persistence: new MemoryPersistence(records) });
+    expect(compareStamps(resumed.clock.now(), future)).toBeGreaterThan(0);
+    const replica = new WorkspaceStore({ node: "a", persistence: new MemoryPersistence(records), resumeClock: false });
+    expect(compareStamps(replica.clock.now(), future)).toBeLessThan(0);
+  });
+});

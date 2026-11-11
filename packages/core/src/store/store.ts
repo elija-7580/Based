@@ -240,6 +240,12 @@ export interface StoreOptions {
    * Beim Öffnen werden Datenbanken im alten Format umgestellt (deterministisch, siehe `splitDatabase`).
    */
   propertyRecords?: boolean;
+  /**
+   * Die Uhr setzt beim Laden hinter den gespeicherten Stempeln fort (Standard). Aus für Kopien, die mit der
+   * Geräte-Kennung eines anderen Stores schreiben (Seitenreplik im Editor): zwei Uhren mit gleicher Kennung und gleichem
+   * Startstand erzeugen sonst dieselben Stempel, und eine der beiden Änderungen verliert.
+   */
+  resumeClock?: boolean;
 }
 
 export class WorkspaceStore {
@@ -283,6 +289,7 @@ export class WorkspaceStore {
     this.userID = opts.userID === undefined ? "me" : opts.userID;
     this.propertyRecords = opts.propertyRecords ?? WorkspaceStore.propertyRecordsByDefault;
     let ws: Workspace | undefined;
+    const resume = opts.resumeClock !== false;
     this.composing = false;
     for (const r of opts.persistence?.loadAll() ?? []) {
       if (r.kind === "workspace") {
@@ -290,7 +297,7 @@ export class WorkspaceStore {
       } else this._set(r);
       // Die Uhr setzt hinter dem Gespeicherten fort: eine lokale Änderung ist sonst (gleiche Millisekunde, zurück
       // gestellte Systemuhr) älter gestempelt als der Stand, den sie ändert, und verliert gegen dessen Wiederkehr.
-      this.clock.observe(stampOf(r));
+      if (resume) this.clock.observe(stampOf(r));
     }
     this.composing = true;
     if (this.propertyRecords) for (const id of this.cores.keys()) this.compose(id);
