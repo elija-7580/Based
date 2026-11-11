@@ -90,6 +90,19 @@ input::placeholder { color: var(--muted); }
 .nav-item:hover { background: var(--selected); }
 .nav-item[aria-current="page"] { background: var(--bg); color: var(--ink); box-shadow: var(--shadow-panel); font-weight: var(--weight-heading); }
 .nav-item .key { margin-left: auto; }
+/* BSD-270: Kürzel nur beim langen Halten von ⌘ (data-show-keys am Wurzelelement, shell/keyHints.ts) */
+.key-badge {
+  display: none; align-items: center; justify-content: center; min-width: var(--space-5); height: var(--space-4); padding: 0 var(--space-1);
+  border-radius: var(--radius-sm); background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: var(--type-meta-size);
+  line-height: 1; white-space: nowrap; flex: none; pointer-events: none;
+}
+:root:not([data-show-keys]) .nav-item .key { display: none; }
+:root[data-show-keys] .nav-item .key { display: inline-flex; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--ink); color: var(--bg); animation: key-in var(--duration-fast) var(--ease-out); }
+:root[data-show-keys] .key-badge { display: inline-flex; animation: key-in var(--duration-fast) var(--ease-out); }
+.key-badge.above { position: absolute; left: 50%; top: 0; transform: translate(-50%, -110%); }
+.tab .key-badge { margin-left: var(--space-1); }
+@keyframes key-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { :root[data-show-keys] :is(.key-badge, .nav-item .key) { animation: none; } }
 .badge {
   margin-left: auto; min-width: var(--space-5); height: var(--icon-md); padding: 0 var(--space-2); border-radius: var(--radius-pill);
   background: var(--surface-raised); font-size: var(--type-meta-size); font-weight: var(--weight-heading); display: inline-flex; align-items: center; justify-content: center;

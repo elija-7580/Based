@@ -15,6 +15,7 @@ import { PageView } from "./screens/PageView.js";
 import { tasksRuntime } from "./tasks/runtime.js";
 import "./tasks/AgentSettingsSection.js";
 import { installHistoryGestures } from "./shell/historyGestures.js";
+import { installKeyHints } from "./shell/keyHints.js";
 import { Icon } from "./icons.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
@@ -68,6 +69,8 @@ export function App({ client, history }: { client: StoreClient; history: History
   useEffect(() => installNewTabIntent(), []);
   // BSD-244: Maustasten 4/5, ⌘←/⌘→ und Wischen; der Hinweis am Rand folgt dem Finger ohne React-Render.
   const swipeHint = useRef<HTMLDivElement>(null);
+  // BSD-270: ⌘ (Strg) lange halten blendet die Kürzel-Plaketten ein
+  useEffect(() => installKeyHints(window), []);
   useEffect(() => installHistoryGestures(window, history, (p) => {
     const el = swipeHint.current;
     if (!el) return;
