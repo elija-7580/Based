@@ -1,5 +1,5 @@
-packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -21,7 +21,7 @@ packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1624 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1625)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
 packages/sync test: [2m      Tests [22m [1m[32m45 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (48)[39m
-packages/brain test: [2m      Tests [22m [1m[32m379 passed[39m[22m[90m (379)[39m
+packages/brain test: [2m      Tests [22m [1m[32m383 passed[39m[22m[90m (383)[39m
 packages/editor test: [2m      Tests [22m [1m[32m77 passed[39m[22m[90m (77)[39m
 apps/web test: [2m      Tests [22m [1m[32m172 passed[39m[22m[90m (172)[39m
 apps/server test: [2m      Tests [22m [1m[32m115 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (116)[39m
@@ -29,22 +29,23 @@ apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
 --- e2e
     - Timeout 5000ms exceeded while waiting on the predicate
 
-      130 |   await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
-      131 |   await page.mouse.wheel(0, 200);
-    > 132 |   await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
-          |                                                                                     ^
-      133 | });
-      134 |
-        at /home/runner/work/Based/Based/apps/web/e2e/shell-layout.spec.ts:132:85
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shell-layout-Rad-über-eine-a5bc3-e-Seite-weiter-Elija-11-11--chromium/error-context.md
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
-  4) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
+  3) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
 
     Error: expect(received).toBeLessThan(expected)
 
     Expected: < 34
-    Received:   34
+    Received:   41
 
       142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
       143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
@@ -57,13 +58,12 @@ apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
 
     Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
 
-  4 failed
-    [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
-    [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ 
+  3 failed
     [chromium] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um ──────────────
     [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   20 skipped
-  334 passed (13.9m)
+  341 passed (19.1m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
