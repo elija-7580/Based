@@ -79,3 +79,13 @@ describe("Diagramm-Farben (BSD-216)", () => {
     expect(themedPoints(pts, "green").map((p) => p.color)).toEqual(["green", "green"]);
   });
 });
+
+describe("Personen-Auswahl (BSD-216)", () => {
+  it("Namen aus der Datenbank und bekannte Namen, gefiltert, ohne Gewählte und ohne Doppelte", async () => {
+    const { personSuggestions } = await import("./logic/values.js");
+    const owner = { id: "o", name: "Owner", type: "person" };
+    const rows = [{ id: "r1", values: { o: { person: { _0: ["Anna", "me"] } } } }, { id: "r2", values: { o: { person: { _0: ["Ben"] } } } }] as never[];
+    expect(personSuggestions(rows, [owner], ["anna", "Clara"], "", [])).toEqual(["Anna", "Ben", "Clara"]);
+    expect(personSuggestions(rows, [owner], ["Clara"], "a", ["Anna"])).toEqual(["Clara"]);
+  });
+});

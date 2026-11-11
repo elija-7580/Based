@@ -7,7 +7,7 @@ import {
 } from "@based/core";
 import { ShellSlots, useDB } from "../context.js";
 import {
-  editText, fromInputValue, parseTextInput, storedDate, storedFiles, type StoredFile, storedIDs, toInputValue, withDate,
+  editText, fromInputValue, parseTextInput, personSuggestions, storedDate, storedFiles, type StoredFile, storedIDs, toInputValue, withDate,
 } from "../logic/values.js";
 import { Icon, OptionPill, Popover, type Anchor } from "../ui.js";
 import { PlaceEditor } from "./PlaceEditor.js";
@@ -178,9 +178,19 @@ function DateEditor({ row, prop, anchor, onClose }: CellEditorProps) {
 }
 
 function ListEditor({ row, prop, anchor, onClose, kind }: CellEditorProps & { kind: "person" }) {
-  const { store } = useDB();
+  const { store, db } = useDB();
   const ids = storedIDs(row, prop, kind);
   const [text, setText] = useState("");
+  // BSD-216: Auswahl aus bekannten Personen statt frei getippter Kennung (Eingabe bleibt für neue Namen)
+  const { people } = useContext(ShellSlots);
+  const [known, setKnown] = useState<string[]>([]);
+  useEffect(() => {
+    if (!people) return;
+    let live = true;
+    people().then((n) => { if (live) setKnown(n); }, () => undefined);
+    return () => { live = false; };
+  }, [people]);
+  const suggestions = useMemo(() => personSuggestions(rowsOf(store, db.id), db.properties, known, text, ids), [store, db, known, text, ids]);
   const save = (next: string[]) => setValue(store, row.id, prop.id, next.length ? pv(kind, next) : null);
   const add = (id: string) => { const t = id.trim(); if (t && !ids.includes(t)) save([...ids, t]); setText(""); };
   return (
@@ -191,6 +201,10 @@ function ListEditor({ row, prop, anchor, onClose, kind }: CellEditorProps & { ki
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(text); } }} />
       </div>
       {!ids.includes("me") && <button type="button" className="dbui-menu-item" onClick={() => add("me")}><Icon name="person" />Me</button>}
+      {suggestions.map((n) => <button key={n} type="button" className="dbui-menu-item" data-testid="person-suggestion" onClick={() => add(n)}><Icon name="person" />{n}</button>)}
+      {text.trim() && !suggestions.some((n) => n.toLowerCase() === text.trim().toLowerCase()) ? (
+        <button type="button" className="dbui-menu-item" onClick={() => add(text)}><Icon name="plus" />{`Add “${text.trim()}”`}</button>
+      ) : null}
     </Popover>
   );
 }

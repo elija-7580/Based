@@ -48,7 +48,7 @@ export interface FileHost {
   open: (assetID: string) => Promise<string>;
 }
 
-export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined; ai?: AutofillWriter | undefined; databases?: DatabaseSource | undefined }>({});
+export const ShellSlots = createContext<{ renderForm?: ((p: FormRenderProps) => ReactNode) | undefined; files?: FileHost | undefined; ai?: AutofillWriter | undefined; databases?: DatabaseSource | undefined; people?: (() => Promise<string[]>) | undefined }>({});
 
 /** BSD-216: andere Datenbanken des Workspaces (Dashboard-Quelle); `include` holt sie in den Store dieser Seite. */
 export interface DatabaseSource {

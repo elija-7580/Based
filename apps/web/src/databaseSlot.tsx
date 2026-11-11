@@ -15,6 +15,7 @@ import { asNewTabs, wantsNewTab } from "./shell/newTabIntent.js";
 import { routeToHash } from "./shell/router.js";
 import { assets } from "./assetBridge.js";
 import { chatController } from "./chat/runtime.js";
+import { BrainClient } from "./brain/client.js";
 import { editorClient } from "./editorSlot.js";
 import { ASSET_URL_PREFIX } from "@based/editor";
 import type { DatabaseViewProps } from "./slots.js";
@@ -64,11 +65,16 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     const pageID = store.blocks.get(blockID)?.type === "databasePage" ? blockID : store.containingPage(blockID) ?? blockID;
     return client ? { list: async () => (await client.listDatabases("")).map((d) => ({ id: d.id, title: d.title })), include: (id: string) => client.includeDatabase(pageID, id) } : undefined;
   }, [store, blockID]);
+  // BSD-216: bekannte Personen (Agent Brain „People“) für die Personen-Auswahl
+  const people = useMemo(() => {
+    const client = editorClient();
+    return client ? () => new BrainClient(client).personNames() : undefined;
+  }, []);
   const wrap = useRef<HTMLDivElement>(null);
   useEffect(() => (!fullPage && wrap.current ? attachWheelPassThrough(wrap.current) : undefined), [fullPage]);
   return (
     <div ref={wrap} className={fullPage ? "shell-database full" : "shell-database inline"}>
-      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} databases={databases} />
+      <DatabaseView store={store} databaseID={databaseID} blockID={blockID} readOnly={readOnly} onOpenPage={onOpenPage} showTitle={!fullPage} inline={!fullPage && !nested} {...(fullPage || !nested ? {} : { height: "calc(var(--space-8) * 7)" })} peek={peek} renderForm={renderForm} files={files} weekStart={weekStart} rowActions={rowActions} ai={ai} databases={databases} people={people} />
     </div>
   );
 }

@@ -555,6 +555,24 @@ test("BSD-216 Teil 2: Diagramm – Farben und Höhe", async ({ page }) => {
   await expect(chart.locator("rect.mark.tone-blue")).toHaveCount(1);
 });
 
+test("BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen)", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const owner = { id: "ow", name: "Owner", type: "person" };
+  await seedDatabase(page, {
+    title: "People",
+    properties: [{ id: "title", name: "Name", type: "title" }, owner],
+    rows: [{ id: "r-a", title: "Alpha", values: { ow: { person: { _0: ["Anna Berg"] } } } }, { id: "r-b", title: "Beta" }],
+    views: [{ id: "vt", name: "Table", type: "table" }],
+  });
+  await page.locator('[data-cell="r-b:1"]').click();
+  const pick = page.getByTestId("person-suggestion").filter({ hasText: "Anna Berg" });
+  await expect(pick).toBeVisible();
+  await pick.click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator('[data-cell="r-b:1"]')).toContainText("Anna Berg");
+});
+
 test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });

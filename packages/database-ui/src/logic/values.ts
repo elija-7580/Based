@@ -115,3 +115,17 @@ export function defaultIsAgentEdit(row: Block): boolean {
 
 /** URL mit Schema (Links in Zellen). */
 export const hrefOf = (u: string) => (/^[a-z][a-z0-9+.-]*:/i.test(u) ? u : "https://" + u);
+
+/**
+ * BSD-216: Personen zur Auswahl – alle, die in dieser Datenbank schon in einer Personen-Property stehen, plus die
+ * Namen, die die Shell kennt (Agent Brain „People“), gefiltert nach der Eingabe, ohne die schon gewählten.
+ */
+export function personSuggestions(rows: readonly Block[], props: readonly PropertySchema[], known: readonly string[], query: string, exclude: readonly string[], limit = 8): string[] {
+  const seen = new Map<string, string>();
+  const add = (n: string) => { const t = n.trim(); if (t && t !== "me" && !seen.has(t.toLowerCase())) seen.set(t.toLowerCase(), t); };
+  for (const r of rows) for (const p of props) if (p.type === "person") storedIDs(r, p, "person").forEach(add);
+  known.forEach(add);
+  const q = query.trim().toLowerCase();
+  const skip = new Set(exclude.map((x) => x.toLowerCase()));
+  return [...seen.values()].filter((n) => !skip.has(n.toLowerCase()) && (!q || n.toLowerCase().includes(q))).sort((a, b) => a.localeCompare(b)).slice(0, limit);
+}

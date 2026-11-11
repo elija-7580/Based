@@ -61,6 +61,8 @@ export interface DatabaseViewProps {
   ai?: AutofillWriter | undefined;
   /** BSD-216: andere Datenbanken als Dashboard-Quelle. */
   databases?: DatabaseSource | undefined;
+  /** BSD-216: bekannte Personen (Namen) für die Personen-Auswahl. */
+  people?: (() => Promise<string[]>) | undefined;
   /** Erster Wochentag für Kalender und Timeline (0 = Sonntag … 6 = Samstag) aus den App-Einstellungen; sonst aus dem Locale. */
   weekStart?: number | undefined;
   /** BSD-213: Sammelaktionen der Shell für ausgewählte Zeilen (in Tabs öffnen, Links kopieren). */
@@ -338,7 +340,7 @@ export function DatabaseView(props: DatabaseViewProps) {
   const ctx = useDatabaseContext(store, databaseID, { readOnly: props.readOnly, onOpenPage: props.onOpenPage, isAgentEdit: props.isAgentEdit, weekStart: props.weekStart, rowActions: props.rowActions });
   const style = { height: props.height ?? (props.inline ? "auto" : "100%") };
   const inline = useMemo(() => (props.inline ? { pageSize: INLINE_PAGE_SIZE } : null), [props.inline]);
-  const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files, ai: props.ai, databases: props.databases }), [props.renderForm, props.files, props.ai, props.databases]);
+  const slots = useMemo(() => ({ renderForm: props.renderForm, files: props.files, ai: props.ai, databases: props.databases, people: props.people }), [props.renderForm, props.files, props.ai, props.databases, props.people]);
   // BSD-293: ⌘Z/⇧⌘Z (⌘Y) für Änderungen in der Datenbank, solange der Fokus nicht in einem Textfeld oder Editor liegt.
   // Mehrere Ansichten derselben Seite teilen den Store: die erste nimmt die Taste (preventDefault), die anderen nicht.
   useEffect(() => {
