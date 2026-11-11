@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { AgentStore, fromMs, MAIN_AGENT_ID, type AgentSnapshot, type Rec, type RunData, type ScheduleData, type TaskData, type TaskView } from "../src/index.js";
 import { createDatabase, keysBetween } from "@based/core";
 import {
-  agentDetail, dueItems, groupByProject, showCost, arcGeometry, arcPath, arcPoint, arcTicks, composerTask, costLine, frameStart, greetingSentence, homeModel, overlaps, placeSide,
+  agentDetail, dueItems, groupByProject, showCost, arcGeometry, arcStageHeight, fitArcWidth, arcPath, arcPoint, arcTicks, composerTask, costLine, frameStart, greetingSentence, homeModel, overlaps, placeSide,
   projectDetail, ringLayout, taskCard, timeToT, visibleTicks, type HomeModel,
 } from "../src/home/index.js";
 
@@ -392,5 +392,35 @@ describe("BSD-278: Startseite – Ring ohne Doppelkarte, fällige Aufgaben, Erle
     const got = dueItems(store, from, to);
     expect(got.map((d) => [d.title, d.databaseTitle, d.allDay])).toEqual([["Pay rent", "Tasks", true], ["Water plants", "Chores", false]]);
     expect(got[0]!.dueMs).toBe(from);
+  });
+});
+
+// Feinschliff 11.11.: Der Bogen passt sich der Fensterhöhe an, damit der Composer ohne Scrollen sichtbar bleibt.
+describe("fitArcWidth", () => {
+  const card = { w: 236, h: 60 }, apex = { w: 316, h: 124 }, ring = { w: 200, h: 72 };
+  const h = (w: number) => arcStageHeight(w, card, apex, ring);
+
+  it("lässt die volle Breite, wenn die Höhe reicht oder unbekannt ist", () => {
+    expect(fitArcWidth(972, undefined, card, apex, ring)).toBe(972);
+    expect(fitArcWidth(972, h(972), card, apex, ring)).toBe(972);
+    expect(fitArcWidth(972, 2000, card, apex, ring)).toBe(972);
+    expect(fitArcWidth(972, 0, card, apex, ring)).toBe(972);
+  });
+
+  it("wird schmaler, bis die Bühne in die Höhe passt, und nutzt die Höhe fast ganz aus", () => {
+    const max = h(972) - 60;
+    const w = fitArcWidth(972, max, card, apex, ring);
+    expect(w).toBeLessThan(972);
+    expect(h(w)).toBeLessThanOrEqual(max);
+    expect(h(w + 2)).toBeGreaterThan(max);
+  });
+
+  it("unterschreitet die Mindestbreite nicht und wird nie breiter als der Platz", () => {
+    expect(fitArcWidth(972, 50, card, apex, ring)).toBe(560);
+    expect(fitArcWidth(400, 50, card, apex, ring)).toBe(400);
+  });
+
+  it("die Bühnenhöhe wächst mit der Breite (Voraussetzung für die Suche)", () => {
+    for (let w = 320; w < 1200; w += 40) expect(h(w + 40)).toBeGreaterThan(h(w));
   });
 });

@@ -1,7 +1,7 @@
 // Tabs der Shell (wie Notion/Browser): erscheinen ab dem zweiten Tab über der Seite. Klick wechselt, Mittelklick
 // oder × schließt, Ziehen sortiert um, + öffnet einen neuen Tab. Jeder Tab hat seinen eigenen Verlauf (router.ts).
 import { useState, useSyncExternalStore, type DragEvent } from "react";
-import { Icon } from "../icons.js";
+import { Icon, type IconName } from "../icons.js";
 import type { History, Route } from "../shell/router.js";
 import { keyLabel } from "../shell/keyHints.js";
 
@@ -21,6 +21,24 @@ export function routeTitle(r: Route, titles: ReadonlyMap<string, string>): strin
     case "meetings": return "Meetings";
     case "agent": return "Agent";
     case "project": return "Project";
+  }
+}
+
+/** Jeder Tab trägt das Icon seines Ziels (wie in der Seitenleiste), nicht pauschal das Haus. */
+export function routeIcon(r: Route): IconName {
+  switch (r.name) {
+    case "page": return "page";
+    case "home": return "home";
+    case "trash": return "trash";
+    case "settings": return "settings";
+    case "graph": return "graph";
+    case "chat": return "chat";
+    case "tasks": return "agent";
+    case "coding": return "terminal";
+    case "library": return "library";
+    case "meetings": return "mic";
+    case "agent": return "agent";
+    case "project": return "teamspace";
   }
 }
 
@@ -94,7 +112,7 @@ export function TabBar({ history, titles }: { history: History; titles: Readonly
             onDrop={(e) => onDrop(e, t.id)}
             onDragEnd={() => setDrop(undefined)}
           >
-            <Icon name={t.route.name === "page" ? "page" : t.route.name === "trash" ? "trash" : t.route.name === "settings" ? "settings" : t.route.name === "graph" ? "graph" : "home"} size={14} />
+            <Icon name={routeIcon(t.route)} size={14} />
             <span className="tab-title">{title}</span>
             {digit ? <span className="key-badge" aria-hidden="true">{keyLabel(String(digit))}</span> : null}
             <button

@@ -149,6 +149,8 @@
 
 /* Ariakit-Akzent (Blau) durch Based-Flächen ersetzen: eine Aktion = Tinte, Auswahl = `selected`. Menüs und
    Popover hängen BlockNote außerhalb von .bx-editor an (Portale), daher global unter den bn-Klassen. */
+.bn-root .bn-ak-menu-item:hover,
+.bn-root .bn-ak-menu-item[aria-selected="true"],
 .bn-root .bn-ak-menu-item[data-active-item],
 .bn-root .bn-ak-select-item[data-active-item],
 .bn-root .bn-suggestion-menu-item[aria-selected="true"],

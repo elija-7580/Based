@@ -11,6 +11,14 @@ Für Based Next gelten zuerst die Regeln aus `docs/design/README.md` (Designspra
 - `astryx theme add` nicht benutzen (bindet `fonts.css` ein, das lädt Google Fonts). Theme: `apps/web/src/astryxTheme.ts`.
 - CLI im Repo: `pnpm --filter @based/web exec astryx <cmd>`.
 
+## Fertig heißt poliert
+
+Ein Eintrag mit sichtbarer Oberfläche ist erst fertig, wenn `docs/quality/checklist.md` für die berührten Screens
+abgehakt ist: in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel, in allen Zuständen im Browser ansehen
+(Playwright), Bildschirmfotos nach `docs/design/screens/`, Verstöße beheben und jeden mit einem Test absichern
+(`apps/web/e2e/polish.spec.ts` oder beim Bereich). Was nicht zum Eintrag gehört, wird ein eigener Backlog-Eintrag
+„Feinschliff · …“ (Typ „UX/Polish“). Ins Ergebnisfeld gehört die Zeile „Checkliste: geprüft …, behoben …, offen …“.
+
 
 <!-- ASTRYX:START -->
 Astryx v0.7.11 · 174 components

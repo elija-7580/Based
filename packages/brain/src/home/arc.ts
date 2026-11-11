@@ -57,6 +57,32 @@ export function arcGeometry(card: Size, apex: Size, ring: Size, width = 1000): A
   return { width, height, cx: width / 2, cy, r, innerR };
 }
 
+/** Höhe der Bühne in Pixeln bei gegebener Breite; Kartengrößen in Pixeln (die Karten skalieren nicht mit). */
+export function arcStageHeight(width: number, card: Size, apex: Size, ring: Size): number {
+  const k = 1000 / width;
+  const u = (s: Size): Size => ({ w: s.w * k, h: s.h * k });
+  const g = arcGeometry(u(card), u(apex), u(ring));
+  return (g.height / g.width) * width;
+}
+
+/**
+ * Breite der Bühne, bei der der Bogen in `maxHeight` passt, damit der Composer darunter ohne Scrollen sichtbar
+ * bleibt. Nie breiter als der Platz, nie schmaler als `minWidth` (darunter liegen die Karten zu dicht; dann darf
+ * die Seite scrollen). Ohne Höhenangabe gilt die volle Breite.
+ */
+export function fitArcWidth(containerWidth: number, maxHeight: number | undefined, card: Size, apex: Size, ring: Size, minWidth = 560): number {
+  const h = (w: number) => arcStageHeight(w, card, apex, ring);
+  if (maxHeight === undefined || !(maxHeight > 0) || h(containerWidth) <= maxHeight) return containerWidth;
+  let lo = Math.min(minWidth, containerWidth);
+  if (h(lo) >= maxHeight) return lo;
+  let hi = containerWidth;
+  for (let i = 0; i < 16; i++) {
+    const mid = (lo + hi) / 2;
+    if (h(mid) <= maxHeight) lo = mid; else hi = mid;
+  }
+  return Math.floor(lo);
+}
+
 /** Zeit → Lage auf dem Bogen (0 = linkes Ende, 0.5 = now, 1 = rechtes Ende); außerhalb < 0 bzw. > 1. */
 export function timeToT(atMs: number, nowMs: number, frame: Frame): number {
   return 0.5 + (atMs - nowMs) / (2 * FRAME_SPAN_MS[frame]);

@@ -4,7 +4,7 @@
 // reinen Funktionen aus @based/brain/home; hier wird nur gemessen und gezeichnet.
 import { Button } from "@astryxdesign/core/Button";
 import {
-  arcGeometry, arcPath, arcTicks, duration, placeSide, ringLayout, timeToT, visibleTicks,
+  arcGeometry, arcPath, arcTicks, duration, fitArcWidth, placeSide, ringLayout, timeToT, visibleTicks,
   type ArcCard, type Box, type Frame, type HomeModel, type NeedsYou, type RingCard,
 } from "@based/brain/home";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -37,22 +37,26 @@ interface Props extends ArcHandlers {
   nowMs: number;
   showDetails: boolean;
   titleOf: (pageID: string) => string | undefined;
+  /** Höchste Höhe der Bühne in Pixeln, damit der Composer darunter sichtbar bleibt; ohne Angabe volle Breite. */
+  maxHeight?: number;
 }
 
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 
-export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Props) {
+export function TimeArc({ model, frame, nowMs, showDetails, titleOf, maxHeight, ...h }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(1000);
+  const [space, setSpace] = useState(1000);
   useLayoutEffect(() => {
-    const el = ref.current;
+    // Gemessen wird der Platz (das Elternelement), nicht die Bühne selbst: die Bühne kann schmaler sein als der Platz.
+    const el = ref.current?.parentElement ?? ref.current;
     if (!el) return;
-    const measure = () => setWidth(Math.max(320, el.clientWidth));
+    const measure = () => setSpace(Math.max(320, el.clientWidth));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  const width = fitArcWidth(space, maxHeight, SIZES.done, SIZES.apex, SIZES.ring);
 
   // Pixel → Einheiten (Bogen ist 1000 Einheiten breit)
   const k = 1000 / width;
@@ -86,7 +90,7 @@ export function TimeArc({ model, frame, nowMs, showDetails, titleOf, ...h }: Pro
   const right = { x: g.cx + g.r, y: left.y };
 
   return (
-    <section ref={ref} className="arc-stage" style={{ height: (g.height / g.width) * width }} aria-label="Time arc: finished work on the left, now on top, planned on the right, running agents on the inner ring" data-testid="time-arc" data-frame={frame}>
+    <section ref={ref} className="arc-stage" style={{ height: (g.height / g.width) * width, ...(width < space ? { width, marginInline: "auto" } : {}) }} data-fitted={width < space ? "" : undefined} aria-label="Time arc: finished work on the left, now on top, planned on the right, running agents on the inner ring" data-testid="time-arc" data-frame={frame}>
       <svg className="arc-svg" viewBox={`0 0 ${g.width} ${g.height}`} preserveAspectRatio="none" aria-hidden="true">
         <path className="arc-line" d={arcPath(g)} />
         <path className="arc-ring" d={arcPath(g, g.innerR)} />

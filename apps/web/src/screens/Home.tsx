@@ -87,6 +87,28 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
   // MARK: Flug ins Ziel (FLIP)
   const cardRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const homeRef = useRef<HTMLDivElement>(null);
+  // Der Bogen darf nur so hoch sein, dass der Composer ohne Scrollen sichtbar bleibt (Fenster 1280 × 820 und kleiner).
+  // Platz = heutige Bühnenhöhe + was unter dem Dock noch frei ist (negativ, wenn das Dock unten herausragt).
+  const [arcMax, setArcMax] = useState<number | undefined>();
+  useLayoutEffect(() => {
+    const home = homeRef.current;
+    const stage = stageRef.current;
+    const inner = home?.firstElementChild as HTMLElement | null;
+    const last = inner?.lastElementChild as HTMLElement | null;
+    const scroller = (home?.closest(".panel") as HTMLElement | null) ?? home?.parentElement ?? null;
+    if (!home || !stage || !last || !scroller) return;
+    const measure = () => {
+      const free = scroller.getBoundingClientRect().bottom + scroller.scrollTop - parseFloat(getComputedStyle(home).paddingBottom || "0") - last.getBoundingClientRect().bottom;
+      const next = Math.round(stage.offsetHeight + free);
+      setArcMax((prev) => (prev !== undefined && Math.abs(prev - next) <= 1 ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const el of [scroller, stage, last]) ro.observe(el);
+    for (const el of Array.from(inner?.children ?? [])) ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const last = useRef<{ id: string; rect: DOMRect; flight: string; runID?: string } | undefined>(undefined);
   useLayoutEffect(() => {
     const prev = last.current;
@@ -160,7 +182,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
   const synced = state.status.state === "synced" || state.status.state === "syncing";
 
   return (
-    <div className="home" data-testid="home">
+    <div className="home" data-testid="home" ref={homeRef}>
       <div className="home-inner">
         <header className="home-head">
           <SegmentedControl label="Time frame" size="sm" value={frame} onChange={(v) => {
@@ -193,7 +215,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
 
         <div ref={stageRef}>
           {model ? (
-            <TimeArc model={model} frame={frame} nowMs={now} showDetails={showDetails} titleOf={titleOf}
+            <TimeArc model={model} frame={frame} nowMs={now} showDetails={showDetails} titleOf={titleOf} maxHeight={arcMax}
               onOpenRun={(id) => onNavigate({ name: "agent", id })} onOpenPage={onOpenPage} onOpenProject={(id) => onNavigate({ name: "project", id })}
               onUndo={(id) => act(() => rt.runner.undo(id))} onApprove={approve} onAnswer={(id, o) => act(() => rt.runner.answer(id, o))}
               onConfirm={(id) => act(() => rt.runner.confirm(id))} onFile={(id) => act(() => rt.runner.dismiss(id))} onStopRun={stopRun} />
