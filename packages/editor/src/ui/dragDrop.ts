@@ -1,0 +1,273 @@
+// BSD-249: Blöcke ziehen wie in Notion – nach rechts zum Verschachteln, nach links zum Ausrücken, an den linken oder
+// rechten Rand eines Blocks für Spalten. Ohne @blocknote/xl-multi-column (GPL, ADR 0011): BlockNote bewegt Blöcke
+// beim Ablegen selbst nur davor/dahinter; diese Datei entscheidet die übrigen Fälle (reine Funktion `dropZone`) und
+// führt sie mit der Block-API aus (`applyDrop`). Der Rest (obere Hälfte, normale Zeile) bleibt BlockNote.
+import { CUSTOM } from "../mapping/bn.js";
+
+export interface Rect { left: number; right: number; top: number; bottom: number }
+
+/** Der Block unter dem Zeiger und seine (Text-)Vorfahren, innen nach außen; Spalten zählen nicht als Ebene. */
+export interface DropTarget {
+  id: string;
+  rect: Rect;
+  /** Linke Kante des Inhalts je Ebene: [Ziel, Elternblock, …]. */
+  levels: { id: string; left: number; isLast: boolean }[];
+  /** Ziel steht direkt in einer Spalte (neue Spalte dann in derselben Spaltenliste). */
+  inColumn: boolean;
+  /** Ziel kann keine Kinder haben (Spaltenliste, Spalte, Tabelle). */
+  noChildren: boolean;
+}
+
+export type DropZone =
+  | { kind: "column"; side: "left" | "right"; id: string }
+  | { kind: "nest"; id: string }
+  | { kind: "after"; id: string }
+  | { kind: "before"; id: string };
+
+/** Einrückung einer Ebene (BlockNote: 24 px bei 16 px Schrift). */
+export const NEST_INDENT = 24;
+
+/**
+ * Wohin ein gezogener Block fällt (immer ein Ziel, solange der Zeiger über einem Block steht).
+ * - Obere Hälfte: davor; untere Hälfte: dahinter auf gleicher Ebene.
+ * - Mitte des Blocks, rechter Rand (letzte 15 %, höchstens 48 px) oder links neben dem Inhalt: neue Spalte.
+ * - Untere Hälfte, Zeiger eine Einrückung weiter rechts als der Block: als erstes Kind hinein.
+ * - Untere Hälfte, Zeiger links vom Block: hinter den Vorfahren, an dessen Kante er steht (nur vom letzten Kind aus).
+ */
+export function dropZone(x: number, y: number, t: DropTarget): DropZone {
+  const { rect } = t;
+  const h = rect.bottom - rect.top;
+  const w = rect.right - rect.left;
+  const band = Math.min(h / 4, 12);
+  const middle = y >= rect.top + band && y <= rect.bottom - band;
+  const edge = Math.min(48, w * 0.15);
+  const flat = t.levels.length <= 1; // Spalten nur oben im Dokument oder direkt in einer Spalte
+  if (middle && flat && x >= rect.right - edge) return { kind: "column", side: "right", id: t.id };
+  if (middle && x < rect.left && x >= rect.left - 48 && flat) return { kind: "column", side: "left", id: t.id };
+  if (y < rect.top + h / 2) return { kind: "before", id: t.id };
+  const own = t.levels[0]?.left ?? rect.left;
+  if (x >= own + NEST_INDENT && !t.noChildren) return { kind: "nest", id: t.id };
+  if (x >= own - 4) return { kind: "after", id: t.id };
+  // Ausrücken: so weit hinauf, wie der Zeiger links steht – aber nur über letzte Kinder.
+  let chosen = t.levels[0]!;
+  for (let i = 1; i < t.levels.length; i++) {
+    if (!t.levels[i - 1]!.isLast) break;
+    chosen = t.levels[i]!;
+    if (chosen.left <= x + 4) break;
+  }
+  return { kind: "after", id: chosen.id };
+}
+
+/** Was applyDrop vom Editor braucht (Teil der BlockNote-API). */
+export interface DropEditor {
+  getBlock(id: string): DropBlock | undefined;
+  getParentBlock(id: string): DropBlock | undefined;
+  removeBlocks(ids: string[]): unknown;
+  insertBlocks(blocks: unknown[], ref: string, placement: "before" | "after"): unknown;
+  replaceBlocks(remove: string[], insert: unknown[]): unknown;
+  updateBlock(id: string, update: { children: unknown[] }): unknown;
+  transact<T>(f: () => T): T;
+}
+export interface DropBlock { id: string; type: string; props?: Record<string, unknown>; children: DropBlock[] }
+
+/** Höchstzahl Spalten (wie das Slash-Menü). */
+export const MAX_COLUMNS = 5;
+
+/** Darf `dragged` nach `zone`? Nicht in sich selbst, nicht mehr als fünf Spalten. */
+export function canDrop(editor: DropEditor, dragged: readonly string[], zone: DropZone): boolean {
+  if (dragged.length === 0 || dragged.includes(zone.id)) return false;
+  for (let p = editor.getParentBlock(zone.id); p; p = editor.getParentBlock(p.id)) if (dragged.includes(p.id)) return false;
+  if (zone.kind === "column") {
+    const parent = editor.getParentBlock(zone.id);
+    if (parent?.type === CUSTOM.column) {
+      const list = editor.getParentBlock(parent.id);
+      if (list && list.children.length >= MAX_COLUMNS && !list.children.some((c) => c.children.every((k) => dragged.includes(k.id)))) return false;
+    }
+  }
+  return true;
+}
+
+/** Leere Spalten (nach dem Wegziehen) räumen; eine Spaltenliste mit nur einer Spalte löst sich auf. */
+function tidyColumns(editor: DropEditor, listID: string | undefined) {
+  if (!listID) return;
+  const list = editor.getBlock(listID);
+  if (!list || list.type !== CUSTOM.columnList) return;
+  const empty = list.children.filter((c) => c.children.length === 0).map((c) => c.id);
+  if (empty.length) editor.removeBlocks(empty);
+  const now = editor.getBlock(listID);
+  if (!now) return;
+  if (now.children.length === 0) editor.removeBlocks([listID]);
+  else if (now.children.length === 1) editor.replaceBlocks([listID], now.children[0]!.children);
+}
+
+/** Führt das Ablegen aus (ein Schritt im Undo). Liefert false, wenn nichts passiert ist. */
+export function applyDrop(editor: DropEditor, dragged: readonly string[], zone: DropZone): boolean {
+  if (!canDrop(editor, dragged, zone)) return false;
+  const blocks = dragged.map((id) => editor.getBlock(id)).filter((b): b is DropBlock => b !== undefined);
+  if (blocks.length === 0) return false;
+  return editor.transact(() => {
+    // Spaltenlisten, aus denen gezogen wird, danach aufräumen.
+    const sourceLists = new Set<string>();
+    for (const b of blocks) {
+      const col = editor.getParentBlock(b.id);
+      if (col?.type === CUSTOM.column) {
+        const list = editor.getParentBlock(col.id);
+        if (list) sourceLists.add(list.id);
+      }
+    }
+    editor.removeBlocks(blocks.map((b) => b.id));
+    const target = editor.getBlock(zone.id);
+    if (!target) return false;
+    if (zone.kind === "after" || zone.kind === "before") {
+      editor.insertBlocks(blocks, zone.id, zone.kind);
+    } else if (zone.kind === "nest") {
+      editor.updateBlock(zone.id, { children: [...blocks, ...target.children] });
+    } else {
+      const col = editor.getParentBlock(zone.id);
+      const fresh = { type: CUSTOM.column, props: { width: 0 }, children: blocks };
+      if (col?.type === CUSTOM.column) {
+        editor.insertBlocks([fresh], col.id, zone.side === "left" ? "before" : "after");
+        // Neue Spalte: alle wieder gleich breit (wie Notion).
+        const list = editor.getParentBlock(col.id);
+        if (list) for (const c of list.children) editor.updateBlock(c.id, { props: { width: 0 } } as never);
+      } else {
+        const self = { type: CUSTOM.column, props: { width: 0 }, children: [target] };
+        editor.replaceBlocks([zone.id], [{ type: CUSTOM.columnList, children: zone.side === "left" ? [fresh, self] : [self, fresh] }]);
+      }
+    }
+    for (const l of sourceLists) tidyColumns(editor, l);
+    return true;
+  });
+}
+
+const LAYOUT = new Set<string>([CUSTOM.column, CUSTOM.columnList]);
+const NO_CHILDREN = new Set<string>([CUSTOM.column, CUSTOM.columnList, "table"]);
+
+const contentOf = (outer: Element): Element | null => outer.querySelector(":scope > .bn-block > .bn-block-content, :scope > .bn-block > .react-renderer > .bn-block-content");
+const typeOf = (outer: Element) => contentOf(outer)?.getAttribute("data-content-type") ?? "";
+
+/** Ziel aus dem DOM: der Block unter dem Zeiger in genau diesem Editor (nicht in eingebetteten). */
+export function targetAt(root: HTMLElement, el: Element | null, ignore: ReadonlySet<string> = new Set(), at?: { x: number; y: number }): DropTarget | undefined {
+  let outer = el?.closest(".bn-block-outer[data-id]") ?? null;
+  // Layoutblöcke (Spaltenlücke, Griff) und Ränder: der nächste Block auf dieser Höhe, links höchstens 48 px entfernt.
+  if (outer && (LAYOUT.has(typeOf(outer)) || outer.closest(".bn-editor") !== root)) outer = null;
+  if (!outer && at) outer = nearestBlock(root, at.x, at.y, ignore);
+  if (!outer || outer.closest(".bn-editor") !== root) return undefined;
+  const content = contentOf(outer);
+  if (!content) return undefined;
+  const r = content.getBoundingClientRect();
+  const levels: DropTarget["levels"] = [];
+  let inColumn = false;
+  for (let cur: Element | null = outer; cur;) {
+    const t = typeOf(cur);
+    if (!LAYOUT.has(t)) {
+      const c = contentOf(cur);
+      const sib = cur.parentElement ? [...cur.parentElement.children].filter((e) => e.classList.contains("bn-block-outer") && !ignore.has(e.getAttribute("data-id") ?? "")) : [];
+      levels.push({ id: cur.getAttribute("data-id")!, left: c ? c.getBoundingClientRect().left : r.left, isLast: sib[sib.length - 1] === cur });
+    } else if (t === CUSTOM.column) {
+      inColumn = true;
+      break; // Spalten begrenzen Verschachteln und Ausrücken
+    }
+    cur = cur.parentElement?.closest(".bn-block-outer[data-id]") ?? null;
+    if (cur && cur.closest(".bn-editor") !== root) break;
+  }
+  return { id: outer.getAttribute("data-id")!, rect: { left: r.left, right: r.right, top: r.top, bottom: r.bottom }, levels, inColumn, noChildren: NO_CHILDREN.has(typeOf(outer)) };
+}
+
+function nearestBlock(root: HTMLElement, x: number, y: number, ignore: ReadonlySet<string>): Element | null {
+  let best = null as Element | null;
+  let bestDist = Infinity;
+  for (const o of root.querySelectorAll(".bn-block-outer[data-id]")) {
+    if (LAYOUT.has(typeOf(o)) || ignore.has(o.getAttribute("data-id") ?? "") || o.closest(".bn-editor") !== root) continue;
+    const c = contentOf(o);
+    if (!c) continue;
+    const r = c.getBoundingClientRect();
+    if (y < r.top || y > r.bottom || x < r.left - 48 || x > r.right + 8) continue;
+    const d = x < r.left ? r.left - x : x > r.right ? x - r.right : 0;
+    if (d < bestDist || (d === bestDist && best?.contains(o))) { best = o; bestDist = d; }
+  }
+  return best;
+}
+
+/** Wo der Hinweis-Strich hinkommt (Bildschirmkoordinaten). */
+export function indicatorFor(zone: DropZone, t: DropTarget, x: number): Rect {
+  const { rect } = t;
+  if (zone.kind === "column") {
+    const at = zone.side === "right" ? rect.right : rect.left - 8;
+    return { left: at, right: at + 3, top: rect.top, bottom: rect.bottom };
+  }
+  if (zone.kind === "before") return { left: rect.left, right: rect.right, top: rect.top - 3, bottom: rect.top };
+  const left = zone.kind === "nest" ? (t.levels[0]?.left ?? rect.left) + NEST_INDENT : (t.levels.find((l) => l.id === zone.id)?.left ?? Math.min(x, rect.left));
+  return { left, right: Math.max(left + 24, rect.right), top: rect.bottom, bottom: rect.bottom + 3 };
+}
+
+interface PMNode { attrs: Record<string, unknown>; type: { name: string } }
+interface DragView { dragging: unknown; dom: HTMLElement; state: { selection: { node?: PMNode; nodes?: PMNode[] } } }
+export interface BlockDropHost extends DropEditor {
+  prosemirrorView: DragView | undefined;
+  getSelection(): { blocks: { id: string }[] } | undefined;
+  getTextCursorPosition(): { block: { id: string } };
+  focus?(): void;
+}
+
+/**
+ * Hängt das Ziehen an den Editor: beim Überfahren Zone + Hinweis, beim Ablegen ausführen (BlockNotes eigenes Ablegen
+ * fällt dann aus). Gibt das Abmelden zurück.
+ */
+export function attachBlockDrop(host: BlockDropHost, container: HTMLElement, show: (r: Rect | undefined) => void, handleBlock: () => string | undefined = () => undefined): () => void {
+  // Die ProseMirror-Ansicht entsteht erst nach dem Einhängen (bei Kollaboration auch später): erst beim Ereignis holen.
+  const viewOf = () => host.prosemirrorView;
+  let current: DropZone | undefined;
+  // BlockNote wählt beim Fassen am Griff die gezogenen Blöcke als (Mehrfach-)Knotenauswahl aus.
+  const dragged = (view: DragView): string[] => {
+    const sel = view.state.selection;
+    const nodes = sel.nodes ?? (sel.node ? [sel.node] : []);
+    const ids = nodes.map((n) => n.attrs.id).filter((id): id is string => typeof id === "string" && id !== "");
+    // Gefasst wurde der Block am Griff; eine Mehrfachauswahl zählt nur, wenn er darin liegt.
+    const grabbed = handleBlock();
+    if (grabbed && !ids.includes(grabbed)) return [grabbed];
+    return ids.length ? ids : [host.getTextCursorPosition().block.id];
+  };
+  const reset = () => {
+    current = undefined;
+    show(undefined);
+    globalThis.document?.documentElement.removeAttribute("data-bx-dropzone");
+  };
+  const over = (e: DragEvent) => {
+    const view = viewOf();
+    if (!view?.dragging) return reset();
+    const root = view.dom;
+    const ids = dragged(view);
+    const t = targetAt(root, globalThis.document?.elementFromPoint(e.clientX, e.clientY) ?? null, new Set(ids), { x: e.clientX, y: e.clientY });
+    const zone = t ? dropZone(e.clientX, e.clientY, t) : undefined;
+    if (!t || !zone || !canDrop(host, ids, zone)) return reset();
+    current = zone;
+    e.preventDefault();
+    show(indicatorFor(zone, t, e.clientX));
+    globalThis.document?.documentElement.setAttribute("data-bx-dropzone", zone.kind);
+  };
+  const drop = (e: DragEvent) => {
+    const zone = current;
+    reset();
+    const view = viewOf();
+    if (!zone || !view?.dragging) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const ids = dragged(view);
+    view.dragging = null;
+    if (applyDrop(host, ids, zone)) host.focus?.();
+  };
+  const end = () => reset();
+  const leave = (e: DragEvent) => { if (!container.contains(e.relatedTarget as Node | null)) reset(); };
+  container.addEventListener("dragover", over, true);
+  container.addEventListener("drop", drop, true);
+  container.addEventListener("dragleave", leave);
+  globalThis.document?.addEventListener("dragend", end);
+  return () => {
+    container.removeEventListener("dragover", over, true);
+    container.removeEventListener("drop", drop, true);
+    container.removeEventListener("dragleave", leave);
+    globalThis.document?.removeEventListener("dragend", end);
+    reset();
+  };
+}

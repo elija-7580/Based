@@ -16,6 +16,7 @@ import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainT
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
+import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
@@ -333,6 +334,18 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
   // ⌫/Entf löschen, ⌘D dupliziert, ⌘⇧P „Move to“, Esc hebt auf. Der Fokus liegt solange auf dem Rahmen.
   const [range, setRange] = useState<BlockRange | undefined>();
   const docRef = useRef<HTMLDivElement>(null);
+  // BSD-249: Ziehen zum Verschachteln/Ausrücken und für Spalten (dragDrop.ts); der Strich zeigt, wohin es fällt.
+  const [dropRect, setDropRect] = useState<Rect | undefined>();
+  // Der Block, dessen Griff ⋮⋮ gerade gezeigt wird (BlockNotes Auswahl beim Fassen ist nicht immer dieser Block).
+  const sideBlock = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block?.id });
+  const sideBlockRef = useRef<string | undefined>(undefined);
+  sideBlockRef.current = sideBlock;
+  // Der Rahmen kann später erscheinen als der Editor (Laden des Y-Zustands): am Element festmachen, nicht am ersten Render.
+  const [docEl, setDocEl] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!editable || !docEl) return;
+    return attachBlockDrop(editor as unknown as BlockDropHost, docEl, setDropRect, () => sideBlockRef.current);
+  }, [editor, editable, docEl]);
   const sel = editor as unknown as SelectionEditor;
   const selected = range ? rangeIDs(sel, range) : [];
   const selectBlocks = (r: BlockRange | undefined) => {
@@ -384,7 +397,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
 
   return (
     <EnvContext.Provider value={env}>
-      <div className="bx-doc" ref={docRef} tabIndex={-1} data-collab={session.collab ? "" : undefined} data-block-selection={range ? selected.join(" ") : undefined} onKeyDownCapture={(e) => {
+      <div className="bx-doc" ref={(el) => { docRef.current = el; setDocEl(el); }} tabIndex={-1} data-collab={session.collab ? "" : undefined} data-block-selection={range ? selected.join(" ") : undefined} onKeyDownCapture={(e) => {
         if (range && e.target === e.currentTarget) {
           onSelectionKey(e);
           return;
@@ -450,6 +463,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
             ))}
           </div>
         ) : null}
+        {dropRect ? <div className="bx-drop-indicator" aria-hidden="true" style={{ left: dropRect.left, top: dropRect.top, width: dropRect.right - dropRect.left, height: dropRect.bottom - dropRect.top }} /> : null}
         {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }"}</style> : null}
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>

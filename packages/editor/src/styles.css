@@ -136,7 +136,7 @@
 /* BSD-210: Griff zum Ziehen der Spaltenbreite, mittig in der Lücke rechts der Spalte, sichtbar beim Überfahren */
 .bx-editor .bn-block-content[data-content-type="column"], .bx-editor .react-renderer:has(> .bn-block-content[data-content-type="column"]) { position: static; }
 .bx-column-resize {
-  position: absolute; top: 0; bottom: 0; right: calc(-1 * (var(--space-6) + var(--space-2)) / 2); width: var(--space-2); z-index: 30;
+  position: absolute; top: 0; bottom: 0; right: calc(-1 * var(--space-2)); width: var(--space-2); z-index: 30; /* am Anfang der Lücke, damit der Griff ⋮⋮ der nächsten Spalte frei bleibt */
   cursor: col-resize; border-radius: var(--radius-pill); touch-action: none;
 }
 .bx-column-resize:hover, .bx-column-resize:focus-visible { background: var(--line); }
@@ -356,3 +356,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-btn-actions .bx-button { border: 0; cursor: pointer; }
 .bx-btn-template { display: grid; gap: var(--space-1); }
 .bx-btn-template .bx-synced-editor { background: var(--bg); border-radius: var(--radius-md); padding-block: var(--space-1); }
+
+/* BSD-249: Ziel beim Ziehen (davor/dahinter, Verschachteln, Ausrücken, Spalte) – Strich wie die Einfügestelle bei Tabs */
+.bx-drop-indicator { position: fixed; z-index: 60; pointer-events: none; background: var(--marker-strong); border-radius: var(--radius-pill); }
+html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn-drop-cursor { display: none; }
