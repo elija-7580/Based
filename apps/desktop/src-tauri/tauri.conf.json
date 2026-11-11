@@ -50,9 +50,9 @@
       "minimumSystemVersion": "13.0",
       "signingIdentity": "-"
     },
-    "externalBin": [
-      "binaries/based-server"
-    ]
+    "resources": {
+      "../dist-sidecar/based-server.cjs": "based-server.cjs"
+    }
   },
   "plugins": {
     "updater": {
