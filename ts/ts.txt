@@ -1,5 +1,5 @@
-packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -23,47 +23,47 @@ packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[9
 packages/sync test: [2m      Tests [22m [1m[32m45 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (48)[39m
 packages/brain test: [2m      Tests [22m [1m[32m379 passed[39m[22m[90m (379)[39m
 packages/editor test: [2m      Tests [22m [1m[32m77 passed[39m[22m[90m (77)[39m
-apps/server test: [2m      Tests [22m [1m[32m112 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (113)[39m
-apps/web test: [2m      Tests [22m [1m[32m163 passed[39m[22m[90m (163)[39m
-apps/cli test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+apps/web test: [2m      Tests [22m [1m[32m172 passed[39m[22m[90m (172)[39m
+apps/server test: [2m      Tests [22m [1m[32m115 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (116)[39m
+apps/cli test: [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
 --- e2e
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-    Test timeout of 120000ms exceeded.
+      130 |   await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
+      131 |   await page.mouse.wheel(0, 200);
+    > 132 |   await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
+          |                                                                                     ^
+      133 | });
+      134 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell-layout.spec.ts:132:85
 
-    Error Context: test-results/sync-assets-Bild-auf-Gerät-31425--die-Datei-nicht-ladbar-ist-chromium/error-context.md
+    Error Context: test-results/shell-layout-Rad-über-eine-a5bc3-e-Seite-weiter-Elija-11-11--chromium/error-context.md
 
-    Error Context: test-results/sync-assets-Bild-auf-Gerät-31425--die-Datei-nicht-ladbar-ist-chromium/error-context.md
+  4) [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ───
 
-  21) [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) 
+    Error: expect(received).toBeLessThan(expected)
 
-    Test timeout of 30000ms exceeded.
+    Expected: < 34
+    Received:   34
 
-    Error Context: test-results/theme-beim-Laden-gehen-kei-b6da8--fremde-Hosts-Stil-default--chromium/error-context.md
+      142 |   console.log(`[${info.project.name}] Seitenleiste 5.000 Seiten:`, JSON.stringify(r));
+      143 |   expect(r.maxRows).toBeLessThanOrEqual(80);
+    > 144 |   expect(r.p95).toBeLessThan(34);
+          |                 ^
+      145 |   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
+      146 | });
+      147 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:144:17
 
-  21 failed
-    [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn ─
-    [chromium] › e2e/coding.spec.ts:58:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert 
-    [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen 
-    [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert 
+    Error Context: test-results/shell-5-000-Seiten-in-der-Seitenleiste-scrollen-ohne-Ruckeln-webkit/error-context.md
+
+  4 failed
     [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl 
-    [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an 
-    [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) 
-    [chromium] › e2e/interop.spec.ts:133:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) 
-    [chromium] › e2e/interop.spec.ts:152:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) 
-    [chromium] › e2e/interop.spec.ts:183:1 › Word-Dokument (.docx) importieren (BSD-260) ───────────
-    [chromium] › e2e/interop.spec.ts:200:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) 
-    [chromium] › e2e/interop.spec.ts:233:1 › Export: Seite als Markdown, Workspace als Based-Archiv 
-    [chromium] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 
-    [chromium] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis 
+    [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ 
     [chromium] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) 
-    [chromium] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher 
-    [chromium] › e2e/shell.spec.ts:171:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste 
-    [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute 
-    [chromium] › e2e/smoke.spec.ts:57:1 › Show agent details blendet Planer und Laufzeit auf Home ein 
-    [chromium] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist 
-    [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) 
+    [webkit] › e2e/shell.spec.ts:115:1 › 5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln ────
   20 skipped
-  309 passed (19.4m)
+  334 passed (13.9m)
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @based/web@0.0.0 e2e: `playwright test`
 Exit status 1
