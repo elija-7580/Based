@@ -125,9 +125,14 @@ test("Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.)",
     return document.scrollingElement as HTMLElement;
   });
   await db.scrollIntoViewIfNeeded();
-  const before = await scroller.evaluate((el) => (el as HTMLElement).scrollTop);
+  // Je nach Schrift der Umgebung steht die Datenbank am Seitenende (dann ist nach unten kein Platz mehr) und ragt
+  // unten aus dem Fenster. Also: in die Richtung drehen, in der Platz ist, und den Zeiger sicher im Fenster halten.
+  const { before, room } = await scroller.evaluate((el) => { const e = el as HTMLElement; return { before: e.scrollTop, room: e.scrollHeight - e.clientHeight - e.scrollTop }; });
+  const down = room > 120;
   const box = (await db.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 100));
-  await page.mouse.wheel(0, 200);
-  await expect.poll(() => scroller.evaluate((el) => (el as HTMLElement).scrollTop)).toBeGreaterThan(before + 50);
+  const y = Math.min(Math.max(box.y, 0) + Math.min(box.height / 2, 100), 400);
+  await page.mouse.move(box.x + box.width / 2, y);
+  await expect.poll(() => page.evaluate(([px, py]) => !!document.elementFromPoint(px!, py!)?.closest(".shell-database.inline"), [box.x + box.width / 2, y])).toBe(true);
+  await page.mouse.wheel(0, down ? 200 : -200);
+  await expect.poll(() => scroller.evaluate((el, b) => (el as HTMLElement).scrollTop - b, before).then((d) => d * (down ? 1 : -1))).toBeGreaterThan(50);
 });

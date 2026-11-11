@@ -437,8 +437,13 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     let blockMode = false;
     const move = (ev: MouseEvent) => {
       if ((ev.buttons & 1) === 0) return up();
-      const el = globalThis.document?.elementFromPoint(ev.clientX, ev.clientY) ?? null;
-      const cur = blockAt(el);
+      // Schwebendes (die Formatleiste der vorigen Auswahl blendet noch aus, Tooltips) liegt über dem Text: der erste
+      // Treffer, der zu einem Block gehört, zählt – sonst endet die Auswahl unter der Leiste einen Block zu früh.
+      let cur: string | undefined;
+      for (const el of globalThis.document?.elementsFromPoint?.(ev.clientX, ev.clientY) ?? []) {
+        cur = blockAt(el);
+        if (cur) break;
+      }
       if (!cur || (cur === startID && !blockMode)) return;
       const span = siblingSpan(parentOf, startID, cur);
       const ids = rangeIDs(sel, span);
