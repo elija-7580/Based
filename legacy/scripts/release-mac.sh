@@ -40,7 +40,7 @@ xcodebuild -project Based.xcodeproj -scheme Based-macOS -configuration Release -
   build | tail -n 5
 APP="$DD/Build/Products/Release/Based.app"
 [ -d "$APP" ] || { echo "error: build failed ($APP missing)"; exit 1; }
-"$ROOT/scripts/check-mac-signature.sh" "$APP"
+"$ROOT/../scripts/check-mac-signature.sh" "$APP"
 /usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$APP/Contents/Info.plist"
 
 # DMG: the app and an Applications shortcut to drag it onto.

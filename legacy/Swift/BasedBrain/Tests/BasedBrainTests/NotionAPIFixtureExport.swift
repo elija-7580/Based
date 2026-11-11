@@ -10,7 +10,7 @@ import Testing
 @Suite struct NotionAPIFixtureExport {
     let t = NotionAPIImportTests()
     static let file = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .appendingPathComponent("../../../../fixtures/import/notion-api.utc.json").standardized
+        .appendingPathComponent("../../../../../fixtures/import/notion-api.utc.json").standardized
 
     func routesJSON(_ f: FakeNotion) -> JSONValue {
         ["routes": .object(f.routes), "failFirst": .object(f.failFirst.mapValues { .number(Double($0)) }),

@@ -1,4 +1,4 @@
-// BSD-73: wann Seiten eine Version bekommen (Port von App/Shared/History/PageHistory.swift); die Ablage ist
+// BSD-73: wann Seiten eine Version bekommen (Port von legacy/App/Shared/History/PageHistory.swift); die Ablage ist
 // VersionHistory aus @based/core (git-artig, dedupliziert), im Worker auf history.sqlite (OPFS) bzw. im Speicher.
 //
 // * beim Öffnen einer Seite (der Stand vor deinen Änderungen ist immer da),

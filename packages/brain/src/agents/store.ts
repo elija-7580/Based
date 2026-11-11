@@ -45,6 +45,9 @@ export interface RunPatch {
   addUsage?: { inputTokens: number; outputTokens: number; costUSD: number };
   subscriptionShare?: number;
   lease?: { owner: string; until: number } | null;
+  /** BSD-168: wartende Freigabe setzen bzw. mit `null` entfernen. */
+  approval?: RunData["approval"] | null;
+  resume?: RunData["resume"] | null;
 }
 
 /** Neuer Run: Pflichtfelder, Rest optional (Zeit und Kosten setzt der Store). */
@@ -256,6 +259,10 @@ export class AgentStore {
       if (patch.subscriptionShare !== undefined) d.subscriptionShare = patch.subscriptionShare;
       if (patch.lease === null) delete d.lease;
       else if (patch.lease) d.lease = patch.lease;
+      if (patch.approval === null) delete d.approval;
+      else if (patch.approval) d.approval = patch.approval;
+      if (patch.resume === null) delete d.resume;
+      else if (patch.resume) d.resume = patch.resume;
       if (patch.addUsage) {
         const u = d.usage ?? { inputTokens: 0, outputTokens: 0, costUSD: 0 };
         d.usage = { inputTokens: u.inputTokens + patch.addUsage.inputTokens, outputTokens: u.outputTokens + patch.addUsage.outputTokens, costUSD: u.costUSD + patch.addUsage.costUSD };

@@ -23,9 +23,9 @@ import { installKeyHints } from "./shell/keyHints.js";
 import { Icon } from "./icons.js";
 import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
-import { FIND_EVENT, matchShortcut } from "./shell/shortcuts.js";
+import { FIND_EVENT, matchShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
-import { homeTarget, recentPages, startPage, type RecentEntry } from "./shell/storage.js";
+import { homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
 // BSD-280: selten gebrauchte Ansichten erst beim Öffnen laden (kleineres Start-Bundle, schnellerer Start).
@@ -78,6 +78,9 @@ export function App({ client, history }: { client: StoreClient; history: History
   })();
   const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
   useEffect(() => installNewTabIntent(), []);
+  // BSD-168: Rechtschreibprüfung (Einstellungen → My settings); contenteditable erbt `spellcheck` vom body.
+  const spellCheck = useSyncExternalStore(spellCheckPref.subscribe, spellCheckPref.get);
+  useEffect(() => { document.body.spellcheck = spellCheck; }, [spellCheck]);
   // BSD-244: Maustasten 4/5, ⌘←/⌘→ und Wischen; der Hinweis am Rand folgt dem Finger ohne React-Render.
   const swipeHint = useRef<HTMLDivElement>(null);
   // BSD-270: ⌘ (Strg) lange halten blendet die Kürzel-Plaketten ein
@@ -91,7 +94,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
 
   const newPage = useCallback(async (opts: { parent?: string; section?: string } = {}) => {
-    const id = await client.command<string | undefined>({ op: "createPage", ...opts });
+    const id = await client.command<string | undefined>({ op: "createPage", ...opts, format: newPageFormat.get() });
     if (id) openPage(id);
     return id;
   }, [client, openPage]);
@@ -106,6 +109,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     if (id) openPage(id);
   }, [client, openPage]);
 
+  const outlineRef = useRef(state.outline);
+  outlineRef.current = state.outline;
   // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).
   const [palette, setPalette] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -150,6 +155,12 @@ export function App({ client, history }: { client: StoreClient; history: History
         case "back": history.back(); break;
         case "forward": history.forward(); break;
         case "reportProblem": void startReport(); break;
+        case "openParent": {
+          const r = history.route;
+          const parent = r.name === "page" ? parentPage(outlineRef.current, r.id) : undefined;
+          if (parent) navigate({ name: "page", id: parent });
+          break;
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -160,7 +171,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(REPORT_PROBLEM_EVENT, onReport);
     };
-  }, [history, newPage, setAppearance]);
+  }, [history, newPage, setAppearance, navigate]);
 
   // BSD-256: feste Reihenfolge, Ziffern 1–9 wählen direkt (1 Page, 2 AI chat, 3 Meeting notes, 4 Database).
   const commands: PaletteCommand[] = [

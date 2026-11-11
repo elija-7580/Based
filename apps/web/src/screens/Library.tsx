@@ -1,6 +1,6 @@
 // Library: alles im Workspace auf einen Blick – Seiten, Datenbanken, Zeilen – mit Suche, Filtern (Art, Ort, Favoriten,
 // gleicher Titel), Sortierung und Mehrfachauswahl für Verschieben, Duplizieren, Favorisieren und Papierkorb.
-// Vorlage: Swift App/Shared/Views/Library/LibraryView.swift. Die Einträge kommen aus dem Store-Worker
+// Vorlage: Swift legacy/App/Shared/Views/Library/LibraryView.swift. Die Einträge kommen aus dem Store-Worker
 // (`client.library()`), gefiltert und sortiert wird hier mit `filterLibrary` aus @based/core; die Liste ist
 // virtualisiert (nur sichtbare Zeilen im DOM).
 import { LibraryTabs } from "../components/LibraryTabs.js";

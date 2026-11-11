@@ -371,3 +371,16 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 
 /* BSD-258: Rechteck-Auswahl aus dem Seitenrand */
 .bx-marquee { position: fixed; z-index: 60; pointer-events: none; background: color-mix(in srgb, var(--selected) 60%, transparent); border: 1px solid var(--control-border); border-radius: var(--radius-xs); }
+
+/* BSD-168/290: Bild in voller Größe (Doppelklick auf ein Bild) */
+.bx-image-viewer {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: var(--space-8);
+  background: color-mix(in srgb, var(--bg) 94%, transparent); cursor: zoom-out; animation: fade-in var(--duration-fast) var(--ease-out);
+}
+.bx-image-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-sm); box-shadow: var(--shadow-float); cursor: default; }
+.bx-image-viewer-close {
+  position: absolute; top: var(--space-4); right: var(--space-4); width: var(--space-8); height: var(--space-8); border: 0; border-radius: var(--radius-pill);
+  background: var(--surface-raised); color: var(--ink); font: inherit; font-size: var(--type-ui-size); cursor: pointer;
+}
+.bx-image-viewer-close:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 2px; }
+@media print { .bx-image-viewer { display: none; } }

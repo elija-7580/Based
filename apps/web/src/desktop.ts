@@ -5,6 +5,7 @@
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
 import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
+import { autoUpdatePref } from "./shell/storage.js";
 
 /** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
 export const REPORT_PROBLEM_EVENT = "based:report-problem";
@@ -97,7 +98,7 @@ export async function startDesktop(onCloseTab?: () => void) {
   // BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – im Fenster vorn.
   await win.listen("desktop://report-problem", () => void window.dispatchEvent(new CustomEvent(REPORT_PROBLEM_EVENT)));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
-  if (main) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
+  if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }
 
 /** BSD-138: „Install Command Line Tool…“ – zeigt, wo das geht (Opt-in in den Einstellungen). */

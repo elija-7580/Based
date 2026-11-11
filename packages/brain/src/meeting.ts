@@ -1,4 +1,4 @@
-// BSD-226: Meeting-Notizen – Aufnahmedienst ohne DOM (Swift App/Shared/Meeting/MeetingService.swift): Aufnahme →
+// BSD-226: Meeting-Notizen – Aufnahmedienst ohne DOM (Swift legacy/App/Shared/Meeting/MeetingService.swift): Aufnahme →
 // Live-Transkript → (Stop) finaler Durchlauf → Zusammenfassung über die konfigurierte Engine.
 //
 // Aufnahme, Transkription und Ablage kommen als Schnittstellen herein: im Browser MediaRecorder + Asset-Speicher,

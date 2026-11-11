@@ -1,5 +1,6 @@
 // BSD-154: Der Seiten-Editor. BlockNote-Kern auf einem Y.Doc je Seite (bzw. je Synced-Block-Original), Records
 // im Store als materialisierte Ansicht. Undo/Redo lokal über den Yjs-UndoManager.
+import { ImageViewer, imageAt, type ImageView } from "./ImageViewer.js";
 import "@blocknote/ariakit/style.css";
 import "../styles.css";
 import "../meeting.css";
@@ -188,6 +189,7 @@ export function PageEditor(props: PageEditorProps) {
   const [move, setMove] = useState<MoveRequest | undefined>();
   const [link, setLink] = useState<LinkRequest | undefined>();
   const [aiReq, setAIReq] = useState<AIRequest | undefined>();
+  const [viewing, setViewing] = useState<ImageView | undefined>();
   const shared: Shared = {
     ...rest, pageID, notify, startMove: setMove, startLink: setLink, startAI: setAIReq,
     docStore: props.docStore ?? defaultDocStore(props.store),
@@ -220,12 +222,19 @@ export function PageEditor(props: PageEditorProps) {
         e.preventDefault();
         if (container) toggleAll(container);
       }
+    }} onDoubleClick={(e) => {
+      const v = imageAt(e.target);
+      if (v) {
+        e.preventDefault();
+        setViewing(v);
+      }
     }}>
       {flashID ? <style>{`.bx-editor [data-id="${CSS.escape(flashID)}"] > .bn-block { background: var(--selected); border-radius: var(--radius-xs); }`}</style> : null}
       <DocEditor rootID={pageID} ancestors={[]} shared={shared} />
       {aiReq && props.ai ? <AIBox ai={props.ai} req={aiReq} onClose={() => { setAIReq(undefined); aiReq.editor.focus(); }} /> : null}
       {link ? <DatabasePicker source={databases} onClose={() => setLink(undefined)} onPick={(d) => void pickDatabase(link, d)} /> : null}
       {move ? <MovePicker pages={shared.pages} selfID={move.session.rootID} moving={move.ids} onClose={() => setMove(undefined)} onPick={(p) => void pickTarget(move, p)} /> : null}
+      {viewing ? <ImageViewer view={viewing} onClose={() => setViewing(undefined)} /> : null}
       {props.outline === false ? null : <PageOutline store={props.store} pageID={pageID} container={container} />}
       {notice ? (
         <div className="bx-notice" role="status" data-testid="editor-notice">

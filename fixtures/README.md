@@ -4,7 +4,7 @@ Eingabe→Ausgabe-Paare der Swift-Kernlogik. Der TypeScript-Kern (`packages/core
 erst als portiert, wenn alle seine Fixtures grün sind. **Nicht von Hand ändern** – neu erzeugen:
 
 ```bash
-cd Swift/BasedCore && swift run based-fixtures      # schreibt ../../fixtures/ (setzt selbst TZ=UTC)
+cd legacy/Swift/BasedCore && swift run based-fixtures      # schreibt ../../../fixtures/ (setzt selbst TZ=UTC)
 pnpm --filter @based/core test                         # Bericht: "<modul>: x/y grün" bzw. "nicht portiert"
 ```
 
@@ -24,7 +24,7 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | search | `search/search.json`, `search/fulltext.json` | Quick-Find-Index (SearchCorpus): Titel/Inhalt/Zeilen, Faltung (Groß/klein, Umlaute), Filter, alle Sortierungen, Limit. Gleichstand: pageID aufsteigend; Inhalts-Snippet als Kandidatenliste, Zeilen-Snippet über Werte nach Property-ID. `fulltext`: Volltext-Fälle aus SearchCorpusTests (Erwähnungen, Toggle, Zellen, Unterschrift, Transkript, Papierkorb, Vorlagen, Datenbanken) × Filter × Sortierung und inkrementelle Schritte (Remote-Records, danach suchen; der TS-Index folgt über `store.observe`) |
 | clipboard | `clipboard/clipboard.json`, `clipboard/export.utc.json` | Eingefügtes HTML (Notion, Google Docs, Listen, Farben, Links, Tabellen, Entities) → Blöcke; HTML-Export von Seiten und wieder einlesen |
 | import | `import/notion-html.utc.json`, `import/markdown.utc.json` | Notion-HTML-Export aus NotionHTMLImportTests (Ordner, einzelne Seite, ZIP mit Teil-Archiv, Reimport mit lokalen Änderungen) plus Sonderfälle, allgemeines HTML; Markdown-Parser, Inline-Markdown, CSV, Notion-Markdown/CSV-Export (kanonische IDs); ImportIDs. Ergebnis: Records ohne Stempel, Zeiten ab Laufbeginn = `now`, Asset-IDs = `ImportIDs.derived("asset", name, base64)` |
-| notion-api | `import/notion-api.utc.json` | Notion-API-Import (BSD-217) aus NotionAPIImportTests: Routen-Tabelle der Fake-API (inkl. 429, Dateien) → Bericht + Records (voller Import, Dashboard, Karte/Orte, Suche, ungültiges Token, Reimport). Erzeugt in `Swift/BasedBrain`: `BASED_WRITE_FIXTURES=1 swift test --filter NotionAPIFixtureExport`; ohne die Variable vergleicht derselbe Test die eingecheckte Datei |
+| notion-api | `import/notion-api.utc.json` | Notion-API-Import (BSD-217) aus NotionAPIImportTests: Routen-Tabelle der Fake-API (inkl. 429, Dateien) → Bericht + Records (voller Import, Dashboard, Karte/Orte, Suche, ungültiges Token, Reimport). Erzeugt in `legacy/Swift/BasedBrain`: `BASED_WRITE_FIXTURES=1 swift test --filter NotionAPIFixtureExport`; ohne die Variable vergleicht derselbe Test die eingecheckte Datei |
 | reimport | `import/reimport.json` | Reimport-Schutz (BSD-32) aus ReimportProtectionTests, Inhalts-Fingerabdrücke des Record-Korpus |
 | export | `export/export.utc.json` | Markdown-/CSV-/HTML-Export, Workspace-Export (eindeutige Namen, relative Links, Dateien in `assets/`) |
 | archive | `archive/archive.json` | Workspace-Archiv v1/v2 schreiben und lesen, Asset-Einträge, ZIP-Pfade, Import mit Herkunft `import` (BSD-26) |

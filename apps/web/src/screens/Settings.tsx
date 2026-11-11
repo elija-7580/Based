@@ -1,4 +1,4 @@
-// Einstellungen im Notion-Stil (Vorlage: App/Shared/Views/Settings/SettingsView.swift): links die Seiten in den
+// Einstellungen im Notion-Stil (Vorlage: legacy/App/Shared/Views/Settings/SettingsView.swift): links die Seiten in den
 // Gruppen Account und Workspace, rechts die Abschnitte der gewählten Seite – aus Astryx-Komponenten im Theme
 // „Based Default“. Die Ansicht ist dünn: Seiten und „Not available yet“ kommen aus shell/settings.ts, die Abschnitte
 // aus der Registry (settings/registry.ts); eingebaute Abschnitte stehen in settings/sections.tsx.

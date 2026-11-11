@@ -1,5 +1,5 @@
 // BSD-210: Emoji-Katalog mit Suchwörtern für den Icon-Picker (Callout, später Seiten-Icons) und die „:“-Suche.
-// Daten 1:1 aus App/Shared/Editor/EmojiCatalog.swift übernommen (Reihenfolge = Anzeige), Suche wie Swift `search`:
+// Daten 1:1 aus legacy/App/Shared/Editor/EmojiCatalog.swift übernommen (Reihenfolge = Anzeige), Suche wie Swift `search`:
 // erst Treffer, bei denen ein Wort mit der Eingabe beginnt, dann solche, die sie irgendwo enthalten.
 
 export type EmojiEntry = readonly [emoji: string, keywords: string];
