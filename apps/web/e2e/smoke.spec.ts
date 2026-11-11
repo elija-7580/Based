@@ -48,7 +48,8 @@ test("Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute", async ({ 
   await expect(html).toHaveAttribute("data-theme", "dark");
   await expect(html).toHaveAttribute("data-calm", "");
 
-  await page.getByRole("radio", { name: "Default" }).click();
+  // „Default“ gibt es auch bei Writing → Font (BSD-168): im Abschnitt Appearance wählen
+  await page.getByTestId("settings-section-appearance").getByRole("radio", { name: "Default" }).click();
   await expect(html).not.toHaveAttribute("data-style", /.*/);
   await page.getByRole("switch", { name: "Calm mode" }).click();
   await expect(html).not.toHaveAttribute("data-calm", /.*/);

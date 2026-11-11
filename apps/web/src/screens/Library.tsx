@@ -1,6 +1,6 @@
 // Library: alles im Workspace auf einen Blick – Seiten, Datenbanken, Zeilen – mit Suche, Filtern (Art, Ort, Favoriten,
 // gleicher Titel), Sortierung und Mehrfachauswahl für Verschieben, Duplizieren, Favorisieren und Papierkorb.
-// Vorlage: Swift App/Shared/Views/Library/LibraryView.swift. Die Einträge kommen aus dem Store-Worker
+// Vorlage: Swift legacy/App/Shared/Views/Library/LibraryView.swift. Die Einträge kommen aus dem Store-Worker
 // (`client.library()`), gefiltert und sortiert wird hier mit `filterLibrary` aus @based/core; die Liste ist
 // virtualisiert (nur sichtbare Zeilen im DOM).
 import { LibraryTabs } from "../components/LibraryTabs.js";
@@ -133,19 +133,25 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
     setSameTitle(false);
   };
 
-  const run = async (label: string, f: () => Promise<unknown>, keepSelection = false) => {
+  // Läuft eine Sammelaktion, steht das sofort da (bei Tausenden Seiten dauert sie spürbar); Knöpfe sind solange aus.
+  const [working, setWorking] = useState<string | undefined>();
+  const run = async (label: string, f: () => Promise<unknown>, keepSelection = false, progress?: string) => {
+    if (working) return;
+    if (progress) setWorking(progress);
     try {
       await f();
       setNotice(label);
       if (!keepSelection) setSelected(new Set());
     } catch (e) {
       setNotice(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (progress) setWorking(undefined);
     }
   };
   const n = ids.length;
   const things = (k: number) => `${k} ${k === 1 ? "item" : "items"}`;
   const allFavorite = n > 0 && items !== undefined && ids.every((id) => items.find((i) => i.id === id)?.favorite);
-  const trash = () => run(`Moved ${things(n)} to Trash.`, () => client.command({ op: "trash", ids }));
+  const trash = () => run(`Moved ${things(n)} to Trash.`, () => client.command({ op: "trash", ids }), false, `Moving ${things(n)} to Trash…`);
 
   const typeItems: DropdownMenuOption[] = TYPE_FILTERS.map((t) => ({ id: t.id, label: t.label, icon: type === t.id ? check : none, onClick: () => setType(t.id) }));
   const locationItems: DropdownMenuOption[] = [
@@ -226,7 +232,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
           startContent={
             <>
               <IconButton label="Clear selection" variant="ghost" icon={<Icon name="close" size={16} />} onClick={() => setSelected(new Set())} />
-              <strong data-testid="library-selected">{n} selected</strong>
+              <strong data-testid="library-selected">{working ?? `${n} selected`}</strong>
             </>
           }
           endContent={
@@ -234,7 +240,7 @@ export function Library({ client, state, onOpenPage, onSwitch }: Props) {
               <Button label="Move to…" variant="ghost" icon={<Icon name="move" size={16} />} onClick={() => setMoving(true)} />
               <Button label="Duplicate" variant="ghost" icon={<Icon name="duplicate" size={16} />} onClick={() => void run(`Duplicated ${things(n)}.`, () => client.command({ op: "duplicate", ids }), true)} />
               <Button label={allFavorite ? "Remove from Favorites" : "Add to Favorites"} variant="ghost" icon={<Icon name="star" size={16} />} onClick={() => void run(allFavorite ? `Removed ${things(n)} from Favorites.` : `Added ${things(n)} to Favorites.`, () => client.command({ op: "favorite", ids, on: !allFavorite }), true)} />
-              <Button label="Move to Trash" variant="ghost" icon={<Icon name="trash" size={16} />} onClick={() => (n > 1 ? setConfirmTrash(true) : void trash())} />
+              <Button label="Move to Trash" variant="ghost" icon={<Icon name="trash" size={16} />} isDisabled={working !== undefined} onClick={() => (n > 1 ? setConfirmTrash(true) : void trash())} />
             </>
           }
         />

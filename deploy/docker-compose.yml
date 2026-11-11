@@ -1,22 +1,38 @@
+# TS-based-server (ADR 0011) mit Härtung (BSD-75): nicht root, schreibgeschütztes Dateisystem außer /data und /tmp,
+# keine zusätzlichen Rechte, Health-Check, tägliches Backup (sqlite3 .backup, 7 Tage, Skript deploy/backup.sh).
+# Seit BSD-168 der Standard (der Swift-Server liegt in legacy/deploy/).
+#   docker compose up -d --build
 services:
   based:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
     restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
     environment:
       BASED_TOKEN: ${BASED_TOKEN:?set a long random token}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OLLAMA_URL: ${OLLAMA_URL:-}
-      # Sharing: links are built from this URL; BASED_APPLE_APP_ID ("<TeamID>.<bundle id>") opens them in the app.
       BASED_PUBLIC_URL: https://${BASED_DOMAIN}
-      BASED_APPLE_APP_ID: ${BASED_APPLE_APP_ID:-}
+      BASED_LOG_LEVEL: info
+      # BSD-243: geplante Agenten-Läufe auf dem Server (leer = sie laufen, solange die App offen ist)
+      BASED_ANTHROPIC_API_KEY: ${BASED_ANTHROPIC_API_KEY:-}
+      BASED_AGENT_MODEL: ${BASED_AGENT_MODEL:-}
       TZ: Europe/Vienna
     volumes:
       - based-data:/data
     ports:
       - "127.0.0.1:8787:8787"
+  backup:
+    image: alpine:3.20
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - based-data:/data:ro
+      - based-backup:/backup
+      - ./backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
   caddy:
     image: caddy:2
     restart: unless-stopped
@@ -28,4 +44,5 @@ services:
       BASED_DOMAIN: ${BASED_DOMAIN:?e.g. based.example.com}
 volumes:
   based-data:
+  based-backup:
   caddy-data:

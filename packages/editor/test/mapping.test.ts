@@ -16,6 +16,27 @@ describe("Mapping", () => {
     expect(changes.removeBlocks).toEqual([]);
   });
 
+  it("Bildbreite (BSD-168/290): previewWidth ⇄ props.width wie Swift (Wert unverändert durchgereicht)", () => {
+    const store = corpusStore();
+    const blocks = projectDoc(store, "p-root");
+    const find = (list: typeof blocks): (typeof blocks)[number] | undefined => {
+      for (const b of list) {
+        if (b.id === "bima-0017-0000-4000-8000-000000000000") return b;
+        const c = find((b.children ?? []) as typeof blocks);
+        if (c) return c;
+      }
+      return undefined;
+    };
+    const img = find(blocks)!;
+    expect(img.type).toBe("image");
+    expect((img.props as Record<string, unknown>).previewWidth).toBe(0.75);
+    (img.props as Record<string, unknown>).previewWidth = 312;
+    const changes = materializeDoc(store, "p-root", blocks, { now: 1 });
+    const put = changes.puts.find((b) => b.id === img.id)!;
+    expect(put.props?.width).toBe(312);
+    expect(put.props?.asset?.id).toBe("asset-3");
+  });
+
   it("richText mit allen Marken, Erwähnungen und Gleichung", () => {
     const store = corpusStore();
     const runs = store.blocks.get("btex-0002-0000-4000-8000-000000000000")!.text!;

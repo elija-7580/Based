@@ -5,8 +5,8 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 .pushstate*.json
-Config/Local.xcconfig
-App/Shared/Assets.xcassets/AppIcon.appiconset/*.png
+legacy/Config/Local.xcconfig
+legacy/App/Shared/Assets.xcassets/AppIcon.appiconset/*.png
 Based.xcodeproj/
 build/
 build-ios/

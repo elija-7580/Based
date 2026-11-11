@@ -1,4 +1,4 @@
-// BSD-73: wann Seiten eine Version bekommen (Port von App/Shared/History/PageHistory.swift); die Ablage ist
+// BSD-73: wann Seiten eine Version bekommen (Port von legacy/App/Shared/History/PageHistory.swift); die Ablage ist
 // VersionHistory aus @based/core (git-artig, dedupliziert), im Worker auf history.sqlite (OPFS) bzw. im Speicher.
 //
 // * beim Öffnen einer Seite (der Stand vor deinen Änderungen ist immer da),
@@ -179,13 +179,11 @@ export class PageHistory {
       pages.add(id);
       for (const d of subtree(this.store, id)) if (isPageLike(this.store.blocks.get(d))) pages.add(d);
     }
-    for (const p of pages) {
-      this.dirty.delete(p);
-      try {
-        this.history.forget(p);
-      } catch (e) {
-        this.lastError = e instanceof Error ? e.message : String(e);
-      }
+    for (const p of pages) this.dirty.delete(p);
+    try {
+      this.history.forgetAll(pages);
+    } catch (e) {
+      this.lastError = e instanceof Error ? e.message : String(e);
     }
   }
 

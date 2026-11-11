@@ -6,7 +6,7 @@
 ## Context
 
 Based copies Notion's look closely for now. After Notion parity it should get a design of its own. Views
-currently mix values from `DS` (`App/Shared/DesignSystem.swift`) and `Theme` (`App/Shared/Theme.swift`)
+currently mix values from `DS` (`legacy/App/Shared/DesignSystem.swift`) and `Theme` (`legacy/App/Shared/Theme.swift`)
 with hard-coded colours, paddings, font sizes and radii, which makes a redesign a hunt through hundreds of
 views.
 

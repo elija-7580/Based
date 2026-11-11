@@ -33,7 +33,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   callout: ["color", "icon"],
   code: ["language"],
   equation: ["expression"],
-  image: ["url", "asset", "caption"], video: ["url", "asset", "caption"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
+  image: ["url", "asset", "caption", "width"], video: ["url", "asset", "caption", "width"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
   pdf: ["url", "asset"], embed: ["url"], bookmark: ["url"],
   linkToPage: ["linkTarget"],
   syncedBlock: ["syncSource"],
@@ -119,6 +119,8 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
         url: p.url ?? (p.asset ? ASSET_URL_PREFIX + p.asset.id : ""),
         name: p.asset?.name ?? "",
         caption: plainText(p.caption),
+        // BSD-168/290: Breite eines Bildes/Videos (Griff ziehen) wie Swift `props.width` in Punkten.
+        ...((b.type === "image" || b.type === "video") && typeof p.width === "number" && p.width > 0 ? { previewWidth: p.width } : {}),
       });
     // BSD-208: hochgeladene PDFs liegen wie Dateien als `asset` vor (Swift), im Editor als based-asset:-URL.
     case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, { kind: b.type, url: p.url ?? (b.type === "pdf" && p.asset ? ASSET_URL_PREFIX + p.asset.id : "") });
@@ -201,7 +203,9 @@ export function extractOwned(bn: BNBlock): Owned {
     case "image": case "video": case "audio": case "file": {
       const url = str(p.url);
       const asset = url.startsWith(ASSET_URL_PREFIX) ? { id: url.slice(ASSET_URL_PREFIX.length), name: str(p.name) } : undefined;
-      return { type: bn.type, props: { url: asset ? undefined : nonEmpty(url), asset, caption: nonEmpty(p.caption) } };
+      const w = Number(p.previewWidth);
+      const width = (bn.type === "image" || bn.type === "video") && Number.isFinite(w) && w > 0 ? w : undefined;
+      return { type: bn.type, props: { url: asset ? undefined : nonEmpty(url), asset, caption: nonEmpty(p.caption), width } };
     }
     case CUSTOM.embed: {
       const kind = str(p.kind);

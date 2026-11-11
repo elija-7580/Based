@@ -1,6 +1,6 @@
 #!/bin/sh
 # BSD-75: tägliches Backup der Server-Datenbank (sqlite3 .backup ist auch bei laufendem Server konsistent).
-# Behält die Sicherungen der letzten 7 Tage. Läuft im backup-Dienst von docker-compose.ts.yml.
+# Behält die Sicherungen der letzten 7 Tage. Läuft im backup-Dienst von docker-compose.yml.
 set -u
 apk add --no-cache sqlite >/dev/null 2>&1 || true
 while true; do
