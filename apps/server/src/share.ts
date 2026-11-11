@@ -11,7 +11,7 @@
 // Prüfung = ReBAC-Tupel (Subjekt, Rolle, Seite), den Seitenbaum hinauf ausgewertet.
 import { createHash, randomBytes } from "node:crypto";
 import { isPageLike, isTrashed, keyOf, parseKey, type RecordKeyString, type WireRecord, type WorkspaceStore } from "@based/core";
-import type { SqlitePersistence } from "@based/sync";
+import { asText, type SqlitePersistence } from "@based/sync";
 import type { DecodedPush, PullPage, PushReply, SyncService, WireDeletion } from "./sync.js";
 
 export type ShareRole = "view" | "comment" | "edit" | "full";
@@ -93,12 +93,62 @@ export function principalLabel(p: SharePrincipal): string {
 export class ShareService {
   state: ShareState;
 
+  /** BSD-284: Elternverweis je Block (zum Erkennen von Verschiebungen). */
+  private readonly parents = new Map<string, string>();
+  private readonly unobserve: () => void;
+  /** BSD-284: Long-Polls wecken, wenn eine Freigabe neuen Inhalt sichtbar macht (setzt die App). */
+  onScopeChange?: () => void;
+
   constructor(
     readonly store: WorkspaceStore,
     readonly persistence: SqlitePersistence,
     readonly nowMillis: () => number = Date.now,
   ) {
     this.state = ShareService.load(persistence);
+    persistence.db.exec("CREATE TABLE IF NOT EXISTS share_moves (id TEXT PRIMARY KEY, seq INTEGER NOT NULL)");
+    for (const [id, b] of store.blocks) this.parents.set(id, b.parent);
+    this.unobserve = store.observe((change) => this.noteMoves(change.keys));
+  }
+
+  close() {
+    this.unobserve();
+  }
+
+  /**
+   * BSD-284: Ein Block, der den Elternverweis wechselt, kann in den Bereich eines Gastes wandern. Sein Inhalt steht
+   * dann nicht im Change-Log (unverändert). Der Server merkt sich die Verschiebung mit ihrer Log-Position; der Pull
+   * schickt den lesbaren Teilbaum dann einmal mit – nicht bei jeder Änderung (eine Datenbank mit 50 000 Zeilen).
+   */
+  private noteMoves(keys: readonly RecordKeyString[]) {
+    let seq: number | undefined;
+    for (const key of keys) {
+      if (!key.startsWith("block:")) continue;
+      const id = key.slice(6);
+      const b = this.store.blocks.get(id);
+      const old = this.parents.get(id);
+      if (!b) { this.parents.delete(id); continue; }
+      this.parents.set(id, b.parent);
+      if (old === undefined || old === b.parent) continue;
+      seq ??= this.persistence.maxSeq();
+      this.persistence.db.run("INSERT OR REPLACE INTO share_moves(id, seq) VALUES(?, ?)", [id, seq]);
+    }
+  }
+
+  /** Verschobene oder neu freigegebene Blöcke mit Log-Position in (after, upTo]. */
+  private movedBetween(after: number, upTo: number): string[] {
+    return this.persistence.db.all("SELECT id FROM share_moves WHERE seq > ? AND seq <= ?", [after, upTo]).map((r) => asText(r.id) ?? "");
+  }
+
+  /**
+   * BSD-284: Neue Freigabe für einen schon verbundenen Nutzer: die Seite bekommt einen frischen Log-Eintrag (Inhalt
+   * unverändert, gleicher Stempel) und gilt als „hineingewandert“ – sein nächster Pull bringt sie mit Inhalt.
+   */
+  private relogForScope(pageID: string) {
+    const rec = this.store.record(keyOf("block", pageID));
+    if (!rec) return;
+    this.persistence.write([rec], [], new Map(), false);
+    this.persistence.db.run("INSERT OR REPLACE INTO share_moves(id, seq) VALUES(?, ?)", [pageID, this.persistence.maxSeq()]);
+    this.onScopeChange?.();
   }
 
   static load(persistence: SqlitePersistence): ShareState {
@@ -298,9 +348,11 @@ export class ShareService {
     const mine = this.rolePage(by, pageID);
     if (!canShare(mine)) throw new ShareError(403, "Sharing needs full access to the page.");
     if (role !== null && RANK[role] > RANK[mine!]) throw new ShareError(403, "You can't give more access than you have.");
+    const before = this.state.grants.some((g) => g.userID === userID && g.pageID === pageID);
     this.state.grants = this.state.grants.filter((g) => !(g.userID === userID && g.pageID === pageID));
     if (role !== null) this.state.grants.push({ id: secureToken("", 9), pageID, userID, role, createdAt: this.now });
     this.save();
+    if (role !== null && !before) this.relogForScope(pageID);
   }
 
   /** Alle Freigaben einer Seite, auch die von Seiten darüber geerbten. */
@@ -361,6 +413,20 @@ export class ShareService {
       if (r.kind === "workspace") continue; // Gäste haben keinen Workspace-Record
       if (r.kind === "block" && isPageLike(r.data)) for (const k of this.subtreeKeys(r.data.id)) drop(k);
       else drop(keyOf(r.kind, r.data.id));
+    }
+    // BSD-284: hineingewanderte Blöcke bringen ihren (unveränderten) Inhalt mit.
+    const moved = this.movedBetween(after, page.next);
+    if (moved.length > 0) {
+      const have = new Set<string>(records.map((r) => keyOf(r.kind, r.data.id)));
+      for (const id of moved) {
+        const b = this.store.blocks.get(id);
+        if (!b || !this.canRead(p, { kind: "block", data: b } as WireRecord)) continue;
+        for (const k of this.subtreeKeys(id)) {
+          if (have.has(k)) continue;
+          const r = this.store.record(k);
+          if (r && this.canRead(p, r)) { records.push(r); have.add(k); }
+        }
+      }
     }
     return { ...page, records, deletions };
   }

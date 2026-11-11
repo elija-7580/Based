@@ -88,6 +88,7 @@ export function createApp(opts: AppOptions): App {
   const sync = new SyncService(db, opts);
   const pages = new Pages(sync.store);
   const share = new ShareService(sync.store, sync.persistence, opts.nowMillis);
+  share.onScopeChange = () => sync.wake();
   const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t) });
   const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
@@ -325,6 +326,7 @@ export function createApp(opts: AppOptions): App {
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();
       sync.close(); // offene Long-Polls antworten sofort
+      share.close();
       pages.dispose();
       await collab.close();
       await new Promise<void>((resolve) => {

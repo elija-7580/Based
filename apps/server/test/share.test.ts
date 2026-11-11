@@ -88,6 +88,49 @@ describe("Gefilterter Sync", () => {
     expect((next.body!.records as { data: { id: string } }[]).map((r) => r.data.id)).not.toContain(sub);
   });
 
+  it("BSD-284: Seite wandert in den geteilten Bereich – der nächste Pull bringt ihren Inhalt mit, danach nicht mehr", async () => {
+    const { app, shared, priv } = await setup();
+    const { body } = await createLink(app.url, shared, "access", "view");
+    const guest = bearer(body.secret!);
+    const first = await get(`${app.url}/sync/v2/pull?after=0&limit=5000`, guest);
+    const privContent = app.sync.store.children("b:" + priv);
+    expect(privContent.length).toBeGreaterThan(0);
+    // Owner zieht „Private Diary“ in „Team Wiki“ (nur der Seiten-Record ändert sich)
+    app.sync.store.transact("Move", (tx) => tx.update(priv, (b) => { b.parent = "b:" + shared; }));
+    const next = await get(`${app.url}/sync/v2/pull?after=${first.body!.next as number}`, guest);
+    const ids = (next.body!.records as { data: { id: string } }[]).map((r) => r.data.id);
+    expect(ids).toContain(priv);
+    for (const c of privContent) expect(ids).toContain(c);
+    expect(new Set(ids).size).toBe(ids.length);
+    // Eine spätere Titeländerung schickt den Inhalt nicht erneut.
+    app.sync.store.transact("Rename", (tx) => tx.update(priv, (b) => { b.text = "Diary (shared)"; }));
+    const later = await get(`${app.url}/sync/v2/pull?after=${next.body!.next as number}`, guest);
+    expect((later.body!.records as { data: { id: string } }[]).map((r) => r.data.id)).toEqual([priv]);
+    // Der Besitzer bekommt nur das Change-Log.
+    const owner = await get(`${app.url}/sync/v2/pull?after=${first.body!.next as number}`);
+    expect((owner.body!.records as { data: { id: string } }[]).map((r) => r.data.id)).not.toContain(privContent[0]);
+  });
+
+  it("BSD-284: neue Freigabe für einen verbundenen Nutzer – nächster Pull bringt die Seite mit Inhalt", async () => {
+    const { app, shared, priv } = await setup();
+    const inv = app.share.createLink("invite", shared, "view", { kind: "owner" });
+    const { user, token } = app.share.acceptInvite(inv.secret!, "Ada");
+    const first = await get(`${app.url}/sync/v2/pull?after=0&limit=5000`, bearer(token));
+    expect((first.body!.records as { data: { id: string } }[]).map((r) => r.data.id)).not.toContain(priv);
+    app.share.setGrant(user.id, priv, "view", { kind: "owner" });
+    const next = await get(`${app.url}/sync/v2/pull?after=${first.body!.next as number}`, bearer(token));
+    const ids = (next.body!.records as { data: { id: string } }[]).map((r) => r.data.id);
+    expect(ids).toContain(priv);
+    for (const c of app.sync.store.children("b:" + priv)) expect(ids).toContain(c);
+  });
+
+  it("BSD-284: Verschiebungen stehen in der Server-Datei (Tabelle share_moves), nicht nur im Speicher", async () => {
+    const { app, shared, priv } = await setup();
+    app.sync.store.transact("Move", (tx) => tx.update(priv, (b) => { b.parent = "b:" + shared; }));
+    const rows = app.sync.persistence.db.all("SELECT id FROM share_moves");
+    expect(rows.map((r) => r.id)).toContain(priv);
+  });
+
   it("Snapshot: alles Lesbare plus Position", async () => {
     const { app, shared, priv } = await setup();
     const { body } = await createLink(app.url, shared, "access", "view");
