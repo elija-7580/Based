@@ -149,6 +149,27 @@ test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async (
   await expect(page.getByTestId("page-content")).toContainText("Water");
 });
 
+test("OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const opml = '<?xml version="1.0"?><opml version="2.0"><head><title>Outline</title></head><body><outline text="Alpha"><outline text="Beta" _complete="true"/></outline></body></opml>';
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "outline.opml", mimeType: "text/x-opml", buffer: Buffer.from(opml) });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported 1 page");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("treeitem", { name: "Outline" }).click();
+  await expect(page.getByTestId("page-content")).toContainText("Beta");
+  await page.getByRole("button", { name: "Export", exact: true }).click();
+  const exp = page.getByRole("dialog", { name: "Export page" });
+  await exp.getByRole("radio", { name: /OPML/ }).click();
+  const [file] = await Promise.all([page.waitForEvent("download"), exp.getByRole("button", { name: "Export", exact: true }).click()]);
+  expect(file.suggestedFilename()).toBe("Outline.opml");
+  const xml = readFileSync((await file.path())!, "utf8");
+  expect(xml).toContain('<outline text="Alpha">');
+  expect(xml).toContain('<outline text="Beta" _complete="true"/>');
+});
+
 test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
