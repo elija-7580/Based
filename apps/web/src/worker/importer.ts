@@ -165,7 +165,7 @@ export function prepareFiles(files: ImportFile[], opts: PrepareOptions = {}): Im
         if (loaded.read.skipped > 0) out.notes.push(`${name}: skipped ${plural(loaded.read.skipped, "unreadable line")}`);
         continue;
       }
-      if (lower.endsWith(".jsonl")) { out.notes.push(`Skipped ${name} (not a Based archive)`); continue; }
+      // BSD-260 Teil 7: andere .jsonl sind JSON Lines (Tabelle → Datenbank) und gehen unten in den Baum.
     }
     if (f.data) tree.add(f.path, f.data);
     else {

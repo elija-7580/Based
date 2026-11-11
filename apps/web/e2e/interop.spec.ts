@@ -197,6 +197,20 @@ test("Word-Dokument (.docx) importieren (BSD-260)", async ({ page }) => {
   await expect(content.locator("img").first()).toBeVisible();
 });
 
+test("JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  const jsonl = '{"name":"Ada","age":36,"tags":["math","code"]}\n{"name":"Alan","age":41}\n';
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "people.jsonl", mimeType: "application/jsonl", buffer: Buffer.from(jsonl) });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await page.getByRole("treeitem", { name: "people" }).click();
+  await expect(page.getByText("Alan").first()).toBeVisible();
+  await expect(page.getByText("math").first()).toBeVisible();
+});
+
 test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
