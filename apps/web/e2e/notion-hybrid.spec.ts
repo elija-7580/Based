@@ -143,11 +143,11 @@ test("Hybrid-Import: Markdown-Export wird erklärt statt halb importiert", async
 });
 
 // Bildschirmfotos für docs/design/screens (nur mit BASED_SCREENSHOTS=1, Chromium): Dialog mit Export, laufend,
-// Bericht, gesperrte Seite mit Stand in der Seitenleiste – je hell/dunkel in 1280 × 820, 900 × 600, 1728 × 1000.
+// Bericht, gesperrte Seite mit Stand in der Seitenleiste – hell und dunkel in 1280 × 820.
 test("Hybrid-Import: Bildschirmfotos", async ({ page, browserName }) => {
   test.skip(process.env.BASED_SCREENSHOTS !== "1" || browserName !== "chromium", "nur auf Wunsch");
   test.setTimeout(240_000);
-  const sizes = [{ w: 1280, h: 820, s: "" }, { w: 900, h: 600, s: "-900" }, { w: 1728, h: 1000, s: "-1728" }];
+  const sizes = [{ w: 1280, h: 820, s: "" }];
   const world = smallWorld();
   world.pages.get(IDS.NOTES)!.inZip = false;
   world.pages.get(IDS.DEEP)!.zipTitle = "Deep (old name)";
