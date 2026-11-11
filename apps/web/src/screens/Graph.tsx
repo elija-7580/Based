@@ -5,6 +5,7 @@
 // Farben und Schrift kommen zur Laufzeit aus den Design-Tokens (CSS-Variablen), keine Literale.
 // Design: Seiten der obersten Ebene gefüllt in Tinte, Seiten darunter als Ringe (docs/design/README.md). Der Marker
 // (Agent-Änderungen) bleibt frei, bis Records die Herkunft „Agent“ tragen.
+import { LibraryTabs } from "../components/LibraryTabs.js";
 import { Button } from "@astryxdesign/core/Button";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { IconButton } from "@astryxdesign/core/IconButton";
@@ -25,6 +26,8 @@ interface Props {
   client: StoreClient;
   state: ShellState;
   onOpenPage: (id: string) => void;
+  /** BSD-281: Reiter Pages/Graph. */
+  onSwitch?: (to: "library" | "graph") => void;
 }
 
 const ALL = "all";
@@ -76,7 +79,7 @@ function buildScene(graph: PageGraph, previous: GraphLayout | undefined): Scene 
   return { graph, layout, neighbors: adj.neighbors, index: adj.index, links: adj.links, radius, byDegree };
 }
 
-export function Graph({ client, state, onOpenPage }: Props) {
+export function Graph({ client, state, onOpenPage, onSwitch }: Props) {
   const [result, setResult] = useState<GraphResult | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
   const [section, setSection] = useState(ALL);
@@ -345,6 +348,7 @@ export function Graph({ client, state, onOpenPage }: Props) {
     <div className="gx" data-testid="graph">
       <section className="gx-stage" aria-label="Page graph">
         <div className="gx-title">
+          {onSwitch ? <LibraryTabs value="graph" onNavigate={onSwitch} /> : null}
           <h1 className="t-heading">Graph</h1>
           <span className="t-desc" role="status" data-testid="graph-stats">
             {result === undefined ? (failed ? `Couldn't build the graph: ${failed}` : "Building…") : `${count(nodes, "page")} · ${count(edges, "link")}${cut ? ` of ${result.totalNodes.toLocaleString("en-US")}` : ""}`}

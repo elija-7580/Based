@@ -13,7 +13,8 @@ import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./Te
 import { routeToHash, type Route } from "../shell/router.js";
 import { openPageWindow } from "../desktop.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
-import { collapsedSections, expandedPages } from "../shell/storage.js";
+import { collapsedSections, expandedPages, sidebarNavPrefs } from "../shell/storage.js";
+import { cleanNavPrefs, FOOTER_STYLE, hideNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
@@ -50,6 +51,8 @@ interface Props {
   onOpenPage: (id: string) => void;
   onNewPage: (opts?: { parent?: string; section?: string }) => Promise<string | undefined>;
   onQuickFind: () => void;
+  /** BSD-281: erweiterter Agenten-Modus („Show agent details“) – nur dann steht Coding in der Leiste. */
+  advanced?: boolean;
 }
 
 interface Menu {
@@ -58,7 +61,7 @@ interface Menu {
   y: number;
 }
 
-export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPage, onQuickFind }: Props) {
+export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPage, onQuickFind, advanced = false }: Props) {
   const { outline, titles, status } = state;
   const [expanded, setExpanded] = useState<Set<string>>(expandedPages.get);
   const [collapsed, setCollapsed] = useState<Set<string>>(collapsedSections.get);
@@ -325,27 +328,51 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
   };
 
   const trashCount = outline?.trash.length ?? 0;
-  type NavEntry = { name: string; icon: IconName; cut?: IconName; active: boolean; key?: string; badge?: string; go: () => void };
-  const nav: NavEntry[] = [
-    { name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home", go: () => onNavigate({ name: "home" }) },
-    { name: "Search", icon: "search", active: false, key: "⌘K", go: onQuickFind },
-    { name: "Chat", icon: "chat", active: route.name === "chat", key: "⌘J", go: () => onNavigate({ name: "chat" }) },
-    { name: "Tasks", icon: "agent", active: route.name === "tasks", go: () => onNavigate({ name: "tasks" }) },
-    { name: "Coding", icon: "terminal", active: route.name === "coding", go: () => onNavigate({ name: "coding" }) },
-    { name: "Graph", icon: "graph", active: route.name === "graph", go: () => onNavigate({ name: "graph" }) },
-  ];
-  // Fuß wie in der Swift-App: Library · Trash · Settings
-  const footer: NavEntry[] = [
-    { name: "Library", icon: "library", active: route.name === "library", go: () => onNavigate({ name: "library" }) },
-    { name: "Trash", icon: "trash", active: route.name === "trash", ...(trashCount ? { badge: String(trashCount) } : {}), go: () => onNavigate({ name: "trash" }) },
-    { name: "Settings", icon: "settings", active: route.name === "settings", key: "⌘,", go: () => onNavigate({ name: "settings" }) },
-  ];
+  // BSD-281: oben Search, Home, Chat (+ Angepinntes), unten Library · Trash · Settings als Icon-Zeile; Rechtsklick pinnt/blendet aus
+  const [navPrefs, setNavPrefs] = useState<NavPrefs>(() => cleanNavPrefs(sidebarNavPrefs.get()));
+  const [navMenu, setNavMenu] = useState<{ id: NavID; x: number; y: number } | undefined>();
+  const changeNav = (f: (p: NavPrefs) => NavPrefs) => setNavPrefs((p) => {
+    const next = f(p);
+    sidebarNavPrefs.set(next);
+    return next;
+  });
+  type NavEntry = { id: NavID; name: string; icon: IconName; cut?: IconName; active: boolean; key?: string; badge?: string; go: () => void };
+  const entries: Record<NavID, NavEntry> = {
+    search: { id: "search", name: "Search", icon: "search", active: false, key: "⌘K", go: onQuickFind },
+    home: { id: "home", name: "Home", icon: "home", cut: "homeDoor", active: route.name === "home", go: () => onNavigate({ name: "home" }) },
+    chat: { id: "chat", name: "Chat", icon: "chat", active: route.name === "chat", key: "⌘J", go: () => onNavigate({ name: "chat" }) },
+    tasks: { id: "tasks", name: "Tasks", icon: "agent", active: route.name === "tasks", go: () => onNavigate({ name: "tasks" }) },
+    coding: { id: "coding", name: "Coding", icon: "terminal", active: route.name === "coding", go: () => onNavigate({ name: "coding" }) },
+    graph: { id: "graph", name: "Graph", icon: "graph", active: route.name === "graph", go: () => onNavigate({ name: "graph" }) },
+    library: { id: "library", name: "Library", icon: "library", active: route.name === "library", go: () => onNavigate({ name: "library" }) },
+    trash: { id: "trash", name: "Trash", icon: "trash", active: route.name === "trash", ...(trashCount ? { badge: String(trashCount) } : {}), go: () => onNavigate({ name: "trash" }) },
+    settings: { id: "settings", name: "Settings", icon: "settings", active: route.name === "settings", key: "⌘,", go: () => onNavigate({ name: "settings" }) },
+  };
+  const layout = navLayout(navPrefs, { advanced });
+  const onNavMenu = (id: NavID) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setNavMenu({ id, x: e.clientX, y: e.clientY });
+  };
   const navButton = (n: NavEntry) => (
-    <button key={n.name} type="button" className="nav-item" aria-current={n.active ? "page" : undefined} onClick={n.go}>
+    <button key={n.id} type="button" className="nav-item" aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)}>
       <Icon name={n.icon} filled={n.active && FILLABLE.has(n.icon)} {...(n.cut ? { cut: n.cut } : {})} />
       {n.name}
       {n.badge ? <span className="badge" aria-label={`${n.badge} in Trash`}>{n.badge}</span> : n.key ? <span className="key t-data">{n.key}</span> : null}
     </button>
+  );
+  const iconButton = (n: NavEntry) => (
+    <button key={n.id} type="button" className="icon-btn ghost nav-icon" aria-label={n.badge ? `${n.name}, ${n.badge} pages` : n.name} title={n.key ? `${n.name} (${n.key})` : n.name}
+      aria-current={n.active ? "page" : undefined} onClick={n.go} onContextMenu={onNavMenu(n.id)}>
+      <Icon name={n.icon} size={18} filled={n.active && FILLABLE.has(n.icon)} />
+      {n.badge ? <span className="nav-icon-badge" aria-hidden="true">{n.badge}</span> : null}
+    </button>
+  );
+  const syncStatus = (
+    <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
+      <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
+      {SYNC_LABEL[status.state]}
+      {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
+    </div>
   );
   const menuSection = menu ? outline?.nodes[menu.id]?.section : undefined;
 
@@ -370,7 +397,7 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         <img className="on-dark" src={markDark} alt="" />
         <span className="wordmark">based</span>
       </div>
-      {nav.map(navButton)}
+      {layout.top.map((id) => navButton(entries[id]))}
       <VirtualList
         className="tree"
         role="tree"
@@ -381,12 +408,22 @@ export function Sidebar({ client, state, route, onNavigate, onOpenPage, onNewPag
         renderRow={renderRow}
         revealIndex={reveal}
       />
-      <div className="sidebar-footer" role="group" aria-label="Workspace tools">{footer.map(navButton)}</div>
-      <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
-        <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
-        {SYNC_LABEL[status.state]}
-        {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
-      </div>
+      {FOOTER_STYLE === "icons" ? (
+        <div className="sidebar-footer icons" role="group" aria-label="Workspace tools">
+          {syncStatus}
+          <span className="nav-icons">{layout.footer.map((id) => iconButton(entries[id]))}</span>
+        </div>
+      ) : (
+        <>
+          <div className="sidebar-footer" role="group" aria-label="Workspace tools">{layout.footer.map((id) => navButton(entries[id]))}</div>
+          {syncStatus}
+        </>
+      )}
+      {navMenu ? (
+        <NavMenu menu={navMenu} place={navPlace(navMenu.id, navPrefs, { advanced })} advanced={advanced} prefs={navPrefs} onClose={() => setNavMenu(undefined)}
+          onPin={() => changeNav((p) => pinNav(p, navMenu.id))} onUnpin={() => changeNav((p) => unpinNav(p, navMenu.id))} onHide={() => changeNav((p) => hideNav(p, navMenu.id))}
+          onToggle={(id, on) => changeNav((p) => (on ? showNav(p, id) : hideNav(p, id)))} />
+      ) : null}
       {menu && picked.size > 1 && picked.has(menu.id) ? (
         <BulkMenu
           menu={menu}
@@ -626,6 +663,68 @@ function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, 
       {item("Duplicate", "duplicate", onDuplicate)}
       {item("Move to…", "move", onMove)}
       {item("Move to Trash", "trash", onTrash)}
+    </div>
+  );
+}
+
+/** BSD-281: Rechtsklick auf einen Eintrag der Leiste – oben anpinnen/lösen, ausblenden, und alle Einträge ein-/ausblenden. */
+function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide, onToggle }: {
+  menu: { id: NavID; x: number; y: number };
+  place: "top" | "footer" | "none";
+  advanced: boolean;
+  prefs: NavPrefs;
+  onClose: () => void;
+  onPin: () => void;
+  onUnpin: () => void;
+  onHide: () => void;
+  onToggle: (id: NavID, on: boolean) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const away = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    const esc = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+  const run = (f: () => void) => () => {
+    onClose();
+    f();
+  };
+  const def = NAV.find((n) => n.id === menu.id)!;
+  const l = navLayout(prefs, { advanced });
+  const visible = new Set<NavID>([...l.top, ...l.footer]);
+  const pinned = prefs.pinned.includes(menu.id);
+  const keyNav = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = [...(ref.current?.querySelectorAll<HTMLButtonElement>("[role^='menuitem']") ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus();
+  };
+  return (
+    <div ref={ref} role="menu" aria-label={`${def.name} in the sidebar`} className="menu" style={{ left: menu.x, top: menu.y }} data-testid="nav-menu" onKeyDown={keyNav}>
+      {place !== "top" ? <button type="button" role="menuitem" className="menu-item" onClick={run(onPin)}><Icon name="plus" size={16} />Pin to top</button> : null}
+      {place === "top" && pinned ? <button type="button" role="menuitem" className="menu-item" onClick={run(onUnpin)}><Icon name="back" size={16} />{def.home === "footer" ? "Move back to the bottom" : "Unpin from top"}</button> : null}
+      <button type="button" role="menuitem" className="menu-item" onClick={run(onHide)}><Icon name="close" size={16} />Hide from sidebar</button>
+      <div className="menu-sep" role="separator" />
+      <span className="menu-label t-meta">Show in sidebar</span>
+      {NAV.filter((n) => n.id !== "coding" || advanced).map((n) => {
+        const on = visible.has(n.id);
+        return (
+          <button key={n.id} type="button" role="menuitemcheckbox" aria-checked={on} className="menu-item" onClick={run(() => onToggle(n.id, !on))}>
+            {n.name}<span className="menu-check" aria-hidden="true">{on ? <Icon name="check" size={16} /> : null}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

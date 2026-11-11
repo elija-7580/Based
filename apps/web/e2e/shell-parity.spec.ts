@@ -207,7 +207,9 @@ test("Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet", async ({ pag
   await command(page, { op: "createPage", parent: a, title: "Q2 goals" });
   if (home) await command(page, { op: "createPage", parent: home, title: "Getting started" });
   await command(page, { op: "seed", count: 120, prefix: "Note" });
-  await page.getByRole("button", { name: "Graph" }).click();
+  // BSD-281: Graph ist ein Reiter der Library
+  await page.getByRole("button", { name: "Library" }).click();
+  await page.getByRole("radiogroup", { name: "Library view" }).getByRole("radio", { name: "Graph" }).click();
   const canvas = page.getByTestId("graph-canvas");
   // Der Graph füllt sich asynchron aus dem Worker (erst 0 Knoten): warten statt einmal lesen.
   await expect.poll(async () => Number(await canvas.getAttribute("data-nodes")), { timeout: 15_000 }).toBeGreaterThanOrEqual(124);
@@ -238,7 +240,9 @@ test("Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet", async ({ pag
 test("Graph bleibt mit 5.000 Seiten bedienbar", async ({ page }) => {
   test.slow();
   await command(page, { op: "seed", count: 5000, prefix: "Bulk" });
-  await page.getByRole("button", { name: "Graph" }).click();
+  // BSD-281: Graph ist ein Reiter der Library
+  await page.getByRole("button", { name: "Library" }).click();
+  await page.getByRole("radiogroup", { name: "Library view" }).getByRole("radio", { name: "Graph" }).click();
   const canvas = page.getByTestId("graph-canvas");
   await expect(canvas).toHaveAttribute("data-nodes", /^50\d\d$/, { timeout: 20_000 });
   // Das Layout rechnet im Worker; der Hauptthread zeichnet nur: die Arbeit je Frame bleibt klein.

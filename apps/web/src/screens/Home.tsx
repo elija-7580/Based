@@ -178,6 +178,7 @@ export function Home({ client, state, showDetails, onOpenPage, onNavigate, onNew
             <span className={`dot ${synced ? "synced-dot" : state.status.state === "error" ? "error-dot" : ""}`} aria-hidden="true" />
             {synced ? "Server connected" : SYNC_LABEL[state.status.state]}
           </span>
+          <button type="button" className="btn ghost" onClick={() => onNavigate({ name: "tasks" })} data-testid="home-all-tasks"><Icon name="agent" size={16} />All tasks</button>
           <button type="button" className="btn ghost" onClick={onNewPage}><Icon name="plus" size={16} />New page</button>
           {onNewDatabase ? <button type="button" className="btn ghost" onClick={onNewDatabase}><Icon name="plus" size={16} />New database</button> : null}
         </header>
