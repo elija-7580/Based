@@ -68,3 +68,14 @@ describe("⌘Z in Datenbank-Ansichten (BSD-293)", () => {
     expect(k("z", { metaKey: true, altKey: true })).toBeUndefined();
   });
 });
+
+describe("Diagramm-Farben (BSD-216)", () => {
+  it("auto lässt Optionsfarben, colorful verteilt Farben, eine Farbe färbt alles", async () => {
+    const { themedPoints } = await import("./layouts/Chart.js");
+    const pts = [{ key: "a", label: "A", value: 1, color: "pink" }, { key: "b", label: "B", value: 2 }] as never[];
+    expect(themedPoints(pts, undefined)).toBe(pts);
+    expect(themedPoints(pts, "auto")).toBe(pts);
+    expect(themedPoints(pts, "colorful").map((p: { color?: string }) => p.color)).toEqual(["blue", "green"]);
+    expect(themedPoints(pts, "green").map((p: { color?: string }) => p.color)).toEqual(["green", "green"]);
+  });
+});

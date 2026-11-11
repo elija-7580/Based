@@ -7,7 +7,20 @@ import { optionTone } from "../logic/values.js";
 import { EmptyState } from "./shared.js";
 
 const DEFAULT_CHART: NonNullable<DatabaseView["chart"]> = { kind: "bar", aggregate: "count", dateBucket: "month", showLegend: true, showValues: true, sortByValue: false };
-const HEIGHTS: Record<string, number> = { small: 200, medium: 300, large: 420, xlarge: 560 };
+// Notion/Swift: small / medium / large / extra_large („xlarge“ aus älteren TS-Ständen gilt weiter)
+const HEIGHTS: Record<string, number> = { small: 200, medium: 300, large: 420, extra_large: 560, xlarge: 560 };
+
+/** BSD-216: Farbschema wie Notion/Swift `colorTheme` – „auto“ = Optionsfarben, „colorful“ = je Wert eine Farbe, sonst eine Farbe für alles. */
+export const CHART_THEMES: { id: string; label: string }[] = [
+  { id: "auto", label: "Auto" }, { id: "colorful", label: "Colorful" }, { id: "gray", label: "Gray" }, { id: "blue", label: "Blue" },
+  { id: "green", label: "Green" }, { id: "orange", label: "Orange" }, { id: "pink", label: "Pink" }, { id: "red", label: "Red" },
+];
+const CYCLE = ["blue", "green", "orange", "pink", "red", "gray"];
+export function themedPoints(pts: ChartPoint[], theme: string | undefined): ChartPoint[] {
+  if (!theme || theme === "auto") return pts;
+  if (theme === "colorful") return pts.map((p, i) => ({ ...p, color: CYCLE[i % CYCLE.length]! }));
+  return pts.map((p) => ({ ...p, color: theme }));
+}
 
 function useWidth() {
   const ref = useRef<HTMLDivElement>(null);
@@ -122,7 +135,7 @@ export function ChartLayout({ view, result, height }: { view: DatabaseView; resu
   const c = view.chart ?? DEFAULT_CHART;
   const yProp = c.yPropertyID ? propertyOf(db, c.yPropertyID) : undefined;
   const fmt = (n: number) => (yProp ? formatNumber(Math.round(n * 100) / 100, yProp.numberFormat) : formatNumber(Math.round(n * 100) / 100));
-  const pts = useMemo(() => (c.kind === "number" ? [] : chartPoints(engine, result.rows, db, c)), [engine, result, db, c]);
+  const pts = useMemo(() => (c.kind === "number" ? [] : themedPoints(chartPoints(engine, result.rows, db, c), c.colorTheme)), [engine, result, db, c]);
   const h = height ?? HEIGHTS[c.height ?? "medium"] ?? 300;
   let body: React.ReactNode;
   if (c.kind === "number") {
@@ -148,7 +161,7 @@ export function ChartLayout({ view, result, height }: { view: DatabaseView; resu
     );
   } else body = <Bars pts={pts} w={w} h={h} fmt={fmt} values={c.showValues} />;
   return (
-    <div className="dbui-chart" data-testid="chart">
+    <div className="dbui-chart" data-testid="chart" data-theme={c.colorTheme ?? "auto"} data-height={c.height ?? "medium"}>
       <div ref={ref}>{body}</div>
       {c.caption && <p className="dbui-hint">{c.caption}</p>}
     </div>

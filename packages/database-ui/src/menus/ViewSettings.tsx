@@ -1,5 +1,6 @@
 // BSD-155: Einstellungen einer Ansicht (Swift ViewSettingsView): Name, Layout, Properties, Gruppierung,
 // Karten, Diagramm, Dashboard-Widgets, Sperre, Duplizieren/Löschen. Alles über Store-Transaktionen.
+import { CHART_THEMES } from "../layouts/Chart.js";
 import {
   CALENDAR_PROPERTY_TYPES, DASHBOARD_COLUMNS, PROPERTY_TYPE_LABELS, TIMELINE_SCALES, calendarDateProperty, addDashboardWidget, deleteView, duplicateView, movePropertyInView, removeDashboardWidget,
   renameView, setAllPropertiesVisible, setDashboardWidgetWidth, setDatabaseLocked, setGroupBy, setGroupHidden, setPropertyVisible,
@@ -147,6 +148,16 @@ function ChartSection({ view }: { view: DatabaseView }) {
       <label className="dbui-field"><span className="dbui-field-label">Dates by</span>
         <select className="dbui-select" aria-label="Date bucket" value={c?.dateBucket ?? "month"} onChange={(e) => set((x) => { x.dateBucket = e.target.value; })}>
           {["day", "week", "month", "quarter", "year"].map((a) => <option key={a} value={a}>{a[0]!.toUpperCase() + a.slice(1)}</option>)}
+        </select>
+      </label>
+      <label className="dbui-field"><span className="dbui-field-label">Colors</span>
+        <select className="dbui-select" aria-label="Chart colors" value={c?.colorTheme ?? "auto"} onChange={(e) => set((x) => { if (e.target.value === "auto") delete x.colorTheme; else x.colorTheme = e.target.value; })}>
+          {CHART_THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+      </label>
+      <label className="dbui-field"><span className="dbui-field-label">Height</span>
+        <select className="dbui-select" aria-label="Chart height" value={c?.height === "xlarge" ? "extra_large" : c?.height ?? "medium"} onChange={(e) => set((x) => { if (e.target.value === "medium") delete x.height; else x.height = e.target.value; })}>
+          {[["small", "Small"], ["medium", "Medium"], ["large", "Large"], ["extra_large", "Extra large"]].map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
       </label>
       <Toggle label="Show values" checked={c?.showValues ?? true} onChange={(on) => set((x) => { x.showValues = on; })} />

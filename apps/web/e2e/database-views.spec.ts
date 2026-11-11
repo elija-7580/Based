@@ -531,6 +531,30 @@ test("BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Ze
   await expect(dash.getByTestId("dashboard-widget")).toHaveCount(1);
 });
 
+test("BSD-216 Teil 2: Diagramm – Farben und Höhe", async ({ page }) => {
+  await fresh(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  const st = (o: string) => ({ st: { status: { _0: o } } });
+  await seedDatabase(page, {
+    title: "Charts",
+    properties: [{ id: "title", name: "Name", type: "title" }, status],
+    rows: [{ title: "A", values: st("todo") }, { title: "B", values: st("doing") }, { title: "C", values: st("doing") }],
+    views: [{ id: "vc", name: "Chart", type: "chart", extra: { chart: { kind: "bar", xPropertyID: "st", aggregate: "count", dateBucket: "month", showLegend: true, showValues: true, sortByValue: false } } }],
+  });
+  const chart = page.getByTestId("chart");
+  await expect(chart.locator("rect.mark").first()).toBeVisible();
+  const svgH = async () => Number(await chart.locator("svg").first().getAttribute("height"));
+  const before = await svgH();
+  await page.getByRole("button", { name: "View settings" }).click();
+  await page.getByLabel("Chart colors").selectOption("green");
+  await page.getByLabel("Chart height").selectOption("large");
+  await expect(chart).toHaveAttribute("data-theme", "green");
+  await expect(chart.locator("rect.mark.tone-green")).not.toHaveCount(0);
+  await expect.poll(svgH).toBeGreaterThan(before);
+  await page.getByLabel("Chart colors").selectOption("colorful");
+  await expect(chart.locator("rect.mark.tone-blue")).toHaveCount(1);
+});
+
 test("BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank", async ({ page }) => {
   await fresh(page);
   await page.setViewportSize({ width: 1400, height: 900 });
