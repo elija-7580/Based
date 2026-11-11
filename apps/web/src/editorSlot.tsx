@@ -3,7 +3,7 @@
 // KaTeX offline (BSD-10, src/equation.tsx). Erwähnungen, Seitensuche und Backlinks kommen aus dem Store-Worker
 // (shell/pageDirectory.ts); Synced Blocks von anderen Seiten holt `loadSynced` in die Seiten-Replik.
 import { useEffect, useMemo, useState } from "react";
-import { PageEditor, type DatabaseRenderProps, type EquationRenderProps, type MeetingHost } from "@based/editor";
+import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
