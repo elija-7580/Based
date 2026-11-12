@@ -339,6 +339,13 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-editor [data-content-type="codeBlock"] > div > select option { color: var(--ink); background: var(--bg); }
 .bx-html-preview-wrap { display: grid; gap: var(--space-1); margin-top: var(--space-3); white-space: normal; font-family: var(--font-ui); }
 .bx-html-preview-label { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
+/* BSD-209: Mermaid-Vorschau – Fläche hat schon beim Laden ihre Höhe, Diagramm mittig, Fehler gedämpft in einem Satz. */
+.bx-mermaid-body {
+  display: flex; align-items: center; justify-content: center; min-height: calc(var(--space-8) * 3); padding: var(--space-3);
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); overflow-x: auto;
+}
+.bx-mermaid-image { display: block; max-width: 100%; height: auto; }
+.bx-mermaid-error { color: var(--muted); font-size: var(--type-meta-size); overflow-wrap: anywhere; }
 .bx-html-preview { display: block; width: 100%; min-height: calc(var(--space-8) * 3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); }
 
 /* BSD-211: Auswahl nach dem Einfügen einer URL (Link / Bookmark / Embed) */

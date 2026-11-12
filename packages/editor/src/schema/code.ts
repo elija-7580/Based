@@ -7,6 +7,7 @@ import { CODE_LANGUAGES, syntaxTokens } from "@based/core";
 import type { Node as PMNode } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import { mermaidPreview } from "./mermaid.js";
 
 /** Kein Netz, keine Formulare nach außen; Skripte nur im abgeschotteten Rahmen. */
 export const HTML_PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:";
@@ -37,8 +38,8 @@ export function htmlPreviewFrame(code: string): HTMLElement {
 const languages: Record<string, { name: string; aliases?: string[] }> = {};
 for (const l of CODE_LANGUAGES) languages[l.id] = { name: l.name, ...(l.aliases ? { aliases: [...l.aliases] } : {}) };
 
-/** Sprachen mit Vorschau unter dem Code (Mermaid folgt, braucht eine gebündelte Bibliothek). */
-const PREVIEW_LANGUAGES: ReadonlySet<string> = new Set(["html"]);
+/** Sprachen mit Vorschau unter dem Code: HTML im abgeschotteten Rahmen, Mermaid als Bild (BSD-209). */
+const PREVIEW_LANGUAGES: ReadonlySet<string> = new Set(["html", "mermaid"]);
 
 /**
  * BlockNote wirft beim Zeichnen, wenn die gespeicherte Sprache nicht in der Liste steht („ts“ aus Markdown, Sprachen
@@ -63,7 +64,8 @@ export function syntaxDecorations(doc: PMNode): DecorationSet {
     }
     if (PREVIEW_LANGUAGES.has(language) && text.trim() !== "") {
       // Schlüssel = Inhalt: unveränderter Code behält seinen Rahmen (kein Neuladen bei jeder Änderung anderswo).
-      decos.push(Decoration.widget(pos + node.nodeSize - 1, () => htmlPreviewFrame(text), { side: 1, key: "html:" + text, ignoreSelection: true }));
+      const make = language === "mermaid" ? () => mermaidPreview(text) : () => htmlPreviewFrame(text);
+      decos.push(Decoration.widget(pos + node.nodeSize - 1, make, { side: 1, key: language + ":" + text, ignoreSelection: true }));
     }
     return false;
   });

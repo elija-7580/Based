@@ -765,6 +765,8 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
     { title: "HTML", subtext: "HTML code with a live preview (sandboxed, offline).", aliases: ["html", "web"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "html" } } as never) },
+    // BSD-209: wie die Swift-App „Mermaid diagram“ – Codeblock mit Sprache mermaid, Vorschau darunter.
+    { title: "Mermaid diagram", subtext: "Flowcharts, sequence diagrams and more from text.", aliases: ["mermaid", "diagram", "flowchart"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "mermaid" } } as never) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
     { title: "Button", subtext: "Run steps with one click: insert blocks, add a page, open a link.", aliases: ["button", "action", "automation"], group: "Advanced blocks", onItemClick: () => {
       const id = globalThis.crypto.randomUUID().toUpperCase();
