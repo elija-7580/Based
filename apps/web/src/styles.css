@@ -322,14 +322,18 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .topbar .spacer { margin-left: auto; }
 .history-buttons { display: flex; gap: 1px; margin-left: calc(-1 * var(--space-2)); }
 .breadcrumb { display: flex; gap: var(--space-2); min-width: 0; overflow: hidden; white-space: nowrap; }
-.crumb { display: inline-flex; gap: var(--space-2); }
+.crumb { display: inline-flex; gap: var(--space-2); min-width: 0; flex: 0 1 auto; }
 .crumb-link { border: 0; background: transparent; color: inherit; padding: 0; }
+.crumb > [aria-hidden="true"], .crumb:has(> .crumb-more) { flex: none; }
+.crumb-link, .crumb-text { min-width: 0; max-width: calc(var(--space-8) * 6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
 .crumb-link:hover { color: var(--ink); }
-.crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
 .trash-banner { display: flex; align-items: center; gap: var(--space-3); justify-content: center; padding: var(--space-2) var(--space-4); background: var(--surface-raised); flex-wrap: wrap; }
 .page-head { margin-bottom: var(--space-4); }
 .title-input { width: 100%; border: 0; padding: 0; margin: 0; background: transparent; color: var(--ink); font: inherit; letter-spacing: inherit; outline: none; }
 .title-input::placeholder { color: var(--muted); }
+/* BSD-301: Seitentitel bricht um (mehrzeiliges Feld, Höhe aus dem Inhalt), statt rechts abgeschnitten zu werden. */
+.title-wrap { display: block; resize: none; overflow: hidden; line-height: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .page-body { min-width: 0; }
 .blocks { display: flex; flex-direction: column; gap: var(--space-2); }
 .blocks p { min-height: 1em; }

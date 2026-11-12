@@ -566,7 +566,9 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   );
 }
 
-const indent = (depth: number) => `calc(${depth} * var(--space-4) + var(--space-1))`;
+/** Einrückung; ab der fünften Ebene nur noch Drittel-Schritte, damit auch tief verschachtelte Seiten (BSD-301) ihren
+ *  Titel zeigen statt nur Pfeil und Symbol. */
+const indent = (depth: number) => `calc(${depth <= 4 ? depth : 4 + (depth - 4) / 3} * var(--space-4) + var(--space-1))`;
 
 interface RowProps {
   row: Extract<SidebarRow, { kind: "page" }>;
