@@ -1,6 +1,30 @@
-failure c8d1bf9d931743630ec516b5d22057dba203f196
+success 75dbd06e8ebccca1c180e9a4bd29b2823f26ab8b
+  ✓  118 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.3s)
+  ✓  115 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.1s)
+  ✓  119 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (9.2s)
 
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+  1) [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('menuitem', { name: 'Copy link to block' })
+
+
+      27 |     await target.locator(".bn-block-content").hover();
+      28 |     await page.locator(".bn-side-menu [draggable=true]").first().click();
+    > 29 |     await page.getByRole("menuitem", { name: "Copy link to block" }).click();
+         |                                                                      ^
+      30 |     const copied = await page.evaluate(() => navigator.clipboard.readText());
+      31 |     expect(copied).toContain(`#page-${pageID}/${blockID}`);
+      32 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/block-link.spec.ts:29:70
+
+    Error Context: test-results/block-link-Link-zu-einem-Block-kopieren-und-öffnen-chromium/error-context.md
+
+  2) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
 
     Error: expect(received).toEqual(expected) // deep equality
 
@@ -28,34 +52,10 @@ failure c8d1bf9d931743630ec516b5d22057dba203f196
       237 |
         at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
 
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium-retry1/error-context.md
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
 
-  2) [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ─────────────
-
-    Test timeout of 30000ms exceeded.
-
-    Error: locator.click: Test timeout of 30000ms exceeded.
-    Call log:
-      - waiting for getByRole('menuitem', { name: 'Copy link to block' })
-
-
-      27 |     await target.locator(".bn-block-content").hover();
-      28 |     await page.locator(".bn-side-menu [draggable=true]").first().click();
-    > 29 |     await page.getByRole("menuitem", { name: "Copy link to block" }).click();
-         |                                                                      ^
-      30 |     const copied = await page.evaluate(() => navigator.clipboard.readText());
-      31 |     expect(copied).toContain(`#page-${pageID}/${blockID}`);
-      32 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/block-link.spec.ts:29:70
-
-    Error Context: test-results/block-link-Link-zu-einem-Block-kopieren-und-öffnen-chromium/error-context.md
-
-  1 failed
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-  1 flaky
+  2 flaky
     [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ──────────────
+    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   5 skipped
-  105 passed (4.4m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+  110 passed (3.9m)

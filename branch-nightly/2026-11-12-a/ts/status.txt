@@ -1,1 +1,1 @@
-rot c8d1bf9d931743630ec516b5d22057dba203f196 nightly/2026-11-12-a · ts-fast=success e2e=failure perf=success (nicht blockierend) · run 43175134803
+grün 75dbd06e8ebccca1c180e9a4bd29b2823f26ab8b nightly/2026-11-12-a · ts-fast=success e2e=success perf=success (nicht blockierend) · run 43175964360
