@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { BlockNoteEditor } from "@blocknote/core";
 import { basedSchema } from "../src/schema/schema.js";
 import { HTML_PREVIEW_CSP, htmlPreviewDoc, htmlPreviewFrame, syntaxDecorations, syntaxHighlighting } from "../src/schema/code.js";
+import { mermaidErrorText } from "../src/schema/mermaid.js";
 
 describe("Codeblock", () => {
   it("hebt Code der gewählten Sprache hervor, Klartext nicht", () => {
@@ -34,6 +35,25 @@ describe("Codeblock", () => {
     expect(d.indexOf("Content-Security-Policy")).toBeLessThan(d.indexOf("<b>hi</b>"));
     const f = htmlPreviewFrame("<b>hi</b>").querySelector("iframe")!;
     expect(f.getAttribute("sandbox")).toBe("allow-scripts");
+  });
+
+  it("Mermaid (BSD-209): Vorschau-Widget unter dem Code, Fehlermeldung in einer Zeile", () => {
+    const editor = BlockNoteEditor.create({ schema: basedSchema(), extensions: [syntaxHighlighting] });
+    const div = document.createElement("div");
+    document.body.appendChild(div);
+    editor.mount(div);
+    editor.replaceBlocks(editor.document, [
+      { type: "codeBlock", props: { language: "mermaid" }, content: "graph TD\n  A --> B" } as never,
+      { type: "codeBlock", props: { language: "mermaid" }, content: "  " } as never, // leer: keine Vorschau
+    ]);
+    const previews = div.querySelectorAll("[data-testid=mermaid-preview]");
+    expect(previews.length).toBe(1);
+    expect((previews[0] as HTMLElement).dataset.code).toBe("graph TD\n  A --> B");
+    expect(previews[0]!.querySelector(".bx-html-preview-label")?.textContent).toBe("Preview");
+    expect(previews[0]!.querySelector("iframe, script")).toBeNull();
+    editor.unmount();
+    expect(mermaidErrorText(new Error("Parse error on line 2:\n...A --> \n-----^\nExpecting 'AMP'"))).toBe("Parse error on line 2:");
+    expect(mermaidErrorText("x".repeat(400)).length).toBe(160);
   });
 });
 

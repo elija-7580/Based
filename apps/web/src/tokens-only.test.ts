@@ -55,8 +55,8 @@ describe("nur Tokens", () => {
 
   it("SVG-Icons nur aus den Icon-Dateien", () => {
     // Ausnahmen mit Grund: die Icon-Sätze selbst; der Zeitbogen auf Home und Diagramme sind Grafiken, keine Icons;
-    // @based/database-ui ist ein Paket ohne Zugriff auf apps/web und hat einen eigenen Satz auf demselben Raster.
-    const allowed = ["apps/web/src/icons.tsx", "apps/web/src/astryxIcons.tsx", "apps/web/src/home/TimeArc.tsx", "packages/database-ui/src/layouts/Chart.tsx", "packages/database-ui/src/ui.tsx"];
+    // @based/database-ui und @based/editor sind Pakete ohne Zugriff auf apps/web und haben je einen eigenen Satz auf demselben Raster.
+    const allowed = ["apps/web/src/icons.tsx", "apps/web/src/astryxIcons.tsx", "apps/web/src/home/TimeArc.tsx", "packages/database-ui/src/layouts/Chart.tsx", "packages/database-ui/src/ui.tsx", "packages/editor/src/ui/icons.tsx"];
     const offenders = lines((f) => f.endsWith(".tsx")).filter(([f, , l]) => /<svg\b/.test(l) && !allowed.includes(f));
     expect(offenders).toEqual([]);
   });

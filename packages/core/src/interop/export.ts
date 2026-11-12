@@ -188,11 +188,11 @@ export class HTMLExporter {
       case "image": {
         const src = p.url ?? (p.asset ? this.assetLink(p.asset) : "");
         const alt = p.caption !== undefined ? plain(runsOf(p.caption)) : "";
-        return `<figure><img src="${escapeAttribute(sanitizeURL(src, true))}" alt="${escapeAttribute(alt)}">${this.caption(p, true)}</figure>\n`;
+        return `<figure${figureAlign(p)}><img src="${escapeAttribute(sanitizeURL(src, true))}" alt="${escapeAttribute(alt)}">${this.caption(p, true)}</figure>\n`;
       }
       case "video": case "audio": {
         const src = p.url ?? (p.asset ? this.assetLink(p.asset) : "");
-        return `<figure><${b.type} controls src="${escapeAttribute(sanitizeURL(src))}"></${b.type}>${this.caption(p, true)}</figure>\n`;
+        return `<figure${b.type === "video" ? figureAlign(p) : ""}><${b.type} controls src="${escapeAttribute(sanitizeURL(src))}"></${b.type}>${this.caption(p, true)}</figure>\n`;
       }
       case "embed": {
         const url = sanitizeURL(p.url ?? "");
@@ -377,4 +377,9 @@ export class HTMLExporter {
     }
     return out;
   }
+}
+
+/** BSD-290: Ausrichtung eines Bildes/Videos (Notion: links, Mitte, rechts) im HTML-Export. */
+function figureAlign(p: BlockProps): string {
+  return p.align === "center" || p.align === "right" ? ` style="text-align: ${p.align}"` : "";
 }

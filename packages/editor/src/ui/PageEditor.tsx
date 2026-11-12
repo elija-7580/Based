@@ -1,6 +1,7 @@
 // BSD-154: Der Seiten-Editor. BlockNote-Kern auf einem Y.Doc je Seite (bzw. je Synced-Block-Original), Records
 // im Store als materialisierte Ansicht. Undo/Redo lokal über den Yjs-UndoManager.
 import { ImageViewer, imageAt, type ImageView } from "./ImageViewer.js";
+import { ExpandIcon } from "./icons.js";
 import "@blocknote/ariakit/style.css";
 import "../styles.css";
 import "../meeting.css";
@@ -10,10 +11,10 @@ import { withCollaboration } from "@blocknote/core/yjs";
 import { BlockNoteView } from "@blocknote/ariakit";
 import {
   BlockColorsItem, DragHandleMenu, FormattingToolbar, FormattingToolbarController, getDefaultReactSlashMenuItems,
-  getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
-  useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
+  getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController, TextAlignButton,
+  useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
@@ -45,6 +46,8 @@ export interface PageEditorProps {
   renderDatabase?: (p: DatabaseRenderProps) => ReactNode;
   /** Zeichnet eine Gleichung (KaTeX, eigener Eintrag). Ohne: TeX als Code. */
   renderEquation?: (p: EquationRenderProps) => ReactNode;
+  /** BSD-209: Bookmark-Vorschau holen (Desktop-App über Tauri-HTTP, nur auf Klick „Fetch preview“). */
+  fetchLinkPreview?: (url: string) => Promise<BookmarkMeta>;
   /** Klick auf Unterseite, Seitenlink oder Seiten-Erwähnung. */
   onOpenPage?: (pageID: string) => void;
   /** Personen für @-Erwähnungen. */
@@ -100,6 +103,8 @@ interface Shared extends Omit<PageEditorProps, "pageID" | "className" | "pages">
   startLink: (req: LinkRequest) => void;
   /** BSD-225: AI-Feld öffnen. */
   startAI: (req: AIRequest) => void;
+  /** BSD-290: Bild in voller Größe zeigen (Knopf in der Bildleiste). */
+  viewImage: (view: ImageView) => void;
 }
 
 /** BSD-225: AI-Feld für die Schreibmarke bzw. die Auswahl in `editor` (an dem Block, unter ihm am Bildschirm). */
@@ -191,7 +196,7 @@ export function PageEditor(props: PageEditorProps) {
   const [aiReq, setAIReq] = useState<AIRequest | undefined>();
   const [viewing, setViewing] = useState<ImageView | undefined>();
   const shared: Shared = {
-    ...rest, pageID, notify, startMove: setMove, startLink: setLink, startAI: setAIReq,
+    ...rest, pageID, notify, startMove: setMove, startLink: setLink, startAI: setAIReq, viewImage: setViewing,
     docStore: props.docStore ?? defaultDocStore(props.store),
     pages: props.pages ?? defaultDirectory(props.store),
   };
@@ -336,6 +341,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     ancestors: props.ancestors,
     renderDatabase: shared.renderDatabase,
     renderEquation: shared.renderEquation,
+    fetchLinkPreview: shared.fetchLinkPreview,
     onOpenPage: shared.onOpenPage,
     people: shared.people,
     pages: shared.pages,
@@ -716,7 +722,9 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           {range ? null : (
             <FormattingToolbarController formattingToolbar={() => (
               <FormattingToolbar>
-                {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
+                {shared.ai && editable && !mediaSelected(editor) ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
+                {/* BSD-290: Ausrichtung nur für Bilder und Videos (Text richtet Based nicht aus), dazu „View full size“. */}
+                <MediaToolbarItems key="media" onView={shared.viewImage} />
                 {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
               </FormattingToolbar>
             )} />
@@ -763,6 +771,8 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     { title: "Inline equation", subtext: "Insert a math equation in the text.", aliases: ["math", "tex", "latex", "equation", "inline"], group: "Advanced blocks", onItemClick: () => insertInlineEquation(editor) },
     { title: "Meeting notes", subtext: "Record a meeting, take timestamped notes, get a summary.", aliases: ["meet", "meeting", "transcribe", "record", "notes"], group: "Advanced blocks", onItemClick: () => insertMeeting(editor, session) },
     { title: "HTML", subtext: "HTML code with a live preview (sandboxed, offline).", aliases: ["html", "web"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "html" } } as never) },
+    // BSD-209: wie die Swift-App „Mermaid diagram“ – Codeblock mit Sprache mermaid, Vorschau darunter.
+    { title: "Mermaid diagram", subtext: "Flowcharts, sequence diagrams and more from text.", aliases: ["mermaid", "diagram", "flowchart"], group: "Advanced blocks", onItemClick: () => insert({ type: "codeBlock", props: { language: "mermaid" } } as never) },
     { title: "Table of contents", subtext: "Show an outline of this page.", aliases: ["toc", "outline"], group: "Advanced blocks", onItemClick: () => insert({ type: CUSTOM.toc } as never) },
     { title: "Button", subtext: "Run steps with one click: insert blocks, add a page, open a link.", aliases: ["button", "action", "automation"], group: "Advanced blocks", onItemClick: () => {
       const id = globalThis.crypto.randomUUID().toUpperCase();
@@ -882,6 +892,40 @@ export function insertInlineEquation(editor: BasedEditor, expression = "") {
 function AskAIButton({ onAsk }: { onAsk: () => void }) {
   const Components = useComponentsContext()!;
   return <Components.FormattingToolbar.Button className="bn-button bx-ask-ai" label="Ask AI" mainTooltip="Ask AI" onClick={onAsk}>Ask AI</Components.FormattingToolbar.Button>;
+}
+
+/** BSD-290: Ausrichten (links, Mitte, rechts) und „View full size“ in der Leiste eines markierten Bildes/Videos. */
+function MediaToolbarItems({ onView }: { onView: (view: ImageView) => void }) {
+  const editor = useBlockNoteEditor();
+  const Components = useComponentsContext()!;
+  const blocks = useSelectedBlocks(editor);
+  if (!editor.isEditable || blocks.length === 0 || !blocks.every((b) => isMediaType(b.type))) return null;
+  const only = blocks.length === 1 && blocks[0]!.type === "image" ? blocks[0]! : undefined;
+  const view = () => {
+    if (!only) return;
+    const img = editor.domElement?.querySelector<HTMLImageElement>(`[data-id="${CSS.escape(only.id)}"] [data-content-type="image"] img`);
+    const v = img ? imageAt(img) : undefined;
+    if (v) onView(v);
+  };
+  return (
+    <>
+      <TextAlignButton textAlignment="left" />
+      <TextAlignButton textAlignment="center" />
+      <TextAlignButton textAlignment="right" />
+      {only && String((only.props as { url?: unknown }).url ?? "") !== "" ? (
+        <Components.FormattingToolbar.Button className="bn-button" label="View full size" mainTooltip="View full size" onClick={view}
+          icon={<ExpandIcon />} />
+      ) : null}
+    </>
+  );
+}
+
+const isMediaType = (type: string) => type === "image" || type === "video";
+
+/** BSD-290: Sind nur Bilder/Videos markiert? Dann gibt es kein „Ask AI“ (es gibt keinen Text). */
+function mediaSelected(editor: BasedEditor): boolean {
+  const blocks = editor.getSelection()?.blocks ?? [editor.getTextCursorPosition().block];
+  return blocks.length > 0 && blocks.every((b) => isMediaType(b.type));
 }
 
 // MARK: Block-Menü mit „Copy and sync“

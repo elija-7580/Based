@@ -23,6 +23,7 @@ export type { ConversionPlan } from "./store/conversion.js";
 export { SearchCorpus, SearchIndex, attachSearchIndex, contentText, fold, handleSearchMessage, observeSearchDeltas, rowText, searchDeltaFrom, searchSnapshot, searchTitle, snippet } from "./search/search.js";
 export type { SearchDelta, SearchFilters, SearchHit, SearchOptions, SearchRequest, SearchResponse, SearchSort, SearchSource } from "./search/search.js";
 export { HTMLNode, decodeEntities, parseHTML, pageIDFromLink, sanitizeURL, urlScheme } from "./interop/html.js";
+export { LINK_PREVIEW_MAX_BYTES, parseLinkPreview, type BookmarkMeta } from "./interop/link-preview.js";
 export { ClipboardHTMLImporter, importedJSON, notionColor } from "./interop/clipboard.js";
 export type { ImportedBlock } from "./interop/clipboard.js";
 export { HTMLExporter, escapeAttribute, escapeText } from "./interop/export.js";

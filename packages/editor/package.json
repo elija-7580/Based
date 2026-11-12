@@ -22,6 +22,7 @@
     "@blocknote/ariakit": "0.57.0",
     "@blocknote/core": "0.57.0",
     "@blocknote/react": "0.57.0",
+    "mermaid": "11.17.2",
     "prosemirror-model": "1.25.13",
     "prosemirror-state": "1.4.4",
     "prosemirror-transform": "1.12.5",
