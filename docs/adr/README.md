@@ -19,5 +19,6 @@ decision, consequences. Source: the architecture review of 2026-11-08.
 | [0012](0012-design-language.md) | Designsprache „Based Default“: leiser Standard, Agent-Marker als einziges Signal, Theme „Bold“; Werte im Paket `@based/design-tokens`. |
 | [0013](0013-main-agent-task-cards.md) | Hauptagent als Auftragskarten: Auftrag zuerst gespeichert, Plan per Schema aus festem Aktionskatalog, deterministischer Ausführer mit Undo und Sicherheitsstufen. |
 | [0014](0014-properties-as-records.md) | Datenbank-Properties als eigene Records: Record-Art `property`, Sicht im Store, deterministische Migration, alte Clients gesperrt (BSD-30). |
+| [0015](0015-folder-sync-icloud.md) | *Vorgeschlagen:* Sync über einen geteilten Ordner (iCloud Drive) – ein Schreiber je Datei, Segmente mit Endmarke, LWW wie der Server; Spike hinter Schalter (BSD-296). |
 
 New decisions get the next number. A superseded ADR keeps its file and gets status "superseded by NNNN".
