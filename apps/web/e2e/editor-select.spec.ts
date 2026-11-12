@@ -92,7 +92,7 @@ test("Text über mehrere Absätze markieren; über einen Block ohne Text wird es
   expect(await selection(page)).toBeNull();
   // WebKit unter Linux verliert beim simulierten Ziehen über den Trenner die Mausereignisse unregelmäßig (in Chromium
   // stabil); dort am Mac prüfen (Backlog BSD-258: Mac-Test).
-  if (browserName === "webkit") return;
+  // (vorher in WebKit übersprungen; BSD-258: läuft jetzt auch dort stabil)
   // Von Five rückwärts über den Trenner bis Three: Blockauswahl (vorher die Textauswahl aufheben)
   await content(page, "One").click();
   await expect.poll(() => page.evaluate(() => getSelection()?.toString() ?? "")).toBe("");
@@ -135,6 +135,28 @@ test("Blockauswahl reicht bis unter schwebende Leisten", async ({ page, browserN
   expect(sel).toContain(i4);
   expect(sel).toContain(i5);
   expect(sel).toHaveLength(4);
+});
+
+// BSD-258 (Mac-Abnahme durchgefallen): im breiten Fenster liegt der leere Rand außerhalb des Editor-Elements. Das
+// Rechteck muss auch dort beginnen – in Chromium und WebKit.
+test("Rechteck aus dem breiten Seitenrand außerhalb des Editors", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 820 });
+  await setup(page);
+  const ed = (await editor(page).boundingBox())!;
+  const two = (await content(page, "Two").boundingBox())!;
+  const three = (await content(page, "Three").boundingBox())!;
+  expect(ed.x).toBeGreaterThan(100);
+  await dragSelect(page, { x: ed.x - 60, y: two.y + 4 }, { x: ed.x - 20, y: three.y + three.height - 4 });
+  const [i2, i3] = [await idOf(page, "Two"), await idOf(page, "Three")];
+  await expect.poll(() => selection(page)).toBe(`${i2} ${i3}`);
+  // Rechts der Textspalte ebenso
+  await page.keyboard.press("Escape");
+  await content(page, "One").click();
+  await dragSelect(page, { x: ed.x + ed.width + 40, y: two.y + 4 }, { x: ed.x + ed.width + 10, y: three.y + three.height - 4 });
+  await expect.poll(() => selection(page)).toBe(`${i2} ${i3}`);
+  // ⌫ wirkt auf die Auswahl (WebKit gab den Fokus beim Loslassen an den Text zurück)
+  await page.keyboard.press("Backspace");
+  await expect.poll(() => topOrder(page)).toEqual(["One", "Four"]);
 });
 
 test("Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden", async ({ page, browserName }) => {

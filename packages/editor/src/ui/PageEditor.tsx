@@ -438,6 +438,34 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     globalThis.addEventListener("mousemove", move);
     globalThis.addEventListener("mouseup", up);
   };
+  // BSD-258 (Mac-Abnahme): Das Rechteck beginnt auch im leeren Seitenrand außerhalb des Editors (wie Notion) – im
+  // breiten Fenster liegt der Rand links und rechts der Textspalte, nicht im Editor-Element. Zählt nur, wenn der
+  // Klick auf einen Hintergrund trifft, der diesen Editor umschließt (nicht auf Bedienelemente, nicht auf einen
+  // anderen Editor) und auf Höhe der Blöcke liegt.
+  const marqueeRef = useRef(startMarquee);
+  marqueeRef.current = startMarquee;
+  useEffect(() => {
+    if (!editable) return;
+    const down = (e: MouseEvent) => {
+      const doc = docRef.current;
+      const t = e.target as Element | null;
+      if (e.button !== 0 || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || !doc || !t || !(t instanceof Element)) return;
+      if (doc.contains(t)) return; // im Editor: onMouseDownCapture
+      // Nächster gemeinsamer Rahmen mit dem Editor; darin muss dieser Editor der erste sein (nicht Peek, Synced Block).
+      let frame: Element | null = t;
+      while (frame && !frame.contains(doc)) frame = frame.parentElement;
+      if (!frame || frame.querySelector(".bx-doc") !== doc) return;
+      // Leere Fläche (Rand, Rasterzelle neben der Textspalte), kein Text und kein Bedienelement
+      if (t !== frame && (t.textContent ?? "").trim() !== "") return;
+      if (t.closest("button, a, input, textarea, select, [role], [contenteditable], [draggable=true]")) return;
+      const r = doc.getBoundingClientRect();
+      if (e.clientY < r.top || e.clientY > r.bottom) return;
+      e.preventDefault();
+      marqueeRef.current(e);
+    };
+    globalThis.document?.addEventListener("mousedown", down, true);
+    return () => globalThis.document?.removeEventListener("mousedown", down, true);
+  }, [editable]);
   /**
    * Ziehen aus dem Text: sobald die Spanne einen Block ohne Text (Bild, Trenner, Datenbank …) berührt, wird daraus eine
    * Blockauswahl (wie Notion). Browser (vor allem WebKit) verlieren die Textauswahl sonst an solchen Blöcken.
@@ -464,6 +492,14 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     const up = () => {
       globalThis.removeEventListener("mousemove", move);
       globalThis.removeEventListener("mouseup", up);
+      // BSD-258: WebKit setzt beim Loslassen über Text Fokus und Schreibmarke zurück in den Editor – dann gingen ⌫,
+      // ⌘C und Pfeiltasten an den Text statt an die Blockauswahl. Danach den Rahmen wieder fokussieren.
+      if (blockMode) {
+        setTimeout(() => {
+          globalThis.getSelection?.()?.removeAllRanges();
+          docRef.current?.focus({ preventScroll: true });
+        }, 0);
+      }
     };
     globalThis.addEventListener("mousemove", move);
     globalThis.addEventListener("mouseup", up);
