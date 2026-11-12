@@ -36,7 +36,7 @@
 .chat-text { font-size: var(--size-body); line-height: var(--leading-body); color: var(--ink-2); overflow-wrap: anywhere; }
 .chat-user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .chat-meta { align-self: flex-start; }
-.chat-pending { animation: chat-pulse 1.2s var(--ease-out) infinite alternate; }
+.chat-pending { animation: chat-pulse var(--duration-pulse) var(--ease-out) infinite alternate; }
 @keyframes chat-pulse { from { opacity: 0.45; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .chat-pending { animation: none; } }
 .chat-thinking-text { white-space: pre-wrap; padding: var(--space-1) 0 var(--space-1) var(--space-5); }
@@ -97,6 +97,6 @@
 .chat-cli-actions { display: inline-flex; gap: var(--space-2); flex: none; }
 /* Live-Marker: Gespräch läuft gerade im Terminal (Marker-Farbe = das eine Signal der Designsprache) */
 .chat-cli-live { display: inline-flex; align-items: center; gap: var(--space-1); flex: none; color: var(--ink-2); }
-.chat-cli-live-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--marker-strong); animation: chat-cli-pulse 1.6s ease-in-out infinite; }
+.chat-cli-live-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--marker-strong); animation: chat-cli-pulse var(--duration-pulse) var(--ease-out) infinite; }
 @keyframes chat-cli-pulse { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .chat-cli-live-dot { animation: none; } }

@@ -33,7 +33,7 @@
 /* Ziel eines Zitat-Sprungs: eine Fläche über dem Block, kurz sichtbar. */
 .brain-cite-flash {
   position: fixed; pointer-events: none; z-index: 5; border-radius: var(--radius-sm); background: var(--selected); mix-blend-mode: multiply;
-  animation: brain-cite-fade var(--duration) var(--ease-out) 1.8s forwards;
+  animation: brain-cite-fade var(--duration) var(--ease-out) calc(var(--duration-pulse) + var(--duration)) forwards;
 }
 [data-theme="dark"] .brain-cite-flash { mix-blend-mode: screen; }
 @keyframes brain-cite-fade { to { opacity: 0; } }

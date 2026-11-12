@@ -362,7 +362,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
   padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
 }
 .bx-btn-edit:hover, .bx-btn-remove:hover, .bx-btn-target:hover { background: var(--surface-raised); color: var(--ink); }
-.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .bx-btn:hover .bx-btn-row .bx-btn-edit, .bx-btn-row .bx-btn-edit:focus-visible, .bx-btn[data-editing] .bx-btn-row .bx-btn-edit { opacity: 1; }
 .bx-btn-confirm { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); background: var(--surface-raised); }
 .bx-btn-confirm > span { flex: 1; min-width: 0; }

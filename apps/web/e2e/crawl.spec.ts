@@ -119,7 +119,10 @@ async function probe(page: Page, scope: string, t: Target): Promise<"ok" | "dead
       s.focus = document.activeElement;
       s.href = location.href;
     });
-    await target.click({ timeout: 1000, noWaitAfter: true }).catch((e: Error) => { if (process.env.CRAWL_DEBUG) console.log("click failed:", String(e).split("\n").slice(0, 12).join(" | ")); });
+    // Unter Last kann ein beim Überfahren eingeblendeter Knopf noch animieren („stable“): dann einmal direkt klicken.
+    await target.click({ timeout: 1000, noWaitAfter: true })
+      .catch(() => target.click({ timeout: 1000, noWaitAfter: true, force: true }))
+      .catch((e: Error) => { if (process.env.CRAWL_DEBUG) console.log("click failed:", String(e).split("\n").slice(0, 12).join(" | ")); });
     await page.waitForTimeout(250);
     const changed = await page.evaluate(() => {
       const s = (window as unknown as { __crawl: { hits: number; obs: MutationObserver; href: string; focus: Element | null } }).__crawl;
