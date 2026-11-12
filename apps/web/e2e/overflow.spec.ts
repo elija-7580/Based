@@ -181,16 +181,17 @@ test("Gliederung überdeckt nie den Text", async ({ page }) => {
   }, "# One\n\n" + "Long text line that fills the whole column of the page. ".repeat(6) + "\n\n## Two\n\nText");
   const outline = page.getByTestId("page-outline");
   await expect(outline).toBeVisible();
+  const state = () => page.evaluate(() => {
+    const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
+    const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
+    const shown = getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none";
+    return { shown, clear: !shown || o.getBoundingClientRect().left >= text.right };
+  });
   for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
     await page.setViewportSize({ width: w, height: h });
-    await page.waitForTimeout(300);
-    const r = await page.evaluate(() => {
-      const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
-      const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
-      return { shown: getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none", left: o.getBoundingClientRect().left, textRight: text.right };
-    });
-    if (r.shown) expect(r.left, `bei ${w}`).toBeGreaterThanOrEqual(r.textRight);
-    if (w === 1280) expect(r.shown).toBe(true);
+    // Unter Last kommt die Messung (ResizeObserver) einen Moment später: auf den Endzustand warten statt fester Zeit.
+    await expect.poll(async () => (await state()).clear, { message: `Gliederung frei vom Text bei ${w}` }).toBe(true);
+    if (w === 1280) await expect.poll(async () => (await state()).shown).toBe(true);
   }
 });
 
