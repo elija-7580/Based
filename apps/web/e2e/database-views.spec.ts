@@ -106,7 +106,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 // Dauerhaftes Profil (wie phase2.spec.ts): nur so überleben die Daten in WebKit das Neuladen.
-test("Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page", async ({ playwright, browserName, baseURL }) => {
+test("Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   const dir = mkdtempSync(join(tmpdir(), "based-dbviews-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL!, viewport: VIEWPORT });
   try {
@@ -375,7 +375,7 @@ test("Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort
 });
 
 // 5.000 Zeilen: Karte (Pins/Cluster, Ziehen, Zoomen), Peek (Blättern) und Formular (Absenden) dürfen nicht ruckeln.
-test("5.000 Zeilen: Karte, Peek und Formular bleiben flüssig", async ({ page, browserName }) => {
+test("5.000 Zeilen: Karte, Peek und Formular bleiben flüssig", { tag: "@perf" }, async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "Zeitmessung nur in Chromium");
   test.setTimeout(180_000);
   await seedDatabase(page, {

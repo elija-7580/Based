@@ -44,7 +44,7 @@ async function addRows(page: Page, n: number) {
   }, n);
 }
 
-test("Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page", async ({ page, browserName }) => {
+test("Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page", { tag: "@smoke" }, async ({ page, browserName }) => {
   await ready(page);
   const { db } = await setup(page);
   const rows = db.locator(".dbui-vrow[data-row-id]");

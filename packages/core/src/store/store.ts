@@ -599,7 +599,9 @@ export class WorkspaceStore {
 
   private stamped(r: WireRecord, now: number, keepTimes: boolean): WireRecord {
     const s = this.clock.now();
-    const c = structuredClone(r);
+    // Flache Kopie reicht: Records im Store werden nie an Ort und Stelle geändert (Tx.put legt eine tiefe Kopie ab,
+    // Tx.update ändert eine Kopie); hier ändern sich nur Felder der obersten Ebene.
+    const c = { kind: r.kind, data: { ...r.data } } as WireRecord;
     c.data.stamp = s;
     if (c.kind === "block") {
       if (!keepTimes) {
@@ -639,7 +641,9 @@ export class WorkspaceStore {
         }
         continue;
       }
-      const unchanged = prev !== undefined && same(cur, prev);
+      // Gleiches Objekt = nicht angefasst (Tx.put ersetzt immer durch eine Kopie; der Schnappschuss teilt `data`).
+      // Spart den Vergleich als Text bei Records, die nur neu gestempelt werden (Wiederherstellen von 8.000 Seiten).
+      const unchanged = prev !== undefined && (prev.data === cur.data || same(cur, prev));
       if (unchanged && !tx.forced.has(key)) continue;
       if (restamp) {
         cur = this.stamped(cur, now, tx.preserveTimestamps || unchanged);

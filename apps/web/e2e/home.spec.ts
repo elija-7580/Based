@@ -26,7 +26,7 @@ async function send(page: Page, text: string) {
   await field(page).press("Enter");
 }
 
-test("Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen", async ({ playwright, browserName, baseURL }) => {
+test("Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   // eigenes Profil: WebKit hat OPFS nur in einem dauerhaften Kontext
   const dir = mkdtempSync(join(tmpdir(), "based-home-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });

@@ -256,7 +256,7 @@ test("Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet", async ({ pag
   await expect(page.getByLabel("Page title")).toBeVisible();
 });
 
-test("Graph bleibt mit 5.000 Seiten bedienbar", async ({ page }) => {
+test("Graph bleibt mit 5.000 Seiten bedienbar", { tag: "@perf" }, async ({ page }) => {
   test.slow();
   await command(page, { op: "seed", count: 5000, prefix: "Bulk" });
   // BSD-281: Graph ist ein Reiter der Library

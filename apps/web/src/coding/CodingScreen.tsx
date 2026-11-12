@@ -12,12 +12,12 @@ import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/Segme
 import { Selector } from "@astryxdesign/core/Selector";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
-import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { cliResumeCommand, cliSessionsByProject, codingErrorMessage, foldTranscript, type AgentStatus, type CliSession, type DoctorTool, type InboxItem, type TranscriptItem } from "@based/brain";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ChatMessages } from "../chat/ChatMessages.js";
 import { PERMISSIONS } from "../chat/AiSettingsSection.js";
+import { Composer } from "./Composer.js";
 import { codingModelFor, useCodingConnection } from "./connection.js";
 import type { CodingModel } from "./model.js";
 import "./coding.css";
@@ -95,8 +95,6 @@ function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id
 function Sessions({ model }: { model: CodingModel }) {
   const s = useSyncExternalStore(model.subscribe, model.getState);
   const current = s.sessions.find((x) => x.id === s.selected);
-  const [text, setText] = useState("");
-  const send = async () => { if (await model.send(text)) setText(""); };
   const running = current?.state === "running";
   return (
     <HStack gap={4} vAlign="start" className="coding-split">
@@ -123,13 +121,7 @@ function Sessions({ model }: { model: CodingModel }) {
               <Button size="sm" variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
             </HStack>
             <Console items={s.items} running={running} />
-            <HStack gap={2} vAlign="end" className="coding-composer">
-              <TextArea label="Message" isLabelHidden placeholder={`Ask ${current.agentName}…`} value={text} onChange={setText} rows={2}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }} />
-              {running
-                ? <Button variant="secondary" onClick={() => void model.cancel()} label="Stop" />
-                : <Button variant="primary" onClick={() => void send()} isDisabled={!text.trim() || current.state !== "idle"} data-testid="coding-send" label="Send" />}
-            </HStack>
+            <Composer key={current.id} model={model} session={current} />
           </>
         )}
       </VStack>

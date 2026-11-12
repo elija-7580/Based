@@ -200,3 +200,96 @@ test("BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich 
     }
   }
 });
+
+// BSD-313: Slash-Befehle des Agenten, @Dateien als Chip (resource_link), ⇧Tab schaltet die Modi des Agenten.
+test("BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "src", "main.ts"), "export {};\n");
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.goto("/#coding");
+  await expect(page.getByTestId("coding-screen")).toBeVisible();
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  const mode = page.getByTestId("coding-agent-mode");
+  await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible({ timeout: 15_000 });
+
+  const input = page.getByLabel("Message", { exact: true });
+  // ⇧Tab im Eingabefeld: nächster Modus des Agenten, Fokus bleibt
+  await input.focus();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Accept edits" })).toBeVisible();
+  await expect(input).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
+
+  // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
+  await input.pressSequentially("/");
+  const cmds = page.getByTestId("coding-commands");
+  await expect(cmds.getByText("/review")).toBeVisible({ timeout: 10_000 });
+  await expect(cmds.getByText("Review the current changes")).toBeVisible();
+  await expect(cmds.getByText("/compact")).toBeVisible();
+  await input.pressSequentially("co");
+  await expect(cmds.getByText("/review")).toHaveCount(0);
+  await expect(cmds.getByText("/compact")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(cmds).toHaveCount(0);
+  await input.fill("");
+  await input.pressSequentially("/");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(input).toHaveValue("/init ");
+  await expect(cmds).toHaveCount(0);
+
+  // „@“: Dateien aus dem Arbeitsordner, Auswahl wird Chip, der Text bleibt ohne „@…“
+  await input.fill("");
+  await input.pressSequentially("look at @mai");
+  const files = page.getByTestId("coding-files");
+  await expect(files.getByText("main.ts", { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(files.getByText("src/main.ts")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(input).toHaveValue("look at ");
+  const chips = page.getByTestId("coding-file-chips");
+  await expect(chips.getByText("@main.ts")).toBeVisible();
+  if (browserName === "chromium") await page.screenshot({ path: join(screens, "web-coding-chip-light.png") });
+  await page.getByTestId("coding-send").click();
+  // Fake-Agent wiederholt die Prompt-Blöcke: Text und Verweis auf die Datei
+  await expect(page.getByTestId("coding-console").getByText(/resource_link/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("coding-console").getByText(/src\/main\.ts/).first()).toBeVisible();
+  await expect(chips).toHaveCount(0);
+
+  // Checkliste „Fertig heißt poliert“: Datei-Menü hell und dunkel in drei Fenstergrößen; nichts läuft heraus
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.getByTestId("coding-sessions").getByRole("listitem").first().click();
+      await input.fill("");
+      await input.pressSequentially("look at @mai");
+      await expect(files.getByText("main.ts", { exact: true })).toBeVisible({ timeout: 10_000 });
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await input.scrollIntoViewIfNeeded();
+        const menu = (await files.boundingBox())!;
+        const field = (await input.boundingBox())!;
+        expect(menu.x + menu.width).toBeLessThanOrEqual(w);
+        expect(menu.y + menu.height).toBeLessThanOrEqual(field.y + 1);
+        await expect(page.getByTestId("coding-agent-mode")).toBeInViewport();
+        await page.screenshot({ path: join(screens, `web-coding-files-${theme}${w === 1280 ? "" : `-${w}`}.png`) });
+      }
+      await page.setViewportSize({ width: 1280, height: 820 });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+});

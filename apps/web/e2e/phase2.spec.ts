@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 // Phase 2 zusammen: Editor (@based/editor) und Datenbank-Ansichten (@based/database-ui) in der Shell, Daten bleiben
 // nach dem Neuladen (OPFS, dauerhaftes Profil wie im Shell-Test).
-test("Editor und Datenbank in der Shell, nach dem Neuladen noch da", async ({ playwright, browserName, baseURL }) => {
+test("Editor und Datenbank in der Shell, nach dem Neuladen noch da", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   const dir = mkdtempSync(join(tmpdir(), "based-phase2-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
   try {

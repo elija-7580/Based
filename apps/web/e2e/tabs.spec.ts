@@ -74,7 +74,7 @@ test("zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, de
   }
 });
 
-test("Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da", async ({ playwright, browserName, baseURL }) => {
+test("Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   // dauerhaftes Profil, damit die Seiten das Neuladen auch in WebKit überleben
   const { ctx, dispose } = await persistent(playwright, browserName, baseURL!);
   try {

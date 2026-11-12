@@ -22,7 +22,7 @@ export type AcpUpdate =
   | { type: "usage"; inputTokens: number; outputTokens: number; costUSD: number | undefined }
   | { type: "notice"; text: string }
   | { type: "modeChanged"; modeId: string }
-  | { type: "commands"; commands: { name: string; description: string }[] }
+  | { type: "commands"; commands: AcpCommand[] }
   | { type: "other"; kind: string };
 
 export type AcpStopReason = "end_turn" | "max_tokens" | "max_turn_requests" | "refusal" | "cancelled" | "unknown";
@@ -34,8 +34,17 @@ export interface AcpFileSystem {
   realpath?(path: string): Promise<string>;
 }
 
-/** Ein Inhaltsblock des Prompts (ACP `ContentBlock`). */
-export type AcpPromptBlock = { type: "text"; text: string } | { type: "resource"; uri: string; text: string; mimeType?: string };
+/** BSD-313: Slash-Befehl des Agenten (ACP `AvailableCommand`); `hint` = Platzhalter für die Eingabe danach. */
+export interface AcpCommand { name: string; description: string; hint?: string }
+
+/**
+ * Ein Inhaltsblock des Prompts (ACP `ContentBlock`). `resource_link` (BSD-313: @Datei) verweist nur auf die Datei;
+ * der Agent liest sie selbst – jeder ACP-Agent muss Text und `resource_link` im Prompt verstehen.
+ */
+export type AcpPromptBlock =
+  | { type: "text"; text: string }
+  | { type: "resource"; uri: string; text: string; mimeType?: string }
+  | { type: "resource_link"; uri: string; name: string; mimeType?: string };
 
 type Obj = { [k: string]: JSONValue };
 const obj = (v: JSONValue | undefined): Obj | undefined => (v && typeof v === "object" && !Array.isArray(v) ? v : undefined);
@@ -100,7 +109,8 @@ export function parseSessionUpdate(params: JSONValue | undefined): AcpUpdate | u
         commands: arr(u.availableCommands).flatMap((c) => {
           const o = obj(c);
           const name = s(o?.name);
-          return name ? [{ name, description: s(o?.description) ?? "" }] : [];
+          const hint = s(obj(o?.input)?.hint);
+          return name ? [{ name, description: s(o?.description) ?? "", ...(hint ? { hint } : {}) }] : [];
         }),
       };
     default: return { type: "other", kind };
@@ -122,6 +132,10 @@ export class AcpClient {
   agentCapabilities: JSONValue = null;
   availableModes: { id: string; name: string }[] = [];
   currentMode: string | undefined;
+  /** BSD-313: zuletzt gemeldete Slash-Befehle (kommen meist kurz nach `session/new`, auch außerhalb eines Turns). */
+  availableCommands: AcpCommand[] = [];
+  /** Modus oder Befehle haben sich geändert (auch außerhalb eines Turns). */
+  onStateChange: (() => void) | undefined;
   onUpdate: ((u: AcpUpdate, sessionId: string) => void) | undefined;
   /** Freigabe entscheiden: gewählte `optionId` oder `undefined` (abgebrochen). Fehlt sie: abgebrochen. */
   onPermission: ((req: AcpPermissionRequest) => Promise<string | undefined>) | undefined;
@@ -132,6 +146,8 @@ export class AcpClient {
       const u = parseSessionUpdate(params);
       if (!u) return;
       if (u.type === "modeChanged") this.currentMode = u.modeId;
+      if (u.type === "commands") this.availableCommands = u.commands;
+      if (u.type === "modeChanged" || u.type === "commands") this.onStateChange?.();
       this.onUpdate?.(u, s(obj(params)?.sessionId) ?? this.sessionId ?? "");
     };
     peer.onRequest = (method, params) => this.handleRequest(method, params);
@@ -174,13 +190,16 @@ export class AcpClient {
     if (!this.sessionId) return;
     await this.peer.request("session/set_mode", { sessionId: this.sessionId, modeId });
     this.currentMode = modeId;
+    this.onStateChange?.();
   }
 
   /** Ein Turn; Updates kommen über `onUpdate`. Kehrt zurück, wenn der Turn endet. */
   async prompt(blocks: readonly AcpPromptBlock[]): Promise<AcpStopReason> {
     if (!this.sessionId) throw RpcError.internal("No session");
     const prompt = blocks.map((b): JSONValue =>
-      b.type === "text" ? { type: "text", text: b.text } : { type: "resource", resource: { uri: b.uri, mimeType: b.mimeType ?? "text/markdown", text: b.text } });
+      b.type === "text" ? { type: "text", text: b.text }
+      : b.type === "resource_link" ? { type: "resource_link", uri: b.uri, name: b.name, ...(b.mimeType ? { mimeType: b.mimeType } : {}) }
+      : { type: "resource", resource: { uri: b.uri, mimeType: b.mimeType ?? "text/markdown", text: b.text } });
     const r = obj(await this.peer.request("session/prompt", { sessionId: this.sessionId, prompt }));
     const reason = s(r?.stopReason);
     return reason === "end_turn" || reason === "max_tokens" || reason === "max_turn_requests" || reason === "refusal" || reason === "cancelled" ? reason : "unknown";
