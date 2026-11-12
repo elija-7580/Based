@@ -1,16 +1,23 @@
 // BSD-164: Verdrahtung der Hülle – offizielle Plugins und das macOS-Menü. Keine App-Logik (ADR 0011):
 // Speicher, Update-Abfrage und Tastenkürzel liegen in apps/web (src/desktop.ts).
+use std::sync::Mutex;
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{Emitter, Manager};
 
 /// Menü-ID für „Check for Updates…“; das Web-Frontend hört auf das Ereignis `desktop://check-updates`.
 const CHECK_UPDATES: &str = "check-updates";
-/// ⌘W schließt den Tab, nie das Fenster (Web-Frontend: `desktop://close-tab`; der letzte Tab wird zur Startseite).
+/// ⌘W schließt den Tab im Fenster vorn (Web-Frontend: `desktop://close-tab`). Beim letzten Tab entscheidet das
+/// Web-Frontend (BSD-310): Seitenfenster schließen, Hauptfenster ausblenden, wenn noch andere Fenster offen sind; nur
+/// im letzten Fenster wird der letzte Tab zur Startseite.
 const CLOSE_TAB: &str = "close-tab";
 /// BSD-138: „Install Command Line Tool…“ – das Web-Frontend zeigt den Befehl (`desktop://install-cli`).
 const INSTALL_CLI: &str = "install-cli";
 /// ⇧⌘W: Fenster ausblenden – die App läuft weiter, Klick aufs Dock-Symbol holt es zurück (wie Notion).
 const CLOSE_WINDOW: &str = "close-window";
+
+/// BSD-310: Label des zuletzt aktiven Fensters. Beim Klick ins Menü meldet macOS `is_focused` nicht immer
+/// verlässlich – ohne das landete ⌘W aus einem Seitenfenster im Hauptfenster (dort: zurück zur Startseite).
+struct FrontWindow(Mutex<String>);
 
 fn show_main(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -21,6 +28,7 @@ fn show_main(app: &tauri::AppHandle) {
 
 pub fn run() {
     tauri::Builder::default()
+        .manage(FrontWindow(Mutex::new("main".to_string())))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
@@ -80,8 +88,15 @@ pub fn run() {
         })
         .on_menu_event(|app, event| {
             // BSD-202: Seiten können in eigenen Fenstern liegen – das Menü wirkt auf das Fenster vorn.
-            let front = app.webview_windows().into_values().find(|w| w.is_focused().unwrap_or(false));
-            let Some(window) = front.or_else(|| app.get_webview_window("main")) else { return };
+            let focused = app.webview_windows().into_values().find(|w| w.is_focused().unwrap_or(false));
+            let last = app
+                .state::<FrontWindow>()
+                .0
+                .lock()
+                .ok()
+                .and_then(|label| app.get_webview_window(label.as_str()))
+                .filter(|w| w.is_visible().unwrap_or(false));
+            let Some(window) = focused.or(last).or_else(|| app.get_webview_window("main")) else { return };
             if event.id() == CHECK_UPDATES {
                 let _ = app.emit_to("main", "desktop://check-updates", ());
             } else if event.id() == INSTALL_CLI {
@@ -99,13 +114,19 @@ pub fn run() {
         })
         // Roter Knopf: auf dem Mac blendet er das Hauptfenster nur aus, die App (und offene Tabs) bleiben; Beenden
         // über ⌘Q. Seitenfenster (BSD-202) schließen normal.
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
                 if cfg!(target_os = "macos") && window.label() == "main" {
                     api.prevent_close();
                     let _ = window.hide();
                 }
             }
+            tauri::WindowEvent::Focused(true) => {
+                if let Ok(mut label) = window.state::<FrontWindow>().0.lock() {
+                    *label = window.label().to_string();
+                }
+            }
+            _ => {}
         })
         .build(tauri::generate_context!())
         .expect("Based Next konnte nicht starten")
