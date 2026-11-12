@@ -5,7 +5,7 @@ import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
-import { isPageWindow, startDesktop } from "./desktop.js";
+import { desktopClipboard, isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
@@ -21,6 +21,9 @@ import "@astryxdesign/core/astryx.css";
 import { Theme } from "@astryxdesign/core/theme";
 import { astryxThemes } from "./astryxTheme.js";
 import "./styles.css";
+// Nichts vom System: eigenes Kontextmenü, eigene Auswahllisten und Tooltips im ganzen Fenster (@based/ui/native).
+import "@based/ui/native.css";
+import { installNativeFree } from "@based/ui/native";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { connectAssets } from "./assetBridge.js";
 import { connectEditor, ShellPageEditor } from "./editorSlot.js";
@@ -30,6 +33,12 @@ import { bootMark, diagnosticsLog, installDiagnostics } from "./shell/diagnostic
 import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
+// Vor dem ersten Rendern, damit kein Rechtsklick und kein Auswahlfeld je die Systemoberfläche zeigt. Nur beim
+// Entwickeln öffnet ⌥⇧-Rechtsklick das Systemmenü (Web-Inspektor).
+{
+  const clipboard = desktopClipboard();
+  installNativeFree({ ...(clipboard ? { clipboard } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
+}
 // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
 installDiagnostics();
 // BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.

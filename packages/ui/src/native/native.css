@@ -1,0 +1,67 @@
+/* „Nichts vom System“ (packages/ui/src/native): Based-Ebenen für Kontextmenü, Auswahlliste, Kalender und Tooltip
+   sowie das Abschalten der Systemteile an Feldern. Nur Tokens. */
+
+/* Ebene: liegt im Top Layer (popover) bzw. ohne Popover-API fest über allem. */
+.nf-layer, .nf-tip { position: fixed; z-index: 10000; margin: 0; border: 0; inset: auto; box-sizing: border-box; }
+.nf-layer[popover], .nf-tip[popover] { inset: auto; margin: 0; border: 0; }
+.nf-layer {
+  top: 0; left: 0; overflow: auto; max-height: calc(100vh - var(--space-4)); max-width: calc(100vw - var(--space-4));
+  background: var(--bg); color: var(--ink); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
+  -webkit-user-select: none; user-select: none; cursor: default; animation: fade-in var(--duration-fast) var(--ease-out);
+}
+/* Bewusst deckend, auch im Glas-Material: backdrop-filter greift im Top Layer nicht überall, der Inhalt darunter
+   schiene sonst durch den Text. */
+
+/* Menü und Auswahlliste */
+/* Lange Listen (Uhrzeiten, viele Optionen) scrollen in der Liste, statt das Fenster zu füllen. */
+.nf-menu { display: flex; flex-direction: column; min-width: calc(var(--space-8) * 3); max-height: min(calc(var(--space-6) * 10 + var(--space-2)), calc(100vh - var(--space-4))); }
+.nf-menu > * { flex: none; }
+.nf-item { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md); white-space: nowrap; }
+.nf-item[data-active] { background: var(--surface-raised); }
+.nf-item[aria-disabled="true"] { color: var(--muted); opacity: 0.6; }
+.nf-item.danger { color: var(--danger); }
+.nf-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nf-hint { color: var(--muted); font-size: var(--type-meta-size); padding-left: var(--space-4); }
+.nf-check { flex: none; width: var(--space-2); height: var(--space-3); margin-right: var(--space-1); border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.nf-sep { height: 1px; background: var(--line); margin: var(--space-1) 0; flex: none; }
+.nf-heading { padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
+
+/* Kalender */
+.nf-cal { padding: var(--space-3); }
+.nf-cal-head { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--space-2); }
+.nf-cal-title { flex: 1; font-weight: 600; padding-left: var(--space-2); }
+.nf-cal-nav { display: inline-flex; align-items: center; justify-content: center; min-width: var(--space-6); height: var(--space-6); padding: 0 var(--space-2); border-radius: var(--radius-md); color: var(--muted); font-size: var(--type-description-size); }
+.nf-cal-arrow { padding: 0; font-size: var(--type-ui-size); }
+.nf-cal-nav:hover { background: var(--surface-raised); color: var(--ink); }
+.nf-cal-grid { display: grid; grid-template-columns: repeat(7, var(--space-6)); gap: var(--space-1); }
+.nf-cal-weekday { display: flex; align-items: center; justify-content: center; height: var(--space-5); color: var(--muted); font-size: var(--type-meta-size); }
+.nf-cal-day { display: flex; align-items: center; justify-content: center; height: var(--space-6); border-radius: var(--radius-md); font-variant-numeric: tabular-nums; }
+.nf-cal-day.out { color: var(--muted); }
+.nf-cal-day.today { box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; }
+.nf-cal-day:hover, .nf-cal-day[data-active] { background: var(--surface-raised); }
+.nf-cal-day[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* Tooltip */
+.nf-tip {
+  top: 0; left: 0; pointer-events: none; max-width: calc(var(--space-8) * 5); padding: var(--space-1) var(--space-2); overflow: hidden;
+  background: var(--ink); color: var(--bg); border-radius: var(--radius-sm); box-shadow: var(--shadow-float);
+  font-family: var(--font-ui); font-size: var(--type-meta-size); line-height: var(--type-ui-leading); white-space: pre-line;
+  animation: fade-in var(--duration-fast) var(--ease-out);
+}
+
+/* Felder: Systemteile aus. Das geschlossene Auswahlfeld zeichnet Based selbst (Pfeil aus zwei Verläufen). */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none; padding-right: var(--space-5); cursor: default;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - var(--space-3)) 50%, calc(100% - var(--space-3) + var(--space-1)) 50%;
+  background-size: var(--space-1) var(--space-1); background-repeat: no-repeat;
+}
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+input::-webkit-calendar-picker-indicator { display: none; }
+input::-webkit-contacts-auto-fill-button, input::-webkit-credentials-auto-fill-button { visibility: hidden; display: none; pointer-events: none; }
+.nf-field { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { .nf-layer, .nf-tip { animation: none; } }

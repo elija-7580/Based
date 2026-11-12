@@ -10,6 +10,7 @@ import {
   EMPTY_FILTER, addItem, conditionItem, conditionOf, groupItem, groupOf, newCondition, removeItem, replaceItem, setCombinator, valueKind,
   type Path,
 } from "../logic/filters.js";
+import { DateField } from "@based/ui/native";
 import { fromInputValue, toInputValue } from "../logic/values.js";
 import { Icon, OptionPill, Popover, type Anchor } from "../ui.js";
 
@@ -55,8 +56,8 @@ function ValueField({ cond, prop, onChange }: { cond: FilterCondition; prop: Pro
             {Object.entries(RELATIVE_DATE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             <option value="exact">Exact date</option>
           </select>
-          {v?.[0] === "date" && <input className="dbui-input" type="date" aria-label="Exact date" value={toInputValue(v[1] as number, false)}
-            onChange={(e) => { const s = fromInputValue(e.target.value); if (s !== undefined) onChange({ date: { _0: s } }); }} />}
+          {v?.[0] === "date" && <DateField className="dbui-input" aria-label="Exact date" value={toInputValue(v[1] as number, false)}
+            onChange={(day) => { const s = fromInputValue(day); if (s !== undefined) onChange({ date: { _0: s } }); }} />}
         </span>
       );
     }
