@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
+import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -352,5 +352,18 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     // Lesen ist nicht betroffen
     expect((await call("read_page", { id: secret })).isError).toBeFalsy();
     expect(store.blocks.get(other)?.trashedAt).toBeUndefined();
+  });
+
+  it("BSD-221 Teil 3e: eingeschaltete Skills sind Prompts (Argument input wird angehängt)", async () => {
+    const { app, client } = await httpClient();
+    const brain = new AgentBrain(app.sync.store);
+    brain.ensure();
+    brain.saveSkill({ name: "Weekly Review", description: "Sum up the week", body: "List what got done this week." });
+    brain.saveSkill({ name: "Off Skill", description: "disabled", body: "x", enabled: false });
+    const prompts = (await client.listPrompts()).prompts;
+    expect(prompts.map((p) => p.name)).toEqual(["weekly-review"]);
+    expect(prompts[0]).toMatchObject({ title: "Weekly Review", description: "Sum up the week" });
+    const got = await client.getPrompt({ name: "weekly-review", arguments: { input: "Project Alpha" } });
+    expect((got.messages[0]!.content as { text: string }).text).toBe("List what got done this week.\n\n---\nProject Alpha");
   });
 });

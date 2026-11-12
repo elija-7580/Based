@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { WorkspaceStore } from "@based/core";
 import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
@@ -98,6 +98,20 @@ export function createMcpServer(pages: Pages): McpServer {
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;
   const dbs = new Databases(pages.store);
   const values = z.record(z.string(), z.string()).describe("Property name → plain text value (empty string clears; options by name; multi-select comma-separated; dates YYYY-MM-DD)");
+
+  // MARK: Skills als Prompts (BSD-221 Teil 3e): jeder eingeschaltete Skill aus dem Agent Brain, wie in der Mac-App
+  // (docs/mcp.md „Prompts“). Name klein mit Bindestrichen; optionales Argument `input` wird angehängt.
+  {
+    const used = new Set<string>();
+    for (const skill of new AgentBrain(pages.store).skills(true)) {
+      const base = skill.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "skill";
+      let name = base;
+      for (let i = 2; used.has(name); i++) name = `${base}-${i}`;
+      used.add(name);
+      server.registerPrompt(name, { title: skill.name, description: skill.description || `Skill “${skill.name}” from Based`, argsSchema: { input: z.string().optional().describe("What to apply the skill to") } },
+        ({ input }: { input?: string | undefined }) => ({ messages: [{ role: "user" as const, content: { type: "text" as const, text: skill.body + (input?.trim() ? `\n\n---\n${input.trim()}` : "") } }] }));
+    }
+  }
 
   // MARK: Läufe und Inbox (BSD-221 Teil 3a; BSD-160-Records, nur lesen)
   server.registerTool(
