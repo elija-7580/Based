@@ -49,11 +49,15 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
       <Group>
         {CHOICES.map((c) => (
           <Row key={c.key} label={c.label} hint={c.hint}>
-            <SegmentedControl label={c.label} value={appearance[c.key]} onChange={(v) => setAppearance({ ...appearance, [c.key]: v } as Appearance)}>
-              {c.options.map((o) => (
-                <SegmentedControlItem key={o.value} value={o.value} label={o.label} {...(o.swatch ? { icon: <span className={`swatch ${o.swatch}`} aria-hidden="true" /> } : {})} />
-              ))}
-            </SegmentedControl>
+            {/* BSD-301: Die Wahl behält ihre volle Breite und bricht bei Platzmangel unter die Beschriftung, statt die
+                Namen („Mint“, „Sky“) zu kürzen. */}
+            <span className="settings-choice">
+              <SegmentedControl label={c.label} value={appearance[c.key]} onChange={(v) => setAppearance({ ...appearance, [c.key]: v } as Appearance)}>
+                {c.options.map((o) => (
+                  <SegmentedControlItem key={o.value} value={o.value} label={o.label} {...(o.swatch ? { icon: <span className={`swatch ${o.swatch}`} aria-hidden="true" /> } : {})} />
+                ))}
+              </SegmentedControl>
+            </span>
           </Row>
         ))}
       </Group>

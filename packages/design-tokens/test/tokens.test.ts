@@ -28,6 +28,14 @@ describe("design tokens", () => {
     for (const st of small) expect(parseFloat(st.letterSpacing ?? "0"), st.name).toBeGreaterThanOrEqual(0);
   });
 
+  it.each(themes)("block background colours keep page text readable (4.5:1) in %s", (t) => {
+    for (const c of ["brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"]) {
+      expect(contrast(color("ink", t), color(`block-${c}`, t)), `ink on block-${c} (${t})`).toBeGreaterThanOrEqual(4.5);
+      // Farbiger Text ist Auszeichnung, nicht Fließtext: mindestens 3:1 (WCAG für große/UI-Schrift)
+      expect(contrast(color(`block-${c}-text`, t), color("bg", t)), `block-${c}-text on bg (${t})`).toBeGreaterThanOrEqual(t === "dark" ? 3 : 2);
+    }
+  });
+
   it.each(themes)("control borders pass 3:1 in %s", (t) => {
     expect(contrast(color("control-border", t), color("bg", t))).toBeGreaterThanOrEqual(3);
   });

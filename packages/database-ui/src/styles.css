@@ -613,6 +613,9 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 }
 .dbui-load-more:hover { background: var(--surface-raised); color: var(--ink); }
 /* Inline: Namen bündig mit dem Seitentext, die Kästchen-Spalte hängt wie bei Notion in den linken Rand. */
-.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2))); }
+/* BSD-306: Kante = Text der ersten Spalte (Kästchen-Spalte 48 + Zellenabstand 8 hängen links heraus); die Tabs
+   hängen ihren Innenabstand ebenso heraus, damit ihr Text auf derselben Kante steht wie Titel und Namen. */
+.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
+.dbui-root.inline .dbui-tabs { margin-left: calc(-1 * var(--space-3)); }
 .dbui-root.inline .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin: 0; }
 .dbui-root.inline .dbui-load-more { padding-left: calc(var(--space-7) + var(--space-2) + var(--space-2)); }

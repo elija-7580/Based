@@ -358,6 +358,13 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page { padding: var(--space-6) var(--space-6) var(--space-8); }
 /* Datenbankseiten nutzen die ganze Panelbreite (wie Notion); Titel bleibt an der Spaltenkante. */
 .page.page-database { padding-inline: var(--space-7); }
+/* BSD-306: Titel, Text der Tabs und Text der ersten Spalte auf einer linken Kante. Dafür rückt die Seite um die
+   Kästchen-Spalte ein (48 + 8), die – wie der Block-Griff im Editor – links in den Rand hängt. */
+.page.page-database { padding-inline-start: calc(var(--space-7) + var(--space-7) + var(--space-2) + var(--space-2)); }
+.page.page-database .dbui-root:not(.inline) .dbui-head { padding-inline: 0; }
+.page.page-database .dbui-root:not(.inline) .dbui-tabs { margin-left: calc(-1 * var(--space-3)); }
+.page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
+.page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin-left: 0; }
 .page.page-database .page-grid { max-width: none; grid-template-columns: minmax(0, 1fr); }
 .page.page-database .spacer-cell { display: none; }
 .page-grid { max-width: calc(var(--page-measure) + var(--margin-column) + var(--space-5)); margin: 0 auto; display: grid; grid-template-columns: var(--margin-column) minmax(0, 1fr); column-gap: var(--space-5); row-gap: var(--space-3); }
@@ -449,6 +456,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
   display: inline-flex; align-items: center; gap: var(--space-2);
 }
 .choice[aria-checked="true"] { background: var(--selected); border-color: var(--ink); font-weight: var(--weight-heading); }
+.settings-choice { flex: none; max-width: 100%; }
+.settings-choice .astryx-segmented-control-item { flex-shrink: 0; }
 .swatch { width: var(--space-3); height: var(--space-3); border-radius: var(--radius-xs); border: 1px solid var(--line); }
 .swatch.light { background: var(--bg); }
 .swatch.dark { background: var(--ink); }
