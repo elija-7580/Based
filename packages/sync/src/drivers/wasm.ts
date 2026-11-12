@@ -23,30 +23,50 @@ function busy(e: unknown): boolean {
   return /NoModificationAllowed|InvalidState|invalid state|Access Handle/i.test(parts.join(" "));
 }
 
+type Sqlite3 = Awaited<ReturnType<typeof sqlite3InitModule>>;
+type Pool = Awaited<ReturnType<Sqlite3["installOpfsSAHPoolVfs"]>>;
+
+// Ein SQLite-Modul und ein Pool je Worker. Vorher holte jeder Aufruf ein eigenes Modul und damit einen zweiten Pool
+// über dieselben OPFS-Dateien: die Zugriffe hielt schon der erste, history.sqlite und ydocs.sqlite fielen still auf
+// den Speicher zurück (Versionsverlauf nach dem Neuladen weg) und die Konsole zeigte „based-sahpool:
+// NoModificationAllowedError“ (Chromium) bzw. „InvalidStateError“ (WebKit) – gefunden beim Klick-Durchlauf BSD-300.
+let module: Promise<Sqlite3> | undefined;
+let pool: Promise<Pool> | undefined;
+
+async function installPool(sqlite3: Sqlite3, waitMs: number): Promise<Pool> {
+  const deadline = Date.now() + waitMs;
+  for (let delay = 50; ; delay = Math.min(delay * 2, 400)) {
+    try {
+      // preserve…: bei einem Fehlschlag gibt der Pool seine schon geholten Dateien wieder frei (ohne sie zu löschen);
+      // forceReinit…: ein gescheiterter Versuch bleibt sonst im Modul zwischengespeichert und jeder weitere scheitert.
+      const options = { name: "based-sahpool", preserveOnInitFailure: true, forceReinitIfPreviouslyFailed: true };
+      const p = await sqlite3.installOpfsSAHPoolVfs(options as Parameters<typeof sqlite3.installOpfsSAHPoolVfs>[0]);
+      // Platz für based.sqlite, history.sqlite (BSD-73), ydocs.sqlite (BSD-220), ihre Journale und eine Sicherung.
+      if (p.getCapacity() < 14) await p.reserveMinimumCapacity(14);
+      return p;
+    } catch (e) {
+      // Warten hilft nur, wenn die Datei belegt ist (Chromium: NoModificationAllowedError, WebKit: InvalidStateError);
+      // ohne OPFS oder in WebKits flüchtigen Profilen („unknown transient reason“) nicht
+      if (Date.now() + delay > deadline || !busy(e)) throw e;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatabase> {
-  const sqlite3 = await sqlite3InitModule();
+  const sqlite3 = await (module ??= sqlite3InitModule());
   let db: Database;
-  let pool: Awaited<ReturnType<typeof sqlite3.installOpfsSAHPoolVfs>> | undefined;
+  let shared: Pool | undefined;
   const file = opts.opfs ? "/" + opts.opfs.replace(/^\/+/, "") : undefined;
   if (file) {
-    const deadline = Date.now() + (opts.waitMs ?? 0);
-    for (let delay = 50; ; delay = Math.min(delay * 2, 400)) {
-      try {
-        // preserve…: bei einem Fehlschlag gibt der Pool seine schon geholten Dateien wieder frei (ohne sie zu löschen);
-        // forceReinit…: ein gescheiterter Versuch bleibt sonst im Modul zwischengespeichert und jeder weitere scheitert.
-        const options = { name: "based-sahpool", preserveOnInitFailure: true, forceReinitIfPreviouslyFailed: true };
-        pool = await sqlite3.installOpfsSAHPoolVfs(options as Parameters<typeof sqlite3.installOpfsSAHPoolVfs>[0]);
-        break;
-      } catch (e) {
-        // Warten hilft nur, wenn die Datei belegt ist (Chromium: NoModificationAllowedError, WebKit: InvalidStateError);
-        // ohne OPFS oder in WebKits flüchtigen Profilen („unknown transient reason“) nicht
-        if (Date.now() + delay > deadline || !busy(e)) throw e;
-        await new Promise((r) => setTimeout(r, delay));
-      }
+    const p = (pool ??= installPool(sqlite3, opts.waitMs ?? 0));
+    try {
+      shared = await p;
+    } catch (e) {
+      if (pool === p) pool = undefined; // nächster Versuch (z. B. nach dem Schließen des anderen Tabs) darf neu
+      throw e;
     }
-    // Platz für based.sqlite, history.sqlite (BSD-73), ydocs.sqlite (BSD-220), ihre Journale und eine Sicherung.
-    if (pool!.getCapacity() < 14) await pool!.reserveMinimumCapacity(14);
-    db = new pool!.OpfsSAHPoolDb(file);
+    db = new shared.OpfsSAHPoolDb(file);
   } else {
     db = new sqlite3.oo1.DB(":memory:", "c");
   }
@@ -62,12 +82,12 @@ export async function openWasmDatabase(opts: WasmOptions = {}): Promise<SqlDatab
       return (b ? db.selectObjects(sql, b) : db.selectObjects(sql)) as SqlRow[];
     },
     backup(version) {
-      if (!pool || !file) return undefined;
+      if (!shared || !file) return undefined;
       // Ohne WAL (die SAH-Pool-VFS kennt keinen) ist die Hauptdatei außerhalb einer Transaktion konsistent.
       const target = `${file}.bak-v${version}`;
-      const bytes = pool.exportFile(file);
-      for (const name of pool.getFileNames()) if (name.startsWith(file + ".bak-v")) pool.unlink(name);
-      void pool.importDb(target, bytes);
+      const bytes = shared.exportFile(file);
+      for (const name of shared.getFileNames()) if (name.startsWith(file + ".bak-v")) shared.unlink(name);
+      void shared.importDb(target, bytes);
       return target;
     },
     close: () => db.close(),
