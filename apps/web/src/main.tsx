@@ -146,7 +146,7 @@ function start(guest: GuestBoot | undefined) {
     return id ? { name: "page", id } : { name: "home" };
   });
   // BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
-  void startDesktop(() => history.close()).catch(() => undefined);
+  void startDesktop({ close: () => history.close(), count: () => history.tabs.length }).catch(() => undefined);
 
   // Startwerte holt der Store-Tab selbst (initParams); `init` verbindet nur.
   void client
