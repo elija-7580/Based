@@ -1,5 +1,6 @@
 # Vorlage für .github/workflows/desktop.yml (BSD-337): nach .github/workflows/desktop.yml kopieren.
-# Unterschied zur aktiven Datei: Veröffentlichen auch bei workflow_dispatch auf main.
+# Unterschiede zur aktiven Datei: Veröffentlichen auch bei workflow_dispatch auf main (BSD-337); Update-Notizen aus den
+# Commits seit dem letzten next-Tag (BSD-168 Nachtrag, scripts/release-notes.mjs) in latest.json und im Release.
 # BSD-164: „Based Next“ – die Web-App (apps/web) in der Tauri-Hülle (apps/desktop) als Mac-App.
 # Baut auf macos-15 eine universelle .app (Apple Silicon + Intel), ad hoc signiert (kein Apple Developer Team),
 # prüft die Signatur, packt sie in eine DMG und veröffentlicht sie bei Pushes auf main:
@@ -39,6 +40,8 @@ jobs:
       TARGET: universal-apple-darwin
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # BSD-168: Tags next-* für die Update-Notizen
 
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -102,6 +105,8 @@ jobs:
         run: |
           BUNDLE="apps/desktop/src-tauri/target/$TARGET/release/bundle/macos"
           mkdir -p dist "$RUNNER_TEMP/dmg"
+          # BSD-168: Notizen für den Update-Dialog (höchstens 12 Punkte) aus den Commits seit dem letzten next-Tag.
+          node scripts/release-notes.mjs > dist/notes.md || echo "• Small fixes and improvements" > dist/notes.md
           ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
           ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
           hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Next.dmg
@@ -113,7 +118,7 @@ jobs:
             SIG="$(cat dist/Based-Next.app.tar.gz.sig)"
             # Ein universelles Paket für beide Architekturen.
             jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              --arg notes "Based Next $V ($(git rev-parse --short HEAD))" \
+              --arg notes "$(cat dist/notes.md)" \
               '{version:$v, notes:$notes, pub_date:$date, platforms:{
                  "darwin-aarch64":{signature:$sig,url:$url},
                  "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json
@@ -141,7 +146,10 @@ jobs:
         run: |
           NOTES="Based Next $V – die neue Oberfläche (TypeScript/Tauri) als Mac-App, ad hoc signiert.
           Installieren: Based-Next.dmg öffnen, „Based Next“ nach Programme ziehen, beim ersten Start Rechtsklick → Öffnen.
-          Läuft neben „Based“ (Swift); eigene Daten. Commit ${GITHUB_SHA}."
+          Läuft neben „Based“ (Swift); eigene Daten. Commit ${GITHUB_SHA}.
+
+          Neu:
+          $(cat dist/notes.md)"
           ASSETS=(dist/Based-Next.dmg)
           [ -f dist/Based-Next.app.tar.gz ] && ASSETS+=(dist/Based-Next.app.tar.gz dist/Based-Next.app.tar.gz.sig)
           gh release create "next-$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Next $V" \
