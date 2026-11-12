@@ -1,4 +1,17 @@
-cancelled 6ccea1766bde51f63a4a8e23e9278ae37bd384e9
+cancelled 302b5b8c35a1ba44a3a6e9ebf37309e1c4578e4a
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
 [WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
 [WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
 [WebServer] 
@@ -20,6 +33,18 @@ cancelled 6ccea1766bde51f63a4a8e23e9278ae37bd384e9
 [WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
 [WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] [plugin vite:reporter] 
 [WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
 [WebServer] 
@@ -31,31 +56,6 @@ cancelled 6ccea1766bde51f63a4a8e23e9278ae37bd384e9
 
 Running 108 tests using 2 workers, shard 1 of 2
 
-(node:5384) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:4707) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    1 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (15.0s)
-{"t":"2026-11-12T06:43:46.318Z","level":"warning","category":"server","message":"backup failed","error":"Error"}
-  ✓    2 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (18.6s)
-  ✓    3 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (6.5s)
-  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (5.9s)
-  ✓    4 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (12.5s)
-  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (6.6s)
-  ✓    7 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.2s)
-  ✓    8 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (5.0s)
-  ✓    9 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (3.4s)
-  ✓   10 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (5.5s)
-  -   12 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓   11 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (5.1s)
-(node:6357) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   14 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (5.2s)
-  -   15 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:6549) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   16 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.5s)
-  ✓   13 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (10.3s)
-(node:6723) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   17 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (14.6s)
-  ✓   18 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (24.8s)
-  ✓   19 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (13.5s)
+  ✓    2 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (10.6s)
