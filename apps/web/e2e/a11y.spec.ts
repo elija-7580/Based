@@ -190,3 +190,18 @@ test("Fotos: Gliederung, Quick Find, Tabelle mit Fokus", async ({ page, browserN
     }
   }
 });
+
+// BSD-304 Teil 2: Fokus kehrt nach dem Schließen des Quick Find dorthin zurück, wo er vorher war.
+test("Quick Find: Esc gibt den Fokus zurück", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await command(page, { op: "createPage", title: "Focus back" });
+  const row = page.getByRole("treeitem", { name: "Focus back" });
+  await row.focus();
+  await expect(row).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+k");
+  await expect(page.getByRole("dialog", { name: "Quick Find" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Quick Find" })).toHaveCount(0);
+  await expect(row).toBeFocused();
+});
