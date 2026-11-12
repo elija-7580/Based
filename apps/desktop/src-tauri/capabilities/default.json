@@ -37,6 +37,9 @@
         },
         {
           "url": "https://*.amazonaws.com/*"
+        },
+        {
+          "url": "https://*/*"
         }
       ]
     }

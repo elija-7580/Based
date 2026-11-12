@@ -1,7 +1,7 @@
 // BSD-154: Records ⇄ BlockNote-Blöcke (rein, ohne Y.Doc).
 import { describe, expect, it } from "vitest";
-import { canonicalStringify, type Block } from "@based/core";
-import { docBlockIDs, mediaAlign, projectDoc } from "../src/mapping/blocks.js";
+import { canonicalStringify, parseRecord, type Block } from "@based/core";
+import { bookmarkMeta, docBlockIDs, mediaAlign, projectDoc } from "../src/mapping/blocks.js";
 import { materializeDoc } from "../src/mapping/materialize.js";
 import { canonicalRichText, inlineToRichText, richTextToInline } from "../src/mapping/richtext.js";
 import { assignSortKeys } from "../src/mapping/sortkeys.js";
@@ -60,6 +60,21 @@ describe("Mapping", () => {
     expect(put.props?.caption).toEqual(store.blocks.get(img.id)!.props?.caption); // Caption (richText) bleibt erhalten
     // „left“ (Vorgabe) und Unbekanntes werden nicht gespeichert
     expect([mediaAlign("left"), mediaAlign("justify"), mediaAlign(undefined), mediaAlign("right")]).toEqual([undefined, undefined, undefined, "right"]);
+  });
+
+  it("BSD-209: Bookmark-Vorschau ⇄ props.bookmark; ohne Vorschau bleibt der Record unverändert", () => {
+    expect(bookmarkMeta(canonicalStringify({ title: "T", summary: "S" }))).toEqual({ title: "T", summary: "S" });
+    expect([bookmarkMeta(""), bookmarkMeta("{}"), bookmarkMeta("[1]"), bookmarkMeta("{oops"), bookmarkMeta(undefined)]).toEqual([undefined, undefined, undefined, undefined, undefined]);
+    const bm: Block = { id: "bm-1", type: "bookmark", parent: "b:p-root", sk: "zz", props: { url: "https://example.com", bookmark: { title: "Example", imageURL: "https://example.com/i.png" } }, createdAt: 1, updatedAt: 1 } as Block;
+    const store = corpusStore([parseRecord({ kind: "block", data: bm })]);
+    const blocks = projectDoc(store, "p-root");
+    const bn = blocks.find((b) => b.id === "bm-1")!;
+    expect(JSON.parse(String((bn.props as Record<string, unknown>).meta))).toEqual({ title: "Example", imageURL: "https://example.com/i.png" });
+    expect(materializeDoc(store, "p-root", blocks, { now: 1 }).puts).toEqual([]);
+    (bn.props as Record<string, unknown>).meta = canonicalStringify({ title: "New", summary: "Fresh" });
+    const put = materializeDoc(store, "p-root", blocks, { now: 2 }).puts.find((b) => b.id === "bm-1")!;
+    expect(put.props?.bookmark).toEqual({ title: "New", summary: "Fresh" });
+    expect(put.props?.url).toBe("https://example.com");
   });
 
   it("richText mit allen Marken, Erwähnungen und Gleichung", () => {

@@ -46,7 +46,7 @@ Image block (upload / link) with caption,blocks,must,yes,yes,,"yes (BSD-168, BSD
 Video / audio blocks,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, Anzeige offline, E2E)",beta
 File block,blocks,should,yes,yes,,"yes (BSD-208: Upload in den Asset-Speicher, offline, E2E)",beta
 PDF block,blocks,could,yes,yes,,"yes (BSD-208: Upload oder Link, Anzeige im Block; Record wie Swift mit asset)",beta
-Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,partial: Karte mit URL bzw. importiertem Titel; kein Abruf von Titel/Vorschau,beta
+Web bookmark with preview,blocks,should,yes,partial,bookmark card with title/host; no OpenGraph fetch,"yes (BSD-209): Karte mit Titel, Beschreibung und Adresse; „Fetch preview“ in der Desktop-App (Tauri-HTTP, nur https, nur auf Klick) liest Open Graph/<title>/Beschreibung, gespeichert wie Swift props.bookmark; im Browser-Tab kein Abruf (Server-Endpunkt nach der Beta); Vorschaubild/Icon nur gespeichert, nicht angezeigt (kein Netz ohne Klick)",beta
 Embed (web),blocks,could,yes,yes,,"yes (BSD-209): YouTube (ohne Cookies), Vimeo, Loom, Figma, CodePen, Spotify, Google Maps eingebettet (iframe, sandbox); andere Seiten als Link-Karte",beta
 Table of contents,blocks,should,yes,yes,,yes,beta
 Breadcrumb block,blocks,could,yes,yes,,yes,beta

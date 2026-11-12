@@ -3,7 +3,8 @@
 // Callbacks aus dem EditorEnv.
 import { defaultProps, type BlockNoteEditor } from "@blocknote/core";
 import { createReactBlockSpec } from "@blocknote/react";
-import { containingPage, embedTarget, headingOutline, plainText, trashedRoot, unsyncCopy, type Block } from "@based/core";
+import { canonicalStringify, containingPage, embedTarget, headingOutline, plainText, trashedRoot, unsyncCopy, type Block, type BookmarkMeta } from "@based/core";
+import { bookmarkMeta } from "../mapping/blocks.js";
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { CUSTOM, SYNC_CLIPBOARD_PREFIX } from "../mapping/bn.js";
 import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
@@ -359,7 +360,7 @@ function PdfView(props: { id: string; url: string; editor: AnyEditor }) {
   );
 }
 
-function EmbedView(props: { id: string; kind: string; url: string; editor: AnyEditor }) {
+function EmbedView(props: { id: string; kind: string; url: string; meta: string; editor: AnyEditor }) {
   const env = useEnv();
   useStoreRevision(env.store);
   if (props.kind === "pdf") return <PdfView id={props.id} url={props.url} editor={props.editor} />;
@@ -367,7 +368,7 @@ function EmbedView(props: { id: string; kind: string; url: string; editor: AnyEd
     if (!props.editor.isEditable) return <span className="bx-muted">Empty {props.kind}</span>;
     return <InlineField value="" placeholder={`Paste a link (${props.kind})…`} onDone={(v) => v && props.editor.updateBlock(props.id, { props: { url: v.trim() } })} />;
   }
-  const meta = env.store.blocks.get(props.id)?.props?.bookmark;
+  const meta = (bookmarkMeta(props.meta) ?? env.store.blocks.get(props.id)?.props?.bookmark) as BookmarkMeta | undefined;
   // BSD-209: bekannte Anbieter (YouTube, Vimeo, Loom, Figma, CodePen, Spotify, Google Maps) als eingebetteter Inhalt.
   const target = props.kind === "embed" ? embedTarget(props.url) : undefined;
   if (target) {
@@ -380,18 +381,48 @@ function EmbedView(props: { id: string; kind: string; url: string; editor: AnyEd
       </figure>
     );
   }
-  return (
+  const card = (
     <a className="bx-embed-card" href={props.url} target="_blank" rel="noreferrer">
       <span className="bx-embed-kind">{props.kind}</span>
       <span className="bx-embed-title">{meta?.title ?? props.url}</span>
-      {meta?.summary ? <span className="bx-muted">{meta.summary}</span> : null}
+      {meta?.summary ? <span className="bx-muted bx-embed-summary">{meta.summary}</span> : null}
+      {meta?.title ? <span className="bx-muted bx-embed-url">{props.url}</span> : null}
     </a>
+  );
+  // BSD-209: Vorschau nur auf ausdrücklichen Klick holen (Regel „Netz nur auf Nutzeraktion“), nur wo die Hülle das kann.
+  if (props.kind !== "bookmark" || !env.fetchLinkPreview || !props.editor.isEditable) return card;
+  return <BookmarkWithFetch id={props.id} url={props.url} hasMeta={meta?.title !== undefined} editor={props.editor}>{card}</BookmarkWithFetch>;
+}
+
+function BookmarkWithFetch(props: { id: string; url: string; hasMeta: boolean; editor: AnyEditor; children: ReactNode }) {
+  const env = useEnv();
+  const [busy, setBusy] = useState(false);
+  const fetchPreview = async () => {
+    if (busy || !env.fetchLinkPreview) return;
+    setBusy(true);
+    try {
+      const m = await env.fetchLinkPreview(props.url);
+      if (Object.keys(m).length === 0) env.notify("That page didn’t share a title or description.");
+      else props.editor.updateBlock(props.id, { props: { meta: canonicalStringify(m) } } as never);
+    } catch {
+      env.notify("Couldn’t fetch a preview for this link. Check the address and your connection.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="bx-bookmark">
+      {props.children}
+      <button type="button" className="bx-button bx-bookmark-fetch" disabled={busy} onClick={() => void fetchPreview()}>
+        {busy ? "Fetching preview…" : props.hasMeta ? "Refresh preview" : "Fetch preview"}
+      </button>
+    </div>
   );
 }
 
 export const embedBlock = createReactBlockSpec(
-  { type: CUSTOM.embed, propSchema: { kind: { default: "embed" }, url: { default: "" } }, content: "none" },
-  { render: ({ block, editor }) => <Atom kind="embed"><EmbedView id={block.id} kind={block.props.kind} url={block.props.url} editor={editor} /></Atom> },
+  { type: CUSTOM.embed, propSchema: { kind: { default: "embed" }, url: { default: "" }, meta: { default: "" } }, content: "none" },
+  { render: ({ block, editor }) => <Atom kind="embed"><EmbedView id={block.id} kind={block.props.kind} url={block.props.url} meta={block.props.meta} editor={editor} /></Atom> },
 );
 
 // MARK: Inhaltsverzeichnis, Breadcrumb, Button

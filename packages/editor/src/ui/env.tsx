@@ -1,4 +1,5 @@
 // BSD-154: Was die eigenen Blöcke vom Editor brauchen (Store, Callbacks der Shell), per React-Context.
+import type { BookmarkMeta } from "@based/core";
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { isTrashed, keyBetween, plainText, type Block, type WorkspaceStore } from "@based/core";
 import type { MeetingHost } from "./meetingHost.js";
@@ -66,6 +67,8 @@ export interface EditorEnv {
   ancestors: readonly string[];
   renderDatabase?: ((p: DatabaseRenderProps) => ReactNode) | undefined;
   renderEquation?: ((p: EquationRenderProps) => ReactNode) | undefined;
+  /** BSD-209: Bookmark-Vorschau holen (nur auf Klick, nur wo die Hülle das kann – Desktop-App). Ohne: kein Knopf. */
+  fetchLinkPreview?: ((url: string) => Promise<BookmarkMeta>) | undefined;
   onOpenPage?: ((pageID: string) => void) | undefined;
   people?: readonly Person[] | undefined;
   /** Seiten des Workspaces (Erwähnungen, „Original auf Seite …“). */

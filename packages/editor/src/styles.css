@@ -143,6 +143,11 @@
 .bx-embed-card, .bx-embed-card * { text-decoration: none; }
 .bx-embed-kind { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); text-transform: uppercase; letter-spacing: var(--type-meta-tracking); }
 .bx-embed-title { font-weight: var(--type-ui-weight); word-break: break-all; }
+/* BSD-209: Bookmark mit geholter Vorschau – Beschreibung höchstens zwei Zeilen, Adresse gedämpft in einer Zeile. */
+.bx-embed-summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bx-embed-url { font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx-bookmark { display: grid; gap: var(--space-1); justify-items: start; }
+.bx-bookmark > .bx-embed-card { justify-self: stretch; }
 .bx-button { display: inline-block; padding: var(--space-1) var(--space-4); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink); font-family: var(--font-ui); }
 
 /* Inhaltsverzeichnis, Breadcrumb */

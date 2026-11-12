@@ -34,7 +34,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   code: ["language"],
   equation: ["expression"],
   image: ["url", "asset", "caption", "width", "align"], video: ["url", "asset", "caption", "width", "align"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
-  pdf: ["url", "asset"], embed: ["url"], bookmark: ["url"],
+  pdf: ["url", "asset"], embed: ["url"], bookmark: ["url", "bookmark"],
   linkToPage: ["linkTarget"],
   syncedBlock: ["syncSource"],
   databaseInline: ["databaseID", "viewIDs"],
@@ -50,6 +50,17 @@ export const OWNS_TEXT: ReadonlySet<string> = new Set([
 
 /** Metadaten, die nie im Editor stehen. */
 const META_KEYS = ["id", "parent", "sk", "createdAt", "updatedAt", "createdBy", "updatedBy", "stamp", "trashedAt"] as const;
+
+/** BSD-209: Bookmark-Vorschau aus dem JSON im Editor; Ungültiges oder Leeres → keine. */
+export function bookmarkMeta(v: unknown): Record<string, unknown> | undefined {
+  if (typeof v !== "string" || v === "") return undefined;
+  try {
+    const o: unknown = JSON.parse(v);
+    return o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).length > 0 ? (o as Record<string, unknown>) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /** BSD-290: Ausrichtung eines Medienblocks; „left“ (Vorgabe) und Unbekanntes werden nicht gespeichert. */
 export function mediaAlign(v: unknown): "center" | "right" | undefined {
@@ -130,7 +141,11 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
         ...((b.type === "image" || b.type === "video") ? { textAlignment: mediaAlign(p.align) ?? "left" } : {}),
       });
     // BSD-208: hochgeladene PDFs liegen wie Dateien als `asset` vor (Swift), im Editor als based-asset:-URL.
-    case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, { kind: b.type, url: p.url ?? (b.type === "pdf" && p.asset ? ASSET_URL_PREFIX + p.asset.id : "") });
+    case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, {
+      kind: b.type, url: p.url ?? (b.type === "pdf" && p.asset ? ASSET_URL_PREFIX + p.asset.id : ""),
+      // BSD-209: geholte Bookmark-Vorschau (Titel, Beschreibung, …) wie Swift `props.bookmark`, im Editor als JSON.
+      ...(b.type === "bookmark" && p.bookmark ? { meta: canonicalStringify(p.bookmark) } : {}),
+    });
     case "tableOfContents": return atom(CUSTOM.toc);
     case "breadcrumb": return atom(CUSTOM.breadcrumb);
     case "button": return atom(CUSTOM.button);
@@ -219,7 +234,8 @@ export function extractOwned(bn: BNBlock): Owned {
       const kind = str(p.kind);
       const url = str(p.url);
       if (kind === "pdf" && url.startsWith(ASSET_URL_PREFIX)) return { type: "pdf", props: { asset: { id: url.slice(ASSET_URL_PREFIX.length), name: "" } } };
-      return { type: kind === "pdf" || kind === "bookmark" ? kind : "embed", props: { url: nonEmpty(url) } };
+      if (kind === "bookmark") return { type: "bookmark", props: { url: nonEmpty(url), bookmark: bookmarkMeta(p.meta) } };
+      return { type: kind === "pdf" ? kind : "embed", props: { url: nonEmpty(url) } };
     }
     case CUSTOM.toc: return { type: "tableOfContents", props: {} };
     case CUSTOM.breadcrumb: return { type: "breadcrumb", props: {} };

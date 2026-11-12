@@ -14,7 +14,7 @@ import {
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController, TextAlignButton,
   useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
-import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
+import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
@@ -45,6 +45,8 @@ export interface PageEditorProps {
   renderDatabase?: (p: DatabaseRenderProps) => ReactNode;
   /** Zeichnet eine Gleichung (KaTeX, eigener Eintrag). Ohne: TeX als Code. */
   renderEquation?: (p: EquationRenderProps) => ReactNode;
+  /** BSD-209: Bookmark-Vorschau holen (Desktop-App über Tauri-HTTP, nur auf Klick „Fetch preview“). */
+  fetchLinkPreview?: (url: string) => Promise<BookmarkMeta>;
   /** Klick auf Unterseite, Seitenlink oder Seiten-Erwähnung. */
   onOpenPage?: (pageID: string) => void;
   /** Personen für @-Erwähnungen. */
@@ -338,6 +340,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     ancestors: props.ancestors,
     renderDatabase: shared.renderDatabase,
     renderEquation: shared.renderEquation,
+    fetchLinkPreview: shared.fetchLinkPreview,
     onOpenPage: shared.onOpenPage,
     people: shared.people,
     pages: shared.pages,
