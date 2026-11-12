@@ -30,7 +30,8 @@ permissions:
 
 env:
   # Ordner auf ci-logs: main schreibt nach ts/…, jeder andere Branch nach branch-<name>/ts/…
-  LOG_PREFIX: ${{ github.ref == 'refs/heads/main' && '' || format('branch-{0}/', github.ref_name) }}
+  # ('' ist in Ausdrücken falsch: deshalb die Bedingung andersherum, sonst landete main unter branch-main/)
+  LOG_PREFIX: ${{ github.ref != 'refs/heads/main' && format('branch-{0}/', github.ref_name) || '' }}
 
 jobs:
   ts-fast:
