@@ -55,6 +55,14 @@ const P = {
   export: "M12 15V4M8 7.5L12 3.5l4 4M5 12.5v5A1.5 1.5 0 0 0 6.5 19h11a1.5 1.5 0 0 0 1.5-1.5v-5",
   textSize: "M3.5 18.5L8.5 6l5 12.5M5.3 14.5h6.4M15 18.5l2.75-6.5 2.75 6.5M16 16.2h3.5",
   width: "M4 12h16M7.5 8.5L4 12l3.5 3.5M16.5 8.5L20 12l-3.5 3.5",
+  // Ausschneiden: Schere; Einfügen: Klemmbrett; Alles auswählen: Rahmen mit Zeilen
+  cut: "M6.5 4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM6.5 15a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM8.6 8.2 20 18M8.6 15.8 20 6",
+  paste: "M9 4.5h6v2.5H9zM15 5.5h2A1.5 1.5 0 0 1 18.5 7v12a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 19V7A1.5 1.5 0 0 1 7 5.5h2M9 12h6M9 16h4",
+  selectAll: "M4 7V5.5A1.5 1.5 0 0 1 5.5 4H7M17 4h1.5A1.5 1.5 0 0 1 20 5.5V7M20 17v1.5a1.5 1.5 0 0 1-1.5 1.5H17M7 20H5.5A1.5 1.5 0 0 1 4 18.5V17M8 9h8M8 12h8M8 15h5",
+  // Blockmenü: Umwandeln (zwei Pfeile), Farben (Tropfen), Kopieren und synchronisieren (Kreispfeile)
+  turnInto: "M4 8h13M14 5l3 3-3 3M20 16H7M10 13l-3 3 3 3",
+  palette: "M12 3.5c3 3.6 6 7 6 10.2a6 6 0 0 1-12 0C6 10.5 9 7.1 12 3.5z",
+  sync: "M19.5 9A8 8 0 0 0 5 7.5M4.5 4v3.5H8M4.5 15A8 8 0 0 0 19 16.5M19.5 20v-3.5H16",
   lock: "M7 11V8a5 5 0 0 1 10 0v3M5.5 11h13a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-6A1.5 1.5 0 0 1 5.5 11z",
 } as const;
 
@@ -67,4 +75,18 @@ export function Icon({ name, size = 20, filled = false, cut }: { name: IconName;
       {cut && filled ? <path d={P[cut]} fill="none" stroke="var(--bg)" strokeWidth={2} strokeLinecap="round" /> : null}
     </svg>
   );
+}
+
+/** Dasselbe Icon als DOM-Element – für Oberflächen außerhalb von React (Based-Kontextmenü, @based/ui/native). */
+export function iconElement(name: string, size = 18): SVGSVGElement | undefined {
+  const d = (P as Record<string, string>)[name];
+  if (!d) return undefined;
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  for (const [k, v] of [["aria-hidden", "true"], ["width", String(size)], ["height", String(size)], ["viewBox", "0 0 24 24"]]) svg.setAttribute(k!, v!);
+  svg.style.flex = "none";
+  const path = document.createElementNS(ns, "path");
+  for (const [k, v] of [["d", d], ["fill", "none"], ["stroke", "currentColor"], ["stroke-width", "2"], ["stroke-linecap", "round"], ["stroke-linejoin", "round"]]) path.setAttribute(k!, v!);
+  svg.appendChild(path);
+  return svg;
 }
