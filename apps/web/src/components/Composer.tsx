@@ -67,9 +67,11 @@ export interface ComposerProps {
   label?: string;
   /** BSD-184: ändert sich der Wert, sendet das Feld seinen Text (nach einer Wahl im Privacy-Hinweis). */
   submitRequest?: number;
+  /** Anhängen (Knopf „+“ erscheint nur damit). */
+  onAttach?: () => void;
 }
 
-export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange, label = "Ask Based", submitRequest }: ComposerProps) {
+export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled = false, placeholder, options, foot, picked: pickedProp, onPick, hide = [], details, autoFocus, inputID = "ask", onDraftChange, label = "Ask Based", submitRequest, onAttach }: ComposerProps) {
   const [open, setOpen] = useState<Menu["key"] | null>(null);
   const [pickedState, setPicked] = useState<Record<Menu["key"], string>>({ agent: "Main", compute: "Auto", permission: "Ask before edits" });
   const picked = { ...pickedState, ...pickedProp };
@@ -145,9 +147,12 @@ export function Composer({ showDetails, onSubmit, busy = false, onStop, disabled
           <input id={inputID} placeholder="Ask your notes, or tell Based what to do" />
         )}
         <div className="composer-bar">
-          <button type="button" className="icon-btn" aria-label="Attach">
-            <Icon name="plus" size={18} />
-          </button>
+          {/* BSD-300: Anhängen gibt es erst mit einem Ziel dafür – vorher kein toter Knopf. */}
+          {onAttach ? (
+            <button type="button" className="icon-btn" aria-label="Attach" onClick={onAttach}>
+              <Icon name="plus" size={18} />
+            </button>
+          ) : null}
           {menus.map((m) => (
             <button key={m.key} type="button" className="pill" aria-haspopup="listbox" aria-expanded={open === m.key} onClick={() => setOpen(open === m.key ? null : m.key)}>
               <span className="pill-icon"><Icon name={m.icon} size={15} /></span>

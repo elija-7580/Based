@@ -139,7 +139,8 @@ export function ChatView({ controller, chats, mode, onClose, onToggleMode, onImp
           {mode === "panel" ? (
             <IconButton size="sm" variant="ghost" label="Chats" icon={<Icon name="history" size={18} />} onClick={() => setPane(pane === "history" ? "chat" : "history")} />
           ) : null}
-          <IconButton size="sm" variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} onClick={() => { controller.newChat(); setCli(undefined); setPane("chat"); }} />
+          {/* BSD-300: Im leeren neuen Chat gibt es nichts neu anzufangen – Knopf aus statt ohne Wirkung. */}
+          <IconButton size="sm" variant="ghost" label="New chat" icon={<Icon name="plus" size={18} />} isDisabled={!cli && pane === "chat" && t.items.length === 0 && !s.chatID} onClick={() => { controller.newChat(); setCli(undefined); setPane("chat"); }} />
           <IconButton size="sm" variant="ghost" label="Chat settings" icon={<Icon name="settings" size={18} />} onClick={() => setPane(showSettings ? "chat" : "settings")} />
           {onToggleMode ? (
             <IconButton size="sm" variant="ghost" label={mode === "panel" ? "Open as page" : "Open as side panel"} icon={<Icon name={mode === "panel" ? "expand" : "collapse"} size={18} />} onClick={onToggleMode} />
