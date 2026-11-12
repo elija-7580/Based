@@ -1,61 +1,61 @@
-failure 75c309a8bea27d9f2fd61a33bbcceb29602dde1f
+failure 169eefd91f16c5e768c9c439e41df78e0884fe42
 
-    - Expected  - 1
-    + Received  + 0
+    Error: expect(locator).toHaveCount(expected) failed
 
-      Array [
-        "Beta",
-    -   "Alpha",
-        "Welcome to Based",
-        "Beta",
-      ]
+    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
+    Call log:
+      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
+      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
 
-      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
-      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
-    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
-         |                            ^
-      90 | });
-      91 |
-      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
+      184 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      185 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
+    > 186 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
+          |                                                                            ^
+      187 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
+      188 |   } finally {
+      189 |     await ctx.close();
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:186:76
+
+    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
-    Error: expect(received).toEqual(expected) // deep equality
+    Error: expect(locator).toHaveCount(expected) failed
 
-    - Expected  - 1
-    + Received  + 0
+    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
 
-      Array [
-        "Beta",
-    -   "Alpha",
-        "Welcome to Based",
-        "Beta",
-      ]
+    Call log:
+      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
+      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
 
-      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
-      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
-    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
-         |                            ^
-      90 | });
-      91 |
-      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
+      184 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      185 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
+    > 186 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
+          |                                                                            ^
+      187 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
+      188 |   } finally {
+      189 |     await ctx.close();
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:186:76
 
-    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit-retry1/error-context.md
+    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit-retry1/error-context.md
 
   1 failed
-    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ───────
+    [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke ───────────────────────
   12 skipped
-  83 passed (6.8m)
+  84 passed (5.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
