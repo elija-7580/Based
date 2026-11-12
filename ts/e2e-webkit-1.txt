@@ -1,61 +1,61 @@
-success 0dff7b2c8b4a300cd7abde9be82ab101d19f1992
-  ✓   85 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (8.3s)
-  ✓   87 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (3.8s)
-  ✓   89 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (4.6s)
-  ✓   88 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (8.3s)
-  ✓   90 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.6s)
-  ✓   92 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (6.5s)
-(node:13143) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success b83e7d0d5573783332d2deb01c381af70c266937
+  ✓   92 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (10.5s)
+  ✓   94 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (10.1s)
+  ✓   95 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (8.4s)
+(node:13855) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   91 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (11.5s)
-  ✓   93 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (5.3s)
-  ✓   95 [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.9s)
-  ✓   96 [webkit] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.2s)
-  ✓   94 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (7.4s)
-  ✓   97 [webkit] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.5s)
-  ✓   98 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (7.0s)
-  ✓   99 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (7.4s)
-  ✓  100 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (5.2s)
-  ✓  101 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (7.5s)
-  ✓  102 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (10.8s)
-  ✓  104 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (5.5s)
-  ✓  105 [webkit] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.4s)
-  ✓  106 [webkit] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (3.4s)
-  ✓  103 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (19.6s)
-  ✓  107 [webkit] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.5s)
-  ✓  108 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (4.8s)
-  ✓  109 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (4.7s)
-  ✓  110 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (4.1s)
-  ✓  112 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.2s)
+  ✓   96 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (6.8s)
+  ✓   98 [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.9s)
+  ✓   97 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (15.4s)
+  ✓   99 [webkit] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.1s)
+  ✓  101 [webkit] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.3s)
+  ✓  100 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (14.2s)
+  ✓  102 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (11.4s)
+  ✓  104 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (10.4s)
+  ✓  105 [webkit] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.6s)
+  ✓  106 [webkit] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (5.2s)
+  ✓  103 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (24.1s)
+  ✓  107 [webkit] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (8.5s)
+  ✓  108 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (6.5s)
+  ✓  109 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (8.3s)
+  ✓  110 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (7.2s)
+  ✓  112 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (3.1s)
   -  113 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
   -  114 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
-  ✓  111 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (4.6s)
-  ✓  115 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (3.7s)
-  ✓  116 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (3.0s)
-  ✓  117 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.6s)
-  ✓  118 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.5s)
-  ✓  119 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.8s)
+  ✓  111 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (5.8s)
+  ✓  115 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (5.8s)
+  ✓  116 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (4.4s)
+  ✓  117 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.2s)
+  ✓  118 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.7s)
+  ✓  119 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.3s)
 
 
-  1) [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben 
+  1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
 
-    Error: expect(received).toBe(expected) // Object.is equality
+    Error: tote Knöpfe
 
-    Expected: 120
-    Received: 100
+    expect(received).toEqual(expected) // deep equality
 
-      355 |   await page.mouse.up();
-      356 |   const after = await map.getByRole("button", { name: "Pin: Berlin office" }).boundingBox();
-    > 357 |   expect(Math.round(after!.x - before!.x)).toBe(120);
-          |                                            ^
-      358 |   expect(Math.round(after!.y - before!.y)).toBe(40);
-      359 |
-      360 |   // Ort von Hand: Koordinaten prüfen, dann erscheint der Pin.
-        at /home/runner/work/Based/Based/apps/web/e2e/database-views.spec.ts:357:44
+    - Expected  - 1
+    + Received  + 3
 
-    Error Context: test-results/database-views-Karte-Pins--31ca7-tion“-Ort-von-Hand-eingeben-webkit/error-context.md
+    - Array []
+    + Array [
+    +   "Home: „New page“ #0",
+    + ]
+
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
+
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
 
   1 flaky
-    [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben 
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
   8 skipped
-  109 passed (7.4m)
+  109 passed (12.3m)
