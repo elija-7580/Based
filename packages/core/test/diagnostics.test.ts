@@ -1,5 +1,5 @@
 // BSD-227: Diagnose – Log ohne Nutzerinhalte, Sitzungs-Marke, Hänger, Bericht.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   beginSession, buildReport, DiagnosticsLog, endSession, heartbeat, LOG_LIMIT, previousSessionNotice, redact, startStallDetector, type DiagnosticsStorage,
 } from "../src/index.js";
@@ -66,6 +66,23 @@ describe("Diagnose (BSD-227)", () => {
     t += 4000; tick();
     stop();
     expect(stalls).toEqual([3000]);
+  });
+
+  it("Hänger: Sprung der Systemuhr (Ruhezustand, Uhr gestellt) ist kein Hänger (BSD-331)", async () => {
+    const stalls: number[] = [];
+    const realNow = Date.now;
+    let offset = 0;
+    const spy = vi.spyOn(Date, "now").mockImplementation(() => realNow() + offset);
+    const stop = startStallDetector({ intervalMs: 10, thresholdMs: 2000, onStall: (ms) => stalls.push(ms) });
+    try {
+      await new Promise((r) => setTimeout(r, 25));
+      offset = 30_000; // wie nach 30 s Ruhezustand: Wanduhr springt, der Hauptthread war nie blockiert
+      await new Promise((r) => setTimeout(r, 40));
+    } finally {
+      stop();
+      spy.mockRestore();
+    }
+    expect(stalls).toEqual([]);
   });
 
   it("Bericht: Fakten geschwärzt, keine Inhalte", () => {

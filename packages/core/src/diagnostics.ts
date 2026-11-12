@@ -121,6 +121,7 @@ export interface StallDetectorOptions {
   intervalMs?: number;
   /** Ab so viel Verspätung gilt der Hauptthread als hängend (ms). */
   thresholdMs?: number;
+  /** Uhr für die Messung; Standard: `performance.now()` (monoton, steht im Ruhezustand des Rechners still). */
   now?: () => number;
   setInterval?: (fn: () => void, ms: number) => unknown;
   clearInterval?: (id: unknown) => void;
@@ -130,10 +131,13 @@ export interface StallDetectorOptions {
 /**
  * Hänger erkennen: ein Zeitgeber, der viel zu spät kommt, heißt, dass der Hauptthread so lange blockiert war.
  * (Im Hintergrund drosseln Browser Zeitgeber – der Aufrufer stoppt den Detektor, wenn die Seite unsichtbar ist.)
+ * BSD-331: gemessen wird monoton, nicht mit `Date.now()` – sonst zählt ein Ruhezustand des Macs oder eine verstellte
+ * Systemuhr als „main thread blocked“, obwohl nichts blockiert war.
  */
 export function startStallDetector(o: StallDetectorOptions): () => void {
   const interval = o.intervalMs ?? 1000, threshold = o.thresholdMs ?? 2000;
-  const now = o.now ?? Date.now;
+  const perf = globalThis.performance;
+  const now = o.now ?? (typeof perf?.now === "function" ? () => perf.now() : Date.now);
   const set = o.setInterval ?? ((fn, ms) => setInterval(fn, ms));
   const clear = o.clearInterval ?? ((id) => clearInterval(id as ReturnType<typeof setInterval>));
   let last = now();
