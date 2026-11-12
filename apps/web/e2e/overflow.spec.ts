@@ -193,3 +193,23 @@ test("Gliederung überdeckt nie den Text", async ({ page }) => {
     if (w === 1280) expect(r.shown).toBe(true);
   }
 });
+
+// BSD-301 Teil 2: 30 Tabs mit langen Titeln und eine Datenbank mit langen Spaltennamen und vielen Zeilen.
+test("30 Tabs und eine breite Datenbank: nichts läuft über", async ({ page, browserName }) => {
+  await page.goto("/");
+  await ready(page);
+  const ids: string[] = [];
+  for (let i = 1; i <= 30; i++) ids.push((await command(page, { op: "createPage", title: `Tab ${i} ${LONG_TITLE}` })) as string);
+  await page.evaluate((list) => {
+    const h = (globalThis as unknown as { __based: { history: { openTab: (r: unknown, o?: unknown) => string } } }).__based.history;
+    for (const id of list) h.openTab({ name: "page", id }, { background: true });
+  }, ids);
+  const dbID = (await command(page, { op: "createDatabase", title: "Wide " + LONG_TITLE })) as string;
+  const db = "#page-" + dbID;
+  await go(page, db);
+  await expect(page.locator(".dbui-table").first()).toBeVisible();
+  const found = await check(page, [{ name: "tabs-db", hash: db }, { name: "tabs-home", hash: "#home" }], "tabs", browserName);
+  expect(found).toEqual([]);
+  // Die Tab-Leiste rollt waagrecht statt das Fenster zu verbreitern
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+});
