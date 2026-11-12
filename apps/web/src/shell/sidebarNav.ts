@@ -160,6 +160,8 @@ export const NAV_COMMANDS: readonly NavCommand[] = [
   { id: "library", label: "Library", keywords: ["all pages", "pages", "databases"] },
   { id: "trash", label: "Trash", keywords: ["deleted", "bin"] },
   { id: "settings", label: "Settings", keywords: ["preferences", "options"] },
+  // BSD-319: Fehler festhalten (⇧⌘B)
+  { id: "report", label: "Report a problem", keywords: ["bug", "feedback", "diagnostics", "issue"] },
 ];
 
 /** Befehle passend zur Eingabe (Wortanfang in Name oder Suchwort); leere Eingabe: keine. Coding gibt es hier immer. */

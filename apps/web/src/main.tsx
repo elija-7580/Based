@@ -27,10 +27,14 @@ import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
 import { bootMark, diagnosticsLog, installDiagnostics } from "./shell/diagnostics.js";
+import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
 installDiagnostics();
+// BSD-319: Editor-Aufzeichnung für „Problem melden“ (Ringpuffer im Speicher, immer an) und Haken für die Wiedergabe.
+installBugRecorder();
+exposeReplayHooks();
 // Zeit bis hierher = Laden und Auswerten aller Skripte (die Importe oben laufen vor dieser Zeile).
 bootMark("scripts loaded");
 

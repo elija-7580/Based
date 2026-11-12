@@ -77,7 +77,8 @@ test("erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur i
   await page.goto("/?based-fail-store=history#prefs-diagnostics");
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
   await expect(page.getByTestId("diagnostics-storage")).toContainText("Persistent (OPFS) · Version history is kept in memory only");
-  await expect(page.getByTestId("diagnostics-log")).toContainText("warning status: local · Version history is kept in memory only");
+  // BSD-319: Das Log zeigt Stufen als eigene Spalte (data-level) – die Warnung steht als Zeile der Stufe „warning“ drin.
+  await expect(page.getByTestId("diagnostics-log").locator("[data-level=warning]", { hasText: "status: local · Version history is kept in memory only" })).toHaveCount(1);
   await page.goto("/?based-fail-store=history#prefs-sync");
   await expect(page.getByTestId("sync-storage-warning")).toContainText("Version history is kept in memory only");
 });

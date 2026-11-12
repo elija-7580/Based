@@ -1,6 +1,6 @@
 // `based` – Ein-/Ausgabe: argv, Umgebung, Konfigurationsdatei, MCP über Streamable HTTP (POST /mcp mit Bearer-Token),
 // stdin. Entscheidungen stehen in args.ts, config.ts und cli.ts (getestet).
-import { chmodSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -9,6 +9,7 @@ import { loadArchive, propertyRecords } from "@based/core";
 import { CLIError, parseArgs, VERSION } from "./args.js";
 import { BasedCLI, type MCPSession } from "./cli.js";
 import { checkURL, configFileContents, configPath, resolveConfig } from "./config.js";
+import { formatReports, listReports } from "./reports.js";
 
 const readFile = (p: string) => {
   try {
@@ -109,6 +110,18 @@ export async function main(argv: string[], io: { env?: Record<string, string | u
       chmodSync(path, 0o600);
       writeFileSync(path, configFileContents(url, token), { mode: 0o600 });
       out(`Saved ${url} to ${path} (mode 600).`);
+      return 0;
+    }
+    if (command.name === "reports") {
+      // BSD-319: Dateien der Mac-App, kein Server nötig.
+      const listDirs = (p: string) => {
+        try {
+          return readdirSync(p, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+        } catch {
+          return [];
+        }
+      };
+      out(formatReports(listReports(home, { listDirs, readFile, exists: existsSync }, command.limit), home, options.json));
       return 0;
     }
     if (command.name === "check") {

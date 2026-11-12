@@ -8,6 +8,9 @@ import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from ".
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
 
+/** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
+export const REPORT_PROBLEM_EVENT = "based:report-problem";
+
 /** Läuft die Seite in der Tauri-Hülle? (Tauri 2 setzt `__TAURI_INTERNALS__` vor dem ersten Skript.) */
 export function isTauri(g: object = globalThis): boolean {
   return "__TAURI_INTERNALS__" in g;
@@ -117,6 +120,8 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
   // jedes normale Beenden wie ein Absturz aus („didn't close normally“).
   const { markSessionEnd } = await import("./shell/diagnostics.js");
   if (main) for (const ev of ["tauri://close-requested", "tauri://destroyed"]) await win.listen(ev, () => markSessionEnd());
+  // BSD-319: Hilfe → „Report a Problem…“ (⇧⌘B) – im Fenster vorn.
+  await win.listen("desktop://report-problem", () => void window.dispatchEvent(new CustomEvent(REPORT_PROBLEM_EVENT)));
   // Start nicht bremsen: erst prüfen, wenn das Fenster steht (nur im Hauptfenster).
   if (main && autoUpdatePref.get()) setTimeout(() => void checkForUpdates({ interactive: false }), 5000);
 }

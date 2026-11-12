@@ -14,14 +14,19 @@ const MESSAGE_LIMIT = 300;
  * Text in Anführungszeichen (oft Seitentitel oder Inhalt aus Fehlermeldungen). Länge begrenzt.
  */
 export function redact(message: string): string {
-  let m = message
-    .replace(/Bearer\s+\S+/gi, "Bearer ‹redacted›")
-    .replace(/\b(?:bdu|bdl|sk|sk-ant|ghp|gho|xox[abp])[-_][A-Za-z0-9_-]{6,}/g, "‹token›")
-    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "‹email›")
+  let m = redactSecrets(message)
     .replace(/(https?:\/\/[^\s?#"'<>]+)[?#][^\s"'<>]*/g, "$1?‹…›")
     .replace(/“[^”]*”|"[^"\n]{1,200}"|'[^'\n]{1,200}'/g, "‹text›");
   m = m.replace(/\s+/g, " ").trim();
   return m.length > MESSAGE_LIMIT ? m.slice(0, MESSAGE_LIMIT - 1) + "…" : m;
+}
+
+/** Nur Geheimnisse schwärzen (Bearer, Token, E-Mail) – Text sonst unverändert (BSD-319: „echter Text“ im Bündel). */
+export function redactSecrets(text: string): string {
+  return text
+    .replace(/Bearer\s+\S+/gi, "Bearer ‹redacted›")
+    .replace(/\b(?:bdu|bdl|sk|sk-ant|ghp|gho|xox[abp])[-_][A-Za-z0-9_-]{6,}/g, "‹token›")
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "‹email›");
 }
 
 /** Schlüssel-Wert-Speicher (localStorage oder ein Test-Doppel). Fehler beim Speichern werden geschluckt. */

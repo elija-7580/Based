@@ -9,6 +9,10 @@ import { ImportDialog } from "./components/ImportExport.js";
 import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
+import { DevOverlay } from "./components/DevOverlay.js";
+import { ReportProblemDialog } from "./components/ReportProblem.js";
+import { REPORT_PROBLEM_EVENT } from "./desktop.js";
+import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
 import { TabBar } from "./components/TabBar.js";
@@ -154,6 +158,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         }
         case "back": history.back(); break;
         case "forward": history.forward(); break;
+        case "reportProblem": void startReport(); break;
         case "openParent": {
           const r = history.route;
           if (r.name !== "page") break;
@@ -166,7 +171,13 @@ export function App({ client, history }: { client: StoreClient; history: History
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // BSD-319: Mac-App, Menü Hilfe → „Report a Problem…“ (⇧⌘B liegt dort als Menükürzel)
+    const onReport = () => void startReport();
+    window.addEventListener(REPORT_PROBLEM_EVENT, onReport);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(REPORT_PROBLEM_EVENT, onReport);
+    };
   }, [history, newPage, setAppearance, navigate, client]);
 
   // BSD-256: feste Reihenfolge, Ziffern 1–9 wählen direkt (1 Page, 2 AI chat, 3 Meeting notes, 4 Database).
@@ -226,6 +237,8 @@ export function App({ client, history }: { client: StoreClient; history: History
       <ChatDock client={client} history={history} route={route} />
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
+      <DevOverlay />
+      <ReportProblemDialog onOpenDiagnostics={() => history.navigate({ name: "settings", page: "diagnostics" })} />
       {importing ? <ImportDialog client={client} initial={importing} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
         onCommand={(id) => {
@@ -233,6 +246,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           if (id === "meeting") void newMeeting();
           else if (id === "home") goHome();
           else if (id === "dashboard") navigate({ name: "home" });
+          else if (id === "report") void startReport();
           else if (id === "chat" || id === "tasks" || id === "coding" || id === "graph" || id === "meetings" || id === "library" || id === "trash" || id === "settings") navigate({ name: id });
         }} /> : null}
     </div>

@@ -35,6 +35,7 @@ import { mentionItems, resolveWikilink, wikilinkBefore } from "./mentions.js";
 import { PageOutline } from "./Outline.js";
 import { handlePaste } from "./paste.js";
 import { lastCopiedSync, rememberSyncClipboard } from "./syncClipboard.js";
+import { attachEditorProbe } from "./probe.js";
 
 export interface PageEditorProps {
   store: WorkspaceStore;
@@ -384,6 +385,8 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
   const selected = range ? rangeIDs(sel, range) : [];
   const selectedRef = useRef<readonly string[]>([]);
   selectedRef.current = selected;
+  // BSD-319: Diagnose-Sonde (Aufzeichnung für „Problem melden“), wenn die App eine gesetzt hat.
+  useEffect(() => attachEditorProbe({ rootID: session.rootID, editor, doc: session.doc, selectedBlocks: () => selectedRef.current }), [editor, session]);
   const selectBlocks = (r: BlockRange | undefined) => {
     setRange(r);
     if (!r) return;

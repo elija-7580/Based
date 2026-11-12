@@ -122,6 +122,7 @@ export class BasedCLI {
       case "version": return out(`based ${VERSION}`);
       case "login":
       case "config":
+      case "reports":
       case "check":
         throw new CLIError("handled by the executable");
       case "tools": {

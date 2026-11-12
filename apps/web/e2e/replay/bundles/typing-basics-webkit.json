@@ -1,0 +1,4133 @@
+{
+ "format": "based-bug-report",
+ "version": 1,
+ "id": "20261112-163020-6490",
+ "createdAt": "2026-11-12T16:30:20.707Z",
+ "note": "Sample: typing, bold, list, heading, paste, click and backspace",
+ "realText": false,
+ "app": {
+  "shell": "web",
+  "commit": "8dc7c6e",
+  "platform": "Linux x86_64",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+ },
+ "env": {
+  "width": 1280,
+  "height": 820,
+  "dpr": 2,
+  "zoom": 1,
+  "theme": "light",
+  "route": "page-"
+ },
+ "state": {
+  "menus": [],
+  "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+  "doc": {
+   "type": "doc",
+   "content": [
+    {
+     "type": "blockGroup",
+     "content": [
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "marks": [
+            {
+             "type": "bold"
+            }
+           ],
+           "text": "Xxxxx xxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxx xxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
+       },
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx xx!"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
+       },
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxxx"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "type": "blockContainer",
+       "attrs": {
+        "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
+       },
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         },
+         "content": [
+          {
+           "type": "text",
+           "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "blocks": [
+   {
+    "id": "57ea1945-4fe9-4222-8748-4f6229653300",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxxx",
+      "styles": {
+       "bold": true
+      }
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "1849481d-9d28-42b0-8195-590e4a9f1f81",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxx xxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "b3303681-9d8c-450d-a7c8-a10378c659fb",
+    "type": "bulletListItem",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx xx!",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0",
+    "type": "heading",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left",
+     "level": 1,
+     "isToggleable": false
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   },
+   {
+    "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303",
+    "type": "paragraph",
+    "props": {
+     "backgroundColor": "default",
+     "textColor": "default",
+     "textAlignment": "left"
+    },
+    "content": [
+     {
+      "type": "text",
+      "text": "Xxxxxx: xxxx xxx xxxxxxxxx",
+      "styles": {}
+     }
+    ],
+    "children": []
+   }
+  ],
+  "sel": {
+   "type": "text",
+   "anchor": 42,
+   "head": 42
+  },
+  "focus": "div.tiptap.ProseMirror[role=textbox]"
+ },
+ "layout": {
+  "items": [
+   {
+    "kind": "block",
+    "label": "paragraph #57ea1945-4fe9-4222-8748-4f6229653300",
+    "rect": {
+     "x": 462,
+     "y": 231,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #1849481d-9d28-42b0-8195-590e4a9f1f81",
+    "rect": {
+     "x": 462,
+     "y": 261,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "bulletListItem #b3303681-9d8c-450d-a7c8-a10378c659fb",
+    "rect": {
+     "x": 462,
+     "y": 291,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "block",
+    "label": "heading #eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0",
+    "rect": {
+     "x": 462,
+     "y": 321,
+     "w": 720,
+     "h": 49
+    }
+   },
+   {
+    "kind": "block",
+    "label": "paragraph #f8e15eac-47fb-4b2b-a64d-56958a45d303",
+    "rect": {
+     "x": 462,
+     "y": 370,
+     "w": 720,
+     "h": 30
+    }
+   },
+   {
+    "kind": "floating",
+    "label": "div.sidebar-resize[role=separator]#sidebar-resize",
+    "rect": {
+     "x": 224,
+     "y": 0,
+     "w": 8,
+     "h": 820
+    },
+    "z": "2",
+    "position": "absolute"
+   },
+   {
+    "kind": "floating",
+    "label": "header.topbar.t-desc",
+    "rect": {
+     "x": 232,
+     "y": 12,
+     "w": 1036,
+     "h": 56
+    },
+    "z": "5",
+    "position": "sticky",
+    "opaque": true
+   },
+   {
+    "kind": "floating",
+    "label": "nav.bx-outline#page-outline",
+    "rect": {
+     "x": 1214,
+     "y": 389,
+     "w": 50,
+     "h": 42
+    },
+    "z": "15",
+    "position": "fixed"
+   },
+   {
+    "kind": "floating",
+    "label": "div.swipe-hint",
+    "rect": {
+     "x": 232,
+     "y": 0,
+     "w": 1048,
+     "h": 820
+    },
+    "z": "8",
+    "position": "absolute"
+   },
+   {
+    "kind": "focus",
+    "label": "div.tiptap.ProseMirror[role=textbox]",
+    "rect": {
+     "x": 406,
+     "y": 231,
+     "w": 832,
+     "h": 199
+    }
+   }
+  ],
+  "issues": []
+ },
+ "recording": {
+  "events": [
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 3,
+     "head": 3
+    },
+    "t": 1794501010188
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 822,
+    "y": 246,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794501010913
+   },
+   {
+    "kind": "focus",
+    "target": "div.tiptap.ProseMirror[role=textbox]",
+    "t": 1794501010919
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 822,
+    "y": 246,
+    "button": 0,
+    "detail": 1,
+    "target": "div.bn-block-content[paragraph]",
+    "t": 1794501010928
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "X",
+    "mods": {},
+    "t": 1794501010941
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794501010956
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501010972
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 3,
+      "to": 3,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 4,
+     "head": 4
+    },
+    "t": 1794501010976
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501010994
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501010996
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011003
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 4,
+      "to": 4,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 5,
+     "head": 5
+    },
+    "t": 1794501011004
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011015
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011017
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011022
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 5,
+      "to": 5,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 6,
+     "head": 6
+    },
+    "t": 1794501011022
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011036
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011037
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011043
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 6,
+      "to": 6,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 7,
+     "head": 7
+    },
+    "t": 1794501011044
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011048
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011049
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011052
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 7,
+      "to": 7,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 8,
+     "head": 8
+    },
+    "t": 1794501011053
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501011069
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501011070
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011076
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 8,
+      "to": 8,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 9,
+     "head": 9
+    },
+    "t": 1794501011076
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011078
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011079
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011082
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 9,
+      "to": 9,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 10,
+     "head": 10
+    },
+    "t": 1794501011082
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011085
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011086
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011093
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 10,
+      "to": 10,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 11,
+     "head": 11
+    },
+    "t": 1794501011093
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011106
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011107
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011114
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 11,
+      "to": 11,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 12,
+     "head": 12
+    },
+    "t": 1794501011115
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011124
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011129
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011134
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 12,
+      "to": 12,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 13,
+     "head": 13
+    },
+    "t": 1794501011135
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501011160
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501011161
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501011165
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 13,
+      "to": 13,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794501011165
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Shift",
+    "code": "ShiftLeft",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794501011187
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Home",
+    "code": "Home",
+    "mods": {
+     "shift": true
+    },
+    "t": 1794501011192
+   },
+   {
+    "kind": "select",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "cause": "pointer",
+    "t": 1794501011194
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794501011194
+   },
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794501012594
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Control",
+    "code": "ControlLeft",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794501012594
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "b",
+    "code": "KeyB",
+    "mods": {
+     "ctrl": true
+    },
+    "t": 1794501012595
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 41,
+    "origin": "y-sync$",
+    "t": 1794501012606
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "addMark",
+      "mark": {
+       "type": "bold"
+      },
+      "from": 3,
+      "to": 14
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 3
+    },
+    "t": 1794501012606
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794501013127
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 14,
+     "head": 14
+    },
+    "t": 1794501013133
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794501013204
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794501013217
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 14,
+      "to": 14,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794501013217
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "-",
+    "mods": {},
+    "t": 1794501013897
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "-",
+    "t": 1794501013898
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501013904
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "-"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794501013906
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501013917
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501013918
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501013924
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794501013924
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 133,
+    "origin": "y-sync$",
+    "t": 1794501013945
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 20
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 17,
+      "to": 19,
+      "gapFrom": 18,
+      "gapTo": 18,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "bulletListItem",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 18,
+     "head": 18
+    },
+    "t": 1794501013945
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "X",
+    "mods": {},
+    "t": 1794501014029
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794501014029
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501014034
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 18,
+      "to": 18,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 19,
+     "head": 19
+    },
+    "t": 1794501014035
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014092
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014093
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014096
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 19,
+      "to": 19,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 20,
+     "head": 20
+    },
+    "t": 1794501014096
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014111
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014112
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014114
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 20,
+      "to": 20,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 21,
+     "head": 21
+    },
+    "t": 1794501014115
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014133
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014137
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014140
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 21,
+      "to": 21,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 22,
+     "head": 22
+    },
+    "t": 1794501014140
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014151
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014151
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014154
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 22,
+      "to": 22,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 23,
+     "head": 23
+    },
+    "t": 1794501014155
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501014161
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501014162
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014166
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 23,
+      "to": 23,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 24,
+     "head": 24
+    },
+    "t": 1794501014166
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014169
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014170
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014172
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 24,
+      "to": 24,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 25,
+     "head": 25
+    },
+    "t": 1794501014172
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014173
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014174
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014176
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 25,
+      "to": 25,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 26,
+     "head": 26
+    },
+    "t": 1794501014176
+   },
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 26,
+     "head": 26
+    },
+    "t": 1794501014178
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014178
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014179
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014180
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 26,
+      "to": 26,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 27,
+     "head": 27
+    },
+    "t": 1794501014180
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501014182
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501014183
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501014184
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 27,
+      "to": 27,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 28,
+     "head": 28
+    },
+    "t": 1794501014184
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794501014199
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794501014204
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 28,
+      "to": 28,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 32,
+     "head": 32
+    },
+    "t": 1794501014204
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "X",
+    "mods": {},
+    "t": 1794501015038
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794501015039
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501015048
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 32,
+      "to": 32,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 33,
+     "head": 33
+    },
+    "t": 1794501015049
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015051
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015051
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015054
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 33,
+      "to": 33,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 34,
+     "head": 34
+    },
+    "t": 1794501015054
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015058
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015059
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015071
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 34,
+      "to": 34,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 35,
+     "head": 35
+    },
+    "t": 1794501015071
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015115
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015116
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015119
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 35,
+      "to": 35,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 36,
+     "head": 36
+    },
+    "t": 1794501015120
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015123
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015129
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015162
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 36,
+      "to": 36,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "t": 1794501015163
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015185
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015187
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015193
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 37,
+      "to": 37,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 38,
+     "head": 38
+    },
+    "t": 1794501015193
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501015195
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501015196
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015198
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 38,
+      "to": 38,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 39,
+     "head": 39
+    },
+    "t": 1794501015198
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015199
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015200
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015202
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 39,
+      "to": 39,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 40,
+     "head": 40
+    },
+    "t": 1794501015202
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015203
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015204
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015205
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 40,
+      "to": 40,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794501015205
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015207
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015207
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015208
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794501015209
+   },
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794501015211
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501015211
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501015211
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501015213
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 42,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794501015213
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794501015216
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 197,
+    "origin": "y-sync$",
+    "t": 1794501015219
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 43,
+      "to": 43,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794501015219
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794501015935
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 126,
+    "origin": "y-sync$",
+    "t": 1794501015942
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "paragraph",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left"
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794501015942
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "#",
+    "mods": {},
+    "t": 1794501016421
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "#",
+    "t": 1794501016428
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501016438
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "#"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794501016440
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501016444
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501016472
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016477
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794501016477
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 164,
+    "origin": "y-sync$",
+    "t": 1794501016488
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 49
+     },
+     {
+      "stepType": "replaceAround",
+      "from": 46,
+      "to": 48,
+      "gapFrom": 47,
+      "gapTo": 47,
+      "insert": 1,
+      "slice": {
+       "content": [
+        {
+         "type": "heading",
+         "attrs": {
+          "backgroundColor": "default",
+          "textColor": "default",
+          "textAlignment": "left",
+          "level": 1,
+          "isToggleable": false
+         }
+        }
+       ]
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 47,
+     "head": 47
+    },
+    "t": 1794501016488
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "X",
+    "mods": {},
+    "t": 1794501016509
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794501016510
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501016513
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 47,
+      "to": 47,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 48,
+     "head": 48
+    },
+    "t": 1794501016514
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016545
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016546
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016548
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 48,
+      "to": 48,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 49,
+     "head": 49
+    },
+    "t": 1794501016549
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016550
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016551
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016553
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 49,
+      "to": 49,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 50,
+     "head": 50
+    },
+    "t": 1794501016553
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016554
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016555
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016556
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 50,
+      "to": 50,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 51,
+     "head": 51
+    },
+    "t": 1794501016557
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016558
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016559
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016561
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 51,
+      "to": 51,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 52,
+     "head": 52
+    },
+    "t": 1794501016561
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016569
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016570
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016572
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 52,
+      "to": 52,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 53,
+     "head": 53
+    },
+    "t": 1794501016572
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501016573
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501016574
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501016575
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 53,
+      "to": 53,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 54,
+     "head": 54
+    },
+    "t": 1794501016576
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Enter",
+    "code": "Enter",
+    "mods": {},
+    "t": 1794501016578
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 192,
+    "origin": "y-sync$",
+    "t": 1794501016581
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 54,
+      "to": 54,
+      "slice": {
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           }
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": null
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ],
+       "openStart": 2,
+       "openEnd": 2
+      },
+      "structure": true
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 58,
+     "head": 58
+    },
+    "t": 1794501016582
+   },
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 58,
+     "head": 58
+    },
+    "t": 1794501017825
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "X",
+    "mods": {},
+    "t": 1794501017825
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "X",
+    "t": 1794501017826
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 28,
+    "origin": "y-sync$",
+    "t": 1794501017837
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 58,
+      "to": 58,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "X"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 59,
+     "head": 59
+    },
+    "t": 1794501017838
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501017841
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501017842
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501017847
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 59,
+      "to": 59,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 60,
+     "head": 60
+    },
+    "t": 1794501017847
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501017869
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501017870
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501017872
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 60,
+      "to": 60,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 61,
+     "head": 61
+    },
+    "t": 1794501017877
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501017884
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501017885
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501017890
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 61,
+      "to": 61,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 62,
+     "head": 62
+    },
+    "t": 1794501017891
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501017906
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501017908
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501017928
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 62,
+      "to": 62,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 63,
+     "head": 63
+    },
+    "t": 1794501017941
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "x",
+    "mods": {},
+    "t": 1794501018004
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "x",
+    "t": 1794501018009
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501018018
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 63,
+      "to": 63,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "x"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 64,
+     "head": 64
+    },
+    "t": 1794501018018
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": ":",
+    "mods": {},
+    "t": 1794501018045
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": ":",
+    "t": 1794501018046
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501018050
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 64,
+      "to": 64,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": ":"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 65,
+     "head": 65
+    },
+    "t": 1794501018050
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": " ",
+    "mods": {},
+    "t": 1794501018059
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": " ",
+    "t": 1794501018060
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501018063
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 65,
+      "to": 65,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": " "
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 66,
+     "head": 66
+    },
+    "t": 1794501018064
+   },
+   {
+    "kind": "paste",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "plain": "xxxx xxx xxxxxxxxx",
+    "files": 0,
+    "t": 1794501018070
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 35,
+    "origin": "y-sync$",
+    "t": 1794501018087
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 66,
+      "to": 66,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "xxxx xxx xxxxxxxxx"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 84,
+     "head": 84
+    },
+    "meta": [
+     "paste",
+     "uiEvent:paste"
+    ],
+    "t": 1794501018089
+   },
+   {
+    "kind": "pointer",
+    "phase": "down",
+    "x": 533,
+    "y": 306,
+    "button": 0,
+    "detail": 1,
+    "target": "p.bn-inline-content",
+    "t": 1794501018734
+   },
+   {
+    "kind": "pointer",
+    "phase": "up",
+    "x": 533,
+    "y": 306,
+    "button": 0,
+    "detail": 1,
+    "target": "p.bn-inline-content",
+    "t": 1794501018737
+   },
+   {
+    "kind": "select",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "cause": "pointer",
+    "t": 1794501018739
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 37,
+     "head": 37
+    },
+    "meta": [
+     "pointer"
+    ],
+    "t": 1794501018739
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "End",
+    "code": "End",
+    "mods": {},
+    "t": 1794501018756
+   },
+   {
+    "kind": "select",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "cause": "pointer",
+    "t": 1794501018763
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [],
+    "docChanged": false,
+    "sel": {
+     "type": "text",
+     "anchor": 43,
+     "head": 43
+    },
+    "t": 1794501018763
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794501019321
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "deleteContentBackward",
+    "t": 1794501019328
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794501019350
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 42,
+      "to": 43
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794501019350
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "Backspace",
+    "code": "Backspace",
+    "mods": {},
+    "t": 1794501020017
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "deleteContentBackward",
+    "t": 1794501020021
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 10,
+    "origin": "y-sync$",
+    "t": 1794501020023
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 42
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794501020024
+   },
+   {
+    "kind": "checkpoint",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "doc": {
+     "type": "doc",
+     "content": [
+      {
+       "type": "blockGroup",
+       "content": [
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "marks": [
+              {
+               "type": "bold"
+              }
+             ],
+             "text": "Xxxxx xxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxx xxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
+         },
+         "content": [
+          {
+           "type": "bulletListItem",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx xx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
+         },
+         "content": [
+          {
+           "type": "heading",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left",
+            "level": 1,
+            "isToggleable": false
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxxx"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "type": "blockContainer",
+         "attrs": {
+          "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
+         },
+         "content": [
+          {
+           "type": "paragraph",
+           "attrs": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+           },
+           "content": [
+            {
+             "type": "text",
+             "text": "Xxxxxx: xxxx xxx xxxxxxxxx"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "sel": {
+     "type": "text",
+     "anchor": 41,
+     "head": 41
+    },
+    "t": 1794501020295
+   },
+   {
+    "kind": "key",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "key": "!",
+    "mods": {},
+    "t": 1794501020295
+   },
+   {
+    "kind": "input",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "inputType": "insertText",
+    "data": "!",
+    "t": 1794501020296
+   },
+   {
+    "kind": "yjs",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "bytes": 18,
+    "origin": "y-sync$",
+    "t": 1794501020299
+   },
+   {
+    "kind": "tr",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
+    "steps": [
+     {
+      "stepType": "replace",
+      "from": 41,
+      "to": 41,
+      "slice": {
+       "content": [
+        {
+         "type": "text",
+         "text": "!"
+        }
+       ]
+      }
+     }
+    ],
+    "docChanged": true,
+    "sel": {
+     "type": "text",
+     "anchor": 42,
+     "head": 42
+    },
+    "t": 1794501020300
+   }
+  ]
+ },
+ "log": [
+  {
+   "at": 1794501008265,
+   "level": "info",
+   "message": "start · Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
+  },
+  {
+   "at": 1794501008266,
+   "level": "info",
+   "message": "boot: scripts loaded +604 ms"
+  },
+  {
+   "at": 1794501008320,
+   "level": "info",
+   "message": "boot: shell started +658 ms"
+  },
+  {
+   "at": 1794501008452,
+   "level": "info",
+   "message": "boot: settings read +791 ms"
+  },
+  {
+   "at": 1794501008659,
+   "level": "info",
+   "message": "boot: first render +997 ms"
+  },
+  {
+   "at": 1794501009154,
+   "level": "info",
+   "message": "boot: store answered +1492 ms"
+  },
+  {
+   "at": 1794501009154,
+   "level": "info",
+   "message": "status: starting"
+  },
+  {
+   "at": 1794501009200,
+   "level": "info",
+   "message": "status: local"
+  },
+  {
+   "at": 1794501009203,
+   "level": "info",
+   "message": "boot: store ready +1541 ms (1 pages)"
+  }
+ ]
+}

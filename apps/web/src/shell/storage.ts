@@ -217,3 +217,17 @@ export const guestDeviceNode = (id: string) => ({
   get: (): string | undefined => read<string | undefined>(`based.guest.${id}.device`, undefined),
   set: (node: string) => write(`based.guest.${id}.device`, node),
 });
+
+/** BSD-319: Entwickler-Ansicht (Blockgrenzen, Ebenen, Fokus, letzte Ereignisse) – pro Gerät, Settings → Diagnostics. */
+const devViewListeners = new Set<() => void>();
+export const devViewPref = {
+  get: (): boolean => read<unknown>("based.devView", false) === true,
+  set: (on: boolean) => {
+    write("based.devView", on ? true : undefined);
+    devViewListeners.forEach((f) => f());
+  },
+  subscribe: (f: () => void) => {
+    devViewListeners.add(f);
+    return () => void devViewListeners.delete(f);
+  },
+};
