@@ -16,7 +16,7 @@ import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
-import { DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
+import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { autoUpdatePref, deviceNode, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
@@ -384,6 +384,7 @@ export function registerBuiltinSettings() {
   // BSD-319: Diagnostics in Gruppen (diagnostics.tsx)
   registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Status", order: 10, component: StatusSection });
   registerSettingsSection({ id: "diagnostics-problems", page: "diagnostics", title: "Problems", order: 20, component: ProblemsSection, provides: ["Hang reports"] });
+  registerSettingsSection({ id: "diagnostics-crash", page: "diagnostics", title: "Crash reports", order: 25, component: CrashReportsSection });
   registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"] });
   registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"] });
   registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection });

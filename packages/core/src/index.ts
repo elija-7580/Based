@@ -166,6 +166,10 @@ export {
   type DiagnosticsEntry, type DiagnosticsLevel, type DiagnosticsStorage, type ReportFacts, type SessionRecord, type StallDetectorOptions,
 } from "./diagnostics.js";
 export {
+  buildCrashReport, CRASH_CONSENT_KEY, CRASH_HANDLED_KEY, CRASH_LOG_LIMIT, CRASH_REPORT_FORMAT, CRASH_REPORT_VERSION, crashKind, crashReportSummary, crashReportText,
+  shouldOfferCrashReport, type CrashKind, type CrashReport,
+} from "./crashReport.js";
+export {
   WB_KINDS, backZ, bounds, danglingConnectors, frontZ, parseWBObject, sortByZ, wbFields,
   type ConnectorEnd, type ConnectorShape, type ConnectorSide, type WBConnector, type WBKind, type WBObject, type WBShape, type WBStyleValue,
 } from "./whiteboard/model.js";

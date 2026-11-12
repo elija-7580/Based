@@ -13,6 +13,7 @@ import { BUILD, recorder } from "../../shell/bugReport.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
 import { bundleFile, onReportsChanged, reportsChanged, reportStore, type SavedReport } from "../../shell/reportStore.js";
 import { reportUI, startReport } from "../../shell/reportUI.js";
+import { crashConsentPref, crashPrompt, previousCrashReport } from "../../shell/crashReport.js";
 import { devViewPref, deviceNode } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
 import type { SettingsSectionProps } from "./registry.js";
@@ -56,6 +57,25 @@ export function ProblemsSection(_: SettingsSectionProps) {
       {freezes ? <Row label="Freezes" hint="The app stopped responding for two seconds or longer"><Value testID="diagnostics-freezes">{freezes}</Value></Row> : null}
       {errors.length ? <Row label="Errors" hint={last(errors)}><Value testID="diagnostics-errors">{errors.length}</Value></Row> : null}
       {warnings.length ? <Row label="Warnings" hint={last(warnings)}><Value testID="diagnostics-warnings">{warnings.length}</Value></Row> : null}
+    </Group>
+  );
+}
+
+/**
+ * BSD-276: Absturzberichte – Einwilligung (Standard aus), Bericht über die vorige Sitzung von Hand vorbereiten. Senden
+ * aus der App gibt es noch nicht (kein Ziel, kein Datenschutztext): die Zeile sagt das.
+ */
+export function CrashReportsSection(_: SettingsSectionProps) {
+  const on = useSyncExternalStore(crashConsentPref.subscribe, crashConsentPref.get);
+  const report = useMemo(() => previousCrashReport(), []);
+  return (
+    <Group>
+      <Switch label="Offer a report after a crash or freeze" description="When Based didn’t close normally or froze, it asks at the next start. Reports hold no pages, titles or text."
+        value={on} onChange={(v) => crashConsentPref.set(v)} labelPosition="start" labelSpacing="spread" width="100%" data-testid="crash-consent" />
+      <Row label="Last session" hint={report ? (report.kind === "crash" ? "Didn’t close normally" : `Froze ${plural(report.session.freezes, "time")}`) : "Closed normally — nothing to report"}>
+        <BasedButton label="Prepare report…" variant="ghost" disabled={!report} onClick={() => crashPrompt.show()} />
+      </Row>
+      <Row label="Sending" hint="Not available in this beta yet — save the report as a file or copy it and pass it on." />
     </Group>
   );
 }

@@ -1,0 +1,8 @@
+/* BSD-276: Vorschau des Absturzberichts – wie das Diagnose-Log (settings.css), markierbar, scrollt in sich. */
+.crash-report-preview {
+  margin: 0; max-height: min(calc(var(--space-8) * 6), 28vh); overflow: auto; overscroll-behavior: contain; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md); background: var(--surface-soft); color: var(--ink-2);
+  font-family: var(--font-mono); font-size: var(--type-meta-size); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere;
+  -webkit-user-select: text; user-select: text;
+}
+.crash-report-preview:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
