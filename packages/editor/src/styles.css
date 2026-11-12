@@ -403,3 +403,9 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 }
 .bx-image-viewer-close:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 2px; }
 @media print { .bx-image-viewer { display: none; } }
+
+/* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
+   (wie Notion), Häkchen in der Tinte (wie die To-dos in der Seitenleiste). */
+.bx-editor .bn-inline-content a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: var(--space-half); }
+.bx-editor .bn-inline-content a:hover { text-decoration-color: var(--ink); }
+.bx-editor input[type="checkbox"] { accent-color: var(--ink); }
