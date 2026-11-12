@@ -423,6 +423,12 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 }
 .bx-image-viewer-close:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 2px; }
 @media print { .bx-image-viewer { display: none; } }
+/* BSD-290: Markiertes Bild/Video ohne das Blau von BlockNote – Rahmen in der Marker-Farbe, keine Tönung. */
+.bx-editor .bn-block-content.ProseMirror-selectednode > [data-file-block]::after,
+.bx-editor .bn-block-content.ProseMirror-selectednode > *::after,
+.bx-editor .ProseMirror-selectednode > .bn-block-content > *::after {
+  background-color: transparent; box-shadow: inset 0 0 0 2px var(--marker-strong); border-radius: var(--radius-xs);
+}
 
 /* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
    (wie Notion), Häkchen in der Tinte (wie die To-dos in der Seitenleiste). */

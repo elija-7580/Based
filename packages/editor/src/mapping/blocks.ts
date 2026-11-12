@@ -33,7 +33,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   callout: ["color", "icon"],
   code: ["language"],
   equation: ["expression"],
-  image: ["url", "asset", "caption", "width"], video: ["url", "asset", "caption", "width"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
+  image: ["url", "asset", "caption", "width", "align"], video: ["url", "asset", "caption", "width", "align"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
   pdf: ["url", "asset"], embed: ["url"], bookmark: ["url"],
   linkToPage: ["linkTarget"],
   syncedBlock: ["syncSource"],
@@ -50,6 +50,11 @@ export const OWNS_TEXT: ReadonlySet<string> = new Set([
 
 /** Metadaten, die nie im Editor stehen. */
 const META_KEYS = ["id", "parent", "sk", "createdAt", "updatedAt", "createdBy", "updatedBy", "stamp", "trashedAt"] as const;
+
+/** BSD-290: Ausrichtung eines Medienblocks; „left“ (Vorgabe) und Unbekanntes werden nicht gespeichert. */
+export function mediaAlign(v: unknown): "center" | "right" | undefined {
+  return v === "center" || v === "right" ? v : undefined;
+}
 
 export function isOpaqueType(type: string): boolean {
   return OPAQUE_KNOWN.has(type) || !(type in OWNED_PROPS || OWNS_TEXT.has(type) || KNOWN_ATOMS.has(type));
@@ -121,6 +126,8 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
         caption: plainText(p.caption),
         // BSD-168/290: Breite eines Bildes/Videos (Griff ziehen) wie Swift `props.width` in Punkten.
         ...((b.type === "image" || b.type === "video") && typeof p.width === "number" && p.width > 0 ? { previewWidth: p.width } : {}),
+        // BSD-290: Ausrichtung eines Bildes/Videos (links, Mitte, rechts) wie Notion; fehlt = links.
+        ...((b.type === "image" || b.type === "video") ? { textAlignment: mediaAlign(p.align) ?? "left" } : {}),
       });
     // BSD-208: hochgeladene PDFs liegen wie Dateien als `asset` vor (Swift), im Editor als based-asset:-URL.
     case "pdf": case "embed": case "bookmark": return atom(CUSTOM.embed, { kind: b.type, url: p.url ?? (b.type === "pdf" && p.asset ? ASSET_URL_PREFIX + p.asset.id : "") });
@@ -205,7 +212,8 @@ export function extractOwned(bn: BNBlock): Owned {
       const asset = url.startsWith(ASSET_URL_PREFIX) ? { id: url.slice(ASSET_URL_PREFIX.length), name: str(p.name) } : undefined;
       const w = Number(p.previewWidth);
       const width = (bn.type === "image" || bn.type === "video") && Number.isFinite(w) && w > 0 ? w : undefined;
-      return { type: bn.type, props: { url: asset ? undefined : nonEmpty(url), asset, caption: nonEmpty(p.caption), width } };
+      const align = bn.type === "image" || bn.type === "video" ? mediaAlign(p.textAlignment) : undefined;
+      return { type: bn.type, props: { url: asset ? undefined : nonEmpty(url), asset, caption: nonEmpty(p.caption), width, align } };
     }
     case CUSTOM.embed: {
       const kind = str(p.kind);

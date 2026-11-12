@@ -1,7 +1,7 @@
 // BSD-154: Records ⇄ BlockNote-Blöcke (rein, ohne Y.Doc).
 import { describe, expect, it } from "vitest";
 import { canonicalStringify, type Block } from "@based/core";
-import { docBlockIDs, projectDoc } from "../src/mapping/blocks.js";
+import { docBlockIDs, mediaAlign, projectDoc } from "../src/mapping/blocks.js";
 import { materializeDoc } from "../src/mapping/materialize.js";
 import { canonicalRichText, inlineToRichText, richTextToInline } from "../src/mapping/richtext.js";
 import { assignSortKeys } from "../src/mapping/sortkeys.js";
@@ -35,6 +35,31 @@ describe("Mapping", () => {
     const put = changes.puts.find((b) => b.id === img.id)!;
     expect(put.props?.width).toBe(312);
     expect(put.props?.asset?.id).toBe("asset-3");
+  });
+
+  it("BSD-290: Ausrichtung eines Bildes ⇄ props.align; alte Records ohne align bleiben unverändert (links)", () => {
+    const store = corpusStore();
+    const blocks = projectDoc(store, "p-root");
+    const find = (list: typeof blocks): (typeof blocks)[number] | undefined => {
+      for (const b of list) {
+        if (b.id === "bima-0017-0000-4000-8000-000000000000") return b;
+        const c = find((b.children ?? []) as typeof blocks);
+        if (c) return c;
+      }
+      return undefined;
+    };
+    const img = find(blocks)!;
+    const props = img.props as Record<string, unknown>;
+    // alter Stand: kein align im Record → links, und das Zurückschreiben ändert nichts
+    expect(store.blocks.get(img.id)!.props?.align).toBeUndefined();
+    expect(props.textAlignment).toBe("left");
+    expect(materializeDoc(store, "p-root", blocks, { now: 1 }).puts).toEqual([]);
+    props.textAlignment = "center";
+    const put = materializeDoc(store, "p-root", blocks, { now: 1 }).puts.find((b) => b.id === img.id)!;
+    expect(put.props?.align).toBe("center");
+    expect(put.props?.caption).toEqual(store.blocks.get(img.id)!.props?.caption); // Caption (richText) bleibt erhalten
+    // „left“ (Vorgabe) und Unbekanntes werden nicht gespeichert
+    expect([mediaAlign("left"), mediaAlign("justify"), mediaAlign(undefined), mediaAlign("right")]).toEqual([undefined, undefined, undefined, "right"]);
   });
 
   it("richText mit allen Marken, Erwähnungen und Gleichung", () => {
