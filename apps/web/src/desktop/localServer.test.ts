@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, localServer, newToken, parseNodeProbe, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, localServer, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -34,5 +34,20 @@ describe("lokaler Server und CLI (Desktop)", () => {
     await localServer().start();
     expect(await localServer().probeNode()).toBeUndefined();
     expect(localServer().getState().status).toBe("unavailable");
+  });
+});
+
+describe("Tailnet (BSD-315)", () => {
+  it("READY-Zeile: nur Tailscale-Adressen werden übernommen", () => {
+    expect(parseReady('BASED_LOCAL_READY {"url":"http://127.0.0.1:47821","pid":7,"tailnet":["http://100.101.102.103:47821","http://[fd7a:115c:a1e0::42]:47821","http://192.168.1.5:47821","http://100.128.0.1:47821"]}'))
+      .toEqual({ url: "http://127.0.0.1:47821", pid: 7, tailnet: ["http://100.101.102.103:47821", "http://[fd7a:115c:a1e0::42]:47821"] });
+    expect(parseReady('BASED_LOCAL_READY {"url":"http://127.0.0.1:47821","pid":7,"tailnet":[]}')).toEqual({ url: "http://127.0.0.1:47821", pid: 7, tailnet: [] });
+  });
+  it("Kopplungs-Link hin und zurück; nur Geräte-Token", () => {
+    const link = pairingLink("http://100.101.102.103:47821", "bdo_abc");
+    expect(link).toBe("based://pair?url=http%3A%2F%2F100.101.102.103%3A47821&token=bdo_abc");
+    expect(parsePairingLink(link)).toEqual({ url: "http://100.101.102.103:47821", token: "bdo_abc" });
+    expect(parsePairingLink(pairingLink("http://x:1", "main-token"))).toBeUndefined();
+    expect(parsePairingLink("https://evil/pair?url=x")).toBeUndefined();
   });
 });

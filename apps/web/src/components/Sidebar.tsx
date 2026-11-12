@@ -207,7 +207,11 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   };
   const onDrop = (e: DragEvent<HTMLElement>, row: SidebarRow) => {
     const id = dragging.current ?? e.dataTransfer.getData(DRAG_TYPE);
-    const zone = drop?.key === row.key ? drop.zone : "inside";
+    // Zone aus der Position des Drops selbst (wie in onDragOver), nicht aus dem React-Zustand: unter Last kam der
+    // Drop vor dem Neuzeichnen nach dem letzten dragover an, der Zustand war alt und die Seite landete „inside“
+    // statt davor (CI, WebKit, shell.spec.ts „Ziehen sortiert um“).
+    const rect = e.currentTarget.getBoundingClientRect();
+    const zone = row.kind === "page" ? dropZone(e.clientY - rect.top, rect.height, !row.database) : "inside";
     setDrop(undefined);
     dragging.current = undefined;
     if (!id) return;

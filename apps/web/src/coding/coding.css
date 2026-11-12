@@ -9,8 +9,12 @@
 @media (max-width: 760px) {
   .coding-split { flex-direction: column; }
   .coding-side { flex-basis: auto; width: 100%; }
+  /* BSD-315: Freigaben auf dem Handy mit großen Knöpfen (Tippziel ≥ 44 px) */
+  .coding-ask button { min-height: calc(var(--space-7) + var(--space-1)); }
 }
 .coding-composer > :first-child { flex: 1 1 auto; min-width: 0; }
 /* BSD-313: Slash-/Datei-Menü über der Eingabe */
 .coding-composer-wrap { position: relative; }
 .coding-menu { position: absolute; left: 0; right: 0; bottom: calc(100% + var(--space-1)); max-height: calc(var(--space-8) * 5); overflow: auto; z-index: 5; box-shadow: var(--shadow-float); }
+/* BSD-314: Terminal (xterm.js) – gleiche Fläche wie die Konsole */
+.coding-terminal { min-height: calc(var(--space-8) * 3); height: min(60vh, calc(100vh - var(--space-8) * 6.5)); border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--surface-raised); padding: var(--space-2); box-sizing: border-box; overflow: hidden; }

@@ -54,6 +54,7 @@ test.beforeAll(async ({ browserName }) => {
     cwd: serverDir,
     env: { ...process.env, HOME: home, BASED_TOKEN: TOKEN, BASED_LOG_LEVEL: "warning" },
     stdio: ["ignore", "ignore", "inherit"],
+    detached: true,
   });
   for (let i = 0; i < 150; i++) {
     try {
@@ -66,11 +67,18 @@ test.beforeAll(async ({ browserName }) => {
   throw new Error("based-server did not start");
 });
 
-test.afterAll(() => {
-  server?.kill();
-  if (dataDir) rmSync(dataDir, { recursive: true, force: true });
-  if (root) rmSync(root, { recursive: true, force: true });
-  if (home) rmSync(home, { recursive: true, force: true });
+test.afterAll(async () => {
+  // BSD-314: erst warten, bis der Server (und mit ihm die Terminal-Shell) beendet ist – die Shell schreibt beim
+  // Beenden noch ihren Verlauf ins Home.
+  // Prozessgruppe beenden (pnpm → tsx → Server → Shell), nicht nur pnpm.
+  if (server?.pid && server.exitCode === null) {
+    await new Promise<void>((r) => { server.once("exit", () => r()); try { process.kill(-server.pid!, "SIGTERM"); } catch { server.kill(); } setTimeout(r, 5000); });
+  }
+  // Aufräumen in /tmp darf den Lauf nicht rot machen (eine Shell kann ihren Verlauf noch schreiben).
+  const rm = (p: string) => { try { rmSync(p, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* bleibt in /tmp */ } };
+  if (dataDir) rm(dataDir);
+  if (root) rm(root);
+  if (home) rm(home);
 });
 
 test("ohne Server: ehrlicher Hinweis", async ({ page }) => {
@@ -292,4 +300,104 @@ test("BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt d
     }
     await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
   }
+});
+
+// BSD-314: echtes Terminal je Sitzung (xterm.js + PTY auf dem Server), im Arbeitsordner der Sitzung.
+test("BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.goto("/#coding");
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  await expect(page.getByTestId("coding-agent-mode")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("radio", { name: "Terminal" }).click();
+  const term = page.getByTestId("coding-terminal");
+  await expect(term.locator(".xterm-rows")).toBeVisible({ timeout: 15_000 });
+  await term.click();
+  await page.keyboard.type("pwd; echo hi-$((40+2))");
+  await page.keyboard.press("Enter");
+  await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+  await expect(term.locator(".xterm-rows")).toContainText(root.split("/").pop()!);
+  // Zurück zum Transkript und wieder hin: dieselbe Shell, alte Ausgabe noch da
+  await page.getByRole("radio", { name: "Transcript" }).click();
+  await expect(page.getByTestId("coding-console")).toBeVisible();
+  await page.getByRole("radio", { name: "Terminal" }).click();
+  await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
+      await page.getByRole("radio", { name: "Terminal" }).click();
+      await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        const box = (await term.boundingBox())!;
+        expect(box.x + box.width).toBeLessThanOrEqual(w);
+        // xterm füllt die Fläche (Größe folgt dem Fenster)
+        await expect.poll(async () => (await term.locator(".xterm-screen").boundingBox())!.width).toBeGreaterThan(box.width * 0.85);
+        await expect(page.getByTestId("coding-agent-mode")).toBeInViewport();
+        await page.screenshot({ path: join(screens, `web-coding-terminal-${theme}${w === 1280 ? "" : `-${w}`}.png`) });
+      }
+      await page.setViewportSize({ width: 1280, height: 820 });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+});
+
+// BSD-315: vom Handy (390 × 844) bedienbar – Sitzung starten, Freigabe mit großen Knöpfen, nichts läuft waagrecht heraus.
+test("BSD-315: #coding auf dem Handy (390 × 844)", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  // verbinden im großen Fenster, dann aufs Handy-Format
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#coding");
+  await expect(page.getByTestId("coding-screen")).toBeVisible();
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  await expect(page.getByTestId("coding-agent-mode")).toBeVisible({ timeout: 15_000 });
+  writeFileSync(join(root, "a.txt"), "old\n");
+  await page.getByLabel("Message", { exact: true }).fill(`edit ${root}/a.txt`);
+  await page.getByTestId("coding-send").click();
+  const ask = page.getByTestId("coding-permission");
+  await expect(ask).toContainText("wants to: Edit");
+  const allow = ask.getByRole("button", { name: "Allow", exact: true });
+  await allow.scrollIntoViewIfNeeded();
+  // große Knöpfe zum Tippen (≥ 44 px hoch)
+  expect((await allow.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  // Reiter oben nicht abgeschnitten (kein „Sess…“)
+  for (const name of ["Sessions", "CLI history", "Setup"]) {
+    const r = page.getByRole("radio", { name });
+    expect(await r.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), name).toBe(true);
+  }
+  expect(await overflow()).toBeLessThanOrEqual(1);
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("coding-permission")).toBeVisible({ timeout: 15_000 });
+      await page.screenshot({ path: join(screens, `web-coding-phone-${theme}.png`) });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+  await allow.click();
+  await expect(page.getByTestId("coding-inbox")).toHaveCount(0);
 });

@@ -96,6 +96,8 @@ class Session {
 
 export class CodingSessions {
   readonly inbox: PermissionInbox;
+  /** BSD-314: wird mit der ID gerufen, wenn eine Sitzung endet (z. B. ihr Terminal schließen). */
+  readonly onClosed = new Set<(id: string) => void>();
   private readonly sessions = new Map<string, Session>();
   private counter = 0;
   private inboxVer = 0;
@@ -241,6 +243,7 @@ export class CodingSessions {
     s.agentProcess?.stop();
     s.state = "closed";
     s.wake();
+    for (const fn of this.onClosed) fn(id);
   }
 
   closeAll(): void {

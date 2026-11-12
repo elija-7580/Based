@@ -89,6 +89,20 @@ test("Vor und zurück; Favoriten; Ziehen sortiert um", { tag: "@smoke" }, async 
   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
 });
 
+// BSD-322 Nachtrag: Der Drop entscheidet die Zone aus seiner eigenen Position. Vorher galt der Zustand des letzten
+// dragover; kam der Drop vor dem Neuzeichnen an (Last in der CI, WebKit), landete die Seite „inside“ statt davor.
+test("Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position", async ({ page }) => {
+  await newTopLevelPage(page, "Alpha");
+  const names = () => page.locator('[role="treeitem"][aria-level="1"]').evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")));
+  await expect.poll(names).toEqual(["Welcome to Based", "Alpha"]);
+  const dt = await page.evaluateHandle(() => new DataTransfer());
+  await page.locator(".tree-row").filter({ hasText: "Alpha" }).dispatchEvent("dragstart", { dataTransfer: dt });
+  const target = page.locator(".tree-row").filter({ hasText: "Welcome to Based" });
+  const box = (await target.boundingBox())!;
+  await target.dispatchEvent("drop", { dataTransfer: dt, clientX: box.x + 40, clientY: box.y + 2 });
+  await expect.poll(names).toEqual(["Alpha", "Welcome to Based"]);
+});
+
 test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
   await based(page).seed(5000);
   await expect(page.getByRole("treeitem", { name: "Page 0001" })).toBeVisible();
