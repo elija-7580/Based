@@ -181,15 +181,36 @@ test("Gliederung überdeckt nie den Text", async ({ page }) => {
   }, "# One\n\n" + "Long text line that fills the whole column of the page. ".repeat(6) + "\n\n## Two\n\nText");
   const outline = page.getByTestId("page-outline");
   await expect(outline).toBeVisible();
+  const state = () => page.evaluate(() => {
+    const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
+    const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
+    const shown = getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none";
+    return { shown, clear: !shown || o.getBoundingClientRect().left >= text.right };
+  });
   for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
     await page.setViewportSize({ width: w, height: h });
-    await page.waitForTimeout(300);
-    const r = await page.evaluate(() => {
-      const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
-      const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
-      return { shown: getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none", left: o.getBoundingClientRect().left, textRight: text.right };
-    });
-    if (r.shown) expect(r.left, `bei ${w}`).toBeGreaterThanOrEqual(r.textRight);
-    if (w === 1280) expect(r.shown).toBe(true);
+    // Unter Last kommt die Messung (ResizeObserver) einen Moment später: auf den Endzustand warten statt fester Zeit.
+    await expect.poll(async () => (await state()).clear, { message: `Gliederung frei vom Text bei ${w}` }).toBe(true);
+    if (w === 1280) await expect.poll(async () => (await state()).shown).toBe(true);
   }
+});
+
+// BSD-301 Teil 2: 30 Tabs mit langen Titeln und eine Datenbank mit langen Spaltennamen und vielen Zeilen.
+test("30 Tabs und eine breite Datenbank: nichts läuft über", async ({ page, browserName }) => {
+  await page.goto("/");
+  await ready(page);
+  const ids: string[] = [];
+  for (let i = 1; i <= 30; i++) ids.push((await command(page, { op: "createPage", title: `Tab ${i} ${LONG_TITLE}` })) as string);
+  await page.evaluate((list) => {
+    const h = (globalThis as unknown as { __based: { history: { openTab: (r: unknown, o?: unknown) => string } } }).__based.history;
+    for (const id of list) h.openTab({ name: "page", id }, { background: true });
+  }, ids);
+  const dbID = (await command(page, { op: "createDatabase", title: "Wide " + LONG_TITLE })) as string;
+  const db = "#page-" + dbID;
+  await go(page, db);
+  await expect(page.locator(".dbui-table").first()).toBeVisible();
+  const found = await check(page, [{ name: "tabs-db", hash: db }, { name: "tabs-home", hash: "#home" }], "tabs", browserName);
+  expect(found).toEqual([]);
+  // Die Tab-Leiste rollt waagrecht statt das Fenster zu verbreitern
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });

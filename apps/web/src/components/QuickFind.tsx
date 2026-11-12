@@ -30,7 +30,16 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const listID = useId();
   const input = useRef<HTMLInputElement>(null);
 
-  useLayoutEffect(() => input.current?.focus(), []);
+  // BSD-304: Fokus beim Schließen dorthin zurück, wo er vorher war (Seitenleiste, Editor …) – außer man hat eine
+  // Seite geöffnet, dann bestimmt die neue Seite den Fokus.
+  const opened = useRef(false);
+  useLayoutEffect(() => {
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+    input.current?.focus();
+    return () => {
+      if (!opened.current && before?.isConnected) before.focus({ preventScroll: true });
+    };
+  }, []);
   useEffect(() => {
     void client.warmSearch().catch(() => undefined);
     return () => client.cancelSearch();
@@ -62,6 +71,7 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   const open = (i: number) => {
     const it = items[i];
     if (!it) return;
+    opened.current = true;
     if ("command" in it) onCommand?.(it.command.id);
     else onOpen(it.pageID);
   };

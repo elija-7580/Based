@@ -46,3 +46,11 @@ describe("[[Wikilinks]] asynchron aufgelöst", () => {
     }
   });
 });
+
+describe("Slash-Menü: Gruppen hintereinander (BSD-305)", () => {
+  it("bringt Einträge derselben Gruppe zusammen, Reihenfolge nach erstem Auftreten", async () => {
+    const { groupContiguous } = await import("../src/ui/PageEditor.js");
+    const r = groupContiguous([{ group: "A", t: 1 }, { group: "M", t: 2 }, { group: "B", t: 3 }, { group: "M", t: 4 }, { group: "A", t: 5 }]);
+    expect(r.map((x) => `${x.group}${x.t}`)).toEqual(["A1", "A5", "M2", "M4", "B3"]);
+  });
+});

@@ -783,7 +783,23 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     });
   }
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
-  return [...defaults, ...custom];
+  return groupContiguous([...defaults, ...custom]);
+}
+
+/**
+ * BSD-305: Einträge derselben Gruppe hintereinander (Reihenfolge der Gruppen nach erstem Auftreten). BlockNote setzt
+ * je Gruppenwechsel eine Überschrift mit der Gruppe als React-Schlüssel – kam „Media“ zweimal vor (Standard- und
+ * eigene Einträge), gab es doppelte Schlüssel, und beim Filtern blieben leere Überschriften stehen.
+ */
+export function groupContiguous<T extends { group?: string }>(items: T[]): T[] {
+  const order: string[] = [];
+  const byGroup = new Map<string, T[]>();
+  for (const it of items) {
+    const g = it.group ?? "";
+    if (!byGroup.has(g)) { byGroup.set(g, []); order.push(g); }
+    byGroup.get(g)!.push(it);
+  }
+  return order.flatMap((g) => byGroup.get(g)!);
 }
 
 /**
