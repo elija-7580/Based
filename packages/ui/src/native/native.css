@@ -4,28 +4,35 @@
 /* Ebene: liegt im Top Layer (popover) bzw. ohne Popover-API fest über allem. */
 .nf-layer, .nf-tip { position: fixed; z-index: 10000; margin: 0; border: 0; inset: auto; box-sizing: border-box; }
 .nf-layer[popover], .nf-tip[popover] { inset: auto; margin: 0; border: 0; }
+/* Aussehen wie die übrigen Based-Menüs (.menu, z. B. „…“ oben rechts auf einer Seite): gleiche Fläche, auf dem Mac
+   Glas mit Unschärfe und Kanten-Licht, derselbe Menü-Schatten, gleiche Zeilenhöhe, Icons und Abstände. */
 .nf-layer {
   top: 0; left: 0; overflow: auto; max-height: calc(100vh - var(--space-4)); max-width: calc(100vw - var(--space-4));
   background: var(--bg); color: var(--ink); border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); padding: var(--space-1);
   font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading);
-  -webkit-user-select: none; user-select: none; cursor: default; animation: fade-in var(--duration-fast) var(--ease-out);
+  -webkit-user-select: none; user-select: none; cursor: default; animation: nf-in var(--duration-fast) var(--ease-out);
 }
-/* Bewusst deckend, auch im Glas-Material: backdrop-filter greift im Top Layer nicht überall, der Inhalt darunter
-   schiene sonst durch den Text. */
+[data-material="glass"] .nf-layer { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
+@keyframes nf-in { from { opacity: 0; transform: translateY(calc(-1 * var(--space-1))); } }
 
-/* Menü und Auswahlliste */
+/* Menü und Auswahlliste – Zeilen wie .menu-item */
 /* Lange Listen (Uhrzeiten, viele Optionen) scrollen in der Liste, statt das Fenster zu füllen. */
-.nf-menu { display: flex; flex-direction: column; min-width: calc(var(--space-8) * 3); max-height: min(calc(var(--space-6) * 10 + var(--space-2)), calc(100vh - var(--space-4))); }
+.nf-menu { display: flex; flex-direction: column; min-width: calc(var(--sidebar-width) - var(--space-5)); max-height: min(calc(var(--space-6) * 10 + var(--space-2)), calc(100vh - var(--space-4))); }
+.nf-menu[role="listbox"] { min-width: calc(var(--space-8) * 3); }
 .nf-menu > * { flex: none; }
-.nf-item { display: flex; align-items: center; gap: var(--space-3); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md); white-space: nowrap; }
+.nf-item { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md); white-space: nowrap; }
 .nf-item[data-active] { background: var(--surface-raised); }
 .nf-item[aria-disabled="true"] { color: var(--muted); opacity: 0.6; }
 .nf-item.danger { color: var(--danger); }
+.nf-with-icons .nf-item:not(:has(.nf-icon)) { padding-left: calc(var(--space-3) + var(--space-2) + 18px); /* Icon 18 px wie in .menu */ }
+.nf-icon { flex: none; }
+.nf-glyph { display: inline-flex; flex: none; }
 .nf-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.nf-hint { color: var(--muted); font-size: var(--type-meta-size); padding-left: var(--space-4); }
+.nf-hint { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-size: var(--type-meta-size); }
+.nf-check-icon { display: inline-flex; margin-left: auto; color: var(--ink); }
 .nf-check { flex: none; width: var(--space-2); height: var(--space-3); margin-right: var(--space-1); border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
 .nf-sep { height: 1px; background: var(--line); margin: var(--space-1) 0; flex: none; }
-.nf-heading { padding: var(--space-2) var(--space-3) var(--space-1); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
+.nf-heading { padding: var(--space-1) var(--space-3); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
 
 /* Kalender */
 .nf-cal { padding: var(--space-3); }

@@ -190,6 +190,17 @@
 .bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
 .bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--marker-strong); }
 .bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
+/* Menüs (Blockgriff ⋮⋮ und Untermenüs) wie die übrigen Based-Menüs (.menu, „…“ oben rechts auf einer Seite): Glas auf
+   dem Mac, Kanten-Licht, gleiche Zeilen, Icons und Abstände. */
+.bn-root .bn-ak-menu { border: 0; padding: var(--space-1); min-width: calc(var(--sidebar-width) - var(--space-5)); gap: 0; }
+[data-material="glass"] .bn-root .bn-ak-menu { background: var(--chrome-bg); backdrop-filter: var(--chrome-filter); -webkit-backdrop-filter: var(--chrome-filter); box-shadow: var(--shadow-menu), var(--chrome-edge); }
+.bn-root .bn-ak-menu .bn-ak-menu-item {
+  display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-6); padding: 0 var(--space-3); border-radius: var(--radius-md);
+  font-family: var(--font-ui); font-size: var(--type-ui-size); line-height: var(--type-ui-leading); color: var(--ink);
+}
+.bn-root .bn-ak-menu .bn-ak-menu-item:hover, .bn-root .bn-ak-menu .bn-ak-menu-item[data-active-item] { background-color: var(--surface-raised); }
+.bn-root .bn-ak-menu .bn-ak-menu-item.bx-menu-danger { color: var(--danger); }
+.bn-root .bn-ak-menu .nf-glyph { display: inline-flex; flex: none; }
 
 /* Erwähnungen: Icon + Titel, Papierkorb/gelöscht markiert; Datum mit Erinnerungs-Feld */
 .bx-mention[data-kind="page"] { display: inline-flex; align-items: baseline; gap: var(--space-1); white-space: nowrap; max-width: 100%; }

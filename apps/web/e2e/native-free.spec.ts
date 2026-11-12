@@ -154,3 +154,46 @@ test("Keine Systemauswahl für Datum und Uhrzeit in der App", async ({ page }) =
     expect(await page.locator("input[type=date], input[type=time], input[type=datetime-local], input[type=color], input[type=month], input[type=week]").count()).toBe(0);
   }
 });
+
+test("Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben", async ({ page }) => {
+  await fresh(page);
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByTestId("page-content")).toContainText("This is your workspace");
+  for (const text of ["Start here", "Press ⌘K"]) {
+    await page.getByTestId("page-content").locator("h1, h2, h3, p, [data-content-type]").filter({ hasText: text }).last().hover();
+    const handle = page.locator(".bn-side-menu [draggable=true]").last();
+    const h = (await handle.boundingBox())!;
+    await handle.click();
+    const menu = page.locator(".bn-drag-handle-menu");
+    await expect(menu).toBeVisible();
+    const m = (await menu.boundingBox())!;
+    expect(Math.abs(m.y - h.y), `${text}: oben bündig`).toBeLessThanOrEqual(4);
+    expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
+    // Gleiche Icons wie im Seitenmenü „…“
+    await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+  }
+});
+
+test("Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts", async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, "platform", { get: () => "MacIntel" }));
+  await fresh(page);
+  await expect(page.locator("html")).toHaveAttribute("data-material", "glass");
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByTestId("page-content")).toContainText("This is your workspace");
+  const look = (sel: string) => page.locator(sel).first().evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { bg: cs.backgroundColor, filter: cs.backdropFilter || cs.getPropertyValue("-webkit-backdrop-filter"), shadow: cs.boxShadow, radius: cs.borderTopLeftRadius };
+  });
+  await page.getByRole("button", { name: "Page menu" }).click();
+  const reference = await look(".page-menu");
+  expect(reference.filter).not.toBe("none");
+  await page.keyboard.press("Escape");
+  await page.getByLabel("Page title").click({ button: "right" });
+  expect(await look(".nf-menu")).toEqual(reference);
+  await page.keyboard.press("Escape");
+  await page.getByTestId("page-content").locator("h1, h2, h3").filter({ hasText: "Start here" }).first().hover();
+  await page.locator(".bn-side-menu [draggable=true]").last().click();
+  expect(await look(".bn-drag-handle-menu")).toEqual(reference);
+});

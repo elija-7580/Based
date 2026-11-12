@@ -3,6 +3,13 @@
 import { openLayer, pointer, type Layer, type LayerAnchor } from "./layer.js";
 import { isAction, nextEnabled, typeahead, type MenuEntry } from "./logic.js";
 
+/** Zeichnet ein Icon aus dem Satz der App (apps/web/icons.tsx); ohne: Menüs ohne Icons. */
+let iconRenderer: ((name: string) => Element | undefined) | undefined;
+export function setMenuIcons(render: ((name: string) => Element | undefined) | undefined) { iconRenderer = render; }
+const icon = (name: string | undefined) => (name ? iconRenderer?.(name) : undefined);
+/** Icon aus dem Satz der App als DOM-Element (für Menüs anderer Bausteine, z. B. das Blockmenü des Editors). */
+export const menuIcon = (name: string): Element | undefined => icon(name);
+
 export interface MenuOptions {
   label?: string;
   role?: "menu" | "listbox";
@@ -19,6 +26,7 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
   el.className = "nf-menu";
   el.setAttribute("role", role);
   if (opts.label) el.setAttribute("aria-label", opts.label);
+  if (entries.some((e) => "label" in e && e.icon && iconRenderer)) el.classList.add("nf-with-icons");
   const rows: (HTMLElement | undefined)[] = entries.map((e, i) => {
     if ("separator" in e) {
       const s = document.createElement("div");
@@ -40,6 +48,11 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
     row.dataset.nfAct = String(i);
     if (e.disabled) row.setAttribute("aria-disabled", "true");
     if (role === "listbox") row.setAttribute("aria-selected", e.checked ? "true" : "false");
+    const glyph = icon(e.icon);
+    if (glyph) {
+      glyph.classList.add("nf-icon");
+      row.appendChild(glyph);
+    }
     const label = document.createElement("span");
     label.className = "nf-label";
     label.textContent = e.label;
@@ -51,9 +64,11 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
       row.appendChild(hint);
     }
     if (e.checked) {
+      const mark = icon("check");
       const check = document.createElement("span");
-      check.className = "nf-check";
+      check.className = mark ? "nf-check-icon" : "nf-check";
       check.setAttribute("aria-hidden", "true");
+      if (mark) check.appendChild(mark);
       row.appendChild(check);
     }
     el.appendChild(row);

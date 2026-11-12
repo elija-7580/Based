@@ -3,12 +3,14 @@
 // der title-Blase. Datum/Uhrzeit: DateField/TimeField (fields.tsx). Styles: native.css.
 import { installContextMenu, type ContextMenuOptions } from "./contextMenu.js";
 import { installLayers } from "./layer.js";
+import { setMenuIcons } from "./menu.js";
 import { installSelects } from "./select.js";
 import { installTooltips } from "./tooltip.js";
 
 export { registerContextItems, contextEntries, pasteInto } from "./contextMenu.js";
 export type { ClipboardAccess, ContextInfo, ContextMenuOptions } from "./contextMenu.js";
-export { showMenu } from "./menu.js";
+export { menuIcon, setMenuIcons, showMenu } from "./menu.js";
+export { MenuGlyph } from "./MenuGlyph.js";
 export { closeLayers, openLayer } from "./layer.js";
 export { openSelect, selectEntries } from "./select.js";
 export { openCalendar, openTimeList } from "./calendar.js";
@@ -20,6 +22,7 @@ let uninstall: (() => void) | undefined;
 export function installNativeFree(opts: ContextMenuOptions = {}): () => void {
   uninstall?.();
   installLayers();
+  setMenuIcons(opts.icon);
   const parts = [installContextMenu(opts), installSelects(), installTooltips()];
   document.documentElement.dataset.nativeFree = "";
   uninstall = () => { parts.forEach((f) => f()); delete document.documentElement.dataset.nativeFree; uninstall = undefined; };

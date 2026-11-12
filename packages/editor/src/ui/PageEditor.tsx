@@ -1,5 +1,6 @@
 // BSD-154: Der Seiten-Editor. BlockNote-Kern auf einem Y.Doc je Seite (bzw. je Synced-Block-Original), Records
 // im Store als materialisierte Ansicht. Undo/Redo lokal über den Yjs-UndoManager.
+import { MenuGlyph } from "@based/ui/native";
 import { ImageViewer, imageAt, type ImageView } from "./ImageViewer.js";
 import "@blocknote/ariakit/style.css";
 import "../styles.css";
@@ -11,7 +12,7 @@ import { BlockNoteView } from "@blocknote/ariakit";
 import {
   BlockColorsItem, DragHandleMenu, FormattingToolbar, FormattingToolbarController, getDefaultReactSlashMenuItems,
   getFormattingToolbarItems, RemoveBlockItem, SideMenu, SideMenuController, SuggestionMenuController,
-  useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
+  ComponentsContext, useBlockNoteEditor, useComponentsContext, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
 import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -711,7 +712,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
-          <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} />
+          <AnchoredMenus><SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} /></AnchoredMenus>
           {/* BSD-318: Bei einer Blockauswahl keine Formatleiste (die Editor-Auswahl spannt dann nur für Blockaktionen über die Blöcke). */}
           {range ? null : (
             <FormattingToolbarController formattingToolbar={() => (
@@ -908,7 +909,7 @@ function DuplicateItem(props: { duplicate: (blocks: readonly BlockLike[]) => unk
   const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
   if (!block) return null;
   return (
-    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
+    <Components.Generic.Menu.Item className="bn-menu-item" icon={<MenuGlyph name="duplicate" />} onClick={() => {
       const a = editor as unknown as ActionEditor;
       props.duplicate(targetBlocks(a, block.id));
     }}>
@@ -958,6 +959,33 @@ function MoveToItem(props: { session: DocSession; startMove: (req: MoveRequest) 
       Move to
     </Components.Generic.Menu.Item>
   );
+}
+
+/**
+ * Menüs am Blockgriff (⋮⋮) und ihre Untermenüs liegen oben bündig neben dem Auslöser („left-start“/„right-start“),
+ * wie in Notion. BlockNote setzt „left“/„right“ (vertikal mittig): ein langes Menü sprang dann je nach Block weit nach
+ * oben und stand nicht mehr dort, wo man geklickt hat.
+ */
+const BLOCK_MENU_ICONS: Record<string, string> = {
+  "Turn into": "turnInto", Duplicate: "duplicate", "Move to": "move", "Copy as Markdown": "export", Colors: "palette",
+  "Copy and sync": "sync", "Copy link to block": "link", Delete: "trash",
+};
+
+function AnchoredMenus({ children }: { children: ReactNode }) {
+  const components = useComponentsContext()!;
+  const value = useMemo(() => {
+    const Root = components.Generic.Menu.Root;
+    const Anchored: typeof Root = (p) => <Root {...p} position={p.position === "left" ? "left-start" : p.position === "right" ? "right-start" : p.position} />;
+    // Icons wie im Seitenmenü „…“ – auch für die Einträge, die BlockNote selbst zeichnet (Colors, Delete).
+    const Item = components.Generic.Menu.Item;
+    const WithIcon: typeof Item = (p) => {
+      const name = typeof p.children === "string" ? BLOCK_MENU_ICONS[p.children] : undefined;
+      if (!name || p.icon) return <Item {...p} />;
+      return <Item {...p} icon={<MenuGlyph name={name} />} className={(p.className ?? "") + (p.children === "Delete" ? " bx-menu-danger" : "")} />;
+    };
+    return { ...components, Generic: { ...components.Generic, Menu: { ...components.Generic.Menu, Root: Anchored, Item: WithIcon } } };
+  }, [components]);
+  return <ComponentsContext.Provider value={value}>{children}</ComponentsContext.Provider>;
 }
 
 /** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen, dazu „Page“. */
