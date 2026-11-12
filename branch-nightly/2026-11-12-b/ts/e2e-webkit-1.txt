@@ -1,4 +1,11 @@
-cancelled 51092f8df6caa8438bff8c135fd9d282f1dc2d28
+cancelled 7f70dc5ec7d807bd13cdd1490625c5b01b8e30e6
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
 [WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 [WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
 [WebServer] 
@@ -28,34 +35,27 @@ cancelled 51092f8df6caa8438bff8c135fd9d282f1dc2d28
 
 Running 116 tests using 2 workers, shard 1 of 2
 
-(node:5401) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:4927) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    1 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (14.5s)
-  ✓    3 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (6.9s)
-  ✓    4 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (6.7s)
-  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (4.3s)
-  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (6.4s)
+  ✓    1 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (17.2s)
+  ✓    3 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (8.2s)
+  ✓    4 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (6.6s)
+  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (4.6s)
 Library: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen
-  ✘    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (42.5s)
-  ✓    7 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (5.0s)
-  ✓    9 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (5.0s)
+  ✘    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (43.4s)
+  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (6.3s)
+  ✓    8 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (5.2s)
+  ✓    9 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (4.9s)
   -   10 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓   11 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (10.7s)
-  ✓   12 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.1s)
-  ✓   13 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (3.6s)
-  ✓   14 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (4.2s)
-  ✓   15 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (5.7s)
+  ✓   11 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (11.1s)
+  ✓   12 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.4s)
+  ✓   13 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (3.4s)
+  ✓   14 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (4.8s)
 Library: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen
-Settings: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen
+  ✘    7 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (retry #1) (40.5s)
+  ✓   15 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (4.7s)
+  -   17 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
   -   16 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-  ✘    8 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (retry #1) (40.9s)
-(node:6710) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  -   18 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-  ✓   19 [webkit] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (3.3s)
-(node:7030) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   20 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.3s)
-  ✓   17 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (9.6s)
-(node:7226) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+  ✓   18 [webkit] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (3.0s)
+(node:6452) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,5 +1,5 @@
-packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -26,8 +26,8 @@ packages/editor test: [2m      Tests [22m [1m[32m79 passed[39m[22m[90m (7
 apps/web test: [2m      Tests [22m [1m[32m195 passed[39m[22m[90m (195)[39m
 apps/server test: [2m      Tests [22m [1m[32m146 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (147)[39m
 apps/cli test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
-packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -47,5 +47,4 @@ packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1673 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1674)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
 --- smoke
