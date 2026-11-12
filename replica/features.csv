@@ -23,7 +23,7 @@ Quick Find search (titles + content),search,must,yes,yes,"search off the main th
 Recent pages in search,search,should,yes,yes,,yes,beta
 Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope",beta
 Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende; BSD-90: unverlinkte Erwähnungen mit „Link“)",beta
-Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page; BSD-322: Papierkorb-Markierung auch nach Seitenwechsel aktuell)",beta
+Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page; BSD-322: Papierkorb-Markierung auch nach Seitenwechsel aktuell; BSD-321: [[Titel]] landet beim Weitertippen an der richtigen Stelle)",beta
 Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)",beta
 Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung",beta
 Link to page block,linking,should,yes,yes,,yes,beta
