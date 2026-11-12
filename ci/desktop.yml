@@ -1,0 +1,157 @@
+# Vorlage für .github/workflows/desktop.yml (BSD-337): nach .github/workflows/desktop.yml kopieren.
+# Unterschied zur aktiven Datei: Veröffentlichen auch bei workflow_dispatch auf main.
+# BSD-164: „Based Next“ – die Web-App (apps/web) in der Tauri-Hülle (apps/desktop) als Mac-App.
+# Baut auf macos-15 eine universelle .app (Apple Silicon + Intel), ad hoc signiert (kein Apple Developer Team),
+# prüft die Signatur, packt sie in eine DMG und veröffentlicht sie bei Pushes auf main:
+#   Release next-<version> (prerelease, nie „latest“ – die Swift-Releases v* bleiben unberührt)
+#     Based-Next.dmg            → zum Installieren (erstes Öffnen: Rechtsklick → Öffnen)
+#     Based-Next.app.tar.gz/.sig → Update-Paket für den Tauri-Updater (nur mit Signatur-Secret)
+#   Release next-latest (prerelease, fester Link): Based-Next.dmg + latest.json, das installierte Kopien abfragen.
+# Secret für Updates: TAURI_SIGNING_PRIVATE_KEY (Settings → Secrets and variables → Actions), siehe docs/desktop.md.
+# Ohne Secret entsteht trotzdem eine DMG, nur ohne Update-Paket; latest.json bleibt dann unverändert.
+name: Desktop
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "apps/desktop/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    name: Based Next (DMG)
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      APP_NAME: Based Next
+      TARGET: universal-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Rust (beide Mac-Architekturen)
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/desktop/src-tauri/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Version
+        id: version
+        run: |
+          # Laufende Nummer dieses Workflows: steigt mit jedem Lauf, damit der Updater neuere Versionen erkennt.
+          V="0.1.${GITHUB_RUN_NUMBER}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Based Next $V"
+
+      - name: Build (.app, universal, ad hoc signiert)
+        env:
+          V: ${{ steps.version.outputs.version }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+        run: |
+          CONF="$RUNNER_TEMP/tauri.ci.json"
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "{\"version\":\"$V\",\"bundle\":{\"createUpdaterArtifacts\":true}}" > "$CONF"
+          else
+            echo "::warning::Secret TAURI_SIGNING_PRIVATE_KEY fehlt – DMG ohne Update-Paket (siehe docs/desktop.md)."
+            unset TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+            echo "{\"version\":\"$V\"}" > "$CONF"
+          fi
+          cd apps/desktop
+          pnpm exec tauri build --target "$TARGET" --bundles app --config "$CONF"
+
+      - name: Signatur prüfen
+        run: |
+          APP="apps/desktop/src-tauri/target/$TARGET/release/bundle/macos/$APP_NAME.app"
+          codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature|TeamIdentifier" || true
+          lipo -archs "$APP/Contents/MacOS/"*
+          bash scripts/check-mac-signature.sh "$APP"
+
+      - name: DMG
+        env:
+          V: ${{ steps.version.outputs.version }}
+          HAS_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        run: |
+          BUNDLE="apps/desktop/src-tauri/target/$TARGET/release/bundle/macos"
+          mkdir -p dist "$RUNNER_TEMP/dmg"
+          ditto "$BUNDLE/$APP_NAME.app" "$RUNNER_TEMP/dmg/$APP_NAME.app"
+          ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
+          hdiutil create -volname "$APP_NAME" -srcfolder "$RUNNER_TEMP/dmg" -ov -format UDZO dist/Based-Next.dmg
+          hdiutil verify dist/Based-Next.dmg
+          if [ -f "$BUNDLE/$APP_NAME.app.tar.gz" ]; then
+            cp "$BUNDLE/$APP_NAME.app.tar.gz" dist/Based-Next.app.tar.gz
+            cp "$BUNDLE/$APP_NAME.app.tar.gz.sig" dist/Based-Next.app.tar.gz.sig
+            URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/next-$V/Based-Next.app.tar.gz"
+            SIG="$(cat dist/Based-Next.app.tar.gz.sig)"
+            # Ein universelles Paket für beide Architekturen.
+            jq -n --arg v "$V" --arg url "$URL" --arg sig "$SIG" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg notes "Based Next $V ($(git rev-parse --short HEAD))" \
+              '{version:$v, notes:$notes, pub_date:$date, platforms:{
+                 "darwin-aarch64":{signature:$sig,url:$url},
+                 "darwin-x86_64":{signature:$sig,url:$url}}}' > dist/latest.json
+            cat dist/latest.json
+          fi
+          ls -la dist
+          # Mit Secret muss ein Update-Paket entstehen – sonst bekäme keine installierte Kopie das Update.
+          if [ "$HAS_KEY" = "true" ] && [ ! -f dist/latest.json ]; then
+            echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY ist gesetzt, aber es entstand kein latest.json (Signatur fehlgeschlagen?)."
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Based-Next-${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 14
+
+      - name: Release veröffentlichen
+        # BSD-337: auch ein Lauf von Hand (workflow_dispatch) auf main veröffentlicht – sonst baut er nur.
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.version.outputs.version }}
+        run: |
+          NOTES="Based Next $V – die neue Oberfläche (TypeScript/Tauri) als Mac-App, ad hoc signiert.
+          Installieren: Based-Next.dmg öffnen, „Based Next“ nach Programme ziehen, beim ersten Start Rechtsklick → Öffnen.
+          Läuft neben „Based“ (Swift); eigene Daten. Commit ${GITHUB_SHA}."
+          ASSETS=(dist/Based-Next.dmg)
+          [ -f dist/Based-Next.app.tar.gz ] && ASSETS+=(dist/Based-Next.app.tar.gz dist/Based-Next.app.tar.gz.sig)
+          gh release create "next-$V" "${ASSETS[@]}" --target "$GITHUB_SHA" --title "Based Next $V" \
+            --notes "$NOTES" --prerelease --latest=false
+
+          # Fester Kanal für Download-Link und Updater.
+          if ! gh release view next-latest >/dev/null 2>&1; then
+            gh release create next-latest --target "$GITHUB_SHA" --title "Based Next (neueste Version)" --prerelease --latest=false \
+              --notes "Fester Link auf die neueste Based-Next-DMG und latest.json für den Updater. Versionen: Releases next-<version>."
+          fi
+          UP=(dist/Based-Next.dmg)
+          [ -f dist/latest.json ] && UP+=(dist/latest.json)
+          gh release upload next-latest "${UP[@]}" --clobber

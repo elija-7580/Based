@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { atQuery, filterCommands, nextMode, removeAt, slashQuery } from "./composer.js";
+import { atQuery, filterCommands, nextMode, removeAt, slashQuery } from "./composerInput.js";
 
 describe("Coding-Eingabe (BSD-313)", () => {
   it("Slash nur am Anfang und solange der Name getippt wird", () => {
