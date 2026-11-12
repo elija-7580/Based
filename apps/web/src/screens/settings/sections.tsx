@@ -292,7 +292,8 @@ function UpdatesSection() {
 
 function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   const s = state.status;
-  const [copied, setCopied] = useState(false);
+  // BSD-300: Kopieren kann scheitern (keine Berechtigung für die Zwischenablage) – dann das sagen, nicht still bleiben.
+  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
   const facts = {
     sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
     storage: s.persistent ? "persistent" : "memory",
@@ -304,7 +305,11 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   };
   const log = useSyncExternalStore(diagnosticsLog.subscribe, diagnosticsLog.getSnapshot);
   const notice = previousSessionText();
-  const copy = () => void navigator.clipboard?.writeText(diagnosticsReport(facts)).then(() => setCopied(true), () => setCopied(false));
+  const copy = () => {
+    const clip = globalThis.navigator?.clipboard;
+    if (!clip) return setCopied("failed");
+    void clip.writeText(diagnosticsReport(facts)).then(() => setCopied("ok"), () => setCopied("failed"));
+  };
   return (
     <Group>
       <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
@@ -318,7 +323,7 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
         </VStack>
       </Row>
       <Row label="Report" hint="State of this device, the previous session and the log as text — contains no page content">
-        <BasedButton label={copied ? "Copied" : "Copy diagnostics"} onClick={copy} />
+        <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
       </Row>
       <Row label="Design kit" hint="Buttons, dialog, menu and form fields in the Based theme">
         <BasedButton label="Open design kit" variant="ghost" onClick={() => navigate({ name: "settings", page: "kit" })} />

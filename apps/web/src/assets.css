@@ -13,11 +13,11 @@
   width: 100%;
   max-width: 480px;
   min-height: 120px;
-  padding: 16px;
+  padding: var(--space-4);
   border: 1px dashed var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface-soft);
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--type-meta-size);
   line-height: 1.4;
 }

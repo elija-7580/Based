@@ -101,7 +101,8 @@
 /* Seiten und Erwähnungen */
 .bx-pagelink { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--ink); border-radius: var(--radius-xs); }
 .bx-pagelink:hover { background: var(--surface-raised); }
-.bx-pagelink-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); font-weight: var(--type-ui-weight); }
+.bx-pagelink { max-width: 100%; }
+.bx-pagelink-title { min-width: 0; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); font-weight: var(--type-ui-weight); }
 .bx-linkarrow { color: var(--muted); margin-right: var(--space-1); }
 .bx-mention { color: var(--ink); border-radius: var(--radius-xs); padding-inline: var(--space-1); background: var(--surface-soft); cursor: pointer; }
 .bx-mention[data-kind="date"], .bx-mention[data-kind="user"] { color: var(--muted); }
@@ -361,7 +362,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
   padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
 }
 .bx-btn-edit:hover, .bx-btn-remove:hover, .bx-btn-target:hover { background: var(--surface-raised); color: var(--ink); }
-.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .bx-btn:hover .bx-btn-row .bx-btn-edit, .bx-btn-row .bx-btn-edit:focus-visible, .bx-btn[data-editing] .bx-btn-row .bx-btn-edit { opacity: 1; }
 .bx-btn-confirm { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); background: var(--surface-raised); }
 .bx-btn-confirm > span { flex: 1; min-width: 0; }
