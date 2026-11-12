@@ -16,7 +16,7 @@ import { assetsLabel } from "../../assetBridge.js";
 import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
-import { diagnosticsLog, diagnosticsReport, previousSessionText } from "../../shell/diagnostics.js";
+import { DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { autoUpdatePref, deviceNode, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
 import { mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
@@ -299,48 +299,6 @@ function UpdatesSection() {
   );
 }
 
-function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
-  const s = state.status;
-  // BSD-300: Kopieren kann scheitern (keine Berechtigung für die Zwischenablage) – dann das sagen, nicht still bleiben.
-  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
-  const facts = {
-    sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
-    storage: (s.persistent ? "persistent" : "memory") + (s.storageWarnings?.length ? ` (${s.storageWarnings.join(" ")})` : ""),
-    clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
-    device: deviceNode.get() ?? "-",
-    shell: isTauri() ? "desktop" : "web",
-    pages: Object.keys(state.outline?.nodes ?? {}).length,
-    trash: state.outline?.trash.length ?? 0,
-  };
-  const log = useSyncExternalStore(diagnosticsLog.subscribe, diagnosticsLog.getSnapshot);
-  const notice = previousSessionText();
-  const copy = () => {
-    const clip = globalThis.navigator?.clipboard;
-    if (!clip) return setCopied("failed");
-    void clip.writeText(diagnosticsReport(facts)).then(() => setCopied("ok"), () => setCopied("failed"));
-  };
-  return (
-    <Group>
-      <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
-      <Row label="Storage"><Value testID="diagnostics-storage">{s.persistent ? "Persistent (OPFS)" : "Memory only"}{s.storageWarnings?.length ? ` · ${s.storageWarnings.join(" ")}` : ""}</Value></Row>
-      {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
-      <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
-      {notice ? <Row label="Last session"><Value testID="diagnostics-last-session">{notice}</Value></Row> : null}
-      <Row label="Log" hint="Recent events on this device, newest last — no page content">
-        <VStack gap={1} data-testid="diagnostics-log">
-          {log.length === 0 ? <Value>—</Value> : log.slice(-8).map((e, i) => <Value key={i} mono>{`${new Date(e.at).toLocaleTimeString()} ${e.level} ${e.message}`}</Value>)}
-        </VStack>
-      </Row>
-      <Row label="Report" hint="State of this device, the previous session and the log as text — contains no page content">
-        <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
-      </Row>
-      <Row label="Design kit" hint="Buttons, dialog, menu and form fields in the Based theme">
-        <BasedButton label="Open design kit" variant="ghost" onClick={() => navigate({ name: "settings", page: "kit" })} />
-      </Row>
-    </Group>
-  );
-}
-
 function AboutSection() {
   const id = useId();
   return (
@@ -423,7 +381,12 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "sync-server", page: "sync", title: "Based server", order: 10, component: SyncSection });
   registerSettingsSection({ id: "plan", page: "billing", title: "Plan", order: 10, component: BillingSection });
   registerSettingsSection({ id: "updates", page: "updates", title: "Updates", order: 10, component: UpdatesSection, provides: ["Automatic update checks on or off"] });
-  registerSettingsSection({ id: "diagnostics", page: "diagnostics", title: "This device", order: 10, component: DiagnosticsSection, provides: ["Logs"] });
+  // BSD-319: Diagnostics in Gruppen (diagnostics.tsx)
+  registerSettingsSection({ id: "diagnostics-status", page: "diagnostics", title: "Status", order: 10, component: StatusSection });
+  registerSettingsSection({ id: "diagnostics-problems", page: "diagnostics", title: "Problems", order: 20, component: ProblemsSection, provides: ["Hang reports"] });
+  registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"] });
+  registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"] });
+  registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection });
   // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.
   registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
   registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection });

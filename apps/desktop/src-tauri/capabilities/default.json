@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Rückfrage-Dialog, Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien).",
+  "description": "Rechte der Fenster (Haupt- und Seitenfenster): Kern, Fenster ziehen (Titelleiste), Fenster schließen/ausblenden (⌘W beim letzten Tab, BSD-310), Seitenfenster öffnen, Menü, Updater, Rückfrage-Dialog, Neustart nach dem Update, HTTP nur zu Notion (API-Import, BSD-217: API und von Notion gehostete Dateien). BSD-319: Dateien nur in ~/.config/based/reports (Fehlerberichte) lesen, schreiben, löschen; Bericht im Finder zeigen.",
   "windows": [
     "main",
     "page-*"
@@ -39,6 +39,26 @@
           "url": "https://*.amazonaws.com/*"
         }
       ]
-    }
+    },
+    "fs:allow-mkdir",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
+    "fs:allow-read-file",
+    "fs:allow-read-text-file",
+    "fs:allow-read-dir",
+    "fs:allow-exists",
+    "fs:allow-remove",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$HOME/.config/based/reports"
+        },
+        {
+          "path": "$HOME/.config/based/reports/**"
+        }
+      ]
+    },
+    "opener:allow-reveal-item-in-dir"
   ]
 }
