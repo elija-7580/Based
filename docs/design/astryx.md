@@ -106,13 +106,27 @@ für Zeilen: `screens/settings/parts.tsx` (`Group`, `Row`, `Value`). Adresse ein
 - Nichts von fremden Servern laden (Schriften, Icons). `astryx theme add` nicht benutzen, es bindet `fonts.css` ein.
 - Farben, Radien, Abstände kommen aus `@based/design-tokens`. Astryx-Tokens werden im Theme darauf abgebildet,
   nicht per `:root` überschrieben. Neue Abbildungen gehören in `astryxThemeSpec` (mit Test).
-- Editor (BlockNote) und Datenbank-Views (virtualisiert) bleiben eigene Bausteine. Astryx ist für Shell, Menüs,
-  Dialoge, Einstellungen, Formulare, Chat- und Agenten-Oberflächen.
+- **Eine Bedienoberfläche überall (Entscheidung Elija, 12. 11. 2026).** Eigene Bausteine bleiben nur der
+  Blockinhalt im Editor (BlockNote-Blöcke) und der virtualisierte Tabellenkörper der Datenbank-Views. **Alles
+  drumherum** – Slash-Menü, @-Menü, Formatleiste, Blockmenü (⋮⋮), „Turn into“, Farbwahl, Link-Popover, Filter-,
+  Sortier- und Eigenschaftsmenüs der Datenbank, Seitenmenü, Quick Find, Dialoge, Sidebar-Einträge, Toolbars –
+  sieht aus wie das Seitenmenü: `BasedMenu`/`BasedPopover` oder dieselben Klassen und Tokens. Kein
+  BlockNote-/Ariakit-Standardaussehen in der fertigen App.
+- **Views importieren nur `@based/ui/astryx`.** `@astryxdesign/core` direkt nur in `packages/ui`, `main.tsx` und
+  `astryxTheme.ts`. Fehlt ein Baustein, kommt er als neuer Wrapper nach `packages/ui/src/astryx` (mit Eintrag im
+  Design-Kit `#prefs-kit`), nicht als Einzelfall in einer View.
+- **Keine neuen rohen `<button>`, Menü- oder Dialog-Klassen** in `apps/*` und `packages/editor`/`database-ui`:
+  `BasedButton` (auch `ghost`/Icon-Variante) bzw. die Wrapper. Bestehende werden über die Backlog-Einträge
+  „Design · Umstellung …“ ersetzt, nicht nebenbei.
+- **Keine festen px-Werte** für Abstände, Radien, Größen – `var(--space-*|--radius-*|--size-*)`. Ausnahme: 1-px-Linien
+  und 3-px-Marker-Strich.
+- Agenten lesen vor jeder sichtbaren Änderung den Skill `.claude/skills/based-design/SKILL.md`.
 
 ## Offen
 
-- Bestehende Shell-Teile schrittweise auf Astryx-Komponenten umstellen (Import-/Export-Dialoge, Seitenmenü,
-  Quick Find, Papierkorb nutzen noch die eigenen Klassen), Screenshots vorher/nachher.
+- Umstellung auf die Based-Bausteine läuft über Backlog-Einträge „Design · Umstellung …“ (Stand 12. 11.: 10 von 63
+  Oberflächen nutzen die Wrapper, 41 importieren Astryx direkt, 153 rohe `<button>`, Editor-Menüs im
+  Ariakit-Standard). Reihenfolge: Editor-Menüs → Seitenmenü/Quick Find → Sidebar → Dialoge → Rest.
 - Scrim im Dunkeln: `--color-overlay` mischt wie `.dialog-backdrop` 16 % `ink` – im Dunkeln hellt das auf. Ein
   eigenes Token `scrim` wäre sauberer (Designentscheidung).
 - Tokens für Diagramm- und Syntaxfarben, falls Astryx-Charts/CodeBlock genutzt werden.

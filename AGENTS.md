@@ -7,7 +7,10 @@ Project-specific guidance for AI coding agents.
 Für Based Next gelten zuerst die Regeln aus `docs/design/README.md` (Designsprache „Based Default“) und
 `docs/design/astryx.md`. Wo der Astryx-Block unten dem widerspricht, gewinnt Based:
 
-- Bestehende Based-Oberflächen (Shell, Editor, Datenbank-Views) werden nicht wegen „No <div>“ umgeschrieben.
+- Vor jeder sichtbaren Änderung den Skill `.claude/skills/based-design/SKILL.md` lesen und befolgen.
+- Eine Bedienoberfläche überall: Menüs, Popover, Toolbars und Dialoge – auch im Editor und in Datenbank-Views –
+  kommen aus `@based/ui/astryx` (oder sehen genau so aus). Views importieren `@astryxdesign/core` nicht direkt.
+- Bestehender Blockinhalt (Editor) und der Tabellenkörper (Datenbank) werden nicht wegen „No <div>“ umgeschrieben.
 - `astryx theme add` nicht benutzen (bindet `fonts.css` ein, das lädt Google Fonts). Theme: `apps/web/src/astryxTheme.ts`.
 - CLI im Repo: `pnpm --filter @based/web exec astryx <cmd>`.
 
