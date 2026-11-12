@@ -1,61 +1,61 @@
-cancelled 4a283f3bd6491960f11634660d84dfb7526c9507
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+cancelled a27df88e33eae9c14f5d965cc64025a38ac28f64
 [WebServer] - Using dynamic import() to code-split the application
 [WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 [WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-Running 111 tests using 2 workers, shard 1 of 2
+Running 114 tests using 2 workers, shard 1 of 2
 
-  ✓    2 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (2.8s)
-  ✓    3 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (2.9s)
-  ✓    4 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.1s)
-  ✓    5 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.2s)
-  ✓    6 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (1.5s)
-  ✓    7 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (1.9s)
-  -    8 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓    9 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (3.1s)
-  ✓   10 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (1.8s)
-  ✓   11 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (1.7s)
+(node:3838) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    2 [chromium] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (9.1s)
+  ✓    3 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (2.7s)
+  ✓    4 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (3.7s)
+  ✓    5 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.5s)
+  ✓    6 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.6s)
+  ✓    7 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (1.7s)
+
+  ✓    1 [chromium] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (28.5s)
+  -    9 [chromium] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓    8 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (2.8s)
+  -   11 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+(node:4217) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   10 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.9s)
+  ✓   12 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (2.8s)
+  ✓   13 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (1.8s)
+(node:4376) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   14 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (973ms)
+  ✓   15 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.7s)
+  ✓   17 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (2.0s)
+  ✓   18 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (2.1s)
+  ✓   16 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.7s)
+  -   19 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
+(node:4547) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   20 [chromium] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (5.6s)
+  ✓   21 [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (9.0s)
+  ✓   22 [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (7.3s)
+  ✘   24 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (20.7s)
+(node:4769) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   25 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (retry #1) (20.8s)
+(node:4919) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   26 [chromium] › e2e/coding.spec.ts:358:1 › BSD-315: #coding auf dem Handy (390 × 844) (3.8s)
+  ✓   27 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.6s)
+  ✓   28 [chromium] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (1.5s)
+  ✓   29 [chromium] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (1.6s)
+  ✓   30 [chromium] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (1.4s)
+  ✓   31 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (2.2s)
+  ✓   32 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (1.9s)
+  ✓   33 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (1.9s)
+  ✓   34 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (1.9s)
+  ✓   35 [chromium] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (1.2s)
+[chromium] Klick-Durchlauf: 110 Klicks, 4 ausgelassen
+  ✓   23 [chromium] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.2m)
+  ✓   37 [chromium] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (2.7s)
+  ✓   38 [chromium] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (2.1s)
+  -   39 [chromium] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓   36 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (6.7s)
+  ✓   40 [chromium] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (1.8s)
