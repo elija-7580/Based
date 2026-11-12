@@ -294,6 +294,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .qf-chip[aria-pressed="true"], .qf-chip[data-active] { background: var(--button); color: var(--button-ink); }
 .qf-select { position: relative; padding-right: var(--space-2); }
 .qf-select select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer; outline: none; padding: 0; }
+/* Eigener Pfeil der Pille (unten): der allgemeine Based-Pfeil für Auswahlfelder (@based/ui/native.css) entfällt hier. */
+.qf-select select:not([multiple]):not([size]) { background-image: none; padding-right: 0; }
 .qf-select:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .qf-select select option { color: var(--ink); background: var(--bg); }
 .qf-head { padding: var(--space-3) var(--space-4) var(--space-1); }
