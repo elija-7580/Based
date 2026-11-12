@@ -1,0 +1,61 @@
+success f7e1236955d2e6388bd0ad73a0e54bb886ce3c7b
+(node:7129) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  115 [chromium] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (2.3s)
+  ✓  114 [chromium] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (4.3s)
+  ✓  117 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (1.7s)
+  ✓  118 [chromium] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (1.6s)
+  ✓  116 [chromium] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (8.2s)
+  ✓  119 [chromium] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (2.4s)
+  ✓  121 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.5s)
+  ✓  120 [chromium] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (3.6s)
+  ✓  122 [chromium] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.5s)
+  ✓  124 [chromium] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.6s)
+  ✓  123 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light) (3.6s)
+  ✓  125 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.0s)
+  ✓  127 [chromium] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.9s)
+  ✓  126 [chromium] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark) (4.0s)
+  ✓  128 [chromium] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (2.7s)
+  ✓  129 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.7s)
+  ✓  130 [chromium] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (2.3s)
+  ✓  131 [chromium] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (2.1s)
+  ✓  133 [chromium] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (1.1s)
+  ✓  132 [chromium] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (1.7s)
+  ✓  135 [chromium] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.1s)
+  ✓  134 [chromium] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (1.6s)
+  -  137 [chromium] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  136 [chromium] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (828ms)
+  ✓  138 [chromium] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (1.5s)
+
+
+  1) [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator:  getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
+    Expected: focused
+    Received: inactive
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeFocused" getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' }) with timeout 5000ms
+      - waiting for getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
+        14 × locator resolved to <button type="button" role="menuitem" class="menu-item">…</button>
+           - unexpected value "inactive"
+
+
+      105 |   await expect(menu.getByRole("menuitem", { name: /Find in page/ })).toBeFocused();
+      106 |   await page.keyboard.press("ArrowDown");
+    > 107 |   await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
+          |                                                                   ^
+      108 |   await page.keyboard.press("Enter");
+      109 |   await expect(menu).toBeHidden();
+      110 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:107:67
+
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+  9 skipped
+  127 passed (3.8m)
