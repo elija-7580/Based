@@ -1,61 +1,61 @@
-cancelled b3ab6c8d826ce4f9a748c5dd6e12a9ab7d97a04d
-  ✓   30 [webkit] › e2e/polish.spec.ts:85:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (6.4s)
-  ✓   32 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (10.8s)
-  ✓   33 [webkit] › e2e/polish.spec.ts:120:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (7.5s)
-  ✓   34 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.7s)
-  ✓   35 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (3.3s)
-  ✓   36 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (3.9s)
-  ✓   37 [webkit] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (2.6s)
-(node:7627) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   39 [webkit] › e2e/settings.spec.ts:63:1 › Sync-Formular prüft die Adresse, bevor es verbindet (3.3s)
-  ✓   40 [webkit] › e2e/settings.spec.ts:81:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (4.7s)
-  ✓   41 [webkit] › e2e/settings.spec.ts:107:1 › Account und Diagnostics zeigen echten Gerätezustand (2.3s)
-  ✓   42 [webkit] › e2e/settings.spec.ts:116:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (1.9s)
-  ✓   38 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (11.1s)
-  ✓   43 [webkit] › e2e/settings.spec.ts:141:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (2.0s)
-  -   45 [webkit] › e2e/settings.spec.ts:161:3 › Screenshot Einstellungen (light)
-  -   46 [webkit] › e2e/settings.spec.ts:161:3 › Screenshot Einstellungen (dark)
-  ✓   47 [webkit] › e2e/shell-layout.spec.ts:11:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (4.1s)
-  ✓   48 [webkit] › e2e/shell-layout.spec.ts:30:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (3.1s)
-  ✓   44 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (13.8s)
-  ✓   49 [webkit] › e2e/shell-layout.spec.ts:53:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (6.0s)
-  ✓   51 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur in der Highlight-Farbe (Marker) (1.5s)
-  ✓   52 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (4.4s)
-  ✓   50 [webkit] › e2e/shell-parity.spec.ts:70:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (10.7s)
-  ✓   53 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (6.6s)
-  ✓   54 [webkit] › e2e/shell-parity.spec.ts:108:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (11.9s)
-  ✓   55 [webkit] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (10.2s)
-  ✓   56 [webkit] › e2e/shell-parity.spec.ts:167:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (4.2s)
-  ✓   57 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (6.2s)
-  ✓   58 [webkit] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (5.4s)
-  ✓   59 [webkit] › e2e/shell.spec.ts:94:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (3.5s)
-  ✓   61 [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke (7.2s)
-  ✓   60 [webkit] › e2e/shell-parity.spec.ts:203:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (8.4s)
-  ✓   63 [webkit] › e2e/shortcuts.spec.ts:12:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (2.5s)
-  ✓   62 [webkit] › e2e/shell.spec.ts:194:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (6.2s)
-  ✓   64 [webkit] › e2e/shortcuts.spec.ts:33:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (3.1s)
-  ✓   66 [webkit] › e2e/shortcuts.spec.ts:62:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (3.1s)
-  ✓   65 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (5.1s)
-  ✓   67 [webkit] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (3.4s)
-  ✓   68 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (5.3s)
-  ✓   69 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (5.6s)
-  ✓   70 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (3.4s)
-  ✓   71 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (3.5s)
-  ✓   72 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (6.8s)
-  ✓   73 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (6.5s)
-  ✓   75 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (2.5s)
-  ✓   74 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (6.7s)
-  -   77 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
-  -   78 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
-  ✓   76 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (3.7s)
-  ✓   79 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (6.0s)
-  ✓   80 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (5.9s)
-  ✓   82 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (3.8s)
-  ✓   81 [webkit] › e2e/switch-parity.spec.ts:41:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (5.2s)
-(node:10853) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   84 [webkit] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (3.9s)
-  ✓   85 [webkit] › e2e/switch-parity.spec.ts:66:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.8s)
-  ✓   86 [webkit] › e2e/switch-parity.spec.ts:82:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (8.0s)
-  ✓   83 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (19.9s)
+cancelled 621dd208a810a5c4b6af18aa6de0f60e5ff70de9
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 105 tests using 2 workers, shard 2 of 2
+
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (4.2s)
+  -    3 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    2 [webkit] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (9.3s)
+  ✓    5 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (7.4s)
+  ✓    6 [webkit] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (11.0s)
+  ✓    7 [webkit] › e2e/meeting.spec.ts:97:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (11.0s)
+  -    9 [webkit] › e2e/meeting.spec.ts:117:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓   10 [webkit] › e2e/meeting.spec.ts:196:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (7.8s)
+  ✓   11 [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über (14.7s)
+  ✓    8 [webkit] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (34.5s)
+  ✓   13 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (8.7s)
+  ✓   12 [webkit] › e2e/overflow.spec.ts:149:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (15.2s)
+  ✘   15 [webkit] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (6.3s)
+  ✘   16 [webkit] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (retry #1) (6.6s)
+  ✓   14 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (21.3s)
+  ✓   17 [webkit] › e2e/overflow.spec.ts:198:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (11.4s)
+  ✓   18 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (5.6s)
+  ✓   20 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (5.5s)
+  -   21 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   22 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   23 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (5.6s)
+  ✓   19 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (13.6s)
+  ✓   24 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (6.5s)
+  ✓   26 [webkit] › e2e/polish.spec.ts:13:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (8.3s)
+  ✓   25 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (14.9s)
+  ✓   27 [webkit] › e2e/polish.spec.ts:27:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (4.6s)
+  ✓   29 [webkit] › e2e/polish.spec.ts:38:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (7.7s)
+  ✓   30 [webkit] › e2e/polish.spec.ts:59:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (2.8s)
+  ✓   28 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (17.4s)
+  ✓   32 [webkit] › e2e/scrollbars.spec.ts:7:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar; Bildschirmfotos hell/dunkel (1.6s)
