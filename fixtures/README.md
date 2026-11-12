@@ -30,6 +30,7 @@ schlägt fehl, wenn die eingecheckten Dateien nicht mehr zum Swift-Code passen.
 | archive | `archive/archive.json` | Workspace-Archiv v1/v2 schreiben und lesen, Asset-Einträge, ZIP-Pfade, Import mit Herkunft `import` (BSD-26) |
 | undo-remote | `undo-remote/undo-remote.json` | Undo/Redo gegen Remote-Änderungen und -Löschungen (kein Überschreiben, kein Wiederbeleben) |
 | history | `history/history.json` | Versionsverlauf (BSD-73): Block-Kodierung (`/` maskiert) und 128-Bit-Hash byte-genau, Manifeste/Dedup beim Aufzeichnen, `versionBlocks`, Ausdünnen und Aufräumen, Wiederherstellen samt Undo (nur Fälle, in denen TS bewusst wie Swift bleibt; TS verschiebt zusätzlich statt zu löschen) |
+| brain-routing | `brain/routing.json` | Modellwahl (BSD-242/BSD-328, API-Hälfte von `ModelRouter`): Regel-Routen, Modell-Stufen, Low/Auto/High-Wahl, nächste Stufe, Anbieter des Standardmodells, Budget → Low. **Ausnahme:** von Hand aus `ModelRouterTests.swift` übertragen (jeder Fall nennt seine Swift-Zeile), bis BasedBrain einen Fixture-Export hat; abgespielt von `packages/brain/test/fixtures-routing.test.ts`, nicht vom Kern-Runner |
 
 Bewusste Abweichungen (Swift-Fehler, die TS absichtlich nicht nachbildet, z. B. BSD-183) stehen nicht in den
 Fixtures, sondern in `packages/core/test/fixtures/deviations.ts` – mit Backlog-Verweis und erwartetem TS-Ergebnis.
