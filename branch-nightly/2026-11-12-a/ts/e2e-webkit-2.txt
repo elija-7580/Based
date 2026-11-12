@@ -1,32 +1,4 @@
-failure a75d6f91f0b43c131fe8117fb750a83975c93e02
-  ✓  100 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.0s)
-  ✓  101 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.0s)
-  ✓  102 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.6s)
-
-
-  1) [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ───────────────────
-
-    Error: expect(received).toEqual(expected) // deep equality
-
-    - Expected  - 1
-    + Received  + 4
-
-    - Array []
-    + Array [
-    +   "settings 900×600: auf fast nichts gekürzt: span. „Mint“ (26 px)",
-    +   "settings 900×600: auf fast nichts gekürzt: span. „Sky“ (21 px)",
-    + ]
-
-      140 |     { name: "chat", hash: "#chat" }, { name: "settings", hash: "#prefs-my-settings" },
-      141 |   ], "empty", browserName);
-    > 142 |   expect(found).toEqual([]);
-          |                 ^
-      143 | });
-      144 |
-      145 | const LONG_TITLE = "A very long page title that keeps going on and on to test truncation in every place it appears, sidebar tabs breadcrumb";
-        at /home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:142:17
-
-    Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit/error-context.md
+failure c8d1bf9d931743630ec516b5d22057dba203f196
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -52,10 +24,38 @@ failure a75d6f91f0b43c131fe8117fb750a83975c93e02
 
     Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit-retry1/error-context.md
 
+  2) [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Name",
+        "Tags",
+        "Date",
+    -   "Number",
+      ]
+
+      68 |   await ready(page);
+      69 |   await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+    > 70 |   expect(await headers(page)).toEqual(after);
+         |                               ^
+      71 |   expect(await status(page)).toBe(true);
+      72 |
+      73 |   // in den Einstellungen steht der neue Zustand, der Knopf ist weg
+        at run (/home/runner/work/Based/Based/apps/web/e2e/property-records.spec.ts:70:31)
+        at /home/runner/work/Based/Based/apps/web/e2e/property-records.spec.ts:22:5
+
+    Error Context: test-results/property-records-Umstellen-f9cf1-rbeitbar-übersteht-Neuladen-webkit/error-context.md
+
   1 failed
     [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ────────────────────
-  12 skipped
-  88 passed (7.0m)
+  1 flaky
+    [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen 
+  13 skipped
+  89 passed (5.5m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
