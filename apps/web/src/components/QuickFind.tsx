@@ -68,7 +68,18 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
 
   return (
     <div className="qf-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-label="Quick Find" className="qf" onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } }}>
+      <div role="dialog" aria-modal="true" aria-label="Quick Find" className="qf" onKeyDown={(e) => {
+        if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+        // BSD-304: Tab bleibt im Dialog (aria-modal) – vom letzten Element zurück zum ersten und umgekehrt.
+        if (e.key === "Tab") {
+          const focusables = [...e.currentTarget.querySelectorAll<HTMLElement>("input, button, [href], select, textarea, [tabindex]:not([tabindex='-1'])")]
+            .filter((el) => !el.hasAttribute("disabled") && el.getClientRects().length > 0);
+          const first = focusables[0], last = focusables[focusables.length - 1];
+          if (!first || !last) return;
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }}>
         <div className="qf-field">
           <Icon name="search" size={18} />
           <input

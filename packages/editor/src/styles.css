@@ -215,9 +215,11 @@
   padding: var(--space-2); border-radius: var(--radius-lg); border: 1px solid transparent; font-family: var(--font-ui);
   transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
-.bx-outline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+/* BSD-304: jeder Eintrag 24 px hoch (Klickfläche), ohne Lücke dazwischen – die Balken stehen im selben Takt wie vorher
+   ungefähr, sind aber einzeln gut zu treffen. */
+.bx-outline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .bx-outline-item {
-  display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); width: 100%; min-height: var(--space-4);
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); width: 100%; min-height: var(--space-5);
   background: none; border: 0; padding: 0 var(--space-1); border-radius: var(--radius-sm); color: var(--muted); font: inherit;
   font-size: var(--type-description-size); cursor: pointer; text-align: left;
 }
