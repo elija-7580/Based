@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 // BSD-209: Codeblock – Sprache gespeichert, Hervorhebung als Dekorationen, HTML-Vorschau ohne Netz.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BlockNoteEditor } from "@blocknote/core";
 import { basedSchema } from "../src/schema/schema.js";
 import { HTML_PREVIEW_CSP, htmlPreviewDoc, htmlPreviewFrame, syntaxDecorations, syntaxHighlighting } from "../src/schema/code.js";
-import { mermaidErrorText } from "../src/schema/mermaid.js";
+import { mermaidErrorText, mermaidPreview, pruneDetached } from "../src/schema/mermaid.js";
 
 describe("Codeblock", () => {
   it("hebt Code der gewählten Sprache hervor, Klartext nicht", () => {
@@ -54,6 +54,28 @@ describe("Codeblock", () => {
     editor.unmount();
     expect(mermaidErrorText(new Error("Parse error on line 2:\n...A --> \n-----^\nExpecting 'AMP'"))).toBe("Parse error on line 2:");
     expect(mermaidErrorText("x".repeat(400)).length).toBe(160);
+  });
+
+  it("gibt die Bild-URL einer ausgehängten Mermaid-Vorschau frei (BSD-365)", () => {
+    const orig = (URL as { revokeObjectURL?: (u: string) => void }).revokeObjectURL;
+    const revoke = vi.fn();
+    URL.revokeObjectURL = revoke;
+    try {
+      const wrap = mermaidPreview("graph TD\n  A --> B");
+      document.body.append(wrap);
+      const img = document.createElement("img");
+      img.className = "bx-mermaid-image";
+      img.src = "blob:test/1";
+      wrap.querySelector(".bx-mermaid-body")!.replaceChildren(img);
+      pruneDetached();
+      expect(revoke).not.toHaveBeenCalled();
+      wrap.remove();
+      pruneDetached();
+      expect(revoke).toHaveBeenCalledWith("blob:test/1");
+    } finally {
+      // jsdom kennt revokeObjectURL nicht; späte draw()-Aufrufe brauchen eine Funktion
+      URL.revokeObjectURL = orig ?? (() => {});
+    }
   });
 });
 

@@ -62,13 +62,26 @@ export function mermaidErrorText(e: unknown): string {
 const live = new Set<HTMLElement>();
 let observer: MutationObserver | undefined;
 
+/** BSD-365: Bild-URL (blob:) einer Vorschau freigeben – sonst bleibt jedes gezeichnete SVG bis zum Neuladen im Speicher. */
+function releaseImage(wrap: HTMLElement) {
+  const img = wrap.querySelector<HTMLImageElement>("img.bx-mermaid-image");
+  if (img?.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+}
+
+/** BSD-365: ausgehängte Vorschauen (nach Codeänderung oder Löschen) vergessen und ihre Bild-URL freigeben. */
+export function pruneDetached() {
+  for (const el of [...live]) {
+    if (el.isConnected) continue;
+    releaseImage(el);
+    live.delete(el);
+  }
+}
+
 function watchTheme() {
   if (observer || typeof MutationObserver === "undefined") return;
   observer = new MutationObserver(() => {
-    for (const el of [...live]) {
-      if (!el.isConnected) live.delete(el);
-      else void draw(el);
-    }
+    pruneDetached();
+    for (const el of live) void draw(el);
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 }
@@ -79,19 +92,20 @@ async function draw(wrap: HTMLElement) {
   wrap.dataset.state = "loading";
   try {
     const svg = await renderMermaid(code);
-    if (wrap.dataset.code !== code) return;
+    // Inzwischen ausgehängt und vergessen (pruneDetached): keine neue Bild-URL mehr anlegen.
+    if (wrap.dataset.code !== code || !live.has(wrap)) return;
     const img = document.createElement("img");
     img.className = "bx-mermaid-image";
     img.alt = "Mermaid diagram";
     img.src = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
-    const old = body.querySelector("img");
-    if (old) URL.revokeObjectURL(old.src);
+    releaseImage(wrap);
     body.replaceChildren(img);
     wrap.dataset.state = "ready";
   } catch (e) {
     const msg = document.createElement("div");
     msg.className = "bx-mermaid-error";
     msg.textContent = "Can’t draw this diagram. " + mermaidErrorText(e);
+    releaseImage(wrap);
     body.replaceChildren(msg);
     wrap.dataset.state = "error";
   }
@@ -110,7 +124,7 @@ export function mermaidPreview(code: string): HTMLElement {
   const body = document.createElement("div");
   body.className = "bx-mermaid-body";
   wrap.append(label, body);
-  for (const el of live) if (!el.isConnected) live.delete(el);
+  pruneDetached();
   live.add(wrap);
   watchTheme();
   void draw(wrap);
