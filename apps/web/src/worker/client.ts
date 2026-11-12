@@ -32,6 +32,8 @@ export interface ShellState {
   chats?: readonly ChatInfo[];
   /** Aufträge, Runs, Projekte, Zeitpläne (`undefined`: noch nicht geladen). */
   agents?: AgentSnapshot;
+  /** BSD-163: letzter Hinweis aus dem Worker (`id` zählt hoch, damit derselbe Text erneut erscheint). */
+  notice?: { id: number; message: string };
 }
 
 const INITIAL: ShellState = { ready: false, outline: undefined, titles: new Map(), status: { state: "starting", persistent: false, canUndo: false, canRedo: false } };
@@ -61,6 +63,31 @@ export class StoreClient {
     this.endpoint.removeEventListener("message", this.onMessage);
     for (const p of this.pending.values()) p.reject(new RequestCancelled());
     this.pending.clear();
+    this.checkSettled();
+  }
+
+  private settleWaiters: { upTo: number; resolve: () => void }[] = [];
+
+  /**
+   * BSD-335: Erfüllt, sobald jede bis jetzt abgeschickte Anfrage beantwortet ist. Der Store-Tab antwortet erst nach dem
+   * (synchronen) Schreiben in SQLite/OPFS – danach übersteht die Änderung ein Neuladen. Vorher nicht: ein Befehl, der
+   * beim Abbau der Seite noch in der Warteschlange des Workers liegt, geht mit dem Worker verloren (z. B. „Move to
+   * Trash“ und sofort danach neu laden). Für Tests und für Stellen, die vor dem Verlassen auf den Speicherstand warten.
+   */
+  settled(): Promise<void> {
+    const upTo = this.nextID - 1;
+    if (![...this.pending.keys()].some((id) => id <= upTo)) return Promise.resolve();
+    return new Promise((resolve) => this.settleWaiters.push({ upTo, resolve }));
+  }
+
+  private checkSettled() {
+    if (!this.settleWaiters.length) return;
+    const oldest = Math.min(Infinity, ...this.pending.keys());
+    this.settleWaiters = this.settleWaiters.filter((w) => {
+      if (oldest <= w.upTo) return true;
+      w.resolve();
+      return false;
+    });
   }
 
   // MARK: Zustand für React
@@ -77,6 +104,9 @@ export class StoreClient {
     for (const fn of this.listeners) fn();
   }
 
+  /** Hinweis schließen. */
+  dismissNotice = () => { if (this.state.notice) { const { notice: _n, ...rest } = this.state; this.state = rest; for (const fn of this.listeners) fn(); } };
+
   title(id: string): string {
     return this.state.titles.get(id) ?? "Untitled";
   }
@@ -92,6 +122,7 @@ export class StoreClient {
         this.pending.delete(ev.id);
         if (ev.ok) p.resolve(ev.result);
         else p.reject(ev.cancelled ? new RequestCancelled() : new Error(ev.error));
+        this.checkSettled();
         return;
       }
       case "outline": this.set({ outline: ev.outline }); return;
@@ -108,6 +139,7 @@ export class StoreClient {
       case "device": this.onDevice?.(ev.node); return;
       case "chats": this.set({ chats: ev.chats }); return;
       case "agents": this.set({ agents: ev.snapshot }); return;
+      case "notice": this.set({ notice: { id: (this.state.notice?.id ?? 0) + 1, message: ev.message } }); return;
       case "pageChanges": this.replicas.get(ev.pageID)?.receive(ev.upserts, ev.deletions); return;
     }
   };
@@ -432,19 +464,22 @@ export class PageReplica {
 
   constructor(private readonly client: StoreClient, data: PageRecords) {
     this.pageID = data.pageID;
-    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records) });
+    // BSD-30: gleiche Form wie der Worker – so schickt eine Schema-Änderung nur die geänderte Property zurück
+    this.store = new WorkspaceStore({ node: data.node, persistence: new ReplicaPersistence(data.records), propertyRecords: data.propertyRecords === true, resumeClock: false });
     this.unobserve = this.store.observe((c) => {
       if (c.origin !== "local" && c.origin !== "undo" && c.origin !== "redo" && c.origin !== "derived") return;
       const upserts: WireRecord[] = [];
       const deletions: RecordKeyString[] = [];
-      for (const key of c.keys) {
+      // BSD-30: nur was wirklich geschrieben wurde (nicht die bloß benachrichtigte Datenbank einer Property)
+      const sent = c.notified?.length ? c.keys.filter((k) => !c.notified!.includes(k)) : c.keys;
+      for (const key of sent) {
         const r = this.store.record(key);
         if (r) upserts.push(structuredClone(r));
         else deletions.push(key);
         this.inflight.set(key, (this.inflight.get(key) ?? 0) + 1);
       }
       const done = () => {
-        for (const key of c.keys) {
+        for (const key of sent) {
           const n = (this.inflight.get(key) ?? 1) - 1;
           if (n <= 0) this.inflight.delete(key);
           else this.inflight.set(key, n);
@@ -485,6 +520,7 @@ export class PageReplica {
     for (const b of s.blocks.values()) gone.push(recordKey({ kind: "block", data: b }));
     for (const d of s.databases.values()) gone.push(recordKey({ kind: "database", data: d }));
     for (const v of s.views.values()) gone.push(recordKey({ kind: "view", data: v }));
+    for (const p of s.properties.values()) gone.push(recordKey({ kind: "property", data: p }));
     this.receive(records, gone.filter((k) => !have.has(k)));
   }
 

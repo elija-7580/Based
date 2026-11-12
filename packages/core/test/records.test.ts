@@ -12,7 +12,8 @@ const swift = JSON.parse(readFileSync(fixtures + "schema.json", "utf8")) as { ke
 describe("Records aus Swift", () => {
   it("Korpus deckt alle Arten, Block-, Property- und View-Typen ab", () => {
     const recs = corpus.map((l) => JSON.parse(l));
-    expect(new Set(recs.map((r) => r.kind))).toEqual(new Set(ENUMS.RecordKind));
+    // `property` gibt es nur im TS-Stack (BSD-30, ADR 0014), nicht im Swift-Korpus
+    expect(new Set(recs.map((r) => r.kind))).toEqual(new Set(ENUMS.RecordKind.filter((k) => k !== "property")));
     const blockTypes = new Set(recs.filter((r) => r.kind === "block").map((r) => r.data.type));
     for (const t of ENUMS.BlockType) expect(blockTypes, t).toContain(t);
     const propTypes = new Set(recs.filter((r) => r.kind === "database").flatMap((r) => r.data.properties.map((p: { type: string }) => p.type)));
@@ -43,7 +44,9 @@ describe("Drift-Check gegen Swift", () => {
     expect(Object.keys(KNOWN_KEYS).sort()).toEqual(Object.keys(swift.keys).sort());
   });
   it.each(Object.keys(swift.enums))("Enum-Werte von %s", (name) => {
-    expect([...ENUMS[name as keyof typeof ENUMS]]).toEqual(swift.enums[name]);
+    // BSD-30 (ADR 0014): die Record-Art `property` kennt nur der TS-Stack
+    const ts = [...ENUMS[name as keyof typeof ENUMS]].filter((v) => !(name === "RecordKind" && v === "property"));
+    expect(ts).toEqual(swift.enums[name]);
   });
   it("es gibt kein Swift-Enum ohne TS-Gegenstück", () => {
     expect(Object.keys(swift.enums).every((n) => n in ENUMS)).toBe(true);

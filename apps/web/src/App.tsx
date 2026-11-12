@@ -13,6 +13,7 @@ import { ReportProblemDialog } from "./components/ReportProblem.js";
 import { REPORT_PROBLEM_EVENT } from "./desktop.js";
 import { startReport } from "./shell/reportUI.js";
 import { Sidebar } from "./components/Sidebar.js";
+import { Notice } from "./components/Notice.js";
 import { TabBar } from "./components/TabBar.js";
 import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
@@ -228,6 +229,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         </div>
       </main>
       <ChatDock client={client} history={history} route={route} />
+      <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       <DevOverlay />
       <ReportProblemDialog onOpenDiagnostics={() => history.navigate({ name: "settings", page: "diagnostics" })} />

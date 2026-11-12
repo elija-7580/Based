@@ -10,6 +10,7 @@ export type PropertyValue = z.infer<typeof S.propertyValue>;
 export type BlockProps = z.infer<typeof S.blockProps>;
 export type Block = z.infer<typeof S.block>;
 export type PropertySchema = z.infer<typeof S.propertySchema>;
+export type PropertyRecord = z.infer<typeof S.propertyRecord>;
 export type Database = z.infer<typeof S.database>;
 export type DatabaseView = z.infer<typeof S.databaseView>;
 export type Workspace = z.infer<typeof S.workspace>;
@@ -19,7 +20,7 @@ export type RecordKey = z.infer<typeof S.recordKey>;
 export type Tombstone = z.infer<typeof S.tombstone>;
 export type { FilterCondition, FilterGroup, FilterItem, FilterValue } from "./schema.js";
 
-const byKind = { block: S.block, database: S.database, view: S.databaseView, workspace: S.workspace } as const;
+const byKind = { block: S.block, database: S.database, view: S.databaseView, workspace: S.workspace, property: S.propertyRecord } as const;
 
 /** Prüft einen Record `{kind, data}`. Wirft bei ungültigen Daten (wie Swift beim strikten Dekodieren). */
 export function parseRecord(value: unknown): WireRecord {

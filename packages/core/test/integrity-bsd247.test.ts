@@ -71,7 +71,7 @@ describe("BSD-122: Zeile aus dem Papierkorb", () => {
     deleteOption(b, databaseID, status, open);
     deleteOption(b, databaseID, tags, t2);
     changePropertyType(b, databaseID, num, "text");
-    a.applyRemote(b.allRecords().filter((r) => r.kind === "database"));
+    a.applyRemote(b.allRecords().filter((r) => r.kind === "database" || r.kind === "property"));
     restorePages(a, [row]);
     const v = a.blocks.get(row)!.values!;
     expect(v[status]).toBeUndefined();

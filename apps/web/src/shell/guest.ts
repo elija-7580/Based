@@ -88,3 +88,43 @@ export async function fetchGuestMe(cfg: GuestConfig, fetcher: typeof fetch = (..
 export function guestStartPage(cfg: GuestConfig, me: GuestMe | undefined): string | undefined {
   return cfg.page ?? me?.pages[0]?.id;
 }
+
+/**
+ * BSD-282: Endgültig löschen dürfen nur der Besitzer und Gäste mit „Full access“; „Can edit“ legt in den Papierkorb.
+ * Der Server lehnt es ohnehin ab, die Oberfläche bietet es dann gar nicht erst an.
+ */
+let deleteForeverAllowed = true;
+
+/** Nur im Gast-Modus aufrufen. Unbekannte Rolle (Server nicht erreichbar) zählt als „Can edit“. */
+export function setGuestAccess(me: Pick<GuestMe, "pages"> | undefined) {
+  deleteForeverAllowed = me !== undefined && me.pages.some((p) => p.role === "full");
+}
+
+export const mayDeleteForever = (): boolean => deleteForeverAllowed;
+
+/**
+ * BSD-235 Teil 3: Widerruf wirkt, während der Gast die Seite offen hat. Prüft `/share/v1/me` alle `intervalMs`, beim
+ * Zurückkommen ins Fenster und wenn `poke()` gerufen wird (z. B. bei einem Sync-Fehler); ist der Link widerrufen oder
+ * entfernt, wird `onRevoked` genau einmal gerufen. Gibt `{ stop, poke }` zurück. Netzfehler zählen nicht als Widerruf.
+ */
+export function watchGuestRevocation(cfg: GuestConfig, onRevoked: () => void, o: { intervalMs?: number; fetcher?: typeof fetch; events?: Pick<EventTarget, "addEventListener" | "removeEventListener"> } = {}): { stop(): void; poke(): void } {
+  let stopped = false;
+  let busy = false;
+  const check = async () => {
+    if (stopped || busy) return;
+    busy = true;
+    try {
+      if ((await fetchGuestMe(cfg, o.fetcher)) === "revoked" && !stopped) { stop(); onRevoked(); }
+    } finally { busy = false; }
+  };
+  const timer = setInterval(() => void check(), o.intervalMs ?? 15_000);
+  const events = o.events ?? globalThis;
+  const onEvent = () => void check();
+  for (const e of ["focus", "online", "visibilitychange"]) events.addEventListener(e, onEvent);
+  function stop() {
+    stopped = true;
+    clearInterval(timer);
+    for (const e of ["focus", "online", "visibilitychange"]) events.removeEventListener(e, onEvent);
+  }
+  return { stop, poke: () => void check() };
+}

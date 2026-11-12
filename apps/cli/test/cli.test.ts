@@ -128,10 +128,14 @@ describe("gegen den Server (MCP)", () => {
     expect(JSON.parse(json.out)).toMatchObject({ content: [{ type: "text" }] });
   });
 
-  it("was der Server nicht anbietet (ask), sagt der Befehl ehrlich", async () => {
+  it("ask gibt dem Hauptagenten einen Auftrag (seit BSD-221 Teil 3e bietet der TS-Server ask_main_agent)", async () => {
     const r = await run(["ask", "Do it"]);
-    expect(r.code).toBe(1);
-    expect(r.err).toMatch(/This server doesn't offer .* \(no `ask_main_agent` tool\)/);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain("Sent to the main agent");
+    // --wait: der Lauf entsteht erst in Based – ehrlicher Hinweis statt einem falschen Lauf zu folgen
+    const w = await run(["ask", "Do it", "--wait"]);
+    expect(w.code).toBe(1);
+    expect(w.err).toContain("no run id to follow");
   });
 
   it("BSD-221 Teil 3a: runs, run, inbox gegen den TS-Server", async () => {
@@ -226,6 +230,48 @@ describe("BSD-319: based reports", () => {
       expect(() => parseArgs(["reports", "x"])).toThrow("takes no arguments");
     } finally {
       rmSync(home, { recursive: true, force: true });
+    }
+  });
+});
+
+// BSD-30: Probelauf der Umstellung auf einem Archiv – ohne Server, ohne Token, schreibt nichts.
+describe("based check", () => {
+  it("liest ein Based-Archiv, rechnet die Umstellung und meldet OK; kaputte Datei und Dubletten geben Fehler", async () => {
+    const { createPage, dbops, MemoryPersistence, WorkspaceStore, writeArchive, writeArchivePackage } = await import("@based/core");
+    const store = new WorkspaceStore({ node: "t", persistence: new MemoryPersistence(), propertyRecords: false });
+    const page = createPage(store, { title: "Home" });
+    const made = dbops.createDatabase(store, { parent: "b:" + page, title: "Tasks" });
+    dbops.addProperty(store, made.databaseID, "Due", "date");
+    const dir = mkdtempSync(join(tmpdir(), "based-check-"));
+    try {
+      const plain = join(dir, "export.based.jsonl"), zip = join(dir, "export.based.zip"), bad = join(dir, "bad.based.jsonl"), junk = join(dir, "junk.txt");
+      writeFileSync(plain, writeArchive(store));
+      writeFileSync(zip, writeArchivePackage(store, () => undefined).zip);
+      const before = readFileSync(plain, "utf8");
+      for (const file of [plain, zip]) {
+        const r = await run(["check", file]);
+        expect(r.err).toBe("");
+        expect(r.code).toBe(0);
+        expect(r.out).toContain("Databases: 1");
+        expect(r.out).toContain("Split and join gives the same database: yes, all");
+        expect(r.out).toContain("Result: OK");
+      }
+      expect(readFileSync(plain, "utf8")).toBe(before);
+      const json = JSON.parse((await run(["check", plain, "--json"])).out) as { ok: boolean; databases: number; properties: number };
+      expect(json).toMatchObject({ ok: true, databases: 1 });
+      expect(json.properties).toBe(store.databases.get(made.databaseID)!.properties.length);
+      // doppelte Property-ID: nicht umstellbar, Exit-Code 1
+      const first = store.databases.get(made.databaseID)!.properties[1]!;
+      writeFileSync(bad, before.replace(JSON.stringify(first.id), JSON.stringify(store.databases.get(made.databaseID)!.properties[0]!.id)));
+      const refused = await run(["check", bad]);
+      expect(refused.code).toBe(1);
+      expect(refused.out).toContain("NOT OK");
+      writeFileSync(junk, "hello");
+      expect((await run(["check", junk])).code).toBe(1);
+      expect((await run(["check", join(dir, "missing.zip")])).err).toContain("can't read");
+      expect((await run(["check"])).code).toBe(2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });

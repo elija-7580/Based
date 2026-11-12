@@ -50,7 +50,7 @@ async function quickFind(page: Page, q: string) {
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen", async ({ page }) => {
+test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen", { tag: "@smoke" }, async ({ page }) => {
   // Text aus dem Inhalt der Willkommensseite (nicht im Titel)
   let hits = await quickFind(page, "sync server in Settings");
   await expect(hits.first()).toContainText("Welcome to Based");
@@ -128,6 +128,33 @@ test("Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bi
   await expect(content).toContainText("Go to 📄Seeds"); // Erwähnung zeigt den Seitentitel
   await expect(content).not.toContainText("[[");
   await expect(content.locator("img").first()).toBeVisible();
+});
+
+test("Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await expect(dialog).toContainText("Logseq");
+  const id = "6573f1f2-1a2b-4c3d-8e9f-0123456789ab";
+  const graph = zip([
+    { path: "notes/logseq/config.edn", data: Buffer.from("{}") },
+    { path: "notes/pages/Garden___Herbs.md", data: Buffer.from(`alias:: Herbs\n\n- Basil needs sun\n  id:: ${id}\n  collapsed:: true\n- Mint spreads`) },
+    { path: "notes/journals/2026_11_12.md", data: Buffer.from(`- Planted [[Herbs]] today\n- Remember: ((${id}))`) },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "notes.zip", mimeType: "application/zip", buffer: graph });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  const hits = await quickFind(page, "Planted");
+  await expect(hits.first()).toContainText("Nov 12th, 2026");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Nov 12th, 2026");
+  const content = page.getByTestId("page-content");
+  await expect(content).toContainText("Remember: Basil needs sun");
+  await expect(content).not.toContainText("((");
+  await content.getByText("Garden/Herbs").first().click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Garden/Herbs");
+  await expect(page.getByTestId("page-content")).not.toContainText("collapsed::");
 });
 
 test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async ({ page }) => {
@@ -230,7 +257,7 @@ test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => 
   expect(v.blocks.length).toBeGreaterThan(0);
 });
 
-test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
+test("Export: Seite als Markdown, Workspace als Based-Archiv", { tag: "@smoke" }, async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Export page" });

@@ -17,6 +17,7 @@ import { trimSpaces } from "./html.js";
 import { MarkdownImporter, type MarkdownBlock } from "./markdown.js";
 import { PLAIN, toRichText } from "./runs.js";
 import { ImportCancelled } from "./zip.js";
+import { isLogseqGraph, logseqBlockIDs, logseqSkip, logseqTitle, logseqToMarkdown } from "./logseq.js";
 
 export interface ObsidianImportOptions {
   assets?: AssetSink | undefined;
@@ -38,6 +39,10 @@ const hidden = (p: string) => p.split("/").some((s) => s.startsWith("."));
  *  seine Notizen [[Wikilinks]] enthalten). */
 export function findObsidianVault(files: ImportFiles, path: string): string | undefined {
   const root = normalizePath(path);
+  // BSD-260 Teil 8: Logseq-Graph (pages/ + journals/ oder logseq/config.edn) – auch ohne [[Links]]
+  if (isLogseqGraph(files, root)) return root;
+  const graphs = files.walk(root).filter((f) => f.endsWith("/logseq/config.edn")).map((f) => f.slice(0, -"/logseq/config.edn".length)).sort((a, b) => a.length - b.length);
+  if (graphs[0] !== undefined) return graphs[0];
   let best: string | undefined;
   for (const f of files.walk(root)) {
     const i = f.split("/").indexOf(".obsidian");
@@ -118,12 +123,36 @@ export class ObsidianImporter {
   private ids = new Map<string, string>();
   private assetCache = new Map<string, AssetRef>();
   private folderNotes = new Set<string>();
+  /** BSD-260 Teil 8: Logseq-Graph (Eigenheiten werden vor dem Lesen übersetzt). */
+  private readonly logseq: boolean;
+  private logseqBlocks: Map<string, string> | undefined;
   private done = 0;
   private total = 1;
 
   constructor(private readonly files: ImportFiles, private readonly vault: string, private readonly opts: ObsidianImportOptions = {}) {
     this.now = opts.now ?? (() => (Date.now() - 978_307_200_000) / 1000);
     this.userID = opts.userID === undefined ? "me" : opts.userID;
+    this.logseq = isLogseqGraph(files, vault);
+  }
+
+  /** Inhalt einer Notiz (Logseq: übersetzt). */
+  private text(p: string): string {
+    const raw = this.files.readText(p) ?? "";
+    if (!this.logseq) return raw;
+    if (!this.logseqBlocks) {
+      this.logseqBlocks = new Map();
+      for (const q of this.ids.keys()) logseqBlockIDs(this.files.readText(q) ?? "", this.logseqBlocks);
+    }
+    return logseqToMarkdown(raw, this.logseqBlocks);
+  }
+
+  private title(p: string): string {
+    return this.logseq ? logseqTitle(this.rel(p)) : basename(stripExtension(p));
+  }
+
+  private skipped(p: string): boolean {
+    const rel = this.rel(p);
+    return hidden(rel) || (this.logseq && logseqSkip(rel));
   }
 
   private rel(p: string): string {
@@ -131,7 +160,7 @@ export class ObsidianImporter {
   }
 
   private index() {
-    const all = this.files.walk(this.vault).filter((p) => !hidden(this.rel(p)));
+    const all = this.files.walk(this.vault).filter((p) => !this.skipped(p));
     for (const p of all) {
       const ext = extname(p).toLowerCase();
       if (ext === "md") {
@@ -140,7 +169,9 @@ export class ObsidianImporter {
         this.byPath.set(stripExtension(this.rel(p)).toLowerCase(), p);
         const name = basename(stripExtension(p)).toLowerCase();
         this.byName.set(name, [...(this.byName.get(name) ?? []), p]);
-        const fm = splitFrontmatter(this.files.readText(p) ?? "").yaml;
+        const shown = this.title(p).toLowerCase();
+        if (shown !== name) this.byName.set(shown, [...(this.byName.get(shown) ?? []), p]);
+        const fm = splitFrontmatter(this.logseq ? logseqToMarkdown(this.files.readText(p) ?? "") : this.files.readText(p) ?? "").yaml;
         if (fm) for (const a of [...yamlList(fm, "aliases"), ...yamlList(fm, "alias")]) {
           const k = a.toLowerCase();
           this.byName.set(k, [...(this.byName.get(k) ?? []), p]);
@@ -168,7 +199,9 @@ export class ObsidianImporter {
       const viaVault = this.byPath.get(normalizePath(t).toLowerCase());
       if (viaVault) return viaVault;
       const relative = normalizePath(joinPath(dirname(from), t));
-      return this.byPath.get(stripExtension(this.rel(relative + ".md")).toLowerCase());
+      const viaRelative = this.byPath.get(stripExtension(this.rel(relative + ".md")).toLowerCase());
+      // Logseq: „/“ ist ein Namensraum im Seitennamen (Datei A___B.md), kein Ordner
+      return viaRelative ?? (this.logseq ? this.pick(this.byName.get(t.toLowerCase()), from) : undefined);
     }
     return this.pick(this.byName.get(t.toLowerCase()), from);
   }
@@ -290,9 +323,9 @@ export class ObsidianImporter {
   /** Notiz als Seite; `extra` = Kinder nach dem Inhalt (Ordner-Inhalt bei Folder Notes). */
   private note(p: string, parent: string, sk: string, id: string = this.ids.get(p) ?? makeRecordID(), children?: () => void): string {
     if (this.opts.isCancelled?.()) throw new ImportCancelled();
-    const raw = this.files.readText(p) ?? "";
+    const raw = this.text(p);
     const { yaml, body: afterYaml } = splitFrontmatter(raw);
-    const title = basename(stripExtension(p));
+    const title = this.title(p);
     let body = afterYaml;
     const split = MarkdownImporter.splitTitle(body);
     if (split.title !== undefined && split.title.toLowerCase() === title.toLowerCase()) body = split.body;
@@ -314,7 +347,7 @@ export class ObsidianImporter {
 
   /** Ordner als Seite: Unterordner und Notizen (Ordner zuerst, dann Notizen, je nach Name). */
   private folder(dir: string, parent: string, sk: string, title: string): string {
-    const entries = this.files.list(dir).filter((p) => !hidden(this.rel(p)) && !(dir === this.vault && basename(p) === ".obsidian"));
+    const entries = this.files.list(dir).filter((p) => !this.skipped(p) && !(dir === this.vault && basename(p) === ".obsidian"));
     const folderNote = entries.find((p) => this.files.isFile(p) && extname(p).toLowerCase() === "md" && basename(stripExtension(p)) === basename(dir));
     const fill = (pageID: string, startAfter: string | undefined) => {
       const dirs = entries.filter((p) => this.files.isDirectory(p) && !this.files.isFile(p)).sort((a, b) => comparePaths(basename(a), basename(b)));
@@ -322,9 +355,11 @@ export class ObsidianImporter {
       for (const c of entries) if (this.files.isFile(c) && extname(c).toLowerCase() === "canvas") this.warn(`Skipped ${this.rel(c)} (Obsidian Canvas isn't supported yet)`);
       let k = startAfter;
       for (const d of dirs) {
-        if (!this.files.walk(d).some((f) => !hidden(this.rel(f)) && extname(f).toLowerCase() === "md")) continue; // reine Anhang-Ordner
+        if (!this.files.walk(d).some((f) => !this.skipped(f) && extname(f).toLowerCase() === "md")) continue; // reine Anhang-Ordner
         k = keyBetween(k, undefined);
-        this.folder(d, "b:" + pageID, k, basename(d));
+        // Logseq: die Ordner pages/ und journals/ als „Pages“ und „Journals“
+        const name = basename(d);
+        this.folder(d, "b:" + pageID, k, this.logseq && dir === this.vault && (name === "pages" || name === "journals") ? name[0]!.toUpperCase() + name.slice(1) : name);
       }
       for (const n of notes) {
         k = keyBetween(k, undefined);

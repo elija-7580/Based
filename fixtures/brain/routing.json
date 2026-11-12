@@ -1,0 +1,466 @@
+{
+ "module": "brain-routing",
+ "note": "Von Hand aus den Swift-Tests übertragen (BSD-328, Teil 1); jede Erwartung nennt ihre Swift-Zeile. Nur die API-Hälfte von ModelRouter (Coding-CLIs, Klassifikator und keepingConversation sind in TS nicht portiert). Ersetzen durch einen Swift-Export, sobald der Fixture-Export für BasedBrain steht.",
+ "cases": [
+  {
+   "name": "Code im Projektordner",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:35",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Fix the crash in the sidebar",
+     "folder": "/Users/e/Based"
+    }
+   },
+   "output": {
+    "route": "code"
+   }
+  },
+  {
+   "name": "Code mit Repo-Nomen",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:36",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Implementiere BSD-49 im repo"
+    }
+   },
+   "output": {
+    "route": "code"
+   }
+  },
+  {
+   "name": "Zusammenfassen (de)",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:37",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Fasse diese Seite zusammen"
+    }
+   },
+   "output": {
+    "route": "quick"
+   }
+  },
+  {
+   "name": "Zusammenfassen (en)",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:38",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Summarize this page please"
+    }
+   },
+   "output": {
+    "route": "quick"
+   }
+  },
+  {
+   "name": "Recherche",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:39",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Recherchiere die aktuellen Preise für Mac minis"
+    }
+   },
+   "output": {
+    "route": "research"
+   }
+  },
+  {
+   "name": "Schreiben",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:40",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Schreib einen Brief an die Hausverwaltung"
+    }
+   },
+   "output": {
+    "route": "write"
+   }
+  },
+  {
+   "name": "Kurze Frage",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:41",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Was steht morgen an?"
+    }
+   },
+   "output": {
+    "route": "quick"
+   }
+  },
+  {
+   "name": "Langes Dokument",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:42",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "x",
+     "attachmentChars": 150000
+    }
+   },
+   "output": {
+    "route": "long"
+   }
+  },
+  {
+   "name": "Zeitplan gewinnt",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:43",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Schreib den Code",
+     "scheduled": true
+    }
+   },
+   "output": {
+    "route": "background"
+   }
+  },
+  {
+   "name": "Keine Regel",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:44",
+   "input": {
+    "kind": "ruleRoute",
+    "task": {
+     "text": "Let's plan the next quarter for the team and think about hiring"
+    }
+   },
+   "output": {
+    "route": null
+   }
+  },
+  {
+   "name": "Stufe haiku",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:91",
+   "input": {
+    "kind": "modelTier",
+    "model": "claude-haiku-5-5"
+   },
+   "output": {
+    "tier": 0
+   }
+  },
+  {
+   "name": "Stufe gpt-5",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:91",
+   "input": {
+    "kind": "modelTier",
+    "model": "gpt-5"
+   },
+   "output": {
+    "tier": 2
+   }
+  },
+  {
+   "name": "Stufe sonnet",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:91",
+   "input": {
+    "kind": "modelTier",
+    "model": "claude-sonnet-5-5"
+   },
+   "output": {
+    "tier": 1
+   }
+  },
+  {
+   "name": "Quick Auto → klein",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:50",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Fasse diese Seite zusammen"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-haiku-5-5"
+   }
+  },
+  {
+   "name": "Quick High → mittel",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:51",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Fasse diese Seite zusammen"
+    },
+    "compute": "high",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-sonnet-5-5"
+   }
+  },
+  {
+   "name": "Writing Low → klein",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:53",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Schreib einen Blogartikel über Based"
+    },
+    "compute": "low",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-haiku-5-5"
+   }
+  },
+  {
+   "name": "Writing Auto → mittel",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:54",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Schreib einen Blogartikel über Based"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-sonnet-5-5"
+   }
+  },
+  {
+   "name": "Writing High → stark",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:55-57",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Schreib einen Blogartikel über Based"
+    },
+    "compute": "high",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-opus-5-5",
+    "route": "write",
+    "routeName": "Writing",
+    "compute": "high"
+   }
+  },
+  {
+   "name": "General Auto ohne Standardmodell = alte Auto-Reihenfolge",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:72",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Let's plan the next quarter for the team and think about hiring"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-opus-5-5"
+   }
+  },
+  {
+   "name": "General Auto mit Standardmodell",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:72",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Let's plan the next quarter for the team and think about hiring"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": "anthropic/claude-sonnet-5-5"
+   },
+   "output": {
+    "model": "anthropic/claude-sonnet-5-5"
+   }
+  },
+  {
+   "name": "Nichts eingerichtet → keine Wahl",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:81",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Let's plan the next quarter for the team and think about hiring"
+    },
+    "compute": "auto",
+    "models": [],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": null
+   }
+  },
+  {
+   "name": "Kein kleines Modell → nächste Stufe",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:87",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Summarize this"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "openai/gpt-4.1"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "openai/gpt-4.1"
+   }
+  },
+  {
+   "name": "Anbieter des Standardmodells zuerst",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:90",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Summarize this"
+    },
+    "compute": "auto",
+    "models": [
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     },
+     {
+      "ref": "openai/gpt-4.1-mini"
+     }
+    ],
+    "defaultModel": "openai/gpt-4.1-mini"
+   },
+   "output": {
+    "model": "openai/gpt-4.1-mini"
+   }
+  },
+  {
+   "name": "Nur auf dem Gerät",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:94",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Summarize this"
+    },
+    "compute": "low",
+    "models": [
+     {
+      "ref": "apple/on-device",
+      "onDevice": true
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "apple/on-device"
+   }
+  },
+  {
+   "name": "Budget erzwingt Low",
+   "source": "legacy/Swift/BasedBrain/Tests/BasedBrainTests/ModelRouterTests.swift:97-101",
+   "input": {
+    "kind": "decide",
+    "task": {
+     "text": "Write a long article"
+    },
+    "compute": "high",
+    "forceLow": true,
+    "models": [
+     {
+      "ref": "anthropic/claude-opus-5-5"
+     },
+     {
+      "ref": "anthropic/claude-sonnet-5-5"
+     },
+     {
+      "ref": "anthropic/claude-haiku-5-5"
+     }
+    ],
+    "defaultModel": ""
+   },
+   "output": {
+    "model": "anthropic/claude-haiku-5-5",
+    "compute": "low",
+    "reasonContains": "budget"
+   }
+  }
+ ]
+}

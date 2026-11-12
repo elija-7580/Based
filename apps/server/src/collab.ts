@@ -57,6 +57,8 @@ export interface CollabOptions {
   debounce?: number;
   /** Sammelzeit, bevor Y-Änderungen der Geräte als Records geschrieben werden (Standard 120 ms). */
   materializeDelay?: number;
+  /** BSD-315: weitere gültige Tokens (Geräte des Besitzers); ohne: nur `token`. */
+  acceptToken?: (token: string) => boolean;
   /** Konverter BlockNote ⇄ Y-XML (Standard: `sharedConverter()`). */
   converter?: BlockConverter;
 }
@@ -77,7 +79,7 @@ export class Collab {
       debounce: opts.debounce ?? 2000,
       maxDebounce: 10_000,
       async onAuthenticate({ token: given, documentName }) {
-        if (!tokenEquals(given, token)) throw new Error("unauthorized");
+        if (!(opts.acceptToken ? opts.acceptToken(given) : tokenEquals(given, token))) throw new Error("unauthorized");
         const id = documentName.startsWith(DOC_PREFIX) ? documentName.slice(DOC_PREFIX.length) : "";
         const root = store.blocks.get(id);
         // Seiten und (BSD-252) Synced-Block-Originale sind eigene Dokument-Wurzeln; Kopien zeigen nur aufs Original.
@@ -127,10 +129,14 @@ export class Collab {
     });
   }
 
-  /** WebSocket-Upgrades auf /collab annehmen; alles andere schließen. */
-  attach(server: Server) {
+  /**
+   * WebSocket-Upgrades auf /collab annehmen; `other` darf andere Pfade übernehmen (BSD-314: Terminal), alles
+   * Übrige wird geschlossen.
+   */
+  attach(server: Server, other?: (req: IncomingMessage, socket: Duplex, head: Buffer) => boolean) {
     server.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
       const path = new URL(req.url ?? "/", "http://localhost").pathname;
+      if (path !== COLLAB_PATH && other?.(req, socket, head)) return;
       if (path !== COLLAB_PATH) {
         socket.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
         socket.destroy();

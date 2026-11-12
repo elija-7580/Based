@@ -1,7 +1,7 @@
 // BSD-223 Teil 4: Zustand der Coding-Ansicht (#coding). Spricht über `CodingClient` mit dem based-server:
 // Sitzungsliste, gewählte Sitzung (Ereignisse per Long-Poll), Freigabe-Inbox (Long-Poll auf die Version).
 // Läuft im Hauptthread; ein Modell je Server-Konfiguration.
-import { CodingClient, codingErrorMessage, foldTranscript, type CodingAgentInfo, type CodingSessionView, type InboxItem, type StoredChatEvent, type TranscriptItem } from "@based/brain";
+import { CodingClient, codingErrorMessage, foldTranscript, type CodingAgentInfo, type CodingSessionView, type FileMatch, type InboxItem, type StoredChatEvent, type TranscriptItem } from "@based/brain";
 
 export interface CodingUIState {
   agents: CodingAgentInfo[];
@@ -94,10 +94,11 @@ export class CodingModel {
     return s;
   }
 
-  async send(text: string): Promise<boolean> {
+  /** `files` (BSD-313): @Dateien relativ zum Arbeitsordner. */
+  async send(text: string, files: readonly string[] = []): Promise<boolean> {
     const id = this.state.selected;
     if (!id || !text.trim()) return false;
-    const ok = await this.guard(async () => { await this.client.prompt(id, text); return true; });
+    const ok = await this.guard(async () => { await this.client.prompt(id, text, files); return true; });
     if (ok) this.patchSession(id, { state: "running" });
     return ok === true;
   }
@@ -112,6 +113,23 @@ export class CodingModel {
     if (!id) return;
     const s = await this.guard(() => this.client.setMode(id, mode));
     if (s) this.patchSession(id, s);
+  }
+
+  /** BSD-313: Modus des Agenten (⇧Tab). */
+  async setAgentMode(mode: string): Promise<void> {
+    const id = this.state.selected;
+    if (!id) return;
+    const prev = this.state.sessions.find((s) => s.id === id)?.agentMode;
+    this.patchSession(id, { agentMode: mode });
+    const s = await this.guard(() => this.client.setAgentMode(id, mode));
+    this.patchSession(id, s ?? { agentMode: prev });
+  }
+
+  /** BSD-313: Dateien für „@“ (Fehler = keine Treffer, kein Banner). */
+  async searchFiles(query: string, signal?: AbortSignal): Promise<FileMatch[]> {
+    const id = this.state.selected;
+    if (!id) return [];
+    return this.client.files(id, query, 30, signal).catch(() => []);
   }
 
   async close(id: string): Promise<void> {
@@ -137,6 +155,13 @@ export class CodingModel {
         const r = await this.client.events(id, since, since === 0 ? 0 : LONG_POLL_MS, ctl.signal);
         if (ctl.signal.aborted) return;
         since = r.next;
+        // BSD-313: Befehle und Modus des Agenten kommen mit jeder Antwort (auch ohne neue Ereignisse).
+        if (r.session) {
+          const cur = this.state.sessions.find((s) => s.id === id);
+          if (cur && (cur.agentMode !== r.session.agentMode || JSON.stringify(cur.commands) !== JSON.stringify(r.session.commands) || JSON.stringify(cur.modes) !== JSON.stringify(r.session.modes))) {
+            this.patchSession(id, { agentMode: r.session.agentMode, commands: r.session.commands, modes: r.session.modes });
+          }
+        }
         if (r.events.length > 0) {
           const events = [...this.state.events, ...r.events];
           this.set({ events, items: foldTranscript(events).items });

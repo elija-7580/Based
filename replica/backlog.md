@@ -1,12 +1,24 @@
 # Backlog — alle Anforderungen mit ehrlichem Status
 
-Stand: Pass 32 (Nachtlauf 2026-11-11, TS-Stack, Abschnitt direkt unten; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
+Stand: Pass 33 (Nachtlauf 2026-11-12, TS-Stack, Abschnitt direkt unten; Pass 25/24 = Swift); ältere Abschnitte Stand Pass 16. Legende: ✅ umgesetzt (Code + Linux-Tests/Type-Check), 🟡 teilweise / ungetestet, ❌ offen.
 Seit Pass 12/13 baut und startet die App auf dem Mac (Nutzer-Log: macOS 27.2, Notion-Import mit 53.086
 Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht alle von Hand geprüft.
 
 > Wichtig: Bis Pass 10 kompilierte die App in Xcode nicht (3 Fehler aus Pass 8/9, jetzt behoben). Alles
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
 > geprüft. `bash ci/typecheck/run.sh` prüft `App/Shared` unter Linux gegen SwiftUI/AppKit/MapKit-Stubs.
+
+## Nachtlauf 2026-11-12 (Pass 33, TS-Stack)
+Zwei Schichten (A Kern & Server, B Oberfläche) 05:13–08:50, danach Kurzschichten A2/B2 bis 09:09, alles auf `main` = 11a86d8; nach jedem Merge geprüft: `pnpm -r typecheck`, `pnpm lint`, `pnpm -r test` (beide Datenformate; core 1674, brain 390, web 200+, server 150, editor 80, database-ui 64, sync 52, cli 19), Playwright gezielt + @smoke in Chromium und WebKit, zweimal voll (361 bzw. 378 grün, nur Wackler). CI neu (BSD-322): Merge-Check `ts-fast`, voller Lauf in 4 Shards, Zeitmessungen nicht blockierend, Status immer auf `ci-logs`.
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| CI / Tests | ✅ | BSD-322 (ts-fast, Shards, @perf, ts/status.txt, store-perf robust), 298/299 + 321 (rote E2E behoben), 300 Klick-Durchlauf, 303 Token-Lint, 333 features.csv, 335 OPFS-Neuladen |
+| Datensicherheit | ✅ | BSD-330 kein stiller Speicher-Fallback (Versionsverlauf überlebte Neuladen nicht – behoben mit 7cccc24), 274 automatische Backups (Mac-Test) |
+| Editor | 🟡 | BSD-318 weiße Fläche/Callout (Mac-Test), 258 Rechteck aus dem Rand (Mac-Test), 305 Teil 1/2, 323 Blockfarben, 324 Gliederung; 261 Scrollbalken blockiert (Entscheidung) |
+| Shell | 🟡 | BSD-310 ⌘W (Mac-Test), 288 Kontextmenü wie Swift, 301 Teil 1/2 Überlauf, 304 Teil 1/2 Tastatur/Fokus, 306 Datenbank-Kante |
+| Agenten / Coding | 🟡 | BSD-331 Hänger-Messung monoton (Mac-Test), BSD-313 Slash/@/⇧Tab, 314 echtes Terminal (Mac-Test), 315 Handy über Tailscale (Mac-Test), 221 Teil 3e MCP-Regeln/Prompts/Inbox/Hauptagent, 243 Teil 3b, 163 Hinweis, 328 Teil 1 Chat-Fixtures |
+| Sync / Import | 🟡 | BSD-296 iCloud-Option (ADR 0015, Spike hinter Schalter), 235 Teil 3 Widerruf live, 260 Teil 8 Logseq |
 
 ## Nachtlauf 2026-11-11 (Pass 32, TS-Stack)
 Zwei Schichten (A Kern & Server, B Oberfläche) 05:07–08:49, alles auf `main` = d108cc5. Nach jedem Merge geprüft: `pnpm -r typecheck`, `pnpm lint`, `pnpm -r test` (core 1624, brain 379, web 163, server 112, editor 77, database-ui 64, sync 45, cli 11), Playwright gezielt bzw. voll (zuletzt voll 305/308, Rest einzeln grün). Mac-Abnahme offen für die mit „Mac-Test“ markierten Einträge (Anleitung im Notion-Backlog).

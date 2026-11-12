@@ -18,6 +18,8 @@ export interface ChatRequest {
   history?: readonly ChatMessage[];
   /** Zusätzliches System-Prompt (Agent-Anweisungen). */
   system?: string;
+  /** BSD-313: Dateien (@Datei) als Verweise; nur ACP-Engines geben sie als `resource_link` weiter. */
+  files?: readonly { uri: string; name: string }[];
 }
 
 export interface ChatEngine {

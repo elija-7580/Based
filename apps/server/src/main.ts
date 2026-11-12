@@ -8,6 +8,7 @@ import { CodingSessions, DEFAULT_AGENTS, type AcpMcpServer, type AgentDefinition
 import { spawnAgent } from "@based/brain/acp-node";
 import { homedir } from "node:os";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { revertPropertyRecords } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { createApp } from "./app.js";
 import { anthropicAgentEngine } from "./agent-engine.js";
@@ -17,6 +18,7 @@ import { createLogger, parseLogLevel, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { loginShellPath, mergePath, newLocalToken, removeLocalDiscovery, writeLocalDiscovery } from "./local.js";
+import { tailnetAddresses, urlFor } from "./tailnet.js";
 import { SyncService } from "./sync.js";
 
 export interface Options {
@@ -25,6 +27,10 @@ export interface Options {
   host: string;
   token: string;
   node: string;
+  /** BSD-30: Workspace auf Properties als eigene Records umstellen (einmalig; danach Protokoll 3). */
+  propertyRecords: boolean;
+  /** BSD-30, Rückweg: die Datei zurück ins alte Format bringen und beenden. */
+  revertPropertyRecords: boolean;
   stdio: boolean;
   publicURL: string | undefined;
   /** BSD-235: Web-Client für den Gast-Modus („Open in Based“ auf Access-Links). */
@@ -45,9 +51,13 @@ export interface Options {
   codingAgents: string | undefined;
   /** BSD-138: Sidecar der Desktop-App – nur 127.0.0.1, freier Port, Discovery-Datei für die CLI, Ende mit stdin. */
   local: boolean;
+  /** BSD-315: zusätzlich auf den Tailscale-Adressen dieses Rechners lauschen (nie 0.0.0.0). */
+  tailnet: boolean;
+  /** BSD-274: Ordner für automatische Backups. */
+  backupDir: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local [--tailnet]] [--backups <dir>] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -57,6 +67,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     host: env.BASED_HOST ?? "0.0.0.0",
     token: env.BASED_TOKEN ?? "",
     node: env.BASED_NODE ?? "server",
+    propertyRecords: env.BASED_PROPERTY_RECORDS === "1",
+    revertPropertyRecords: false,
     stdio: false,
     publicURL: env.BASED_PUBLIC_URL,
     webURL: env.BASED_WEB_URL,
@@ -68,6 +80,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     codingEnv: parseCodingEnv(env.BASED_CODING_ENV),
     codingAgents: env.BASED_CODING_AGENTS,
     local: false,
+    tailnet: env.BASED_TAILNET === "1",
+    backupDir: env.BASED_BACKUP_DIR || undefined,
   };
   let portGiven = false;
   let sandbox = env.BASED_SANDBOX;
@@ -86,6 +100,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--host": o.host = value(a); break;
       case "--token": o.token = value(a); break;
       case "--node": o.node = value(a); break;
+      case "--property-records": o.propertyRecords = true; break;
+      case "--revert-property-records": o.revertPropertyRecords = true; break;
       case "--public-url": o.publicURL = value(a); break;
       case "--web-url": o.webURL = value(a); break;
       case "--assets": o.assetsDir = value(a); break;
@@ -96,6 +112,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--coding-agents": o.codingAgents = value(a); break;
       case "--stdio": o.stdio = true; break;
       case "--local": o.local = true; break;
+      case "--tailnet": o.tailnet = true; break;
+      case "--backups": o.backupDir = value(a); break;
       default: throw new Error(`unknown option ${a}`);
     }
   }
@@ -110,6 +128,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     if (!portGiven) o.port = 0;
   }
   if (o.codingRoots.some((r) => !r.startsWith("/"))) throw new Error("--coding-root must be an absolute path");
+  if (o.tailnet && !o.local) throw new Error("--tailnet only works with --local (the server listens on 127.0.0.1 and the Tailscale addresses)");
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
   if (o.maxAssetMB !== undefined && !(o.maxAssetMB > 0)) throw new Error("--max-asset-mb must be a positive number");
   return o;
@@ -217,6 +236,15 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     process.exit(2);
   }
 
+  if (opts.revertPropertyRecords) {
+    // BSD-30: Rückweg. Nur die Datei, kein Server; danach ohne --property-records starten.
+    const db = openNodeDatabase(opts.db);
+    const n = revertPropertyRecords(db);
+    db.close();
+    process.stderr.write(n > 0 ? `based-server: ${n} databases are back in the old format (${opts.db}).\n` : `based-server: ${opts.db} is in the old format already.\n`);
+    return;
+  }
+
   if (opts.stdio) {
     // stdio ist lokal (der Client startet den Prozess): kein Token nötig. stdout gehört dem Protokoll.
     const sync = new SyncService(openNodeDatabase(opts.db), { node: opts.node });
@@ -238,12 +266,13 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   const bound: { port?: number } = {};
   const token = opts.token;
   const selfMcp = (): AcpMcpServer[] => (bound.port ? [{ name: "based", url: `http://${selfHost(opts.host)}:${bound.port}/mcp`, headers: { Authorization: `Bearer ${token}` } }] : []);
-  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, allowedOrigin: allowedOrigin(opts.publicURL) ?? (opts.local ? localAppOrigin(process.env.BASED_APP_ORIGIN) : undefined),
+  const app = createApp({ token: opts.token, db: opts.db, node: opts.node, ...(opts.propertyRecords ? { propertyRecords: true } : {}), allowedOrigin: allowedOrigin(opts.publicURL) ?? (opts.local ? localAppOrigin(process.env.BASED_APP_ORIGIN) : undefined),
     log,
     ...(opts.webURL ? { webURL: opts.webURL } : {}),
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined }) } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
+    ...(opts.backupDir ? { backupDir: opts.backupDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
     ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log, selfMcp), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),
@@ -254,7 +283,16 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   if (opts.local) {
     // BSD-138: für die CLI auffindbar; die Hülle liest die Adresse aus dieser Zeile (der Token steht nicht darin).
     const d = writeLocalDiscovery(homedir(), { port, token: opts.token, owner: process.env.BASED_LOCAL_OWNER ?? "based-server --local" });
-    process.stdout.write(`BASED_LOCAL_READY ${JSON.stringify({ url: d.url, pid: d.pid })}\n`);
+    // BSD-315: im Tailnet erreichbar – nur auf den Tailscale-Adressen, gleicher Port.
+    const tailnet: string[] = [];
+    if (opts.tailnet) {
+      for (const ip of tailnetAddresses()) {
+        try { await app.listenAlso(port, ip); tailnet.push(urlFor(ip, port)); } catch (e) { log.warning("tailnet listen failed", { error: e instanceof Error ? e.name : "unknown" }); }
+      }
+      if (tailnet.length === 0) log.warning("tailnet: no Tailscale address found on this computer");
+      else log.info("tailnet: also listening", { addresses: tailnet.length });
+    }
+    process.stdout.write(`BASED_LOCAL_READY ${JSON.stringify({ url: d.url, pid: d.pid, ...(opts.tailnet ? { tailnet } : {}) })}\n`);
   }
 
   let stopping = false;

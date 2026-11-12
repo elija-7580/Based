@@ -441,6 +441,34 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     globalThis.addEventListener("mousemove", move);
     globalThis.addEventListener("mouseup", up);
   };
+  // BSD-258 (Mac-Abnahme): Das Rechteck beginnt auch im leeren Seitenrand außerhalb des Editors (wie Notion) – im
+  // breiten Fenster liegt der Rand links und rechts der Textspalte, nicht im Editor-Element. Zählt nur, wenn der
+  // Klick auf einen Hintergrund trifft, der diesen Editor umschließt (nicht auf Bedienelemente, nicht auf einen
+  // anderen Editor) und auf Höhe der Blöcke liegt.
+  const marqueeRef = useRef(startMarquee);
+  marqueeRef.current = startMarquee;
+  useEffect(() => {
+    if (!editable) return;
+    const down = (e: MouseEvent) => {
+      const doc = docRef.current;
+      const t = e.target as Element | null;
+      if (e.button !== 0 || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || !doc || !t || !(t instanceof Element)) return;
+      if (doc.contains(t)) return; // im Editor: onMouseDownCapture
+      // Nächster gemeinsamer Rahmen mit dem Editor; darin muss dieser Editor der erste sein (nicht Peek, Synced Block).
+      let frame: Element | null = t;
+      while (frame && !frame.contains(doc)) frame = frame.parentElement;
+      if (!frame || frame.querySelector(".bx-doc") !== doc) return;
+      // Leere Fläche (Rand, Rasterzelle neben der Textspalte), kein Text und kein Bedienelement
+      if (t !== frame && (t.textContent ?? "").trim() !== "") return;
+      if (t.closest("button, a, input, textarea, select, [role], [contenteditable], [draggable=true]")) return;
+      const r = doc.getBoundingClientRect();
+      if (e.clientY < r.top || e.clientY > r.bottom) return;
+      e.preventDefault();
+      marqueeRef.current(e);
+    };
+    globalThis.document?.addEventListener("mousedown", down, true);
+    return () => globalThis.document?.removeEventListener("mousedown", down, true);
+  }, [editable]);
   /**
    * Ziehen aus dem Text: sobald die Spanne einen Block ohne Text (Bild, Trenner, Datenbank …) berührt, wird daraus eine
    * Blockauswahl (wie Notion). Browser (vor allem WebKit) verlieren die Textauswahl sonst an solchen Blöcken.
@@ -449,8 +477,13 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     let blockMode = false;
     const move = (ev: MouseEvent) => {
       if ((ev.buttons & 1) === 0) return up();
-      const el = globalThis.document?.elementFromPoint(ev.clientX, ev.clientY) ?? null;
-      const cur = blockAt(el);
+      // Schwebendes (die Formatleiste der vorigen Auswahl blendet noch aus, Tooltips) liegt über dem Text: der erste
+      // Treffer, der zu einem Block gehört, zählt – sonst endet die Auswahl unter der Leiste einen Block zu früh.
+      let cur: string | undefined;
+      for (const el of globalThis.document?.elementsFromPoint?.(ev.clientX, ev.clientY) ?? []) {
+        cur = blockAt(el);
+        if (cur) break;
+      }
       if (!cur || (cur === startID && !blockMode)) return;
       const span = siblingSpan(parentOf, startID, cur);
       const ids = rangeIDs(sel, span);
@@ -462,6 +495,14 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     const up = () => {
       globalThis.removeEventListener("mousemove", move);
       globalThis.removeEventListener("mouseup", up);
+      // BSD-258: WebKit setzt beim Loslassen über Text Fokus und Schreibmarke zurück in den Editor – dann gingen ⌫,
+      // ⌘C und Pfeiltasten an den Text statt an die Blockauswahl. Danach den Rahmen wieder fokussieren.
+      if (blockMode) {
+        setTimeout(() => {
+          globalThis.getSelection?.()?.removeAllRanges();
+          docRef.current?.focus({ preventScroll: true });
+        }, 0);
+      }
     };
     globalThis.addEventListener("mousemove", move);
     globalThis.addEventListener("mouseup", up);
@@ -545,7 +586,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
               e.preventDefault();
               const len = before.length - before.lastIndexOf("[[");
               view.dispatch(view.state.tr.delete(sel.from - len, sel.from));
-              void resolveWikilink(editor, title, mentionOptions);
+              void resolveWikilink(editor, title, mentionOptions, sel.from - len);
               return;
             }
           }
@@ -662,19 +703,24 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           </div>
         ) : null}
         {dropRect ? <div className="bx-drop-indicator" aria-hidden="true" style={{ left: dropRect.left, top: dropRect.top, width: dropRect.right - dropRect.left, height: dropRect.bottom - dropRect.top }} /> : null}
-        {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }"}</style> : null}
+        {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }\n"
+          // BSD-318: Farbige Flächen im markierten Block (Hintergrundfarbe, Callout) nicht über die Auswahl legen.
+          + selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block :is([data-background-color], .bn-block)`).join(",\n") + " { background: transparent; }"}</style> : null}
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
           <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} />
-          <FormattingToolbarController formattingToolbar={() => (
-            <FormattingToolbar>
-              {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
-              {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
-            </FormattingToolbar>
-          )} />
+          {/* BSD-318: Bei einer Blockauswahl keine Formatleiste (die Editor-Auswahl spannt dann nur für Blockaktionen über die Blöcke). */}
+          {range ? null : (
+            <FormattingToolbarController formattingToolbar={() => (
+              <FormattingToolbar>
+                {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
+                {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
+              </FormattingToolbar>
+            )} />
+          )}
         </BlockNoteView>
       </div>
     </EnvContext.Provider>
@@ -740,7 +786,23 @@ function slashItems(editor: BasedEditor, session: DocSession, ancestors: readonl
     });
   }
   const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/^(Heading [56]|Toggle Heading [56]|Emoji|Page Break)$/i.test(i.title));
-  return [...defaults, ...custom];
+  return groupContiguous([...defaults, ...custom]);
+}
+
+/**
+ * BSD-305: Einträge derselben Gruppe hintereinander (Reihenfolge der Gruppen nach erstem Auftreten). BlockNote setzt
+ * je Gruppenwechsel eine Überschrift mit der Gruppe als React-Schlüssel – kam „Media“ zweimal vor (Standard- und
+ * eigene Einträge), gab es doppelte Schlüssel, und beim Filtern blieben leere Überschriften stehen.
+ */
+export function groupContiguous<T extends { group?: string }>(items: T[]): T[] {
+  const order: string[] = [];
+  const byGroup = new Map<string, T[]>();
+  for (const it of items) {
+    const g = it.group ?? "";
+    if (!byGroup.has(g)) { byGroup.set(g, []); order.push(g); }
+    byGroup.get(g)!.push(it);
+  }
+  return order.flatMap((g) => byGroup.get(g)!);
 }
 
 /**

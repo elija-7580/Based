@@ -12,8 +12,8 @@ roles on several levels, the highest wins.
 
 | Role | Can |
 |---|---|
-| **Full access** | edit, share further (never above their own role), revoke, change others' roles |
-| **Can edit** | edit content, add and move blocks *within* the shared area |
+| **Full access** | edit, delete pages for good, share further (never above their own role), revoke, change others' roles |
+| **Can edit** | edit content, add and move blocks *within* the shared area, move pages to the Trash (not delete them for good, BSD-282) |
 | **Can comment** | read (Based has no comments yet, so this is read-only for now) |
 | **Can view** | read |
 
@@ -83,7 +83,9 @@ server stays the reference until it is switched off.
   lay in the guest's area (table `share_deleted`; deletions from before it existed still pass, BSD-285). Push
   applies only records with edit access where they are *and* where they go; the rest come back in `newer` (only if
   the guest may read them) and are listed in `rejected` (`[{kind, id}]`), so the device takes the server copy even
-  though its own stamp is newer. Assets: guests read only files referenced from
+  though its own stamp is newer. Deleting for good (BSD-282): with **Can edit**, a push may delete content blocks and
+  views, but not a page, a database row or a database, nothing inside one it tries to delete, and no block that
+  would still hold a page afterwards. Those go to the Trash instead (`trashedAt`, an ordinary edit). Assets: guests read only files referenced from
   readable records and upload only with an edit role somewhere.
 - **Publish:** `/p/<id>[/<page>]` is rendered with the core HTML exporter (`exportHTMLPage`, `offline: true`) and the
   token stylesheet from `@based/design-tokens/export-css` — no scripts, no fonts or scripts from other servers.

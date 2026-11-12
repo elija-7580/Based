@@ -6,6 +6,7 @@
 
 import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
 import { autoUpdatePref } from "./shell/storage.js";
+import { closeTabAction } from "./shell/closeTab.js";
 
 /** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
 export const REPORT_PROBLEM_EVENT = "based:report-problem";
@@ -75,7 +76,7 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
 }
 
 /** Einstieg aus main.tsx: im Browser ohne Wirkung. */
-export async function startDesktop(onCloseTab?: () => void) {
+export async function startDesktop(tabs?: { close: () => void; count: () => number }) {
   if (!isTauri()) return;
   applyDesktopShell();
   // BSD-202: Ereignisse nur für dieses Fenster (lib.rs schickt sie an das Fenster vorn), nicht an alle.
@@ -89,8 +90,23 @@ export async function startDesktop(onCloseTab?: () => void) {
     void localServer().autostart();
     await win.listen("desktop://install-cli", () => void showCliInstall());
   }
-  // ⌘W liegt im Menü (lib.rs) und schließt den Tab, nicht das Fenster.
-  if (onCloseTab) await win.listen("desktop://close-tab", () => onCloseTab());
+  // ⌘W liegt im Menü (lib.rs, an das Fenster vorn). BSD-310: beim letzten Tab Seitenfenster schließen bzw.
+  // Hauptfenster ausblenden, solange andere Fenster offen sind; nur im letzten Fenster zur Startseite.
+  if (tabs) {
+    await win.listen("desktop://close-tab", async () => {
+      let visible = 0;
+      if (tabs.count() <= 1) {
+        const { getAllWebviewWindows } = await import("@tauri-apps/api/webviewWindow");
+        for (const w of await getAllWebviewWindows().catch(() => [])) {
+          if (w.label !== win.label && (await w.isVisible().catch(() => false))) visible += 1;
+        }
+      }
+      const action = closeTabAction({ tabs: tabs.count(), pageWindow: !main, otherVisibleWindows: visible });
+      if (action === "close-window") await win.close().catch(() => tabs.close());
+      else if (action === "hide-window") await win.hide().catch(() => tabs.close());
+      else tabs.close();
+    });
+  }
   // Diagnose: Beim Schließen des Fensters bzw. Beenden der App meldet WKWebView kein pagehide – ohne das hier sah
   // jedes normale Beenden wie ein Absturz aus („didn't close normally“).
   const { markSessionEnd } = await import("./shell/diagnostics.js");

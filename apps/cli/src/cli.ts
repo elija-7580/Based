@@ -123,6 +123,7 @@ export class BasedCLI {
       case "login":
       case "config":
       case "reports":
+      case "check":
         throw new CLIError("handled by the executable");
       case "tools": {
         this.tools = undefined;

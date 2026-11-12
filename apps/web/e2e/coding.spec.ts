@@ -54,6 +54,7 @@ test.beforeAll(async ({ browserName }) => {
     cwd: serverDir,
     env: { ...process.env, HOME: home, BASED_TOKEN: TOKEN, BASED_LOG_LEVEL: "warning" },
     stdio: ["ignore", "ignore", "inherit"],
+    detached: true,
   });
   for (let i = 0; i < 150; i++) {
     try {
@@ -66,11 +67,18 @@ test.beforeAll(async ({ browserName }) => {
   throw new Error("based-server did not start");
 });
 
-test.afterAll(() => {
-  server?.kill();
-  if (dataDir) rmSync(dataDir, { recursive: true, force: true });
-  if (root) rmSync(root, { recursive: true, force: true });
-  if (home) rmSync(home, { recursive: true, force: true });
+test.afterAll(async () => {
+  // BSD-314: erst warten, bis der Server (und mit ihm die Terminal-Shell) beendet ist – die Shell schreibt beim
+  // Beenden noch ihren Verlauf ins Home.
+  // Prozessgruppe beenden (pnpm → tsx → Server → Shell), nicht nur pnpm.
+  if (server?.pid && server.exitCode === null) {
+    await new Promise<void>((r) => { server.once("exit", () => r()); try { process.kill(-server.pid!, "SIGTERM"); } catch { server.kill(); } setTimeout(r, 5000); });
+  }
+  // Aufräumen in /tmp darf den Lauf nicht rot machen (eine Shell kann ihren Verlauf noch schreiben).
+  const rm = (p: string) => { try { rmSync(p, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* bleibt in /tmp */ } };
+  if (dataDir) rm(dataDir);
+  if (root) rm(root);
+  if (home) rm(home);
 });
 
 test("ohne Server: ehrlicher Hinweis", async ({ page }) => {
@@ -199,4 +207,203 @@ test("BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich 
       }
     }
   }
+});
+
+// BSD-313: Slash-Befehle des Agenten, @Dateien als Chip (resource_link), ⇧Tab schaltet die Modi des Agenten.
+test("BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  mkdirSync(join(root, "src"), { recursive: true });
+  writeFileSync(join(root, "src", "main.ts"), "export {};\n");
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.goto("/#coding");
+  await expect(page.getByTestId("coding-screen")).toBeVisible();
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  const mode = page.getByTestId("coding-agent-mode");
+  await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible({ timeout: 15_000 });
+
+  const input = page.getByLabel("Message", { exact: true });
+  // ⇧Tab im Eingabefeld: nächster Modus des Agenten, Fokus bleibt
+  await input.focus();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Accept edits" })).toBeVisible();
+  await expect(input).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
+  await page.keyboard.press("Shift+Tab");
+  await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
+
+  // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
+  await input.pressSequentially("/");
+  const cmds = page.getByTestId("coding-commands");
+  await expect(cmds.getByText("/review")).toBeVisible({ timeout: 10_000 });
+  await expect(cmds.getByText("Review the current changes")).toBeVisible();
+  await expect(cmds.getByText("/compact")).toBeVisible();
+  await input.pressSequentially("co");
+  await expect(cmds.getByText("/review")).toHaveCount(0);
+  await expect(cmds.getByText("/compact")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(cmds).toHaveCount(0);
+  await input.fill("");
+  await input.pressSequentially("/");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(input).toHaveValue("/init ");
+  await expect(cmds).toHaveCount(0);
+
+  // „@“: Dateien aus dem Arbeitsordner, Auswahl wird Chip, der Text bleibt ohne „@…“
+  await input.fill("");
+  await input.pressSequentially("look at @mai");
+  const files = page.getByTestId("coding-files");
+  await expect(files.getByText("main.ts", { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(files.getByText("src/main.ts")).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(input).toHaveValue("look at ");
+  const chips = page.getByTestId("coding-file-chips");
+  await expect(chips.getByText("@main.ts")).toBeVisible();
+  if (browserName === "chromium") await page.screenshot({ path: join(screens, "web-coding-chip-light.png") });
+  await page.getByTestId("coding-send").click();
+  // Fake-Agent wiederholt die Prompt-Blöcke: Text und Verweis auf die Datei
+  await expect(page.getByTestId("coding-console").getByText(/resource_link/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("coding-console").getByText(/src\/main\.ts/).first()).toBeVisible();
+  await expect(chips).toHaveCount(0);
+
+  // Checkliste „Fertig heißt poliert“: Datei-Menü hell und dunkel in drei Fenstergrößen; nichts läuft heraus
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.getByTestId("coding-sessions").getByRole("listitem").first().click();
+      await input.fill("");
+      await input.pressSequentially("look at @mai");
+      await expect(files.getByText("main.ts", { exact: true })).toBeVisible({ timeout: 10_000 });
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await input.scrollIntoViewIfNeeded();
+        const menu = (await files.boundingBox())!;
+        const field = (await input.boundingBox())!;
+        expect(menu.x + menu.width).toBeLessThanOrEqual(w);
+        expect(menu.y + menu.height).toBeLessThanOrEqual(field.y + 1);
+        await expect(page.getByTestId("coding-agent-mode")).toBeInViewport();
+        await page.screenshot({ path: join(screens, `web-coding-files-${theme}${w === 1280 ? "" : `-${w}`}.png`) });
+      }
+      await page.setViewportSize({ width: 1280, height: 820 });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+});
+
+// BSD-314: echtes Terminal je Sitzung (xterm.js + PTY auf dem Server), im Arbeitsordner der Sitzung.
+test("BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.goto("/#coding");
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  await expect(page.getByTestId("coding-agent-mode")).toBeVisible({ timeout: 15_000 });
+  await page.getByRole("radio", { name: "Terminal" }).click();
+  const term = page.getByTestId("coding-terminal");
+  await expect(term.locator(".xterm-rows")).toBeVisible({ timeout: 15_000 });
+  await term.click();
+  await page.keyboard.type("pwd; echo hi-$((40+2))");
+  await page.keyboard.press("Enter");
+  await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+  await expect(term.locator(".xterm-rows")).toContainText(root.split("/").pop()!);
+  // Zurück zum Transkript und wieder hin: dieselbe Shell, alte Ausgabe noch da
+  await page.getByRole("radio", { name: "Transcript" }).click();
+  await expect(page.getByTestId("coding-console")).toBeVisible();
+  await page.getByRole("radio", { name: "Terminal" }).click();
+  await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
+      await page.getByRole("radio", { name: "Terminal" }).click();
+      // Nicht auf die alte Ausgabe warten: nach den Größenwechseln der vorigen Runde zeichnet die Shell (readline) ihre
+      // Zeile neu und kann dabei frühere Zeilen überschreiben (auf GitHub mit längerem Prompt gesehen). Neu tippen.
+      await expect(term.locator(".xterm-rows")).toContainText("$((40+2))", { timeout: 15_000 });
+      await term.click();
+      await page.keyboard.type(`echo ${theme}-$((1+1))`);
+      await page.keyboard.press("Enter");
+      await expect(term.locator(".xterm-rows")).toContainText(`${theme}-2`, { timeout: 15_000 });
+      for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        const box = (await term.boundingBox())!;
+        expect(box.x + box.width).toBeLessThanOrEqual(w);
+        // xterm füllt die Fläche (Größe folgt dem Fenster)
+        await expect.poll(async () => (await term.locator(".xterm-screen").boundingBox())!.width).toBeGreaterThan(box.width * 0.85);
+        await expect(page.getByTestId("coding-agent-mode")).toBeInViewport();
+        await page.screenshot({ path: join(screens, `web-coding-terminal-${theme}${w === 1280 ? "" : `-${w}`}.png`) });
+      }
+      await page.setViewportSize({ width: 1280, height: 820 });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+});
+
+// BSD-315: vom Handy (390 × 844) bedienbar – Sitzung starten, Freigabe mit großen Knöpfen, nichts läuft waagrecht heraus.
+test("BSD-315: #coding auf dem Handy (390 × 844)", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  // verbinden im großen Fenster, dann aufs Handy-Format
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#coding");
+  await expect(page.getByTestId("coding-screen")).toBeVisible();
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  await expect(page.getByTestId("coding-agent-mode")).toBeVisible({ timeout: 15_000 });
+  writeFileSync(join(root, "a.txt"), "old\n");
+  await page.getByLabel("Message", { exact: true }).fill(`edit ${root}/a.txt`);
+  await page.getByTestId("coding-send").click();
+  const ask = page.getByTestId("coding-permission");
+  await expect(ask).toContainText("wants to: Edit");
+  const allow = ask.getByRole("button", { name: "Allow", exact: true });
+  await allow.scrollIntoViewIfNeeded();
+  // große Knöpfe zum Tippen (≥ 44 px hoch)
+  expect((await allow.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  // Reiter oben nicht abgeschnitten (kein „Sess…“)
+  for (const name of ["Sessions", "CLI history", "Setup"]) {
+    const r = page.getByRole("radio", { name });
+    expect(await r.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), name).toBe(true);
+  }
+  expect(await overflow()).toBeLessThanOrEqual(1);
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("coding-permission")).toBeVisible({ timeout: 15_000 });
+      await page.screenshot({ path: join(screens, `web-coding-phone-${theme}.png`) });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+  await allow.click();
+  await expect(page.getByTestId("coding-inbox")).toHaveCount(0);
 });

@@ -31,7 +31,7 @@ export function StatusSection({ state }: SettingsSectionProps) {
     <Group>
       <Row label="Version"><Value testID="diagnostics-version">{versionText()}</Value></Row>
       <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
-      <Row label="Storage"><Value>{s.persistent ? "Persistent (OPFS)" : "Memory only"}</Value></Row>
+      <Row label="Storage"><Value testID="diagnostics-storage">{s.persistent ? "Persistent (OPFS)" : "Memory only"}{s.storageWarnings?.length ? ` · ${s.storageWarnings.join(" ")}` : ""}</Value></Row>
       {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
       <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
       <Row label="Pages"><Value testID="diagnostics-pages">{`${plural(nodes.filter((n) => n.kind === "page").length, "page")} · ${plural(nodes.filter((n) => n.kind === "database").length, "database")}`}</Value></Row>
@@ -127,7 +127,8 @@ export function LogSection({ state }: SettingsSectionProps) {
   const log = useLog();
   const [level, setLevel] = useState<LevelFilter>("all");
   const [query, setQuery] = useState("");
-  const [copied, setCopied] = useState(false);
+  // BSD-300: Kopieren kann scheitern (keine Berechtigung für die Zwischenablage) – dann das sagen, nicht still bleiben.
+  const [copied, setCopied] = useState<"" | "ok" | "failed">("");
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return log.filter((e) => (level === "all" || e.level === level) && (!q || e.message.toLowerCase().includes(q)));
@@ -136,18 +137,22 @@ export function LogSection({ state }: SettingsSectionProps) {
   const facts = {
     version: versionText(),
     sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
-    storage: s.persistent ? "persistent" : "memory",
+    storage: (s.persistent ? "persistent" : "memory") + (s.storageWarnings?.length ? ` (${s.storageWarnings.join(" ")})` : ""),
     clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
     device: deviceNode.get() ?? "-",
     shell: isTauri() ? "desktop" : "web",
     pages: Object.keys(state.outline?.nodes ?? {}).length,
     trash: state.outline?.trash.length ?? 0,
   };
-  const copy = () => void navigator.clipboard?.writeText(diagnosticsReport(facts)).then(() => setCopied(true), () => setCopied(false));
+  const copy = () => {
+    const clip = globalThis.navigator?.clipboard;
+    if (!clip) return setCopied("failed");
+    void clip.writeText(diagnosticsReport(facts)).then(() => setCopied("ok"), () => setCopied("failed"));
+  };
   return (
     <Group>
       <Row label="Events on this device" hint="Newest last — no page content">
-        <BasedButton label={copied ? "Copied" : "Copy diagnostics"} onClick={copy} />
+        <BasedButton label={copied === "ok" ? "Copied" : copied === "failed" ? "Couldn’t copy – try again" : "Copy diagnostics"} onClick={copy} />
       </Row>
       <HStack gap={3} vAlign="end" wrap="wrap">
         <SegmentedControl label="Level" value={level} onChange={(v) => setLevel(v as LevelFilter)}>

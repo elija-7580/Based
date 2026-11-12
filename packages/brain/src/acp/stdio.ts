@@ -213,3 +213,4 @@ export async function readCliTranscript(s: Pick<CliSession, "tool" | "file">, li
   if (st.size > 64 << 20) throw new Error("transcript file is too large");
   return cliTranscript(s.tool, await fsp.readFile(s.file, "utf8"), limit);
 }
+export { listSessionFiles } from "./files-node.js";

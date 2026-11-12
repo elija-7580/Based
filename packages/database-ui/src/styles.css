@@ -125,6 +125,12 @@
 
 /* Tabelle */
 .dbui-table { position: relative; outline: none; margin: 0 var(--space-6); }
+/* BSD-304: Die Tabelle nimmt per Tab den Fokus (Pfeiltasten wählen Zellen) – dann sichtbar, in der Marker-Farbe. */
+/* Als Rahmen über allem (die klebende Kopfzeile liegt sonst über der Kontur). */
+.dbui-table:focus-visible::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  border: var(--marker-width) solid var(--focus-ring, var(--marker-strong)); border-radius: var(--radius-sm);
+}
 .dbui-thead {
   position: sticky; top: 0; z-index: 2; display: flex; height: var(--dbui-row); background: var(--bg); border-bottom: 1px solid var(--line);
 }
@@ -379,7 +385,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-cal-bar { flex: none; display: flex; align-items: center; gap: var(--space-1); padding: var(--space-3) var(--space-6) var(--space-2); flex-wrap: wrap; }
 .dbui-cal-title { font-size: var(--type-section-size); font-weight: var(--type-section-weight); letter-spacing: var(--type-section-tracking); margin-right: auto; min-width: calc(var(--space-8) * 3); }
 .dbui-cal-spacer { flex: 1; }
-.dbui-seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--radius-pill); background: var(--surface-raised); }
+.dbui-seg { display: inline-flex; padding: var(--space-half); gap: var(--space-half); border-radius: var(--radius-pill); background: var(--surface-raised); }
 .dbui-seg-item {
   min-height: calc(var(--space-6) - var(--space-1)); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-pill); background: transparent; color: var(--muted);
   font-size: var(--type-description-size); font-weight: var(--type-description-weight);
@@ -598,7 +604,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-vlist.static { display: flex; flex-direction: column; }
 .dbui-vitem.static { position: static; }
 .dbui-board-col .dbui-load-more { padding-left: var(--space-3); }
-.dbui-root.inline .dbui-actions, .dbui-root.inline .dbui-open-full { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.dbui-root.inline .dbui-actions, .dbui-root.inline .dbui-open-full { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .dbui-root.inline:hover .dbui-actions, .dbui-root.inline:focus-within .dbui-actions,
 .dbui-root.inline:hover .dbui-open-full, .dbui-root.inline:focus-within .dbui-open-full { opacity: 1; }
 .dbui-load-more {
@@ -607,6 +613,9 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 }
 .dbui-load-more:hover { background: var(--surface-raised); color: var(--ink); }
 /* Inline: Namen bündig mit dem Seitentext, die Kästchen-Spalte hängt wie bei Notion in den linken Rand. */
-.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2))); }
+/* BSD-306: Kante = Text der ersten Spalte (Kästchen-Spalte 48 + Zellenabstand 8 hängen links heraus); die Tabs
+   hängen ihren Innenabstand ebenso heraus, damit ihr Text auf derselben Kante steht wie Titel und Namen. */
+.dbui-root.inline .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
+.dbui-root.inline .dbui-tabs { margin-left: calc(-1 * var(--space-3)); }
 .dbui-root.inline .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin: 0; }
 .dbui-root.inline .dbui-load-more { padding-left: calc(var(--space-7) + var(--space-2) + var(--space-2)); }

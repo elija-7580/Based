@@ -3,7 +3,7 @@
 // weiße Pille. Seiten: auf-/zuklappen, neue Seite, umbenennen, Favorit, Papierkorb, Ziehen zum Umsortieren.
 import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
 import { VirtualList } from "@based/ui";
-import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type DragEvent, type KeyboardEvent } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type DragEvent, type KeyboardEvent } from "react";
 import "./teamspaces.css";
 import markLight from "../../../../docs/design/logo/based-mark-small.svg?url";
 import markDark from "../../../../docs/design/logo/based-mark-small-on-dark.svg?url";
@@ -12,6 +12,8 @@ import { MoveDialog } from "./MoveDialog.js";
 import { DeleteTeamspaceDialog, TeamspaceDialog, type TeamspaceEdit } from "./TeamspaceDialog.js";
 import { routeToHash, type Route } from "../shell/router.js";
 import { openPageWindow } from "../desktop.js";
+import { asNewTabs } from "../shell/newTabIntent.js";
+import { download } from "./ImportExport.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
@@ -207,7 +209,11 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   };
   const onDrop = (e: DragEvent<HTMLElement>, row: SidebarRow) => {
     const id = dragging.current ?? e.dataTransfer.getData(DRAG_TYPE);
-    const zone = drop?.key === row.key ? drop.zone : "inside";
+    // Zone aus der Position des Drops selbst (wie in onDragOver), nicht aus dem React-Zustand: unter Last kam der
+    // Drop vor dem Neuzeichnen nach dem letzten dragover an, der Zustand war alt und die Seite landete „inside“
+    // statt davor (CI, WebKit, shell.spec.ts „Ziehen sortiert um“).
+    const rect = e.currentTarget.getBoundingClientRect();
+    const zone = row.kind === "page" ? dropZone(e.clientY - rect.top, rect.height, !row.database) : "inside";
     setDrop(undefined);
     dragging.current = undefined;
     if (!id) return;
@@ -493,6 +499,8 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onFavorite={(on) => void client.command({ op: "favorite", ids: [...picked], on })}
           onDuplicate={() => void client.command({ op: "duplicate", ids: [...picked] })}
           onMove={() => setMoving([...picked])}
+          onOpenTabs={() => asNewTabs(() => [...picked].forEach((id) => onOpenPage(id)))}
+          onCopyLinks={() => void copyPageLinks([...picked])}
           onTrash={() => {
             const ids = [...picked];
             void client.command({ op: "trash", ids });
@@ -512,6 +520,9 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
           onMove={() => setMoving([menu.id])}
           onDuplicate={() => void client.command({ op: "duplicate", ids: [menu.id] })}
           onOpenWindow={() => void openPageWindow(routeToHash({ name: "page", id: menu.id }), titles.get(menu.id) ?? "")}
+          onOpenTab={() => asNewTabs(() => onOpenPage(menu.id))}
+          onCopyLink={() => void copyPageLinks([menu.id])}
+          onExport={(format) => void client.exportPage(menu.id, format).then(download).catch(() => undefined)}
           isHome={homePage === menu.id}
           onHome={(on) => startPage.set(on ? menu.id : undefined)}
           quickMoves={(outline?.nodes[menu.id]?.parent === undefined ? outline?.sections ?? [] : []).filter((x) => x.id !== menuSection).map((x) => ({ id: x.id, label: `Move to ${x.name}` }))}
@@ -566,7 +577,9 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
   );
 }
 
-const indent = (depth: number) => `calc(${depth} * var(--space-4) + var(--space-1))`;
+/** Einrückung; ab der fünften Ebene nur noch Drittel-Schritte, damit auch tief verschachtelte Seiten (BSD-301) ihren
+ *  Titel zeigen statt nur Pfeil und Symbol. */
+const indent = (depth: number) => `calc(${depth <= 4 ? depth : 4 + (depth - 4) / 3} * var(--space-4) + var(--space-1))`;
 
 interface RowProps {
   row: Extract<SidebarRow, { kind: "page" }>;
@@ -696,9 +709,9 @@ const PageRow = memo(function PageRow(p: RowProps) {
 });
 
 /** Sammelaktionen für mehrere ausgewählte Seiten (wie Notion). */
-function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, onMove, onTrash }: {
+function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, onMove, onOpenTabs, onCopyLinks, onTrash }: {
   menu: Menu; count: number; allFavorite: boolean; onClose: () => void;
-  onFavorite: (on: boolean) => void; onDuplicate: () => void; onMove: () => void; onTrash: () => void;
+  onFavorite: (on: boolean) => void; onDuplicate: () => void; onMove: () => void; onOpenTabs: () => void; onCopyLinks: () => void; onTrash: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -723,6 +736,8 @@ function BulkMenu({ menu, count, allFavorite, onClose, onFavorite, onDuplicate, 
       <p className="menu-foot t-meta">{count} pages selected</p>
       {item(allFavorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!allFavorite))}
       {item("Duplicate", "duplicate", onDuplicate)}
+      {item("Open in new tabs", "expand", onOpenTabs)}
+      {item("Copy links", "link", onCopyLinks)}
       {item("Move to…", "move", onMove)}
       {item("Move to Trash", "trash", onTrash)}
     </div>
@@ -821,7 +836,13 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
   );
 }
 
-function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, isHome, onHome, quickMoves, onQuickMove }: {
+/** BSD-288: Links auf Seiten (eine pro Zeile) in die Zwischenablage – dieselbe Adresse wie in der Adressleiste. */
+function copyPageLinks(ids: string[]): Promise<void> {
+  const text = ids.map((id) => { const u = new URL(location.href); u.hash = routeToHash({ name: "page", id }); return u.toString(); }).join("\n");
+  return navigator.clipboard?.writeText(text).catch(() => undefined) ?? Promise.resolve();
+}
+
+function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAdd, onTrash, onMove, onDuplicate, onOpenWindow, onOpenTab, onCopyLink, onExport, isHome, onHome, quickMoves, onQuickMove }: {
   menu: Menu;
   favorite: boolean;
   canNest: boolean;
@@ -834,6 +855,10 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
   onDuplicate: () => void;
   /** BSD-202: in eigenem Fenster (Hülle) bzw. neuem Browser-Fenster. */
   onOpenWindow: () => void;
+  /** BSD-288 (wie Swift): neuer Tab, Link kopieren, als Markdown/HTML exportieren. */
+  onOpenTab: () => void;
+  onCopyLink: () => void;
+  onExport: (format: "markdown" | "html") => void;
   /** Diese Seite ist Home bzw. soll es werden (aus: zurück zum Dashboard). */
   isHome: boolean;
   onHome: (on: boolean) => void;
@@ -866,7 +891,15 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
       {label}
     </button>
   );
-  const pos: CSSProperties = { left: menu.x, top: menu.y };
+  // BSD-288: Das Menü bleibt ganz im Fenster – unten anstoßend rückt es nach oben, ist es höher als das Fenster,
+  // rollt es (kleinstes Fenster 900 × 600).
+  const [top, setTop] = useState(menu.y);
+  useLayoutEffect(() => {
+    const h = ref.current?.offsetHeight ?? 0;
+    const margin = 8;
+    setTop(Math.max(margin, Math.min(menu.y, window.innerHeight - h - margin)));
+  }, [menu.y]);
+  const pos: CSSProperties = { left: menu.x, top, maxHeight: "calc(100vh - var(--space-4))", overflowY: "auto" };
   return (
     <div ref={ref} role="menu" aria-label="Page actions" className="menu" style={pos}>
       {item(favorite ? "Remove from Favorites" : "Add to Favorites", "star", () => onFavorite(!favorite))}
@@ -874,9 +907,13 @@ function PageMenu({ menu, favorite, canNest, onClose, onFavorite, onRename, onAd
       {item("Rename", "page", onRename)}
       {canNest ? item("Add a page inside", "plus", onAdd) : null}
       {item("Duplicate", "duplicate", onDuplicate)}
+      {item("Open in new tab", "expand", onOpenTab)}
       {item("Open in new window", "expand", onOpenWindow)}
+      {item("Copy link", "link", onCopyLink)}
       {item("Move to…", "move", onMove)}
       {quickMoves.slice(0, 4).map((q) => <span key={q.id} style={{ display: "contents" }}>{item(q.label, q.id === PRIVATE ? "lock" : "teamspace", () => onQuickMove(q.id))}</span>)}
+      {item("Export as Markdown", "export", () => onExport("markdown"))}
+      {item("Export as HTML", "export", () => onExport("html"))}
       {item("Move to Trash", "trash", onTrash)}
     </div>
   );

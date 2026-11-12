@@ -74,7 +74,9 @@ input::placeholder { color: var(--muted); }
   display: flex; justify-content: flex-end;
 }
 .sidebar-resize::after { content: ""; width: 1px; height: 100%; background: transparent; transition: background var(--duration-fast) var(--ease-out); }
-.sidebar-resize:hover::after, .sidebar-resize:focus-visible::after { background: var(--line); }
+.sidebar-resize:hover::after { background: var(--line); }
+/* BSD-304: Tastaturfokus sofort (ohne Übergang) und in der Marker-Farbe, nicht nur als Haarlinie. */
+.sidebar-resize:focus-visible::after { background: var(--focus-ring); width: var(--marker-width); transition: none; }
 .sidebar-resize:focus-visible { outline: none; }
 /* Seitenleiste ausgeblendet: Der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite (auf der Höhe der
    Tab-Leiste), nicht mehr über der Kopfzeile der Seite – dort lag er auf den Pfeilen und dem Seitentitel. In der
@@ -322,14 +324,18 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .topbar .spacer { margin-left: auto; }
 .history-buttons { display: flex; gap: 1px; margin-left: calc(-1 * var(--space-2)); }
 .breadcrumb { display: flex; gap: var(--space-2); min-width: 0; overflow: hidden; white-space: nowrap; }
-.crumb { display: inline-flex; gap: var(--space-2); }
+.crumb { display: inline-flex; gap: var(--space-2); min-width: 0; flex: 0 1 auto; }
 .crumb-link { border: 0; background: transparent; color: inherit; padding: 0; }
+.crumb > [aria-hidden="true"], .crumb:has(> .crumb-more) { flex: none; }
+.crumb-link, .crumb-text { min-width: 0; max-width: calc(var(--space-8) * 6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
 .crumb-link:hover { color: var(--ink); }
-.crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.crumb-current { color: var(--ink); overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 0 1 auto; }
 .trash-banner { display: flex; align-items: center; gap: var(--space-3); justify-content: center; padding: var(--space-2) var(--space-4); background: var(--surface-raised); flex-wrap: wrap; }
 .page-head { margin-bottom: var(--space-4); }
 .title-input { width: 100%; border: 0; padding: 0; margin: 0; background: transparent; color: var(--ink); font: inherit; letter-spacing: inherit; outline: none; }
 .title-input::placeholder { color: var(--muted); }
+/* BSD-301: Seitentitel bricht um (mehrzeiliges Feld, Höhe aus dem Inhalt), statt rechts abgeschnitten zu werden. */
+.title-wrap { display: block; resize: none; overflow: hidden; line-height: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
 .page-body { min-width: 0; }
 .blocks { display: flex; flex-direction: column; gap: var(--space-2); }
 .blocks p { min-height: 1em; }
@@ -354,6 +360,13 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .page { padding: var(--space-6) var(--space-6) var(--space-8); }
 /* Datenbankseiten nutzen die ganze Panelbreite (wie Notion); Titel bleibt an der Spaltenkante. */
 .page.page-database { padding-inline: var(--space-7); }
+/* BSD-306: Titel, Text der Tabs und Text der ersten Spalte auf einer linken Kante. Dafür rückt die Seite um die
+   Kästchen-Spalte ein (48 + 8), die – wie der Block-Griff im Editor – links in den Rand hängt. */
+.page.page-database { padding-inline-start: calc(var(--space-7) + var(--space-7) + var(--space-2) + var(--space-2)); }
+.page.page-database .dbui-root:not(.inline) .dbui-head { padding-inline: 0; }
+.page.page-database .dbui-root:not(.inline) .dbui-tabs { margin-left: calc(-1 * var(--space-3)); }
+.page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] .dbui-scroll { margin-left: calc(-1 * (var(--space-7) + var(--space-2) + var(--space-2))); }
+.page.page-database .dbui-root:not(.inline) .dbui-body[data-view-type="table"] :is(.dbui-table, .dbui-tfoot) { margin-left: 0; }
 .page.page-database .page-grid { max-width: none; grid-template-columns: minmax(0, 1fr); }
 .page.page-database .spacer-cell { display: none; }
 .page-grid { max-width: calc(var(--page-measure) + var(--margin-column) + var(--space-5)); margin: 0 auto; display: grid; grid-template-columns: var(--margin-column) minmax(0, 1fr); column-gap: var(--space-5); row-gap: var(--space-3); }
@@ -445,6 +458,8 @@ button.row:hover, a.row:hover { background: var(--bg); }
   display: inline-flex; align-items: center; gap: var(--space-2);
 }
 .choice[aria-checked="true"] { background: var(--selected); border-color: var(--ink); font-weight: var(--weight-heading); }
+.settings-choice { flex: none; max-width: 100%; }
+.settings-choice .astryx-segmented-control-item { flex-shrink: 0; }
 .swatch { width: var(--space-3); height: var(--space-3); border-radius: var(--radius-xs); border: 1px solid var(--line); }
 .swatch.light { background: var(--bg); }
 .swatch.dark { background: var(--ink); }

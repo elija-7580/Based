@@ -71,7 +71,8 @@ export const ENUMS = {
   DateGrouping: ["day", "month", "relative", "week", "year"],
   PageFont: ["default", "mono", "serif"],
   AudioTrackRole: ["microphone", "mixed", "system", "upload"],
-  RecordKind: ["block", "database", "view", "workspace"],
+  // `property` gibt es nur im TS-Stack (BSD-30, ADR 0014); die eingefrorene Swift-App kennt die Art nicht.
+  RecordKind: ["block", "database", "view", "workspace", "property"],
   PropertyValueCase: ["checkbox", "date", "email", "files", "multiSelect", "number", "person", "phone", "place", "relation", "select", "status", "text", "uniqueID", "url"],
   CardCoverCase: ["none", "pageContent", "pageCover", "pageIcon", "property"],
 } as const;
@@ -206,6 +207,12 @@ export const database = z.looseObject({
   locked: z.boolean().optional(), createdAt: swiftDate, updatedAt: swiftDate, stamp,
 });
 
+/**
+ * BSD-30 (ADR 0014): eine Property als eigener Record. `id` = `<databaseID>/<propertyID>` (Property-IDs sind nur je
+ * Datenbank eindeutig), `sk` = Reihenfolge in der Datenbank, `schema` = die Property wie bisher in `database.properties`.
+ */
+export const propertyRecord = z.looseObject({ id: recordID, databaseID: recordID, sk: z.string(), schema: propertySchema, stamp });
+
 // MARK: View
 
 export const filterValue = z.union([
@@ -283,6 +290,7 @@ export const record = z.discriminatedUnion("kind", [
   z.looseObject({ kind: z.literal("database"), data: database }),
   z.looseObject({ kind: z.literal("view"), data: databaseView }),
   z.looseObject({ kind: z.literal("workspace"), data: workspace }),
+  z.looseObject({ kind: z.literal("property"), data: propertyRecord }),
 ]);
 export const recordKey = z.looseObject({ kind: recordKind, id: recordID });
 /** Löschung auf dem Draht (ADR 0002): ohne `stamp` von älteren Clients. */

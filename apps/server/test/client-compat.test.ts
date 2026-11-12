@@ -3,10 +3,14 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import { canonicalStringify, encodeRecord, keyOf, parseRecord, recordKey, type WireRecord, type WorkspaceStore } from "@based/core";
+import { canonicalStringify, encodeRecord, keyOf, parseRecord, recordKey, type WireRecord, WorkspaceStore } from "@based/core";
 import { openWorkspace, PULLED_KEY, PUSHED_KEY, SqlitePersistence, SyncClient, type SqlDatabase } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
 import { startApp, TOKEN } from "./helpers.js";
+
+// Diese Datei prüft das alte Format (Properties im Datenbank-Record, Protokoll 2) – auch wenn die Suite sonst mit
+// BASED_PROPERTY_RECORDS=1 läuft (BSD-30).
+WorkspaceStore.propertyRecordsByDefault = false;
 
 const corpus = readFileSync(fileURLToPath(new URL("../../../fixtures/records/corpus.jsonl", import.meta.url)), "utf8")
   .split("\n")

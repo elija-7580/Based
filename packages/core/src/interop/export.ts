@@ -2,7 +2,8 @@
 // Für die Zwischenablage (headingOffset 0) und als Grundlage des Seitenexports.
 import type { Block, BlockProps, RichText } from "../model/records.js";
 import { cellText, QueryEngine, rowsOf, titleOf } from "../query/engine.js";
-import { isEmptyValue } from "../query/value.js";
+import { isEmptyValue, type Value } from "../query/value.js";
+import type { Database, PropertySchema } from "../model/records.js";
 import type { WorkspaceStore } from "../store/store.js";
 import { sanitizeURL } from "./html.js";
 import { plain, runsOf } from "./runs.js";
@@ -23,6 +24,14 @@ export interface HTMLExporterOptions {
    * (Datei-Export). Veröffentlichte Seiten zeigen fremde Rahmen nur nach Opt-in.
    */
   embeds?: "frame" | "link";
+  /**
+   * BSD-279: Darf der Leser diesen Block (Seite, Zeile, Block einer Datenbank) sehen? Geteilte und veröffentlichte
+   * Seiten geben damit nichts von außerhalb ihres Bereichs preis: Erwähnungen werden zu „No access“, Links auf
+   * fremde Seiten und verknüpfte Ansichten fremder Datenbanken entfallen, Relationen zeigen nur lesbare Seiten,
+   * Rollups und Formeln, die über eine nicht lesbare Datenbank rechnen, bleiben leer. Ohne Angabe: alles (Datei-Export
+   * des Besitzers).
+   */
+  canRead?: (blockID: string) => boolean;
 }
 
 export const escapeText = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -46,6 +55,7 @@ export class HTMLExporter {
   readonly headingOffset: number;
   readonly htmlBlockURL: ((id: string) => string) | undefined;
   readonly embeds: "frame" | "link" | undefined;
+  readonly canRead: ((blockID: string) => boolean) | undefined;
   private engine: QueryEngine | undefined;
 
   constructor(readonly store: WorkspaceStore, opts: HTMLExporterOptions = {}) {
@@ -54,10 +64,44 @@ export class HTMLExporter {
     this.headingOffset = opts.headingOffset ?? 1;
     this.embeds = opts.embeds;
     this.htmlBlockURL = opts.htmlBlockURL;
+    this.canRead = opts.canRead;
+  }
+
+  private readable(blockID: string): boolean {
+    return this.canRead === undefined || this.canRead(blockID);
+  }
+
+  /** Rechnet die Property über eine Datenbank, die der Leser nicht sehen darf (Rollup, Formel über Relationen)? */
+  private derivedFromHidden(db: Database, p: PropertySchema): boolean {
+    if (this.canRead === undefined || (p.type !== "rollup" && p.type !== "formula")) return false;
+    const hidden = (rel: PropertySchema | undefined) => {
+      const target = rel?.relation?.databaseID !== undefined ? this.store.databases.get(rel.relation.databaseID) : undefined;
+      return target !== undefined && !this.readable(target.blockID);
+    };
+    if (p.type === "rollup") {
+      const rel = db.properties.find((q) => q.id === p.rollup?.relationPropertyID);
+      // ohne auflösbare Relation gibt es nichts zu rechnen; sonst zählt die Zieldatenbank
+      return hidden(rel);
+    }
+    // Formel: kann jede Relation (und jedes Rollup) der Datenbank lesen
+    return db.properties.some((q) => q.type === "relation" && hidden(q));
+  }
+
+  /** Zellwert als Text; Seiten, die der Leser nicht sehen darf, fallen heraus. */
+  private cell(db: Database, p: PropertySchema, v: Value): string {
+    if (this.derivedFromHidden(db, p)) return "";
+    return cellText(this.store, this.visibleValue(v));
+  }
+
+  private visibleValue(v: Value): Value {
+    if (this.canRead === undefined) return v;
+    if (v.t === "page") return this.readable(v.v) ? v : { t: "empty" };
+    if (v.t === "list") return { t: "list", v: v.v.map((x) => this.visibleValue(x)).filter((x) => x.t !== "empty") };
+    return v;
   }
 
   private get query(): QueryEngine {
-    return (this.engine ??= new QueryEngine(this.store));
+    return (this.engine ??= new QueryEngine(this.store, this.canRead ? { canRead: this.canRead } : {}));
   }
 
   /** Sichtbare Kinder (Swift `contentBlocks(of:)`). */
@@ -169,6 +213,7 @@ export class HTMLExporter {
         const target = b.type === "linkToPage" ? (p.linkTarget ?? b.id) : b.id;
         const e = emojiOf(this.store.blocks.get(target)?.props?.icon);
         const icon = e !== undefined ? escapeText(e) + " " : "📄 ";
+        if (!this.readable(target)) return "";
         const l = this.pageLink(target);
         if (l) return `<p class="page-link"><a href="${escapeAttribute(l.url)}">${icon}${escapeText(l.title)}</a></p>\n`;
         return `<p class="page-link">${icon}${escapeText(titleOf(this.store, target))}</p>\n`;
@@ -219,7 +264,8 @@ export class HTMLExporter {
   database(b: Block): string {
     const dbID = b.props?.databaseID;
     const db = dbID !== undefined ? this.store.databases.get(dbID) : undefined;
-    if (!db) return "";
+    // verknüpfte Ansicht einer Datenbank, die der Leser nicht sehen darf: nichts
+    if (!db || !this.readable(db.blockID)) return "";
     const props = [...db.properties];
     const ti = props.findIndex((p) => p.type === "title");
     if (ti >= 0) props.unshift(...props.splice(ti, 1));
@@ -234,9 +280,10 @@ export class HTMLExporter {
           const l = this.pageLink(r.id);
           return l ? `<td><a href="${escapeAttribute(l.url)}">${escapeText(t)}</a></td>` : `<td>${escapeText(t)}</td>`;
         }
+        if (this.derivedFromHidden(db, p)) return "<td></td>";
         const v = this.query.value(r, p, db);
         if (v.t === "bool") return `<td>${v.v ? "☑︎" : "☐"}</td>`;
-        return `<td>${escapeText(cellText(this.store, v))}</td>`;
+        return `<td>${escapeText(this.cell(db, p, v))}</td>`;
       }).join("") + "</tr>\n";
     }
     return out + "</table>\n";
@@ -250,9 +297,10 @@ export class HTMLExporter {
     let rows = "";
     for (const p of db.properties) {
       if (p.type === "title") continue;
-      const v = this.query.value(page, p, db);
+      if (this.derivedFromHidden(db, p)) continue;
+      const v = this.visibleValue(this.query.value(page, p, db));
       if (isEmptyValue(v)) continue;
-      rows += `<tr><th>${escapeText(p.name)}</th><td>${escapeText(cellText(this.store, v))}</td></tr>\n`;
+      rows += `<tr><th>${escapeText(p.name)}</th><td>${escapeText(this.cell(db, p, v))}</td></tr>\n`;
     }
     return rows === "" ? "" : `<table class="properties">\n${rows}</table>\n`;
   }
@@ -303,7 +351,9 @@ export class HTMLExporter {
       } else if (mention && typeof mention === "object") {
         const kind = Object.keys(mention)[0];
         const value = kind !== undefined ? mention[kind]?._0 : undefined;
-        if (kind === "page" && typeof value === "string") {
+        if (kind === "page" && typeof value === "string" && !this.readable(value)) {
+          s = `<span class="mention">No access</span>`;
+        } else if (kind === "page" && typeof value === "string") {
           const title = titleOf(this.store, value);
           const l = this.pageLink(value);
           s = l ? `<a class="mention" href="${escapeAttribute(l.url)}">${escapeText(title)}</a>` : `<span class="mention">${escapeText(title)}</span>`;

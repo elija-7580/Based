@@ -7,8 +7,8 @@ import { App } from "./App.js";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
-import { deviceNode, guestDeviceNode, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
-import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, type GuestConfig, type GuestMe } from "./shell/guest.js";
+import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
+import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { StoreClient } from "./worker/client.js";
@@ -90,13 +90,26 @@ function showGuestRevoked() {
   );
 }
 
+/** BSD-30: Spricht der Server Protokoll 3 (Properties als eigene Records)? Ohne Antwort: nein. */
+async function serverUsesPropertyRecords(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${url.replace(/\/+$/, "")}/health`);
+    return r.ok && ((await r.json()) as { protocol?: unknown }).protocol === 3;
+  } catch {
+    return false;
+  }
+}
+
 function start(guest: GuestBoot | undefined) {
+  if (guest) setGuestAccess(guest.me);
   const devices = guest ? guestDeviceNode(guest.id) : deviceNode;
   const link = new StoreLink({
     ...browserLinkOptions(guest ? `based-guest-${guest.id}` : undefined),
     ...(guest ? { lockName: `based-guest-${guest.id}` } : {}),
     startStore() {
-      const worker = new Worker(new URL("./worker/store.worker.ts", import.meta.url), { type: "module", name: "based-store" });
+      // BSD-330 (Test-Haken): ?based-fail-store=history|ydocs lässt diese Nebendatei absichtlich in den Speicher fallen.
+      const fail = new URLSearchParams(location.search).get("based-fail-store");
+      const worker = new Worker(new URL("./worker/store.worker.ts", import.meta.url), { type: "module", name: fail && /^(history|ydocs)$/.test(fail) ? `based-store fail-${fail}` : "based-store" });
       return { endpoint: worker as unknown as Endpoint<Event, RequestMessage>, terminate: () => worker.terminate() };
     },
     async initParams() {
@@ -104,11 +117,14 @@ function start(guest: GuestBoot | undefined) {
       const device = devices.get();
       const sync = await syncConfig.load();
       // BSD-235: ein Gast läuft nur im Speicher (der OPFS-Pool gehört dem Store-Tab des Besitzers) und synct mit dem Link.
-      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}) };
-      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}) };
+      // BSD-30: ein Gast richtet sich nach dem Server (sein Store lebt nur im Speicher und muss dessen Protokoll sprechen)
+      if (guest) return { ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(sync && (await serverUsesPropertyRecords(sync.url)) ? { propertyRecords: true } : {}) };
+      return { opfs: "based.sqlite", ...(device ? { device } : {}), ...(sync ? { sync } : {}), ...(propertyRecordsSetting.get() ? { propertyRecords: true } : {}) };
     },
   });
   const client = new StoreClient(link);
+  // BSD-235 Teil 3: Widerruf wirkt auch, während der Gast die Seite offen hat (Neuladen zeigt dann den Hinweis).
+  const revocation = guest ? watchGuestRevocation(guest.config, () => { diagnosticsLog.add("warning", "guest link revoked while open"); location.reload(); }) : undefined;
   // BSD-227: Wechsel des Sync-/Speicherzustands ins Diagnose-Log (Zustand und Fehlertext, geschwärzt).
   {
     let last = "";
@@ -117,10 +133,13 @@ function start(guest: GuestBoot | undefined) {
       bootMark("store answered");
       if (whole.ready && whole.outline) bootMark("store ready", `${Object.keys(whole.outline?.nodes ?? {}).length} pages`);
       const st = whole.status;
-      const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}`;
+      // BSD-330: Nebendateien nur im Speicher gehören ins Log (als Warnung), nicht nur in die Konsole
+      const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}${st.storageWarnings?.length ? ` · ${st.storageWarnings.join(" ")}` : ""}`;
       if (line === last) return;
+      // BSD-235 Teil 3: ein Sync-Fehler kann ein widerrufener Link sein – sofort nachsehen
+      if (st.state === "error") revocation?.poke();
       last = line;
-      diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" ? "warning" : "info", `status: ${line}`);
+      diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" || st.storageWarnings?.length ? "warning" : "info", `status: ${line}`);
     });
   }
   connectEditor(client);
@@ -138,7 +157,7 @@ function start(guest: GuestBoot | undefined) {
     return id ? { name: "page", id } : { name: "home" };
   });
   // BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
-  void startDesktop(() => history.close()).catch(() => undefined);
+  void startDesktop({ close: () => history.close(), count: () => history.tabs.length }).catch(() => undefined);
 
   // Startwerte holt der Store-Tab selbst (initParams); `init` verbindet nur.
   void client

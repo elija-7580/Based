@@ -1,6 +1,6 @@
 /* BSD-154: Editor in „Based Default“ (ADR 0012). Nur Tokens aus @based/design-tokens (ADR 0009), keine Farb-,
    Abstands-, Schrift- oder Radius-Literale; Ausnahmen: 0, 1px-Haarlinien, Prozent-/flex-Layout.
-   Die Textfarben-Palette (rot, blau …) kommt vorerst aus BlockNote, dafür gibt es noch keine Tokens. */
+   Block- und Textfarben (rot, blau …) kommen aus den Tokens block-* (BSD-323). */
 @import "@based/design-tokens/tokens.css";
 
 .bx-editor .bn-root,
@@ -21,6 +21,27 @@
   --bn-colors-shadow: var(--line);
   --bn-colors-border: var(--line);
   --bn-colors-side-menu: var(--muted);
+  /* BSD-318: Grau ist die Standardfarbe der Callouts aus Notion. BlockNotes Dunkel-Grau ist eine helle Fläche
+     unter heller Schrift; Grau kommt deshalb aus den Tokens. */
+  --bn-colors-highlights-gray-background: var(--surface-raised);
+  --bn-colors-highlights-gray-text: var(--muted);
+  /* BSD-323: alle Blockfarben aus den Tokens, hell und dunkel (BlockNotes Dunkelfarben waren grelle Flächen). */
+  --bn-colors-highlights-brown-background: var(--block-brown);
+  --bn-colors-highlights-brown-text: var(--block-brown-text);
+  --bn-colors-highlights-orange-background: var(--block-orange);
+  --bn-colors-highlights-orange-text: var(--block-orange-text);
+  --bn-colors-highlights-yellow-background: var(--block-yellow);
+  --bn-colors-highlights-yellow-text: var(--block-yellow-text);
+  --bn-colors-highlights-green-background: var(--block-green);
+  --bn-colors-highlights-green-text: var(--block-green-text);
+  --bn-colors-highlights-blue-background: var(--block-blue);
+  --bn-colors-highlights-blue-text: var(--block-blue-text);
+  --bn-colors-highlights-purple-background: var(--block-purple);
+  --bn-colors-highlights-purple-text: var(--block-purple-text);
+  --bn-colors-highlights-pink-background: var(--block-pink);
+  --bn-colors-highlights-pink-text: var(--block-pink-text);
+  --bn-colors-highlights-red-background: var(--block-red);
+  --bn-colors-highlights-red-text: var(--block-red-text);
   --bn-border-radius: var(--radius-md);
   --bn-border-radius-small: var(--radius-sm);
   --bn-border-radius-medium: var(--radius-md);
@@ -70,8 +91,18 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--surface-raised);
 }
+/* BSD-318: Der Kasten gehört an den ganzen Block – so liegen Kinder (mehrzeilige Callouts aus Notion) im Kasten statt
+   als zweite Fläche darunter, und eine Blockauswahl färbt den Kasten mit (vorher blieb er als helle Fläche stehen).
+   :where hält die Spezifität klein: Farbe (BlockNote) und Auswahl gewinnen. */
+.bx-editor :where(.bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { border-radius: var(--radius-md); }
+.bx-editor :where(.bn-block-content[data-content-type="callout"]) { border-radius: var(--radius-md); }
+.bx-editor :where(.bn-block:not([data-background-color]):has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { background: var(--surface-raised); }
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group {
+  margin-left: calc(var(--space-4) + var(--icon-md) + var(--space-3) + var(--space-1));
+  padding: 0 var(--space-4) var(--space-3) 0;
+}
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group > .bn-block-outer::before { content: none; }
 .bx-callout-icon { background: none; border: 0; padding: 0; font-size: var(--icon-md); line-height: var(--type-body-leading); cursor: pointer; }
 .bx-callout-text { flex: 1; min-width: 0; }
 
@@ -88,7 +119,8 @@
 /* Seiten und Erwähnungen */
 .bx-pagelink { display: inline-flex; align-items: center; gap: var(--space-2); cursor: pointer; color: var(--ink); border-radius: var(--radius-xs); }
 .bx-pagelink:hover { background: var(--surface-raised); }
-.bx-pagelink-title { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); font-weight: var(--type-ui-weight); }
+.bx-pagelink { max-width: 100%; }
+.bx-pagelink-title { min-width: 0; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: var(--space-1); font-weight: var(--type-ui-weight); }
 .bx-linkarrow { color: var(--muted); margin-right: var(--space-1); }
 .bx-mention { color: var(--ink); border-radius: var(--radius-xs); padding-inline: var(--space-1); background: var(--surface-soft); cursor: pointer; }
 .bx-mention[data-kind="date"], .bx-mention[data-kind="user"] { color: var(--muted); }
@@ -201,9 +233,11 @@
   padding: var(--space-2); border-radius: var(--radius-lg); border: 1px solid transparent; font-family: var(--font-ui);
   transition: background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
-.bx-outline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+/* BSD-304: jeder Eintrag 24 px hoch (Klickfläche), ohne Lücke dazwischen – die Balken stehen im selben Takt wie vorher
+   ungefähr, sind aber einzeln gut zu treffen. */
+.bx-outline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .bx-outline-item {
-  display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); width: 100%; min-height: var(--space-4);
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); width: 100%; min-height: var(--space-5);
   background: none; border: 0; padding: 0 var(--space-1); border-radius: var(--radius-sm); color: var(--muted); font: inherit;
   font-size: var(--type-description-size); cursor: pointer; text-align: left;
 }
@@ -224,10 +258,15 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-outline-item[aria-current] { color: var(--ink); font-weight: var(--type-ui-weight); }
 .bx-outline-item:focus-visible { outline: 1px solid var(--muted); }
 @media (max-width: 52rem) { .bx-outline { display: none; } }
+/* BSD-324: kein Platz neben dem Text – unsichtbar, bleibt aber messbar (fest positioniert, nimmt keinen Platz). */
+.bx-outline[data-cramped] { visibility: hidden; }
 @media print { .bx-outline, .bx-notice { display: none; } }
 
 /* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */
 .bx-editor .bn-editor:focus, .bx-editor .bn-editor:focus-visible { outline: none; }
+/* BSD-318: Bei einer Blockauswahl hat der Dokument-Rahmen den Fokus; die markierten Blöcke zeigen ihn schon – kein
+   Fokusring um die ganze Seite. */
+.bx-doc:focus, .bx-doc:focus-visible { outline: none; }
 
 /* Astryx setzt in seiner Basisschicht Farbe und Schrift auf p und h1–h6 (aus dem Astryx-Theme, das nicht dunkel
    wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */
@@ -345,7 +384,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
   padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
 }
 .bx-btn-edit:hover, .bx-btn-remove:hover, .bx-btn-target:hover { background: var(--surface-raised); color: var(--ink); }
-.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) ease-out; }
+.bx-btn-row .bx-btn-edit { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .bx-btn:hover .bx-btn-row .bx-btn-edit, .bx-btn-row .bx-btn-edit:focus-visible, .bx-btn[data-editing] .bx-btn-row .bx-btn-edit { opacity: 1; }
 .bx-btn-confirm { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); background: var(--surface-raised); }
 .bx-btn-confirm > span { flex: 1; min-width: 0; }
@@ -384,3 +423,9 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 }
 .bx-image-viewer-close:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 2px; }
 @media print { .bx-image-viewer { display: none; } }
+
+/* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
+   (wie Notion), Häkchen in der Tinte (wie die To-dos in der Seitenleiste). */
+.bx-editor .bn-inline-content a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: var(--space-half); }
+.bx-editor .bn-inline-content a:hover { text-decoration-color: var(--ink); }
+.bx-editor input[type="checkbox"] { accent-color: var(--ink); }

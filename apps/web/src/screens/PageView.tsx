@@ -3,7 +3,7 @@
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
 import { pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
@@ -17,6 +17,7 @@ import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
+import { mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
@@ -143,13 +144,16 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           <button type="button" className="icon-btn ghost" aria-label="Forward" title="Forward (⌘])" disabled={!history.canForward} onClick={() => history.forward()}><Icon name="forward" size={18} /></button>
         </div>
         <nav aria-label="Breadcrumb" className="breadcrumb">
-          {crumbs.map((c, i) => (
+          {/* BSD-301: tiefe Seiten – erster und die zwei letzten Vorfahren, dazwischen „…“ (wie Notion); jeder Teil
+              kürzt mit „…“, der volle Name steht im Tooltip. */}
+          {(crumbs.length > 3 ? [crumbs[0]!, { label: "…", hidden: crumbs.slice(1, -2).map((c) => c.label).join(" / ") }, ...crumbs.slice(-2)] : crumbs).map((c, i) => (
             <span key={i} className="crumb">
-              {c.id ? <button type="button" className="crumb-link" onClick={() => onOpenPage(c.id!)}>{c.label}</button> : <span>{c.label}</span>}
+              {"id" in c && c.id ? <button type="button" className="crumb-link" title={c.label} onClick={() => onOpenPage(c.id!)}>{c.label}</button>
+                : <span className={"hidden" in c ? "crumb-more" : "crumb-text"} title={"hidden" in c ? c.hidden : c.label}>{c.label}</span>}
               <span aria-hidden="true">/</span>
             </span>
           ))}
-          <span className="crumb-current" aria-current="page">{title || "Untitled"}</span>
+          <span className="crumb-current" aria-current="page" title={title || "Untitled"}>{title || "Untitled"}</span>
         </nav>
         <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : SYNC_LABEL[state.status.state]}</span>
         {page && !trashed ? (
@@ -218,10 +222,12 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         <div className="trash-banner" role="status">
           <span>This page is in the Trash.</span>
           <button type="button" className="btn" onClick={() => void client.command({ op: "restore", ids: [pageID] })}>Restore</button>
-          <button type="button" className="btn ghost" onClick={() => {
-            void client.command({ op: "deleteForever", ids: [pageID] });
-            onNavigate({ name: "trash" });
-          }}>Delete forever</button>
+          {mayDeleteForever() ? (
+            <button type="button" className="btn ghost" onClick={() => {
+              void client.command({ op: "deleteForever", ids: [pageID] });
+              onNavigate({ name: "trash" });
+            }}>Delete forever</button>
+          ) : null}
         </div>
       ) : null}
       {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
@@ -412,29 +418,52 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
   );
 }
 
-/** Titel als Eingabefeld; Änderungen gehen sofort an den Worker (dort zu einem Undo-Schritt zusammengefasst). */
+/**
+ * Titel als Eingabefeld; Änderungen gehen sofort an den Worker (dort zu einem Undo-Schritt zusammengefasst).
+ * BSD-301: ein mehrzeiliges Feld, das mit dem Text wächst – lange Titel brechen um wie in Notion, statt rechts
+ * abgeschnitten zu werden. Enter beendet die Eingabe (kein Zeilenumbruch im Titel).
+ */
 function TitleField({ id, title, readOnly, onRename }: { id: string; title: string; readOnly: boolean; onRename: (t: string) => void }) {
   const [value, setValue] = useState(title);
   const focused = useRef(false);
+  const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!focused.current) setValue(title === "Untitled" ? "" : title);
   }, [title, id]);
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    };
+    fit();
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fit) : undefined;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, [value]);
   return (
     <h1 className="t-title page-title">
-      <input
+      <textarea
+        ref={field}
         aria-label="Page title"
-        className="title-input"
+        className="title-input title-wrap"
         placeholder="Untitled"
+        rows={1}
         value={value}
         readOnly={readOnly}
         onFocus={() => (focused.current = true)}
         onBlur={() => (focused.current = false)}
         onChange={(e) => {
-          setValue(e.target.value);
-          onRename(e.target.value);
+          const next = e.target.value.replace(/[\r\n]+/g, " ");
+          setValue(next);
+          onRename(next);
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur();
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
         }}
       />
     </h1>

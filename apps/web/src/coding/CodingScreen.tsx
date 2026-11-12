@@ -12,12 +12,14 @@ import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/Segme
 import { Selector } from "@astryxdesign/core/Selector";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
-import { TextArea } from "@astryxdesign/core/TextArea";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { cliResumeCommand, cliSessionsByProject, codingErrorMessage, foldTranscript, type AgentStatus, type CliSession, type DoctorTool, type InboxItem, type TranscriptItem } from "@based/brain";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ChatMessages } from "../chat/ChatMessages.js";
 import { PERMISSIONS } from "../chat/AiSettingsSection.js";
+import { Composer } from "./Composer.js";
+// BSD-314: xterm.js erst laden, wenn das Terminal aufgeht (nicht im Start-Bundle).
+const TerminalView = lazy(() => import("./TerminalView.js").then((m) => ({ default: m.TerminalView })));
 import { codingModelFor, useCodingConnection } from "./connection.js";
 import type { CodingModel } from "./model.js";
 import "./coding.css";
@@ -56,7 +58,7 @@ function CodingBody({ model }: { model: CodingModel }) {
 
   return (
     <VStack className="coding" gap={4} data-testid="coding-screen">
-      <HStack hAlign="between" vAlign="center">
+      <HStack hAlign="between" vAlign="center" wrap="wrap" gap={2}>
         <Text as="h1" type="large" weight="bold">Coding agents</Text>
         <SegmentedControl label="View" value={pane} onChange={(v) => setPane(v as Pane)}>
           <SegmentedControlItem value="sessions" label="Sessions" />
@@ -71,7 +73,17 @@ function CodingBody({ model }: { model: CodingModel }) {
   );
 }
 
+/** BSD-315: schmales Fenster (Handy) – Freigaben dann mit großen Knöpfen zum Tippen. */
+function useNarrow(query = "(max-width: 760px)"): boolean {
+  const mq = typeof matchMedia === "function" ? matchMedia(query) : undefined;
+  return useSyncExternalStore(
+    (fn) => { mq?.addEventListener("change", fn); return () => mq?.removeEventListener("change", fn); },
+    () => mq?.matches ?? false,
+  );
+}
+
 function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id: string, optionId: string | undefined) => void }) {
+  const size = useNarrow() ? "lg" : "sm";
   return (
     <VStack gap={2} data-testid="coding-inbox">
       {items.map((it) => (
@@ -81,9 +93,9 @@ function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id
             {it.argument && !it.title.includes(it.argument) ? <Text type="supporting" className="coding-mono">{it.argument}</Text> : null}
             <HStack gap={2} wrap="wrap">
               {it.options.map((o) => (
-                <Button key={o.optionId} size="sm" variant={o.kind.startsWith("allow") ? (o.kind === "allow_once" ? "primary" : "secondary") : "secondary"} onClick={() => onAnswer(it.id, o.optionId)} label={o.name} />
+                <Button key={o.optionId} size={size} variant={o.kind.startsWith("allow") ? (o.kind === "allow_once" ? "primary" : "secondary") : "secondary"} onClick={() => onAnswer(it.id, o.optionId)} label={o.name} />
               ))}
-              <Button size="sm" variant="ghost" onClick={() => onAnswer(it.id, undefined)} label="Cancel" />
+              <Button size={size} variant="ghost" onClick={() => onAnswer(it.id, undefined)} label="Cancel" />
             </HStack>
           </VStack>
         </Card>
@@ -95,8 +107,8 @@ function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id
 function Sessions({ model }: { model: CodingModel }) {
   const s = useSyncExternalStore(model.subscribe, model.getState);
   const current = s.sessions.find((x) => x.id === s.selected);
-  const [text, setText] = useState("");
-  const send = async () => { if (await model.send(text)) setText(""); };
+  // BSD-314: Transkript oder echtes Terminal im Arbeitsordner der Sitzung
+  const [view, setView] = useState<"transcript" | "terminal">("transcript");
   const running = current?.state === "running";
   return (
     <HStack gap={4} vAlign="start" className="coding-split">
@@ -111,7 +123,7 @@ function Sessions({ model }: { model: CodingModel }) {
       </VStack>
       <VStack gap={3} className="coding-main">
         {!current ? (
-          <EmptyState title="No session open" description="Start a session on the left, or continue a conversation from the CLI history." isCompact />
+          <EmptyState title="No session open" description="Start a new session, or continue a conversation from the CLI history." isCompact />
         ) : (
           <>
             <HStack gap={2} vAlign="center" wrap="wrap">
@@ -122,14 +134,12 @@ function Sessions({ model }: { model: CodingModel }) {
               <SwitchAgent model={model} from={current.id} cwd={current.cwd} />
               <Button size="sm" variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
             </HStack>
-            <Console items={s.items} running={running} />
-            <HStack gap={2} vAlign="end" className="coding-composer">
-              <TextArea label="Message" isLabelHidden placeholder={`Ask ${current.agentName}…`} value={text} onChange={setText} rows={2}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); } }} />
-              {running
-                ? <Button variant="secondary" onClick={() => void model.cancel()} label="Stop" />
-                : <Button variant="primary" onClick={() => void send()} isDisabled={!text.trim() || current.state !== "idle"} data-testid="coding-send" label="Send" />}
-            </HStack>
+            <SegmentedControl label="Console view" value={view} onChange={(v) => setView(v as "transcript" | "terminal")}>
+              <SegmentedControlItem value="transcript" label="Transcript" />
+              <SegmentedControlItem value="terminal" label="Terminal" />
+            </SegmentedControl>
+            {view === "terminal" ? <Suspense fallback={<Text type="supporting">Loading terminal…</Text>}><TerminalView model={model} sessionId={current.id} /></Suspense> : <Console items={s.items} running={running} />}
+            <Composer key={current.id} model={model} session={current} />
           </>
         )}
       </VStack>

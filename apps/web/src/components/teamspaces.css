@@ -46,7 +46,7 @@
 }
 .rec-pill:hover { box-shadow: var(--shadow-panel); }
 .rec-pill:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.rec-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--danger); flex: none; animation: rec-pulse 1.6s var(--ease-out) infinite; }
+.rec-dot { width: var(--space-2); height: var(--space-2); border-radius: var(--radius-pill); background: var(--danger); flex: none; animation: rec-pulse var(--duration-pulse) var(--ease-out) infinite; }
 .rec-pill[data-paused] .rec-dot { background: var(--muted); animation: none; }
 .rec-time { margin-left: auto; color: var(--muted); }
 @keyframes rec-pulse { 50% { opacity: 0.35; } }

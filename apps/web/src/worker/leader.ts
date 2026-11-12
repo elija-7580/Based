@@ -40,6 +40,8 @@ export interface InitParams {
   device?: string;
   sync?: SyncConfig;
   opfs?: string;
+  /** BSD-30: Workspace auf Properties als eigene Records umstellen bzw. so öffnen. */
+  propertyRecords?: boolean;
 }
 
 export interface StoreLinkOptions {
@@ -102,6 +104,7 @@ export class Relay {
       if (params.device) req.device = params.device;
       if (params.sync) req.sync = params.sync;
       if (params.opfs) req.opfs = params.opfs;
+      if (params.propertyRecords) req.propertyRecords = true;
       this.forward(RELAY, { ...req, id: 0 } as RequestMessage);
     }
     return this.init;

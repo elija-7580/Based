@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
+import { mayDeleteForever } from "../shell/guest.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 
 const PAGE = 100;
@@ -9,6 +10,7 @@ const PAGE = 100;
 export function Trash({ client, state, onOpenPage }: { client: StoreClient; state: ShellState; onOpenPage: (id: string) => void }) {
   const entries = state.outline?.trash ?? [];
   const [confirm, setConfirm] = useState(false);
+  const forever = mayDeleteForever();
   // Nach „alles löschen“ liegen hier Tausende Seiten; alle als Zeilen zu zeichnen machte jeden Klick träge.
   // Erst eine Seite voll, auf Wunsch mehr. „Empty Trash“ gilt immer für alle.
   const [shown, setShown] = useState(PAGE);
@@ -25,11 +27,11 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
         <header className="trash-head">
           <div>
             <h1 className="t-title">Trash</h1>
-            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>Pages stay here until you delete them forever.</p>
+            <p className="t-desc" style={{ marginTop: "var(--space-1)" }}>{forever ? "Pages stay here until you delete them forever." : "Pages stay here until the owner deletes them."}</p>
           </div>
           {emptying !== undefined ? (
             <span className="t-desc" role="status" data-testid="trash-emptying">Deleting {emptying} {emptying === 1 ? "page" : "pages"} forever…</span>
-          ) : entries.length ? (
+          ) : entries.length && forever ? (
             confirm ? (
               <span className="actions">
                 <button type="button" className="btn primary" onClick={empty}>
@@ -58,7 +60,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
                   <button type="button" className="btn" onClick={() => void client.command({ op: "restore", ids: [e.id] })}>
                     <Icon name="restore" size={16} />Restore
                   </button>
-                  <button type="button" className="btn ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })}>Delete forever</button>
+                  {forever ? <button type="button" className="btn ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })}>Delete forever</button> : null}
                 </li>
               );
             })}

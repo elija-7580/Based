@@ -26,7 +26,7 @@ async function openHistory(page: Page) {
   return dialog;
 }
 
-test("Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo", async ({ page }) => {
+test("Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo", { tag: "@smoke" }, async ({ page }) => {
   await openWelcome(page);
   await newLineAtEnd(page);
   await page.keyboard.type("Neuer Absatz für den Verlauf");

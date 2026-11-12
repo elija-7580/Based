@@ -51,7 +51,8 @@
       "signingIdentity": "-"
     },
     "resources": {
-      "../dist-sidecar/based-server.cjs": "based-server.cjs"
+      "../dist-sidecar/based-server.cjs": "based-server.cjs",
+      "../dist-sidecar/node_modules/": "node_modules/"
     }
   },
   "plugins": {

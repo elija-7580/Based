@@ -37,7 +37,7 @@ const LISBON: Step[] = [
 test.beforeEach(async ({ page }) => fresh(page));
 
 // Eigenes Profil: WebKit hat OPFS nur in einem dauerhaften Kontext (sonst „Not saved“ und nach Neuladen leer).
-test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da", async ({ playwright, browserName, baseURL }) => {
+test("⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   const dir = mkdtempSync(join(tmpdir(), "based-chat-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });
   try {

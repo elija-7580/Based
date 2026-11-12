@@ -98,6 +98,8 @@ export class ShareService {
   /** BSD-285: Block einer Datenbank bzw. Ansicht – damit sich nach einer Löschung noch sagen lässt, wo sie lag. */
   private readonly dbBlocks = new Map<string, string>();
   private readonly viewBlocks = new Map<string, string>();
+  /** BSD-30: Property-Record → Datenbank (auch für eben gelöschte Records, BSD-285). */
+  private readonly propertyDatabases = new Map<string, string>();
   private deletedSincePrune = 0;
   private readonly unobserve: () => void;
   /** BSD-284: Long-Polls wecken, wenn eine Freigabe neuen Inhalt sichtbar macht (setzt die App). */
@@ -114,6 +116,7 @@ export class ShareService {
     for (const [id, b] of store.blocks) this.parents.set(id, b.parent);
     for (const [id, d] of store.databases) this.dbBlocks.set(id, d.blockID);
     for (const [id, v] of store.views) this.viewBlocks.set(id, v.blockID);
+    for (const [id, p] of store.properties) this.propertyDatabases.set(id, p.databaseID);
     this.unobserve = store.observe((change) => this.noteMoves(change.keys));
   }
 
@@ -148,6 +151,11 @@ export class ShareService {
         if (v) this.viewBlocks.set(id, v.blockID); else this.viewBlocks.delete(id);
         continue;
       }
+      if (kind === "property") {
+        const p = this.store.properties.get(id);
+        if (p) this.propertyDatabases.set(id, p.databaseID); else this.propertyDatabases.delete(id);
+        continue;
+      }
       if (kind !== "block") continue;
       const b = this.store.blocks.get(id);
       const old = this.parents.get(id);
@@ -178,6 +186,7 @@ export class ShareService {
     if (kind === "block") { if (!this.parents.has(id)) return undefined; out.push(id); cur = this.parents.get(id); }
     else if (kind === "database") { const b = this.dbBlocks.get(id); if (b === undefined) return undefined; cur = "b:" + b; }
     else if (kind === "view") { const b = this.viewBlocks.get(id); if (b === undefined) return undefined; cur = "b:" + b; }
+    else if (kind === "property") { const d = this.propertyDatabases.get(id); if (d === undefined) return undefined; cur = "d:" + d; }
     else return undefined;
     for (let guard = 0; cur && guard < 512; guard++) {
       if (cur.startsWith("b:")) { const b = cur.slice(2); out.push(b); cur = this.parents.get(b); }
@@ -315,6 +324,9 @@ export class ShareService {
       case "database": return this.chainOfParent("b:" + r.data.blockID, pending);
       case "view": return this.chainOfParent("b:" + r.data.blockID, pending);
       case "workspace": return [];
+      // BSD-30: eine Property liegt dort, wo ihre Datenbank liegt
+      case "property": return this.chainOfParent("d:" + r.data.databaseID, pending);
+      default: return [];
     }
   }
 
@@ -444,6 +456,7 @@ export class ShareService {
       const db = dbID ? this.store.databases.get(dbID) : undefined;
       if (db && db.blockID === cur) {
         out.push(keyOf("database", db.id));
+        for (const p of this.store.propertyRecordsOf(db.id)) out.push(keyOf("property", p.id));
         for (const v of this.store.views.values()) if (v.databaseID === db.id) out.push(keyOf("view", v.id));
         stack.push(...this.store.children("d:" + db.id));
       }
@@ -524,10 +537,28 @@ export class ShareService {
       else rejected.push(key);
     }
     const deletions: RecordKeyString[] = [];
+    // BSD-282: Wer nur bearbeiten darf, legt Seiten, Zeilen und Datenbanken in den Papierkorb (das ist eine Änderung
+    // am Record), löscht sie aber nicht endgültig. Dazu gehört alles, was eine solche Löschung mitnähme (der Inhalt
+    // der Seite) oder verwaisen ließe (ein Block, unter dem nach diesem Push noch eine Seite hängt).
+    const kept = new Set<string>();
+    const movedTo = new Map<string, string>();
+    for (const r of allowed) if (r.kind === "block") movedTo.set(r.data.id, r.data.parent);
+    const wanted: { key: RecordKeyString; record: WireRecord; role: ShareRole | undefined }[] = [];
     for (const k of body.deletions) {
       const r = this.store.record(k);
-      if (r && canEdit(this.role(p, r))) deletions.push(k);
-      else rejected.push(k);
+      const role = r ? this.role(p, r) : undefined;
+      if (!r || !canEdit(role)) { rejected.push(k); continue; }
+      wanted.push({ key: k, record: r, role });
+      if (canShare(role)) continue;
+      if (r.kind === "block" && this.store.isTrashable(r.data)) kept.add(r.data.id);
+      else if (r.kind === "database") kept.add(r.data.blockID);
+    }
+    for (const w of wanted) {
+      if (canShare(w.role)) { deletions.push(w.key); continue; }
+      const chain = this.chainOf(w.record);
+      const keepsPage = w.record.kind === "block" && this.holdsPage(w.record.data.id, movedTo);
+      if (keepsPage || chain.some((id) => kept.has(id))) rejected.push(w.key);
+      else deletions.push(w.key);
     }
     const stamps = new Map([...body.stamps].filter(([k]) => deletions.includes(k)));
     const reply = sync.pushDecoded({ records: allowed, deletions, stamps });
@@ -536,6 +567,24 @@ export class ShareService {
       if (r && this.canRead(p, r)) reply.newer.push(r);
     }
     return { ...reply, rejected };
+  }
+
+  /**
+   * Hängt unter dem Block (ihn selbst ausgenommen) noch eine Seite, Zeile oder eigene Datenbank? `movedTo`: neue
+   * Eltern aus demselben Push (der Client zieht eingebettete Seiten vor dem Löschen heraus, BSD-99).
+   */
+  private holdsPage(id: string, movedTo: Map<string, string>): boolean {
+    const stack = [...this.store.children("b:" + id)];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const b = this.store.blocks.get(cur);
+      if (!b) continue;
+      const parent = movedTo.get(cur);
+      if (parent !== undefined && parent !== b.parent && !this.chainOfParent(parent).includes(id)) continue;
+      if (this.store.isTrashable(b)) return true;
+      stack.push(...this.store.children("b:" + cur));
+    }
+    return false;
   }
 
   // MARK: Veröffentlichen

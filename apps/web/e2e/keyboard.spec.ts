@@ -8,7 +8,7 @@ async function ready(page: Page) {
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 }
 
-test("F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite", async ({ page }) => {
+test("F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await expect(page.locator(".bn-editor[contenteditable='true']")).toBeVisible();

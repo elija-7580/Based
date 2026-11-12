@@ -17,7 +17,9 @@ export type CLICommand =
   | { name: "login"; url: string }
   | { name: "config" }
   /** BSD-319: Fehlerberichte der Mac-App (lokal, ohne Server). */
-  | { name: "reports"; limit?: number };
+  | { name: "reports"; limit?: number }
+  /** BSD-30: Probelauf der Umstellung „Properties als eigene Records“ auf einem Based-Archiv. Liest nur, braucht keinen Server. */
+  | { name: "check"; path: string };
 
 export interface CLIOptions {
   url?: string;
@@ -52,6 +54,7 @@ Usage:
   based login --url <https://server>          (reads the token from stdin)
   based config
   based reports [--limit N]                   (problem reports from ⇧⌘B, no server needed)
+  based check <export.based.zip>              (dry run of the properties migration; reads only, no server)
 
 Options (any command):
   --url <url>          Server URL (default: BASED_URL, then the config file)
@@ -196,6 +199,9 @@ export function parseArgs(argv: string[]): { command: CLICommand; options: CLIOp
       only([]);
       if (args.length > 0) throw new CLIError(`\`based ${cmd}\` takes no arguments`, 2);
       return done({ name: cmd });
+    case "check":
+      only([]);
+      return done({ name: "check", path: one("archive file (.based.zip or .based.jsonl)") });
     case "sandbox":
       only([]);
       if (args[0] !== "shell" || args.length !== 2) throw new CLIError("usage: based sandbox shell <run-id>", 2);

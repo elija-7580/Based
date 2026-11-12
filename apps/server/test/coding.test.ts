@@ -1,13 +1,14 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server – anlegen, Prompt, Ereignisse per Long-Poll, Freigabe
 // aus der Inbox von einem anderen „Gerät“, Abbruch, Agentenwechsel, Grenzen (Ordner, nur Owner). Gegen den
 // Fake-ACP-Agenten aus packages/brain/test/fixtures.
-import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { appendFileSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { CodingAPIError, CodingClient, CodingSessions, codingErrorMessage, type AgentDefinition } from "@based/brain";
-import { spawnAgent } from "@based/brain/acp-node";
+import { listSessionFiles, spawnAgent } from "@based/brain/acp-node";
+import { execFileSync } from "node:child_process";
 import { auth, get, post, startApp, TOKEN } from "./helpers.js";
 import { mergeAgents, parseCodingEnv, parseOptions } from "../src/main.js";
 
@@ -58,10 +59,19 @@ describe("/coding", () => {
     expect(c.body).toMatchObject({ agentId: "fake", state: "idle", acpSessionId: "s1", mode: "askEdits" });
     const id = c.body!.id as string;
     // Long-Poll wartet auf den Turn.
-    const waiting = get(`${url}/coding/sessions/${id}/events?since=0&wait=2000`);
+    // (BSD-313: der Long-Poll wacht auch auf, wenn der Agent Befehle/Modus meldet – dann ohne Ereignisse, mit der Sitzung)
+    const waitForFirst = async () => {
+      for (let i = 0; i < 10; i++) {
+        const r = await get(`${url}/coding/sessions/${id}/events?since=0&wait=2000`);
+        const evs = r.body!.events as { type: string }[];
+        if (evs.length > 0) return evs;
+        expect(r.body!.session).toMatchObject({ id });
+      }
+      return [];
+    };
+    const waiting = waitForFirst();
     expect((await post(`${url}/coding/sessions/${id}/prompt`, { prompt: "hello" })).status).toBe(202);
-    const first = await waiting;
-    expect((first.body!.events as { type: string }[])[0]).toMatchObject({ type: "userMessage", text: "hello" });
+    expect((await waiting)[0]).toMatchObject({ type: "userMessage", text: "hello" });
     const { events } = await untilDone(url, id);
     expect(events.find((e) => e.type === "result")).toMatchObject({ text: "Hi there" });
     expect((await get(`${url}/coding/sessions`)).body!.sessions).toHaveLength(1);
@@ -222,5 +232,50 @@ describe("/coding", () => {
     const none = await new CodingClient({ url: plain.url, token: TOKEN }).agents().catch((e: unknown) => e);
     expect(codingErrorMessage(none)).toMatch(/--coding-root/);
     expect(codingErrorMessage(await new CodingClient({ url, token: "wrong" }).agents().catch((e: unknown) => e))).toMatch(/token/);
+  });
+  it("BSD-313: @Dateien nur im Arbeitsordner (.gitignore, ohne Symlinks/node_modules), Agent-Modus, Prompt mit Dateien", async () => {
+    const { url, root } = await setup();
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "outside-")));
+    writeFileSync(join(outside, "secret.ts"), "x");
+    mkdirSync(join(root, "src", "deep"), { recursive: true });
+    mkdirSync(join(root, "node_modules", "pkg"), { recursive: true });
+    mkdirSync(join(root, "dist"), { recursive: true });
+    writeFileSync(join(root, "src", "main.ts"), "");
+    writeFileSync(join(root, "src", "deep", "main.test.ts"), "");
+    writeFileSync(join(root, "node_modules", "pkg", "main.js"), "");
+    writeFileSync(join(root, "dist", "main.js"), "");
+    writeFileSync(join(root, "debug.log"), "");
+    writeFileSync(join(root, ".gitignore"), "dist/\n*.log\n");
+    symlinkSync(outside, join(root, "link"));
+    const c = await post(`${url}/coding/sessions`, { agent: "fake", cwd: join(root, "") });
+    const id = c.body!.id as string;
+    expect(c.body).toMatchObject({ agentMode: "default" });
+    const files = (await get(`${url}/coding/sessions/${id}/files?q=main`)).body!.files as { path: string }[];
+    expect(files.map((f) => f.path)).toEqual(["src/main.ts", "src/deep/main.test.ts"]);
+    const all = ((await get(`${url}/coding/sessions/${id}/files?q=`)).body!.files as { path: string }[]).map((f) => f.path).sort();
+    expect(all).toEqual([".gitignore", "a.txt", "src/deep/main.test.ts", "src/main.ts"]);
+    expect((await get(`${url}/coding/sessions/nope/files?q=a`)).status).toBe(404);
+    expect((await post(`${url}/coding/sessions/${id}/agent-mode`, { mode: "plan" })).body).toMatchObject({ agentMode: "plan" });
+    expect((await post(`${url}/coding/sessions/${id}/agent-mode`, { mode: "nope" })).status).toBe(400);
+    expect((await post(`${url}/coding/sessions/${id}/prompt`, { prompt: "x", files: ["../outside/secret.ts"] })).status).toBe(403);
+    expect((await post(`${url}/coding/sessions/${id}/prompt`, { prompt: "x", files: "a.txt" })).status).toBe(400);
+    expect((await post(`${url}/coding/sessions/${id}/prompt`, { prompt: "look", files: ["src/main.ts"] })).status).toBe(202);
+    const { events } = await untilDone(url, id);
+    const result = events.find((e) => e.type === "result") as { text: string };
+    expect(JSON.parse(result.text)).toContainEqual({ type: "resource_link", uri: `file://${root}/src/main.ts`, name: "src/main.ts" });
+    // Befehle des Agenten stehen in der Sitzung (kommen kurz nach dem Start)
+    await expect.poll(async () => ((await get(`${url}/coding/sessions/${id}`)).body!.commands as { name: string }[]).map((x) => x.name)).toEqual(["review", "init", "compact"]);
+  });
+  it("BSD-313: in einem git-Repo zählt git (verschachtelte .gitignore, unversionierte Dateien dabei)", async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "git-files-")));
+    execFileSync("git", ["init", "-q"], { cwd: root });
+    mkdirSync(join(root, "app", "gen"), { recursive: true });
+    writeFileSync(join(root, "app", ".gitignore"), "gen/\n");
+    writeFileSync(join(root, "app", "gen", "x.ts"), "");
+    writeFileSync(join(root, "app", "y.ts"), "");
+    writeFileSync(join(root, "z.md"), "");
+    expect((await listSessionFiles(root, { ttlMs: 0 })).sort()).toEqual(["app/.gitignore", "app/y.ts", "z.md"]);
+    // Unterordner als Arbeitsordner: Pfade relativ dazu
+    expect((await listSessionFiles(join(root, "app"), { ttlMs: 0 })).sort()).toEqual([".gitignore", "y.ts"]);
   });
 });

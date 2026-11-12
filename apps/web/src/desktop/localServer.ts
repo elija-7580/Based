@@ -34,6 +34,24 @@ export interface LocalServerState {
   log: string[];
   node: NodeInfo | undefined;
   cli: CliState;
+  /** BSD-315: auch im eigenen Tailnet erreichbar (Tailscale), Einstellung. */
+  tailnet: boolean;
+  /** Adressen im Tailnet, wenn der Server dort lauscht (leer: kein Tailscale gefunden). */
+  tailnetUrls: string[] | undefined;
+}
+
+/** BSD-315: Kopplungs-Link für ein Gerät (QR-Code): Adresse im Tailnet + eigenes Geräte-Token, nie das Haupt-Token. */
+export function pairingLink(url: string, token: string): string {
+  return `based://pair?${new URLSearchParams({ url, token }).toString()}`;
+}
+
+/** Kopplungs-Link lesen (für die Gegenseite, z. B. Einfügen in Sync & server). */
+export function parsePairingLink(link: string): { url: string; token: string } | undefined {
+  const m = /^based:\/\/pair\?(.*)$/.exec(link.trim());
+  if (!m) return undefined;
+  const q = new URLSearchParams(m[1]!);
+  const url = q.get("url"), token = q.get("token");
+  return url && token && /^https?:\/\//.test(url) && token.startsWith("bdo_") ? { url, token } : undefined;
 }
 
 /** Ausgabe von `command -v node && node --version` deuten. */
@@ -59,14 +77,16 @@ export function parseResult(stdout: string): { ok: boolean; message?: string; ta
   }
 }
 
-/** `BASED_LOCAL_READY {"url":…,"pid":…}` → Adresse (nur Loopback). */
-export function parseReady(line: string): { url: string; pid: number } | undefined {
+/** `BASED_LOCAL_READY {"url":…,"pid":…,"tailnet":[…]}` → Adresse (nur Loopback) und Tailnet-Adressen (BSD-315). */
+export function parseReady(line: string): { url: string; pid: number; tailnet?: string[] } | undefined {
   const m = /^BASED_LOCAL_READY (\{.*\})\s*$/.exec(line.trim());
   if (!m) return undefined;
   try {
-    const v = JSON.parse(m[1]!) as { url?: unknown; pid?: unknown };
+    const v = JSON.parse(m[1]!) as { url?: unknown; pid?: unknown; tailnet?: unknown };
     if (typeof v.url !== "string" || !/^http:\/\/127\.0\.0\.1:\d+$/.test(v.url)) return undefined;
-    return { url: v.url, pid: typeof v.pid === "number" ? v.pid : 0 };
+    // nur Tailscale-Adressen (100.64.0.0/10, fd7a:115c:a1e0::/48) übernehmen
+    const tailnet = Array.isArray(v.tailnet) ? v.tailnet.filter((u): u is string => typeof u === "string" && /^http:\/\/(100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+|\[fd7a:115c:a1e0:[0-9a-f:]*\]):\d+$/i.test(u)) : undefined;
+    return { url: v.url, pid: typeof v.pid === "number" ? v.pid : 0, ...(tailnet ? { tailnet } : {}) };
   } catch {
     return undefined;
   }
@@ -87,17 +107,18 @@ export function newToken(random: (a: Uint8Array) => Uint8Array = (a) => crypto.g
 
 interface Child { kill(): Promise<void> }
 
-function readEnabled(): boolean {
+function readSettings(): { enabled: boolean; tailnet: boolean } {
   try {
-    return (JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown }).enabled === true;
+    const v = JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown; tailnet?: unknown };
+    return { enabled: v.enabled === true, tailnet: v.tailnet === true };
   } catch {
-    return false;
+    return { enabled: false, tailnet: false };
   }
 }
 
 class LocalServer {
   private state: LocalServerState = {
-    status: isTauri() ? "off" : "unavailable", enabled: readEnabled(), url: undefined, error: undefined, log: [], node: undefined,
+    status: isTauri() ? "off" : "unavailable", ...readSettings(), tailnetUrls: undefined, url: undefined, error: undefined, log: [], node: undefined,
     cli: { installed: false, target: undefined, message: undefined, busy: false },
   };
   private listeners = new Set<() => void>();
@@ -115,8 +136,17 @@ class LocalServer {
   }
   private setCli(patch: Partial<CliState>) { this.set({ cli: { ...this.state.cli, ...patch } }); }
 
+  private tokenOverride: string | undefined;
+  /** Siehe `__basedLocalServerTest` (nur E2E). */
+  testPatch(patch: Partial<LocalServerState> & { token?: string }) {
+    const { token, ...rest } = patch;
+    if (token !== undefined) this.tokenOverride = token;
+    this.set(rest);
+  }
+
   /** Token aus der verschlüsselten Ablage (beim ersten Mal erzeugt). */
   async token(): Promise<string> {
+    if (this.tokenOverride) return this.tokenOverride;
     const store = secretVault();
     const t = await store.getSecret(TOKEN_SECRET);
     if (t) return t;
@@ -187,13 +217,61 @@ class LocalServer {
     }
   }
 
-  async setEnabled(on: boolean): Promise<void> {
+  private save(patch: { enabled?: boolean; tailnet?: boolean }) {
     try {
-      globalThis.localStorage?.setItem(SETTINGS_KEY, JSON.stringify({ enabled: on }));
+      globalThis.localStorage?.setItem(SETTINGS_KEY, JSON.stringify({ enabled: patch.enabled ?? this.state.enabled, tailnet: patch.tailnet ?? this.state.tailnet }));
     } catch {
       // nur für diese Sitzung
     }
-    this.set({ enabled: on });
+    this.set(patch);
+  }
+
+  /** BSD-315: im Tailnet erreichbar (Neustart des laufenden Servers). */
+  async setTailnet(on: boolean): Promise<void> {
+    this.save({ tailnet: on });
+    if (this.child || this.starting) {
+      await this.stop();
+      this.set({ status: "off" });
+      await this.start();
+    }
+  }
+
+  /** BSD-315: Gerät koppeln – eigenes Token beim lokalen Server anlegen (mit dem Haupt-Token dieser App). */
+  async addDevice(name: string): Promise<{ id: string; token: string; link: string | undefined }> {
+    if (!this.state.url) throw new Error("The local server isn't running.");
+    const r = await fetch(`${this.state.url}/devices`, { method: "POST", headers: { Authorization: `Bearer ${await this.token()}`, "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (!r.ok) throw new Error(`The local server answered ${r.status}.`);
+    const v = (await r.json()) as { device: { id: string }; token: string };
+    const at = this.state.tailnetUrls?.[0];
+    return { id: v.device.id, token: v.token, link: at ? pairingLink(at, v.token) : undefined };
+  }
+
+  async devices(): Promise<{ id: string; name: string; createdAt: number; lastSeenAt?: number }[]> {
+    if (!this.state.url) return [];
+    const r = await fetch(`${this.state.url}/devices`, { headers: { Authorization: `Bearer ${await this.token()}` } });
+    return r.ok ? ((await r.json()) as { devices: { id: string; name: string; createdAt: number; lastSeenAt?: number }[] }).devices : [];
+  }
+
+  /** BSD-274: Backups des lokalen Servers. */
+  private async call<T>(method: "GET" | "POST", route: string): Promise<T> {
+    if (!this.state.url) throw new Error("The local server isn't running.");
+    const r = await fetch(`${this.state.url}${route}`, { method, headers: { Authorization: `Bearer ${await this.token()}` } });
+    const v = (await r.json().catch(() => ({}))) as T & { error?: string };
+    if (!r.ok) throw new Error(v.error ?? `The local server answered ${r.status}.`);
+    return v;
+  }
+  backups() { return this.call<{ dir: string; last?: { at: number; name: string }; error?: string; snapshots: { name: string; at: number }[] }>("GET", "/backups"); }
+  backupNow() { return this.call<{ snapshot: { name: string; at: number } | null }>("POST", "/backups"); }
+  backupPreview(name: string) { return this.call<{ pages: { added: number; changed: number; removed: number } }>("GET", `/backups/${encodeURIComponent(name)}/preview`); }
+  backupRestore(name: string) { return this.call<{ before?: string; pages: { added: number; changed: number; removed: number } }>("POST", `/backups/${encodeURIComponent(name)}/restore`); }
+
+  async removeDevice(id: string): Promise<void> {
+    if (!this.state.url) return;
+    await fetch(`${this.state.url}/devices/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${await this.token()}` } });
+  }
+
+  async setEnabled(on: boolean): Promise<void> {
+    this.save({ enabled: on });
     if (on) await this.start();
     else await this.stop();
   }
@@ -223,11 +301,15 @@ class LocalServer {
         BASED_TOKEN: await this.token(), BASED_LOCAL_OWNER: "Based Next", BASED_LOG_LEVEL: "warning",
         // BSD-251: das Fenster der App darf den Server ansprechen (CORS) – sonst scheitern Coding, CLI-Verlauf und Sync
         BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
+        // BSD-315: zusätzlich nur auf den Tailscale-Adressen lauschen
+        ...(this.state.tailnet ? { BASED_TAILNET: "1" } : {}),
+        // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
+        BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });
       const cmd = Command.create(RUN.name, [...RUN.args], { env });
       cmd.stdout.on("data", (line: string) => {
         const r = parseReady(line);
-        if (r) this.set({ status: "running", url: r.url });
+        if (r) this.set({ status: "running", url: r.url, tailnetUrls: r.tailnet });
       });
       cmd.stderr.on("data", (line: string) => this.set({ log: [...this.state.log, line].slice(-20) }));
       cmd.on("close", (e: { code: number | null }) => {
@@ -245,7 +327,7 @@ class LocalServer {
   async stop(): Promise<void> {
     const c = this.child;
     this.child = undefined;
-    this.set({ status: isTauri() ? "off" : "unavailable", url: undefined });
+    this.set({ status: isTauri() ? "off" : "unavailable", url: undefined, tailnetUrls: undefined });
     await c?.kill().catch(() => undefined);
   }
 
@@ -258,3 +340,9 @@ class LocalServer {
 
 let shared: LocalServer | undefined;
 export const localServer = (): LocalServer => (shared ??= new LocalServer());
+
+/**
+ * Nur für E2E im Browser (dort gibt es keine Hülle): Zustand und Token des lokalen Servers vorgeben, damit die
+ * Einstellungen gegen einen echten Testserver laufen. Ohne Aufruf ändert sich nichts.
+ */
+(globalThis as { __basedLocalServerTest?: unknown }).__basedLocalServerTest = (patch: Partial<LocalServerState> & { token?: string }) => localServer().testPatch(patch);

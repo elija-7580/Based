@@ -12,15 +12,18 @@ import { Collab, YStateStore } from "./collab.js";
 import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
-import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
-import type { AgentRunnerOptions, CodingSessions } from "@based/brain";
+import { error, json, LARGE_BODY_LIMIT, Router, tokenEquals, type Caller } from "./router.js";
+import type { AgentRunnerOptions, CodingSessions, PtyFactory } from "@based/brain";
 import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
+import { TerminalSockets } from "./terminal-ws.js";
+import { OwnerDevices } from "./devices.js";
+import { Backups } from "./backups.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
 import { Scheduler } from "./scheduler.js";
 import { principalOf, registerShareRoutes } from "./share-routes.js";
-import { BadRequest, WaitLimit, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
+import { BadRequest, ProtocolMismatch, PROTOCOL_HEADER, WaitLimit, decodePush, DEFAULT_PAGE, SyncService, TOMBSTONE_RETENTION_DAYS, type SyncServiceOptions } from "./sync.js";
 
 export interface AppOptions extends SyncServiceOptions {
   token: string;
@@ -46,6 +49,12 @@ export interface AppOptions extends SyncServiceOptions {
   codingLongPollMs?: number;
   /** Rechner der Agenten (CLI-Verlauf, Setup-Doctor); ohne: diese Routen fehlen. */
   codingHost?: CodingHost | undefined;
+  /** BSD-274: Ordner für automatische Backups (stündlich bei Änderungen, beim Beenden); ohne: keine. */
+  backupDir?: string | undefined;
+  /** Takt der Backups in ms (Tests); Standard 1 h. */
+  backupEvery?: number;
+  /** BSD-314: PTY-Start für Terminals (Tests); `null` = kein Terminal; ohne Angabe node-pty. */
+  ptySpawn?: PtyFactory | null;
   /** BSD-235: Adresse des Web-Clients; Access-Links bieten dann „Open in Based“ (Gast-Modus) an. */
   webURL?: string | undefined;
   /** BSD-243: Abstand der Zeitplan-Prüfung in ms (Standard 30 000; `false` = aus). */
@@ -70,6 +79,8 @@ export interface App {
   log: Logger;
   /** Lauscht auf `port` (0 = frei wählen); gibt die Adresse zurück. */
   listen(port: number, host?: string): Promise<{ port: number; url: string }>;
+  /** BSD-315: zusätzlich auf einer weiteren Adresse lauschen (Tailscale), gleicher Port, gleiche Routen. */
+  listenAlso(port: number, host: string): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -101,10 +112,13 @@ export function createApp(opts: AppOptions): App {
     ...(opts.agentEngine ? { engine: opts.agentEngine(sync.store) } : {}) });
   if (opts.agentEngine) log.info("scheduler: runs execute on the server");
   if (opts.scheduleEvery !== false) scheduler.start();
-  const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t) });
+  // BSD-315: eigene Geräte des Besitzers (Handy im Tailnet) mit eigenem, widerrufbarem Token.
+  const devices = new OwnerDevices(db);
+  const ownerToken = (t: string) => tokenEquals(t, opts.token) || devices.check(t) !== undefined;
+  const router = new Router({ token: opts.token, allowedOrigin: opts.allowedOrigin, log, sharedPrincipal: (t) => share.principal(t), ownerDevice: (t) => devices.check(t)?.id });
   const collabPath = opts.collabDb ?? (typeof opts.db === "string" && opts.db !== ":memory:" ? opts.db.replace(/(\.sqlite)?$/, ".collab.sqlite") : ":memory:");
   const collabDb = typeof collabPath === "string" ? openNodeDatabase(collabPath) : collabPath;
-  const collab = new Collab({ store: sync.store, states: new YStateStore(collabDb), token: opts.token, log, ...(opts.collabDebounce !== undefined ? { debounce: opts.collabDebounce } : {}) });
+  const collab = new Collab({ store: sync.store, states: new YStateStore(collabDb), token: opts.token, acceptToken: ownerToken, log, ...(opts.collabDebounce !== undefined ? { debounce: opts.collabDebounce } : {}) });
 
   const persistentDb = typeof opts.db === "string" && opts.db !== ":memory:";
   const temporaryAssets = !opts.assetsDir && !persistentDb;
@@ -120,37 +134,43 @@ export function createApp(opts: AppOptions): App {
       return f();
     } catch (e) {
       if (e instanceof BadRequest) return error(e.message, 400);
+      // BSD-30: Client und Server sprechen nicht dasselbe Format (426 = App aktualisieren, 409 = Server noch alt)
+      if (e instanceof ProtocolMismatch) return error(e.message, e.status);
       throw e;
     }
   };
+  const sameProtocol = (req: { headers: Record<string, string | string[] | undefined> }) => sync.checkProtocol(req.headers[PROTOCOL_HEADER]);
 
   // MARK: öffentlich
-  const health = () => json({ ok: true, name: "based-server", impl: "ts", protocol: 2, time: new Date().toISOString() });
+  const health = () => json({ ok: true, name: "based-server", impl: "ts", protocol: sync.protocol, time: new Date().toISOString() });
   router.add("GET", "/health", health, { access: "public" });
   router.add("GET", "/", health, { access: "public" });
 
   // MARK: Sync v2 (docs/sync-protocol.md). Gäste (Geräte-Token, Access-Link) sehen nur ihren Bereich (docs/sharing.md).
   // BSD-243: `agents.runsOnServer` – Zeitpläne laufen auch bei geschlossener App (Modell auf dem Server eingerichtet).
   router.add("GET", "/sync/v2/info", () => json({ ...sync.info(), assets: { maxBytes: assets.maxBytes, chunkBytes: ASSET_CHUNK_LIMIT }, agents: { runsOnServer: scheduler.executes } }), { access: "shared" });
-  router.add("GET", "/sync/v2/pull", ({ url, caller }) =>
-    handle(() => json(share.pull(principalOf(caller), sync, intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE)))), { access: "shared" });
-  router.add("POST", "/sync/v2/push", ({ body, caller }) =>
+  router.add("GET", "/sync/v2/pull", ({ url, caller, req }) =>
+    handle(() => (sameProtocol(req), json(share.pull(principalOf(caller), sync, intParam(url, "after", 0), intParam(url, "limit", DEFAULT_PAGE))))), { access: "shared" });
+  router.add("POST", "/sync/v2/push", ({ body, caller, req }) =>
     handle(() => {
+      sameProtocol(req);
       const p = principalOf(caller);
       const { rejected, ...reply } = share.push(p, sync, decodePush(parseJSON(body)));
       if (rejected.length > 0) log.info("share: rejected records from a shared principal", { count: rejected.length });
       // BSD-285: abgelehnte Records eigens nennen – das Gerät übernimmt die Server-Kopie dann trotz eigenem Stempel.
       return json(rejected.length > 0 ? { ...reply, rejected: rejected.map((k) => parseKey(k)) } : reply);
     }), { bodyLimit: LARGE_BODY_LIMIT, access: "shared" });
-  router.add("GET", "/sync/v2/wait", async ({ url, signal, caller }) => {
+  router.add("GET", "/sync/v2/wait", async ({ url, signal, caller, req }) => {
     let after: number, timeout: number;
     try {
+      sameProtocol(req);
       after = intParam(url, "after", 0);
       const t = url.searchParams.get("timeout");
       timeout = t === null || t === "" ? 25 : Number(t);
       if (!Number.isFinite(timeout)) throw new BadRequest("timeout must be a number");
     } catch (e) {
       if (e instanceof BadRequest) return error(e.message, 400);
+      if (e instanceof ProtocolMismatch) return error(e.message, e.status);
       throw e;
     }
     // BSD-75: Grenze je Client (Owner bzw. geteilter Principal); darüber 429 mit Retry-After statt offener Verbindung.
@@ -241,9 +261,37 @@ export function createApp(opts: AppOptions): App {
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
+  // MARK: Backups (BSD-274)
+  const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log) : undefined;
+  if (backups) {
+    backups.start(opts.backupEvery);
+    const nameOK = (n: string) => /^[0-9T-]+Z\.based\.jsonl$/.test(n);
+    router.add("GET", "/backups", async () => json({ dir: backups.dir, last: backups.last, error: backups.lastError, snapshots: await backups.list() }));
+    router.add("POST", "/backups", async () => json({ snapshot: (await backups.snapshot(true)) ?? null }, 201));
+    router.add("GET", "/backups/:name/preview", async ({ params }) => nameOK(params.name!) ? json({ pages: await backups.preview(params.name!) }) : error("not a backup", 400));
+    router.add("POST", "/backups/:name/restore", async ({ params }) => nameOK(params.name!) ? json(await backups.restore(params.name!)) : error("not a backup", 400));
+  }
+
+  // MARK: Eigene Geräte (BSD-315). Verwalten nur mit dem Haupt-Token, nicht mit einem Geräte-Token.
+  const mainOnly = (caller: Caller<unknown> | undefined) => caller?.kind === "owner" && caller.device === undefined;
+  router.add("GET", "/devices", ({ caller }) => json({ devices: devices.list(), current: caller?.kind === "owner" ? caller.device : undefined }));
+  router.add("POST", "/devices", ({ caller, body }) => {
+    if (!mainOnly(caller)) return error("devices can only be added with the main token", 403);
+    let name = "";
+    try { const v = JSON.parse(body.toString("utf8")) as { name?: unknown }; name = typeof v.name === "string" ? v.name : ""; } catch { /* leer */ }
+    const r = devices.add(name);
+    log.info("device added", { device: r.device.id });
+    return json({ device: r.device, token: r.token }, 201);
+  });
+  router.add("DELETE", "/devices/:id", ({ caller, params }) => {
+    if (!mainOnly(caller)) return error("devices can only be removed with the main token", 403);
+    return devices.remove(params.id!) ? json({ ok: true }) : error("device not found", 404);
+  });
+
   // MARK: Sync v1 (nur für sehr alte Apps)
-  router.add("GET", "/sync/pull", ({ url }) =>
+  router.add("GET", "/sync/pull", ({ url, req }) =>
     handle(() => {
+      sameProtocol(req);
       const raw = url.searchParams.get("since");
       let since;
       if (raw) {
@@ -260,7 +308,7 @@ export function createApp(opts: AppOptions): App {
       return json(sync.pullV1(since));
     }),
   );
-  router.add("POST", "/sync/push", ({ body }) => handle(() => json(sync.pushV1(parseJSON(body)))), { bodyLimit: LARGE_BODY_LIMIT });
+  router.add("POST", "/sync/push", ({ body, req }) => handle(() => (sameProtocol(req), json(sync.pushV1(parseJSON(body))))), { bodyLimit: LARGE_BODY_LIMIT });
 
   // MARK: MCP (Streamable HTTP, zustandslos: pro Anfrage ein Server + Transport, JSON-Antworten)
   router.add(
@@ -289,10 +337,14 @@ export function createApp(opts: AppOptions): App {
   router.add("GET", "/mcp", noSSE);
   router.add("DELETE", "/mcp", noSSE);
 
-  const server = createServer({ requestTimeout: 120_000, headersTimeout: 30_000, keepAliveTimeout: 5_000 }, (req, res) => void router.handle(req, res));
+  const makeServer = () => createServer({ requestTimeout: 120_000, headersTimeout: 30_000, keepAliveTimeout: 5_000 }, (req, res) => void router.handle(req, res));
+  const server = makeServer();
+  const extraServers: ReturnType<typeof makeServer>[] = [];
   // Long-Polls dauern bis 55 s; alles andere bricht nach requestTimeout ab.
   server.timeout = 0;
-  collab.attach(server);
+  // BSD-314: Terminal je Coding-Sitzung (WebSocket /coding/terminal/<id>), nur mit Coding-Agenten.
+  const terminals = opts.coding ? new TerminalSockets(opts.coding, ownerToken, log, opts.ptySpawn) : undefined;
+  collab.attach(server, terminals?.handle);
 
   let gc: NodeJS.Timeout | undefined;
   const compact = () => {
@@ -336,10 +388,24 @@ export function createApp(opts: AppOptions): App {
         });
       });
     },
+    listenAlso(port, host) {
+      const extra = makeServer();
+      extra.timeout = 0;
+      collab.attach(extra, terminals?.handle);
+      extraServers.push(extra);
+      return new Promise((resolve, reject) => {
+        extra.once("error", reject);
+        extra.listen(port, host, () => resolve());
+      });
+    },
     async close() {
       if (gc) clearInterval(gc);
+      // BSD-274: beim Beenden noch einmal sichern (nur bei Änderungen)
+      if (backups) { backups.stop(); await backups.snapshot().catch(() => undefined); }
+      for (const x of extraServers) { x.close(); x.closeAllConnections(); }
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();
+      terminals?.close();
       sync.close(); // offene Long-Polls antworten sofort
       share.close();
       scheduler.stop();

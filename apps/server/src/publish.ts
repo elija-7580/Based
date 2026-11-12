@@ -101,6 +101,8 @@ export function renderShared(share: ShareService, link: SharingLink, target: str
     assetLink: (a) => `${base}/asset/${encodeURIComponent(a.id)}`,
     htmlBlockURL: (id) => `${base}/${encodeURIComponent(target)}/html/${encodeURIComponent(id)}`,
     embeds: link.allowEmbeds === true ? "frame" : "link",
+    // BSD-279: nichts von außerhalb des Bereichs (Titel hinter Erwähnungen, Relationen, verknüpfte Datenbanken)
+    canRead: (id) => inArea(share, link, id),
   });
   const html = exportHTMLPage(exporter, target, { css: exportStylesheet(), offline: true });
   return { html, csp: link.allowEmbeds === true ? pageCSP(embedHosts(store, target)) : PAGE_CSP };

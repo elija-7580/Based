@@ -56,7 +56,7 @@ export function encodeArchive(records: WireRecord[], workspaceName: string, vers
 
 /** v1-Archiv des ganzen Stores (`.based.jsonl`). */
 export function writeArchive(store: WorkspaceStore, exportedAt?: Date): string {
-  return encodeArchive(store.allRecords(), store.workspace.name, ARCHIVE_PLAIN_VERSION, undefined, exportedAt);
+  return encodeArchive(store.exportRecords(), store.workspace.name, ARCHIVE_PLAIN_VERSION, undefined, exportedAt);
 }
 
 /** Jede Datei, auf die die Records zeigen (`"asset": {"id", "name"}`, auch in `{"_0": …}`), eindeutig nach ID. */
@@ -101,7 +101,8 @@ export function assetRefForEntry(path: string): AssetRef | undefined {
 /** `.based.zip` (v2): Records und alle Dateien, die `readAsset` liefert; fehlende werden gemeldet. */
 export function writeArchivePackage(store: WorkspaceStore, readAsset: (ref: AssetRef) => Uint8Array | undefined, exportedAt?: Date):
   { zip: Uint8Array; records: number; assets: number; bytes: number; missing: AssetRef[] } {
-  const records = store.allRecords();
+  // BSD-30: Archive bleiben in der Austauschform (Datenbank mit Property-Liste), egal wie der Store speichert.
+  const records = store.exportRecords();
   const refs = archiveAssetRefs(records);
   const text = encodeArchive(records, store.workspace.name, ARCHIVE_VERSION, refs.length, exportedAt);
   const entries: ZipWriteEntry[] = [{ path: PACKAGE_RECORDS, data: enc.encode(text), compress: false }];

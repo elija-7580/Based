@@ -17,7 +17,8 @@ import { SYNC_LABEL } from "../../components/Sidebar.js";
 import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
-import { autoUpdatePref, deviceNode, newPageFormat, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { autoUpdatePref, deviceNode, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
+import { mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
@@ -48,11 +49,15 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
       <Group>
         {CHOICES.map((c) => (
           <Row key={c.key} label={c.label} hint={c.hint}>
-            <SegmentedControl label={c.label} value={appearance[c.key]} onChange={(v) => setAppearance({ ...appearance, [c.key]: v } as Appearance)}>
-              {c.options.map((o) => (
-                <SegmentedControlItem key={o.value} value={o.value} label={o.label} {...(o.swatch ? { icon: <span className={`swatch ${o.swatch}`} aria-hidden="true" /> } : {})} />
-              ))}
-            </SegmentedControl>
+            {/* BSD-301: Die Wahl behält ihre volle Breite und bricht bei Platzmangel unter die Beschriftung, statt die
+                Namen („Mint“, „Sky“) zu kürzen. */}
+            <span className="settings-choice">
+              <SegmentedControl label={c.label} value={appearance[c.key]} onChange={(v) => setAppearance({ ...appearance, [c.key]: v } as Appearance)}>
+                {c.options.map((o) => (
+                  <SegmentedControlItem key={o.value} value={o.value} label={o.label} {...(o.swatch ? { icon: <span className={`swatch ${o.swatch}`} aria-hidden="true" /> } : {})} />
+                ))}
+              </SegmentedControl>
+            </span>
           </Row>
         ))}
       </Group>
@@ -104,6 +109,7 @@ function SyncSection({ client, state }: SettingsSectionProps) {
     // erst gespeichert, dann verbunden: der Status in der Seitenleiste heißt dann auch „übersteht Neuladen“
     void syncConfig.flush().then(() => client.setSync(config));
   };
+  const [convert, setConvert] = useState(false);
   const disconnect = () => {
     syncConfig.set(undefined);
     setConnected(false);
@@ -114,6 +120,11 @@ function SyncSection({ client, state }: SettingsSectionProps) {
       <Row label="Status" hint={status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}>
         <Value testID="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}{status.assets ? ` · ${assetsLabel(status.assets)}` : ""}</Value>
       </Row>
+      {status.storageWarnings?.length ? (
+        <Row label="Storage" hint="These parts start empty again after a reload. Close other Based tabs and reload; if it stays, copy the report under Diagnostics.">
+          <Value testID="sync-storage-warning">{status.storageWarnings.join(" ")}</Value>
+        </Row>
+      ) : null}
       {status.clockSkew !== undefined ? (
         <Row label="Clock" hint="Based stamps your changes with the server's time until this is fixed. Set the date and time of this device automatically.">
           <Value testID="sync-clock-skew">{clockSkewText(status.clockSkew)}</Value>
@@ -137,6 +148,16 @@ function SyncSection({ client, state }: SettingsSectionProps) {
             value={collab} onChange={changeCollab} labelPosition="start" labelSpacing="spread" width="100%" />
         </VStack>
       </form>
+      <Row label="Database columns" hint={status.propertyRecords
+        ? "Each column is stored and synced on its own. Two devices can change different columns of the same database at the same time. Older versions of Based can't open this workspace any more."
+        : "Columns are stored together with their database. If two devices change different columns at the same time, one change is lost."}>
+        {status.propertyRecords
+          ? <Value testID="property-records-status">Synced one by one</Value>
+          : <BasedButton label="Convert…" onClick={() => setConvert(true)} />}
+      </Row>
+      <BasedConfirm open={convert} onClose={() => setConvert(false)} title="Store each column on its own?"
+        description="Based converts this workspace once and reloads. Rows and pages are not touched, and a copy of every database is kept. After this, older versions of Based and a server that has not been converted can't sync with this device. Convert the server first."
+        actionLabel="Convert and reload" onConfirm={() => { propertyRecordsSetting.set(true); location.reload(); }} />
     </Group>
   );
 }
@@ -186,7 +207,7 @@ function WorkspaceSection({ client, state, navigate }: SettingsSectionProps) {
       <Row label="Trash" hint={trash ? `${count(trash, "page")} waiting in the Trash` : "The Trash is empty"}>
         <HStack gap={2}>
           <BasedButton label="Open Trash" variant="ghost" onClick={() => navigate({ name: "trash" })} />
-          <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} />
+          {mayDeleteForever() ? <BasedButton label="Empty Trash…" variant="danger" disabled={trash === 0} onClick={() => setConfirm(true)} /> : null}
         </HStack>
       </Row>
       <BasedConfirm open={confirm} onClose={() => setConfirm(false)} title="Empty the Trash?" description={`${count(trash, "page")} will be deleted for good. This can't be undone.`} actionLabel="Empty Trash" onConfirm={async () => { await client.command({ op: "emptyTrash" }); }} />
