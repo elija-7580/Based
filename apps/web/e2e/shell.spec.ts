@@ -180,6 +180,11 @@ test("Neuladen behält Daten (OPFS)", { tag: "@smoke" }, async ({ playwright, br
     await newTopLevelPage(page, "Kept after reload");
     await page.getByRole("treeitem", { name: "Welcome to Based" }).click({ button: "right" });
     await page.getByRole("menuitem", { name: "Move to Trash" }).click();
+    await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
+    // BSD-335: erst neu laden, wenn der Store-Tab jede Anfrage beantwortet hat (= in OPFS geschrieben). Ohne das lag
+    // „Move to Trash“ unter Last (WebKit, 1 von 20) noch in der Warteschlange des Workers und ging beim Neuladen mit
+    // ihm verloren – der Test prüft den Datenerhalt geschriebener Änderungen, nicht ein Neuladen mitten im Befehl.
+    await page.evaluate(() => (globalThis as unknown as { __based: { client: { settled(): Promise<void> } } }).__based.client.settled());
     await page.reload();
     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();

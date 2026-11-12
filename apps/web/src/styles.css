@@ -74,7 +74,9 @@ input::placeholder { color: var(--muted); }
   display: flex; justify-content: flex-end;
 }
 .sidebar-resize::after { content: ""; width: 1px; height: 100%; background: transparent; transition: background var(--duration-fast) var(--ease-out); }
-.sidebar-resize:hover::after, .sidebar-resize:focus-visible::after { background: var(--line); }
+.sidebar-resize:hover::after { background: var(--line); }
+/* BSD-304: Tastaturfokus sofort (ohne Übergang) und in der Marker-Farbe, nicht nur als Haarlinie. */
+.sidebar-resize:focus-visible::after { background: var(--focus-ring); width: var(--marker-width); transition: none; }
 .sidebar-resize:focus-visible { outline: none; }
 /* Seitenleiste ausgeblendet: Der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite (auf der Höhe der
    Tab-Leiste), nicht mehr über der Kopfzeile der Seite – dort lag er auf den Pfeilen und dem Seitentitel. In der
