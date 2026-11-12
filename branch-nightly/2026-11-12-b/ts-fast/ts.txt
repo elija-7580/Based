@@ -26,8 +26,8 @@ packages/editor test: [2m      Tests [22m [1m[32m79 passed[39m[22m[90m (7
 apps/web test: [2m      Tests [22m [1m[32m195 passed[39m[22m[90m (195)[39m
 apps/server test: [2m      Tests [22m [1m[32m146 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (147)[39m
 apps/cli test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
-packages/design-tokens test: [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
 packages/ui test: [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+packages/design-tokens test: [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
 packages/core test:   archive    10/10 grün
 packages/core test:   clipboard  13/13 grün
 packages/core test:   conversion 117/117 grün
@@ -48,50 +48,4 @@ packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
 packages/core test: [2m      Tests [22m [1m[32m1673 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1674)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
-packages/sync test: [2m      Tests [22m [1m[32m49 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (52)[39m
-packages/brain test: [2m      Tests [22m [1m[32m390 passed[39m[22m[90m (390)[39m
-packages/editor test: [2m      Tests [22m [1m[32m79 passed[39m[22m[90m (79)[39m
-apps/web test: [2m      Tests [22m [1m[32m195 passed[39m[22m[90m (195)[39m
-apps/server test: [2m      Tests [22m [1m[32m146 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (147)[39m
-apps/cli test: [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
 --- smoke
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-
-Running 23 tests using 2 workers
-
-  ✓   2 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.9s)
-  ✓   1 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (3.6s)
-  ✓   3 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (2.0s)
-  ✓   5 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (2.2s)
-  ✓   6 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (1.6s)
-  ✓   4 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (5.6s)
-  ✓   7 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.1s)
