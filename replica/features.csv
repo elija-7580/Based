@@ -23,7 +23,7 @@ Quick Find search (titles + content),search,must,yes,yes,"search off the main th
 Recent pages in search,search,should,yes,yes,,yes,beta
 Search filters (created by / date / in page),search,could,yes,partial,"Pages / Chats scopes, date-grouped results, Ask AI row; no creator filter","partial: Quick Find chips Title only, In this page, Edited (today/week/30 days/year), Sort (BSD-206); no creator filter, no Chats scope",beta
 Backlinks,linking,should,yes,yes,,"yes (Pass 30: Backlink-Index im Worker, Liste am Seitenende; BSD-90: unverlinkte Erwähnungen mit „Link“)",beta
-Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page)",beta
+Page mention (@ / [[),linking,must,yes,yes,,"yes (Pass 30: @ und [[ mit Seitensuche, New page; BSD-322: Papierkorb-Markierung auch nach Seitenwechsel aktuell)",beta
 Date mention,linking,should,yes,yes,,"yes (Pass 30: Today/Tomorrow/Wochentage/getipptes Datum; BSD-210: Wähler mit Tag, Bereich und Uhrzeit)",beta
 Reminders on date mentions,linking,could,yes,partial,reminder flag stored; no notifications,"partial: Erinnerungs-Flagge gespeichert, keine Benachrichtigung",beta
 Link to page block,linking,should,yes,yes,,yes,beta
@@ -73,7 +73,7 @@ Turn into page,editor,should,yes,yes,,"yes (BSD-207: Text wird Titel, Kinder wer
 Block action menu (delete / duplicate / move / color),editor,must,yes,yes,,"yes: Turn into (inkl. Page), Duplicate (⌘D), Move to, Colors, Copy and sync, Delete",beta
 Drag handle to reorder blocks,editor,must,yes,yes,,yes,beta
 Drag to nest / create columns,editor,could,yes,yes,"Pass 14: drag right to nest, left to outdent, onto a block's side for columns","yes (BSD-249): Griff ziehen (auch mehrere ausgewählte Blöcke, Auto-Scroll am Rand) – davor/dahinter, nach rechts verschachteln, nach links ausrücken (vom letzten Kind), an den Rand für Spalten (bis 5, zurückziehen, leere Spalten verschwinden), Kinder wandern mit, ein Undo-Schritt",beta
-Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown)",beta
+Multi-block selection (Esc / shift),editor,should,yes,yes,,"yes (BSD-207: Esc-Blockauswahl, ↑/↓, ⇧↑/⇧↓, ⌫, ⌘D, ⌘⇧P Move to, Enter; BSD-258: Rechteck aus dem Rand, Textauswahl über Nicht-Text-Blöcke wird Blockauswahl, ⇧-Klick, ⌘A zweimal, ⌘C/⌘X als Markdown; BSD-298: Blockauswahl reicht unter schwebende Leisten)",beta
 Move block up/down (⌘⇧↑↓),editor,should,yes,yes,,yes,beta
 Duplicate block (⌘D),editor,should,yes,yes,,"yes (BSD-207: Blockmenü, ⌘D, Blockauswahl; Unterseiten und Datenbanken tief kopiert; Synced Blocks/Meetings nicht)",beta
 Turn-into shortcuts (⌘⌥0-9),editor,should,yes,yes,,yes,beta
