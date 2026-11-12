@@ -127,10 +127,14 @@ export class Collab {
     });
   }
 
-  /** WebSocket-Upgrades auf /collab annehmen; alles andere schließen. */
-  attach(server: Server) {
+  /**
+   * WebSocket-Upgrades auf /collab annehmen; `other` darf andere Pfade übernehmen (BSD-314: Terminal), alles
+   * Übrige wird geschlossen.
+   */
+  attach(server: Server, other?: (req: IncomingMessage, socket: Duplex, head: Buffer) => boolean) {
     server.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
       const path = new URL(req.url ?? "/", "http://localhost").pathname;
+      if (path !== COLLAB_PATH && other?.(req, socket, head)) return;
       if (path !== COLLAB_PATH) {
         socket.write("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
         socket.destroy();

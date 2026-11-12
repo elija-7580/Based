@@ -38,7 +38,8 @@ test("Seitenfenster (BSD-202): Rechte gelten auch für page-*, Fenster dürfen a
 
 test("BSD-138: Bundle als Resource (keine Node-Laufzeit, kein externalBin); Shell-Plugin nur für zwei feste Aufrufe", () => {
   assert.equal(conf.bundle.externalBin, undefined);
-  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs" });
+  // BSD-314: node-pty (native Datei für das Terminal) liegt daneben in node_modules/, nicht im Bundle.
+  assert.deepEqual(conf.bundle.resources, { "../dist-sidecar/based-server.cjs": "based-server.cjs", "../dist-sidecar/node_modules/": "node_modules/" });
   assert.match(conf.build.beforeBuildCommand, /@based\/desktop sidecar/);
   assert.match(conf.build.beforeDevCommand, /@based\/desktop sidecar/);
   const cap = JSON.parse(readFileSync(new URL("../src-tauri/capabilities/local-server.json", import.meta.url), "utf8"));

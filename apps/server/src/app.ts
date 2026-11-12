@@ -13,8 +13,9 @@ import { createLogger, type Logger } from "./log.js";
 import { createMcpServer } from "./mcp.js";
 import { Pages } from "./pages.js";
 import { error, json, LARGE_BODY_LIMIT, Router } from "./router.js";
-import type { AgentRunnerOptions, CodingSessions } from "@based/brain";
+import type { AgentRunnerOptions, CodingSessions, PtyFactory } from "@based/brain";
 import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
+import { TerminalSockets } from "./terminal-ws.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
@@ -46,6 +47,8 @@ export interface AppOptions extends SyncServiceOptions {
   codingLongPollMs?: number;
   /** Rechner der Agenten (CLI-Verlauf, Setup-Doctor); ohne: diese Routen fehlen. */
   codingHost?: CodingHost | undefined;
+  /** BSD-314: PTY-Start für Terminals (Tests); `null` = kein Terminal; ohne Angabe node-pty. */
+  ptySpawn?: PtyFactory | null;
   /** BSD-235: Adresse des Web-Clients; Access-Links bieten dann „Open in Based“ (Gast-Modus) an. */
   webURL?: string | undefined;
   /** BSD-243: Abstand der Zeitplan-Prüfung in ms (Standard 30 000; `false` = aus). */
@@ -299,7 +302,9 @@ export function createApp(opts: AppOptions): App {
   const server = createServer({ requestTimeout: 120_000, headersTimeout: 30_000, keepAliveTimeout: 5_000 }, (req, res) => void router.handle(req, res));
   // Long-Polls dauern bis 55 s; alles andere bricht nach requestTimeout ab.
   server.timeout = 0;
-  collab.attach(server);
+  // BSD-314: Terminal je Coding-Sitzung (WebSocket /coding/terminal/<id>), nur mit Coding-Agenten.
+  const terminals = opts.coding ? new TerminalSockets(opts.coding, opts.token, log, opts.ptySpawn) : undefined;
+  collab.attach(server, terminals?.handle);
 
   let gc: NodeJS.Timeout | undefined;
   const compact = () => {
@@ -347,6 +352,7 @@ export function createApp(opts: AppOptions): App {
       if (gc) clearInterval(gc);
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();
+      terminals?.close();
       sync.close(); // offene Long-Polls antworten sofort
       share.close();
       scheduler.stop();

@@ -10,3 +10,4 @@ export * from "./doctor.js";
 export * from "./remote.js";
 export * from "./chatgpt.js";
 export * from "./files.js";
+export * from "./terminal.js";

@@ -14,10 +14,12 @@ import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { cliResumeCommand, cliSessionsByProject, codingErrorMessage, foldTranscript, type AgentStatus, type CliSession, type DoctorTool, type InboxItem, type TranscriptItem } from "@based/brain";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ChatMessages } from "../chat/ChatMessages.js";
 import { PERMISSIONS } from "../chat/AiSettingsSection.js";
 import { Composer } from "./Composer.js";
+// BSD-314: xterm.js erst laden, wenn das Terminal aufgeht (nicht im Start-Bundle).
+const TerminalView = lazy(() => import("./TerminalView.js").then((m) => ({ default: m.TerminalView })));
 import { codingModelFor, useCodingConnection } from "./connection.js";
 import type { CodingModel } from "./model.js";
 import "./coding.css";
@@ -95,6 +97,8 @@ function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id
 function Sessions({ model }: { model: CodingModel }) {
   const s = useSyncExternalStore(model.subscribe, model.getState);
   const current = s.sessions.find((x) => x.id === s.selected);
+  // BSD-314: Transkript oder echtes Terminal im Arbeitsordner der Sitzung
+  const [view, setView] = useState<"transcript" | "terminal">("transcript");
   const running = current?.state === "running";
   return (
     <HStack gap={4} vAlign="start" className="coding-split">
@@ -120,7 +124,11 @@ function Sessions({ model }: { model: CodingModel }) {
               <SwitchAgent model={model} from={current.id} cwd={current.cwd} />
               <Button size="sm" variant="ghost" onClick={() => void model.close(current.id)} isDisabled={current.state === "closed"} label="End session" />
             </HStack>
-            <Console items={s.items} running={running} />
+            <SegmentedControl label="Console view" value={view} onChange={(v) => setView(v as "transcript" | "terminal")}>
+              <SegmentedControlItem value="transcript" label="Transcript" />
+              <SegmentedControlItem value="terminal" label="Terminal" />
+            </SegmentedControl>
+            {view === "terminal" ? <Suspense fallback={<Text type="supporting">Loading terminal…</Text>}><TerminalView model={model} sessionId={current.id} /></Suspense> : <Console items={s.items} running={running} />}
             <Composer key={current.id} model={model} session={current} />
           </>
         )}
