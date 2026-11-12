@@ -11,7 +11,7 @@ import { TextArea } from "@astryxdesign/core/TextArea";
 import { Token } from "@astryxdesign/core/Token";
 import type { CodingSessionView, FileMatch } from "@based/brain";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { atQuery, filterCommands, nextMode, removeAt, slashQuery } from "./composer.js";
+import { atQuery, filterCommands, nextMode, removeAt, slashQuery } from "./composerInput.js";
 import type { CodingModel } from "./model.js";
 
 type Menu =
