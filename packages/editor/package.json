@@ -19,6 +19,7 @@
   "dependencies": {
     "@based/core": "workspace:*",
     "@based/design-tokens": "workspace:*",
+    "@based/ui": "workspace:*",
     "@blocknote/ariakit": "0.57.0",
     "@blocknote/core": "0.57.0",
     "@blocknote/react": "0.57.0",

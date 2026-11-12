@@ -1,4 +1,5 @@
 // BSD-154: Erwähnungen (Seite, Person, Datum, Link) und Gleichungen im Text.
+import { DateField, TimeField } from "@based/ui/native";
 import { createReactInlineContentSpec } from "@blocknote/react";
 import { useEffect, useRef, useState } from "react";
 import { canonicalStringify, dateFromSwift, dateParts, withDateParts, type DateParts } from "@based/core";
@@ -108,7 +109,7 @@ function DateMention(props: { value: string; editable: boolean; onChange: (value
   );
 }
 
-/** BSD-210: Tag, „End date“ (Bereich) und „Include time“ – native Felder, Wert wie in den Swift-Records. */
+/** BSD-210: Tag, „End date“ (Bereich) und „Include time“ – Based-Felder mit eigenem Kalender (keine Systemauswahl), Wert wie in den Swift-Records. */
 function DatePicker(props: { value: DateProps; onChange: (v: DateProps) => void }) {
   const parts = dateParts(props.value);
   const set = (patch: Partial<DateParts>) => props.onChange(withDateParts(props.value, { ...parts, ...patch }));
@@ -116,13 +117,13 @@ function DatePicker(props: { value: DateProps; onChange: (v: DateProps) => void 
   return (
     <span className="bx-date-picker">
       <span className="bx-date-row">
-        <input type="date" className="bx-field" aria-label="Start day" value={parts.startDay} onChange={(e) => set({ startDay: e.target.value })} />
-        {parts.includeTime ? <input type="time" className="bx-field" aria-label="Start time" value={parts.startTime} onChange={(e) => set({ startTime: e.target.value })} /> : null}
+        <DateField className="bx-field" aria-label="Start day" value={parts.startDay} onChange={(startDay) => set({ startDay })} />
+        {parts.includeTime ? <TimeField className="bx-field" aria-label="Start time" value={parts.startTime} onChange={(startTime) => set({ startTime })} /> : null}
       </span>
       {hasEnd ? (
         <span className="bx-date-row">
-          <input type="date" className="bx-field" aria-label="End day" value={parts.endDay} onChange={(e) => set({ endDay: e.target.value })} />
-          {parts.includeTime ? <input type="time" className="bx-field" aria-label="End time" value={parts.endTime ?? parts.startTime} onChange={(e) => set({ endTime: e.target.value })} /> : null}
+          <DateField className="bx-field" aria-label="End day" value={parts.endDay ?? ""} onChange={(endDay) => set({ endDay })} />
+          {parts.includeTime ? <TimeField className="bx-field" aria-label="End time" value={parts.endTime ?? parts.startTime} onChange={(endTime) => set({ endTime })} /> : null}
         </span>
       ) : null}
       <label className="bx-date-remind">
