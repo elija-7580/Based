@@ -1,4 +1,30 @@
-success 767e249fd915a1b8305a317188bced8b5f07f403
+success f7e1236955d2e6388bd0ad73a0e54bb886ce3c7b
+  ✓  116 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.3s)
+  ✓  118 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.8s)
+  ✓  119 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.7s)
+  ✓  120 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.3s)
+  -  121 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  122 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.6s)
+  ✓  123 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.3s)
+  ✓  117 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.6s)
+  ✓  124 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.3s)
+  ✓  125 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.4s)
+  ✓  126 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.1s)
+  ✓  128 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.4s)
+  ✓  127 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.2s)
+  ✓  130 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.8s)
+  ✓  129 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.5s)
+  ✓  132 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.5s)
+  ✓  133 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.8s)
+  ✓  134 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.6s)
+  ✓  135 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.4s)
+  ✓  131 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (12.6s)
+  ✓  136 [chromium] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.0s)
+  ✓  138 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light) (2.0s)
+  ✓  139 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark) (2.0s)
+  ✓  137 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (12.2s)
+
+
   1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
 
     Error: expect(received).toEqual(expected) // deep equality
@@ -29,33 +55,7 @@ success 767e249fd915a1b8305a317188bced8b5f07f403
 
     Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
 
-  2) [chromium] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen ──────────
-
-    Error: expect(locator).toBeVisible() failed
-
-    Locator: getByRole('menu').first()
-    Expected: visible
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeVisible" getByRole('menu').first() with timeout 5000ms
-      - waiting for getByRole('menu').first()
-
-
-      115 |       await expect(handle).toBeVisible();
-      116 |       await handle.click();
-    > 117 |       await expect(page.getByRole("menu").first()).toBeVisible();
-          |                                                    ^
-      118 |       await shoot("block-menu", theme, w);
-      119 |       await page.keyboard.press("Escape");
-      120 |       await page.keyboard.press("Escape");
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-polish.spec.ts:117:52
-
-    Error Context: test-results/editor-polish-Editor-in-Ruhe-und-in-seinen-Zuständen-chromium/error-context.md
-
-  2 flaky
+  1 flaky
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-    [chromium] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen ───────────
   8 skipped
-  128 passed (4.6m)
+  129 passed (4.8m)
