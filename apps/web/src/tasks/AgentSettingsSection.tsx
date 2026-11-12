@@ -141,6 +141,6 @@ let registered = false;
 export function registerAgentSettings() {
   if (registered) return;
   registered = true;
-  registerSettingsSection({ id: "main-agent", page: "agents", title: "Main agent", order: 20, component: AgentSettingsSection, provides: ["Agents and the main agent"] });
+  registerSettingsSection({ id: "main-agent", page: "agents", title: "Main agent", order: 20, ai: true, component: AgentSettingsSection, provides: ["Agents and the main agent"] });
 }
 registerAgentSettings();

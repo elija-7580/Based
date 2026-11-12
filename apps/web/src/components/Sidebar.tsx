@@ -16,7 +16,7 @@ import { asNewTabs } from "../shell/newTabIntent.js";
 import { download } from "./ImportExport.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
 import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
-import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
+import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navAvailable, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import { meetingHost } from "../editorSlot.js";
@@ -64,6 +64,8 @@ interface Props {
   onImportStatus?: (() => void) | undefined;
   /** BSD-281: erweiterter Agenten-Modus („Show agent details“) – nur dann steht Coding in der Leiste. */
   advanced?: boolean;
+  /** AI-Schalter (shell/ai.ts): ohne AI keine Einträge Chat, Tasks, Coding. Standard an. */
+  ai?: boolean;
 }
 
 interface Menu {
@@ -72,7 +74,7 @@ interface Menu {
   y: number;
 }
 
-export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, onImportStatus, advanced = false }: Props) {
+export function Sidebar({ client, state, route, homePage, onHome, onNavigate, onOpenPage, onNewPage, onQuickFind, onImportStatus, advanced = false, ai = true }: Props) {
   const { outline, titles, status } = state;
   const [expanded, setExpanded] = useState<Set<string>>(expandedPages.get);
   const [collapsed, setCollapsed] = useState<Set<string>>(collapsedSections.get);
@@ -363,7 +365,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     trash: { id: "trash", name: "Trash", icon: "trash", active: route.name === "trash", ...(trashCount ? { badge: String(trashCount) } : {}), go: () => onNavigate({ name: "trash" }) },
     settings: { id: "settings", name: "Settings", icon: "settings", active: route.name === "settings", key: keyLabel(","), go: () => onNavigate({ name: "settings" }) },
   };
-  const layout = navLayout(navPrefs, { advanced });
+  const layout = navLayout(navPrefs, { advanced, ai });
   const onNavMenu = (id: NavID) => (e: React.MouseEvent) => {
     e.preventDefault();
     setNavMenu({ id, x: e.clientX, y: e.clientY });
@@ -402,7 +404,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
       e.preventDefault();
       const ids = list === "top" ? layout.top : layout.footer;
       const before = side === "before" ? id : ids[ids.indexOf(id) + 1];
-      changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced }));
+      changeNav((p) => moveNav(p, moved, list, before === moved ? ids[ids.indexOf(moved) + 1] : before, { advanced, ai }));
     },
   });
   const dropClass = (id: NavID) => (navDrop?.id === id ? ` nav-drop-${navDrop.side}` : "");
@@ -488,10 +490,10 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
         </>
       )}
       {navMenu ? (
-        <NavMenu menu={navMenu} place={navPlace(navMenu.id, navPrefs, { advanced })} advanced={advanced} prefs={navPrefs} onClose={() => setNavMenu(undefined)}
+        <NavMenu menu={navMenu} place={navPlace(navMenu.id, navPrefs, { advanced, ai })} advanced={advanced} ai={ai} prefs={navPrefs} onClose={() => setNavMenu(undefined)}
           onPin={() => changeNav((p) => pinNav(p, navMenu.id))} onUnpin={() => changeNav((p) => unpinNav(p, navMenu.id))} onHide={() => changeNav((p) => hideNav(p, navMenu.id))}
           onToggle={(id, on) => changeNav((p) => (on ? showNav(p, id) : hideNav(p, id)))}
-          onLower={() => changeNav((p) => moveNav(p, navMenu.id, "footer", undefined, { advanced }))}
+          onLower={() => changeNav((p) => moveNav(p, navMenu.id, "footer", undefined, { advanced, ai }))}
           onReset={() => changeNav(() => ({ pinned: [], hidden: [] }))} />
       ) : null}
       {menu && picked.size > 1 && picked.has(menu.id) ? (
@@ -770,10 +772,11 @@ function RecordingPill({ onOpenPage }: { onOpenPage: (id: string) => void }) {
 }
 
 /** BSD-281: Rechtsklick auf einen Eintrag der Leiste – oben anpinnen/lösen, ausblenden, und alle Einträge ein-/ausblenden. */
-function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide, onToggle, onLower, onReset }: {
+function NavMenu({ menu, place, advanced, ai, prefs, onClose, onPin, onUnpin, onHide, onToggle, onLower, onReset }: {
   menu: { id: NavID; x: number; y: number };
   place: "top" | "footer" | "none";
   advanced: boolean;
+  ai: boolean;
   prefs: NavPrefs;
   onClose: () => void;
   onPin: () => void;
@@ -804,7 +807,7 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
     f();
   };
   const def = NAV.find((n) => n.id === menu.id)!;
-  const l = navLayout(prefs, { advanced });
+  const l = navLayout(prefs, { advanced, ai });
   const visible = new Set<NavID>([...l.top, ...l.footer]);
   const pinned = prefs.pinned.includes(menu.id);
   const keyNav = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -822,7 +825,7 @@ function NavMenu({ menu, place, advanced, prefs, onClose, onPin, onUnpin, onHide
       <button type="button" role="menuitem" className="menu-item" onClick={run(onHide)}><Icon name="close" size={16} />Hide from sidebar</button>
       <div className="menu-sep" role="separator" />
       <span className="menu-label t-meta">Show in sidebar</span>
-      {NAV.filter((n) => n.id !== "coding" || advanced).map((n) => {
+      {NAV.filter((n) => navAvailable(n.id, { advanced, ai })).map((n) => {
         const on = visible.has(n.id);
         return (
           <button key={n.id} type="button" role="menuitemcheckbox" aria-checked={on} className="menu-item" onClick={run(() => onToggle(n.id, !on))}>

@@ -9,7 +9,8 @@ import { Heading, Text } from "@astryxdesign/core/Text";
 import { useSyncExternalStore } from "react";
 import type { Appearance } from "../appearance.js";
 import type { Route } from "../shell/router.js";
-import { resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES } from "../shell/settings.js";
+import { aiSetting } from "../shell/ai.js";
+import { resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, visibleSettingsPages } from "../shell/settings.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import { AstryxKit } from "./settings/AstryxKit.js";
 import { settingsRegistry } from "./settings/registry.js";
@@ -33,23 +34,26 @@ export interface SettingsProps {
 
 export function Settings({ page: pageID, value, onChange, client, state, onNavigate }: SettingsProps) {
   useSyncExternalStore(settingsRegistry.subscribe, settingsRegistry.getVersion);
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  const view = { ai };
+  const pages = visibleSettingsPages(SETTINGS_PAGES, view);
   const kit = pageID === "kit";
-  const page = resolveSettingsPage(pageID);
-  const sections = settingsRegistry.sectionsFor(page.id);
-  const missing = settingsRegistry.missingFor(page.id);
+  const page = resolveSettingsPage(pageID, pages);
+  const sections = settingsRegistry.sectionsFor(page.id, view);
+  const missing = settingsRegistry.missingFor(page.id, view);
   const props = { client, state, appearance: value, setAppearance: onChange, navigate: onNavigate };
 
   const nav = (
     <VStack gap={4}>
       {SETTINGS_GROUPS.map((g) => (
         <List key={g.id} density="compact" header={<Text type="supporting" weight="semibold" color="secondary" className="settings-nav-head">{g.title}</Text>}>
-          {SETTINGS_PAGES.filter((p) => p.group === g.id).map((p) => (
+          {pages.filter((p) => p.group === g.id).map((p) => (
             <ListItem
               key={p.id}
               label={<Text type="body" weight={!kit && p.id === page.id ? "semibold" : "medium"}>{p.title}</Text>}
               isSelected={!kit && p.id === page.id}
               onClick={() => onNavigate({ name: "settings", page: p.id })}
-              {...(settingsRegistry.status(p.id) === "unavailable" ? { endContent: <Text type="supporting" color="secondary">Not yet</Text> } : {})}
+              {...(settingsRegistry.status(p.id, view) === "unavailable" ? { endContent: <Text type="supporting" color="secondary">Not yet</Text> } : {})}
             />
           ))}
         </List>

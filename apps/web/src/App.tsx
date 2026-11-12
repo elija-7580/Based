@@ -31,6 +31,7 @@ import { cycleRegion } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
 import { firstRun } from "./shell/firstRun.js";
+import { aiSetting } from "./shell/ai.js";
 import { homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
@@ -68,10 +69,15 @@ export function App({ client, history }: { client: StoreClient; history: History
   }, [appearance]);
 
   useEffect(() => recentPages.subscribe(setRecent), []);
-  // Hauptagent: offene Aufträge fortsetzen, Unteragenten und Zeitpläne (solange die App offen ist)
+  // AI-Schalter (shell/ai.ts): ohne AI kein Chat, kein Hauptagent, keine Aufträge, kein Coding; Home ist eine Seite.
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  // Hauptagent: offene Aufträge fortsetzen, Unteragenten und Zeitpläne (solange die App offen ist und AI an ist)
   useEffect(() => {
-    if (state.ready) tasksRuntime(client).start();
-  }, [state.ready, client]);
+    if (!state.ready || !ai) return;
+    const rt = tasksRuntime(client);
+    rt.start();
+    return () => rt.stop();
+  }, [state.ready, client, ai]);
   useEffect(() => {
     if (route.name === "page") recentPages.touch(route.id);
   }, [route]);
@@ -86,6 +92,18 @@ export function App({ client, history }: { client: StoreClient; history: History
     return t.name === "page" ? t.id : undefined;
   })();
   const goHome = useCallback(() => navigate(homePage ? { name: "page", id: homePage } : { name: "home" }), [navigate, homePage]);
+  // Ohne AI ist Home einfach eine Seite: fehlt eine gewählte Home-Seite, legt Based einmal eine Seite „Home“ an.
+  const creatingHome = useRef(false);
+  const aiRoute = route.name === "chat" || route.name === "tasks" || route.name === "coding" || route.name === "agent" || route.name === "project";
+  const wantsHome = route.name === "home" || (!ai && aiRoute);
+  useEffect(() => {
+    if (ai || !wantsHome || homePage || !state.ready || !state.outline || welcome || creatingHome.current) return;
+    creatingHome.current = true;
+    void client.command<string | undefined>({ op: "createPage", title: "Home" })
+      .then((id) => { if (id) startPage.set(id); })
+      .catch(() => undefined)
+      .finally(() => { creatingHome.current = false; });
+  }, [ai, wantsHome, homePage, state.ready, state.outline, welcome, client]);
   useEffect(() => installNewTabIntent(), []);
   // BSD-168: Rechtschreibprüfung (Einstellungen → My settings); contenteditable erbt `spellcheck` vom body.
   const spellCheck = useSyncExternalStore(spellCheckPref.subscribe, spellCheckPref.get);
@@ -205,7 +223,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   // BSD-256: feste Reihenfolge, Ziffern 1–9 wählen direkt (1 Page, 2 AI chat, 3 Meeting notes, 4 Database).
   const commands: PaletteCommand[] = [
     { id: "page", title: "New page", hint: "⌥⌘N", icon: "page", keywords: "document note", run: () => void newPage() },
-    { id: "chat", title: "New AI chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) },
+    ...(ai ? [{ id: "chat", title: "New AI chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) } satisfies PaletteCommand] : []),
     { id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() },
     { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
     { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting("pick") },
@@ -223,6 +241,11 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <PageView key={route.id} client={client} state={state} pageID={route.id} history={history} onOpenPage={openPage} onNavigate={navigate} focusBlock={route.block} />;
   } else if (route.name === "trash") {
     screen = <Trash client={client} state={state} onOpenPage={openPage} />;
+  } else if (!ai && wantsHome && !(welcome && state.ready && state.outline?.nodes[welcome.page] && !state.outline.trash.some((x) => x.id === welcome.page))) {
+    // Ohne AI: Home zeigt die Home-Seite (oder lädt, bis sie angelegt ist); AI-Routen (alte Tabs, Links) landen hier.
+    screen = homePage
+      ? <PageView key={homePage} client={client} state={state} pageID={homePage} history={history} onOpenPage={openPage} onNavigate={navigate} />
+      : <div className="screen-loading" role="status" aria-label="Loading" />;
   } else if (route.name === "chat") {
     screen = <ChatPage client={client} history={history} />;
   } else if (route.name === "tasks") {
@@ -249,7 +272,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   return (
     <div className="shell" data-testid="based-root" data-ready={state.ready ? "" : undefined}>
-      <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} onImportStatus={() => setImporting("notion")} advanced={appearance.agentDetails} />
+      <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} onImportStatus={() => setImporting("notion")} advanced={appearance.agentDetails} ai={ai} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
         <div className="panel"><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
@@ -258,7 +281,7 @@ export function App({ client, history }: { client: StoreClient; history: History
           <span className="swipe-forward"><Icon name="forward" size={18} /></span>
         </div>
       </main>
-      <ChatDock client={client} history={history} route={route} />
+      {ai ? <ChatDock client={client} history={history} route={route} /> : null}
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       <PromptHost />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}

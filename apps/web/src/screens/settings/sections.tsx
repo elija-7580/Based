@@ -23,6 +23,7 @@ import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
 import { registerSettingsSection, type SettingsSectionProps } from "./registry.js";
+import { AI_OPTION, aiSetting } from "../../shell/ai.js";
 
 type ChoiceKey = "theme" | "style" | "marker" | "density";
 interface Choice { key: ChoiceKey; label: string; hint?: string; options: { value: string; label: string; swatch?: string }[] }
@@ -41,6 +42,7 @@ const CHOICES: Choice[] = [
 ];
 
 function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) {
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const toggle = (key: "calm" | "agentDetails", label: string, hint: string) => (
     <Switch label={label} description={hint} value={appearance[key]} onChange={(on) => setAppearance({ ...appearance, [key]: on })} labelPosition="start" labelSpacing="spread" width="100%" />
   );
@@ -63,7 +65,7 @@ function AppearanceSection({ appearance, setAppearance }: SettingsSectionProps) 
       </Group>
       <Group>
         {toggle("calm", "Calm mode", "Agent marks turn grey — on with Focus")}
-        {toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home")}
+        {ai ? toggle("agentDetails", "Show agent details", "Models, run times and permissions on Home") : null}
       </Group>
     </VStack>
   );
@@ -319,6 +321,7 @@ const HOME = "__home";
 
 /** Home: wohin „Home“ in der Seitenleiste, neue Tabs, der Start der App und das Schließen des letzten Tabs führen. */
 function StartPageSection({ state }: SettingsSectionProps) {
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const value = useSyncExternalStore(startPage.subscribe, startPage.get) ?? HOME;
   const nodes = state.outline?.nodes ?? {};
   const trashed = new Set((state.outline?.trash ?? []).map((t) => t.id));
@@ -329,12 +332,14 @@ function StartPageSection({ state }: SettingsSectionProps) {
   const known = value === HOME || pages.some((p) => p.value === value);
   return (
     <Group>
-      <Row label="Home" hint="Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home. The dashboard stays reachable with ⌘K → Dashboard.">
+      <Row label="Home" hint={ai
+        ? "Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home. The dashboard stays reachable with ⌘K → Dashboard."
+        : "Home in the sidebar, new tabs and app start lead here. You can also right-click a page → Set as Home."}>
         <Selector
           label="Home"
           value={known ? value : HOME}
           onChange={(v) => startPage.set(!v || v === HOME ? undefined : v)}
-          options={[{ value: HOME, label: "Dashboard" }, ...pages]}
+          options={[{ value: HOME, label: ai ? "Dashboard" : "A new page called Home" }, ...pages]}
         />
       </Row>
     </Group>
@@ -365,6 +370,27 @@ function WritingSection(_: SettingsSectionProps) {
   );
 }
 
+/**
+ * AI-Schalter (shell/ai.ts): Chat, Hauptagent, Aufträge, Coding, „Ask AI“, Modelle und MCP-Connections. MCP (Based als
+ * Server), Skills, Memories, Suche und Meeting-Transkripte laufen immer. In Beta-Builds gibt es den Abschnitt nicht.
+ */
+function AiSwitchSection(_: SettingsSectionProps) {
+  const on = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  return (
+    <Group>
+      <Switch
+        label="AI features"
+        description="Chat, agents, tasks, coding and Ask AI. Off: Home is a page and nothing is sent to a model. MCP, skills, memories, search and meeting transcripts work either way."
+        value={on}
+        onChange={aiSetting.set}
+        labelPosition="start"
+        labelSpacing="spread"
+        width="100%"
+      />
+    </Group>
+  );
+}
+
 let registered = false;
 
 /** Meldet die eingebauten Abschnitte einmal an (aus Settings.tsx). */
@@ -388,7 +414,8 @@ export function registerBuiltinSettings() {
   registerSettingsSection({ id: "diagnostics-reports", page: "diagnostics", title: "Reports", order: 30, component: ReportsSection, provides: ["Layout audit"] });
   registerSettingsSection({ id: "diagnostics-log", page: "diagnostics", title: "Log", order: 40, component: LogSection, provides: ["Logs"] });
   registerSettingsSection({ id: "diagnostics-dev", page: "diagnostics", title: "For developers", order: 50, component: DeveloperSection });
+  if (AI_OPTION) registerSettingsSection({ id: "ai-switch", page: "agents", title: "AI", order: 5, component: AiSwitchSection });
   // BSD-159: Anbieter, Schlüssel, Modelle und Freigaben aus dem Chat-Bereich.
-  registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
+  registerSettingsSection({ id: "ai-providers", page: "agents", title: "Models and keys", order: 10, ai: true, component: () => <AiSettingsSection />, provides: ["API keys for AI providers", "Permissions"] });
   registerSettingsSection({ id: "about", page: "about", title: "About", order: 10, component: AboutSection });
 }

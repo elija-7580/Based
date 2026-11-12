@@ -59,8 +59,14 @@ export function cleanNavPrefs(v: unknown): NavPrefs {
   return { pinned, hidden, ...(lowered.length ? { lowered } : {}), ...(order.length ? { order } : {}), ...(footerOrder.length ? { footerOrder } : {}) };
 }
 
-/** Darf der Eintrag überhaupt erscheinen? Coding nur im erweiterten Agenten-Modus. */
-export const navAvailable = (id: NavID, opts: { advanced: boolean }) => id !== "coding" || opts.advanced;
+/** Optionen: erweiterter Agenten-Modus und AI-Schalter (shell/ai.ts; fehlt `ai`, gilt an). */
+export interface NavOpts { advanced: boolean; ai?: boolean }
+
+/** Einträge, die nur mit eingeschalteter AI erscheinen. */
+export const AI_NAV: ReadonlySet<NavID> = new Set<NavID>(["chat", "tasks", "coding"]);
+
+/** Darf der Eintrag überhaupt erscheinen? Coding nur im erweiterten Agenten-Modus; Chat, Tasks, Coding nur mit AI. */
+export const navAvailable = (id: NavID, opts: NavOpts) => (opts.ai !== false || !AI_NAV.has(id)) && (id !== "coding" || opts.advanced);
 
 export interface NavLayout {
   top: NavID[];
@@ -74,7 +80,7 @@ function sorted(ids: NavID[], order: readonly NavID[] | undefined): NavID[] {
   return ids.map((id, i) => ({ id, i })).sort((a, b) => at(a.id) - at(b.id) || a.i - b.i).map((x) => x.id);
 }
 
-export function navLayout(prefs: NavPrefs, opts: { advanced: boolean }): NavLayout {
+export function navLayout(prefs: NavPrefs, opts: NavOpts): NavLayout {
   const shown = (id: NavID) => navAvailable(id, opts) && !prefs.hidden.includes(id);
   const lowered = prefs.lowered ?? [];
   const top = NAV.filter((n) => n.home === "top" && shown(n.id) && !lowered.includes(n.id)).map((n) => n.id);
@@ -84,7 +90,7 @@ export function navLayout(prefs: NavPrefs, opts: { advanced: boolean }): NavLayo
 }
 
 /** Wo steht der Eintrag gerade? */
-export function navPlace(id: NavID, prefs: NavPrefs, opts: { advanced: boolean }): "top" | "footer" | "none" {
+export function navPlace(id: NavID, prefs: NavPrefs, opts: NavOpts): "top" | "footer" | "none" {
   const l = navLayout(prefs, opts);
   return l.top.includes(id) ? "top" : l.footer.includes(id) ? "footer" : "none";
 }
@@ -121,7 +127,7 @@ export function showNav(prefs: NavPrefs, id: NavID): NavPrefs {
  * Ziehen: `id` nach oben oder in den Fuß, vor `before` (ohne `before` ans Ende). Legt die Reihenfolge beider Listen
  * fest und merkt, was dadurch seinen Stammplatz verlassen hat.
  */
-export function moveNav(prefs: NavPrefs, id: NavID, to: "top" | "footer", before: NavID | undefined, opts: { advanced: boolean }): NavPrefs {
+export function moveNav(prefs: NavPrefs, id: NavID, to: "top" | "footer", before: NavID | undefined, opts: NavOpts): NavPrefs {
   if (before === id) return prefs;
   const shownPrefs: NavPrefs = { ...prefs, hidden: without(prefs.hidden, id) };
   const l = navLayout(shownPrefs, opts);
@@ -164,10 +170,16 @@ export const NAV_COMMANDS: readonly NavCommand[] = [
   { id: "report", label: "Report a problem", keywords: ["bug", "feedback", "diagnostics", "issue"] },
 ];
 
-/** Befehle passend zur Eingabe (Wortanfang in Name oder Suchwort); leere Eingabe: keine. Coding gibt es hier immer. */
-export function matchCommands(query: string): NavCommand[] {
+/** Befehle, die nur mit eingeschalteter AI erscheinen (Dashboard = Zeitbogen der Agenten). */
+const AI_COMMANDS = new Set(["chat", "tasks", "coding", "dashboard"]);
+
+/**
+ * Befehle passend zur Eingabe (Wortanfang in Name oder Suchwort); leere Eingabe: keine. Coding gibt es hier immer,
+ * solange AI an ist; mit `ai: false` fallen Chat, Tasks, Coding und Dashboard weg.
+ */
+export function matchCommands(query: string, opts: { ai?: boolean } = {}): NavCommand[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const starts = (s: string) => s.toLowerCase().split(/\s+/).some((w) => w.startsWith(q)) || s.toLowerCase().startsWith(q);
-  return NAV_COMMANDS.filter((c) => starts(c.label) || c.keywords.some(starts));
+  return NAV_COMMANDS.filter((c) => (opts.ai !== false || !AI_COMMANDS.has(c.id)) && (starts(c.label) || c.keywords.some(starts)));
 }

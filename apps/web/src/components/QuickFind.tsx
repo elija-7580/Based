@@ -1,8 +1,9 @@
 // Quick Find (⌘K): sucht im Store-Worker über den Volltextindex (Titel, Inhalt mit Snippet, Zeilen). Jede Eingabe bricht die vorige
 // Suche ab; ohne Eingabe stehen die zuletzt geöffneten Seiten da. Pfeiltasten wählen, Enter öffnet, Esc schließt.
 // BSD-206: Filter wie in Notion – nur Titel, in der aktuellen Seite, Zeitraum, Sortierung (shell/quickFindFilters.ts).
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon, type IconName } from "../icons.js";
+import { aiSetting } from "../shell/ai.js";
 import { matchCommands, type NavCommand } from "../shell/sidebarNav.js";
 import { DATE_OPTIONS, SORT_OPTIONS, toSearchFilters, type QuickFindFilters } from "../shell/quickFindFilters.js";
 import type { RecentEntry } from "../shell/storage.js";
@@ -65,7 +66,8 @@ export function QuickFind({ client, titles, recent, currentPage, onOpen, onClose
   }, [client, query, filters, currentPage?.id]);
 
   const pages: QuickFindHit[] = hits ?? recent.filter((r) => titles.has(r.id)).slice(0, 8).map((r) => ({ pageID: r.id, title: titles.get(r.id)!, path: "", kind: "page" }));
-  const commands: NavCommand[] = onCommand ? matchCommands(query) : [];
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  const commands: NavCommand[] = onCommand ? matchCommands(query, { ai }) : [];
   // Befehle stehen vor den Seiten; die Auswahl läuft über beide
   const items: (QuickFindHit | { command: NavCommand })[] = [...commands.map((c) => ({ command: c })), ...pages];
   const open = (i: number) => {

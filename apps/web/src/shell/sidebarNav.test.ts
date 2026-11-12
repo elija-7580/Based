@@ -88,3 +88,19 @@ describe("Seitenleiste: Einträge ziehen", () => {
     expect(cleanNavPrefs({ pinned: ["tasks"], hidden: ["chat"] })).toEqual({ pinned: ["tasks"], hidden: ["chat"] });
   });
 });
+
+describe("AI-Schalter in der Seitenleiste und in ⌘K", () => {
+  const off = { advanced: true, ai: false };
+  it("ohne AI keine Einträge Chat, Tasks, Coding – auch nicht angepinnt", () => {
+    const p = pinNav(pinNav(EMPTY_NAV_PREFS, "tasks"), "coding");
+    expect(navLayout(p, off)).toEqual({ top: ["search", "home"], footer: ["library", "trash", "settings"] });
+    expect(navLayout(p, { advanced: true, ai: true }).top).toEqual(["search", "home", "chat", "tasks", "coding"]);
+  });
+  it("ohne AI keine Befehle für Chat, Tasks, Coding und Dashboard", () => {
+    expect(matchCommands("chat", { ai: false })).toEqual([]);
+    expect(matchCommands("dash", { ai: false })).toEqual([]);
+    expect(matchCommands("cod", { ai: false })).toEqual([]);
+    expect(matchCommands("chat").map((c) => c.id)).toContain("chat");
+    expect(matchCommands("meet", { ai: false }).map((c) => c.id)).toEqual(["meetings", "meeting"]);
+  });
+});

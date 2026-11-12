@@ -14,7 +14,13 @@ const commit = (() => {
 
 export default defineConfig({
   plugins: [react()],
-  define: { __BASED_VERSION__: JSON.stringify(process.env.V ?? process.env.BASED_VERSION ?? ""), __BASED_COMMIT__: JSON.stringify(commit) },
+  define: {
+    __BASED_VERSION__: JSON.stringify(process.env.V ?? process.env.BASED_VERSION ?? ""),
+    __BASED_COMMIT__: JSON.stringify(commit),
+    // AI-Schalter (shell/ai.ts): Beta-Builds bieten AI nicht an; E2E/Entwicklung kann den Standard auf „an“ setzen.
+    __BASED_AI_OPTION__: JSON.stringify(process.env.BASED_CHANNEL !== "beta"),
+    __BASED_AI_DEFAULT__: JSON.stringify(process.env.BASED_AI_DEFAULT === "on"),
+  },
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
   // BSD-153: Store-Worker als ES-Modul (SQLite-WASM lädt sein .wasm relativ zum Modul).

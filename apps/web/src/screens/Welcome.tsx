@@ -2,6 +2,7 @@
 // Import-Dialog mit „Connect Notion directly“, BSD-217/317) oder leer starten. Beide legen die kurzen Anleitungsseiten
 // unter „Welcome to Based“ an (worker/welcomeGuides.ts). AI bleibt aus; „Turn on agents“ führt nur zu Einstellungen →
 // Agents (BSD-228), ohne den Willkommensbildschirm zu beenden. Steht an Stelle von Home, solange firstRun aussteht.
+import { AI_OPTION } from "../shell/ai.js";
 import { BasedButton } from "@based/ui/astryx";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "../icons.js";
@@ -61,6 +62,7 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
           </button>
         </div>
 
+        {AI_OPTION ? (
         <section className="welcome-ai" aria-labelledby="welcome-ai-title">
           <span className="welcome-choice-text">
             <strong id="welcome-ai-title">AI stays off</strong>
@@ -68,6 +70,7 @@ export function Welcome({ client, pending, onOpenPage, onNavigate, onImport }: P
           </span>
           <BasedButton label="Turn on agents" variant="secondary" onClick={() => onNavigate({ name: "settings", page: "agents" })} />
         </section>
+        ) : null}
 
         <p className="t-desc welcome-foot">Your workspace is saved on this device. You can import more later with {keyLabel("N")}.</p>
       </div>

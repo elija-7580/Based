@@ -19,6 +19,8 @@ export default defineConfig({
     command: `pnpm exec vite build && pnpm exec vite preview --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
+    // AI-Schalter: die bestehenden Specs testen die AI-Flächen mit AI an; e2e/ai-switch.spec.ts prüft „aus“.
+    env: { BASED_AI_DEFAULT: "on" },
     timeout: 120_000,
   },
 });

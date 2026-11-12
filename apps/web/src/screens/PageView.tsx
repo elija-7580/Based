@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } fr
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
+import { aiSetting } from "../shell/ai.js";
 import { openPageWindow } from "../desktop.js";
 import { FindBar } from "../components/FindBar.js";
 import { ExportDialog } from "../components/ImportExport.js";
@@ -130,6 +131,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
 
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const chatOpen = useSyncExternalStore(subscribeChatPanel, isChatPanelOpen);
+  const ai = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const subpages = outline?.children[pageID]?.length ?? 0;
   // BSD-255: eine Inline-Datenbank lässt sich per „Open as full page“ wie eine Datenbankseite öffnen.
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
@@ -178,9 +180,11 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             </button>
             <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
             {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}
-            <button type="button" className="icon-btn ghost" aria-label="AI chat" title="AI chat (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
-              <Icon name="chat" size={18} filled={chatOpen} />
-            </button>
+            {ai ? (
+              <button type="button" className="icon-btn ghost" aria-label="AI chat" title="AI chat (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
+                <Icon name="chat" size={18} filled={chatOpen} />
+              </button>
+            ) : null}
             <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
             <button type="button" className="icon-btn ghost" aria-label="Page menu" data-menu-trigger="" aria-haspopup="menu" aria-expanded={menu !== undefined} title="More" onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();

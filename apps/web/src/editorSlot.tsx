@@ -2,8 +2,9 @@
 // Inline-Datenbanken rendert der DatabaseView-Steckplatz (sobald @based/database-ui eingesteckt ist), Gleichungen
 // KaTeX offline (BSD-10, src/equation.tsx). Erwähnungen, Seitensuche und Backlinks kommen aus dem Store-Worker
 // (shell/pageDirectory.ts); Synced Blocks von anderen Seiten holt `loadSynced` in die Seiten-Replik.
+import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
@@ -78,7 +79,9 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const collabOn = syncConfig.get()?.collab === true;
   const pageCollabSource = useMemo(() => (collab && collabOn ? pageCollab(collab, pageID, () => true /* BSD-252: verschachtelte Wurzeln sind nur Synced-Block-Originale */) : undefined), [pageID, collabOn]);
   // BSD-225: „Ask AI“ über die Chat-Engine (Modell aus Einstellungen → Agents & AI; in Tests die Skript-Engine).
-  const ai = useMemo(() => (client ? editorAI((system, prompt, signal) => chatController(client).write(system, prompt, signal), () => chatController(client).canWrite()) : undefined), [client]);
+  // AI-Schalter (shell/ai.ts): ohne AI kein „Ask AI“ (Slash, Leertaste, Formatleiste).
+  const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
+  const ai = useMemo(() => (client && aiOn ? editorAI((system, prompt, signal) => chatController(client).write(system, prompt, signal), () => chatController(client).canWrite()) : undefined), [client, aiOn]);
   const copyPages = useMemo(() => (client ? (ids: string[]) => client.command({ op: "duplicate", ids }) : undefined), [client]);
   const hideBacklinks = store.blocks.get(pageID)?.props?.format?.hideBacklinks === true;
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);

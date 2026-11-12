@@ -118,4 +118,4 @@ function ConnectionsSection({ client }: SettingsSectionProps) {
   );
 }
 
-registerSettingsSection({ id: "mcp-connections", page: "connections", title: "MCP servers", order: 10, component: ConnectionsSection, provides: ["MCP connections"] });
+registerSettingsSection({ id: "mcp-connections", page: "connections", title: "MCP servers", order: 10, ai: true, component: ConnectionsSection, provides: ["MCP connections"] });

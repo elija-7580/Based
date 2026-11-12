@@ -5,6 +5,7 @@
 import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { attachWheelPassThrough } from "./database/wheelPassThrough.js";
 import { weekStartPref } from "./shell/storage.js";
+import { aiSetting } from "./shell/ai.js";
 import { plainText } from "@based/core";
 import { DatabaseView, type FormRenderProps, type PeekOptions, type RowActions } from "@based/database-ui";
 import "@based/database-ui/styles.css";
@@ -55,10 +56,11 @@ export function ShellDatabaseView({ store, blockID, databaseID, readOnly, onOpen
     return a ? { upload: async (f: File) => (await a.uploadFile(f)).slice(ASSET_URL_PREFIX.length), open: (id: string) => a.resolveFileUrl(ASSET_URL_PREFIX + id) } : undefined;
   }, []);
   // BSD-225 Teil 2: „Autofill with AI“ im Property-Menü über das eingestellte Modell (wie „Ask AI“ im Editor)
+  const aiOn = useSyncExternalStore(aiSetting.subscribe, aiSetting.get);
   const ai = useMemo(() => {
     const client = editorClient();
-    return client ? { write: (system: string, prompt: string, signal: AbortSignal) => chatController(client).write(system, prompt, signal), available: () => chatController(client).canWrite() } : undefined;
-  }, []);
+    return client && aiOn ? { write: (system: string, prompt: string, signal: AbortSignal) => chatController(client).write(system, prompt, signal), available: () => chatController(client).canWrite() } : undefined;
+  }, [aiOn]);
   // BSD-216: andere Datenbanken als Dashboard-Quelle (wie „Linked view of database“ im Editor)
   const databases = useMemo(() => {
     const client = editorClient();

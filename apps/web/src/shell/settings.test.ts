@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS_PAGE, resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm } from "./settings.js";
+import { DEFAULT_SETTINGS_PAGE, resolveSettingsPage, SETTINGS_GROUPS, SETTINGS_PAGES, SettingsRegistry, validateSyncForm, visibleSettingsPages } from "./settings.js";
 
 describe("Einstellungen: Modell", () => {
   it("Seiten wie in der Swift-Vorlage: 5 unter Account, 12 unter Workspace, IDs eindeutig", () => {
@@ -78,5 +78,19 @@ describe("Sync-Formular", () => {
       expect(r.ok, url).toBe(false);
       if (!r.ok) expect(r.error.length).toBeGreaterThan(10);
     }
+  });
+});
+
+describe("Einstellungen: AI-Schalter", () => {
+  it("ohne AI fehlen reine AI-Seiten und AI-Abschnitte; „Not available yet“ der AI-Seiten fällt weg", () => {
+    expect(visibleSettingsPages(SETTINGS_PAGES, { ai: false }).map((p) => p.id)).not.toContain("connections");
+    expect(visibleSettingsPages(SETTINGS_PAGES).map((p) => p.id)).toContain("connections");
+    const r = new SettingsRegistry<string>();
+    r.register({ id: "switch", page: "agents", title: "AI", component: "s" });
+    r.register({ id: "models", page: "agents", title: "Models", ai: true, component: "m", provides: ["Permissions"] });
+    expect(r.sectionsFor("agents", { ai: false }).map((s) => s.id)).toEqual(["switch"]);
+    expect(r.sectionsFor("agents").map((s) => s.id)).toEqual(["switch", "models"]);
+    expect(r.missingFor("agents", { ai: false })).toEqual([]);
+    expect(r.missingFor("agents")).toContain("Skills");
   });
 });

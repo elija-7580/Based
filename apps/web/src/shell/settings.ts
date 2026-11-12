@@ -14,7 +14,19 @@ export interface SettingsPageDef {
   summary: string;
   /** Was die Swift-App hier kann und Based Next noch nicht – wird ehrlich als „Not available yet“ gezeigt. */
   missing: readonly string[];
+  /**
+   * AI-Schalter (shell/ai.ts): „page“ = die ganze Seite gibt es nur mit AI; „missing“ = nur die Liste „Not available
+   * yet“ (sie nennt dann nur AI-Funktionen) fällt ohne AI weg.
+   */
+  ai?: "page" | "missing";
 }
+
+/** Was die Ansicht über den AI-Schalter weiß; fehlt `ai`, gilt an. */
+export interface SettingsViewOpts { ai?: boolean }
+
+/** Seiten, die gerade erscheinen (ohne AI fallen reine AI-Seiten weg). */
+export const visibleSettingsPages = (pages: readonly SettingsPageDef[], opts: SettingsViewOpts = {}) =>
+  pages.filter((p) => opts.ai !== false || p.ai !== "page");
 
 export const SETTINGS_GROUPS: readonly { id: SettingsGroup; title: string }[] = [
   { id: "account", title: "Account" },
@@ -31,11 +43,11 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "people", group: "workspace", title: "People", summary: "Members and guests of this workspace.", missing: ["Members", "Invitations", "Guests"] },
   { id: "teamspaces", group: "workspace", title: "Teamspaces", summary: "Shared areas of the workspace.", missing: ["Default teamspace", "Who may create teamspaces"] },
   { id: "security", group: "workspace", title: "Security", summary: "Access to the app and to your data.", missing: ["App lock (Face ID / Touch ID)", "Export and guest rules", "Agent approval rules"] },
-  { id: "agents", group: "workspace", title: "Agents & AI", summary: "Models, keys and what agents may do.", missing: ["API keys for AI providers", "Agents and the main agent", "Permissions", "Skills", "Sandbox cleanup"] },
-  { id: "connections", group: "workspace", title: "Connections", summary: "MCP servers and other tools agents can use.", missing: ["MCP connections", "Tool permissions"] },
+  { id: "agents", group: "workspace", title: "Agents & AI", summary: "AI features, skills and memories.", ai: "missing", missing: ["API keys for AI providers", "Agents and the main agent", "Permissions", "Skills", "Sandbox cleanup"] },
+  { id: "connections", group: "workspace", title: "Connections", summary: "MCP servers and other tools agents can use.", ai: "page", missing: ["MCP connections", "Tool permissions"] },
   { id: "import", group: "workspace", title: "Import", summary: "Bring in a Notion export or Markdown files, or take everything with you.", missing: [] },
   { id: "sync", group: "workspace", title: "Sync & server", summary: "Use your workspace on your other devices.", missing: ["iCloud sync"] },
-  { id: "billing", group: "workspace", title: "Billing", summary: "Based is open source and free.", missing: ["AI usage overview"] },
+  { id: "billing", group: "workspace", title: "Billing", summary: "Based is open source and free.", ai: "missing", missing: ["AI usage overview"] },
   { id: "updates", group: "workspace", title: "Updates", summary: "How this copy of Based stays current.", missing: ["Update channel", "Automatic update checks on or off"] },
   { id: "diagnostics", group: "workspace", title: "Diagnostics", summary: "What the app knows about its own state.", missing: ["Logs", "Hang reports", "Layout audit"] },
   { id: "about", group: "workspace", title: "About", summary: "Based Next — the notes app that keeps your data yours.", missing: [] },
@@ -59,6 +71,8 @@ export interface SettingsSection<C = unknown> {
   order?: number;
   /** Einträge aus `missing` der Seite, die dieser Abschnitt jetzt liefert (verschwinden aus „Not available yet“). */
   provides?: readonly string[];
+  /** AI-Schalter: nur mit eingeschalteter AI zeigen (Modelle, Hauptagent, Privacy-Redact, MCP-Connections …). */
+  ai?: boolean;
   component: C;
 }
 
@@ -90,24 +104,24 @@ export class SettingsRegistry<C = unknown> {
   };
 
   /** Abschnitte einer Seite in Anzeigereihenfolge. */
-  sectionsFor(pageID: string): SettingsSection<C>[] {
+  sectionsFor(pageID: string, opts: SettingsViewOpts = {}): SettingsSection<C>[] {
     return [...this.sections.values()]
-      .filter((e) => e.section.page === pageID)
+      .filter((e) => e.section.page === pageID && (opts.ai !== false || !e.section.ai))
       .sort((a, b) => (a.section.order ?? 100) - (b.section.order ?? 100) || a.seq - b.seq)
       .map((e) => e.section);
   }
 
   /** Was auf der Seite noch fehlt, nach Abzug dessen, was angemeldete Abschnitte liefern. */
-  missingFor(pageID: string): string[] {
+  missingFor(pageID: string, opts: SettingsViewOpts = {}): string[] {
     const page = this.pages.find((p) => p.id === pageID);
-    if (!page) return [];
-    const provided = new Set(this.sectionsFor(pageID).flatMap((s) => s.provides ?? []));
+    if (!page || (opts.ai === false && page.ai)) return [];
+    const provided = new Set(this.sectionsFor(pageID, opts).flatMap((s) => s.provides ?? []));
     return page.missing.filter((m) => !provided.has(m));
   }
 
-  status(pageID: string): PageStatus {
-    const has = this.sectionsFor(pageID).length > 0;
-    const missing = this.missingFor(pageID).length > 0;
+  status(pageID: string, opts: SettingsViewOpts = {}): PageStatus {
+    const has = this.sectionsFor(pageID, opts).length > 0;
+    const missing = this.missingFor(pageID, opts).length > 0;
     return has ? (missing ? "partial" : "available") : "unavailable";
   }
 
