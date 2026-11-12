@@ -157,6 +157,7 @@ export { NotionWorkspaceImport, NotionClient, NotionAPIError, fetchTransport, no
 export type { NotionTransport, NotionResponse, NotionImportOptions as NotionAPIImportOptions, NotionSnapshot, NotionRoot, NotionAPIErrorKind } from "./interop/notion-api/index.js";
 // BSD-230: Datei-Verweise auf den synchronisierten Speicher umschreiben.
 export { assetIDsInStore, remapAssetRefs, remapStoreAssets } from "./interop/asset-ids.js";
+export * from "./interop/notion-hybrid/index.js";
 export { graphemes, firstGrapheme, graphemeCount } from "./graphemes.js";
 export { BUTTON_ACTION_KINDS, buttonActionName, buttonLabel, contentBlocks, describeButtonAction, effectiveButtonActions, isKnownButtonAction, runButton, setButton } from "./store/button-ops.js";
 export type { ButtonAction, ButtonActionKind, ButtonEffect, ButtonPause, OpenMode, RunButtonOptions } from "./store/button-ops.js";
