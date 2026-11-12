@@ -63,6 +63,31 @@ export class StoreClient {
     this.endpoint.removeEventListener("message", this.onMessage);
     for (const p of this.pending.values()) p.reject(new RequestCancelled());
     this.pending.clear();
+    this.checkSettled();
+  }
+
+  private settleWaiters: { upTo: number; resolve: () => void }[] = [];
+
+  /**
+   * BSD-335: Erfüllt, sobald jede bis jetzt abgeschickte Anfrage beantwortet ist. Der Store-Tab antwortet erst nach dem
+   * (synchronen) Schreiben in SQLite/OPFS – danach übersteht die Änderung ein Neuladen. Vorher nicht: ein Befehl, der
+   * beim Abbau der Seite noch in der Warteschlange des Workers liegt, geht mit dem Worker verloren (z. B. „Move to
+   * Trash“ und sofort danach neu laden). Für Tests und für Stellen, die vor dem Verlassen auf den Speicherstand warten.
+   */
+  settled(): Promise<void> {
+    const upTo = this.nextID - 1;
+    if (![...this.pending.keys()].some((id) => id <= upTo)) return Promise.resolve();
+    return new Promise((resolve) => this.settleWaiters.push({ upTo, resolve }));
+  }
+
+  private checkSettled() {
+    if (!this.settleWaiters.length) return;
+    const oldest = Math.min(Infinity, ...this.pending.keys());
+    this.settleWaiters = this.settleWaiters.filter((w) => {
+      if (oldest <= w.upTo) return true;
+      w.resolve();
+      return false;
+    });
   }
 
   // MARK: Zustand für React
@@ -97,6 +122,7 @@ export class StoreClient {
         this.pending.delete(ev.id);
         if (ev.ok) p.resolve(ev.result);
         else p.reject(ev.cancelled ? new RequestCancelled() : new Error(ev.error));
+        this.checkSettled();
         return;
       }
       case "outline": this.set({ outline: ev.outline }); return;
