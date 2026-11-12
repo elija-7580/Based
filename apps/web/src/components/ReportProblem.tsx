@@ -6,6 +6,7 @@ import { TextArea } from "@astryxdesign/core/TextArea";
 import { VStack } from "@astryxdesign/core/Layout";
 import { BasedButton, BasedDialog } from "@based/ui/astryx";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { CrashReportPrompt } from "./CrashReportPrompt.js";
 import { bundleFile, reportStore } from "../shell/reportStore.js";
 import { closeReport, reportUI, saveReport } from "../shell/reportUI.js";
 
@@ -28,7 +29,8 @@ export function ReportProblemDialog({ onOpenDiagnostics }: { onOpenDiagnostics: 
   useEffect(() => {
     void reportStore().then((st) => setCanReveal(!!st.reveal));
   }, []);
-  if (s.phase !== "open" && s.phase !== "saved") return null;
+  // BSD-276: Hinweis nach Absturz/Hänger hängt hier mit dran (gleiche Stelle im Baum, App.tsx bleibt unberührt).
+  if (s.phase !== "open" && s.phase !== "saved") return <CrashReportPrompt />;
 
   if (s.phase === "saved") {
     const reveal = async () => {
