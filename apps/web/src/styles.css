@@ -325,7 +325,19 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .history-buttons { display: flex; gap: 1px; margin-left: calc(-1 * var(--space-2)); }
 .breadcrumb { display: flex; gap: var(--space-2); min-width: 0; overflow: hidden; white-space: nowrap; }
 .crumb { display: inline-flex; gap: var(--space-2); min-width: 0; flex: 0 1 auto; }
-.crumb-link { border: 0; background: transparent; color: inherit; padding: 0; }
+.crumb-link { border: 0; background: transparent; color: inherit; padding: 0 var(--space-1); margin: 0 calc(-1 * var(--space-1)); border-radius: var(--radius-sm); display: inline-flex; align-items: center; gap: var(--space-1); cursor: pointer; }
+.crumb-link:hover, .crumb-link[aria-expanded="true"] { background: var(--surface-raised); }
+.crumb-icon { display: inline-flex; flex: none; }
+.crumb-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Breadcrumb-Menü: die Seite selbst und ihre Unterseiten (wie Notion) */
+.crumb-menu { max-width: min(calc(var(--space-8) * 6), calc(100vw - var(--space-5))); max-height: 60vh; overflow-y: auto; }
+.crumb-menu-item[data-self] { font-weight: var(--type-ui-weight); }
+.crumb-menu-item[aria-current="page"] { background: var(--selected); }
+.crumb-menu-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crumb-menu-more { color: var(--muted); }
+/* „Opening…“ erst zeigen, wenn es wirklich dauert – sonst blitzt der Text bei jedem Seitenwechsel auf. */
+.page-opening { animation: page-opening-in var(--duration-fast) var(--ease-out) calc(var(--duration-fast) * 3) both; }
+@keyframes page-opening-in { from { opacity: 0; } to { opacity: 1; } }
 .crumb > [aria-hidden="true"], .crumb:has(> .crumb-more) { flex: none; }
 .crumb-link, .crumb-text { min-width: 0; max-width: calc(var(--space-8) * 6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
 .crumb-link:hover { color: var(--ink); }
@@ -357,7 +369,9 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .trash-head .actions { display: flex; gap: var(--space-2); }
 .trash-more { display: flex; align-items: center; gap: var(--space-2); }
 .group .row .btn { flex: none; }
-.page { padding: var(--space-6) var(--space-6) var(--space-8); }
+/* Die Seite füllt die Fläche: ein Klick unter den Inhalt setzt die Schreibmarke ans Ende (wie Notion). */
+.page { padding: var(--space-6) var(--space-6) var(--space-8); flex: 1 0 auto; cursor: text; }
+.page .page-head, .page .page-body, .page.page-database { cursor: auto; }
 /* Datenbankseiten nutzen die ganze Panelbreite (wie Notion); Titel bleibt an der Spaltenkante. */
 .page.page-database { padding-inline: var(--space-7); }
 /* BSD-306: Titel, Text der Tabs und Text der ersten Spalte auf einer linken Kante. Dafür rückt die Seite um die

@@ -21,7 +21,9 @@ describe("Codeblock", () => {
     expect(tok("number")).toEqual(["1"]);
     expect(tok("comment")).toEqual(["// one"]);
     const doc = editor.prosemirrorState.doc;
-    expect(syntaxDecorations(doc).find().length).toBe(3);
+    // drei Tokens im ersten Block, dazu ein Kopierknopf je Codeblock
+    expect(syntaxDecorations(doc).find().length).toBe(6);
+    expect(div.querySelectorAll("[data-content-type=codeBlock] .bx-code-copy").length).toBe(3);
     expect(editor.document[0]?.props).toMatchObject({ language: "javascript" });
     expect(editor.document[2]?.props).toMatchObject({ language: "ts" });
     editor.unmount();
