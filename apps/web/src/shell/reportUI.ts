@@ -16,6 +16,8 @@ let state: State = { phase: "idle" };
 const listeners = new Set<() => void>();
 const set = (s: State) => {
   state = s;
+  // Sofortige Rückmeldung für jeden Auslöser (⇧⌘B, ⌘K, Menü, Settings): Wurzel kennt die Phase, CSS zeigt den Warte-Cursor.
+  if (typeof document !== "undefined") document.documentElement.dataset.report = s.phase;
   for (const l of listeners) l();
 };
 

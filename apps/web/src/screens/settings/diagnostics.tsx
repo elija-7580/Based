@@ -12,7 +12,7 @@ import { isTauri } from "../../desktop.js";
 import { BUILD, recorder } from "../../shell/bugReport.js";
 import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } from "../../shell/diagnostics.js";
 import { bundleFile, onReportsChanged, reportsChanged, reportStore, type SavedReport } from "../../shell/reportStore.js";
-import { startReport } from "../../shell/reportUI.js";
+import { reportUI, startReport } from "../../shell/reportUI.js";
 import { devViewPref, deviceNode } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
 import type { SettingsSectionProps } from "./registry.js";
@@ -91,11 +91,13 @@ export function ReportsSection(_: SettingsSectionProps) {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
+  const preparing = useSyncExternalStore(reportUI.subscribe, () => reportUI.get().phase === "capturing");
   const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
   return (
     <Group>
       <Row label="Report a problem" hint="Saves the last editor events, the layout and a screenshot · ⇧⌘B anywhere">
-        <BasedButton label="Report a problem…" onClick={() => void startReport()} />
+        {/* Der Dialog kommt erst nach dem Bildschirmfoto – bis dahin sagt der Knopf, dass etwas passiert. */}
+        <BasedButton label={preparing ? "Preparing report…" : "Report a problem…"} disabled={preparing} busy={preparing} onClick={() => void startReport()} />
       </Row>
       <VStack gap={4} data-testid="diagnostics-reports">
         {reports === undefined ? null : reports.length === 0 ? (

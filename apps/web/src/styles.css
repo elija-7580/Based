@@ -683,3 +683,9 @@ button.row:hover, a.row:hover { background: var(--bg); }
 .hybrid-pill-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .hybrid-pill-bar { display: block; height: var(--space-1); border-radius: var(--radius-pill); background: var(--bg); overflow: hidden; }
 .hybrid-pill-bar > span { display: block; height: 100%; background: var(--ink-2); border-radius: inherit; transition: width var(--duration-fast) var(--ease-out); }
+
+/* BSD-319: während das Bildschirmfoto für „Problem melden“ entsteht, zeigt der Zeiger, dass etwas passiert. */
+:root[data-report="capturing"],
+:root[data-report="capturing"] * {
+  cursor: progress;
+}
