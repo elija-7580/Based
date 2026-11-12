@@ -1,9 +1,1 @@
-success 6727fa6137ecea44a1af41fe91648a8e9326b061 (nicht blockierend)
-perf 5000: {"mapOpen":[],"idleBeforePan":[191],"firstMove":[],"mapPanLong":[],"mapPanZoomMs":3842,"mapDom":{"pins":0,"clusters":109,"zoom":"5.30"},"mapPanZoomLong":[],"mapClusterLong":[],"peekStepMs":8.9,"peekLong":[],"formSubmitMs":116,"formLong":[]}
-BSD-215 chromium: 50 000 Zeilen öffnen 850 ms, ans Ende scrollen 60 ms, Zelle ändern 216 ms
-[chromium] Quick Find (Hin und zurück zum Worker, ms): 5.2, 7.7, 9.2, 13.1, 20.1
-  ✓   5 [chromium] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.1s)
-BSD-215 webkit: 50 000 Zeilen öffnen 1641 ms, ans Ende scrollen 1142 ms, Zelle ändern 319 ms
-[webkit] Quick Find (Hin und zurück zum Worker, ms): 7, 10, 11, 15, 16
-  ✓  11 [webkit] › e2e/shell.spec.ts:106:1 › Quick Find über 5.000 Seiten antwortet in < 50 ms @perf (3.9s)
-  11 passed (1.1m)
+cancelled 4a283f3bd6491960f11634660d84dfb7526c9507 (nicht blockierend)

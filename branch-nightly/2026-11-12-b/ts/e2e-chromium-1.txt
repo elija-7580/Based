@@ -1,61 +1,61 @@
-failure 6727fa6137ecea44a1af41fe91648a8e9326b061
-    Call log:
-      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
-      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
-        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-        - unexpected value " "
-        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-           - unexpected value "runner@runnervm7aw5e:/tmp/based-e2e-code-shZFbD$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-shZFbDrunner@runnervm7aw5e:/tmp/based-e2e-code-shZFbD$  "
+cancelled 4a283f3bd6491960f11634660d84dfb7526c9507
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
+Running 111 tests using 2 workers, shard 1 of 2
 
-      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
-      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
-    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
-          |                                                 ^
-      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      343 |         await page.setViewportSize({ width: w, height: h });
-      344 |         const box = (await term.boundingBox())!;
-        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toContainText(expected) failed
-
-    Locator: getByTestId('coding-terminal').locator('.xterm-rows')
-    Expected substring: "hi-42"
-    Received string:    "runner@runnervm7aw5e:/tmp/based-e2e-code-YNgDwn$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-YNgDwnrunner@runnervm7aw5e:/tmp/based-e2e-code-YNgDwn$  "
-    Timeout: 15000ms
-
-    Call log:
-      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
-      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
-        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-        - unexpected value " "
-        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-           - unexpected value "runner@runnervm7aw5e:/tmp/based-e2e-code-YNgDwn$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-YNgDwnrunner@runnervm7aw5e:/tmp/based-e2e-code-YNgDwn$  "
-
-
-      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
-      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
-    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
-          |                                                 ^
-      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      343 |         await page.setViewportSize({ width: w, height: h });
-      344 |         const box = (await term.boundingBox())!;
-        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster 
-  4 skipped
-  106 passed (4.7m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+  ✓    2 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (2.8s)
+  ✓    3 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (2.9s)
+  ✓    4 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.1s)
+  ✓    5 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.2s)
+  ✓    6 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (1.5s)
+  ✓    7 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (1.9s)
+  -    8 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+  ✓    9 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (3.1s)
+  ✓   10 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (1.8s)
+  ✓   11 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (1.7s)
