@@ -128,10 +128,14 @@ describe("gegen den Server (MCP)", () => {
     expect(JSON.parse(json.out)).toMatchObject({ content: [{ type: "text" }] });
   });
 
-  it("was der Server nicht anbietet (ask), sagt der Befehl ehrlich", async () => {
+  it("ask gibt dem Hauptagenten einen Auftrag (seit BSD-221 Teil 3e bietet der TS-Server ask_main_agent)", async () => {
     const r = await run(["ask", "Do it"]);
-    expect(r.code).toBe(1);
-    expect(r.err).toMatch(/This server doesn't offer .* \(no `ask_main_agent` tool\)/);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain("Sent to the main agent");
+    // --wait: der Lauf entsteht erst in Based – ehrlicher Hinweis statt einem falschen Lauf zu folgen
+    const w = await run(["ask", "Do it", "--wait"]);
+    expect(w.code).toBe(1);
+    expect(w.err).toContain("no run id to follow");
   });
 
   it("BSD-221 Teil 3a: runs, run, inbox gegen den TS-Server", async () => {

@@ -32,6 +32,8 @@ export interface ShellState {
   chats?: readonly ChatInfo[];
   /** Aufträge, Runs, Projekte, Zeitpläne (`undefined`: noch nicht geladen). */
   agents?: AgentSnapshot;
+  /** BSD-163: letzter Hinweis aus dem Worker (`id` zählt hoch, damit derselbe Text erneut erscheint). */
+  notice?: { id: number; message: string };
 }
 
 const INITIAL: ShellState = { ready: false, outline: undefined, titles: new Map(), status: { state: "starting", persistent: false, canUndo: false, canRedo: false } };
@@ -77,6 +79,9 @@ export class StoreClient {
     for (const fn of this.listeners) fn();
   }
 
+  /** Hinweis schließen. */
+  dismissNotice = () => { if (this.state.notice) { const { notice: _n, ...rest } = this.state; this.state = rest; for (const fn of this.listeners) fn(); } };
+
   title(id: string): string {
     return this.state.titles.get(id) ?? "Untitled";
   }
@@ -108,6 +113,7 @@ export class StoreClient {
       case "device": this.onDevice?.(ev.node); return;
       case "chats": this.set({ chats: ev.chats }); return;
       case "agents": this.set({ agents: ev.snapshot }); return;
+      case "notice": this.set({ notice: { id: (this.state.notice?.id ?? 0) + 1, message: ev.message } }); return;
       case "pageChanges": this.replicas.get(ev.pageID)?.receive(ev.upserts, ev.deletions); return;
     }
   };

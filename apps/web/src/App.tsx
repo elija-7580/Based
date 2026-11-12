@@ -9,6 +9,7 @@ import { ImportDialog } from "./components/ImportExport.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
+import { Notice } from "./components/Notice.js";
 import { TabBar } from "./components/TabBar.js";
 import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
@@ -217,6 +218,7 @@ export function App({ client, history }: { client: StoreClient; history: History
         </div>
       </main>
       <ChatDock client={client} history={history} route={route} />
+      <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}

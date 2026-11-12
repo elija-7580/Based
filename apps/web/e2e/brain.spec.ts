@@ -206,3 +206,44 @@ test("Screenshots web-brain-*", async ({ page, browserName }) => {
     await page.screenshot({ path: `${SHOTS}web-brain-settings-${theme}.png`, fullPage: true });
   }
 });
+
+// BSD-163: Löschen des Agent Brain wird verweigert – nicht still, sondern mit Hinweis; die Seite bleibt.
+async function refuseTrash(page: Page) {
+  await importSkills(page);
+  const item = page.getByRole("treeitem", { name: "Agent Brain" });
+  await item.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Move to Trash" }).click();
+  const notice = page.getByTestId("app-notice");
+  await expect(notice).toContainText("“Agent Brain” stays: the Agent Brain (About me, Memories, Skills) can't be moved to the Trash.");
+  await expect(item).toBeVisible();
+  return notice;
+}
+
+test("trashing the Agent Brain shows why it stays", async ({ page }) => {
+  await fresh(page);
+  const notice = await refuseTrash(page);
+  // Der Hinweis überdeckt nichts dauerhaft: Dismiss schließt ihn.
+  await notice.getByRole("button", { name: "Dismiss" }).click();
+  await expect(notice).toHaveCount(0);
+  await page.goto("/#trash");
+  await expect(page.getByRole("main").getByText("Agent Brain")).toHaveCount(0);
+});
+
+// Checkliste (BSD-163): drei Größen, hell und dunkel; der Hinweis passt in die Breite und liegt über dem Inhalt.
+test("Screenshots web-brain-refused-*", async ({ page, browserName }) => {
+  test.skip(!process.env.BASED_SCREENSHOTS || browserName !== "chromium", "nur auf Wunsch");
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const theme of ["light", "dark"] as const) {
+      await fresh(page, theme);
+      const notice = await refuseTrash(page);
+      const box = (await notice.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(w);
+      expect(box.y + box.height).toBeLessThanOrEqual(h);
+      await page.mouse.move(0, 0);
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: `${SHOTS}web-brain-refused-${w}-${theme}.png` });
+    }
+  }
+});

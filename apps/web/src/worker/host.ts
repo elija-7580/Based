@@ -322,6 +322,14 @@ export class StoreHost {
 
   // MARK: Befehle
 
+  /** Löschschutz des Agent Brain; Verweigertes meldet die Oberfläche als Hinweis (BSD-163). */
+  private guardDelete(ids: string[], forever: boolean): string[] {
+    const { allowed, refused } = this.brain.guardDelete(ids);
+    const message = this.brain.refusedNotice(refused, forever);
+    if (message) this.opts.post({ type: "notice", message });
+    return allowed;
+  }
+
   command(c: Command): unknown {
     const store = this.store;
     switch (c.op) {
@@ -347,9 +355,9 @@ export class StoreHost {
         return store.blocks.has(created.blockID) ? created.blockID : undefined;
       }
       case "rename": return renamePage(store, c.id, c.title);
-      case "trash": return trashPages(store, this.brain.guardDelete(c.ids).allowed);
+      case "trash": return trashPages(store, this.guardDelete(c.ids, false));
       case "restore": return restorePages(store, c.ids);
-      case "deleteForever": { const ids = this.brain.guardDelete(c.ids).allowed; this.history?.forget(ids); return deleteForever(store, ids); }
+      case "deleteForever": { const ids = this.guardDelete(c.ids, true); this.history?.forget(ids); return deleteForever(store, ids); }
       case "emptyTrash": this.history?.forget(trashedPages(store).map((b) => b.id)); return emptyTrash(store);
       case "drop": return dropPages(store, c.ids, c.target, c.zone);
       case "moveToSection":

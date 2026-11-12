@@ -65,6 +65,30 @@ export function inboxText(store: WorkspaceStore): string {
   return [`${waiting.length} ${waiting.length === 1 ? "run needs" : "runs need"} you:`, ...waiting.map((r) => `${line(r)}${r.data.result ? `\n  ${r.data.result.split("\n")[0]}` : ""}`)].join("\n");
 }
 
+/**
+ * BSD-221 Teil 3e: Freigabe eines wartenden Laufs beantworten (wie „Allow“/„Deny“ in Based, BSD-168): erlauben →
+ * der Lauf wird wieder eingereiht und darf genau diesen Aufruf (resume), ablehnen → er endet mit Hinweis. Ob ein
+ * MCP-Client das überhaupt darf, entscheidet der Aufrufer (ausdrückliche allow-Regel).
+ */
+export function resolveInboxText(store: WorkspaceStore, o: { run_id: string; decision: string }): string {
+  const agents = new AgentStore(store);
+  const run = getRecord<RunData>(store, RUN_TYPE, o.run_id);
+  if (!run) throw new ToolError(`No run with id ${o.run_id}`);
+  if (run.data.status !== "needsYou") throw new ToolError(`${run.name || "This run"} isn't waiting for an answer (status: ${run.data.status}).`);
+  const approval = run.data.approval;
+  if (!approval) throw new ToolError(`${run.name || "This run"} waits for something else than an approval – answer it in Based.`);
+  const d = o.decision.trim().toLowerCase();
+  if (d === "allow" || d === "approve" || d === "yes") {
+    agents.updateRun(run.id, { status: "queued", approval: null, lease: null, resume: { ...approval, ok: true } });
+    return `Allowed ${approval.name} for ${run.name || "the run"}; it continues when Based picks it up.`;
+  }
+  if (d === "deny" || d === "decline" || d === "no") {
+    agents.updateRun(run.id, { status: "failed", result: `Stopped: you declined ${approval.name}.`, approval: null, lease: null });
+    return `Declined ${approval.name}; ${run.name || "the run"} stopped.`;
+  }
+  throw new ToolError("decision must be allow or deny");
+}
+
 // MARK: Projekte (BSD-221 Teil 3c, lesend; Swift AgentTools list_projects/get_project)
 
 const PROJECT_STATUSES = ["active", "paused", "done"] as const;

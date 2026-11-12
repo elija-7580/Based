@@ -7,9 +7,9 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { WorkspaceStore } from "@based/core";
-import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
+import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
 export const SERVER_NAME = "based";
 export const SERVER_VERSION = "0.1.0";
@@ -18,7 +18,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
-- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user (\`resolve_inbox\` answers an approval, only if the user allowed it); \`ask_main_agent\` hands Based's main agent a task; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Writing tools follow the user's permission rules in Based; a refused call says why – don't retry it, tell the user.
@@ -99,6 +99,20 @@ export function createMcpServer(pages: Pages): McpServer {
   const dbs = new Databases(pages.store);
   const values = z.record(z.string(), z.string()).describe("Property name → plain text value (empty string clears; options by name; multi-select comma-separated; dates YYYY-MM-DD)");
 
+  // MARK: Skills als Prompts (BSD-221 Teil 3e): jeder eingeschaltete Skill aus dem Agent Brain, wie in der Mac-App
+  // (docs/mcp.md „Prompts“). Name klein mit Bindestrichen; optionales Argument `input` wird angehängt.
+  {
+    const used = new Set<string>();
+    for (const skill of new AgentBrain(pages.store).skills(true)) {
+      const base = skill.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "skill";
+      let name = base;
+      for (let i = 2; used.has(name); i++) name = `${base}-${i}`;
+      used.add(name);
+      server.registerPrompt(name, { title: skill.name, description: skill.description || `Skill “${skill.name}” from Based`, argsSchema: { input: z.string().optional().describe("What to apply the skill to") } },
+        ({ input }: { input?: string | undefined }) => ({ messages: [{ role: "user" as const, content: { type: "text" as const, text: skill.body + (input?.trim() ? `\n\n---\n${input.trim()}` : "") } }] }));
+    }
+  }
+
   // MARK: Läufe und Inbox (BSD-221 Teil 3a; BSD-160-Records, nur lesen)
   server.registerTool(
     "list_runs",
@@ -118,6 +132,34 @@ export function createMcpServer(pages: Pages): McpServer {
     "inbox",
     { description: "What needs the user: runs waiting for an answer or approval", inputSchema: {}, annotations: { readOnlyHint: true } },
     guarded(() => text(inboxText(pages.store))),
+  );
+  // BSD-221 Teil 3e: dem Hauptagenten einen Auftrag geben (wie das Eingabefeld auf der Startseite, ADR 0013). Der
+  // Auftrag erscheint als Karte auf Home; ausgeführt wird er von Based (App oder Server mit Modellzugang).
+  server.registerTool(
+    "ask_main_agent",
+    {
+      description: "Give Based's main agent a task in plain words (like typing it on Based's Home). It shows up as a task card there and runs with the user's permission rules; check progress with list_runs.",
+      inputSchema: { task: z.string().min(1).max(4000).describe("What the main agent should do") },
+    },
+    guarded(({ task }: { task: string }) => {
+      new AgentStore(pages.store).createTask(task.trim(), { source: "mcp" });
+      // ohne Kennung: der Lauf entsteht erst, wenn Based den Auftrag aufnimmt (`based ask --wait` sagt das ehrlich)
+      return text("Sent to the main agent. It appears on Based's Home and runs there; its run shows up in list_runs once Based picks it up.");
+    }),
+  );
+  server.registerTool(
+    "resolve_inbox",
+    {
+      description: "Answer a run that waits for an approval (see inbox): allow or deny the tool call it asked for. Only works when the user allowed it with a rule `allow based.resolve_inbox` in Based.",
+      inputSchema: { run_id: z.string(), decision: z.string().describe("allow | deny") },
+    },
+    guarded(({ run_id, decision }: { run_id: string; decision: string }) => {
+      // Freigaben von außen nur mit ausdrücklicher Regel (wie in der Mac-App); ohne Regel nie.
+      const main = getRecord<AgentData>(pages.store, AGENT_TYPE, MAIN_AGENT_ID)?.data ?? defaultMainAgent();
+      const v = Permissions.from(main.permissions?.rules ?? "", main.permissions?.mode ?? "askEdits").ruleVerdict({ tool: "based.resolve_inbox", argument: run_id });
+      if (v?.effect !== "allow") return fail("Answering approvals from outside Based needs the rule `allow based.resolve_inbox` (Settings → Agents & AI).");
+      return text(resolveInboxText(pages.store, { run_id, decision }));
+    }),
   );
   server.registerTool(
     "list_projects",
