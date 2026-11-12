@@ -1,9 +1,9 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
 import { BlockView } from "../components/BlockView.js";
@@ -84,6 +84,20 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     return () => window.removeEventListener(FIND_EVENT, on);
   }, []);
   const findRoot = useRef(() => article.current).current;
+  // Wie Notion: ↑ in der ersten Textzeile (oder Rücktaste in einer leeren ersten Zeile) geht in den Titel.
+  useEffect(() => {
+    const el = article.current;
+    if (!el) return;
+    const on = (e: Event) => {
+      const field = el.querySelector<HTMLTextAreaElement>(".title-input");
+      if (!field) return;
+      e.preventDefault();
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
+    };
+    el.addEventListener("bx:leave-top", on);
+    return () => el.removeEventListener("bx:leave-top", on);
+  }, []);
 
   const store = replica?.store;
   const page = store?.blocks.get(pageID);
@@ -128,6 +142,13 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     for (const id of chain) crumbs.push({ id, label: state.titles.get(id) ?? "Untitled" });
   }
 
+  const [crumbMenu, setCrumbMenu] = useState<CrumbMenuState | undefined>();
+  const toggleCrumb = (e: MouseEvent<HTMLElement>, m: Omit<CrumbMenuState, "top" | "left">) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setCrumbMenu((open) => (open?.key === m.key ? undefined : { ...m, top: r.bottom + 4, left: r.left }));
+  };
+  useEffect(() => setCrumbMenu(undefined), [pageID]);
+
   const favorite = outline?.favorites.includes(pageID) ?? false;
   const chatOpen = useSyncExternalStore(subscribeChatPanel, isChatPanelOpen);
   const subpages = outline?.children[pageID]?.length ?? 0;
@@ -135,9 +156,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const dbID = page?.type === "databasePage" || page?.type === "databaseInline" ? page.props?.databaseID : undefined;
   const edited = store && page ? editedLabel(lastEdited(store, pageID)) : undefined;
 
+  const loading = !store && !failed;
   let body;
   if (failed) body = <p className="t-desc">Couldn't open this page: {failed}</p>;
-  else if (!store) body = <p className="t-desc" aria-busy="true">Opening…</p>;
+  else if (!store) body = <p className="t-desc page-opening" aria-busy="true">Opening…</p>;
   else if (!page) body = <p className="t-desc">This page was deleted.</p>;
   else if (dbID) {
     const View = slots.DatabaseView;
@@ -160,11 +182,19 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         </div>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           {/* BSD-301: tiefe Seiten – erster und die zwei letzten Vorfahren, dazwischen „…“ (wie Notion); jeder Teil
-              kürzt mit „…“, der volle Name steht im Tooltip. */}
-          {(crumbs.length > 3 ? [crumbs[0]!, { label: "…", hidden: crumbs.slice(1, -2).map((c) => c.label).join(" / ") }, ...crumbs.slice(-2)] : crumbs).map((c, i) => (
+              kürzt mit „…“, der volle Name steht im Tooltip. Ein Klick klappt die Seite mit ihren Unterseiten auf
+              (wie Notion), „…“ die ausgelassenen Vorfahren. */}
+          {(crumbs.length > 3 ? [crumbs[0]!, { label: "…", hidden: crumbs.slice(1, -2) }, ...crumbs.slice(-2)] : crumbs).map((c, i) => (
             <span key={i} className="crumb">
-              {"id" in c && c.id ? <button type="button" className="crumb-link" title={c.label} onClick={() => onOpenPage(c.id!)}>{c.label}</button>
-                : <span className={"hidden" in c ? "crumb-more" : "crumb-text"} title={"hidden" in c ? c.hidden : c.label}>{c.label}</span>}
+              {"hidden" in c ? (
+                <button type="button" className="crumb-link crumb-more" aria-label="Show hidden pages" title={c.hidden.map((h) => h.label).join(" / ")} data-menu-trigger="" aria-haspopup="menu"
+                  aria-expanded={crumbMenu?.key === "more"} onClick={(e) => toggleCrumb(e, { key: "more", pages: c.hidden.flatMap((h) => (h.id ? [h.id] : [])) })}>…</button>
+              ) : c.id ? (
+                <button type="button" className="crumb-link" title={c.label} data-menu-trigger="" aria-haspopup="menu" aria-expanded={crumbMenu?.key === c.id}
+                  onClick={(e) => toggleCrumb(e, { key: c.id!, self: c.id!, pages: outline?.children[c.id!] ?? [] })}>
+                  <CrumbIcon node={outline?.nodes[c.id]} /><span className="crumb-label">{c.label}</span>
+                </button>
+              ) : <span className="crumb-text" title={c.label}>{c.label}</span>}
               <span aria-hidden="true">/</span>
             </span>
           ))}
@@ -197,6 +227,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           </>
         ) : null}
       </header>
+      {crumbMenu && outline ? <CrumbMenu menu={crumbMenu} outline={outline} titles={state.titles} current={pageID} onClose={() => setCrumbMenu(undefined)} onOpen={(id) => { setCrumbMenu(undefined); onOpenPage(id); }} /> : null}
       {menu ? (
         <PageMenu pos={menu} onClose={() => setMenu(undefined)} onHistory={() => { setMenu(undefined); setHistoryOpen(true); }}
           outline={store && page && !dbID && !readOnly ? { hidden: isOutlineHidden(store, pageID), toggle: () => { setMenu(undefined); setOutlineHidden(store, pageID, !isOutlineHidden(store, pageID)); } } : undefined}
@@ -246,12 +277,23 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         </div>
       ) : null}
       {find ? <FindBar root={findRoot} focusSignal={find.focus} step={find.step} onClose={() => setFind(undefined)} /> : null}
-      <article ref={article} className={dbID ? "page page-database" : "page"} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
+      <article ref={article} className={dbID ? "page page-database" : "page"} onMouseDown={(e) => {
+        // Wie Notion: Klick in die leere Fläche unter dem Inhalt setzt die Schreibmarke ans Ende (neue Zeile, wenn
+        // die letzte nicht leer ist).
+        if (e.button !== 0 || readOnly || dbID) return;
+        const t = e.target as Element;
+        const bodyEl = e.currentTarget.querySelector(".page-body");
+        // Menüs des Editors sind Portale: ihre Klicks kommen in React hier an, liegen im DOM aber außerhalb der Seite.
+        if (!bodyEl || !e.currentTarget.contains(t) || t.closest(".bn-editor, button, input, textarea, select, a, [role=menu], [role=dialog], [role=listbox]")) return;
+        if (e.clientY > bodyEl.getBoundingClientRect().bottom && intoBody(e.currentTarget, { at: "end" })) e.preventDefault();
+      }} data-font={format.font} data-small-text={format.smallText ? "" : undefined}
         data-full-width={format.fullWidth ? "" : undefined} data-locked={format.locked ? "" : undefined}>
         {store && page && page.props?.cover ? <PageCoverBand store={store} pageID={pageID} readOnly={readOnly} position={typeof page.props?.format?.coverPosition === "number" ? page.props.format.coverPosition : 0.5} /> : null}
         <div className="page-grid">
           <div className="spacer-cell" />
           <div className="page-head">
+            {/* Solange die Seite lädt, hält eine leere Zeile den Platz frei – sonst springt der Titel beim Öffnen. */}
+            {loading && state.status.state !== "readonly" ? <div className="page-icon-row" aria-hidden="true" /> : null}
             {icon || iconImage || (!readOnly && page) ? (
               <div className="page-icon-row">
                 {icon ? (
@@ -298,7 +340,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
                 <span>Created {longDate(fromSwift(page.createdAt))}</span>
                 {subpages ? <span>{subpages} {subpages === 1 ? "sub-page" : "sub-pages"}</span> : null}
               </div>
-            ) : null}
+            ) : loading ? <div className="meta-line t-desc" aria-hidden="true">&nbsp;</div> : null}
           </div>
           <div className="spacer-cell" />
           <div className="page-body" data-testid="page-content">{body}</div>
@@ -306,6 +348,64 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
       </article>
       {exporting ? <ExportDialog client={client} pageID={pageID} onClose={() => setExporting(false)} /> : null}
     </>
+  );
+}
+
+/** Menü der Kopfzeile: Fokus auf den ersten Eintrag, ↑/↓ wandern, Escape und Klick daneben schließen. */
+function useMenuKeys(ref: RefObject<HTMLDivElement | null>, onClose: () => void) {
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
+    const down = (e: globalThis.MouseEvent) => {
+      const t = e.target as Element;
+      if (!ref.current?.contains(t) && !t.closest?.("[data-menu-trigger]")) onClose();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      // BSD-238: ↑/↓ zwischen den Einträgen.
+      else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && ref.current?.contains(document.activeElement)) {
+        const items = [...ref.current.querySelectorAll<HTMLElement>("[role^=menuitem]")];
+        const i = items.indexOf(document.activeElement as HTMLElement);
+        items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("mousedown", down);
+    window.addEventListener("keydown", key);
+    return () => {
+      window.removeEventListener("mousedown", down);
+      window.removeEventListener("keydown", key);
+    };
+  }, [ref, onClose]);
+}
+
+/** Aufgeklappter Breadcrumb-Teil: die Seite selbst (`self`) und darunter ihre Unterseiten bzw. die ausgelassenen Vorfahren. */
+interface CrumbMenuState { key: string; self?: string; pages: readonly string[]; top: number; left: number }
+
+/** So viele Unterseiten zeigt das Breadcrumb-Menü sofort; der Rest hinter „N more“. */
+const CRUMB_MENU_FIRST = 5;
+
+function CrumbIcon({ node }: { node: Outline["nodes"][string] | undefined }) {
+  return <span className="crumb-icon" aria-hidden="true">{node?.icon && isEmojiIcon(node.icon) ? node.icon : <Icon name={node?.kind === "database" ? "database" : "page"} size={16} />}</span>;
+}
+
+function CrumbMenu({ menu, outline, titles, current, onClose, onOpen }: { menu: CrumbMenuState; outline: Outline; titles: ReadonlyMap<string, string>; current: string; onClose: () => void; onOpen: (id: string) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useMenuKeys(ref, onClose);
+  const [all, setAll] = useState(false);
+  const shown = all ? menu.pages : menu.pages.slice(0, CRUMB_MENU_FIRST);
+  const rest = menu.pages.length - shown.length;
+  const row = (id: string, self: boolean) => (
+    <button key={id} type="button" role="menuitem" className="menu-item crumb-menu-item" aria-current={id === current ? "page" : undefined} data-self={self ? "" : undefined} title={titles.get(id) ?? "Untitled"} onClick={() => onOpen(id)}>
+      <CrumbIcon node={outline.nodes[id]} /><span className="crumb-menu-title">{titles.get(id) ?? "Untitled"}</span>
+    </button>
+  );
+  return (
+    <div ref={ref} role="menu" aria-label="Pages" className="menu crumb-menu" data-testid="crumb-menu" style={{ top: menu.top, left: menu.left }}>
+      {menu.self ? row(menu.self, true) : null}
+      {menu.self && shown.length ? <div className="menu-sep" role="separator" /> : null}
+      {shown.map((id) => row(id, false))}
+      {rest > 0 ? <button type="button" role="menuitem" className="menu-item crumb-menu-more" onClick={() => setAll(true)}>{rest} more</button> : null}
+    </div>
   );
 }
 
@@ -362,29 +462,7 @@ async function copyPageLink(pageID: string) {
 
 function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos: { top: number; right: number }; onClose: () => void; onHistory: () => void; outline?: { hidden: boolean; toggle: () => void } | undefined; options?: PageOptionsMenu | undefined; actions?: PageActions | undefined }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.querySelector<HTMLButtonElement>("[role=menuitem]")?.focus();
-    const down = (e: MouseEvent) => {
-      const t = e.target as Element;
-      if (!ref.current?.contains(t) && !t.closest?.("[data-menu-trigger]")) onClose();
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      // BSD-238: ↑/↓ zwischen den Einträgen.
-      else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && ref.current?.contains(document.activeElement)) {
-        const items = [...ref.current.querySelectorAll<HTMLElement>("[role^=menuitem]")];
-        const i = items.indexOf(document.activeElement as HTMLElement);
-        items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-        e.preventDefault();
-      }
-    };
-    window.addEventListener("mousedown", down);
-    window.addEventListener("keydown", key);
-    return () => {
-      window.removeEventListener("mousedown", down);
-      window.removeEventListener("keydown", key);
-    };
-  }, [onClose]);
+  useMenuKeys(ref, onClose);
   return (
     <div ref={ref} role="menu" aria-label="Page menu" className="menu page-menu" style={{ top: pos.top, right: pos.right }}>
       {actions ? (
@@ -443,6 +521,19 @@ function PageMenu({ pos, onClose, onHistory, outline, options, actions }: { pos:
  * BSD-301: ein mehrzeiliges Feld, das mit dem Text wächst – lange Titel brechen um wie in Notion, statt rechts
  * abgeschnitten zu werden. Enter beendet die Eingabe (kein Zeilenumbruch im Titel).
  */
+/** Fokus in den Text der Seite geben (Ereignis „bx:focus“ des Editors). `false`: kein Editor da oder nicht übernommen. */
+function intoBody(from: Element, detail: { at: "start" | "end"; insert?: boolean; text?: string }): boolean {
+  const host = from.closest(".page")?.querySelector(".page-body .bx-editor");
+  return host ? !host.dispatchEvent(new CustomEvent("bx:focus", { cancelable: true, detail })) : false;
+}
+
+/** Steht die Schreibmarke in der letzten Zeile des (evtl. umbrochenen) Titels? Einzeilig: immer. */
+function onLastLine(el: HTMLTextAreaElement): boolean {
+  const line = parseFloat(getComputedStyle(el).lineHeight);
+  if (!(line > 0) || el.scrollHeight < line * 1.5) return true;
+  return el.selectionEnd === el.value.length;
+}
+
 function TitleField({ id, title, readOnly, onRename }: { id: string; title: string; readOnly: boolean; onRename: (t: string) => void }) {
   const [value, setValue] = useState(title);
   const focused = useRef(false);
@@ -480,10 +571,19 @@ function TitleField({ id, title, readOnly, onRename }: { id: string; title: stri
           onRename(next);
         }}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
+          const el = e.currentTarget;
+          // Wie Notion: Enter legt unter dem Titel eine neue erste Zeile an (mit dem Text hinter der Schreibmarke),
+          // ↓ in der letzten Zeile des Titels geht in den Text. Ohne Editor (Datenbankseite): Enter verlässt das Feld.
           if (e.key === "Enter") {
             e.preventDefault();
-            e.currentTarget.blur();
-          }
+            const before = value.slice(0, el.selectionStart), after = readOnly ? "" : value.slice(el.selectionEnd);
+            if (!intoBody(el, { at: "start", insert: true, text: after })) el.blur();
+            else if (!readOnly && before !== value) {
+              setValue(before);
+              onRename(before);
+            }
+          } else if (e.key === "ArrowDown" && !e.shiftKey && onLastLine(el) && intoBody(el, { at: "start" })) e.preventDefault();
         }}
       />
     </h1>

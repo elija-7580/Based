@@ -6,7 +6,8 @@ import { createCodeBlockSpec, createExtension } from "@blocknote/core";
 import { CODE_LANGUAGES, syntaxTokens } from "@based/core";
 import type { Node as PMNode } from "prosemirror-model";
 import { Plugin, PluginKey } from "prosemirror-state";
-import { Decoration, DecorationSet } from "prosemirror-view";
+import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
+import { menuIconPath } from "../ui/menuIcons.js";
 
 /** Kein Netz, keine Formulare nach außen; Skripte nur im abgeschotteten Rahmen. */
 export const HTML_PREVIEW_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data: blob:; font-src data:";
@@ -34,6 +35,59 @@ export function htmlPreviewFrame(code: string): HTMLElement {
   return wrap;
 }
 
+/** Zuletzt mit dem Kopierknopf eines Codeblocks kopiert (für Tests und Umgebungen ohne Zwischenablage-Recht). */
+export let lastCodeCopy = "";
+
+const SVG = "http://www.w3.org/2000/svg";
+function icon(name: "duplicate" | "check"): SVGElement {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", "bx-menu-icon");
+  const path = document.createElementNS(SVG, "path");
+  for (const [k, v] of [["d", menuIconPath(name)], ["fill", "none"], ["stroke", "currentColor"], ["stroke-width", "2"], ["stroke-linecap", "round"], ["stroke-linejoin", "round"]] as const) path.setAttribute(k, v);
+  svg.append(path);
+  return svg;
+}
+
+/**
+ * Kopierknopf oben rechts im Codeblock (wie Notion), sichtbar beim Überfahren oder mit Tastaturfokus. Liest den Code
+ * beim Klick aus dem Dokument – der Knopf selbst bleibt beim Tippen stehen (fester Schlüssel).
+ */
+export function codeCopyButton(view: EditorView, getPos: () => number | undefined): HTMLElement {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "bx-code-copy";
+  b.contentEditable = "false";
+  b.setAttribute("aria-label", "Copy code");
+  b.title = "Copy code";
+  b.append(icon("duplicate"));
+  let reset: ReturnType<typeof setTimeout> | undefined;
+  b.addEventListener("mousedown", (e) => e.preventDefault()); // Schreibmarke bleibt, wo sie ist
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    const pos = getPos();
+    const node = pos === undefined ? null : view.state.doc.resolve(pos).parent;
+    if (!node || node.type.name !== "codeBlock") return;
+    lastCodeCopy = node.textContent;
+    const done = (ok: boolean) => {
+      b.replaceChildren(icon(ok ? "check" : "duplicate"));
+      b.setAttribute("aria-label", ok ? "Copied" : "Couldn’t copy");
+      b.title = ok ? "Copied" : "Couldn’t copy";
+      if (reset !== undefined) clearTimeout(reset);
+      reset = setTimeout(() => {
+        b.replaceChildren(icon("duplicate"));
+        b.setAttribute("aria-label", "Copy code");
+        b.title = "Copy code";
+      }, 1500);
+    };
+    const clip = globalThis.navigator?.clipboard;
+    if (!clip) done(false);
+    else void clip.writeText(lastCodeCopy).then(() => done(true), () => done(false));
+  });
+  return b;
+}
+
 const languages: Record<string, { name: string; aliases?: string[] }> = {};
 for (const l of CODE_LANGUAGES) languages[l.id] = { name: l.name, ...(l.aliases ? { aliases: [...l.aliases] } : {}) };
 
@@ -56,6 +110,7 @@ export function syntaxDecorations(doc: PMNode): DecorationSet {
     if (node.type.name !== "codeBlock") return true;
     const text = node.textContent;
     const language = String(node.attrs.language ?? "").toLowerCase();
+    decos.push(Decoration.widget(pos + 1, codeCopyButton, { side: -1, key: "copy", ignoreSelection: true }));
     if (text.length > 0 && text.length < 200_000) {
       for (const t of syntaxTokens(text, language)) {
         decos.push(Decoration.inline(pos + 1 + t.from, pos + 1 + t.from + t.length, { class: "bx-tok-" + t.kind }));
