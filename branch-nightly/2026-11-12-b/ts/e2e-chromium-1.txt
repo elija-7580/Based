@@ -1,61 +1,61 @@
-cancelled 7f70dc5ec7d807bd13cdd1490625c5b01b8e30e6
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
-[WebServer] 
-[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+success c730a553247a195c8b17773c3ad6df8ef0e2e155
+(node:7468) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   96 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.5s)
+  ✓   95 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.3s)
+  ✓   97 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (3.6s)
+  ✓   98 [chromium] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.9s)
+  ✓  100 [chromium] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.3s)
+  ✓   99 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.0s)
+  ✓  101 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.6s)
+  ✓  102 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.1s)
+  ✓  104 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.8s)
+  ✓  105 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.5s)
+  ✓  106 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.4s)
+  ✓  107 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.4s)
+  ✓  108 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.5s)
+  ✓  103 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.2s)
+  ✓  109 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.6s)
+  ✓  110 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.6s)
+  ✓  111 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.5s)
+  ✓  112 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.2s)
+  ✓  114 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
+  ✓  113 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.8s)
+  ✓  116 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.3s)
+  ✓  117 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.8s)
+  ✓  118 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.7s)
+  ✓  115 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (12.4s)
+  ✓  119 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.2s)
 
-Running 116 tests using 2 workers, shard 1 of 2
 
-(node:3355) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    1 [chromium] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (9.2s)
-  ✓    3 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (2.7s)
-  ✓    4 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (3.7s)
-  ✓    5 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.3s)
-  ✓    6 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.5s)
-  ✓    7 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (1.9s)
-  ✓    8 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (2.8s)
-  -    9 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+  1) [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
 
-  ✓    2 [chromium] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (29.5s)
-  -   11 [chromium] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-  ✓   12 [chromium] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (1.3s)
-  ✓   10 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.4s)
-(node:3813) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   14 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (2.9s)
-  ✓   13 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (2.9s)
-(node:3974) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   15 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.3s)
-  ✓   16 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.0s)
-  ✓   17 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (2.3s)
-  ✓   19 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (1.8s)
-  -   20 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:4096) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   18 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.4s)
-  ✓   22 [chromium] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (5.3s)
-  ✓   21 [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (9.1s)
-  ✓   23 [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (7.9s)
-  ✘   25 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (20.2s)
-(node:4371) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✘   26 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (retry #1) (19.6s)
-(node:4529) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' }) with timeout 5000ms
+      - waiting for getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+
+
+      240 |   await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
+      241 |   await page.keyboard.press("Shift+Tab");
+    > 242 |   await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
+          |                                                                     ^
+      243 |
+      244 |   // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
+      245 |   await input.pressSequentially("/");
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:242:69
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
+  5 skipped
+  112 passed (4.5m)
