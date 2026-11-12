@@ -338,7 +338,13 @@ test("BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Gr
       await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
       await page.getByRole("radio", { name: "Terminal" }).click();
-      await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+      // Nicht auf die alte Ausgabe warten: nach den Größenwechseln der vorigen Runde zeichnet die Shell (readline) ihre
+      // Zeile neu und kann dabei frühere Zeilen überschreiben (auf GitHub mit längerem Prompt gesehen). Neu tippen.
+      await expect(term.locator(".xterm-rows")).toContainText("$((40+2))", { timeout: 15_000 });
+      await term.click();
+      await page.keyboard.type(`echo ${theme}-$((1+1))`);
+      await page.keyboard.press("Enter");
+      await expect(term.locator(".xterm-rows")).toContainText(`${theme}-2`, { timeout: 15_000 });
       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
         await page.setViewportSize({ width: w, height: h });
         const box = (await term.boundingBox())!;
