@@ -63,6 +63,29 @@ test("⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts", async (
   await expect(page.getByLabel("Page title")).toHaveValue("Parent page");
 });
 
+test("Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank", async ({ page }) => {
+  const parent = (await command(page, { op: "createPage", title: "Projects" })) as string;
+  const dbBlock = (await command(page, { op: "createDatabase", parent, title: "Tasks" })) as string;
+  const row = await page.evaluate(async (id) => {
+    interface Store { blocks: Map<string, { props?: { databaseID?: string } }>; children(p: string): string[] }
+    const c = (globalThis as unknown as { __based: { client: { openPage(id: string): Promise<{ store: Store }> } } }).__based.client;
+    const { store } = await c.openPage(id);
+    const db = store.blocks.get(id)!.props!.databaseID!;
+    return store.children("d:" + db)[0]!;
+  }, dbBlock);
+  expect(row).toBeTruthy();
+  await page.goto("/#page-" + row);
+  await expect(page.getByLabel("Page title")).toBeVisible();
+  const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(crumbs).toContainText("Projects");
+  await expect(crumbs).toContainText("Tasks");
+  await page.locator(".bn-editor .bn-block-content").first().click();
+  await page.keyboard.press("ControlOrMeta+Shift+U");
+  await expect(page.getByLabel("Page title")).toHaveValue("Tasks");
+  await page.keyboard.press("ControlOrMeta+Shift+U");
+  await expect(page.getByLabel("Page title")).toHaveValue("Projects");
+});
+
 test("Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus", async ({ page }) => {
   await page.goto("/#prefs-my-settings");
   await page.getByRole("radio", { name: "Serif" }).click();

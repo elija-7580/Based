@@ -27,6 +27,15 @@ export function applyDesktopShell(root: HTMLElement = document.documentElement) 
 
 let checking = false;
 
+/** BSD-168: Text des Update-Dialogs mit den Notizen aus latest.json (höchstens 12 Zeilen). */
+export function updatePrompt(version: string, current: string, notes?: string): string {
+  const lines = (notes ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const shown = lines.slice(0, 12);
+  const more = lines.length > shown.length ? `\n… and ${lines.length - shown.length} more` : "";
+  const body = shown.length ? `\n\nWhat’s new:\n${shown.join("\n")}${more}` : "";
+  return `Based Next ${version} is available (you have ${current}).${body}\n\nInstall it and restart now?`;
+}
+
 /** Fragt die next-Releases nach einer neueren Version; bei Ja: laden, installieren, neu starten. */
 export async function checkForUpdates(opts: { interactive: boolean }) {
   if (checking) return;
@@ -39,7 +48,7 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
       if (opts.interactive) await dialog.message("You’re on the newest version of Based Next.", { title: "No update available" });
       return;
     }
-    const yes = await dialog.ask(`Based Next ${update.version} is available (you have ${update.currentVersion}). Install it and restart now?`, {
+    const yes = await dialog.ask(updatePrompt(update.version, update.currentVersion, update.body), {
       title: "Update available",
       kind: "info",
       okLabel: "Install and Restart",

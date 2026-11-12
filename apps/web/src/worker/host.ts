@@ -351,6 +351,7 @@ export class StoreHost {
         const id = createPage(store, opts);
         return store.blocks.has(id) ? id : undefined;
       }
+      case "pageAncestors": return pageAncestors(store, c.id);
       case "createMeetingPage": {
         const id = createPage(store, { title: meetingTitleFor(new Date()) });
         createMeeting(store, { parent: "b:" + id });

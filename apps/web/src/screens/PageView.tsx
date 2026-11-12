@@ -105,6 +105,17 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];
   const node = outline?.nodes[pageID];
+  // BSD-168: Datenbank-Zeilen fehlen in der Seitenleisten-Struktur – ihre Kette (Datenbankseite, Seiten darüber)
+  // fragt die Seite beim Worker nach.
+  const [rowChain, setRowChain] = useState<string[]>();
+  const outsideOutline = outline !== undefined && !node;
+  useEffect(() => {
+    if (!outsideOutline) return setRowChain(undefined);
+    let live = true;
+    void client.command<string[]>({ op: "pageAncestors", id: pageID }).then((c) => { if (live) setRowChain(c); }, () => undefined);
+    return () => { live = false; };
+  }, [client, pageID, outsideOutline, state.titles]);
+  if (!node && rowChain) for (const id of rowChain) crumbs.push({ id, label: state.titles.get(id) ?? "Untitled" });
   if (node) {
     const chain: string[] = [];
     for (let p = node.parent, n = 0; p && n < 100; p = outline?.nodes[p]?.parent, n++) chain.unshift(p);
