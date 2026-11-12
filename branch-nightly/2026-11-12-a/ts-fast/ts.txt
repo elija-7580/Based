@@ -18,9 +18,4 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1673 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1674)[39m
-packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
-packages/sync test: [2m      Tests [22m [1m[32m49 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (52)[39m
-packages/brain test: [2m      Tests [22m [1m[32m390 passed[39m[22m[90m (390)[39m
-packages/editor test: [2m      Tests [22m [1m[32m79 passed[39m[22m[90m (79)[39m
 --- smoke
