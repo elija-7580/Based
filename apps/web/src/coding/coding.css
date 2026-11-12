@@ -9,6 +9,8 @@
 @media (max-width: 760px) {
   .coding-split { flex-direction: column; }
   .coding-side { flex-basis: auto; width: 100%; }
+  /* BSD-315: Freigaben auf dem Handy mit großen Knöpfen (Tippziel ≥ 44 px) */
+  .coding-ask button { min-height: calc(var(--space-7) + var(--space-1)); }
 }
 .coding-composer > :first-child { flex: 1 1 auto; min-width: 0; }
 /* BSD-313: Slash-/Datei-Menü über der Eingabe */

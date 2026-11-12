@@ -58,7 +58,7 @@ function CodingBody({ model }: { model: CodingModel }) {
 
   return (
     <VStack className="coding" gap={4} data-testid="coding-screen">
-      <HStack hAlign="between" vAlign="center">
+      <HStack hAlign="between" vAlign="center" wrap="wrap" gap={2}>
         <Text as="h1" type="large" weight="bold">Coding agents</Text>
         <SegmentedControl label="View" value={pane} onChange={(v) => setPane(v as Pane)}>
           <SegmentedControlItem value="sessions" label="Sessions" />
@@ -73,7 +73,17 @@ function CodingBody({ model }: { model: CodingModel }) {
   );
 }
 
+/** BSD-315: schmales Fenster (Handy) – Freigaben dann mit großen Knöpfen zum Tippen. */
+function useNarrow(query = "(max-width: 760px)"): boolean {
+  const mq = typeof matchMedia === "function" ? matchMedia(query) : undefined;
+  return useSyncExternalStore(
+    (fn) => { mq?.addEventListener("change", fn); return () => mq?.removeEventListener("change", fn); },
+    () => mq?.matches ?? false,
+  );
+}
+
 function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id: string, optionId: string | undefined) => void }) {
+  const size = useNarrow() ? "lg" : "sm";
   return (
     <VStack gap={2} data-testid="coding-inbox">
       {items.map((it) => (
@@ -83,9 +93,9 @@ function Inbox({ items, onAnswer }: { items: readonly InboxItem[]; onAnswer: (id
             {it.argument && !it.title.includes(it.argument) ? <Text type="supporting" className="coding-mono">{it.argument}</Text> : null}
             <HStack gap={2} wrap="wrap">
               {it.options.map((o) => (
-                <Button key={o.optionId} size="sm" variant={o.kind.startsWith("allow") ? (o.kind === "allow_once" ? "primary" : "secondary") : "secondary"} onClick={() => onAnswer(it.id, o.optionId)} label={o.name} />
+                <Button key={o.optionId} size={size} variant={o.kind.startsWith("allow") ? (o.kind === "allow_once" ? "primary" : "secondary") : "secondary"} onClick={() => onAnswer(it.id, o.optionId)} label={o.name} />
               ))}
-              <Button size="sm" variant="ghost" onClick={() => onAnswer(it.id, undefined)} label="Cancel" />
+              <Button size={size} variant="ghost" onClick={() => onAnswer(it.id, undefined)} label="Cancel" />
             </HStack>
           </VStack>
         </Card>
@@ -113,7 +123,7 @@ function Sessions({ model }: { model: CodingModel }) {
       </VStack>
       <VStack gap={3} className="coding-main">
         {!current ? (
-          <EmptyState title="No session open" description="Start a session on the left, or continue a conversation from the CLI history." isCompact />
+          <EmptyState title="No session open" description="Start a new session, or continue a conversation from the CLI history." isCompact />
         ) : (
           <>
             <HStack gap={2} vAlign="center" wrap="wrap">

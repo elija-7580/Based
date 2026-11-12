@@ -31,7 +31,7 @@ export class TerminalSockets {
   readonly terminals: Terminals | undefined;
 
   /** `spawn`: ohne Angabe node-pty, `null` = kein Terminal. */
-  constructor(private readonly coding: CodingSessions, private readonly token: string, private readonly log: Logger, spawn?: PtyFactory | null, env: Readonly<Record<string, string | undefined>> = process.env) {
+  constructor(private readonly coding: CodingSessions, private readonly accept: string | ((token: string) => boolean), private readonly log: Logger, spawn?: PtyFactory | null, env: Readonly<Record<string, string | undefined>> = process.env) {
     const pty = spawn === undefined ? loadPty() : spawn ?? undefined;
     this.terminals = pty ? new Terminals({ spawn: pty, baseEnv: env }) : undefined;
     coding.onClosed.add((id) => this.terminals?.close(id));
@@ -56,7 +56,7 @@ export class TerminalSockets {
       if (!link) {
         let auth: { type?: unknown; token?: unknown; cols?: unknown; rows?: unknown } | undefined;
         try { auth = JSON.parse(text) as typeof auth; } catch { auth = undefined; }
-        if (auth?.type !== "auth" || typeof auth.token !== "string" || !tokenEquals(auth.token, this.token)) return fail("unauthorized", 4401);
+        if (auth?.type !== "auth" || typeof auth.token !== "string" || !(typeof this.accept === "string" ? tokenEquals(auth.token, this.accept) : this.accept(auth.token))) return fail("unauthorized", 4401);
         clearTimeout(timer);
         if (!this.terminals) return fail("The terminal is not available on this server (node-pty missing).", 4501);
         const view = this.coding.get(sessionId);

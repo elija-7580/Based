@@ -12,7 +12,8 @@ export const LARGE_BODY_LIMIT = 32 << 20; // 32 MiB: Sync-Pushes, MCP-Aufrufe mi
 export type RouteAccess = "public" | "owner" | "shared";
 
 /** Wer anfragt. `owner` = BASED_TOKEN; sonst ein geteilter Principal (Gerät eines Gasts, Access-Link). */
-export type Caller<P> = { kind: "owner" } | { kind: "shared"; principal: P };
+/** `device`: Besitzer über ein eigenes Geräte-Token (BSD-315), sonst das Haupt-Token. */
+export type Caller<P> = { kind: "owner"; device?: string } | { kind: "shared"; principal: P };
 
 export interface RouteContext {
   req: IncomingMessage;
@@ -103,6 +104,8 @@ export interface RouterConfig {
   log: Logger;
   /** Geteilte Principals aus einem Token (Geräte-Token `bdu_…`, Link-Geheimnis `bdl_…`); ohne: nur der Owner. */
   sharedPrincipal?: ((token: string) => unknown) | undefined;
+  /** BSD-315: Geräte-Token des Besitzers (`bdo_…`) → Geräte-ID; gilt wie der Besitzer. */
+  ownerDevice?: ((token: string) => string | undefined) | undefined;
 }
 
 export class Router {
@@ -170,7 +173,10 @@ export class Router {
     const token = bearer(req);
     let caller: Caller<unknown> | undefined;
     if (token && tokenEquals(token, this.config.token)) caller = { kind: "owner" };
-    else if (token && route.access !== "public") {
+    else if (token && route.access !== "public" && token.startsWith("bdo_") && this.config.ownerDevice) {
+      const device = this.config.ownerDevice(token);
+      if (device) caller = { kind: "owner", device };
+    } else if (token && route.access !== "public") {
       const principal = this.config.sharedPrincipal?.(token);
       if (principal !== undefined) caller = { kind: "shared", principal };
     }

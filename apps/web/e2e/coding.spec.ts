@@ -353,3 +353,51 @@ test("BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Gr
     await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
   }
 });
+
+// BSD-315: vom Handy (390 × 844) bedienbar – Sitzung starten, Freigabe mit großen Knöpfen, nichts läuft waagrecht heraus.
+test("BSD-315: #coding auf dem Handy (390 × 844)", async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  // verbinden im großen Fenster, dann aufs Handy-Format
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await page.getByLabel("Server URL").fill(serverURL);
+  await page.getByLabel("Token").fill(TOKEN);
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await expect(page.getByTestId("sync-status")).toHaveAttribute("data-sync", "synced", { timeout: 20_000 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/#coding");
+  await expect(page.getByTestId("coding-screen")).toBeVisible();
+  await page.getByLabel("Folder on the server").fill(root);
+  await page.getByTestId("coding-start").click();
+  await expect(page.getByTestId("coding-agent-mode")).toBeVisible({ timeout: 15_000 });
+  writeFileSync(join(root, "a.txt"), "old\n");
+  await page.getByLabel("Message", { exact: true }).fill(`edit ${root}/a.txt`);
+  await page.getByTestId("coding-send").click();
+  const ask = page.getByTestId("coding-permission");
+  await expect(ask).toContainText("wants to: Edit");
+  const allow = ask.getByRole("button", { name: "Allow", exact: true });
+  await allow.scrollIntoViewIfNeeded();
+  // große Knöpfe zum Tippen (≥ 44 px hoch)
+  expect((await allow.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  // Reiter oben nicht abgeschnitten (kein „Sess…“)
+  for (const name of ["Sessions", "CLI history", "Setup"]) {
+    const r = page.getByRole("radio", { name });
+    expect(await r.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), name).toBe(true);
+  }
+  expect(await overflow()).toBeLessThanOrEqual(1);
+  if (browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(page.getByTestId("coding-permission")).toBeVisible({ timeout: 15_000 });
+      await page.screenshot({ path: join(screens, `web-coding-phone-${theme}.png`) });
+    }
+    await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "light" })));
+  }
+  await allow.click();
+  await expect(page.getByTestId("coding-inbox")).toHaveCount(0);
+});
