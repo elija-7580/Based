@@ -1,61 +1,61 @@
-cancelled 76b919f96016148486d309b859b7d7fad745083e
-  -   36 [chromium] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
-  ✓   33 [chromium] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (4.5s)
-  ✓   37 [chromium] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (993ms)
-  ✓   38 [chromium] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (959ms)
-  ✓   39 [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (1.4s)
-  ✓   40 [chromium] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (2.4s)
-  ✓   42 [chromium] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (1.6s)
-  ✓   41 [chromium] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (2.8s)
-  ✓   43 [chromium] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (2.0s)
-  ✓   44 [chromium] › e2e/editor-drag.spec.ts:119:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (2.9s)
-  ✓   45 [chromium] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (1.2s)
-  ✓   46 [chromium] › e2e/editor-drag.spec.ts:147:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (1.4s)
-  ✓   47 [chromium] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (1.4s)
-  ✓   49 [chromium] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (1.3s)
-  ✓   48 [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (2.1s)
-  ✓   50 [chromium] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (1.4s)
-  ✓   52 [chromium] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (1.1s)
-  ✓   53 [chromium] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (953ms)
-  ✓   51 [chromium] › e2e/editor-drag.spec.ts:191:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (3.1s)
-  ✓   55 [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (2.0s)
-  ✓   54 [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (3.1s)
-  ✓   56 [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (1.5s)
-  ✓   57 [chromium] › e2e/editor-parity.spec.ts:193:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (1.4s)
-  ✓   58 [chromium] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten (1.2s)
-  ✓   60 [chromium] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (1.4s)
-  ✓   59 [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (3.1s)
-  ✓   61 [chromium] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.0s)
-  ✓   63 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (615ms)
-  ✓   64 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (904ms)
-  ✓   65 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (1.3s)
-  ✓   62 [chromium] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (4.5s)
-  ✓   66 [chromium] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (2.5s)
-  ✓   68 [chromium] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (1.5s)
-  ✓   69 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (1.1s)
-  ✓   70 [chromium] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (897ms)
-  ✓   71 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (1.4s)
-  ✓   67 [chromium] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (6.8s)
-  ✓   72 [chromium] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (1.5s)
-  ✓   73 [chromium] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (3.3s)
-  ✓   74 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (3.6s)
-(node:6182) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   75 [chromium] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (3.0s)
-  ✓   76 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.0s)
-  ✓   77 [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (3.4s)
-  ✓   78 [chromium] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.7s)
-  ✓   79 [chromium] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (1.5s)
-  ✓   80 [chromium] › e2e/guest.spec.ts:99:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.9s)
-  ✓   81 [chromium] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (2.7s)
-  ✓   82 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (2.1s)
-  ✓   84 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.4s)
-  ✓   83 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (3.6s)
-  ✓   86 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (2.5s)
-  ✓   87 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (2.1s)
-  ✓   88 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (2.8s)
-  ✓   89 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (2.1s)
-  ✓   90 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (1.9s)
-  ✓   85 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.3s)
-  ✓   91 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (1.9s)
-  ✓   92 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.0s)
+failure db6859e821dc9f5e239c37cf650c78dd2f29a5ec
+    Call log:
+      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
+      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
+        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
+        - unexpected value " "
+        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
+           - unexpected value "pwd; ecrunner@runnervm7aw5e:/tmp/based-e2e-code-EELeDW$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-EELeDWrunner@runnervm7aw5e:/tmp/based-e2e-code-EELeDW$  "
+
+
+      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
+      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
+    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+          |                                                 ^
+      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      343 |         await page.setViewportSize({ width: w, height: h });
+      344 |         const box = (await term.boundingBox())!;
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByTestId('coding-terminal').locator('.xterm-rows')
+    Expected substring: "hi-42"
+    Received string:    "runner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-dAMzbkrunner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$  "
+    Timeout: 15000ms
+
+    Call log:
+      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
+      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
+        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
+        - unexpected value " "
+        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
+           - unexpected value "runner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-dAMzbkrunner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$  "
+
+
+      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
+      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
+    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+          |                                                 ^
+      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      343 |         await page.setViewportSize({ width: w, height: h });
+      344 |         const box = (await term.boundingBox())!;
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster 
+  3 skipped
+  103 passed (4.4m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
