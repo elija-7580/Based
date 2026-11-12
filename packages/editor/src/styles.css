@@ -240,6 +240,8 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-outline-item[aria-current] { color: var(--ink); font-weight: var(--type-ui-weight); }
 .bx-outline-item:focus-visible { outline: 1px solid var(--muted); }
 @media (max-width: 52rem) { .bx-outline { display: none; } }
+/* BSD-324: kein Platz neben dem Text – unsichtbar, bleibt aber messbar (fest positioniert, nimmt keinen Platz). */
+.bx-outline[data-cramped] { visibility: hidden; }
 @media print { .bx-outline, .bx-notice { display: none; } }
 
 /* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */

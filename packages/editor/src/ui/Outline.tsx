@@ -93,9 +93,32 @@ export function PageOutline(props: { store: WorkspaceStore; pageID: string; cont
     };
   }, [container, hidden, ids]);
 
+  // BSD-324: Ist rechts neben dem Text kein Platz (kleines Fenster, Seitenleiste offen), läge der Balken über dem
+  // Text – dann ausblenden (wie Notion), bis wieder Platz ist.
+  const nav = useRef<HTMLElement>(null);
+  const [cramped, setCramped] = useState(false);
+  useEffect(() => {
+    if (hidden || !container) return;
+    const check = () => {
+      const n = nav.current;
+      if (!n) return;
+      const text = container.querySelector(".bn-editor > .bn-block-group") ?? container;
+      const textRight = text.getBoundingClientRect().right;
+      setCramped(n.getBoundingClientRect().left < textRight);
+    };
+    check();
+    window.addEventListener("resize", check);
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(check) : undefined;
+    ro?.observe(container);
+    return () => {
+      window.removeEventListener("resize", check);
+      ro?.disconnect();
+    };
+  }, [container, hidden, ids]);
+
   if (hidden || headings.length === 0) return null;
   return (
-    <nav className="bx-outline" aria-label="Page outline" data-testid="page-outline">
+    <nav ref={nav} className="bx-outline" aria-label="Page outline" data-testid="page-outline" data-cramped={cramped ? "" : undefined} aria-hidden={cramped || undefined}>
       <ul className="bx-outline-list">
         {headings.map((h, i) => (
           <li key={h.id} data-depth={Math.min(h.depth, 3)}>
