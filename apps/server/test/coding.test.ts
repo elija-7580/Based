@@ -59,10 +59,19 @@ describe("/coding", () => {
     expect(c.body).toMatchObject({ agentId: "fake", state: "idle", acpSessionId: "s1", mode: "askEdits" });
     const id = c.body!.id as string;
     // Long-Poll wartet auf den Turn.
-    const waiting = get(`${url}/coding/sessions/${id}/events?since=0&wait=2000`);
+    // (BSD-313: der Long-Poll wacht auch auf, wenn der Agent Befehle/Modus meldet – dann ohne Ereignisse, mit der Sitzung)
+    const waitForFirst = async () => {
+      for (let i = 0; i < 10; i++) {
+        const r = await get(`${url}/coding/sessions/${id}/events?since=0&wait=2000`);
+        const evs = r.body!.events as { type: string }[];
+        if (evs.length > 0) return evs;
+        expect(r.body!.session).toMatchObject({ id });
+      }
+      return [];
+    };
+    const waiting = waitForFirst();
     expect((await post(`${url}/coding/sessions/${id}/prompt`, { prompt: "hello" })).status).toBe(202);
-    const first = await waiting;
-    expect((first.body!.events as { type: string }[])[0]).toMatchObject({ type: "userMessage", text: "hello" });
+    expect((await waiting)[0]).toMatchObject({ type: "userMessage", text: "hello" });
     const { events } = await untilDone(url, id);
     expect(events.find((e) => e.type === "result")).toMatchObject({ text: "Hi there" });
     expect((await get(`${url}/coding/sessions`)).body!.sessions).toHaveLength(1);

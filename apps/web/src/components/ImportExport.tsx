@@ -121,7 +121,7 @@ export function ImportDialog({ client, onClose, onOpenPage }: { client: StoreCli
       {phase.k === "pick" || phase.k === "error" ? (
         <>
           <p className="t-desc">
-            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Word documents (.docx), JSON or JSON Lines (a list of objects becomes a database), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
+            A Notion export (HTML or Markdown &amp; CSV — the .zip or its unpacked folder), an Obsidian vault or Logseq graph (folder or .zip), Evernote notebooks (.enex), outlines (.opml), Word documents (.docx), JSON or JSON Lines (a list of objects becomes a database), Markdown or CSV files, or a Based archive (.based.zip, .jsonl).
             Importing the same Notion export again updates those pages and keeps what you changed in Based.
           </p>
           {phase.k === "error" ? <p role="alert" className="dialog-error">Import failed: {phase.message}</p> : null}

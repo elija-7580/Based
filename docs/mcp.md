@@ -99,6 +99,13 @@ Quick notes, voice-note transcripts and links land in the Brain database **Captu
 
 External tools of connected MCP servers appear as `<connection>__<tool>`.
 
+## Permission rules
+
+Every writing tool (all tools without `readOnlyHint`) checks the main agent's permission rules first (Settings →
+Agents & AI, BSD-98), the same way the chat does: tool name `based.<tool>`, the main argument, and the page paths for
+`path:` rules. `deny` refuses with the reason; `ask` refuses as well, because an MCP client can't ask the user — the
+answer says so. Without rules nothing changes. Reading tools are never affected. (TypeScript server: BSD-221 Teil 3e.)
+
 ## Resources
 
 | URI | Content |

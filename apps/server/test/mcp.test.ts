@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
+import { AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -330,5 +330,27 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     expect(app.pages.read(p.data.pageID!)).toContain("Beta shipped");
     expect((await call("update_project_status", { project: "Publit", update: "x", status: "weird" })).isError).toBe(true);
     expect((await call("update_project_status", { project: "nope", update: "x" })).isError).toBe(true);
+  });
+
+  it("BSD-221 Teil 3e: Berechtigungsregeln gelten für Schreibzugriffe (deny, ask, Pfad); Lesen bleibt frei", async () => {
+    const { app, call } = await httpClient();
+    const created = textOf(await call("create_page", { title: "Secret plans" }));
+    const secret = idIn(created);
+    const other = idIn(textOf(await call("create_page", { title: "Notes" })));
+    const store = app.sync.store;
+    store.transact("rules", (tx) => putRecord(store, tx, AGENT_TYPE, MAIN_AGENT_ID, "Main agent", {
+      ...defaultMainAgent(), permissions: { mode: "askEdits", rules: "deny based.trash_page\nask based.create_page\ndeny based.append_markdown(path:Secret plans/**)" },
+    }));
+    const trash = await call("trash_page", { id: other });
+    expect(trash.isError).toBe(true);
+    expect(textOf(trash)).toContain("Not allowed by the permission rules");
+    const create = await call("create_page", { title: "x" });
+    expect(create.isError).toBe(true);
+    expect(textOf(create)).toContain("needs the user's approval");
+    expect((await call("append_markdown", { id: secret, markdown: "more" })).isError).toBe(true);
+    expect((await call("append_markdown", { id: other, markdown: "fine" })).isError).toBeFalsy();
+    // Lesen ist nicht betroffen
+    expect((await call("read_page", { id: secret })).isError).toBeFalsy();
+    expect(store.blocks.get(other)?.trashedAt).toBeUndefined();
   });
 });

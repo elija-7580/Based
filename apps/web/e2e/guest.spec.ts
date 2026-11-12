@@ -96,6 +96,18 @@ test("Teil 3: widerrufener Link zeigt „This link no longer works“ statt eine
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "", { timeout: 20_000 });
 });
 
+test("Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand)", async ({ page }) => {
+  const res = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "edit" }) });
+  const link = (await res.json()) as { id: string; secret: string };
+  await page.goto("/#/share/" + encodeURIComponent(`${serverURL}/s/${link.secret}`));
+  await expect(page.getByTestId("page-content")).toContainText("Welcome to the shared wiki", { timeout: 20_000 });
+  expect((await fetch(`${serverURL}/share/v1/links/${link.id}/revoke`, { method: "POST", headers: owner })).ok).toBe(true);
+  // Zurück ins Fenster (oder der nächste Sync-Fehler, spätestens der Takt) → Hinweis statt weiter bearbeitbarer Seite
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(page.getByRole("heading", { name: "This link no longer works" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("page-content")).toHaveCount(0);
+});
+
 test("BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten", async ({ page }) => {
   const link = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "edit" }) });
   const { secret } = (await link.json()) as { secret: string };

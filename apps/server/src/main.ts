@@ -53,9 +53,11 @@ export interface Options {
   local: boolean;
   /** BSD-315: zusätzlich auf den Tailscale-Adressen dieses Rechners lauschen (nie 0.0.0.0). */
   tailnet: boolean;
+  /** BSD-274: Ordner für automatische Backups. */
+  backupDir: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local [--tailnet]] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local [--tailnet]] [--backups <dir>] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -79,6 +81,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     codingAgents: env.BASED_CODING_AGENTS,
     local: false,
     tailnet: env.BASED_TAILNET === "1",
+    backupDir: env.BASED_BACKUP_DIR || undefined,
   };
   let portGiven = false;
   let sandbox = env.BASED_SANDBOX;
@@ -110,6 +113,7 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--stdio": o.stdio = true; break;
       case "--local": o.local = true; break;
       case "--tailnet": o.tailnet = true; break;
+      case "--backups": o.backupDir = value(a); break;
       default: throw new Error(`unknown option ${a}`);
     }
   }
@@ -268,6 +272,7 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     // BSD-243 Teil 2: mit Modellzugang führt der Server Zeitplan-Läufe selbst aus (sonst wartet die App).
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined }) } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
+    ...(opts.backupDir ? { backupDir: opts.backupDir } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
     ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log, selfMcp), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),

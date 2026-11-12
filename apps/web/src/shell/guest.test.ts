@@ -1,6 +1,6 @@
 // BSD-235 Teil 2: Gast-Link lesen, Kennung, Ablage, /share/v1/me.
-import { describe, expect, it } from "vitest";
-import { fetchGuestMe, guestID, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest } from "./guest.js";
+import { describe, expect, it, vi } from "vitest";
+import { fetchGuestMe, guestID, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, watchGuestRevocation } from "./guest.js";
 import { memoryKV, SecretStore } from "./secrets.js";
 
 describe("Gast-Modus (BSD-235)", () => {
@@ -54,5 +54,39 @@ describe("BSD-282: endgültig löschen im Gast-Modus", () => {
     expect(mayDeleteForever()).toBe(false);
     setGuestAccess({ pages: [{ id: "a", title: "A", role: "edit" }, { id: "b", title: "B", role: "full" }] });
     expect(mayDeleteForever()).toBe(true);
+  });
+});
+
+describe("Widerruf während der Gast offen ist (BSD-235 Teil 3)", () => {
+  it("prüft im Takt und bei Ereignissen; ruft onRevoked genau einmal; Netzfehler zählen nicht", async () => {
+    vi.useFakeTimers();
+    let status = 200;
+    let fail = false;
+    const calls: string[] = [];
+    const fetcher = (async (url: string) => {
+      calls.push(url);
+      if (fail) throw new TypeError("offline");
+      return new Response(JSON.stringify({ role: "edit", pages: [] }), { status });
+    }) as unknown as typeof fetch;
+    const events = new EventTarget();
+    let revoked = 0;
+    const w = watchGuestRevocation({ server: "https://s.example", secret: "bdl_x" }, () => { revoked++; }, { intervalMs: 1000, fetcher, events });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(calls).toHaveLength(1);
+    expect(revoked).toBe(0);
+    fail = true;
+    events.dispatchEvent(new Event("focus"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(revoked).toBe(0);
+    fail = false;
+    status = 403;
+    w.poke();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(revoked).toBe(1);
+    await vi.advanceTimersByTimeAsync(5000);
+    events.dispatchEvent(new Event("focus"));
+    expect(revoked).toBe(1);
+    expect(calls).toHaveLength(3);
+    vi.useRealTimers();
   });
 });

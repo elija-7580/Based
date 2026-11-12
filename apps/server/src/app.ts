@@ -17,6 +17,7 @@ import type { AgentRunnerOptions, CodingSessions, PtyFactory } from "@based/brai
 import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
 import { TerminalSockets } from "./terminal-ws.js";
 import { OwnerDevices } from "./devices.js";
+import { Backups } from "./backups.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
@@ -48,6 +49,10 @@ export interface AppOptions extends SyncServiceOptions {
   codingLongPollMs?: number;
   /** Rechner der Agenten (CLI-Verlauf, Setup-Doctor); ohne: diese Routen fehlen. */
   codingHost?: CodingHost | undefined;
+  /** BSD-274: Ordner für automatische Backups (stündlich bei Änderungen, beim Beenden); ohne: keine. */
+  backupDir?: string | undefined;
+  /** Takt der Backups in ms (Tests); Standard 1 h. */
+  backupEvery?: number;
   /** BSD-314: PTY-Start für Terminals (Tests); `null` = kein Terminal; ohne Angabe node-pty. */
   ptySpawn?: PtyFactory | null;
   /** BSD-235: Adresse des Web-Clients; Access-Links bieten dann „Open in Based“ (Gast-Modus) an. */
@@ -256,6 +261,17 @@ export function createApp(opts: AppOptions): App {
   if (opts.sandbox) registerSandboxRoutes(router, opts.sandbox, log);
   if (opts.coding) registerCodingRoutes(router, opts.coding, log, opts.codingLongPollMs, opts.codingHost);
 
+  // MARK: Backups (BSD-274)
+  const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log) : undefined;
+  if (backups) {
+    backups.start(opts.backupEvery);
+    const nameOK = (n: string) => /^[0-9T-]+Z\.based\.jsonl$/.test(n);
+    router.add("GET", "/backups", async () => json({ dir: backups.dir, last: backups.last, error: backups.lastError, snapshots: await backups.list() }));
+    router.add("POST", "/backups", async () => json({ snapshot: (await backups.snapshot(true)) ?? null }, 201));
+    router.add("GET", "/backups/:name/preview", async ({ params }) => nameOK(params.name!) ? json({ pages: await backups.preview(params.name!) }) : error("not a backup", 400));
+    router.add("POST", "/backups/:name/restore", async ({ params }) => nameOK(params.name!) ? json(await backups.restore(params.name!)) : error("not a backup", 400));
+  }
+
   // MARK: Eigene Geräte (BSD-315). Verwalten nur mit dem Haupt-Token, nicht mit einem Geräte-Token.
   const mainOnly = (caller: Caller<unknown> | undefined) => caller?.kind === "owner" && caller.device === undefined;
   router.add("GET", "/devices", ({ caller }) => json({ devices: devices.list(), current: caller?.kind === "owner" ? caller.device : undefined }));
@@ -384,6 +400,8 @@ export function createApp(opts: AppOptions): App {
     },
     async close() {
       if (gc) clearInterval(gc);
+      // BSD-274: beim Beenden noch einmal sichern (nur bei Änderungen)
+      if (backups) { backups.stop(); await backups.snapshot().catch(() => undefined); }
       for (const x of extraServers) { x.close(); x.closeAllConnections(); }
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();

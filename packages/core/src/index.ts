@@ -56,6 +56,7 @@ export type { MarkdownBlock, MarkdownImporterOptions } from "./interop/markdown.
 export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, parseCSVValue, preparedImportFromWire, preparedImportToWire, prepareImport } from "./interop/notion-import.js";
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
+export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
 export { EnexImporter, enexDate, enmlToHTML, parseEnex, type EnexNote, type EnexResource } from "./interop/enex-import.js";
 export { md5Hex } from "./interop/md5.js";
 export { exportOPML, importOPML, parseOPML, type OutlineNode as OPMLOutline } from "./interop/opml.js";
@@ -75,6 +76,7 @@ export type { ExportFormat, ExportPlan, ExportPlanOptions, ExportReport } from "
 export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, archiveAssetRefs, archiveEntryPath,
   assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
 export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";
+export * from "./backup/backup.js";
 // BSD-155: Datenbank-Operationen, Diagramme, Anzeige-Helfer und gefilterte Beobachtung für @based/database-ui.
 export * as dbops from "./store/database-ops.js";
 export {

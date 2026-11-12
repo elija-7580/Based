@@ -10,6 +10,7 @@ import { VStack } from "@astryxdesign/core/Layout";
 import { BasedButton } from "@based/ui/astryx";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { TailnetGroup } from "./TailnetGroup.js";
+import { BackupsGroup } from "./BackupsGroup.js";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
 import { syncConfig } from "../shell/storage.js";
@@ -63,6 +64,7 @@ function LocalServerSection({ client }: SettingsSectionProps) {
         {syncsHere ? <Text type="supporting" color="secondary">This app syncs with the local server.</Text> : null}
         {message ? <Text type="supporting" color="secondary" role="status">{message}</Text> : null}
       </Group>
+      <BackupsGroup />
       <TailnetGroup />
       <Group>
         <Row label="Command line tool" hint={s.cli.installed ? `Installed at ${s.cli.target ?? ""}.` : "Adds the `based` command. It runs with your Node.js and talks to this app's local server or your own server."}>

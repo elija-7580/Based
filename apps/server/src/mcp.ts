@@ -7,6 +7,8 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
+import { AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import type { WorkspaceStore } from "@based/core";
 import { createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
 export const SERVER_NAME = "based";
@@ -19,6 +21,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
+- Writing tools follow the user's permission rules in Based; a refused call says why – don't retry it, tell the user.
 - Call \`based_guide\` for details (topics: overview, markdown, safety).`;
 
 export const GUIDE: Record<string, string> = {
@@ -61,9 +64,37 @@ function paged(lines: string[], limit: number, offset: number): string {
 const limit = z.number().int().min(1).max(500).optional().describe("Max items (default 50)");
 const offset = z.number().int().min(0).optional().describe("Skip this many items");
 
+/**
+ * BSD-221 Teil 3e (BSD-98): Berechtigungsregeln des Hauptagenten (Settings → Agents & AI) gelten auch für Schreib-
+ * zugriffe über MCP – wie im Chat (`ruleVerdict` mit Werkzeug „based.<name>“, Hauptargument und Seitenpfaden).
+ * `deny` lehnt ab; `ask` auch, denn ein MCP-Client kann in Based nicht nachfragen. Ohne Regeln: nichts ändert sich.
+ * Gibt die Ablehnung als Text zurück oder `undefined`.
+ */
+export function mcpRuleRefusal(store: WorkspaceStore, tool: string, args: unknown): string | undefined {
+  const main = getRecord<AgentData>(store, AGENT_TYPE, MAIN_AGENT_ID)?.data ?? defaultMainAgent();
+  const rules = main.permissions?.rules ?? "";
+  if (!rules.trim()) return undefined;
+  const input = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+  // MCP-Werkzeuge nennen die Seite meist `id`
+  const target = targetPage(input) ?? (typeof input.id === "string" && store.blocks.has(input.id) ? input.id : undefined);
+  const v = Permissions.from(rules, main.permissions.mode).ruleVerdict({ tool: "based." + tool, argument: mainArgument(input), ...(target ? { paths: pagePathCandidates(store, target) } : {}) });
+  if (v?.effect === "deny") return `Not allowed by the permission rules in Based (${v.reason}).`;
+  if (v?.effect === "ask") return `This needs the user's approval in Based (${v.reason}). MCP clients can't ask for it – do it from Based, or change the rule in Settings → Agents & AI.`;
+  return undefined;
+}
+
 /** Ein MCP-Server über den Seiten des Workspaces. Pro HTTP-Anfrage neu (zustandslos), für stdio einmal. */
 export function createMcpServer(pages: Pages): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
+  // Jedes schreibende Werkzeug (ohne readOnlyHint) prüft vorher die Regeln (BSD-221 Teil 3e).
+  {
+    const register = server.registerTool.bind(server) as (name: string, config: { annotations?: { readOnlyHint?: boolean } }, cb: (...a: unknown[]) => unknown) => unknown;
+    (server as unknown as { registerTool: typeof register }).registerTool = (name, config, cb) =>
+      register(name, config, config.annotations?.readOnlyHint ? cb : (...a: unknown[]) => {
+        const refused = mcpRuleRefusal(pages.store, name, a[0]);
+        return refused ? fail(refused) : cb(...a);
+      });
+  }
   const line = (id: string) => `- ${pages.title(id)} (id: ${id})`;
   const dbs = new Databases(pages.store);
   const values = z.record(z.string(), z.string()).describe("Property name → plain text value (empty string clears; options by name; multi-select comma-separated; dates YYYY-MM-DD)");
