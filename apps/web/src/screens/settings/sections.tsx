@@ -120,6 +120,11 @@ function SyncSection({ client, state }: SettingsSectionProps) {
       <Row label="Status" hint={status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}>
         <Value testID="sync-settings-status">{SYNC_LABEL[status.state]}{status.detail && status.state !== "synced" ? ` · ${status.detail}` : ""}{status.assets ? ` · ${assetsLabel(status.assets)}` : ""}</Value>
       </Row>
+      {status.storageWarnings?.length ? (
+        <Row label="Storage" hint="These parts start empty again after a reload. Close other Based tabs and reload; if it stays, copy the report under Diagnostics.">
+          <Value testID="sync-storage-warning">{status.storageWarnings.join(" ")}</Value>
+        </Row>
+      ) : null}
       {status.clockSkew !== undefined ? (
         <Row label="Clock" hint="Based stamps your changes with the server's time until this is fixed. Set the date and time of this device automatically.">
           <Value testID="sync-clock-skew">{clockSkewText(status.clockSkew)}</Value>
@@ -300,7 +305,7 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   const [copied, setCopied] = useState<"" | "ok" | "failed">("");
   const facts = {
     sync: `${s.state}${s.detail ? ` (${s.detail})` : ""}`,
-    storage: s.persistent ? "persistent" : "memory",
+    storage: (s.persistent ? "persistent" : "memory") + (s.storageWarnings?.length ? ` (${s.storageWarnings.join(" ")})` : ""),
     clock: s.clockSkew !== undefined ? clockSkewText(s.clockSkew) : undefined,
     device: deviceNode.get() ?? "-",
     shell: isTauri() ? "desktop" : "web",
@@ -317,7 +322,7 @@ function DiagnosticsSection({ state, navigate }: SettingsSectionProps) {
   return (
     <Group>
       <Row label="Sync"><Value>{SYNC_LABEL[s.state]}{s.detail ? ` · ${s.detail}` : ""}</Value></Row>
-      <Row label="Storage"><Value>{s.persistent ? "Persistent (OPFS)" : "Memory only"}</Value></Row>
+      <Row label="Storage"><Value testID="diagnostics-storage">{s.persistent ? "Persistent (OPFS)" : "Memory only"}{s.storageWarnings?.length ? ` · ${s.storageWarnings.join(" ")}` : ""}</Value></Row>
       {s.clockSkew !== undefined ? <Row label="Clock"><Value>{clockSkewText(s.clockSkew)}</Value></Row> : null}
       <Row label="Shell"><Value>{isTauri() ? "Desktop app" : "Web browser"}</Value></Row>
       {notice ? <Row label="Last session"><Value testID="diagnostics-last-session">{notice}</Value></Row> : null}

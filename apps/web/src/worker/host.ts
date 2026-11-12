@@ -90,6 +90,11 @@ export interface OpenedWorkspace {
   assets?: AssetBlobStore;
   /** BSD-220: Y-Zustände der Editor-Dokumente (ydocs.sqlite); ohne: im Speicher. */
   ydocs?: YDocStorage;
+  /**
+   * BSD-330: Nebendateien (Versionsverlauf, Y-Zustände, Dateien), die nicht dauerhaft geöffnet werden konnten, obwohl
+   * der Workspace selbst dauerhaft liegt – je ein Satz für Status und Hinweis. Nie still im Speicher.
+   */
+  storageWarnings?: string[];
 }
 
 export interface HostOptions {
@@ -290,6 +295,9 @@ export class StoreHost {
     this.opts.post({ type: "titles", titles: Object.fromEntries(this.titles), full: true });
     this.syncState = this.ws.persistent ? "local" : "memory";
     this.syncDetail = this.ws.note;
+    // BSD-330: fällt eine Nebendatei in den Speicher zurück, sagt es die Oberfläche (Hinweis + Einstellungen).
+    const warnings = this.ws.persistent ? this.ws.storageWarnings ?? [] : [];
+    if (warnings.length) this.opts.post({ type: "notice", message: `${warnings.join(" ")} It is lost when you reload — see Settings → Diagnostics.` });
     this.startSync(sync);
     // BSD-230: alte Import-Dateien in den synchronisierten Speicher (im Leerlauf, Fehler nur im Log).
     setTimeout(() => { void this.migrateImportedAssets().catch(() => undefined); }, this.opts.migrateDelayMs ?? 2000);
@@ -1132,6 +1140,7 @@ export class StoreHost {
     if (state !== syncState) s.sync = syncState;
     if (this.sync?.clockSkew !== undefined) s.clockSkew = Math.round(this.sync.clockSkew / 1000);
     if (store?.propertyRecords) s.propertyRecords = true;
+    if (this.ws?.persistent && this.ws.storageWarnings?.length) s.storageWarnings = [...this.ws.storageWarnings];
     const a = this.assets?.status();
     if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {
       s.assets = { uploads: a.pending, downloads: a.downloading, failed: a.failed };

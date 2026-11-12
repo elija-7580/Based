@@ -46,6 +46,8 @@ export interface StatusInfo {
   propertyRecords?: boolean;
   /** BSD-286: Uhr dieses Geräts weicht von der Server-Uhr ab (Sekunden, Server minus Gerät); nur über der Grenze. */
   clockSkew?: number;
+  /** BSD-330: Nebendateien, die nur im Speicher liegen, obwohl der Workspace dauerhaft ist (je ein Satz). */
+  storageWarnings?: string[];
 }
 
 /** Stand der Datei-Übertragung für die Sync-Anzeige. */
