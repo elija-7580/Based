@@ -30,7 +30,8 @@ export const pointBox = (x: number, y: number): Box => ({ left: x, top: y, right
 // MARK: Menüs
 
 export type MenuEntry =
-  | { label: string; hint?: string; disabled?: boolean; danger?: boolean; checked?: boolean; run: () => void }
+  /** `icon`: Name aus dem Icon-Satz der App (gezeichnet über setMenuIcons). */
+  | { label: string; icon?: string; hint?: string; disabled?: boolean; danger?: boolean; checked?: boolean; run: () => void }
   | { separator: true }
   | { heading: string };
 

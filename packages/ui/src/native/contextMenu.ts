@@ -21,6 +21,8 @@ export interface ClipboardAccess {
 
 export interface ContextMenuOptions {
   clipboard?: ClipboardAccess;
+  /** Icons der App für die Menüeinträge (Name → SVG). */
+  icon?: (name: string) => Element | undefined;
   /** Für Entwickler: liefert `true`, wenn ausnahmsweise das Systemmenü kommen darf (Web-Inspektor). */
   allowNative?: (e: MouseEvent) => boolean;
 }
@@ -37,8 +39,9 @@ export function registerContextItems(provider: Provider): () => void {
 const TEXT_INPUTS = new Set(["text", "search", "url", "tel", "email", "password", "number", ""]);
 const mac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform ?? "");
 const mod = (key: string) => (mac ? `⌘${key}` : `Ctrl+${key}`);
-const LABELS: Record<TextAction, [string, string?]> = {
-  openLink: ["Open link"], copyLink: ["Copy link"], cut: ["Cut", mod("X")], copy: ["Copy", mod("C")], paste: ["Paste", mod("V")], selectAll: ["Select all", mod("A")],
+const LABELS: Record<TextAction, [string, string, string?]> = {
+  openLink: ["Open link", "expand"], copyLink: ["Copy link", "link"], cut: ["Cut", "cut", mod("X")], copy: ["Copy", "duplicate", mod("C")],
+  paste: ["Paste", "paste", mod("V")], selectAll: ["Select all", "selectAll", mod("A")],
 };
 
 function editableOf(target: Element): HTMLElement | null {
@@ -113,8 +116,8 @@ export function contextEntries(info: ContextInfo, clipboard: ClipboardAccess): M
   };
   const entries: MenuEntry[] = actions.map((a) => {
     if (a.id === "-") return { separator: true };
-    const [label, hint] = LABELS[a.id];
-    return { label, ...(hint ? { hint } : {}), ...(a.disabled ? { disabled: true } : {}), run: run[a.id] };
+    const [label, icon, hint] = LABELS[a.id];
+    return { label, icon, ...(hint ? { hint } : {}), ...(a.disabled ? { disabled: true } : {}), run: run[a.id] };
   });
   for (const p of providers) {
     const extra = p(info);

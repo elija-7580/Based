@@ -126,13 +126,13 @@ export function App({ client, history }: { client: StoreClient; history: History
     const mod = shortcutLabel;
     const apple = /Mac|iPhone|iPad/.test(navigator.platform);
     return [
-      { label: "Search…", hint: mod("K", { apple }), run: () => setQuickFind(true) },
-      { label: "New page", hint: apple ? "⌥⌘N" : "Ctrl+Alt+N", run: () => void newPage() },
+      { label: "Search…", icon: "search", hint: mod("K", { apple }), run: () => setQuickFind(true) },
+      { label: "New page", icon: "page", hint: apple ? "⌥⌘N" : "Ctrl+Alt+N", run: () => void newPage() },
       { separator: true },
-      { label: "Back", hint: mod("[", { apple }), run: () => history.back() },
-      { label: "Forward", hint: mod("]", { apple }), run: () => history.forward() },
+      { label: "Back", icon: "back", hint: mod("[", { apple }), run: () => history.back() },
+      { label: "Forward", icon: "forward", hint: mod("]", { apple }), run: () => history.forward() },
       { separator: true },
-      { label: "Settings", hint: mod(",", { apple }), run: () => history.navigate({ name: "settings" }) },
+      { label: "Settings", icon: "settings", hint: mod(",", { apple }), run: () => history.navigate({ name: "settings" }) },
     ];
   }), [history, newPage]);
   // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).

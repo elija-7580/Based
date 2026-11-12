@@ -25,6 +25,7 @@ import "./styles.css";
 // Nichts vom System: eigenes Kontextmenü, eigene Auswahllisten und Tooltips im ganzen Fenster (@based/ui/native).
 import "@based/ui/native.css";
 import { installNativeFree } from "@based/ui/native";
+import { iconElement } from "./icons.js";
 import { ShellDatabaseView } from "./databaseSlot.js";
 import { connectAssets } from "./assetBridge.js";
 import { connectEditor, ShellPageEditor } from "./editorSlot.js";
@@ -38,7 +39,7 @@ registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
 // Entwickeln öffnet ⌥⇧-Rechtsklick das Systemmenü (Web-Inspektor).
 {
   const clipboard = desktopClipboard();
-  installNativeFree({ ...(clipboard ? { clipboard } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
+  installNativeFree({ icon: iconElement, ...(clipboard ? { clipboard } : {}), ...(import.meta.env.DEV ? { allowNative: (e: MouseEvent) => e.altKey && e.shiftKey } : {}) });
 }
 // BSD-227: Diagnose (Log, Fehler, Hänger, Sitzungs-Marke) so früh wie möglich.
 installDiagnostics();
