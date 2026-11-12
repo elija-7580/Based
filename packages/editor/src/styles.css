@@ -21,6 +21,10 @@
   --bn-colors-shadow: var(--line);
   --bn-colors-border: var(--line);
   --bn-colors-side-menu: var(--muted);
+  /* BSD-318: Grau ist die Standardfarbe der Callouts aus Notion. BlockNotes Dunkel-Grau ist eine helle Fläche
+     unter heller Schrift; Grau kommt deshalb aus den Tokens. Die übrigen Farben: Backlog „Feinschliff · Blockfarben“. */
+  --bn-colors-highlights-gray-background: var(--surface-raised);
+  --bn-colors-highlights-gray-text: var(--muted);
   --bn-border-radius: var(--radius-md);
   --bn-border-radius-small: var(--radius-sm);
   --bn-border-radius-medium: var(--radius-md);
@@ -70,8 +74,17 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--surface-raised);
 }
+/* BSD-318: Der Kasten gehört an den ganzen Block – so liegen Kinder (mehrzeilige Callouts aus Notion) im Kasten statt
+   als zweite Fläche darunter, und eine Blockauswahl färbt den Kasten mit (vorher blieb er als helle Fläche stehen).
+   :where hält die Spezifität klein: Farbe (BlockNote) und Auswahl gewinnen. */
+.bx-editor :where(.bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { border-radius: var(--radius-md); }
+.bx-editor :where(.bn-block:not([data-background-color]):has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { background: var(--surface-raised); }
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group {
+  margin-left: calc(var(--space-4) + var(--icon-md) + var(--space-3) + var(--space-1));
+  padding: 0 var(--space-4) var(--space-3) 0;
+}
+.bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group > .bn-block-outer::before { content: none; }
 .bx-callout-icon { background: none; border: 0; padding: 0; font-size: var(--icon-md); line-height: var(--type-body-leading); cursor: pointer; }
 .bx-callout-text { flex: 1; min-width: 0; }
 
@@ -228,6 +241,9 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 
 /* Die Schreibfläche selbst bekommt keinen Fokusrahmen (die Schreibmarke zeigt den Fokus); eingebettete Felder schon. */
 .bx-editor .bn-editor:focus, .bx-editor .bn-editor:focus-visible { outline: none; }
+/* BSD-318: Bei einer Blockauswahl hat der Dokument-Rahmen den Fokus; die markierten Blöcke zeigen ihn schon – kein
+   Fokusring um die ganze Seite. */
+.bx-doc:focus, .bx-doc:focus-visible { outline: none; }
 
 /* Astryx setzt in seiner Basisschicht Farbe und Schrift auf p und h1–h6 (aus dem Astryx-Theme, das nicht dunkel
    wird). Im Editor gilt die Typografie von Based: die Textelemente erben vom Block. */

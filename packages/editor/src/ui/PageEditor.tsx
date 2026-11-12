@@ -664,19 +664,24 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
           </div>
         ) : null}
         {dropRect ? <div className="bx-drop-indicator" aria-hidden="true" style={{ left: dropRect.left, top: dropRect.top, width: dropRect.right - dropRect.left, height: dropRect.bottom - dropRect.top }} /> : null}
-        {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }"}</style> : null}
+        {selected.length ? <style>{selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block`).join(",\n") + " { background: var(--selected); border-radius: var(--radius-xs); }\n"
+          // BSD-318: Farbige Flächen im markierten Block (Hintergrundfarbe, Callout) nicht über die Auswahl legen.
+          + selected.map((id) => `.bx-doc [data-id="${CSS.escape(id)}"] > .bn-block :is([data-background-color], .bn-block)`).join(",\n") + " { background: transparent; }"}</style> : null}
         <BlockNoteView editor={editor} editable={editable} slashMenu={false} sideMenu={false} formattingToolbar={false}
           {...(shared.theme ? { theme: shared.theme } : {})} data-root={session.rootID}>
           <SuggestionMenuController triggerCharacter="/" getItems={async (q) => filterSuggestionItems(slashItems(editor, session, props.ancestors, shared), q)} />
           <SuggestionMenuController triggerCharacter="@" getItems={(q) => mentionItems(editor, q, mentionOptions)} />
           <SuggestionMenuController triggerCharacter="[[" getItems={(q) => mentionItems(editor, q, { ...mentionOptions, pagesOnly: true })} />
           <SideMenuController sideMenu={(p) => <SideMenu {...p} dragHandleMenu={() => <BlockMenu session={session} duplicate={duplicate} startMove={shared.startMove} blockLink={shared.blockLink} notify={shared.notify} />} />} />
-          <FormattingToolbarController formattingToolbar={() => (
-            <FormattingToolbar>
-              {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
-              {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
-            </FormattingToolbar>
-          )} />
+          {/* BSD-318: Bei einer Blockauswahl keine Formatleiste (die Editor-Auswahl spannt dann nur für Blockaktionen über die Blöcke). */}
+          {range ? null : (
+            <FormattingToolbarController formattingToolbar={() => (
+              <FormattingToolbar>
+                {shared.ai && editable ? <AskAIButton key="askAI" onAsk={() => { const r = aiRequest(editor, true); if (r) shared.startAI(r); }} /> : null}
+                {getFormattingToolbarItems().filter((item) => !String(item.key).startsWith("textAlign"))}
+              </FormattingToolbar>
+            )} />
+          )}
         </BlockNoteView>
       </div>
     </EnvContext.Provider>
