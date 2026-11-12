@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Gemeinsame React-Bausteine der Based-Oberflächen (BSD-153): virtualisierte Listen, Fenster-Rechnung; unter ./astryx dünne Based-Wrapper um Astryx.",
+  "description": "Gemeinsame React-Bausteine der Based-Oberfl\u00e4chen (BSD-153): virtualisierte Listen, Fenster-Rechnung; unter ./astryx d\u00fcnne Based-Wrapper um Astryx.",
   "exports": {
     ".": "./src/index.ts",
-    "./astryx": "./src/astryx/index.tsx"
+    "./astryx": "./src/astryx/index.tsx",
+    "./native": "./src/native/index.ts",
+    "./native.css": "./src/native/native.css"
   },
   "scripts": {
     "typecheck": "tsc -p .",

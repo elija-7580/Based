@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "BSD-155: Datenbank-Ansichten (Tabelle, Board, Liste, Galerie, Diagramm, Dashboard) für Based – React, virtualisiert",
+  "description": "BSD-155: Datenbank-Ansichten (Tabelle, Board, Liste, Galerie, Diagramm, Dashboard) f\u00fcr Based \u2013 React, virtualisiert",
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css"
@@ -19,6 +19,7 @@
   "dependencies": {
     "@based/core": "workspace:*",
     "@based/design-tokens": "workspace:*",
+    "@based/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.14.26"
   },
   "peerDependencies": {

@@ -15,7 +15,8 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-updater = "2"
-tauri-plugin-dialog = "2"
+# Zwischenablage für das Based-Kontextmenü (Einfügen ohne die System-Blase von WKWebView).
+tauri-plugin-clipboard-manager = "2"
 tauri-plugin-process = "2"
 # BSD-217: HTTP für den Notion-API-Import (kein CORS); erlaubte Adressen in capabilities/default.json.
 tauri-plugin-http = "2"

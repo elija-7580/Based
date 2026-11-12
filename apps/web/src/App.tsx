@@ -10,6 +10,9 @@ import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { Notice } from "./components/Notice.js";
+import { PromptHost } from "./components/PromptHost.js";
+import { registerContextItems } from "@based/ui/native";
+import { shortcutLabel } from "@based/ui";
 import { TabBar } from "./components/TabBar.js";
 import { Home } from "./screens/Home.js";
 import { PageView } from "./screens/PageView.js";
@@ -108,6 +111,21 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   const outlineRef = useRef(state.outline);
   outlineRef.current = state.outline;
+  // Rechtsklick auf freie Flächen: die wichtigsten Wege der App (in Textfeldern stehen dort nur die Text-Einträge).
+  useEffect(() => registerContextItems((info) => {
+    if (info.editable || info.selection) return [];
+    const mod = shortcutLabel;
+    const apple = /Mac|iPhone|iPad/.test(navigator.platform);
+    return [
+      { label: "Search…", hint: mod("K", { apple }), run: () => setQuickFind(true) },
+      { label: "New page", hint: apple ? "⌥⌘N" : "Ctrl+Alt+N", run: () => void newPage() },
+      { separator: true },
+      { label: "Back", hint: mod("[", { apple }), run: () => history.back() },
+      { label: "Forward", hint: mod("]", { apple }), run: () => history.forward() },
+      { separator: true },
+      { label: "Settings", hint: mod(",", { apple }), run: () => history.navigate({ name: "settings" }) },
+    ];
+  }), [history, newPage]);
   // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).
   const [palette, setPalette] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -219,6 +237,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       </main>
       <ChatDock client={client} history={history} route={route} />
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
+      <PromptHost />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
       {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
