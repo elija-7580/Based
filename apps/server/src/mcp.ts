@@ -142,8 +142,9 @@ export function createMcpServer(pages: Pages): McpServer {
       inputSchema: { task: z.string().min(1).max(4000).describe("What the main agent should do") },
     },
     guarded(({ task }: { task: string }) => {
-      const t = new AgentStore(pages.store).createTask(task.trim(), { source: "mcp" });
-      return text(`Sent to the main agent (task id: ${t.id}). It appears on Based's Home and runs there; its run shows up in list_runs.`);
+      new AgentStore(pages.store).createTask(task.trim(), { source: "mcp" });
+      // ohne Kennung: der Lauf entsteht erst, wenn Based den Auftrag aufnimmt (`based ask --wait` sagt das ehrlich)
+      return text("Sent to the main agent. It appears on Based's Home and runs there; its run shows up in list_runs once Based picks it up.");
     }),
   );
   server.registerTool(

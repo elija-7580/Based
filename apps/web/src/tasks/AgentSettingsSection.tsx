@@ -14,6 +14,7 @@ import { budgetLevel, formatEUR, formatFire, parseLayer, toMs, type AgentData, t
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { aiConfig } from "../chat/aiConfig.js";
 import { PERMISSIONS } from "../chat/AiSettingsSection.js";
+import { scheduleHint, useServerRuns } from "./serverRuns.js";
 import { Group, Row } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
 
@@ -21,6 +22,8 @@ const SAME = "same";
 
 export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
   const snap = state.agents;
+  // BSD-243 Teil 3b: laufen Zeitpläne auch bei geschlossener App (Server mit Modellzugang)?
+  const serverRuns = useServerRuns();
   const config = aiConfig();
   const ai = useSyncExternalStore(config.subscribe, config.getState);
   const main = snap?.main;
@@ -118,7 +121,7 @@ export function AgentSettingsSection({ client, state }: SettingsSectionProps) {
 
       <Group>
         <Text type="label">Schedules</Text>
-        <Text type="supporting" color="secondary">Scheduled runs start while Based is open in this browser or app.</Text>
+        <Text type="supporting" color="secondary" data-testid="schedules-where">{scheduleHint(serverRuns)}</Text>
         {snap.schedules.length === 0 ? <Text type="supporting" color="secondary">None yet — ask the main agent, e.g. “daily brief every morning at 6:30”.</Text> : null}
         {snap.schedules.map((s) => (
           <Row key={s.id} label={s.name} hint={`${s.data.when}${s.data.nextAt !== undefined ? ` · next ${formatFire(toMs(s.data.nextAt), Date.now())}` : " · no next time"}`}>
