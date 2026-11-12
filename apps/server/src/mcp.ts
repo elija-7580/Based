@@ -7,7 +7,7 @@ import { z } from "zod";
 import { PRIVATE, backlinksTo, duplicatePages, isPageLike, movePages, replaceInRichText, setFavorite } from "@based/core";
 import { PAGE_URI, ToolError, type Pages } from "./pages.js";
 import { Databases } from "./databases.js";
-import { AgentBrain, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
+import { AgentBrain, AgentStore, AGENT_TYPE, defaultMainAgent, getRecord, MAIN_AGENT_ID, mainArgument, pagePathCandidates, Permissions, targetPage, type AgentData } from "@based/brain";
 import type { WorkspaceStore } from "@based/core";
 import { resolveInboxText, createProjectText, getProjectText, getRunText, inboxText, listProjectsText, listRunsText, updateProjectStatusText } from "./runs.js";
 
@@ -18,7 +18,7 @@ export const INSTRUCTIONS = `Based is a Notion-like workspace (pages, blocks, da
 - Find pages with \`search\` or \`list_pages\`, read them with \`read_page\` (ids are UUIDs; links look like based://page/<id>).
 - Create with \`create_page\`, add content with \`append_markdown\`; use \`replace_page_content\` only when the user wants a rewrite.
 - Deleting moves pages to the Trash (\`trash_page\`, restorable with \`restore_page\`).
-- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user (\`resolve_inbox\` answers an approval, only if the user allowed it); projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
+- Agent runs: \`list_runs\`, \`get_run\`; \`inbox\` shows what needs the user (\`resolve_inbox\` answers an approval, only if the user allowed it); \`ask_main_agent\` hands Based's main agent a task; projects: \`list_projects\`, \`get_project\`, \`create_project\`, \`update_project_status\`.
 - Databases: \`list_databases\`, \`database_schema\`, \`query_database\`; write rows with \`add_row\` / \`update_row\` (properties by name, plain text values).
 - Schema and views: \`create_database\`, \`update_database\`, \`list_views\`, \`create_view\`, \`update_view\`, \`delete_view\`.
 - Writing tools follow the user's permission rules in Based; a refused call says why – don't retry it, tell the user.
@@ -132,6 +132,19 @@ export function createMcpServer(pages: Pages): McpServer {
     "inbox",
     { description: "What needs the user: runs waiting for an answer or approval", inputSchema: {}, annotations: { readOnlyHint: true } },
     guarded(() => text(inboxText(pages.store))),
+  );
+  // BSD-221 Teil 3e: dem Hauptagenten einen Auftrag geben (wie das Eingabefeld auf der Startseite, ADR 0013). Der
+  // Auftrag erscheint als Karte auf Home; ausgeführt wird er von Based (App oder Server mit Modellzugang).
+  server.registerTool(
+    "ask_main_agent",
+    {
+      description: "Give Based's main agent a task in plain words (like typing it on Based's Home). It shows up as a task card there and runs with the user's permission rules; check progress with list_runs.",
+      inputSchema: { task: z.string().min(1).max(4000).describe("What the main agent should do") },
+    },
+    guarded(({ task }: { task: string }) => {
+      const t = new AgentStore(pages.store).createTask(task.trim(), { source: "mcp" });
+      return text(`Sent to the main agent (task id: ${t.id}). It appears on Based's Home and runs there; its run shows up in list_runs.`);
+    }),
   );
   server.registerTool(
     "resolve_inbox",

@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterEach, describe, expect, it } from "vitest";
 import { openWorkspace, SyncClient } from "@based/sync";
 import { openNodeDatabase } from "@based/sync/node";
-import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, type ProjectData } from "@based/brain";
+import { AgentBrain, AGENT_TYPE, defaultMainAgent, listRecords, MAIN_AGENT_ID, PROJECT_TYPE, putRecord, RUN_TYPE, TASK_TYPE, type ProjectData } from "@based/brain";
 import { startApp, TOKEN } from "./helpers.js";
 
 type ToolResult = { content: { type: string; text: string }[]; isError?: boolean };
@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox", "ask_main_agent"].sort(),
     );
   });
 
@@ -387,5 +387,14 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     expect(listRecords<{ status: string }>(store, RUN_TYPE).find((r) => r.id === "run-2")!.data.status).toBe("failed");
     expect((await call("resolve_inbox", { run_id: "run-2", decision: "allow" })).isError).toBe(true); // wartet nicht mehr
     expect((await call("resolve_inbox", { run_id: "nope", decision: "allow" })).isError).toBe(true);
+  });
+
+  it("BSD-221 Teil 3e: ask_main_agent legt einen Auftrag für die Startseite an (Quelle mcp)", async () => {
+    const { app, call } = await httpClient();
+    const r = await call("ask_main_agent", { task: "Summarize this week's notes" });
+    expect(textOf(r)).toContain("Sent to the main agent");
+    const tasks = listRecords<{ state: string; input: string; source?: string }>(app.sync.store, TASK_TYPE);
+    expect(tasks.map((t) => t.data)).toEqual([expect.objectContaining({ state: "received", input: "Summarize this week's notes", source: "mcp" })]);
+    expect((await call("ask_main_agent", { task: "" })).isError).toBe(true);
   });
 });
