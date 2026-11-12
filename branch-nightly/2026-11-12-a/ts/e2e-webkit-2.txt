@@ -1,2 +1,61 @@
-cancelled 104159c86cc4294a8adbd9935b678e948581622d
-(kein Log – Lauf vorher abgebrochen)
+success 08e540484158988033caca5b70c18b60033c58f2
+  1) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ──────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
+
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
+
+  2) [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.bn-editor[contenteditable=\'true\']').first().locator('[data-inline-content-type=\'mention\']')
+    Expected: 2
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.bn-editor[contenteditable=\'true\']').first().locator('[data-inline-content-type=\'mention\']') with timeout 5000ms
+      - waiting for locator('.bn-editor[contenteditable=\'true\']').first().locator('[data-inline-content-type=\'mention\']')
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      50 |   await page.keyboard.type("Today: [[Launch plan]] and [[Brand new idea]] done");
+      51 |   const mentions = editor.locator("[data-inline-content-type='mention']");
+    > 52 |   await expect(mentions).toHaveCount(2);
+         |                          ^
+      53 |   await expect(mentions.first()).toContainText("Launch plan");
+      54 |   await expect(mentions.nth(1)).toContainText("Brand new idea");
+      55 |   await expect(editor).not.toContainText("[[");
+        at /home/runner/work/Based/Based/apps/web/e2e/unlinked.spec.ts:52:26
+
+    Error Context: test-results/unlinked--Titel-fertig-get-cf7f1-neu-angelegt-BSD-90-Teil-2--webkit/error-context.md
+
+  2 flaky
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ───────
+    [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) 
+  12 skipped
+  82 passed (5.1m)
