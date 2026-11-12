@@ -1,5 +1,4 @@
-failure f167b9fe8dbfcede99fecca9fa8336cbe31dcdd3
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+failure 38f1e056b865c0137bdc90e884bf37053a410a2a
 
     Error: expect(received).toEqual(expected) // deep equality
 
@@ -23,39 +22,40 @@ failure f167b9fe8dbfcede99fecca9fa8336cbe31dcdd3
 
     Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit-retry1/error-context.md
 
-  2) [webkit] › e2e/shell.spec.ts:157:1 › Neuladen behält Daten (OPFS) @smoke ──────────────────────
+  2) [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ──────
 
-    Error: expect(locator).toHaveCount(expected) failed
+    Error: expect(received).toEqual(expected) // deep equality
 
-    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
-    Expected: 0
-    Received: 1
-    Timeout:  5000ms
+    - Expected  - 1
+    + Received  + 0
 
-    Call log:
-      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
-      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
-        14 × locator resolved to 1 element
-           - unexpected value "1"
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-      170 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-      171 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
-    > 172 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
-          |                                                                            ^
-      173 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
-      174 |   } finally {
-      175 |     await ctx.close();
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:172:76
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
 
-    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
 
   1 failed
     [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ────────────────────
   1 flaky
-    [webkit] › e2e/shell.spec.ts:157:1 › Neuladen behält Daten (OPFS) @smoke ───────────────────────
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ───────
   12 skipped
-  84 passed (5.3m)
+  84 passed (7.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
