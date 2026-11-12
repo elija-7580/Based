@@ -10,7 +10,7 @@ import { plainText } from "@based/core";
 import { RowProperties, type PeekRenderProps } from "@based/database-ui";
 import { BlockView } from "../components/BlockView.js";
 import { slots } from "../slots.js";
-import { DbIcon } from "./icons.js";
+import { Icon } from "../icons.js";
 import "./rowPeek.css";
 
 /** Im Peek geöffnete Inline-Datenbanken öffnen ihre Zeilen als ganze Seite (keine Peeks in Peeks). */
@@ -88,12 +88,12 @@ export function RowPeek(p: Props) {
   const position = p.index >= 0 ? `${(p.index + 1).toLocaleString("en-US")} of ${p.total.toLocaleString("en-US")}` : "Not in this view";
   const nav = (
     <span className="row-peek-nav">
-      <IconButton label="Previous page" tooltip="Previous page (⌃⇧↑)" variant="ghost" size="sm" icon={<DbIcon name="up" />} isDisabled={!p.onPrev} onClick={() => p.onPrev?.()} />
-      <IconButton label="Next page" tooltip="Next page (⌃⇧↓)" variant="ghost" size="sm" icon={<DbIcon name="down" />} isDisabled={!p.onNext} onClick={() => p.onNext?.()} />
+      <IconButton label="Previous page" tooltip="Previous page (⌃⇧↑)" variant="ghost" size="sm" icon={<Icon name="up" size={16} />} isDisabled={!p.onPrev} onClick={() => p.onPrev?.()} />
+      <IconButton label="Next page" tooltip="Next page (⌃⇧↓)" variant="ghost" size="sm" icon={<Icon name="down" size={16} />} isDisabled={!p.onNext} onClick={() => p.onNext?.()} />
     </span>
   );
   const full = p.onOpenFull
-    ? <IconButton label="Open as full page" tooltip="Open as full page" variant="ghost" size="sm" icon={<DbIcon name="expand" />} onClick={() => p.onOpenFull?.()} />
+    ? <IconButton label="Open as full page" tooltip="Open as full page" variant="ghost" size="sm" icon={<Icon name="expand" size={16} />} onClick={() => p.onOpenFull?.()} />
     : null;
   const subtitle = <span className="row-peek-position" data-testid="row-peek-position">{position}</span>;
   const content = <LayoutContent><Body p={p} /></LayoutContent>;

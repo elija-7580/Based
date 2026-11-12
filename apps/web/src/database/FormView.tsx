@@ -23,7 +23,7 @@ import {
   formDescription, formQuestions, formTitle, hiddenFormProperties, setFormDescription, setFormTitle, setQuestionDescription,
   setQuestionRequired, submitForm, validateAnswer, type FormAnswer, type FormAnswers, type FormQuestion, type FormRenderProps, type PlaceAnswer,
 } from "@based/database-ui";
-import { DbIcon } from "./icons.js";
+import { Icon } from "../icons.js";
 import "./form.css";
 
 /** Eingabe, die lokal tippt und an den Store schreibt (ohne dass Store-Echos den Cursor springen lassen). */
@@ -41,8 +41,8 @@ function EditQuestion({ p, q, index, count, prev }: { p: FormRenderProps; q: For
     <section className="db-form-question" aria-label={`Question ${name}`} data-testid="form-question">
       <HStack gap={2}>
         <span className="db-form-qtitle"><Text type="label">{name}</Text> <Text type="supporting">{PROPERTY_TYPE_LABELS[q.prop.type] ?? q.prop.type}</Text></span>
-        <IconButton label={`Move ${name} up`} variant="ghost" size="sm" icon={<DbIcon name="up" />} isDisabled={index === 0} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(-1))} />
-        <IconButton label={`Move ${name} down`} variant="ghost" size="sm" icon={<DbIcon name="down" />} isDisabled={index === count - 1} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(1))} />
+        <IconButton label={`Move ${name} up`} variant="ghost" size="sm" icon={<Icon name="up" size={16} />} isDisabled={index === 0} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(-1))} />
+        <IconButton label={`Move ${name} down`} variant="ghost" size="sm" icon={<Icon name="down" size={16} />} isDisabled={index === count - 1} onClick={() => movePropertyInView(p.store, p.view.id, q.prop.id, prev(1))} />
         {q.prop.type !== "title" && <Button label={`Remove ${name}`} variant="ghost" size="sm" onClick={() => setPropertyVisible(p.store, p.view.id, q.prop.id, false)}>Remove</Button>}
       </HStack>
       <TextInput label="Help text" size="sm" width="100%" placeholder="Add a description for this question" value={desc} onChange={(v) => { setDesc(v); setQuestionDescription(p.store, p.view.id, q.prop.id, v); }} onKeyDown={(e) => { if (e.key === "Enter") doneDesc(); }} />
