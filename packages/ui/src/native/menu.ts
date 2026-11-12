@@ -10,6 +10,9 @@ const icon = (name: string | undefined) => (name ? iconRenderer?.(name) : undefi
 /** Icon aus dem Satz der App als DOM-Element (für Menüs anderer Bausteine, z. B. das Blockmenü des Editors). */
 export const menuIcon = (name: string): Element | undefined => icon(name);
 
+/** Icon-Größe der App-Menüs (wie <Icon size={18}> in .menu). */
+const ICON_SIZE = 18;
+
 export interface MenuOptions {
   label?: string;
   role?: "menu" | "listbox";
@@ -26,7 +29,7 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
   el.className = "nf-menu";
   el.setAttribute("role", role);
   if (opts.label) el.setAttribute("aria-label", opts.label);
-  if (entries.some((e) => "label" in e && e.icon && iconRenderer)) el.classList.add("nf-with-icons");
+  const withIcons = entries.some((e) => "label" in e && e.icon && iconRenderer);
   const rows: (HTMLElement | undefined)[] = entries.map((e, i) => {
     if ("separator" in e) {
       const s = document.createElement("div");
@@ -52,6 +55,12 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
     if (glyph) {
       glyph.classList.add("nf-icon");
       row.appendChild(glyph);
+    } else if (withIcons) {
+      // Platz eines Icons, damit die Beschriftungen fluchten (Breite wie die Icons der App).
+      const gap = document.createElement("span");
+      gap.className = "nf-icon";
+      gap.style.width = `${ICON_SIZE}px`;
+      row.appendChild(gap);
     }
     const label = document.createElement("span");
     label.className = "nf-label";
@@ -66,9 +75,10 @@ export function showMenu(entries: readonly MenuEntry[], anchor: LayerAnchor, opt
     if (e.checked) {
       const mark = icon("check");
       const check = document.createElement("span");
-      check.className = mark ? "nf-check-icon" : "nf-check";
+      check.className = "nf-check";
       check.setAttribute("aria-hidden", "true");
       if (mark) check.appendChild(mark);
+      else check.textContent = "✓";
       row.appendChild(check);
     }
     el.appendChild(row);

@@ -698,3 +698,6 @@ button.row:hover, a.row:hover { background: var(--bg); }
 :root[data-report="capturing"] * {
   cursor: progress;
 }
+
+/* Rückfragen der App (components/PromptHost.tsx): Zeilenumbrüche des Hinweistexts bleiben. */
+.prompt-text { margin: 0; white-space: pre-line; }

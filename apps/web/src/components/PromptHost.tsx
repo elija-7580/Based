@@ -1,6 +1,5 @@
 // Zeichnet die Dialoge aus shell/prompts.ts (Update-Rückfrage, Hinweise) als Based-Dialog.
 import { useSyncExternalStore } from "react";
-import { Text } from "@astryxdesign/core/Text";
 import { BasedButton, BasedDialog } from "@based/ui/astryx";
 import { prompts } from "../shell/prompts.js";
 
@@ -15,7 +14,7 @@ export function PromptHost() {
         <BasedButton label={p.okLabel} variant="primary" onClick={() => answer(true)} />
       </>}>
       {/* Mehrzeilig (Update-Hinweis mit „What’s new“): Zeilenumbrüche bleiben. */}
-      <Text type="body" data-testid="prompt-text"><span style={{ whiteSpace: "pre-line" }}>{p.text}</span></Text>
+      <p className="t-body prompt-text" data-testid="prompt-text">{p.text}</p>
     </BasedDialog>
   );
 }
