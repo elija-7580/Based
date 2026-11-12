@@ -1,61 +1,61 @@
-success 75312b0045a75e7336810d73457efd81b505e401
-(node:10502) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  77 [webkit] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (3.8s)
-  ✓  79 [webkit] › e2e/switch-parity.spec.ts:66:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.1s)
-  ✓  80 [webkit] › e2e/switch-parity.spec.ts:82:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (8.5s)
-  -  81 [webkit] › e2e/switch-parity.spec.ts:122:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓  78 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (20.3s)
-(node:11237) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  82 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.7s)
-  ✓  83 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.2s)
-  ✓  84 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (14.5s)
-  ✓  85 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (17.5s)
-  ✓  86 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (4.3s)
-  ✓  88 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.7s)
-  ✓  87 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (5.9s)
-  -  90 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  91 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓  89 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.2s)
-  ✓  93 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.3s)
-  ✓  92 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (7.2s)
-  ✓  94 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (1.7s)
-  ✓  96 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.6s)
-  ✓  95 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (5.1s)
-  ✓  97 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.4s)
-  ✓  98 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.3s)
-  ✓  99 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.2s)
+failure 5b1a2e1f8121fd518fc974a9874fe23399be76ab
+  ✓   98 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (3.6s)
+  ✓  100 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.5s)
+  ✓  101 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.9s)
 
 
-  1) [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke ──────────────────────
+  1) [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ───────────────────
 
-    Error: expect(locator).toHaveCount(expected) failed
+    Error: expect(received).toEqual(expected) // deep equality
 
-    Locator:  getByRole('treeitem', { name: 'Welcome to Based' })
-    Expected: 0
-    Received: 1
-    Timeout:  5000ms
+    - Expected  - 1
+    + Received  + 4
 
-    Call log:
-      - Expect "toHaveCount" getByRole('treeitem', { name: 'Welcome to Based' }) with timeout 5000ms
-      - waiting for getByRole('treeitem', { name: 'Welcome to Based' })
-        14 × locator resolved to 1 element
-           - unexpected value "1"
+    - Array []
+    + Array [
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Mint“ (26 px)",
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Sky“ (21 px)",
+    + ]
 
+      140 |     { name: "chat", hash: "#chat" }, { name: "settings", hash: "#prefs-my-settings" },
+      141 |   ], "empty", browserName);
+    > 142 |   expect(found).toEqual([]);
+          |                 ^
+      143 | });
+      144 |
+      145 | const LONG_TITLE = "A very long page title that keeps going on and on to test truncation in every place it appears, sidebar tabs breadcrumb";
+        at /home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:142:17
 
-      184 |     await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
-      185 |     await expect(page.getByRole("treeitem", { name: "Kept after reload" })).toBeVisible();
-    > 186 |     await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveCount(0);
-          |                                                                            ^
-      187 |     await expect(page.getByRole("button", { name: /^Trash/ })).toContainText("1");
-      188 |   } finally {
-      189 |     await ctx.close();
-        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:186:76
+    Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit/error-context.md
 
-    Error Context: test-results/shell-Neuladen-behält-Daten-OPFS--webkit/error-context.md
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
-  1 flaky
-    [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke ───────────────────────
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 4
+
+    - Array []
+    + Array [
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Mint“ (26 px)",
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Sky“ (21 px)",
+    + ]
+
+      140 |     { name: "chat", hash: "#chat" }, { name: "settings", hash: "#prefs-my-settings" },
+      141 |   ], "empty", browserName);
+    > 142 |   expect(found).toEqual([]);
+          |                 ^
+      143 | });
+      144 |
+      145 | const LONG_TITLE = "A very long page title that keeps going on and on to test truncation in every place it appears, sidebar tabs breadcrumb";
+        at /home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:142:17
+
+    Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ────────────────────
   12 skipped
-  85 passed (5.1m)
+  87 passed (4.1m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
