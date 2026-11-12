@@ -98,6 +98,9 @@ test("Editor in Ruhe und in seinen Zuständen", async ({ page, browserName }) =>
       await page.keyboard.type("hea");
       await page.waitForTimeout(200);
       await shoot("slash-filtered", theme, w);
+      // Keine leeren Gruppenüberschriften (BSD-305: doppelte Gruppen ließen sie beim Filtern stehen)
+      const empty = await page.locator(".bn-suggestion-menu").evaluate((m) => [...m.children].filter((c, i, all) => c.classList.contains("bn-suggestion-menu-label") && !(all[i + 1]?.classList.contains("bn-suggestion-menu-item"))).map((c) => c.textContent));
+      expect(empty).toEqual([]);
       await page.keyboard.type("zzzz");
       await page.waitForTimeout(200);
       await shoot("slash-empty", theme, w);
