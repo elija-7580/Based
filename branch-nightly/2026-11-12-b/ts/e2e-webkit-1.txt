@@ -1,14 +1,4 @@
-cancelled a27df88e33eae9c14f5d965cc64025a38ac28f64
-[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
-[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
+cancelled d40c8420557fffec4e016ead142ef60218cac3f1
 [WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
 [WebServer] 
 [WebServer] 
@@ -17,45 +7,55 @@ cancelled a27df88e33eae9c14f5d965cc64025a38ac28f64
 [WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
 [WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-Running 114 tests using 2 workers, shard 1 of 2
+Running 115 tests using 2 workers, shard 1 of 2
 
-(node:4717) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:4807) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    1 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (14.9s)
-  ✓    3 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (4.9s)
-  ✓    4 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (4.1s)
-  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (3.2s)
-  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (3.4s)
-  ✓    7 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (2.6s)
-  ✓    8 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (3.1s)
+  ✓    1 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (15.4s)
+  ✓    3 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (5.6s)
+  ✓    4 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (4.9s)
+  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (4.6s)
+  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (4.0s)
+Library: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen
+  ✓    7 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (3.8s)
+  ✘    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (41.3s)
+  ✓    8 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (3.0s)
+  -   10 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+  ✓   11 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (9.5s)
+  ✓   12 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (3.5s)
+  ✓   13 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.2s)
+  ✓   14 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (3.2s)
+  ✓   15 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (4.6s)
+  -   16 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
+(node:6116) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
 
-  -    9 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (38.7s)
-  -   11 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-(node:5585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+  ✓    9 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (retry #1) (34.6s)
+  -   18 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓   17 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (7.0s)
+(node:6347) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   10 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (7.8s)
-  ✓   12 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (6.2s)
-  ✓   13 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (2.8s)
-(node:5861) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:6374) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   14 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.0s)
-  ✓   15 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.7s)
-  ✓   17 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (3.3s)
-  ✓   18 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (2.8s)
-  -   19 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-  ✓   16 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (10.4s)
-(node:6284) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   21 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (6.5s)
-  ✓   22 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (7.7s)
-  ✓   20 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (15.7s)
-  ✓   23 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (6.9s)
-  ✓   25 [webkit] › e2e/coding.spec.ts:358:1 › BSD-315: #coding auf dem Handy (390 × 844) (4.7s)
-  ✓   26 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (6.1s)
-  ✓   27 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (5.9s)
-  ✓   28 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (2.9s)
-  ✓   29 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (3.9s)
-  ✓   30 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (6.4s)
-  ✓   31 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (5.5s)
-  ✓   32 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (5.7s)
+  ✓   19 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.1s)
+  ✓   21 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (12.1s)
+  ✓   20 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (18.1s)
+  ✓   22 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (9.3s)
+  ✓   24 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (9.0s)
+  ✓   25 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (8.9s)
+  ✓   26 [webkit] › e2e/coding.spec.ts:358:1 › BSD-315: #coding auf dem Handy (390 × 844) (6.3s)
+  ✓   27 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (7.0s)
+  ✓   28 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (7.6s)
+  ✓   29 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (3.5s)
+  ✓   30 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (5.4s)
+  ✓   31 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (7.9s)
+  ✓   32 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (7.8s)
+  ✓   33 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (7.9s)
+  ✓   34 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (7.1s)
+  ✓   35 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (4.3s)
+  ✓   36 [webkit] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (15.5s)
+  ✓   37 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (9.7s)
+  ✓   38 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (2.9s)
+  ✓   39 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (4.9s)
+  ✓   40 [webkit] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (4.2s)
+  ✓   41 [webkit] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (7.7s)
