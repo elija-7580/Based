@@ -107,6 +107,36 @@ test("Text über mehrere Absätze markieren; über einen Block ohne Text wird es
   await expect.poll(() => topOrder(page)).toEqual(["One", "Two"]);
 });
 
+// BSD-298/299 (BSD-322 Teil 5): Liegt beim Ziehen etwas Schwebendes über dem Zielblock (die ausblendende Formatleiste
+// der vorigen Auswahl, ein Tooltip), zählt trotzdem der Block darunter – vorher endete die Auswahl einen Block zu früh.
+test("Blockauswahl reicht bis unter schwebende Leisten", async ({ page, browserName }) => {
+  test.skip(browserName === "webkit", "WebKit/Linux verliert simulierte Mausereignisse über dem Trenner (siehe oben)");
+  await createPage(page, "Select overlay");
+  await openPage(page, "Select overlay");
+  await editor(page).locator(".bn-block-content").first().click();
+  await page.evaluate((md) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", md);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, "One\n\nTwo\n\nThree\n\n---\n\nFour\n\nFive");
+  await expect.poll(() => topOrder(page)).toEqual(["One", "Two", "Three", "divider", "Four", "Five"]);
+  const t3 = (await content(page, "Three").boundingBox())!;
+  await page.evaluate((r) => {
+    const o = document.createElement("div");
+    o.setAttribute("data-testid", "fake-toolbar");
+    Object.assign(o.style, { position: "fixed", left: `${r.x - 10}px`, top: `${r.y - 4}px`, width: "300px", height: `${r.height + 8}px`, zIndex: "9999" });
+    document.body.appendChild(o);
+  }, t3);
+  const five = (await content(page, "Five").boundingBox())!;
+  await dragSelect(page, { x: five.x + 30, y: five.y + five.height / 2 }, { x: t3.x + 2, y: t3.y + t3.height / 2 });
+  const [i3, i4, i5] = [await idOf(page, "Three"), await idOf(page, "Four"), await idOf(page, "Five")];
+  await expect.poll(() => selection(page)).toContain(i3);
+  const sel = (await selection(page))!.split(" ");
+  expect(sel).toContain(i4);
+  expect(sel).toContain(i5);
+  expect(sel).toHaveLength(4);
+});
+
 test("Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden", async ({ page, browserName }) => {
   await setup(page);
   const two = (await content(page, "Two").boundingBox())!;
