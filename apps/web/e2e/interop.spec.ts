@@ -50,7 +50,7 @@ async function quickFind(page: Page, q: string) {
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen", async ({ page }) => {
+test("Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen", { tag: "@smoke" }, async ({ page }) => {
   // Text aus dem Inhalt der Willkommensseite (nicht im Titel)
   let hits = await quickFind(page, "sync server in Settings");
   await expect(hits.first()).toContainText("Welcome to Based");
@@ -230,7 +230,7 @@ test("Export: Markdown mit Frontmatter und JSON (BSD-260)", async ({ page }) => 
   expect(v.blocks.length).toBeGreaterThan(0);
 });
 
-test("Export: Seite als Markdown, Workspace als Based-Archiv", async ({ page }) => {
+test("Export: Seite als Markdown, Workspace als Based-Archiv", { tag: "@smoke" }, async ({ page }) => {
   await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
   await page.getByRole("button", { name: "Export", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Export page" });

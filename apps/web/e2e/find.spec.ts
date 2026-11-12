@@ -23,7 +23,7 @@ async function newPageWith(page: Page, lines: string[]) {
   return editor;
 }
 
-test("⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt", async ({ page }) => {
+test("⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   const editor = await newPageWith(page, ["Café notes for the café team", "Nothing here", "A third CAFE line"]);
   await page.keyboard.press("ControlOrMeta+f");
@@ -67,7 +67,7 @@ test("•••-Menü: Find in page und Wortzahl", async ({ page }) => {
   await expect(page.getByTestId("find-bar").getByRole("textbox")).toBeFocused();
 });
 
-test("Quick Find: Title only, In this page und Sortierung filtern die Treffer", async ({ page }) => {
+test("Quick Find: Title only, In this page und Sortierung filtern die Treffer", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   await newPageWith(page, ["the zebra lives in this text"]);
   await page.getByLabel("Page title").fill("Animals");

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 // BSD-215: Tabelle mit 50 000 Zeilen öffnen, ans Ende scrollen, eine Zelle ändern. Grenzwerte großzügig (geteilte
 // Maschine, zwei Browser); die gemessenen Zeiten stehen als Anmerkung im Testbericht.
 
-test("50 000 Zeilen: öffnen, scrollen, Zelle ändern", async ({ page }, info) => {
+test("50 000 Zeilen: öffnen, scrollen, Zelle ändern", { tag: "@perf" }, async ({ page }, info) => {
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto("/");

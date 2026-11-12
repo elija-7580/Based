@@ -30,7 +30,7 @@ async function newTopLevelPage(page: Page, title: string) {
 
 test.beforeEach(async ({ page }) => fresh(page));
 
-test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen", async ({ page }) => {
+test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen", { tag: "@smoke" }, async ({ page }) => {
   await newTopLevelPage(page, "Project notes");
 
   // Umbenennen in der Seitenleiste (Kontextmenü)
@@ -71,7 +71,7 @@ test("Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig
   await expect(page.getByRole("treeitem", { name: "Project plan" })).toHaveCount(0);
 });
 
-test("Vor und zurück; Favoriten; Ziehen sortiert um", async ({ page }) => {
+test("Vor und zurück; Favoriten; Ziehen sortiert um", { tag: "@smoke" }, async ({ page }) => {
   await newTopLevelPage(page, "Alpha");
   await newTopLevelPage(page, "Beta");
   await page.getByRole("button", { name: "Back" }).click();
@@ -89,7 +89,7 @@ test("Vor und zurück; Favoriten; Ziehen sortiert um", async ({ page }) => {
   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
 });
 
-test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info) => {
+test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
   await based(page).seed(5000);
   await expect(page.getByRole("treeitem", { name: "Page 0001" })).toBeVisible();
   await page.keyboard.press("ControlOrMeta+k");
@@ -112,7 +112,7 @@ test("Quick Find über 5.000 Seiten antwortet in < 50 ms", async ({ page }, info
   await expect(page.getByRole("dialog", { name: "Quick Find" })).toHaveCount(0);
 });
 
-test("5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln", async ({ page }, info) => {
+test("5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln", { tag: "@perf" }, async ({ page }, info) => {
   await based(page).seed(5000);
   await expect(page.getByRole("treeitem", { name: "Page 0001" })).toBeVisible();
   const measure = () => page.evaluate(async () => {
@@ -154,7 +154,7 @@ test("5.000 Seiten in der Seitenleiste scrollen ohne Ruckeln", async ({ page }, 
   await expect(page.getByRole("treeitem", { name: "Page 5000" })).toBeVisible();
 });
 
-test("Neuladen behält Daten (OPFS)", async ({ playwright, browserName, baseURL }) => {
+test("Neuladen behält Daten (OPFS)", { tag: "@smoke" }, async ({ playwright, browserName, baseURL }) => {
   // WebKit hat OPFS nur in einem dauerhaften Profil, deshalb für beide Browser ein eigenes Profil.
   const dir = mkdtempSync(join(tmpdir(), "based-opfs-"));
   const ctx = await playwright[browserName].launchPersistentContext(dir, { baseURL: baseURL! });

@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
 });
 
-test("Shell mit Seitenleiste und Home", async ({ page }) => {
+test("Shell mit Seitenleiste und Home", { tag: "@smoke" }, async ({ page }) => {
   await expect(page.getByTestId("based-root")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Good (morning|afternoon|evening|night)/);
@@ -21,13 +21,13 @@ test("Shell mit Seitenleiste und Home", async ({ page }) => {
   await expect(page.getByRole("treeitem", { name: "Welcome to Based" })).toHaveAttribute("aria-selected", "true");
 });
 
-test("Composer-Picker öffnen ein Menü und übernehmen die Wahl", async ({ page }) => {
+test("Composer-Picker öffnen ein Menü und übernehmen die Wahl", { tag: "@smoke" }, async ({ page }) => {
   await page.getByRole("button", { name: /Compute: Auto/ }).click();
   await page.getByRole("option", { name: /Deep/ }).click();
   await expect(page.getByRole("button", { name: /Compute: Deep/ })).toBeVisible();
 });
 
-test("Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute", async ({ page }) => {
+test("Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute", { tag: "@smoke" }, async ({ page }) => {
   const html = page.locator("html");
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(html).toHaveAttribute("data-theme", "light");
@@ -55,7 +55,7 @@ test("Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute", async ({ 
   await expect(html).not.toHaveAttribute("data-calm", /.*/);
 });
 
-test("Show agent details blendet Planer und Laufzeit auf Home ein", async ({ page }) => {
+test("Show agent details blendet Planer und Laufzeit auf Home ein", { tag: "@smoke" }, async ({ page }) => {
   await expect(page.getByText(/^planner /)).toHaveCount(0);
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("switch", { name: "Show agent details" }).click();

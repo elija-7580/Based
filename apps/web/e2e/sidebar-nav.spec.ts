@@ -13,7 +13,7 @@ async function ready(page: Page) {
 const nav = (page: Page) => page.getByRole("navigation", { name: "Workspace" });
 const topNames = (page: Page) => nav(page).locator(":scope > .nav-item").allInnerTexts();
 
-test("oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar", async ({ page }) => {
+test("oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   expect((await topNames(page)).map((t) => t.split("\n")[0]!.trim())).toEqual(["Search", "Home", "Chat"]);
   const tools = nav(page).getByRole("group", { name: "Workspace tools" });
@@ -44,7 +44,7 @@ test("oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings b
   }
 });
 
-test("Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen", async ({ page }) => {
+test("Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   const tools = nav(page).getByRole("group", { name: "Workspace tools" });
   await tools.getByRole("button", { name: "Library" }).click({ button: "right" });

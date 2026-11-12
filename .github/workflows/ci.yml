@@ -1,16 +1,22 @@
-# Copy this file to .github/workflows/ci.yml (the agent integration cannot write workflow files):
-#   github.com/elija-7580/Based → Add file → Create new file → name ".github/workflows/ci.yml" → paste → Commit.
-# Afterwards GitHub builds and tests everything on each push; results appear in the "Actions" tab and as ✓ / ✗ next to each commit.
-# Jobs: ts (TypeScript-Stack, ADR 0011: pnpm typecheck/lint/test inkl. Golden Fixtures, Playwright WebKit + Chromium)
-#   · fixtures (BSD-168: die eingefrorene Swift-App liegt in legacy/ und ist nur noch Fixture-Quelle; BasedCore-Tests
-#   prüfen, dass fixtures/ zum Swift-Code passt – im gepinnten swift:6.2-noble-Container, nur wenn legacy/ oder
-#   fixtures/ sich ändern). Logs go to the ci-logs branch on pushes only (not for pull requests).
+# Vorlage: ci/github-actions-ci.yml (gleicher Inhalt; die Agent-Integration darf Workflow-Dateien sonst nicht schreiben).
+# GitHub baut und testet bei jedem Push nach main und nightly/**, bei Pull Requests und von Hand; Ergebnisse im Tab
+# „Actions“, als ✓ / ✗ am Commit und auf dem Branch ci-logs (nur bei Pushes).
+#
+# BSD-322 „CI schnell und verlässlich“ – Jobs:
+#   ts-fast   Merge-Check (Ziel < 10 min): typecheck, lint, Unit-Tests (beide Datenformate), Playwright-Smoke (@smoke,
+#             Chromium). Wer mergen will, wartet nur hierauf. Lokal: ci/typecheck/run-ts.sh --fast
+#   e2e       voller Playwright-Lauf ohne @perf als Matrix: Chromium und WebKit, je zwei Shards, fail-fast aus.
+#   perf      Zeitmessungen (@perf) in eigenem Job, blockiert nicht (continue-on-error); Ergebnis als Warnung im Log.
+#   report    sammelt alles und schreibt ts/status.txt (grün | rot | abgebrochen) – auch bei Abbruch oder Zeitlimit.
+#   fixtures  BSD-168: Swift (legacy/) nur noch als Golden-Fixture-Quelle, nur wenn legacy/ oder fixtures/ sich ändern.
+# Logs auf ci-logs: main → ts/, ts-fast/, core/; andere Branches → branch-<name>/… (überschreiben main nicht).
+# Jeder Schritt hat ein eigenes Zeitlimit unter dem des Jobs, damit „Publish log“ auch nach einer Zeitüberschreitung läuft.
 # Releases: Based Next baut .github/workflows/desktop.yml; die Swift-Releases (release.yml) sind abgeschaltet.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "nightly/**"]
     paths-ignore: ["replica/**", "**/*.md"]
   pull_request:
   workflow_dispatch:
@@ -22,13 +28,15 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  # Ordner auf ci-logs: main schreibt nach ts/…, jeder andere Branch nach branch-<name>/ts/…
+  LOG_PREFIX: ${{ github.ref == 'refs/heads/main' && '' || format('branch-{0}/', github.ref_name) }}
+
 jobs:
-  # BSD-13: TypeScript-Stack (ADR 0011). Gleiche Prüfungen wie ci/typecheck/run-ts.sh --e2e.
-  ts:
-    name: TypeScript (pnpm, Playwright)
+  ts-fast:
+    name: Merge-Check (typecheck, lint, unit, Smoke)
     runs-on: ubuntu-latest
-    # BSD-168: der volle Playwright-Lauf (WebKit + Chromium) braucht inzwischen > 20 min
-    timeout-minutes: 45
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -37,22 +45,156 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Typecheck, Lint, Tests (inkl. Fixture-Runner)
+      - name: Playwright-Version
+        id: pw
+        run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+      - name: Typecheck, Lint, Tests (inkl. Fixture-Runner, beide Datenformate)
+        timeout-minutes: 12
         run: |
           set -o pipefail
-          { pnpm -r typecheck && pnpm lint && pnpm -r test; } 2>&1 | tee ts.log
-      - name: Playwright (WebKit + Chromium)
+          { pnpm -r typecheck && pnpm lint && pnpm -r test && BASED_PROPERTY_RECORDS=1 pnpm -r test; } 2>&1 | tee ts.log
+      - name: Playwright-Smoke (@smoke, Chromium)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 10
+        run: |
+          set -o pipefail
+          pnpm --filter @based/web exec playwright install --with-deps chromium
+          CI=1 pnpm --filter @based/web exec playwright test --project=chromium --grep @smoke 2>&1 | tee smoke.log
+      - name: Log sichern
         if: always()
         run: |
-          set -o pipefail
-          pnpm --filter @based/web exec playwright install --with-deps chromium webkit
-          CI=1 pnpm --filter @based/web e2e 2>&1 | tee e2e.log
+          mkdir -p /tmp/out
+          { grep -E "error|FAIL|Tests |grün|portiert|Zeitmessung" ts.log | head -n 200; echo "--- smoke"; tail -n 40 smoke.log 2>/dev/null; } > /tmp/out/ts.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-ts-fast
+          path: /tmp/out/ts.txt
+          retention-days: 7
       - name: Publish log
         if: always() && github.event_name == 'push'
         run: |
+          echo "${{ job.status }} ${{ github.sha }} ${{ github.ref_name }}" > /tmp/out/status.txt
+          bash scripts/publish-logs.sh "${LOG_PREFIX}ts-fast"
+
+  e2e:
+    name: Playwright ${{ matrix.browser }} ${{ matrix.shard }}/2
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright-Version
+        id: pw
+        run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+      - run: pnpm --filter @based/web exec playwright install --with-deps ${{ matrix.browser }}
+      - name: Playwright (ohne @perf)
+        timeout-minutes: 25
+        run: |
+          set -o pipefail
+          CI=1 pnpm --filter @based/web exec playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }}/2 --grep-invert @perf 2>&1 | tee e2e.log
+      - name: Log sichern
+        if: always()
+        run: |
+          mkdir -p out
+          { echo "${{ job.status }} ${{ github.sha }}"; tail -n 60 e2e.log 2>/dev/null || echo "(kein Log – Lauf vorher abgebrochen)"; } > out/e2e-${{ matrix.browser }}-${{ matrix.shard }}.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-e2e-${{ matrix.browser }}-${{ matrix.shard }}
+          path: out/
+          retention-days: 7
+
+  perf:
+    name: Zeitmessungen (@perf, nicht blockierend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright-Version
+        id: pw
+        run: echo "version=$(pnpm --filter @based/web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-webkit
+      - run: pnpm --filter @based/web exec playwright install --with-deps chromium webkit
+      - name: Playwright @perf
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          CI=1 pnpm --filter @based/web exec playwright test --grep @perf 2>&1 | tee perf.log || {
+            echo "::warning title=Zeitmessungen::@perf-Specs rot (nicht blockierend) – siehe ts/perf.txt auf ci-logs"; exit 1; }
+      - name: Log sichern
+        if: always()
+        run: |
+          mkdir -p out
+          { echo "${{ job.status }} ${{ github.sha }} (nicht blockierend)"; grep -E "BSD-215|Quick Find|perf 5000|sidebar-scroll|✘|Error|passed|failed|flaky" perf.log 2>/dev/null | head -n 80; } > out/perf.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-perf
+          path: out/
+          retention-days: 7
+
+  report:
+    name: Status (ts/status.txt)
+    needs: [ts-fast, e2e, perf]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: log-*
+          merge-multiple: true
+          path: /tmp/out
+      - name: Status bestimmen
+        id: status
+        env:
+          FAST: ${{ needs.ts-fast.result }}
+          E2E: ${{ needs.e2e.result }}
+          PERF: ${{ needs.perf.result }}
+        run: |
           mkdir -p /tmp/out
-          { grep -E "error|FAIL|Tests |grün|portiert" ts.log | head -n 200; echo "--- e2e"; tail -n 40 e2e.log 2>/dev/null; } > /tmp/out/ts.txt || true
-          bash scripts/publish-logs.sh ts
+          # perf zählt nicht (continue-on-error); abgebrochen schlägt rot, rot schlägt grün
+          if [ "$FAST" = cancelled ] || [ "$E2E" = cancelled ]; then s=abgebrochen
+          elif [ "$FAST" = success ] && [ "$E2E" = success ]; then s=grün
+          else s=rot; fi
+          echo "$s ${{ github.sha }} ${{ github.ref_name }} · ts-fast=$FAST e2e=$E2E perf=$PERF (nicht blockierend) · run ${{ github.run_id }}" | tee /tmp/out/status.txt
+          echo "status=$s" >> "$GITHUB_OUTPUT"
+      - name: Publish log
+        if: always() && github.event_name == 'push'
+        run: bash scripts/publish-logs.sh "${LOG_PREFIX}ts"
+      - name: Ergebnis
+        run: test "${{ steps.status.outputs.status }}" = grün
 
   # BSD-168: Swift-Code nur noch als Fixture-Quelle (legacy/). Läuft nur, wenn sich legacy/ oder fixtures/ ändern.
   fixtures:
@@ -94,4 +236,4 @@ jobs:
         if: always() && github.event_name == 'push' && steps.changed.outputs.run == '1'
         run: |
           mkdir -p /tmp/out && grep -E "error:|failed|passed|Executed|Test run with" core-test.log | tail -n 80 > /tmp/out/core.txt || true
-          bash scripts/publish-logs.sh core
+          bash scripts/publish-logs.sh "${LOG_PREFIX}core"

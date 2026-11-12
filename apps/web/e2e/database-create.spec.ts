@@ -16,7 +16,7 @@ async function newDatabase(page: Page) {
   return db;
 }
 
-test("„/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell", async ({ page }) => {
+test("„/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell", { tag: "@smoke" }, async ({ page }) => {
   await ready(page);
   const full = await newDatabase(page);
   await expect(full.getByLabel("Pages in view")).toHaveText("3");
