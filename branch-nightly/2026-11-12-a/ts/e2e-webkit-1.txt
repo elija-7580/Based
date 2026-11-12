@@ -1,61 +1,61 @@
-cancelled 6d2a448f6da02a74a73d58b755e6e2bf603f2cbe
-[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
-[WebServer] 
-[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
-[WebServer] 
-[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
-[WebServer] [plugin vite:reporter] 
-[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
-[WebServer] 
-[WebServer] 
-[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
-[WebServer] - Using dynamic import() to code-split the application
-[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+success 5f288f9d55ebfb22071b5bb33d85215ed19e89a8
+  ✓  116 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (5.8s)
+  ✓  117 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (4.6s)
+  ✓  118 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.1s)
+  ✓  119 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.9s)
+  ✓  120 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.3s)
 
-Running 118 tests using 2 workers, shard 1 of 2
 
-(node:4707) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓    1 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (17.1s)
-  ✓    3 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (5.6s)
-  ✓    4 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (4.6s)
-  ✓    5 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (3.8s)
-  ✓    6 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (4.2s)
-  ✓    7 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (3.3s)
-Library: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen
-  ✘    2 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (41.8s)
-  ✓    8 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (3.2s)
-  -   10 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓   11 [webkit] › e2e/brain.spec.ts:222:1 › trashing the Agent Brain shows why it stays (5.0s)
-  -   12 [webkit] › e2e/brain.spec.ts:233:1 › Screenshots web-brain-refused-*
-  ✓   13 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (8.0s)
-  ✓   14 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (2.5s)
-  ✓   15 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.4s)
-  ✓   16 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (3.0s)
-  ✓   17 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (4.0s)
-  -   18 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:6117) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
+  1) [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
 
-  ✓    9 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (retry #1) (35.0s)
-  -   20 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
-  ✓   19 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (7.0s)
-  ✓   21 [webkit] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (2.6s)
-(node:6447) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   22 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (964ms)
-(node:6512) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   24 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (12.0s)
-  ✓   23 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (19.2s)
-  ✓   25 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (9.9s)
-  ✓   27 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (8.8s)
-  ✓   28 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (8.2s)
-  ✓   29 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (5.3s)
-  ✓   30 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (8.0s)
-  ✓   31 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (7.4s)
-  ✓   32 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (4.5s)
-  ✓   33 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (5.0s)
-  ✓   34 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (7.4s)
-  ✓   35 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (7.4s)
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Library: div.sidebar-resize „Resize sidebar“ – kein sichtbarer Fokusrahmen",
+    + ]
+
+      146 |   for (const h of await page.locator(".qf-filters").locator("button, label, input:not([type=hidden])").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(24);
+      147 |   console.log(found.join("\n"));
+    > 148 |   expect(found).toEqual([]);
+          |                 ^
+      149 | });
+      150 |
+      151 | // Fotos der in BSD-304 geänderten Stellen (Gliederung 24 px, Quick Find, Tabelle mit Fokus), hell und dunkel in
+        at /home/runner/work/Based/Based/apps/web/e2e/a11y.spec.ts:148:17
+
+    Error Context: test-results/a11y-Tab-Durchlauf-Namen-F-db003-chen-auf-allen-Hauptscreens-webkit/error-context.md
+
+  2) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+
+    Error: tote Knöpfe
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Home: „New page“ #0",
+    + ]
+
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
+
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
+
+  2 flaky
+    [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens 
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+  8 skipped
+  108 passed (12.4m)
