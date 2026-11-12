@@ -306,6 +306,8 @@ export type Event =
   | { type: "chats"; chats: ChatInfo[] }
   /** Agenten-Records haben sich geändert (lokal, anderer Tab oder Sync). */
   | { type: "agents"; snapshot: AgentSnapshot }
+  /** BSD-163: kurzer Hinweis für die Oberfläche (z. B. verweigertes Löschen des Agent Brain). */
+  | { type: "notice"; message: string }
   /** Änderungen an einer offenen Seite (für die Replik im Hauptthread). */
   | { type: "pageChanges"; pageID: string; upserts: WireRecord[]; deletions: RecordKeyString[] };
 

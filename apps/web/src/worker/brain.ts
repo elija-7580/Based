@@ -177,6 +177,11 @@ export class BrainHost {
     return deletableIDs(this.store, ids);
   }
 
+  /** BSD-163: Hinweis für die UI, wenn Seiten wegen des Brain stehen bleiben (`undefined` = nichts verweigert). */
+  refusedNotice(refused: readonly string[], forever = false): string | undefined {
+    return refusedDeleteNotice(refused.map((id) => titleOf(this.store, id)), forever);
+  }
+
   noteChange(change: StoreChange) {
     for (const key of change.keys) {
       const { kind, id } = parseKey(key);
@@ -193,6 +198,13 @@ export class BrainHost {
       });
     }
   }
+}
+
+/** Text des Hinweises (rein, für Tests): welche Seiten bleiben und warum. */
+export function refusedDeleteNotice(titles: readonly string[], forever = false): string | undefined {
+  if (titles.length === 0) return undefined;
+  const what = titles.length === 1 ? `“${titles[0] || "Untitled"}” stays` : `${titles.length} pages stay`;
+  return `${what}: the Agent Brain (About me, Memories, Skills) can't be ${forever ? "deleted" : "moved to the Trash"}. Its pages keep what your agents know.`;
 }
 
 /** Die Seite, auf der ein Block steht (die Seite selbst, wenn es eine ist). */

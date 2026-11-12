@@ -1,0 +1,9 @@
+/* BSD-163: kurzer Hinweis unten in der Mitte (z. B. verweigertes Löschen des Agent Brain). */
+.app-notice {
+  position: fixed; z-index: 25; left: 50%; bottom: var(--space-5); transform: translateX(-50%);
+  width: max-content; max-width: min(36rem, calc(100vw - var(--space-4) * 2));
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--surface-raised); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
+  animation: fade-in var(--duration-fast) var(--ease-out);
+}
+.app-notice > span { flex: 1; min-width: 0; line-height: 1.4; }
