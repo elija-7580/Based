@@ -125,6 +125,12 @@
 
 /* Tabelle */
 .dbui-table { position: relative; outline: none; margin: 0 var(--space-6); }
+/* BSD-304: Die Tabelle nimmt per Tab den Fokus (Pfeiltasten wählen Zellen) – dann sichtbar, in der Marker-Farbe. */
+/* Als Rahmen über allem (die klebende Kopfzeile liegt sonst über der Kontur). */
+.dbui-table:focus-visible::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  border: var(--marker-width) solid var(--focus-ring, var(--marker-strong)); border-radius: var(--radius-sm);
+}
 .dbui-thead {
   position: sticky; top: 0; z-index: 2; display: flex; height: var(--dbui-row); background: var(--bg); border-bottom: 1px solid var(--line);
 }
