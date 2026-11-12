@@ -1,61 +1,61 @@
-success ee8ef9ec4eb8fe189425a9dcedc2c78706083197
-  ✓   57 [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (6.9s)
-  ✓   59 [webkit] › e2e/shell.spec.ts:94:1 › Drop ohne vorheriges dragover auf dieselbe Zeile: Zone aus der Drop-Position (3.7s)
-  ✓   58 [webkit] › e2e/shell-parity.spec.ts:167:1 › HTML-Export: Download enthält Titel und Text, Stylesheet aus den Tokens (4.9s)
-  ✓   61 [webkit] › e2e/shell-parity.spec.ts:185:1 › Import eines ZIPs mit Bild: der Bildblock zeigt das Bild aus dem Asset-Speicher (6.6s)
-  ✓   60 [webkit] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke (8.7s)
-  ✓   63 [webkit] › e2e/shell.spec.ts:199:1 › Sync-Server in den Einstellungen: Status in der Seitenleiste (5.4s)
-  ✓   62 [webkit] › e2e/shell-parity.spec.ts:203:1 › Graph zeigt echte Seiten; Suche, Hervorheben, Klick öffnet (8.6s)
-  ✓   64 [webkit] › e2e/shortcuts.spec.ts:12:1 › ⌘N öffnet „New…“: tippen filtert, Enter legt eine Datenbank an; ⌥⌘N neue Seite (3.0s)
-  ✓   66 [webkit] › e2e/shortcuts.spec.ts:33:1 › ⌘N und Ziffer: 1 legt eine Seite an, 3 Meeting notes, 4 eine Datenbank; beim Tippen filtern Ziffern (BSD-256) (3.2s)
-  ✓   65 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (5.4s)
-  ✓   67 [webkit] › e2e/shortcuts.spec.ts:62:1 › ⌘P sucht, ⇧⌘L schaltet hell/dunkel, ⌘1/⌘9 wählen Tabs (2.8s)
-  ✓   68 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (5.6s)
-  ✓   69 [webkit] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen (4.6s)
-  ✓   70 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (3.8s)
-  ✓   71 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (6.1s)
-  ✓   73 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (4.0s)
-  ✓   72 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (7.4s)
-  ✓   74 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (6.0s)
-  ✓   75 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (7.3s)
-  -   77 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
-  -   78 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
-  ✓   76 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (3.3s)
-  ✓   80 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (3.5s)
-  ✓   79 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (6.5s)
-  ✓   81 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (6.7s)
-  ✓   82 [webkit] › e2e/storage.spec.ts:50:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (8.2s)
-  ✓   83 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (4.8s)
-  ✓   84 [webkit] › e2e/storage.spec.ts:71:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.1s)
-  -   86 [webkit] › e2e/storage.spec.ts:86:1 › Screenshots web-storage-warning-*
-  ✓   85 [webkit] › e2e/switch-parity.spec.ts:41:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (4.7s)
-(node:11244) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+success 0dff7b2c8b4a300cd7abde9be82ab101d19f1992
+  ✓   92 [webkit] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (4.0s)
+  ✓   93 [webkit] › e2e/switch-parity.spec.ts:66:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.8s)
+  ✓   94 [webkit] › e2e/switch-parity.spec.ts:82:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (8.7s)
+  ✓   91 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (20.5s)
+  -   95 [webkit] › e2e/switch-parity.spec.ts:122:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+(node:12294) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   88 [webkit] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (4.2s)
-  ✓   89 [webkit] › e2e/switch-parity.spec.ts:66:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (7.8s)
-  ✓   90 [webkit] › e2e/switch-parity.spec.ts:82:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (8.5s)
-  -   91 [webkit] › e2e/switch-parity.spec.ts:122:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
-  ✓   87 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (21.9s)
-(node:12044) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   92 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.0s)
-  ✓   93 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.2s)
-  ✓   94 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (16.3s)
-  ✓   95 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.9s)
-  ✓   96 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (3.9s)
-  ✓   97 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (6.2s)
-  -   99 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
-  -  100 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
-  ✓   98 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.6s)
-  ✓  102 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (3.4s)
-  ✓  101 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (7.3s)
-  ✓  103 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.6s)
-  ✓  104 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.6s)
-  ✓  105 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.4s)
-  ✓  106 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (1.6s)
-  ✓  107 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.7s)
-  ✓  108 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.4s)
-  ✓  109 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.4s)
+  ✓   96 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (8.2s)
+  ✓   97 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (6.5s)
+  ✓   99 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (15.7s)
+  ✓   98 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (16.6s)
+  ✓  101 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (4.4s)
+  ✓  100 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (6.0s)
+  -  103 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  104 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  102 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (4.7s)
+  ✓  106 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (2.9s)
+  ✓  105 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (7.3s)
+  ✓  107 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (4.0s)
+  ✓  109 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (2.1s)
+  ✓  108 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.8s)
+  ✓  110 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (2.1s)
+  ✓  111 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (1.5s)
+  ✓  112 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.3s)
+  ✓  113 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.5s)
 
-  13 skipped
-  96 passed (6.1m)
+
+  1) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+        "Chat",
+        "Search",
+    -   "Home",
+        "Library",
+    +   "Home",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      104 |   // Library aus dem Fuß nach oben hinter Home
+      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
+    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
+          |                          ^
+      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
+      108 |   // Search in den Fuß vor Trash
+      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
+        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
+
+    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+  14 skipped
+  97 passed (6.0m)
