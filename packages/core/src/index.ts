@@ -75,6 +75,7 @@ export type { ExportFormat, ExportPlan, ExportPlanOptions, ExportReport } from "
 export { ARCHIVE_FORMAT, ARCHIVE_PLAIN_VERSION, ARCHIVE_VERSION, ArchiveError, PACKAGE_EXTENSION, PACKAGE_RECORDS, applyImported, archiveAssetRefs, archiveEntryPath,
   assetRefForEntry, encodeArchive, importArchive, importArchiveRecords, isArchive, loadArchive, mergeWorkspace, readArchive, writeArchive, writeArchivePackage } from "./interop/archive.js";
 export type { ArchiveHeader, ArchiveImportResult, ArchiveReadResult, LoadedArchive } from "./interop/archive.js";
+export * from "./backup/backup.js";
 // BSD-155: Datenbank-Operationen, Diagramme, Anzeige-Helfer und gefilterte Beobachtung für @based/database-ui.
 export * as dbops from "./store/database-ops.js";
 export {

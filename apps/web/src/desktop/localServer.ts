@@ -252,6 +252,19 @@ class LocalServer {
     return r.ok ? ((await r.json()) as { devices: { id: string; name: string; createdAt: number; lastSeenAt?: number }[] }).devices : [];
   }
 
+  /** BSD-274: Backups des lokalen Servers. */
+  private async call<T>(method: "GET" | "POST", route: string): Promise<T> {
+    if (!this.state.url) throw new Error("The local server isn't running.");
+    const r = await fetch(`${this.state.url}${route}`, { method, headers: { Authorization: `Bearer ${await this.token()}` } });
+    const v = (await r.json().catch(() => ({}))) as T & { error?: string };
+    if (!r.ok) throw new Error(v.error ?? `The local server answered ${r.status}.`);
+    return v;
+  }
+  backups() { return this.call<{ dir: string; last?: { at: number; name: string }; error?: string; snapshots: { name: string; at: number }[] }>("GET", "/backups"); }
+  backupNow() { return this.call<{ snapshot: { name: string; at: number } | null }>("POST", "/backups"); }
+  backupPreview(name: string) { return this.call<{ pages: { added: number; changed: number; removed: number } }>("GET", `/backups/${encodeURIComponent(name)}/preview`); }
+  backupRestore(name: string) { return this.call<{ before?: string; pages: { added: number; changed: number; removed: number } }>("POST", `/backups/${encodeURIComponent(name)}/restore`); }
+
   async removeDevice(id: string): Promise<void> {
     if (!this.state.url) return;
     await fetch(`${this.state.url}/devices/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${await this.token()}` } });
@@ -290,6 +303,8 @@ class LocalServer {
         BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
         // BSD-315: zusätzlich nur auf den Tailscale-Adressen lauschen
         ...(this.state.tailnet ? { BASED_TAILNET: "1" } : {}),
+        // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
+        BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });
       const cmd = Command.create(RUN.name, [...RUN.args], { env });
       cmd.stdout.on("data", (line: string) => {

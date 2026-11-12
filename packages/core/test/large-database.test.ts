@@ -2,6 +2,7 @@
 // eine Zelle ändern und neu abfragen. Grenzwerte großzügig (CI, geteilte Maschine); die gemessenen Zeiten stehen im
 // Testbericht (console.info) und im Backlog. Swift-Vergleich: 1,7 s Einfügen / 0,5 s Abfrage / 10 µs aus dem Cache.
 import { describe, expect, it } from "vitest";
+import { cpuTime, expectWithinBudget } from "./perf-budget.js";
 import { MemoryPersistence, QueryEngine, WorkspaceStore, addRow, pv, setValue, type WireRecord } from "../src/index.js";
 
 const N = 50_000;
@@ -39,10 +40,12 @@ function records(n: number): WireRecord[] {
   return out;
 }
 
+// BSD-322 Teil 4: CPU-Zeit statt Wanduhr (unter `pnpm -r test` lief das Laden bei voller Maschine 7 s statt 1 s),
+// in der CI nur Warnung (perf-budget.ts).
 const time = <T>(f: () => T): [T, number] => {
-  const t = performance.now();
-  const r = f();
-  return [r, performance.now() - t];
+  let r!: T;
+  const ms = cpuTime(() => { r = f(); });
+  return [r, ms];
 };
 
 describe("Große Datenbank (BSD-215)", () => {
@@ -69,12 +72,7 @@ describe("Große Datenbank (BSD-215)", () => {
     const [, search] = time(() => engine.run(view, "note 42"));
 
     console.info(`BSD-215 ${N} Zeilen: Laden ${load.toFixed(0)} ms, Abfrage ${query.toFixed(0)} ms, Cache ${cached.toFixed(2)} ms, Zelle ${edit.toFixed(1)} ms, neu abfragen ${requery.toFixed(0)} ms, Suche ${search.toFixed(0)} ms`);
-    expect(load).toBeLessThan(5000);
-    expect(query).toBeLessThan(3000);
-    expect(cached).toBeLessThan(50);
-    expect(edit).toBeLessThan(200);
-    expect(requery).toBeLessThan(3000);
-    expect(search).toBeLessThan(3000);
+    expectWithinBudget("50.000 Zeilen", { load: 5000, query: 3000, cached: 50, edit: 200, requery: 3000, search: 3000 }, () => ({ load, query, cached, edit, requery, search }), 1);
   }, 60_000);
 
   it("Einfügen: 50 000 Zeilen per Sync einspielen, 1 000 einzeln per addRow", () => {
@@ -85,7 +83,6 @@ describe("Große Datenbank (BSD-215)", () => {
     const [, add] = time(() => { for (let i = 0; i < 1000; i++) addRow(store, "db", { title: "New " + i }); });
     expect(store.children("d:db").length).toBe(N + 1000);
     console.info(`BSD-215 Einfügen: Sync ${N} Zeilen ${sync.toFixed(0)} ms, 1000 × addRow ${add.toFixed(0)} ms (${(add / 1000).toFixed(2)} ms je Zeile)`);
-    expect(sync).toBeLessThan(5000);
-    expect(add).toBeLessThan(10_000);
+    expectWithinBudget("Einfügen", { sync: 5000, add: 10_000 }, () => ({ sync, add }), 1);
   }, 60_000);
 });
