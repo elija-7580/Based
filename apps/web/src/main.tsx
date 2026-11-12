@@ -103,7 +103,9 @@ function start(guest: GuestBoot | undefined) {
     ...browserLinkOptions(guest ? `based-guest-${guest.id}` : undefined),
     ...(guest ? { lockName: `based-guest-${guest.id}` } : {}),
     startStore() {
-      const worker = new Worker(new URL("./worker/store.worker.ts", import.meta.url), { type: "module", name: "based-store" });
+      // BSD-330 (Test-Haken): ?based-fail-store=history|ydocs lässt diese Nebendatei absichtlich in den Speicher fallen.
+      const fail = new URLSearchParams(location.search).get("based-fail-store");
+      const worker = new Worker(new URL("./worker/store.worker.ts", import.meta.url), { type: "module", name: fail && /^(history|ydocs)$/.test(fail) ? `based-store fail-${fail}` : "based-store" });
       return { endpoint: worker as unknown as Endpoint<Event, RequestMessage>, terminate: () => worker.terminate() };
     },
     async initParams() {
@@ -127,12 +129,13 @@ function start(guest: GuestBoot | undefined) {
       bootMark("store answered");
       if (whole.ready && whole.outline) bootMark("store ready", `${Object.keys(whole.outline?.nodes ?? {}).length} pages`);
       const st = whole.status;
-      const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}`;
+      // BSD-330: Nebendateien nur im Speicher gehören ins Log (als Warnung), nicht nur in die Konsole
+      const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}${st.storageWarnings?.length ? ` · ${st.storageWarnings.join(" ")}` : ""}`;
       if (line === last) return;
       // BSD-235 Teil 3: ein Sync-Fehler kann ein widerrufener Link sein – sofort nachsehen
       if (st.state === "error") revocation?.poke();
       last = line;
-      diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" ? "warning" : "info", `status: ${line}`);
+      diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" || st.storageWarnings?.length ? "warning" : "info", `status: ${line}`);
     });
   }
   connectEditor(client);
