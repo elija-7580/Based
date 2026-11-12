@@ -24,13 +24,11 @@
 .nf-item[data-active] { background: var(--surface-raised); }
 .nf-item[aria-disabled="true"] { color: var(--muted); opacity: 0.6; }
 .nf-item.danger { color: var(--danger); }
-.nf-with-icons .nf-item:not(:has(.nf-icon)) { padding-left: calc(var(--space-3) + var(--space-2) + 18px); /* Icon 18 px wie in .menu */ }
 .nf-icon { flex: none; }
 .nf-glyph { display: inline-flex; flex: none; }
 .nf-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .nf-hint { margin-left: auto; padding-left: var(--space-4); color: var(--muted); font-size: var(--type-meta-size); }
-.nf-check-icon { display: inline-flex; margin-left: auto; color: var(--ink); }
-.nf-check { flex: none; width: var(--space-2); height: var(--space-3); margin-right: var(--space-1); border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.nf-check { display: inline-flex; margin-left: auto; color: var(--ink); }
 .nf-sep { height: 1px; background: var(--line); margin: var(--space-1) 0; flex: none; }
 .nf-heading { padding: var(--space-1) var(--space-3); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
 
