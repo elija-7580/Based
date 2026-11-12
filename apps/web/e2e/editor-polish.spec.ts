@@ -150,3 +150,30 @@ test("Links und Häkchen im Editor ohne Browser-Blau", async ({ page }) => {
   const ink = await page.evaluate(() => { const d = document.createElement("div"); d.style.color = "var(--ink)"; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c; });
   expect(accent).toBe(ink);
 });
+
+// BSD-323: Blockfarben kommen hell und dunkel aus den Tokens (block-*), nicht aus BlockNotes grellen Dunkelfarben.
+test("Blockfarben im Dunkelmodus aus den Tokens", async ({ page, browserName }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await command(page, { op: "createPage", title: "Block colors" });
+  await page.evaluate(() => localStorage.setItem("based.appearance", JSON.stringify({ theme: "dark" })));
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("treeitem", { name: "Block colors" }).click();
+  await expect(editor(page)).toHaveAttribute("contenteditable", "true");
+  await editor(page).locator(".bn-block-content").first().click();
+  await paste(page, "> [!NOTE] Blue callout\n\n> [!WARNING] Warning callout\n\nAfter");
+  const callout = editor(page).locator(".bn-block-content[data-content-type=callout]").first();
+  await expect(callout).toBeVisible();
+  const [bg, token] = await callout.evaluate((el) => {
+    const probe = document.createElement("div");
+    probe.style.background = `var(--block-${el.getAttribute("data-background-color")})`;
+    document.body.appendChild(probe);
+    const t = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return [getComputedStyle(el).backgroundColor, t];
+  });
+  expect(bg).toBe(token);
+  if (SHOTS && browserName === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-editor-polish-block-colors-dark.png" });
+  await page.evaluate(() => localStorage.removeItem("based.appearance"));
+});

@@ -1,6 +1,6 @@
 /* BSD-154: Editor in „Based Default“ (ADR 0012). Nur Tokens aus @based/design-tokens (ADR 0009), keine Farb-,
    Abstands-, Schrift- oder Radius-Literale; Ausnahmen: 0, 1px-Haarlinien, Prozent-/flex-Layout.
-   Die Textfarben-Palette (rot, blau …) kommt vorerst aus BlockNote, dafür gibt es noch keine Tokens. */
+   Block- und Textfarben (rot, blau …) kommen aus den Tokens block-* (BSD-323). */
 @import "@based/design-tokens/tokens.css";
 
 .bx-editor .bn-root,
@@ -22,9 +22,26 @@
   --bn-colors-border: var(--line);
   --bn-colors-side-menu: var(--muted);
   /* BSD-318: Grau ist die Standardfarbe der Callouts aus Notion. BlockNotes Dunkel-Grau ist eine helle Fläche
-     unter heller Schrift; Grau kommt deshalb aus den Tokens. Die übrigen Farben: Backlog „Feinschliff · Blockfarben“. */
+     unter heller Schrift; Grau kommt deshalb aus den Tokens. */
   --bn-colors-highlights-gray-background: var(--surface-raised);
   --bn-colors-highlights-gray-text: var(--muted);
+  /* BSD-323: alle Blockfarben aus den Tokens, hell und dunkel (BlockNotes Dunkelfarben waren grelle Flächen). */
+  --bn-colors-highlights-brown-background: var(--block-brown);
+  --bn-colors-highlights-brown-text: var(--block-brown-text);
+  --bn-colors-highlights-orange-background: var(--block-orange);
+  --bn-colors-highlights-orange-text: var(--block-orange-text);
+  --bn-colors-highlights-yellow-background: var(--block-yellow);
+  --bn-colors-highlights-yellow-text: var(--block-yellow-text);
+  --bn-colors-highlights-green-background: var(--block-green);
+  --bn-colors-highlights-green-text: var(--block-green-text);
+  --bn-colors-highlights-blue-background: var(--block-blue);
+  --bn-colors-highlights-blue-text: var(--block-blue-text);
+  --bn-colors-highlights-purple-background: var(--block-purple);
+  --bn-colors-highlights-purple-text: var(--block-purple-text);
+  --bn-colors-highlights-pink-background: var(--block-pink);
+  --bn-colors-highlights-pink-text: var(--block-pink-text);
+  --bn-colors-highlights-red-background: var(--block-red);
+  --bn-colors-highlights-red-text: var(--block-red-text);
   --bn-border-radius: var(--radius-md);
   --bn-border-radius-small: var(--radius-sm);
   --bn-border-radius-medium: var(--radius-md);
@@ -79,6 +96,7 @@
    als zweite Fläche darunter, und eine Blockauswahl färbt den Kasten mit (vorher blieb er als helle Fläche stehen).
    :where hält die Spezifität klein: Farbe (BlockNote) und Auswahl gewinnen. */
 .bx-editor :where(.bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { border-radius: var(--radius-md); }
+.bx-editor :where(.bn-block-content[data-content-type="callout"]) { border-radius: var(--radius-md); }
 .bx-editor :where(.bn-block:not([data-background-color]):has(> .react-renderer > .bn-block-content[data-content-type="callout"])) { background: var(--surface-raised); }
 .bx-editor .bn-block:has(> .react-renderer > .bn-block-content[data-content-type="callout"]) > .bn-block-group {
   margin-left: calc(var(--space-4) + var(--icon-md) + var(--space-3) + var(--space-1));
