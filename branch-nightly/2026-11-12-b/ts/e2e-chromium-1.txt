@@ -1,61 +1,61 @@
-success 38f1e056b865c0137bdc90e884bf37053a410a2a
-  ✓   79 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (4.4s)
-  ✓   82 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (3.1s)
-  ✓   83 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (2.6s)
-  ✓   84 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (3.6s)
-  ✓   85 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (2.8s)
-  ✓   81 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.6s)
-  ✓   86 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (2.8s)
-  ✓   87 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.1s)
-  ✓   88 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.4s)
-  ✓   89 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.6s)
-  ✓   91 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.8s)
-  ✓   90 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (3.8s)
-  ✓   93 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (2.9s)
-  ✓   94 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (2.1s)
-  ✓   95 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.3s)
-  ✓   96 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.1s)
-  ✓   97 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.0s)
-  ✓   92 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (14.1s)
-  ✓   98 [chromium] › e2e/interop.spec.ts:152:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.3s)
-  ✓  100 [chromium] › e2e/interop.spec.ts:183:1 › Word-Dokument (.docx) importieren (BSD-260) (2.6s)
-  ✓  101 [chromium] › e2e/interop.spec.ts:200:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.3s)
-  ✓  102 [chromium] › e2e/interop.spec.ts:214:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.6s)
-  ✓  103 [chromium] › e2e/interop.spec.ts:233:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.0s)
-  ✓   99 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (12.6s)
+cancelled 512c27797c00a7ba307e53711aec706762302694
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/sections.tsx, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
+Running 103 tests using 2 workers, shard 1 of 2
 
-  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-
-    Error: expect(received).toEqual(expected) // deep equality
-
-    - Expected  - 8
-    + Received  + 1
-
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      233 |   // links vom Griff, unten in der Zeile
-      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      236 | });
-      237 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
-
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
-
-  1 flaky
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-  3 skipped
-  98 passed (3.8m)
+  ✓    2 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (3.2s)
+  ✓    3 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.4s)
+  ✓    4 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (2.0s)
+  ✓    5 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (1.3s)
+  ✓    6 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (1.7s)
+  -    7 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+  ✓    8 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (2.8s)
+  ✓    9 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (1.7s)
+  ✓   10 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (1.7s)
+  ✓   11 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (1.6s)
+  ✓   12 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (1.7s)
+  -   13 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
+(node:3463) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   14 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (2.4s)
+(node:3543) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   15 [chromium] › e2e/coding.spec.ts:76:1 › ohne Server: ehrlicher Hinweis (518ms)
+  ✘    1 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (30.0s)
+  ✓   16 [chromium] › e2e/coding.spec.ts:81:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.3s)
+  ✓   18 [chromium] › e2e/coding.spec.ts:119:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (4.5s)
+  ✓   19 [chromium] › e2e/coding.spec.ts:205:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (7.3s)
+(node:3761) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   20 [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (6.9s)
+  ✘   17 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (retry #1) (30.0s)
