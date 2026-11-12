@@ -1,7 +1,8 @@
 // BSD-223: Fake-ACP-Agent für Tests (stdio, zeilenweises JSON-RPC). Verhalten nach Prompt-Text:
 // "hello" → Text in zwei Stücken + Verbrauch; "edit <pfad>" → Tool-Call, Freigabe, fs/write, Diff;
 // "read <pfad>" → fs/read; "wait" → wartet auf session/cancel; "plan" → Plan; "env" → meldet Umgebungsnamen;
-// "mcp" → Namen der MCP-Server der Sitzung; "args" → eigene Startargumente;
+// "mcp" → Namen der MCP-Server der Sitzung; "args" → eigene Startargumente; nach session/new meldet er drei
+// Slash-Befehle (BSD-313);
 // sonst: wiederholt die empfangenen Prompt-Blöcke als JSON.
 import { createInterface } from "node:readline";
 
@@ -85,7 +86,13 @@ async function handle(m) {
     case "session/new": {
       const id = `s${sessions.size + 1}`;
       sessions.set(id, { cwd: m.params.cwd, mcp: m.params.mcpServers });
-      return { sessionId: id, modes: { currentModeId: "default", availableModes: [{ id: "default", name: "Default" }, { id: "plan", name: "Plan" }] } };
+      // BSD-313: Slash-Befehle kommen wie bei Claude Code kurz nach der Antwort, außerhalb eines Turns.
+      setTimeout(() => update(id, { sessionUpdate: "available_commands_update", availableCommands: [
+        { name: "review", description: "Review the current changes" },
+        { name: "init", description: "Create an AGENTS.md for this folder" },
+        { name: "compact", description: "Summarize the conversation", input: { hint: "what to keep" } },
+      ] }), 20);
+      return { sessionId: id, modes: { currentModeId: "default", availableModes: [{ id: "default", name: "Default" }, { id: "acceptEdits", name: "Accept edits" }, { id: "plan", name: "Plan" }] } };
     }
     case "session/load": {
       sessions.set(m.params.sessionId, { cwd: m.params.cwd });

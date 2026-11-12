@@ -1,8 +1,8 @@
 // BSD-223 Teil 2: Coding-Agent-Sitzungen über den Server (nur Owner). Die Logik liegt in `@based/brain`
 // (`CodingSessions`); hier nur HTTP. Ereignisse und Freigabe-Inbox per Long-Poll (wie /sync/pull), damit jedes Gerät
 // mitlesen und Freigaben beantworten kann. Aus, solange der Server ohne `--coding-root` startet.
-import { agentStatus, chatgptStatus, CodingError, isComputeLevel, toolCatalog, unapprovedKeys, type CodexLogin, type CodingSessions } from "@based/brain";
-import { claudeLoggedIn, codexLoginState, probeTools, toolVersion, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
+import { agentStatus, chatgptStatus, CodingError, isComputeLevel, rankFiles, toolCatalog, unapprovedKeys, type CodexLogin, type CodingSessions } from "@based/brain";
+import { claudeLoggedIn, codexLoginState, listSessionFiles, probeTools, toolVersion, readCliTranscript, scanCliSessions, testAgent, which } from "@based/brain/acp-node";
 import { stat } from "node:fs/promises";
 import type { CliSession } from "@based/brain";
 import type { Logger } from "./log.js";
@@ -95,10 +95,28 @@ export function registerCodingRoutes(router: Router, coding: CodingSessions, log
   }));
 
   router.add("POST", "/coding/sessions/:id/prompt", ({ params, body }) => guarded(() => {
-    const text = str(parse(body).prompt);
+    const b = parse(body);
+    const text = str(b.prompt);
     if (!text?.trim()) return error("prompt is required", 400);
-    coding.prompt(params.id!, text);
+    const files = b.files === undefined ? [] : Array.isArray(b.files) && b.files.every((f) => typeof f === "string") ? (b.files as string[]) : undefined;
+    if (!files || files.length > 50) return error("files must be a list of at most 50 paths", 400);
+    coding.prompt(params.id!, text, files);
     return json({ ok: true }, 202);
+  }));
+
+  // BSD-313: Modus des Agenten (ACP availableModes), z. B. per ⇧Tab.
+  router.add("POST", "/coding/sessions/:id/agent-mode", ({ params, body }) => guarded(async () => {
+    const mode = str(parse(body).mode);
+    if (!mode) return error("mode is required", 400);
+    return json(await coding.setAgentMode(params.id!, mode));
+  }));
+
+  // BSD-313: @Dateien – nur Dateien unterhalb des Arbeitsordners der Sitzung (.gitignore beachtet).
+  router.add("GET", "/coding/sessions/:id/files", ({ params, url }) => guarded(async () => {
+    const view = coding.get(params.id!);
+    if (!view) return error("session not found", 404);
+    const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit") ?? 30) || 30), 200);
+    return json({ files: rankFiles(await listSessionFiles(view.cwd), url.searchParams.get("q") ?? "", limit) });
   }));
 
   router.add("POST", "/coding/sessions/:id/mode", ({ params, body }) => guarded(() => {

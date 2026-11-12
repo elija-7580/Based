@@ -7,6 +7,7 @@ import type { CliSession } from "./history.js";
 import type { AgentStatus, DoctorTool } from "./doctor.js";
 import type { ChatGPTStatus } from "./chatgpt.js";
 import type { ComputeLevel } from "../routing.js";
+import type { FileMatch } from "./files.js";
 
 export class CodingAPIError extends Error {
   constructor(readonly status: number, message: string) {
@@ -65,12 +66,23 @@ export class CodingClient {
   }
 
   /** Ereignisse ab `since`; mit `waitMs` wartet der Server, bis es neue gibt (Long-Poll). */
-  events(id: string, since: number, waitMs = 0, signal?: AbortSignal): Promise<{ events: StoredChatEvent[]; next: number; state: CodingSessionState }> {
+  events(id: string, since: number, waitMs = 0, signal?: AbortSignal): Promise<{ events: StoredChatEvent[]; next: number; state: CodingSessionState; session?: CodingSessionView }> {
     return this.request("GET", `/coding/sessions/${encodeURIComponent(id)}/events?since=${since}&wait=${waitMs}`, undefined, signal);
   }
 
-  async prompt(id: string, prompt: string): Promise<void> {
-    await this.request("POST", `/coding/sessions/${encodeURIComponent(id)}/prompt`, { prompt });
+  /** `files` (BSD-313): @Dateien relativ zum Arbeitsordner der Sitzung, gehen als `resource_link` an den Agenten. */
+  async prompt(id: string, prompt: string, files: readonly string[] = []): Promise<void> {
+    await this.request("POST", `/coding/sessions/${encodeURIComponent(id)}/prompt`, files.length > 0 ? { prompt, files } : { prompt });
+  }
+
+  /** BSD-313: Modus des Agenten (ACP, z. B. per ⇧Tab). */
+  setAgentMode(id: string, mode: string): Promise<CodingSessionView> {
+    return this.request("POST", `/coding/sessions/${encodeURIComponent(id)}/agent-mode`, { mode });
+  }
+
+  /** BSD-313: Dateien im Arbeitsordner der Sitzung für „@“ (nur unterhalb davon, .gitignore beachtet). */
+  async files(id: string, query: string, limit = 30, signal?: AbortSignal): Promise<FileMatch[]> {
+    return (await this.request<{ files: FileMatch[] }>("GET", `/coding/sessions/${encodeURIComponent(id)}/files?q=${encodeURIComponent(query)}&limit=${limit}`, undefined, signal)).files;
   }
 
   setMode(id: string, mode: string): Promise<CodingSessionView> {

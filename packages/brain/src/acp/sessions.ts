@@ -10,7 +10,7 @@ import { historyFromEvents } from "../history.js";
 import { Permissions, parseMode } from "../agents/permissions.js";
 import type { PermissionMode } from "../engine.js";
 import { pathWithin, normalizePath, type AcpMcpServer, type AgentDefinition } from "./agents.js";
-import type { AcpClient } from "./client.js";
+import type { AcpClient, AcpCommand } from "./client.js";
 import { AcpEngine } from "./engine.js";
 import { withCodexEffort } from "./chatgpt.js";
 import type { ComputeLevel } from "../routing.js";
@@ -27,7 +27,12 @@ export interface CodingSessionView {
   /** Sitzungs-ID beim Agenten (zum Fortsetzen). */
   acpSessionId: string | undefined;
   mode: PermissionMode;
+  /** Modi des Agenten (ACP `availableModes`, z. B. Default/Plan bei Claude Code); ⇧Tab schaltet durch (BSD-313). */
   modes: { id: string; name: string }[];
+  /** Aktueller Modus des Agenten. */
+  agentMode: string | undefined;
+  /** BSD-313: Slash-Befehle, die der Agent gemeldet hat. */
+  commands: AcpCommand[];
   createdAt: number;
   /** Anzahl Ereignisse (nächstes `since`). */
   eventCount: number;
@@ -145,6 +150,8 @@ export class CodingSessions {
     try {
       const proc = await this.o.connect(agent, cwd, [cwd], permissions);
       s.agentProcess = proc;
+      // BSD-313: Befehle und Modus kommen auch außerhalb eines Turns; wartende Geräte (Long-Poll) erfahren davon.
+      proc.client.onStateChange = () => s.wake();
       s.engine = new AcpEngine({
         agent,
         connect: async () => proc.client,
@@ -174,9 +181,33 @@ export class CodingSessions {
     return this.view(s);
   }
 
-  /** Turn starten; Ereignisse kommen über `events`. Läuft schon einer: 409. */
-  prompt(id: string, text: string): void {
+  /** BSD-313: Modus des Agenten setzen (ACP `session/set_mode`), z. B. per ⇧Tab. */
+  async setAgentMode(id: string, modeId: string): Promise<CodingSessionView> {
     const s = this.require(id);
+    const client = s.agentProcess?.client;
+    if (!client || s.state === "closed" || s.state === "failed") throw new CodingError(`session is ${s.state}`, 409);
+    if (!client.availableModes.some((m) => m.id === modeId)) throw new CodingError(`unknown mode: ${modeId}`, 400);
+    await client.setMode(modeId);
+    return this.view(s);
+  }
+
+  /**
+   * BSD-313: @Dateien → `file://`-Verweise. Nur relative Pfade unterhalb des Arbeitsordners (kein `..`, nichts
+   * Absolutes): was nicht passt, lehnt die Anfrage ab, statt still etwas anderes zu schicken.
+   */
+  private fileLinks(cwd: string, files: readonly string[]): { uri: string; name: string }[] {
+    return files.map((f) => {
+      const rel = f.replace(/^\.\/+/, "");
+      const abs = normalizePath(cwd + "/" + rel);
+      if (rel === "" || rel.startsWith("/") || !pathWithin(cwd, abs) || abs === cwd) throw new CodingError(`file is outside the session folder: ${f}`, 403);
+      return { uri: "file://" + abs.split("/").map(encodeURIComponent).join("/"), name: rel };
+    });
+  }
+
+  /** Turn starten; Ereignisse kommen über `events`. Läuft schon einer: 409. `files`: @Dateien relativ zum Arbeitsordner. */
+  prompt(id: string, text: string, files: readonly string[] = []): void {
+    const s = this.require(id);
+    const links = this.fileLinks(s.cwd, files);
     if (s.state === "running") throw new CodingError("a turn is already running", 409);
     if (s.state !== "idle" || !s.engine) throw new CodingError(`session is ${s.state}`, 409);
     const engine = s.engine;
@@ -185,10 +216,10 @@ export class CodingSessions {
     s.turn = ctl;
     s.state = "running";
     const push = (e: StoredChatEvent) => { s.events.push(e); s.wake(); };
-    push({ type: "userMessage", text, at: (this.o.now ?? Date.now)() });
+    push({ type: "userMessage", text: links.length > 0 ? `${text}\n\n${links.map((l) => "@" + l.name).join(" ")}` : text, at: (this.o.now ?? Date.now)() });
     void (async () => {
       try {
-        for await (const e of runTurn(engine, { prompt: text, history }, ctl.signal)) push(e as ChatEvent);
+        for await (const e of runTurn(engine, { prompt: text, history, ...(links.length > 0 ? { files: links } : {}) }, ctl.signal)) push(e as ChatEvent);
       } finally {
         s.turn = undefined;
         if (s.state === "running") s.state = s.agentProcess && !s.agentProcess.client.peer.closed ? "idle" : "failed";
@@ -220,13 +251,13 @@ export class CodingSessions {
    * Ereignisse ab `since`. Gibt es keine neuen und läuft die Sitzung noch, wird bis `waitMs` gewartet (Long-Poll);
    * `signal` bricht das Warten ab (Client weg).
    */
-  async events(id: string, since: number, waitMs = 0, signal?: AbortSignal): Promise<{ events: StoredChatEvent[]; next: number; state: CodingSessionState }> {
+  async events(id: string, since: number, waitMs = 0, signal?: AbortSignal): Promise<{ events: StoredChatEvent[]; next: number; state: CodingSessionState; session: CodingSessionView }> {
     const s = this.require(id);
     if (since >= s.events.length && waitMs > 0 && (s.state === "running" || s.state === "starting" || s.state === "idle")) {
       await this.wait(s.waiters, waitMs, signal);
     }
     const from = Math.min(Math.max(0, since), s.events.length);
-    return { events: s.events.slice(from), next: s.events.length, state: s.state };
+    return { events: s.events.slice(from), next: s.events.length, state: s.state, session: this.view(s) };
   }
 
   /** Offene Freigaben; wartet bis `waitMs`, wenn `since` der aktuelle Stand ist. */
@@ -269,6 +300,8 @@ export class CodingSessions {
       acpSessionId: s.engine?.sessionId,
       mode: s.mode,
       modes: s.agentProcess?.client.availableModes ?? [],
+      agentMode: s.agentProcess?.client.currentMode,
+      commands: s.agentProcess?.client.availableCommands ?? [],
       createdAt: s.createdAt,
       eventCount: s.events.length,
       error: s.error,

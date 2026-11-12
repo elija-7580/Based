@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   AcpEngine, ChatTurnBuilder, JsonRpcPeer, Permissions, PermissionInbox, RpcError, autoDecide, childEnvironment, diffText,
   handoffTranscript, mcpServerJSON, parseSessionUpdate, pathWithin, runTurn, secretInArguments, user, assistant,
+  CodingSessions, CodingError, gitignoreMatcher, rankFiles,
   type AgentDefinition, type ChatEvent, type InboxItem,
 } from "../src/index.js";
 import { spawnAgent, type SpawnedAgent } from "../src/acp/stdio.js";
@@ -138,7 +139,7 @@ describe("Sitzung als ChatEngine", () => {
     expect(ev.some((e) => e.type === "thinkingDelta")).toBe(true);
     expect(ev.find((e) => e.type === "usage")).toMatchObject({ inputTokens: 12, outputTokens: 3, estimated: true });
     expect(ev[ev.length - 1]).toMatchObject({ type: "result", text: "Hi there", sessionID: "s1", isError: false });
-    expect(a.client.availableModes.map((m) => m.id)).toEqual(["default", "plan"]);
+    expect(a.client.availableModes.map((m) => m.id)).toEqual(["default", "acceptEdits", "plan"]);
     const b = new ChatTurnBuilder();
     for (const e of ev) b.apply(e);
     expect(b.parts.filter((p) => p.kind === "text").map((p) => p.text)).toEqual(["Hi there"]);
@@ -320,5 +321,80 @@ describe("Agentenwechsel und Fortsetzen", () => {
     expect(t).not.toContain("SYS");
     expect(t).toContain("## User");
     expect(t).toContain("x".repeat(1500) + "…");
+  });
+});
+
+describe("Slash-Befehle, @Dateien, Modi (BSD-313)", () => {
+  it("available_commands_update wird gelesen (mit hint) und gemerkt, auch außerhalb eines Turns", async () => {
+    expect(parseSessionUpdate({ update: { sessionUpdate: "available_commands_update", availableCommands: [{ name: "a", description: "x", input: { hint: "h" } }, { description: "ohne Namen" }] } }))
+      .toEqual({ type: "commands", commands: [{ name: "a", description: "x", hint: "h" }] });
+    const a = await start();
+    let changes = 0;
+    a.client.onStateChange = () => { changes++; };
+    const engine = new AcpEngine({ agent: fakeAgent, connect: async () => a.client, cwd: "/w", inbox: new PermissionInbox() });
+    await engine.ensureSession();
+    await expect.poll(() => a.client.availableCommands.map((c) => c.name)).toEqual(["review", "init", "compact"]);
+    expect(a.client.availableCommands[2]).toEqual({ name: "compact", description: "Summarize the conversation", hint: "what to keep" });
+    expect(changes).toBeGreaterThanOrEqual(1);
+    await a.client.setMode("acceptEdits");
+    expect(a.client.currentMode).toBe("acceptEdits");
+  });
+
+  it("@Dateien gehen als resource_link hinter dem Text an den Agenten", async () => {
+    const a = await start();
+    const engine = new AcpEngine({ agent: fakeAgent, connect: async () => a.client, cwd: "/w", inbox: new PermissionInbox() });
+    const ev: ChatEvent[] = [];
+    for await (const e of runTurn(engine, { prompt: "look", files: [{ uri: "file:///w/src/a.ts", name: "src/a.ts" }] }, new AbortController().signal)) ev.push(e);
+    const echoed = JSON.parse((ev.find((e) => e.type === "result") as { text: string }).text) as unknown[];
+    expect(echoed).toEqual([{ type: "text", text: "look" }, { type: "resource_link", uri: "file:///w/src/a.ts", name: "src/a.ts" }]);
+  });
+
+  it("Sitzungen: Befehle und Agent-Modus in der Ansicht, ⇧Tab-Wechsel, Dateien nur unterhalb des Ordners", async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "acp-313-")));
+    const coding = new CodingSessions({ agents: () => [fakeAgent], roots: [root], connect: (agent, cwd, roots, permissions) => start({ cwd, allowedRoots: roots, permissions }) });
+    const v = await coding.create({ agentId: "fake", cwd: root });
+    expect(v).toMatchObject({ state: "idle", agentMode: "default", modes: [{ id: "default" }, { id: "acceptEdits" }, { id: "plan" }] });
+    // Long-Poll wacht auf, wenn die Befehle kommen (ohne neues Ereignis).
+    const r = await coding.events(v.id, 0, 2000);
+    const commands = r.session.commands.length > 0 ? r.session.commands : (await coding.events(v.id, 0, 2000)).session.commands;
+    expect(commands.map((c) => c.name)).toEqual(["review", "init", "compact"]);
+    expect((await coding.setAgentMode(v.id, "plan")).agentMode).toBe("plan");
+    await expect(coding.setAgentMode(v.id, "nope")).rejects.toThrow(CodingError);
+    for (const bad of ["../x", "/etc/passwd", "a/../../x", ""]) expect(() => coding.prompt(v.id, "x", [bad])).toThrow(/outside the session folder/);
+    coding.prompt(v.id, "see", ["./src/a b.ts"]);
+    const all: { type: string }[] = [];
+    for (let i = 0, next = 0; i < 50 && !all.some((e) => e.type === "result"); i++) {
+      const r2 = await coding.events(v.id, next, 500);
+      all.push(...r2.events);
+      next = r2.next;
+    }
+    expect(all[0]).toMatchObject({ type: "userMessage", text: "see\n\n@src/a b.ts" });
+    const res = all.find((e) => e.type === "result") as unknown as { text: string };
+    expect(JSON.parse(res.text)).toContainEqual({ type: "resource_link", uri: `file://${root.split("/").map(encodeURIComponent).join("/")}/src/a%20b.ts`, name: "src/a b.ts" });
+    coding.closeAll();
+  });
+
+  it("rankFiles: Dateiname vor Pfad, fuzzy, kürzere Pfade zuerst; 50.000 Dateien schnell", () => {
+    const paths = ["src/main.ts", "src/deep/x/main.test.ts", "README.md", "docs/maintenance.md", "lib/remain.ts", "src/domain/a.ts"];
+    expect(rankFiles(paths, "main").map((f) => f.path)).toEqual(["src/main.ts", "docs/maintenance.md", "src/deep/x/main.test.ts", "lib/remain.ts", "src/domain/a.ts"]);
+    expect(rankFiles(paths, "src/ma").map((f) => f.path)).toEqual(["src/main.ts", "src/domain/a.ts", "src/deep/x/main.test.ts"]);
+    expect(rankFiles(paths, "rdm").map((f) => f.name)).toEqual(["README.md"]);
+    expect(rankFiles(paths, "", 2).map((f) => f.path)).toEqual(["README.md", "src/main.ts"]);
+    const many = Array.from({ length: 50_000 }, (_, i) => `pkg${i % 50}/src/dir${i % 7}/file${i}.ts`);
+    const t = performance.now();
+    expect(rankFiles(many, "file4242").length).toBeGreaterThan(0);
+    expect(performance.now() - t).toBeLessThan(500);
+  });
+
+  it("gitignoreMatcher (Fallback ohne git)", () => {
+    const m = gitignoreMatcher("# c\ndist/\n*.log\n/secret.txt\nbuild/**/out\n!keep.log\n");
+    expect(m("dist", true)).toBe(true);
+    expect(m("a/dist", true)).toBe(true);
+    expect(m("dist", false)).toBe(false);
+    expect(m("x/y.log", false)).toBe(true);
+    expect(m("secret.txt", false)).toBe(true);
+    expect(m("sub/secret.txt", false)).toBe(false);
+    expect(m("build/a/b/out", true)).toBe(true);
+    expect(m("src/a.ts", false)).toBe(false);
   });
 });

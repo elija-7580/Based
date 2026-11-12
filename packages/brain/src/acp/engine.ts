@@ -117,6 +117,7 @@ export class AcpEngine implements ChatEngine {
     this.handedOff = true;
     if (request.system?.trim()) blocks.push({ type: "resource", uri: "based://instructions.md", text: request.system });
     blocks.push({ type: "text", text: request.prompt });
+    for (const f of request.files ?? []) blocks.push({ type: "resource_link", uri: f.uri, name: f.name });
 
     let text = "";
     const tools = new Map<string, { title: string; input: JSONValue; diffs: AcpDiff[]; output: string | undefined }>();
