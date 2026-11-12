@@ -8,7 +8,7 @@ import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange }
 import { isPageWindow, startDesktop } from "./desktop.js";
 import { browserTabsStorage, History } from "./shell/router.js";
 import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secretVault, startPage, syncConfig } from "./shell/storage.js";
-import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, type GuestConfig, type GuestMe } from "./shell/guest.js";
+import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
 import { StoreClient } from "./worker/client.js";
@@ -117,6 +117,8 @@ function start(guest: GuestBoot | undefined) {
     },
   });
   const client = new StoreClient(link);
+  // BSD-235 Teil 3: Widerruf wirkt auch, während der Gast die Seite offen hat (Neuladen zeigt dann den Hinweis).
+  const revocation = guest ? watchGuestRevocation(guest.config, () => { diagnosticsLog.add("warning", "guest link revoked while open"); location.reload(); }) : undefined;
   // BSD-227: Wechsel des Sync-/Speicherzustands ins Diagnose-Log (Zustand und Fehlertext, geschwärzt).
   {
     let last = "";
@@ -127,6 +129,8 @@ function start(guest: GuestBoot | undefined) {
       const st = whole.status;
       const line = `${st.state}${st.detail ? ` · ${st.detail}` : ""}`;
       if (line === last) return;
+      // BSD-235 Teil 3: ein Sync-Fehler kann ein widerrufener Link sein – sofort nachsehen
+      if (st.state === "error") revocation?.poke();
       last = line;
       diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" ? "warning" : "info", `status: ${line}`);
     });
