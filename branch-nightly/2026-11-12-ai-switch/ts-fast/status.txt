@@ -1,0 +1,1 @@
+success 767e249fd915a1b8305a317188bced8b5f07f403 nightly/2026-11-12-ai-switch
