@@ -72,7 +72,7 @@ test("Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmer
     expect(await width(), state).toBeLessThanOrEqual(1);
     await expect(status.locator(".dot")).toBeVisible();
     await expect(status).toHaveText(label); // bleibt für Screenreader lesbar
-    await expect(status).toHaveAttribute("title", /.+/);
+    await expect(status).toHaveAttribute("data-tip", /.+/);
   }
   for (const [state, label] of [["memory", "Not saved"], ["offline", "Offline"], ["error", "Sync error"], ["readonly", "Read-only"], ["syncing", "Syncing…"], ["starting", "Opening…"]] as const) {
     await set(state, label);
@@ -130,7 +130,7 @@ test("Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letz
     for (let i = 0; i < 16; i++) { await page.keyboard.type("t"); await page.keyboard.press("Enter"); }
   }
   const outline = page.getByTestId("page-outline");
-  const current = () => outline.locator("[aria-current]").getAttribute("title");
+  const current = () => outline.locator("[aria-current]").getAttribute("data-tip");
   const panel = page.locator(".panel");
   await panel.evaluate((el) => el.scrollTo(0, 0));
   await expect.poll(current).toBe("One");

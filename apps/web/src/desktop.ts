@@ -1,12 +1,15 @@
 // BSD-164: apps/web in der Tauri-Hülle „Based Next“ (apps/desktop). Nur hier steht Tauri-spezifischer Code; im Browser
 // tut nichts davon etwas (die Plugins werden erst bei Bedarf nachgeladen).
 // - Titelleiste im Overlay-Stil: Platz für die Ampel-Knöpfe über der Seitenleiste und Zugflächen fürs Fenster.
+// - Rückfragen und Hinweise sind Based-Dialoge (shell/prompts.ts), keine Systemdialoge.
 // - Updates: beim Start still prüfen, über „Check for Updates…“ im App-Menü auch mit Antwort, wenn alles aktuell ist.
 // Speicher: unverändert SQLite-WASM auf OPFS im Worker (siehe docs/desktop.md, „Speicher“).
 
 import { checkReleasesFallback, DOWNLOAD_PAGE, isMissingUpdateManifest } from "./shell/updateFallback.js";
 import { autoUpdatePref } from "./shell/storage.js";
 import { closeTabAction } from "./shell/closeTab.js";
+import { askUser, showMessage } from "./shell/prompts.js";
+import type { ClipboardAccess } from "@based/ui/native";
 
 /** BSD-319: Menü Hilfe → „Report a Problem…“ kommt als dieses Fenster-Ereignis an (App.tsx startet den Bericht). */
 export const REPORT_PROBLEM_EVENT = "based:report-problem";
@@ -43,17 +46,15 @@ export function updatePrompt(version: string, current: string, notes?: string): 
 export async function checkForUpdates(opts: { interactive: boolean }) {
   if (checking) return;
   checking = true;
-  const dialog = await import("@tauri-apps/plugin-dialog");
   try {
     const { check } = await import("@tauri-apps/plugin-updater");
     const update = await check();
     if (!update) {
-      if (opts.interactive) await dialog.message("You’re on the newest version of Based Next.", { title: "No update available" });
+      if (opts.interactive) await showMessage("You’re on the newest version of Based Next.", { title: "No update available" });
       return;
     }
-    const yes = await dialog.ask(updatePrompt(update.version, update.currentVersion, update.body), {
+    const yes = await askUser(updatePrompt(update.version, update.currentVersion, update.body), {
       title: "Update available",
-      kind: "info",
       okLabel: "Install and Restart",
       cancelLabel: "Later",
     });
@@ -75,10 +76,10 @@ export async function checkForUpdates(opts: { interactive: boolean }) {
         : found.kind === "current"
           ? `You’re on the newest version of Based Next (${current}).`
           : `Automatic updates aren’t set up yet. The newest DMG is always at ${DOWNLOAD_PAGE}`;
-      await dialog.message(text, { title: found.kind === "newer" ? "Update available" : "Updates", kind: "info" });
+      await showMessage(text, { title: found.kind === "newer" ? "Update available" : "Updates" });
       return;
     }
-    await dialog.message(`Could not check for updates: ${message}`, { title: "Update failed", kind: "error" });
+    await showMessage(`Could not check for updates: ${message}`, { title: "Update failed" });
   } finally {
     checking = false;
   }
@@ -128,8 +129,7 @@ export async function startDesktop(tabs?: { close: () => void; count: () => numb
 
 /** BSD-138: „Install Command Line Tool…“ – zeigt, wo das geht (Opt-in in den Einstellungen). */
 async function showCliInstall() {
-  const dialog = await import("@tauri-apps/plugin-dialog");
-  await dialog.message("Open Settings → Sync & server → “Local server & command line” and choose Install… there. It needs Node.js 22 or newer on this Mac; Based doesn't download anything.", { title: "Install Command Line Tool", kind: "info" });
+  await showMessage("Open Settings → Sync & server → “Local server & command line” and choose Install… there. It needs Node.js 22 or newer on this Mac; Based doesn't download anything.", { title: "Install Command Line Tool" });
 }
 
 /** BSD-202: Fenster-Adresse für eine Seite: eigenes Fenster ohne gespeicherte Tabs (`?window=page`). */
@@ -161,4 +161,17 @@ export async function openPageWindow(hash: string, title: string): Promise<void>
     url, title: title || "Based Next", width: 1000, height: 760, minWidth: 600, minHeight: 400,
     titleBarStyle: "overlay", hiddenTitle: true, trafficLightPosition: new LogicalPosition(18, 22), dragDropEnabled: false,
   });
+}
+
+/**
+ * Zwischenablage für das Based-Kontextmenü („Paste“, „Copy link“). In der Hülle über das Tauri-Plugin: WKWebView
+ * zeigt bei navigator.clipboard.readText() sonst die System-Blase „Einsetzen“. Im Browser: `undefined` (Standardweg).
+ */
+export function desktopClipboard(): ClipboardAccess | undefined {
+  if (!isTauri()) return undefined;
+  const plugin = () => import("@tauri-apps/plugin-clipboard-manager");
+  return {
+    read: async () => ({ text: (await (await plugin()).readText()) ?? "" }),
+    write: async (text) => (await plugin()).writeText(text),
+  };
 }
