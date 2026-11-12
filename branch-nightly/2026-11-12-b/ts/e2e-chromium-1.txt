@@ -1,61 +1,61 @@
-success c397165eb3a4c60f66cf3c47ccd19b6973fc8f07
-  ✓   62 [chromium] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen (13.2s)
-  ✓   65 [chromium] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (5.3s)
-  ✓   66 [chromium] › e2e/editor-polish.spec.ts:140:1 › Links und Häkchen im Editor ohne Browser-Blau (1.7s)
-  ✓   68 [chromium] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (1.6s)
-  ✓   69 [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (1.9s)
-  ✓   70 [chromium] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten (1.5s)
-  ✓   71 [chromium] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (1.9s)
-  ✓   67 [chromium] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (8.7s)
-  ✓   72 [chromium] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.8s)
-  ✓   74 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (992ms)
-  ✓   73 [chromium] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (4.1s)
-  ✓   75 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (1.9s)
-  ✓   77 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (1.7s)
-  ✓   76 [chromium] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (4.2s)
-  ✓   78 [chromium] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (3.1s)
-  ✓   80 [chromium] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (2.0s)
-  ✓   79 [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (4.1s)
-  ✓   82 [chromium] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (2.1s)
-  ✓   81 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (2.5s)
-  ✓   84 [chromium] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (2.0s)
-  ✓   83 [chromium] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (3.7s)
-  ✓   85 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (2.0s)
-  ✓   87 [chromium] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.2s)
-  ✓   86 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (4.5s)
-  ✓   88 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (3.9s)
-  ✓   89 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (3.4s)
-(node:7088) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   91 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (3.1s)
-  ✓   90 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.5s)
-  ✓   93 [chromium] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.5s)
-  ✓   92 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (3.8s)
-  ✓   94 [chromium] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.5s)
-  ✓   96 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (2.3s)
-  ✓   95 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.3s)
-  ✓   98 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (2.7s)
-  ✓   97 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.5s)
-  ✓   99 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.9s)
-  ✓  100 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (3.1s)
-  ✓  101 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.1s)
-  ✓  103 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (2.5s)
-  ✓  104 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.4s)
-  ✓  105 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.0s)
-  ✓  106 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.0s)
-  ✓  107 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (1.9s)
-  ✓  102 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.4s)
-  ✓  108 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.5s)
-  ✓  109 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.5s)
-  ✓  110 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.4s)
-  ✓  111 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.7s)
-  ✓  112 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.2s)
-  ✓  113 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
-  ✓  114 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.8s)
-  ✓  116 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.3s)
-  ✓  117 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.5s)
-  ✓  115 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (11.7s)
-  ✓  118 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.1s)
+failure a26292996fe4d1b9d2b10b0f1d05374c75b25f03
+  ✓   99 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.7s)
+  ✓  100 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.2s)
+  ✓  101 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (3.9s)
+  ✓  102 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.6s)
+  ✓  103 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.2s)
+  ✓  105 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.9s)
+  ✓  106 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.0s)
+  ✓  107 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.4s)
+  ✓  108 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.5s)
+  ✓  109 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.4s)
+  ✓  104 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.3s)
+  ✓  110 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (3.0s)
+  ✓  111 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.6s)
+  ✓  113 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.2s)
+  ✓  112 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.8s)
+  ✓  114 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.9s)
+  ✓  115 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.1s)
+  ✓  117 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.8s)
+  ✓  118 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.0s)
+  ✓  116 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (11.9s)
+  ✓  119 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.3s)
 
+
+  1) [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter 
+
+    TypeError: Cannot read properties of null (reading 'x')
+
+      179 |   await expect(handle).toBeVisible();
+      180 |   const h = (await handle.boundingBox())!;
+    > 181 |   await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+          |                           ^
+      182 |   await page.mouse.down();
+      183 |   await page.mouse.move(h.x + h.width / 2 + 6, h.y + h.height / 2 + 6, { steps: 6 });
+      184 |   const vh = page.viewportSize()!.height;
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:181:27
+
+    Error Context: test-results/editor-drag-Auto-Scroll-Zi-9f0dd-nd-scrollt-die-Seite-weiter-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    TypeError: Cannot read properties of null (reading 'x')
+
+      179 |   await expect(handle).toBeVisible();
+      180 |   const h = (await handle.boundingBox())!;
+    > 181 |   await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+          |                           ^
+      182 |   await page.mouse.down();
+      183 |   await page.mouse.move(h.x + h.width / 2 + 6, h.y + h.height / 2 + 6, { steps: 6 });
+      184 |   const vh = page.viewportSize()!.height;
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:181:27
+
+    Error Context: test-results/editor-drag-Auto-Scroll-Zi-9f0dd-nd-scrollt-die-Seite-weiter-chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter 
   5 skipped
-  113 passed (4.5m)
+  112 passed (4.6m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
