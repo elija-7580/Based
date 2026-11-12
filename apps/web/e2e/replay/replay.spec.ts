@@ -21,6 +21,8 @@ for (const name of BUNDLES) {
       const r = await replayReport(page, bundle, { mode });
       expect(r.plan.actions.length).toBeGreaterThan(mode === "input" ? 10 : 3);
       expect(r.expected).toBeDefined();
+      // Das Bündel hält, was die Aufnahme wollte (⇧Home, ⌘B macht die erste Zeile fett) – nicht eine Zufallsreihenfolge.
+      expect(JSON.stringify(r.expected)).toContain('"bold"');
       expect(r.doc).toEqual(r.expected);
       expect(r.issues).toEqual([]);
     });

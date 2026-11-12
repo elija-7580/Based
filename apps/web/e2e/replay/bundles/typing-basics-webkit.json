@@ -1,13 +1,13 @@
 {
  "format": "based-bug-report",
  "version": 1,
- "id": "20261111-163252-027a",
- "createdAt": "2026-11-11T16:32:52.044Z",
+ "id": "20261112-163020-6490",
+ "createdAt": "2026-11-12T16:30:20.707Z",
  "note": "Sample: typing, bold, list, heading, paste, click and backspace",
  "realText": false,
  "app": {
   "shell": "web",
-  "commit": "c2ba051",
+  "commit": "8dc7c6e",
   "platform": "Linux x86_64",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
  },
@@ -21,7 +21,7 @@
  },
  "state": {
   "menus": [],
-  "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+  "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
   "doc": {
    "type": "doc",
    "content": [
@@ -31,7 +31,7 @@
       {
        "type": "blockContainer",
        "attrs": {
-        "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+        "id": "57ea1945-4fe9-4222-8748-4f6229653300"
        },
        "content": [
         {
@@ -58,7 +58,7 @@
       {
        "type": "blockContainer",
        "attrs": {
-        "id": "f4a97f42-002f-4e19-af7c-406126208612"
+        "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
        },
        "content": [
         {
@@ -80,7 +80,7 @@
       {
        "type": "blockContainer",
        "attrs": {
-        "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+        "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
        },
        "content": [
         {
@@ -102,7 +102,7 @@
       {
        "type": "blockContainer",
        "attrs": {
-        "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+        "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
        },
        "content": [
         {
@@ -126,7 +126,7 @@
       {
        "type": "blockContainer",
        "attrs": {
-        "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+        "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
        },
        "content": [
         {
@@ -151,7 +151,7 @@
   },
   "blocks": [
    {
-    "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e",
+    "id": "57ea1945-4fe9-4222-8748-4f6229653300",
     "type": "paragraph",
     "props": {
      "backgroundColor": "default",
@@ -170,7 +170,7 @@
     "children": []
    },
    {
-    "id": "f4a97f42-002f-4e19-af7c-406126208612",
+    "id": "1849481d-9d28-42b0-8195-590e4a9f1f81",
     "type": "bulletListItem",
     "props": {
      "backgroundColor": "default",
@@ -187,7 +187,7 @@
     "children": []
    },
    {
-    "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34",
+    "id": "b3303681-9d8c-450d-a7c8-a10378c659fb",
     "type": "bulletListItem",
     "props": {
      "backgroundColor": "default",
@@ -204,7 +204,7 @@
     "children": []
    },
    {
-    "id": "6ad33309-cc22-4e82-94f3-725196e7d21f",
+    "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0",
     "type": "heading",
     "props": {
      "backgroundColor": "default",
@@ -223,7 +223,7 @@
     "children": []
    },
    {
-    "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490",
+    "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303",
     "type": "paragraph",
     "props": {
      "backgroundColor": "default",
@@ -251,50 +251,50 @@
   "items": [
    {
     "kind": "block",
-    "label": "paragraph #1dd58718-86cb-455c-a9a1-13dd32ab4e6e",
+    "label": "paragraph #57ea1945-4fe9-4222-8748-4f6229653300",
     "rect": {
      "x": 462,
-     "y": 233,
+     "y": 231,
      "w": 720,
      "h": 30
     }
    },
    {
     "kind": "block",
-    "label": "bulletListItem #f4a97f42-002f-4e19-af7c-406126208612",
+    "label": "bulletListItem #1849481d-9d28-42b0-8195-590e4a9f1f81",
     "rect": {
      "x": 462,
-     "y": 263,
+     "y": 261,
      "w": 720,
      "h": 30
     }
    },
    {
     "kind": "block",
-    "label": "bulletListItem #b220d9b5-d736-4735-b8a7-6f9491ae8e34",
+    "label": "bulletListItem #b3303681-9d8c-450d-a7c8-a10378c659fb",
     "rect": {
      "x": 462,
-     "y": 293,
+     "y": 291,
      "w": 720,
      "h": 30
     }
    },
    {
     "kind": "block",
-    "label": "heading #6ad33309-cc22-4e82-94f3-725196e7d21f",
+    "label": "heading #eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0",
     "rect": {
      "x": 462,
-     "y": 323,
+     "y": 321,
      "w": 720,
      "h": 49
     }
    },
    {
     "kind": "block",
-    "label": "paragraph #09d5a9e1-0f7e-494b-8360-9b829e4f4490",
+    "label": "paragraph #f8e15eac-47fb-4b2b-a64d-56958a45d303",
     "rect": {
      "x": 462,
-     "y": 372,
+     "y": 370,
      "w": 720,
      "h": 30
     }
@@ -329,9 +329,9 @@
     "label": "nav.bx-outline#page-outline",
     "rect": {
      "x": 1214,
-     "y": 393,
+     "y": 389,
      "w": 50,
-     "h": 34
+     "h": 42
     },
     "z": "15",
     "position": "fixed"
@@ -353,7 +353,7 @@
     "label": "div.tiptap.ProseMirror[role=textbox]",
     "rect": {
      "x": 406,
-     "y": 233,
+     "y": 231,
      "w": 832,
      "h": 199
     }
@@ -365,7 +365,7 @@
   "events": [
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -375,7 +375,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -397,57 +397,57 @@
      "anchor": 3,
      "head": 3
     },
-    "t": 1794414769364
+    "t": 1794501010188
    },
    {
     "kind": "pointer",
     "phase": "down",
     "x": 822,
-    "y": 248,
+    "y": 246,
     "button": 0,
     "detail": 1,
     "target": "div.bn-block-content[paragraph]",
-    "t": 1794414770046
+    "t": 1794501010913
    },
    {
     "kind": "focus",
     "target": "div.tiptap.ProseMirror[role=textbox]",
-    "t": 1794414770051
+    "t": 1794501010919
    },
    {
     "kind": "pointer",
     "phase": "up",
     "x": 822,
-    "y": 248,
+    "y": 246,
     "button": 0,
     "detail": 1,
     "target": "div.bn-block-content[paragraph]",
-    "t": 1794414770052
+    "t": 1794501010928
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "X",
     "mods": {},
-    "t": 1794414770061
+    "t": 1794501010941
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "X",
-    "t": 1794414770071
+    "t": 1794501010956
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770081
+    "t": 1794501010972
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -469,32 +469,32 @@
      "anchor": 4,
      "head": 4
     },
-    "t": 1794414770084
+    "t": 1794501010976
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770090
+    "t": 1794501010994
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770091
+    "t": 1794501010996
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770096
+    "t": 1794501011003
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -516,32 +516,32 @@
      "anchor": 5,
      "head": 5
     },
-    "t": 1794414770097
+    "t": 1794501011004
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770099
+    "t": 1794501011015
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770100
+    "t": 1794501011017
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770103
+    "t": 1794501011022
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -563,32 +563,32 @@
      "anchor": 6,
      "head": 6
     },
-    "t": 1794414770104
+    "t": 1794501011022
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770106
+    "t": 1794501011036
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770107
+    "t": 1794501011037
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770110
+    "t": 1794501011043
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -610,32 +610,32 @@
      "anchor": 7,
      "head": 7
     },
-    "t": 1794414770111
+    "t": 1794501011044
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770113
+    "t": 1794501011048
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770114
+    "t": 1794501011049
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770116
+    "t": 1794501011052
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -657,32 +657,32 @@
      "anchor": 8,
      "head": 8
     },
-    "t": 1794414770117
+    "t": 1794501011053
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770119
+    "t": 1794501011069
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770119
+    "t": 1794501011070
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770122
+    "t": 1794501011076
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -704,32 +704,32 @@
      "anchor": 9,
      "head": 9
     },
-    "t": 1794414770123
+    "t": 1794501011076
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770125
+    "t": 1794501011078
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770125
+    "t": 1794501011079
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770130
+    "t": 1794501011082
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -751,32 +751,32 @@
      "anchor": 10,
      "head": 10
     },
-    "t": 1794414770131
+    "t": 1794501011082
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770141
+    "t": 1794501011085
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770143
+    "t": 1794501011086
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770147
+    "t": 1794501011093
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -798,32 +798,32 @@
      "anchor": 11,
      "head": 11
     },
-    "t": 1794414770149
+    "t": 1794501011093
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770151
+    "t": 1794501011106
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770152
+    "t": 1794501011107
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770155
+    "t": 1794501011114
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -845,32 +845,32 @@
      "anchor": 12,
      "head": 12
     },
-    "t": 1794414770156
+    "t": 1794501011115
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770157
+    "t": 1794501011124
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770158
+    "t": 1794501011129
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770161
+    "t": 1794501011134
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -892,32 +892,32 @@
      "anchor": 13,
      "head": 13
     },
-    "t": 1794414770161
+    "t": 1794501011135
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770163
+    "t": 1794501011160
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770164
+    "t": 1794501011161
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770166
+    "t": 1794501011165
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -939,42 +939,42 @@
      "anchor": 14,
      "head": 14
     },
-    "t": 1794414770166
+    "t": 1794501011165
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Shift",
     "code": "ShiftLeft",
     "mods": {
      "shift": true
     },
-    "t": 1794414770171
+    "t": 1794501011187
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Home",
     "code": "Home",
     "mods": {
      "shift": true
     },
-    "t": 1794414770172
+    "t": 1794501011192
    },
    {
     "kind": "select",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "sel": {
      "type": "text",
      "anchor": 14,
      "head": 3
     },
     "cause": "pointer",
-    "t": 1794414770175
+    "t": 1794501011194
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [],
     "docChanged": false,
     "sel": {
@@ -982,11 +982,11 @@
      "anchor": 14,
      "head": 3
     },
-    "t": 1794414770175
+    "t": 1794501011194
    },
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -996,7 +996,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -1024,38 +1024,38 @@
      "anchor": 14,
      "head": 3
     },
-    "t": 1794414770478
+    "t": 1794501012594
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Control",
     "code": "ControlLeft",
     "mods": {
      "ctrl": true
     },
-    "t": 1794414770478
+    "t": 1794501012594
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "b",
     "code": "KeyB",
     "mods": {
      "ctrl": true
     },
-    "t": 1794414770483
+    "t": 1794501012595
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 41,
     "origin": "y-sync$",
-    "t": 1794414770491
+    "t": 1794501012606
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "addMark",
@@ -1072,19 +1072,19 @@
      "anchor": 14,
      "head": 3
     },
-    "t": 1794414770491
+    "t": 1794501012606
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "End",
     "code": "End",
     "mods": {},
-    "t": 1794414770505
+    "t": 1794501013127
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [],
     "docChanged": false,
     "sel": {
@@ -1092,26 +1092,26 @@
      "anchor": 14,
      "head": 14
     },
-    "t": 1794414770508
+    "t": 1794501013133
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Enter",
     "code": "Enter",
     "mods": {},
-    "t": 1794414770520
+    "t": 1794501013204
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 192,
     "origin": "y-sync$",
-    "t": 1794414770527
+    "t": 1794501013217
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1122,7 +1122,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -1164,32 +1164,32 @@
      "anchor": 18,
      "head": 18
     },
-    "t": 1794414770528
+    "t": 1794501013217
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "-",
     "mods": {},
-    "t": 1794414770539
+    "t": 1794501013897
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "-",
-    "t": 1794414770540
+    "t": 1794501013898
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770543
+    "t": 1794501013904
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1211,32 +1211,32 @@
      "anchor": 19,
      "head": 19
     },
-    "t": 1794414770544
+    "t": 1794501013906
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770546
+    "t": 1794501013917
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770546
+    "t": 1794501013918
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770550
+    "t": 1794501013924
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1258,18 +1258,18 @@
      "anchor": 20,
      "head": 20
     },
-    "t": 1794414770550
+    "t": 1794501013924
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 133,
     "origin": "y-sync$",
-    "t": 1794414770554
+    "t": 1794501013945
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1304,32 +1304,32 @@
      "anchor": 18,
      "head": 18
     },
-    "t": 1794414770554
+    "t": 1794501013945
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "X",
     "mods": {},
-    "t": 1794414770558
+    "t": 1794501014029
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "X",
-    "t": 1794414770559
+    "t": 1794501014029
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770563
+    "t": 1794501014034
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1351,32 +1351,32 @@
      "anchor": 19,
      "head": 19
     },
-    "t": 1794414770563
+    "t": 1794501014035
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770578
+    "t": 1794501014092
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770579
+    "t": 1794501014093
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770581
+    "t": 1794501014096
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1398,32 +1398,32 @@
      "anchor": 20,
      "head": 20
     },
-    "t": 1794414770581
+    "t": 1794501014096
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770585
+    "t": 1794501014111
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770586
+    "t": 1794501014112
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770588
+    "t": 1794501014114
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1445,32 +1445,32 @@
      "anchor": 21,
      "head": 21
     },
-    "t": 1794414770588
+    "t": 1794501014115
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770590
+    "t": 1794501014133
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770591
+    "t": 1794501014137
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770593
+    "t": 1794501014140
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1492,32 +1492,32 @@
      "anchor": 22,
      "head": 22
     },
-    "t": 1794414770593
+    "t": 1794501014140
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770605
+    "t": 1794501014151
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770606
+    "t": 1794501014151
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770608
+    "t": 1794501014154
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1539,32 +1539,32 @@
      "anchor": 23,
      "head": 23
     },
-    "t": 1794414770608
+    "t": 1794501014155
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770609
+    "t": 1794501014161
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770610
+    "t": 1794501014162
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770612
+    "t": 1794501014166
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1586,32 +1586,32 @@
      "anchor": 24,
      "head": 24
     },
-    "t": 1794414770612
+    "t": 1794501014166
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770624
+    "t": 1794501014169
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770625
+    "t": 1794501014170
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770626
+    "t": 1794501014172
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1633,32 +1633,32 @@
      "anchor": 25,
      "head": 25
     },
-    "t": 1794414770627
+    "t": 1794501014172
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770629
+    "t": 1794501014173
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770630
+    "t": 1794501014174
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770632
+    "t": 1794501014176
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1680,11 +1680,11 @@
      "anchor": 26,
      "head": 26
     },
-    "t": 1794414770632
+    "t": 1794501014176
    },
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -1694,7 +1694,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -1721,7 +1721,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
          },
          "content": [
           {
@@ -1749,32 +1749,32 @@
      "anchor": 26,
      "head": 26
     },
-    "t": 1794414770633
+    "t": 1794501014178
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770633
+    "t": 1794501014178
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770633
+    "t": 1794501014179
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770635
+    "t": 1794501014180
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1796,32 +1796,32 @@
      "anchor": 27,
      "head": 27
     },
-    "t": 1794414770635
+    "t": 1794501014180
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770637
+    "t": 1794501014182
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770638
+    "t": 1794501014183
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770639
+    "t": 1794501014184
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1843,26 +1843,26 @@
      "anchor": 28,
      "head": 28
     },
-    "t": 1794414770640
+    "t": 1794501014184
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Enter",
     "code": "Enter",
     "mods": {},
-    "t": 1794414770653
+    "t": 1794501014199
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 197,
     "origin": "y-sync$",
-    "t": 1794414770659
+    "t": 1794501014204
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1873,7 +1873,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
          },
          "content": [
           {
@@ -1915,32 +1915,32 @@
      "anchor": 32,
      "head": 32
     },
-    "t": 1794414770659
+    "t": 1794501014204
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "X",
     "mods": {},
-    "t": 1794414770663
+    "t": 1794501015038
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "X",
-    "t": 1794414770664
+    "t": 1794501015039
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770667
+    "t": 1794501015048
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -1962,32 +1962,32 @@
      "anchor": 33,
      "head": 33
     },
-    "t": 1794414770668
+    "t": 1794501015049
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770669
+    "t": 1794501015051
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770670
+    "t": 1794501015051
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770671
+    "t": 1794501015054
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2009,32 +2009,32 @@
      "anchor": 34,
      "head": 34
     },
-    "t": 1794414770672
+    "t": 1794501015054
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770673
+    "t": 1794501015058
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770673
+    "t": 1794501015059
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770675
+    "t": 1794501015071
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2056,32 +2056,32 @@
      "anchor": 35,
      "head": 35
     },
-    "t": 1794414770675
+    "t": 1794501015071
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770677
+    "t": 1794501015115
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770678
+    "t": 1794501015116
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770679
+    "t": 1794501015119
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2103,32 +2103,32 @@
      "anchor": 36,
      "head": 36
     },
-    "t": 1794414770679
+    "t": 1794501015120
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770682
+    "t": 1794501015123
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770682
+    "t": 1794501015129
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770684
+    "t": 1794501015162
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2150,32 +2150,32 @@
      "anchor": 37,
      "head": 37
     },
-    "t": 1794414770684
+    "t": 1794501015163
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770685
+    "t": 1794501015185
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770686
+    "t": 1794501015187
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770688
+    "t": 1794501015193
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2197,32 +2197,32 @@
      "anchor": 38,
      "head": 38
     },
-    "t": 1794414770688
+    "t": 1794501015193
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770689
+    "t": 1794501015195
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770690
+    "t": 1794501015196
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770691
+    "t": 1794501015198
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2244,32 +2244,32 @@
      "anchor": 39,
      "head": 39
     },
-    "t": 1794414770692
+    "t": 1794501015198
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770693
+    "t": 1794501015199
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770693
+    "t": 1794501015200
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770695
+    "t": 1794501015202
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2291,32 +2291,32 @@
      "anchor": 40,
      "head": 40
     },
-    "t": 1794414770695
+    "t": 1794501015202
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770697
+    "t": 1794501015203
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770697
+    "t": 1794501015204
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770699
+    "t": 1794501015205
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2338,32 +2338,32 @@
      "anchor": 41,
      "head": 41
     },
-    "t": 1794414770699
+    "t": 1794501015205
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770708
+    "t": 1794501015207
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770708
+    "t": 1794501015207
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770710
+    "t": 1794501015208
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2385,11 +2385,11 @@
      "anchor": 42,
      "head": 42
     },
-    "t": 1794414770710
+    "t": 1794501015209
    },
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -2399,7 +2399,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -2426,7 +2426,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
          },
          "content": [
           {
@@ -2448,7 +2448,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
          },
          "content": [
           {
@@ -2476,32 +2476,32 @@
      "anchor": 42,
      "head": 42
     },
-    "t": 1794414770711
+    "t": 1794501015211
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770711
+    "t": 1794501015211
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770712
+    "t": 1794501015211
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770714
+    "t": 1794501015213
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2523,26 +2523,26 @@
      "anchor": 43,
      "head": 43
     },
-    "t": 1794414770714
+    "t": 1794501015213
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Enter",
     "code": "Enter",
     "mods": {},
-    "t": 1794414770721
+    "t": 1794501015216
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 197,
     "origin": "y-sync$",
-    "t": 1794414770724
+    "t": 1794501015219
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2553,7 +2553,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
          },
          "content": [
           {
@@ -2595,26 +2595,26 @@
      "anchor": 47,
      "head": 47
     },
-    "t": 1794414770724
+    "t": 1794501015219
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Enter",
     "code": "Enter",
     "mods": {},
-    "t": 1794414770726
+    "t": 1794501015935
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 126,
     "origin": "y-sync$",
-    "t": 1794414770730
+    "t": 1794501015942
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replaceAround",
@@ -2644,32 +2644,32 @@
      "anchor": 47,
      "head": 47
     },
-    "t": 1794414770730
+    "t": 1794501015942
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "#",
     "mods": {},
-    "t": 1794414770732
+    "t": 1794501016421
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "#",
-    "t": 1794414770732
+    "t": 1794501016428
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770738
+    "t": 1794501016438
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2691,32 +2691,32 @@
      "anchor": 48,
      "head": 48
     },
-    "t": 1794414770739
+    "t": 1794501016440
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770741
+    "t": 1794501016444
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770741
+    "t": 1794501016472
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770744
+    "t": 1794501016477
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2738,18 +2738,18 @@
      "anchor": 49,
      "head": 49
     },
-    "t": 1794414770744
+    "t": 1794501016477
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 164,
     "origin": "y-sync$",
-    "t": 1794414770757
+    "t": 1794501016488
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2786,32 +2786,32 @@
      "anchor": 47,
      "head": 47
     },
-    "t": 1794414770757
+    "t": 1794501016488
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "X",
     "mods": {},
-    "t": 1794414770779
+    "t": 1794501016509
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "X",
-    "t": 1794414770781
+    "t": 1794501016510
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770784
+    "t": 1794501016513
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2833,32 +2833,32 @@
      "anchor": 48,
      "head": 48
     },
-    "t": 1794414770785
+    "t": 1794501016514
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770789
+    "t": 1794501016545
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770790
+    "t": 1794501016546
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770792
+    "t": 1794501016548
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2880,32 +2880,32 @@
      "anchor": 49,
      "head": 49
     },
-    "t": 1794414770792
+    "t": 1794501016549
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770793
+    "t": 1794501016550
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770794
+    "t": 1794501016551
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770796
+    "t": 1794501016553
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2927,32 +2927,32 @@
      "anchor": 50,
      "head": 50
     },
-    "t": 1794414770796
+    "t": 1794501016553
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770797
+    "t": 1794501016554
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770798
+    "t": 1794501016555
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770799
+    "t": 1794501016556
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -2974,32 +2974,32 @@
      "anchor": 51,
      "head": 51
     },
-    "t": 1794414770800
+    "t": 1794501016557
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770801
+    "t": 1794501016558
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770801
+    "t": 1794501016559
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770803
+    "t": 1794501016561
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3021,32 +3021,32 @@
      "anchor": 52,
      "head": 52
     },
-    "t": 1794414770803
+    "t": 1794501016561
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770804
+    "t": 1794501016569
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770805
+    "t": 1794501016570
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770806
+    "t": 1794501016572
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3068,32 +3068,32 @@
      "anchor": 53,
      "head": 53
     },
-    "t": 1794414770807
+    "t": 1794501016572
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770808
+    "t": 1794501016573
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770809
+    "t": 1794501016574
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770810
+    "t": 1794501016575
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3115,26 +3115,26 @@
      "anchor": 54,
      "head": 54
     },
-    "t": 1794414770810
+    "t": 1794501016576
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Enter",
     "code": "Enter",
     "mods": {},
-    "t": 1794414770812
+    "t": 1794501016578
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 192,
     "origin": "y-sync$",
-    "t": 1794414770816
+    "t": 1794501016581
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3145,7 +3145,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
          },
          "content": [
           {
@@ -3189,11 +3189,11 @@
      "anchor": 58,
      "head": 58
     },
-    "t": 1794414770816
+    "t": 1794501016582
    },
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -3203,7 +3203,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -3230,7 +3230,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
          },
          "content": [
           {
@@ -3252,7 +3252,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
          },
          "content": [
           {
@@ -3274,7 +3274,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
          },
          "content": [
           {
@@ -3298,7 +3298,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+          "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
          },
          "content": [
           {
@@ -3320,32 +3320,32 @@
      "anchor": 58,
      "head": 58
     },
-    "t": 1794414770818
+    "t": 1794501017825
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "X",
     "mods": {},
-    "t": 1794414770818
+    "t": 1794501017825
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "X",
-    "t": 1794414770819
+    "t": 1794501017826
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 28,
     "origin": "y-sync$",
-    "t": 1794414770821
+    "t": 1794501017837
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3367,32 +3367,32 @@
      "anchor": 59,
      "head": 59
     },
-    "t": 1794414770822
+    "t": 1794501017838
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770823
+    "t": 1794501017841
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770824
+    "t": 1794501017842
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770830
+    "t": 1794501017847
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3414,32 +3414,32 @@
      "anchor": 60,
      "head": 60
     },
-    "t": 1794414770830
+    "t": 1794501017847
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770831
+    "t": 1794501017869
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770832
+    "t": 1794501017870
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770833
+    "t": 1794501017872
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3461,32 +3461,32 @@
      "anchor": 61,
      "head": 61
     },
-    "t": 1794414770833
+    "t": 1794501017877
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770835
+    "t": 1794501017884
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770835
+    "t": 1794501017885
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770837
+    "t": 1794501017890
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3508,32 +3508,32 @@
      "anchor": 62,
      "head": 62
     },
-    "t": 1794414770837
+    "t": 1794501017891
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770838
+    "t": 1794501017906
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770839
+    "t": 1794501017908
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770840
+    "t": 1794501017928
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3555,32 +3555,32 @@
      "anchor": 63,
      "head": 63
     },
-    "t": 1794414770840
+    "t": 1794501017941
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "x",
     "mods": {},
-    "t": 1794414770847
+    "t": 1794501018004
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "x",
-    "t": 1794414770848
+    "t": 1794501018009
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770849
+    "t": 1794501018018
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3602,32 +3602,32 @@
      "anchor": 64,
      "head": 64
     },
-    "t": 1794414770849
+    "t": 1794501018018
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": ":",
     "mods": {},
-    "t": 1794414770851
+    "t": 1794501018045
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": ":",
-    "t": 1794414770851
+    "t": 1794501018046
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770853
+    "t": 1794501018050
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3649,32 +3649,32 @@
      "anchor": 65,
      "head": 65
     },
-    "t": 1794414770854
+    "t": 1794501018050
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": " ",
     "mods": {},
-    "t": 1794414770860
+    "t": 1794501018059
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": " ",
-    "t": 1794414770860
+    "t": 1794501018060
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414770863
+    "t": 1794501018063
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3696,25 +3696,25 @@
      "anchor": 66,
      "head": 66
     },
-    "t": 1794414770864
+    "t": 1794501018064
    },
    {
     "kind": "paste",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "plain": "xxxx xxx xxxxxxxxx",
     "files": 0,
-    "t": 1794414770873
+    "t": 1794501018070
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 35,
     "origin": "y-sync$",
-    "t": 1794414770881
+    "t": 1794501018087
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3740,42 +3740,42 @@
      "paste",
      "uiEvent:paste"
     ],
-    "t": 1794414770882
+    "t": 1794501018089
    },
    {
     "kind": "pointer",
     "phase": "down",
     "x": 533,
-    "y": 308,
+    "y": 306,
     "button": 0,
     "detail": 1,
     "target": "p.bn-inline-content",
-    "t": 1794414771593
+    "t": 1794501018734
    },
    {
     "kind": "pointer",
     "phase": "up",
     "x": 533,
-    "y": 308,
+    "y": 306,
     "button": 0,
     "detail": 1,
     "target": "p.bn-inline-content",
-    "t": 1794414771595
+    "t": 1794501018737
    },
    {
     "kind": "select",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "sel": {
      "type": "text",
      "anchor": 37,
      "head": 37
     },
     "cause": "pointer",
-    "t": 1794414771598
+    "t": 1794501018739
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [],
     "docChanged": false,
     "sel": {
@@ -3786,30 +3786,30 @@
     "meta": [
      "pointer"
     ],
-    "t": 1794414771598
+    "t": 1794501018739
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "End",
     "code": "End",
     "mods": {},
-    "t": 1794414771604
+    "t": 1794501018756
    },
    {
     "kind": "select",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "sel": {
      "type": "text",
      "anchor": 43,
      "head": 43
     },
     "cause": "pointer",
-    "t": 1794414771610
+    "t": 1794501018763
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [],
     "docChanged": false,
     "sel": {
@@ -3817,32 +3817,32 @@
      "anchor": 43,
      "head": 43
     },
-    "t": 1794414771610
+    "t": 1794501018763
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Backspace",
     "code": "Backspace",
     "mods": {},
-    "t": 1794414771612
+    "t": 1794501019321
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "deleteContentBackward",
-    "t": 1794414771616
+    "t": 1794501019328
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 10,
     "origin": "y-sync$",
-    "t": 1794414771620
+    "t": 1794501019350
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3856,32 +3856,32 @@
      "anchor": 42,
      "head": 42
     },
-    "t": 1794414771621
+    "t": 1794501019350
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "Backspace",
     "code": "Backspace",
     "mods": {},
-    "t": 1794414771624
+    "t": 1794501020017
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "deleteContentBackward",
-    "t": 1794414771625
+    "t": 1794501020021
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 10,
     "origin": "y-sync$",
-    "t": 1794414771628
+    "t": 1794501020023
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -3895,11 +3895,11 @@
      "anchor": 41,
      "head": 41
     },
-    "t": 1794414771628
+    "t": 1794501020024
    },
    {
     "kind": "checkpoint",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "doc": {
      "type": "doc",
      "content": [
@@ -3909,7 +3909,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "1dd58718-86cb-455c-a9a1-13dd32ab4e6e"
+          "id": "57ea1945-4fe9-4222-8748-4f6229653300"
          },
          "content": [
           {
@@ -3936,7 +3936,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "f4a97f42-002f-4e19-af7c-406126208612"
+          "id": "1849481d-9d28-42b0-8195-590e4a9f1f81"
          },
          "content": [
           {
@@ -3958,7 +3958,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "b220d9b5-d736-4735-b8a7-6f9491ae8e34"
+          "id": "b3303681-9d8c-450d-a7c8-a10378c659fb"
          },
          "content": [
           {
@@ -3980,7 +3980,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "6ad33309-cc22-4e82-94f3-725196e7d21f"
+          "id": "eb1de2f0-b52e-4269-a1f6-e400c0ba2ca0"
          },
          "content": [
           {
@@ -4004,7 +4004,7 @@
         {
          "type": "blockContainer",
          "attrs": {
-          "id": "09d5a9e1-0f7e-494b-8360-9b829e4f4490"
+          "id": "f8e15eac-47fb-4b2b-a64d-56958a45d303"
          },
          "content": [
           {
@@ -4032,32 +4032,32 @@
      "anchor": 41,
      "head": 41
     },
-    "t": 1794414771630
+    "t": 1794501020295
    },
    {
     "kind": "key",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "key": "!",
     "mods": {},
-    "t": 1794414771630
+    "t": 1794501020295
    },
    {
     "kind": "input",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "inputType": "insertText",
     "data": "!",
-    "t": 1794414771631
+    "t": 1794501020296
    },
    {
     "kind": "yjs",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "bytes": 18,
     "origin": "y-sync$",
-    "t": 1794414771633
+    "t": 1794501020299
    },
    {
     "kind": "tr",
-    "root": "1C921FA8-6BA0-4B66-8087-FD763B9DA111",
+    "root": "8EC47006-33E0-434A-9493-6FE23E46652A",
     "steps": [
      {
       "stepType": "replace",
@@ -4079,55 +4079,55 @@
      "anchor": 42,
      "head": 42
     },
-    "t": 1794414771634
+    "t": 1794501020300
    }
   ]
  },
  "log": [
   {
-   "at": 1794414767378,
+   "at": 1794501008265,
    "level": "info",
    "message": "start · Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15"
   },
   {
-   "at": 1794414767379,
+   "at": 1794501008266,
    "level": "info",
-   "message": "boot: scripts loaded +528 ms"
+   "message": "boot: scripts loaded +604 ms"
   },
   {
-   "at": 1794414767406,
+   "at": 1794501008320,
    "level": "info",
-   "message": "boot: shell started +554 ms"
+   "message": "boot: shell started +658 ms"
   },
   {
-   "at": 1794414767502,
+   "at": 1794501008452,
    "level": "info",
-   "message": "boot: settings read +651 ms"
+   "message": "boot: settings read +791 ms"
   },
   {
-   "at": 1794414767659,
+   "at": 1794501008659,
    "level": "info",
-   "message": "boot: first render +808 ms"
+   "message": "boot: first render +997 ms"
   },
   {
-   "at": 1794414768601,
+   "at": 1794501009154,
    "level": "info",
-   "message": "boot: store answered +1750 ms"
+   "message": "boot: store answered +1492 ms"
   },
   {
-   "at": 1794414768601,
+   "at": 1794501009154,
    "level": "info",
    "message": "status: starting"
   },
   {
-   "at": 1794414768616,
+   "at": 1794501009200,
    "level": "info",
    "message": "status: local"
   },
   {
-   "at": 1794414768619,
+   "at": 1794501009203,
    "level": "info",
-   "message": "boot: store ready +1768 ms (1 pages)"
+   "message": "boot: store ready +1541 ms (1 pages)"
   }
  ]
 }

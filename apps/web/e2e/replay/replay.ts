@@ -41,6 +41,11 @@ export function engineOf(json: unknown): "webkit" | "chromium" {
   return /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg/.test(ua) ? "webkit" : "chromium";
 }
 
+/** Zwei Bildwechsel abwarten: selectionchange ist dann ausgeliefert und vom Editor übernommen. */
+export async function settle(page: Page): Promise<void> {
+  await page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
+}
+
 /** Bündel laden und wiedergeben. Erwartet eine geöffnete App (data-ready). */
 export async function replayReport(page: Page, json: unknown, opts: { mode?: "input" | "steps" } = {}): Promise<ReplayResult> {
   const bundle = parseBugBundle(json) as BugBundle | undefined;
@@ -51,18 +56,16 @@ export async function replayReport(page: Page, json: unknown, opts: { mode?: "in
   await page.goto(`/#page-${id}`);
   await expect.poll(() => page.evaluate((root) => (globalThis as unknown as W).__basedReport.roots().includes(root), id), { timeout: 15_000 }).toBe(true);
   expect(await page.evaluate(([root, doc, sel]) => (globalThis as unknown as W).__basedReport.load(root as string, doc, sel), [id, plan.start.doc, plan.start.sel] as const)).toBe(true);
-  // Eine neue Seite setzt den Fokus ins Titelfeld – erst wenn das durch ist, die Schreibmarke in den Editor.
-  // Nach dem Laden das Titelfeld verlassen (Escape/Blur), dann die Schreibmarke setzen und prüfen, dass sie bleibt.
-  await page.getByLabel("Page title").waitFor();
-  await page.waitForTimeout(500);
-  await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, plan.start.sel] as const);
-  await page.waitForTimeout(300);
+  // Schreibmarke an die Startstelle; die Seite ist frisch geladen, erst wenn der Editor den Fokus hält, geht es los.
   await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, plan.start.sel] as const);
   await expect.poll(() => page.evaluate(() => !!document.activeElement?.closest(".ProseMirror"))).toBe(true);
   for (const a of plan.actions) {
     switch (a.kind) {
       case "type": await page.keyboard.type(a.text); break;
-      case "press": await page.keyboard.press(a.combo); break;
+      // Tasten wie ⇧Home oder End bewegt der Browser selbst; der Editor übernimmt die neue Auswahl erst mit dem
+      // nächsten selectionchange. Ein Mensch tippt nie so schnell, dass die nächste Taste davor kommt – die Wiedergabe
+      // wartet deshalb nach jeder solchen Taste, bis die Auswahl übernommen ist (sonst: mal fett, mal nicht).
+      case "press": await page.keyboard.press(a.combo); await settle(page); break;
       case "insertText": await page.keyboard.insertText(a.text); break;
       case "select": await page.evaluate(([root, sel]) => (globalThis as unknown as W).__basedReport.setSelection(root as string, sel), [id, a.sel] as const); break;
       case "paste":
