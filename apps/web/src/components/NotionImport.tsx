@@ -2,8 +2,10 @@
 // Sortierung, Gruppen, Layouts), Spalten und Struktur. Token nur auf diesem Gerät (verschlüsselt, shell/secrets.ts),
 // Anfragen gehen direkt an Notion (Desktop-App), nicht über einen Based-Server.
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
-import { NotionWorkspaceImport, parseNotionTargets } from "@based/core";
+import { NotionWorkspaceImport, parseNotionTargets, type HybridMode } from "@based/core";
 import { useEffect, useRef, useState } from "react";
+import { hybridImport } from "../worker/notionHybridClient.js";
+import { HybridReport, HybridRunning, useHybridImport } from "./NotionHybrid.js";
 import { describeNotionError, notionBaseURL, notionToken, notionTransport } from "../shell/notionTransport.js";
 import type { StoreClient } from "../worker/client.js";
 import { ImportCancelledError } from "../worker/importClient.js";
@@ -21,9 +23,12 @@ interface Props {
   onBack: () => void;
   onDone: (summary: ImportSummary, report: string) => void;
   onBusy: (busy: boolean) => void;
+  onClose: () => void;
 }
 
-export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
+const shortDate = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props) {
   const [phase, setPhase] = useState<Phase>({ k: "form" });
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState(false);
@@ -43,8 +48,16 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
       job.current?.cancel();
     };
   }, []);
+  // BSD-317: mit Notions HTML-Export (ZIP) kommt der Inhalt aus der Datei, die API liefert nur die Struktur.
+  const hybrid = useHybridImport();
+  const [zip, setZip] = useState<File | undefined>(undefined);
+  const zipInput = useRef<HTMLInputElement>(null);
+  const hybridRunning = hybrid.k === "running" || hybrid.k === "stopping";
   const busy = phase.k === "running" || phase.k === "writing";
-  useEffect(() => onBusy(busy), [busy, onBusy]);
+  // Solange nur die Struktur fehlt, bleibt der Dialog offen; danach läuft der Import ohne ihn weiter.
+  useEffect(() => onBusy(busy || (hybridRunning && !hybrid.structureReady)), [busy, hybridRunning, hybrid.structureReady, onBusy]);
+  useEffect(() => { if (hybrid.k === "idle") void hybridImport.restore(client); }, [client, hybrid.k]);
+  const earlier = hybridImport.savedState();
 
   const base = notionBaseURL();
   const currentToken = async () => token.trim() || (saved ? (await notionToken.get()) ?? "" : "");
@@ -65,7 +78,23 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
     }
   };
 
+  const startHybrid = async (mode: HybridMode) => {
+    try {
+      const t = await currentToken();
+      if (!t) {
+        setPhase({ k: "error", message: "Paste the integration token first." });
+        return;
+      }
+      if (token.trim()) await notionToken.set(remember ? token : undefined);
+      setPhase({ k: "form" });
+      hybridImport.start({ client, token: t, mode, zip, zipName: zip?.name, transport: await notionTransport(), baseURL: base, downloadFiles: files });
+    } catch (e) {
+      if (alive.current) setPhase({ k: "error", message: describeNotionError(e, { customBase: base !== undefined }) });
+    }
+  };
+
   const start = async () => {
+    if (zip) return startHybrid("full");
     let report: string | undefined;
     try {
       const t = await currentToken();
@@ -101,6 +130,9 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
     }
   };
 
+  if (hybridRunning) return <HybridRunning status={hybrid} onClose={onClose} />;
+  if (hybrid.k === "done") return <HybridReport status={hybrid} onClose={onClose} />;
+
   if (busy) {
     const fraction = phase.k === "running" ? phase.fraction : 1;
     return (
@@ -122,6 +154,26 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
         Brings pages over with their layout — columns, toggles, callouts — and databases with every view: filters, sorts, groups, boards, calendars, timelines, charts and dashboards.
         Importing again updates those pages and keeps what you changed in Based.
       </p>
+      {hybrid.k === "paused" ? (
+        <div className="hybrid-note" role="status" data-testid="hybrid-paused">
+          <p className="t-desc">
+            <strong>An earlier import isn’t finished.</strong> {hybrid.remaining.toLocaleString("en-US")} {hybrid.remaining === 1 ? "page is" : "pages are"} still waiting for content.
+            {hybrid.waitingForZip > 0 && !zip ? " Choose the same Notion export below to continue." : ""}
+          </p>
+          <button type="button" className="btn" disabled={(!token.trim() && !saved) || (hybrid.waitingForZip > 0 && !zip)} onClick={() => void startHybrid("resume")}>Continue</button>
+        </div>
+      ) : earlier?.watermark !== undefined && earlier.phase === "done" ? (
+        <div className="hybrid-note" data-testid="hybrid-update">
+          <p className="t-desc"><strong>Already imported.</strong> Fetch what changed in Notion since {shortDate(earlier.watermark)} — pages you edited in Based stay as they are.</p>
+          <button type="button" className="btn" disabled={!token.trim() && !saved} onClick={() => void startHybrid("delta")}>Update from Notion</button>
+        </div>
+      ) : null}
+      {hybrid.k === "error" ? (
+        <div className="dialog-report" role="alert" data-testid="hybrid-error">
+          <p className="dialog-error">Import stopped: {describeNotionError(new Error(hybrid.error ?? ""), { customBase: base !== undefined })}{hybrid.structureReady ? " Nothing is lost — continue when you’re ready." : ""}</p>
+          {hybrid.diagnostic ? <CopyReport report={hybrid.diagnostic} /> : null}
+        </div>
+      ) : null}
       <details className="notion-help" open={!saved}>
         <summary className="t-meta">How to get a token</summary>
         <ol className="notion-steps t-desc">
@@ -145,17 +197,30 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
         <CheckboxInput label="Remember the token on this device" value={remember} onChange={setRemember} />
         {saved ? <button type="button" className="btn ghost" onClick={() => void notionToken.set(undefined).then(() => { setSaved(false); setCheck({ k: "idle" }); })}>Forget saved token</button> : null}
       </div>
-      <label className="field">
+      <div className="field">
+        <span className="t-meta" id="notion-zip-label">Notion export for large workspaces (optional)</span>
+        <span className="field-row hybrid-zip">
+          <input ref={zipInput} type="file" accept=".zip" className="sr-only" tabIndex={-1} aria-labelledby="notion-zip-label" data-testid="hybrid-zip"
+            onChange={(e) => { setZip(e.target.files?.[0]); if (hybrid.k === "error") hybridImport.dismiss(); }} />
+          <span className="hybrid-zip-name t-desc" data-empty={zip ? undefined : ""}>{zip ? zip.name : "No export chosen"}</span>
+          {zip ? <button type="button" className="btn ghost" onClick={() => { setZip(undefined); if (zipInput.current) zipInput.current.value = ""; }}>Remove</button> : null}
+          <button type="button" className="btn" onClick={() => zipInput.current?.click()}>{zip ? "Change…" : "Choose ZIP…"}</button>
+        </span>
+        <span className="t-desc">
+          In Notion: Settings → Export all workspace content → HTML, with subpages and folders. Page content is then read from the file and Notion only supplies structure — thousands of pages take minutes instead of hours.
+        </span>
+      </div>
+      {zip ? null : <label className="field">
         <span className="t-meta">Pages or databases (optional)</span>
         <textarea className="input notion-links" rows={3} aria-label="Notion links" spellCheck={false}
           placeholder="Paste Notion links, one per line. Leave empty to import everything shared with the integration."
           value={links} onChange={(e) => setLinks(e.target.value)} />
-      </label>
-      {unreadable > 0 ? <p className="dialog-error" role="alert">{unreadable === 1 ? "One line isn’t a Notion link or ID and will be skipped." : `${unreadable} lines aren’t Notion links or IDs and will be skipped.`}</p> : null}
+      </label>}
+      {!zip && unreadable > 0 ? <p className="dialog-error" role="alert">{unreadable === 1 ? "One line isn’t a Notion link or ID and will be skipped." : `${unreadable} lines aren’t Notion links or IDs and will be skipped.`}</p> : null}
       <div className="notion-options">
-        <CheckboxInput label="Include sub-pages" value={subpages} onChange={setSubpages} />
+        {zip ? null : <CheckboxInput label="Include sub-pages" value={subpages} onChange={setSubpages} />}
         <CheckboxInput label="Copy images and files" value={files} onChange={setFiles} />
-        <CheckboxInput label="Content inside database rows" value={rowContent} onChange={setRowContent} />
+        {zip ? null : <CheckboxInput label="Content inside database rows" value={rowContent} onChange={setRowContent} />}
       </div>
       {phase.k === "error" ? (
         <div className="dialog-report" role="alert">
@@ -165,7 +230,7 @@ export function NotionImport({ client, onBack, onDone, onBusy }: Props) {
       ) : null}
       <div className="dialog-actions">
         <button type="button" className="btn ghost" onClick={onBack}>Back</button>
-        <button type="submit" className="btn primary" disabled={!token.trim() && !saved}>{targets.length ? `Import ${targets.length === 1 ? "1 link" : `${targets.length} links`}` : "Import everything shared"}</button>
+        <button type="submit" className="btn primary" disabled={!token.trim() && !saved}>{zip ? "Import with export" : targets.length ? `Import ${targets.length === 1 ? "1 link" : `${targets.length} links`}` : "Import everything shared"}</button>
       </div>
     </form>
   );
