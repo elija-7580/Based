@@ -1,14 +1,33 @@
-success e35ef3b4c98f0cda0440bbb233cb2d7196b8b88c
-  -  115 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
-  -  116 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
-  ✓  117 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.8s)
-  -  118 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
-  -  119 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
-  ✓  114 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (8.9s)
-  ✓  120 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (4.3s)
-  ✓  121 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.2s)
-  ✓  122 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.5s)
-  ✓  123 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.1s)
+success 414bec0ea23e674d5308dc55ccc2a9cd45dc6778
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   97 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (12.9s)
+  ✓   98 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (6.4s)
+  ✓  100 [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.0s)
+  ✓  101 [webkit] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (2.8s)
+  ✓   99 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (10.8s)
+  ✓  102 [webkit] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.4s)
+  ✓  103 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.6s)
+  ✓  105 [webkit] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (4.1s)
+  ✓  106 [webkit] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (4.8s)
+  ✓  104 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (24.4s)
+  ✓  107 [webkit] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (7.5s)
+  ✓  108 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (7.0s)
+  ✓  109 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (8.2s)
+  ✓  110 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (6.9s)
+  ✓  111 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (6.7s)
+  ✓  112 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (3.0s)
+  -  114 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  115 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  116 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.5s)
+  -  117 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -  118 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓  113 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (10.5s)
+  ✓  119 [webkit] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (4.8s)
+  ✓  121 [webkit] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (7.4s)
+  ✓  120 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (7.9s)
+  ✓  122 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.0s)
+  ✓  123 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.6s)
+  ✓  124 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.1s)
 
 
   1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
@@ -22,7 +41,7 @@ success e35ef3b4c98f0cda0440bbb233cb2d7196b8b88c
 
     - Array []
     + Array [
-    +   "Home: „New database“ #0",
+    +   "Home: „New page“ #0",
     + ]
 
       228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
@@ -36,26 +55,7 @@ success e35ef3b4c98f0cda0440bbb233cb2d7196b8b88c
 
     Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
 
-  2) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "dead"
-    Received: "ok"
-
-      260 |     document.querySelector("main.main")!.prepend(live);
-      261 |   });
-    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
-          |                                                                                ^
-      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
-      264 | });
-      265 |
-        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
-
-    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
-
-  2 flaky
+  1 flaky
     [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
-    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
   10 skipped
-  109 passed (12.1m)
+  112 passed (12.5m)
