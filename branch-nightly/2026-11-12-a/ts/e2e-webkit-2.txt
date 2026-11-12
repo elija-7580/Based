@@ -1,7 +1,7 @@
-failure c95539bd3ac99b907c8e63aeab2023a8a5d2f9a5
-  ✓  100 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (4.0s)
-  ✓  101 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (2.8s)
-  ✓  102 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (1.9s)
+failure a75d6f91f0b43c131fe8117fb750a83975c93e02
+  ✓  100 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (2.0s)
+  ✓  101 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (3.0s)
+  ✓  102 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (2.6s)
 
 
   1) [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ───────────────────
@@ -55,7 +55,7 @@ failure c95539bd3ac99b907c8e63aeab2023a8a5d2f9a5
   1 failed
     [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ────────────────────
   12 skipped
-  88 passed (4.2m)
+  88 passed (7.0m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
