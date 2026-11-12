@@ -1,0 +1,61 @@
+success b34556b09859978fd7039b33f52c38bbbe84e9cb
+  ✓  109 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (8.1s)
+  ✓  110 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (6.6s)
+  ✓  112 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (3.1s)
+  -  113 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  114 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  111 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (7.7s)
+  ✓  115 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.9s)
+  -  117 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -  118 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓  119 [webkit] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (4.8s)
+  ✓  116 [webkit] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (9.9s)
+  ✓  120 [webkit] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (7.1s)
+  ✓  121 [webkit] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (7.8s)
+  ✓  122 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (6.0s)
+  ✓  123 [webkit] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (7.2s)
+  ✓  125 [webkit] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (7.0s)
+  ✓  124 [webkit] › e2e/meeting.spec.ts:97:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (11.4s)
+  -  127 [webkit] › e2e/meeting.spec.ts:117:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓  126 [webkit] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (9.7s)
+  ✓  128 [webkit] › e2e/meeting.spec.ts:196:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (9.0s)
+  ✓  129 [webkit] › e2e/native-free.spec.ts:25:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (3.2s)
+  ✓  130 [webkit] › e2e/native-free.spec.ts:41:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (2.8s)
+  ✓  131 [webkit] › e2e/native-free.spec.ts:64:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (3.9s)
+  ✓  132 [webkit] › e2e/native-free.spec.ts:85:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (2.1s)
+  ✓  133 [webkit] › e2e/native-free.spec.ts:92:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (4.2s)
+  ✓  134 [webkit] › e2e/native-free.spec.ts:130:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.6s)
+  ✓  135 [webkit] › e2e/native-free.spec.ts:150:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (2.7s)
+  ✓  136 [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (3.3s)
+  ✓  137 [webkit] › e2e/native-free.spec.ts:179:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (4.4s)
+
+
+  1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+
+    Error: tote Knöpfe
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Home: „New page“ #0",
+    + ]
+
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
+
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+  11 skipped
+  124 passed (13.4m)
