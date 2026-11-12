@@ -36,6 +36,10 @@ export class ShellPageDirectory implements PageDirectory {
     this.listeners.add(onChange);
     if (!this.unsubscribe) {
       const s = this.client.getState();
+      // Ohne Zuhörer hat niemand den Zwischenspeicher aufgefrischt (Seite gewechselt, oder die Erwähnung wurde
+      // gerade erst gezeichnet und abonniert erst danach): was dazwischen in den Papierkorb ging oder umbenannt
+      // wurde, stünde sonst bis zur nächsten Änderung veraltet da (BSD-322, editor-parity.spec.ts:225 in WebKit).
+      if (s.titles !== this.seen.titles || s.outline !== this.seen.outline) for (const id of this.cache.keys()) this.want(id);
       this.seen = { titles: s.titles, outline: s.outline };
       // Titel oder Struktur (Icon, Papierkorb, verschoben) haben sich geändert: alles Bekannte neu fragen.
       this.unsubscribe = this.client.subscribe(() => {
