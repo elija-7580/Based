@@ -73,7 +73,7 @@ async function dragSelect(page: Page, from: { x: number; y: number }, to: { x: n
   await page.mouse.up();
 }
 
-test("Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl", async ({ page, browserName }) => {
+test("Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl", async ({ page }) => {
   await createPage(page, "Select text");
   await openPage(page, "Select text");
   await editor(page).locator(".bn-block-content").first().click();
