@@ -40,7 +40,7 @@ describe("MCP über Streamable HTTP", () => {
     expect(client.getInstructions()).toContain("Based is a Notion-like workspace");
     const names = (await client.listTools()).tools.map((t) => t.name).sort();
     expect(names).toEqual(
-      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status"].sort(),
+      ["add_row", "append_markdown", "backlinks", "based_guide", "create_page", "database_schema", "duplicate_page", "find_replace", "get_run", "inbox", "list_databases", "list_pages", "list_runs", "list_trash", "move_page", "query_database", "read_page", "replace_page_content", "restore_page", "search", "set_favorite", "trash_page", "update_page", "update_row", "create_database", "update_database", "list_views", "create_view", "update_view", "delete_view", "list_projects", "get_project", "create_project", "update_project_status", "resolve_inbox"].sort(),
     );
   });
 
@@ -365,5 +365,27 @@ describe("MCP: Projekte schreiben (BSD-221 Teil 3d)", () => {
     expect(prompts[0]).toMatchObject({ title: "Weekly Review", description: "Sum up the week" });
     const got = await client.getPrompt({ name: "weekly-review", arguments: { input: "Project Alpha" } });
     expect((got.messages[0]!.content as { text: string }).text).toBe("List what got done this week.\n\n---\nProject Alpha");
+  });
+
+  it("BSD-221 Teil 3e: resolve_inbox nur mit ausdrücklicher allow-Regel; erlauben reiht den Lauf wieder ein, ablehnen beendet ihn", async () => {
+    const { app, call } = await httpClient();
+    const store = app.sync.store;
+    const mk = (id: string) => store.transact("run", (tx) => putRecord(store, tx, RUN_TYPE, id, "Tidy notes", {
+      v: 1, kind: "sub", status: "needsYou", agentID: MAIN_AGENT_ID, title: "Tidy notes", startedAt: store.now(), usage: { inputTokens: 0, outputTokens: 0, costUSD: 0 }, costEUR: 0,
+      approval: { callID: "c1", name: "trash_page", arguments: { id: "p1" } },
+    } as never));
+    mk("run-1"); mk("run-2");
+    const refused = await call("resolve_inbox", { run_id: "run-1", decision: "allow" });
+    expect(refused.isError).toBe(true);
+    expect(textOf(refused)).toContain("allow based.resolve_inbox");
+    store.transact("rules", (tx) => putRecord(store, tx, AGENT_TYPE, MAIN_AGENT_ID, "Main agent", { ...defaultMainAgent(), permissions: { mode: "askEdits", rules: "allow based.resolve_inbox" } }));
+    expect(textOf(await call("resolve_inbox", { run_id: "run-1", decision: "allow" }))).toContain("Allowed trash_page");
+    const r1 = listRecords<{ status: string; resume?: { ok: boolean; callID: string }; approval?: unknown }>(store, RUN_TYPE).find((r) => r.id === "run-1")!;
+    expect(r1.data).toMatchObject({ status: "queued", resume: { ok: true, callID: "c1" } });
+    expect(r1.data.approval).toBeUndefined();
+    expect(textOf(await call("resolve_inbox", { run_id: "run-2", decision: "deny" }))).toContain("Declined");
+    expect(listRecords<{ status: string }>(store, RUN_TYPE).find((r) => r.id === "run-2")!.data.status).toBe("failed");
+    expect((await call("resolve_inbox", { run_id: "run-2", decision: "allow" })).isError).toBe(true); // wartet nicht mehr
+    expect((await call("resolve_inbox", { run_id: "nope", decision: "allow" })).isError).toBe(true);
   });
 });
