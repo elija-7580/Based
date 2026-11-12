@@ -163,3 +163,33 @@ test("Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung", async 
   ], "extreme", browserName);
   expect(found).toEqual([]);
 });
+
+// BSD-324: Die Gliederung rechts lag bei 900 px Breite (Seitenleiste offen) über dem Text. Jetzt blendet sie sich aus,
+// wenn neben dem Text kein Platz ist, und ist im Startfenster sichtbar.
+test("Gliederung überdeckt nie den Text", async ({ page }) => {
+  await page.goto("/");
+  await ready(page);
+  await command(page, { op: "createPage", title: "Outline room" });
+  await page.getByRole("treeitem", { name: "Outline room" }).click();
+  const ed = page.locator(".bx-editor > .bx-doc .bn-editor").first();
+  await expect(ed).toHaveAttribute("contenteditable", "true");
+  await ed.locator(".bn-block-content").first().click();
+  await page.evaluate((md) => {
+    const dt = new DataTransfer();
+    dt.setData("text/plain", md);
+    document.activeElement!.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, "# One\n\n" + "Long text line that fills the whole column of the page. ".repeat(6) + "\n\n## Two\n\nText");
+  const outline = page.getByTestId("page-outline");
+  await expect(outline).toBeVisible();
+  for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(300);
+    const r = await page.evaluate(() => {
+      const o = document.querySelector<HTMLElement>("[data-testid=page-outline]")!;
+      const text = document.querySelector(".bx-editor > .bx-doc .bn-editor > .bn-block-group")!.getBoundingClientRect();
+      return { shown: getComputedStyle(o).visibility !== "hidden" && getComputedStyle(o).display !== "none", left: o.getBoundingClientRect().left, textRight: text.right };
+    });
+    if (r.shown) expect(r.left, `bei ${w}`).toBeGreaterThanOrEqual(r.textRight);
+    if (w === 1280) expect(r.shown).toBe(true);
+  }
+});
