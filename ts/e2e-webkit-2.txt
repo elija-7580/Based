@@ -1,0 +1,61 @@
+failure d34d12ff6aafc54b38733503cfcf13e63eb39438
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 4
+
+    - Array []
+    + Array [
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Mint“ (26 px)",
+    +   "settings 900×600: auf fast nichts gekürzt: span. „Sky“ (21 px)",
+    + ]
+
+      140 |     { name: "chat", hash: "#chat" }, { name: "settings", hash: "#prefs-my-settings" },
+      141 |   ], "empty", browserName);
+    > 142 |   expect(found).toEqual([]);
+          |                 ^
+      143 | });
+      144 |
+      145 | const LONG_TITLE = "A very long page title that keeps going on and on to test truncation in every place it appears, sidebar tabs breadcrumb";
+        at /home/runner/work/Based/Based/apps/web/e2e/overflow.spec.ts:142:17
+
+    Error Context: test-results/overflow-Leerer-Workspace-nichts-läuft-über-webkit-retry1/error-context.md
+
+  2) [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+        "Chat",
+        "Search",
+    -   "Home",
+        "Library",
+    +   "Home",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      104 |   // Library aus dem Fuß nach oben hinter Home
+      105 |   await drag(tools.getByRole("button", { name: "Library" }), item("Home"), (b) => ({ x: b.width / 2, y: b.height - 4 }));
+    > 106 |   await expect.poll(top).toEqual(["Chat", "Search", "Home", "Library"]);
+          |                          ^
+      107 |   await expect.poll(footer).toEqual(["Trash", "Settings"]);
+      108 |   // Search in den Fuß vor Trash
+      109 |   await drag(item("Search"), tools.getByRole("button", { name: /^Trash/ }), (b) => ({ x: 4, y: b.height / 2 }));
+        at /home/runner/work/Based/Based/apps/web/e2e/sidebar-nav.spec.ts:106:26
+
+    Error Context: test-results/sidebar-nav-Einträge-ziehe-52dba--bleibt-nach-Neuladen-Reset-webkit/error-context.md
+
+  1 failed
+    [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über ────────────────────
+  1 flaky
+    [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset 
+  12 skipped
+  85 passed (5.9m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf

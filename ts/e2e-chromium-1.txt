@@ -1,0 +1,61 @@
+failure d34d12ff6aafc54b38733503cfcf13e63eb39438
+    Expected substring: "hi-42"
+    Received string:    "runner@runnervm7aw5e:/tmp/based-e2e-code-mHnsgr$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-mHnsgrrunner@runnervm7aw5e:/tmp/based-e2e-code-mHnsgr$  "
+    Timeout: 15000ms
+
+    Call log:
+      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
+      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
+        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
+           - unexpected value "runner@runnervm7aw5e:/tmp/based-e2e-code-mHnsgr$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-mHnsgrrunner@runnervm7aw5e:/tmp/based-e2e-code-mHnsgr$  "
+
+
+      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
+      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
+    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
+          |                                                 ^
+      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
+      343 |         await page.setViewportSize({ width: w, height: h });
+      344 |         const box = (await term.boundingBox())!;
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
+
+    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
+
+  2) [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' }) with timeout 5000ms
+      - waiting for getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+
+
+      240 |   await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
+      241 |   await page.keyboard.press("Shift+Tab");
+    > 242 |   await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
+          |                                                                     ^
+      243 |
+      244 |   // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
+      245 |   await input.pressSequentially("/");
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:242:69
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster 
+  1 flaky
+    [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
+  3 skipped
+  98 passed (3.7m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
