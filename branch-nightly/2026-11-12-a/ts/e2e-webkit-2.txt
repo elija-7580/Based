@@ -1,2 +1,61 @@
-cancelled 14cefe23c8f03c0e625033a04784433d4bfe3ddd
-(kein Log – Lauf vorher abgebrochen)
+failure 75c309a8bea27d9f2fd61a33bbcceb29602dde1f
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
+
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "Beta",
+    -   "Alpha",
+        "Welcome to Based",
+        "Beta",
+      ]
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      87 |   const rows = page.locator(".tree-row").filter({ hasText: "Alpha" });
+      88 |   await rows.last().dragTo(page.locator(".tree-row").filter({ hasText: "Welcome to Based" }), { targetPosition: { x: 40, y: 2 } });
+    > 89 |   await expect.poll(names).toEqual(["Beta", "Alpha", "Welcome to Based", "Beta"]);
+         |                            ^
+      90 | });
+      91 |
+      92 | test("Quick Find über 5.000 Seiten antwortet in < 50 ms", { tag: "@perf" }, async ({ page }, info) => {
+        at /home/runner/work/Based/Based/apps/web/e2e/shell.spec.ts:89:28
+
+    Error Context: test-results/shell-Vor-und-zurück-Favoriten-Ziehen-sortiert-um-webkit-retry1/error-context.md
+
+  1 failed
+    [webkit] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke ───────
+  12 skipped
+  83 passed (6.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
