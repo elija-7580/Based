@@ -1,6 +1,7 @@
 // Das Erwähnungs-Menü hinter `@` und `[[`: Datum (Today, Tomorrow, getipptes Datum), Personen, Seitensuche über das
 // Seitenverzeichnis der Shell (Volltextindex im Worker, wie Quick Find) und „New page“.
 import type { DefaultReactSuggestionItem } from "@blocknote/react";
+import { trackPosition } from "@blocknote/core";
 import { canonicalStringify, dateMentionValue, dateSuggestions } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
 import type { BasedEditor } from "../schema/schema.js";
@@ -22,8 +23,32 @@ export function wikilinkBefore(text: string): string | undefined {
 /**
  * „[[Titel]]“ fertig getippt (wie Obsidian): Seite mit genau diesem Titel erwähnen, sonst anlegen und erwähnen; ohne
  * Seitenverzeichnis bleibt der Text stehen.
+ *
+ * `at` ist die Stelle, an der „[[Titel]]“ stand (schon gelöscht). Suche und Anlegen sind asynchron; wer schnell
+ * weitertippt, hat die Schreibmarke dann längst woanders – die Erwähnung kommt trotzdem an diese Stelle, nicht an die
+ * Schreibmarke (sonst landete sie mitten im nächsten „[[…“, BSD-321). Ohne `at`: an der Schreibmarke.
  */
-export async function resolveWikilink(editor: BasedEditor, title: string, opts: Pick<MentionMenuOptions, "pages" | "selfID">): Promise<"linked" | "created" | "text"> {
+export async function resolveWikilink(editor: BasedEditor, title: string, opts: Pick<MentionMenuOptions, "pages" | "selfID">, at?: number): Promise<"linked" | "created" | "text"> {
+  const where = at === undefined ? undefined : trackPosition(editor as never, at);
+  // Stelle weg (Absatz gelöscht o. ä.): dann an der Schreibmarke.
+  const target = (): number | undefined => {
+    if (!where) return undefined;
+    const doc = editor.prosemirrorState.doc;
+    const pos = Math.max(0, Math.min(where(), doc.content.size));
+    return doc.resolve(pos).parent.inlineContent ? pos : undefined;
+  };
+  const place = (kind: string, value: string, text: string) => {
+    const pos = target();
+    if (pos === undefined) return insertMention(editor, kind, value, text);
+    editor.transact((tr) => {
+      const schema = tr.doc.type.schema;
+      const next = tr.doc.textBetween(pos, Math.min(pos + 1, tr.doc.content.size), undefined, "\ufffc");
+      // Leerzeichen dahinter nur, wenn dort nicht schon eins steht (wer weitertippt, hat es meist schon getippt).
+      const nodes = [schema.nodes[INLINE.mention]!.create({ kind, value, text })];
+      if (!/^\s/.test(next)) nodes.push(schema.text(" "));
+      tr.insert(pos, nodes);
+    });
+  };
   const lower = title.toLowerCase();
   let found: PageRef[] = [];
   try {
@@ -31,15 +56,17 @@ export async function resolveWikilink(editor: BasedEditor, title: string, opts: 
   } catch { /* Suche nicht erreichbar */ }
   const hit = found.find((p) => !p.trashed && !p.missing && (p.title || "").trim().toLowerCase() === lower);
   if (hit) {
-    insertMention(editor, "page", hit.id, hit.title || title);
+    place("page", hit.id, hit.title || title);
     return "linked";
   }
   const id = opts.pages.create ? await opts.pages.create(title).catch(() => undefined) : undefined;
   if (id) {
-    insertMention(editor, "page", id, title);
+    place("page", id, title);
     return "created";
   }
-  editor.insertInlineContent([`[[${title}]]`] as never, { updateSelection: true });
+  const pos = target();
+  if (pos !== undefined) editor.transact((tr) => tr.insertText(`[[${title}]]`, pos));
+  else editor.insertInlineContent([`[[${title}]]`] as never, { updateSelection: true });
   return "text";
 }
 

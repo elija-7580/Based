@@ -547,7 +547,7 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
               e.preventDefault();
               const len = before.length - before.lastIndexOf("[[");
               view.dispatch(view.state.tr.delete(sel.from - len, sel.from));
-              void resolveWikilink(editor, title, mentionOptions);
+              void resolveWikilink(editor, title, mentionOptions, sel.from - len);
               return;
             }
           }
