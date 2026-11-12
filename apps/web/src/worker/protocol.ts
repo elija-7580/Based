@@ -79,6 +79,8 @@ export type Command =
   | { op: "createDatabase"; parent?: string; title?: string }
   /** BSD-256: neue Seite „Meeting …“ mit einem Meeting-Block darin (⌘N → Meeting notes). */
   | { op: "createMeetingPage" }
+  /** BSD-275: Willkommensseiten (Basics, Databases, Keyboard, Your data) unter der Willkommensseite; gibt neue IDs zurück. */
+  | { op: "addWelcomeGuides"; parent: string }
   /** BSD-168: Seiten über einer Seite (oberste zuerst), auch für Datenbank-Zeilen – Breadcrumb und ⇧⌘U. */
   | { op: "pageAncestors"; id: string }
   | { op: "rename"; id: string; title: string }

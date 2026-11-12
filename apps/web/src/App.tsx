@@ -27,6 +27,7 @@ import { installNewTabIntent, wantsNewTab } from "./shell/newTabIntent.js";
 import { cycleRegion } from "./shell/regions.js";
 import { FIND_EVENT, matchShortcut, parentPage } from "./shell/shortcuts.js";
 import type { History, Route } from "./shell/router.js";
+import { firstRun } from "./shell/firstRun.js";
 import { homeTarget, newPageFormat, recentPages, spellCheckPref, startPage, type RecentEntry } from "./shell/storage.js";
 import type { StoreClient } from "./worker/client.js";
 
@@ -39,6 +40,8 @@ const Library = lazy(() => import("./screens/Library.js").then((m) => ({ default
 const Settings = lazy(() => import("./screens/Settings.js").then((m) => ({ default: m.Settings })));
 const Trash = lazy(() => import("./screens/Trash.js").then((m) => ({ default: m.Trash })));
 const TasksScreen = lazy(() => import("./tasks/TasksScreen.js").then((m) => ({ default: m.TasksScreen })));
+// BSD-275: Willkommensbildschirm nur beim ersten Start
+const Welcome = lazy(() => import("./screens/Welcome.js").then((m) => ({ default: m.Welcome })));
 const CodingScreen = lazy(() => import("./coding/CodingScreen.js").then((m) => ({ default: m.CodingScreen })));
 
 /** Bold-Schriften nur laden, wenn der Stil sie braucht – lokal gebündelt (boldFonts.ts), nicht von fremden Servern. */
@@ -53,6 +56,7 @@ export function App({ client, history }: { client: StoreClient; history: History
   const route = useSyncExternalStore(history.subscribe, () => history.route);
   const [quickFind, setQuickFind] = useState(false);
   const [recent, setRecent] = useState<RecentEntry[]>(recentPages.get);
+  const welcome = useSyncExternalStore(firstRun.subscribe, firstRun.get);
 
   useEffect(() => {
     applyAppearance(appearance);
@@ -219,6 +223,8 @@ export function App({ client, history }: { client: StoreClient; history: History
     screen = <Meetings client={client} state={state} onOpenPage={openPage} onSwitch={(to) => navigate({ name: to })} onNewMeeting={() => void newMeeting()} />;
   } else if (route.name === "settings") {
     screen = <Settings page={route.page} value={appearance} onChange={setAppearance} client={client} state={state} onNavigate={navigate} />;
+  } else if (welcome && state.ready && state.outline?.nodes[welcome.page] && !state.outline.trash.some((x) => x.id === welcome.page)) {
+    screen = <Welcome client={client} pending={welcome} onOpenPage={openPage} onNavigate={navigate} onImport={() => setImporting("pick")} />;
   } else {
     screen = <Home client={client} showDetails={appearance.agentDetails} state={state} onOpenPage={openPage} onNavigate={navigate} onNewPage={() => void newPage()} onNewDatabase={() => void newDatabase()} />;
   }

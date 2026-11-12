@@ -77,6 +77,7 @@ import type { AssetStore, StoredAsset } from "./assets.js";
 import { commitImportPayload, exportPage, exportWorkspace, printPage, type ImportSummary } from "./interop.js";
 import type { ImportPayload } from "./importer.js";
 import { PageHistory } from "./history.js";
+import { addWelcomeGuides } from "./welcomeGuides.js";
 import { ChatHost } from "./chat.js";
 import { AgentHost } from "./agents.js";
 import { BrainHost } from "./brain.js";
@@ -362,6 +363,7 @@ export class StoreHost {
         return store.blocks.has(id) ? id : undefined;
       }
       case "pageAncestors": return pageAncestors(store, c.id);
+      case "addWelcomeGuides": return addWelcomeGuides(store, c.parent);
       case "createMeetingPage": {
         const id = createPage(store, { title: meetingTitleFor(new Date()) });
         createMeeting(store, { parent: "b:" + id });

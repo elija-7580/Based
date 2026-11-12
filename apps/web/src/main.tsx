@@ -11,6 +11,7 @@ import { deviceNode, guestDeviceNode, propertyRecordsSetting, recentPages, secre
 import { fetchGuestMe, guestIDFromSearch, guestStartPage, loadGuest, parseShareFragment, rememberGuest, setGuestAccess, watchGuestRevocation, type GuestConfig, type GuestMe } from "./shell/guest.js";
 import { memoryKV, SecretStore } from "./shell/secrets.js";
 import { GuestRevoked } from "./shell/GuestRevoked.js";
+import { firstRun } from "./shell/firstRun.js";
 import { StoreClient } from "./worker/client.js";
 import { browserLinkOptions, StoreLink } from "./worker/leader.js";
 import type { Endpoint, Event, RequestMessage } from "./worker/protocol.js";
@@ -164,6 +165,8 @@ function start(guest: GuestBoot | undefined) {
     .init({})
     .then((r) => {
       if (r.created && r.homePageID) recentPages.touch(r.homePageID);
+      // BSD-275: frischer Workspace → Willkommensbildschirm an Stelle von Home (nicht für Gäste, nicht in E2E-Browsern)
+      if (!guest) firstRun.noteInit(r);
     })
     .catch(() => undefined);
 

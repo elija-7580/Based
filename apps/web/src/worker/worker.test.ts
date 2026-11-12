@@ -68,6 +68,26 @@ describe("Store-Worker-Schnittstelle", () => {
     expect(s.status.state).toBe("local");
   });
 
+  it("BSD-275: Willkommensseiten unter der Willkommensseite, in Reihenfolge, mit Inhalt, nur einmal", async () => {
+    const { client } = setup();
+    const r = await client.init({});
+    const home = r.homePageID!;
+    const ids = await client.command<string[]>({ op: "addWelcomeGuides", parent: home });
+    await settle();
+    expect(ids).toHaveLength(4);
+    expect(client.getState().outline?.children[home]).toEqual(ids);
+    expect(ids.map((id) => client.title(id))).toEqual(["Basics", "Databases", "Keyboard", "Your data"]);
+    const page = await client.openPage(ids[3]!);
+    expect(page.store.children("b:" + ids[3]).map((id) => page.store.blocks.get(id)?.text).join(" ")).toContain("without an account");
+    page.close();
+    // zweiter Klick, zweites Fenster: keine Doppelten
+    expect(await client.command<string[]>({ op: "addWelcomeGuides", parent: home })).toEqual([]);
+    // ohne gültige Elternseite: nichts
+    expect(await client.command<string[]>({ op: "addWelcomeGuides", parent: "NOPE" })).toEqual([]);
+    await settle();
+    expect(client.getState().outline?.children[home]).toHaveLength(4);
+  });
+
   it("Befehle: anlegen, umbenennen, Papierkorb, wiederherstellen, endgültig löschen", async () => {
     const { client, sent } = setup();
     await client.init({ device: "DEV00001" });

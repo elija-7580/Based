@@ -1,0 +1,26 @@
+/* BSD-275: Willkommensbildschirm beim ersten Start (screens/Welcome.tsx). Nur Tokens (tokens-only.test.ts). */
+.welcome .column { gap: var(--space-6); padding-top: var(--space-6); }
+.welcome-head { display: flex; flex-direction: column; gap: var(--space-2); }
+.welcome-head h1 { margin: 0; }
+.welcome-lead { margin: 0; font-size: var(--type-body-size); }
+
+.welcome-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--page-measure) / 3), 1fr)); gap: var(--space-3); }
+.welcome-choice {
+  display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; text-align: left; border: 0; cursor: pointer;
+  padding: var(--space-4); border-radius: var(--radius-xl); background: var(--surface-raised); color: var(--ink);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.welcome-choice:hover:not(:disabled) { background: var(--selected); }
+.welcome-choice:disabled { cursor: default; opacity: 0.6; }
+/* verschachtelte Rundung: Kachel innen = Karte außen minus Abstand */
+.welcome-choice .tile { border-radius: calc(var(--radius-xl) - var(--space-2)); }
+.welcome-choice-text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; flex: 1; }
+.welcome-choice-text strong { font-weight: var(--weight-heading); overflow-wrap: anywhere; }
+.welcome-choice-text .t-desc { overflow-wrap: anywhere; }
+
+.welcome-ai {
+  display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+  padding: var(--space-4); border-radius: var(--radius-xl); border: 1px solid var(--line);
+}
+.welcome-ai .welcome-choice-text { flex: 1 1 calc(var(--page-measure) / 2.4); }
+.welcome-foot { margin: 0; }
