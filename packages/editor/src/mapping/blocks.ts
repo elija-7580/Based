@@ -31,7 +31,7 @@ export const OWNED_PROPS: Readonly<Record<string, readonly string[]>> = {
   heading1: ["color", "toggleable"], heading2: ["color", "toggleable"], heading3: ["color", "toggleable"], heading4: ["color", "toggleable"],
   todo: ["checked", "color"],
   callout: ["color", "icon"],
-  code: ["language"],
+  code: ["language", "wrap"],
   equation: ["expression"],
   image: ["url", "asset", "caption", "width"], video: ["url", "asset", "caption", "width"], audio: ["url", "asset", "caption"], file: ["url", "asset", "caption"],
   pdf: ["url", "asset"], embed: ["url"], bookmark: ["url"],
@@ -112,7 +112,8 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
     case "quote": return colored("quote");
     case "callout": return colored(CUSTOM.callout, { icon: typeof p.icon === "string" ? p.icon : "" });
     case "divider": return atom("divider");
-    case "code": return { id: b.id, type: "codeBlock", props: { language: p.language ?? "text" }, content: plainText(b.text), children: children() };
+    // Umbruch: an, solange er nicht ausdrücklich abgeschaltet ist (so zeichnet Based Next Code seit jeher).
+    case "code": return { id: b.id, type: "codeBlock", props: { language: p.language ?? "text", wrap: p.wrap !== false }, content: plainText(b.text), children: children() };
     case "equation": return atom(CUSTOM.equation, { expression: p.expression ?? "" });
     case "image": case "video": case "audio": case "file":
       return atom(b.type, {
@@ -197,7 +198,7 @@ export function extractOwned(bn: BNBlock): Owned {
     case "codeBlock": {
       const code = Array.isArray(bn.content) ? (bn.content as { text?: string }[]).map((c) => c.text ?? "").join("") : str(bn.content);
       const lang = str(p.language);
-      return { type: "code", text: code === "" ? undefined : code, props: { language: lang === "" || lang === "text" ? undefined : lang } };
+      return { type: "code", text: code === "" ? undefined : code, props: { language: lang === "" || lang === "text" ? undefined : lang, wrap: p.wrap === false ? false : undefined } };
     }
     case CUSTOM.equation: return { type: "equation", props: { expression: nonEmpty(p.expression) } };
     case "image": case "video": case "audio": case "file": {

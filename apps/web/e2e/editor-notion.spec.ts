@@ -154,6 +154,81 @@ test("Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts", as
   await expect.poll(() => page.evaluate(() => document.querySelector("[data-content-type=codeBlock] code")?.textContent)).toBe("const answer = 42;");
 });
 
+test("Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus", async ({ page }) => {
+  await open(page, "Search");
+  await editor(page).locator(".bn-block-content").first().click();
+  await paste(page, "## Heading two\n\nSome text here");
+  await expect.poll(async () => (await blocks(page)).length).toBeGreaterThan(1);
+  await page.waitForTimeout(500);
+  const openMenu = async () => {
+    await editor(page).getByText("Heading two").first().hover();
+    await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+    await page.locator(".bn-side-menu [draggable=true]").last().click();
+    await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+  };
+  await openMenu();
+  await page.keyboard.type("cop");
+  await expect(page.getByRole("menuitem")).toHaveText([/Copy link to block/, /Copy as Markdown/, /Copy and sync/]);
+  // getippt wurde ins Feld, nicht in den Text der Seite
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "paragraph:Some text here"]);
+  await page.keyboard.press("Escape"); // erst das Feld leeren …
+  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+  await expect(page.getByRole("menuitem", { name: "Turn into" })).toBeVisible();
+  await page.keyboard.type("zzz");
+  await expect(page.getByRole("menuitem")).toHaveCount(0);
+  await expect(page.getByText("No actions")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("dup");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => blocks(page)).toEqual(["heading2:Heading two", "heading2:Heading two", "paragraph:Some text here"]);
+  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
+  // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
+  await openMenu();
+  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
+});
+
+test("Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen", async ({ page }) => {
+  await open(page, "Wrap");
+  await editor(page).locator(".bn-block-content").first().click();
+  await paste(page, "```javascript\nconst long = '" + "on and ".repeat(40) + "';\n```\n\nafter");
+  const code = editor(page).locator("[data-content-type=codeBlock]").first();
+  await expect(code).toBeVisible();
+  const pre = code.locator("pre");
+  expect(await pre.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true); // Standard: umbrochen
+  await code.hover();
+  const wrap = code.getByRole("button", { name: "Wrap code" });
+  await expect(wrap).toHaveAttribute("aria-pressed", "true");
+  await wrap.click();
+  await expect(code).toHaveAttribute("data-wrap", "false");
+  await expect(code.getByRole("button", { name: "Wrap code" })).toHaveAttribute("aria-pressed", "false");
+  expect(await pre.evaluate((e) => e.scrollWidth > e.clientWidth + 50)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); // die Seite rollt nicht
+  await page.waitForTimeout(1200); // gespeichert
+  await page.reload();
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await expect(editor(page).locator("[data-content-type=codeBlock]").first()).toHaveAttribute("data-wrap", "false");
+});
+
+test("Formatleiste: kompaktes Feld, ganz im Fenster", async ({ page }) => {
+  await open(page, "Format");
+  await editor(page).locator(".bn-block-content").first().click();
+  await page.keyboard.type("x ".repeat(60) + "tail");
+  await editor(page).getByText("tail").dblclick({ position: { x: 5, y: 8 } });
+  const bar = page.locator(".bn-formatting-toolbar");
+  await expect(bar).toBeVisible();
+  for (const name of ["Bold", "Italic", "Underline", "Strike"]) await expect(bar.getByRole("button", { name, exact: true })).toBeVisible();
+  const box = (await bar.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(1280);
+  expect(box.width).toBeLessThan(220);
+  await bar.getByRole("button", { name: "Bold", exact: true }).click();
+  await expect(bar.getByRole("button", { name: "Bold", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf", async ({ page }) => {
   const top = await open(page, "Top page");
   const kids: string[] = [];

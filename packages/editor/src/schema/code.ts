@@ -39,7 +39,7 @@ export function htmlPreviewFrame(code: string): HTMLElement {
 export let lastCodeCopy = "";
 
 const SVG = "http://www.w3.org/2000/svg";
-function icon(name: "duplicate" | "check"): SVGElement {
+function icon(name: "duplicate" | "check" | "wrap"): SVGElement {
   const svg = document.createElementNS(SVG, "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("aria-hidden", "true");
@@ -50,42 +50,65 @@ function icon(name: "duplicate" | "check"): SVGElement {
   return svg;
 }
 
-/**
- * Kopierknopf oben rechts im Codeblock (wie Notion), sichtbar beim Überfahren oder mit Tastaturfokus. Liest den Code
- * beim Klick aus dem Dokument – der Knopf selbst bleibt beim Tippen stehen (fester Schlüssel).
- */
-export function codeCopyButton(view: EditorView, getPos: () => number | undefined): HTMLElement {
+function toolButton(cls: string, label: string, iconName: "duplicate" | "check" | "wrap"): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = "bx-code-copy";
-  b.contentEditable = "false";
-  b.setAttribute("aria-label", "Copy code");
-  b.title = "Copy code";
-  b.append(icon("duplicate"));
-  let reset: ReturnType<typeof setTimeout> | undefined;
+  b.className = "bx-code-tool " + cls;
+  b.setAttribute("aria-label", label);
+  b.title = label;
+  b.append(icon(iconName));
   b.addEventListener("mousedown", (e) => e.preventDefault()); // Schreibmarke bleibt, wo sie ist
-  b.addEventListener("click", (e) => {
-    e.preventDefault();
-    const pos = getPos();
-    const node = pos === undefined ? null : view.state.doc.resolve(pos).parent;
-    if (!node || node.type.name !== "codeBlock") return;
-    lastCodeCopy = node.textContent;
-    const done = (ok: boolean) => {
-      b.replaceChildren(icon(ok ? "check" : "duplicate"));
-      b.setAttribute("aria-label", ok ? "Copied" : "Couldn’t copy");
-      b.title = ok ? "Copied" : "Couldn’t copy";
-      if (reset !== undefined) clearTimeout(reset);
-      reset = setTimeout(() => {
-        b.replaceChildren(icon("duplicate"));
-        b.setAttribute("aria-label", "Copy code");
-        b.title = "Copy code";
-      }, 1500);
-    };
-    const clip = globalThis.navigator?.clipboard;
-    if (!clip) done(false);
-    else void clip.writeText(lastCodeCopy).then(() => done(true), () => done(false));
-  });
   return b;
+}
+
+/**
+ * Leiste oben rechts im Codeblock (wie Notion), sichtbar beim Überfahren oder mit Tastaturfokus: Zeilenumbruch
+ * an/aus und Kopieren. Liest den Block beim Klick aus dem Dokument; neu gezeichnet wird sie nur, wenn sich der
+ * Umbruch ändert (Schlüssel der Dekoration).
+ */
+export function codeTools(wrap: boolean): (view: EditorView, getPos: () => number | undefined) => HTMLElement {
+  return (view, getPos) => {
+    const bar = document.createElement("span");
+    bar.className = "bx-code-tools";
+    bar.contentEditable = "false";
+    const block = () => {
+      const pos = getPos();
+      if (pos === undefined) return undefined;
+      const $pos = view.state.doc.resolve(pos);
+      return $pos.parent.type.name === "codeBlock" ? { node: $pos.parent, at: $pos.before() } : undefined;
+    };
+    const wrapButton = toolButton("bx-code-wrap", "Wrap code", "wrap");
+    wrapButton.setAttribute("aria-pressed", String(wrap));
+    wrapButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      const b = block();
+      if (b && view.editable) view.dispatch(view.state.tr.setNodeAttribute(b.at, "wrap", !wrap));
+    });
+    const copy = toolButton("bx-code-copy", "Copy code", "duplicate");
+    let reset: ReturnType<typeof setTimeout> | undefined;
+    copy.addEventListener("click", (e) => {
+      e.preventDefault();
+      const b = block();
+      if (!b) return;
+      lastCodeCopy = b.node.textContent;
+      const show = (name: "duplicate" | "check", label: string) => {
+        copy.replaceChildren(icon(name));
+        copy.setAttribute("aria-label", label);
+        copy.title = label;
+      };
+      const done = (ok: boolean) => {
+        show(ok ? "check" : "duplicate", ok ? "Copied" : "Couldn’t copy");
+        if (reset !== undefined) clearTimeout(reset);
+        reset = setTimeout(() => show("duplicate", "Copy code"), 1500);
+      };
+      const clip = globalThis.navigator?.clipboard;
+      if (!clip) done(false);
+      else void clip.writeText(lastCodeCopy).then(() => done(true), () => done(false));
+    });
+    if (view.editable) bar.append(wrapButton);
+    bar.append(copy);
+    return bar;
+  };
 }
 
 const languages: Record<string, { name: string; aliases?: string[] }> = {};
@@ -101,7 +124,16 @@ const PREVIEW_LANGUAGES: ReadonlySet<string> = new Set(["html"]);
  */
 const anyLanguage = new Proxy(languages, { has: () => true });
 
-export const codeBlockSpec = createCodeBlockSpec({ defaultLanguage: "text", indentLineWithTab: true, supportedLanguages: anyLanguage });
+const baseSpec = createCodeBlockSpec({ defaultLanguage: "text", indentLineWithTab: true, supportedLanguages: anyLanguage });
+
+/**
+ * BlockNotes Codeblock plus `wrap` (Zeilen umbrechen, Standard an; aus = eine Zeile je Codezeile mit waagrechtem
+ * Rollen, wie Notions „Wrap code“). Steht als `data-wrap="false"` am Block und als `wrap: false` im Record.
+ */
+export const codeBlockSpec = {
+  ...baseSpec,
+  config: { ...baseSpec.config, propSchema: { ...baseSpec.config.propSchema, wrap: { default: true } } },
+} as typeof baseSpec;
 
 /** Dekorationen für alle Codeblöcke im Dokument. */
 export function syntaxDecorations(doc: PMNode): DecorationSet {
@@ -110,7 +142,8 @@ export function syntaxDecorations(doc: PMNode): DecorationSet {
     if (node.type.name !== "codeBlock") return true;
     const text = node.textContent;
     const language = String(node.attrs.language ?? "").toLowerCase();
-    decos.push(Decoration.widget(pos + 1, codeCopyButton, { side: -1, key: "copy", ignoreSelection: true }));
+    const wrap = node.attrs.wrap !== false;
+    decos.push(Decoration.widget(pos + 1, codeTools(wrap), { side: -1, key: wrap ? "tools:wrap" : "tools:nowrap", ignoreSelection: true }));
     if (text.length > 0 && text.length < 200_000) {
       for (const t of syntaxTokens(text, language)) {
         decos.push(Decoration.inline(pos + 1 + t.from, pos + 1 + t.from + t.length, { class: "bx-tok-" + t.kind }));

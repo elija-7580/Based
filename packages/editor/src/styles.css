@@ -339,18 +339,25 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
    über dem Code (nimmt keinen Platz), damit beim Ein- und Ausblenden nichts springt. */
 .bx-editor [data-content-type="codeBlock"] > pre { padding: var(--space-4) var(--space-5); }
 .bx-editor [data-content-type="codeBlock"] > div > select,
-.bx-editor .bx-code-copy {
+.bx-editor .bx-code-tools {
   position: absolute; top: var(--space-2); height: var(--space-5); opacity: 0; color: var(--muted); background: var(--bg);
-  border: 0; border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: var(--type-meta-size); cursor: pointer;
+  border: 0; border-radius: var(--radius-sm); font-family: var(--font-ui); font-size: var(--type-meta-size);
   transition: opacity var(--duration-fast) var(--ease-out);
 }
-.bx-editor [data-content-type="codeBlock"] > div > select { left: auto; right: calc(var(--space-2) + var(--space-5) + var(--space-1)); padding: 0 var(--space-2); }
-.bx-editor .bx-code-copy { right: var(--space-2); width: var(--space-5); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-.bx-editor .bx-code-copy .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
+.bx-editor [data-content-type="codeBlock"] > div > select { left: auto; right: calc(var(--space-2) + var(--space-5) * 2 + var(--space-1)); padding: 0 var(--space-2); cursor: pointer; }
+.bx-editor [data-content-type="codeBlock"]:has(.bx-code-tools > :only-child) > div > select { right: calc(var(--space-2) + var(--space-5) + var(--space-1)); }
+.bx-editor .bx-code-tools { right: var(--space-2); display: inline-flex; white-space: normal; user-select: none; -webkit-user-select: none; }
+.bx-editor .bx-code-tool { width: var(--space-5); height: var(--space-5); display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: inherit; cursor: pointer; }
+.bx-editor .bx-code-tool .bx-menu-icon { width: var(--icon-sm); height: var(--icon-sm); }
+.bx-editor .bx-code-tool[aria-pressed="true"] { color: var(--ink); background: var(--selected); }
 .bx-editor [data-content-type="codeBlock"]:hover > div > select, .bx-editor [data-content-type="codeBlock"] > div > select:focus-visible,
-.bx-editor [data-content-type="codeBlock"]:hover .bx-code-copy, .bx-editor .bx-code-copy:focus-visible { opacity: 1; transition-delay: 0s; }
-.bx-editor [data-content-type="codeBlock"] > div > select:hover, .bx-editor .bx-code-copy:hover { color: var(--ink); }
-.bx-editor [data-content-type="codeBlock"] > div > select:focus-visible, .bx-editor .bx-code-copy:focus-visible { outline: 1px solid var(--marker-strong) !important; }
+.bx-editor [data-content-type="codeBlock"]:hover .bx-code-tools, .bx-editor .bx-code-tools:focus-within { opacity: 1; transition-delay: 0s; }
+.bx-editor [data-content-type="codeBlock"] > div > select:hover, .bx-editor .bx-code-tool:hover { color: var(--ink); }
+.bx-editor [data-content-type="codeBlock"] > div > select:focus-visible, .bx-editor .bx-code-tool:focus-visible { outline: 1px solid var(--marker-strong) !important; }
+/* Umbruch aus: eine Zeile je Codezeile, der Block rollt waagrecht (die Seite nicht). */
+.bx-editor [data-content-type="codeBlock"] > pre { overflow-x: auto; }
+.bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre, .bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre * { white-space: pre; overflow-wrap: normal; word-break: normal; }
+.bx-editor [data-content-type="codeBlock"]:not([data-wrap="false"]) > pre, .bx-editor [data-content-type="codeBlock"]:not([data-wrap="false"]) > pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .bx-editor [data-content-type="codeBlock"] > div > select option { color: var(--ink); background: var(--bg); }
 .bx-html-preview-wrap { display: grid; gap: var(--space-1); margin-top: var(--space-3); white-space: normal; font-family: var(--font-ui); }
 .bx-html-preview-label { color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); letter-spacing: var(--type-meta-tracking); }
@@ -455,3 +462,38 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 .bn-root .bx-menu-foot { display: grid; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 /* Pfeil des Untermenüs und Häkchen stehen rechts (wie die Kürzel). */
 .bn-root .bn-ak-menu .bn-ak-menu-item > :last-child:not(.bx-menu-icon):not(.bx-menu-key) { margin-left: auto; }
+
+/* Formatleiste als kompaktes Feld wie in Notion (statt einer langen Zeile, die am Fensterrand abgeschnitten wurde):
+   oben der Blocktyp über die ganze Breite, darunter die Zeichenformate als Raster aus Icon-Knöpfen, unten „Ask AI“. */
+.bn-root .bn-formatting-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0; width: calc(var(--space-6) * 5 + var(--space-1) * 2); max-width: none;
+  overflow: visible; font-family: var(--font-ui); font-size: var(--type-ui-size);
+}
+.bn-root .bn-formatting-toolbar > .bn-ak-button {
+  flex: none; width: var(--space-6); height: var(--space-6); min-width: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md); color: var(--ink); background: transparent;
+}
+.bn-root .bn-formatting-toolbar > .bn-ak-button:hover { background: var(--surface-raised); }
+.bn-root .bn-formatting-toolbar > .bn-ak-button[aria-pressed="true"], .bn-root .bn-formatting-toolbar > .bn-ak-button[data-selected] { background: var(--selected); color: var(--ink); }
+.bn-root .bn-formatting-toolbar > .bn-ak-button:disabled, .bn-root .bn-formatting-toolbar > .bn-ak-button[aria-disabled="true"] { color: var(--muted); background: transparent; }
+.bn-root .bn-formatting-toolbar > .bn-ak-button svg { width: var(--icon-sm); height: var(--icon-sm); }
+/* Blocktyp: erste Zeile, Text links, Pfeil rechts, Trennlinie darunter */
+.bn-root .bn-formatting-toolbar > [role="combobox"] {
+  order: -1; flex: 1 0 100%; width: auto; justify-content: flex-start; gap: var(--space-2); padding: 0 var(--space-2);
+  margin-bottom: var(--space-1); box-shadow: 0 var(--space-1) 0 calc(-1 * var(--space-1) + 1px) var(--line);
+}
+.bn-root .bn-formatting-toolbar > [role="combobox"] > span:last-child { margin-left: auto; color: var(--muted); }
+/* „Ask AI“: letzte Zeile, wie ein Menüeintrag */
+.bn-root .bn-formatting-toolbar > .bx-ask-ai {
+  order: 1; flex: 1 0 100%; width: auto; justify-content: flex-start; padding: 0 var(--space-2);
+  margin-top: var(--space-1); box-shadow: 0 calc(-1 * var(--space-1)) 0 calc(-1 * var(--space-1) + 1px) var(--line);
+}
+
+/* Suchfeld oben im Blockmenü („Search actions…“, wie Notion) */
+.bn-root .bx-menu-search {
+  width: 100%; min-height: var(--space-6); margin-bottom: var(--space-1); padding: 0 var(--space-3); border: 1px solid var(--control-border);
+  border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: inherit;
+}
+.bn-root .bx-menu-search::placeholder { color: var(--muted); }
+.bn-root .bx-menu-search:focus-visible { outline: 1px solid var(--marker-strong); border-color: var(--marker-strong); }
+.bn-root .bx-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }

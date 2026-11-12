@@ -15,7 +15,7 @@ import {
 } from "@blocknote/react";
 import { createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
 import type { ResolvedPos } from "prosemirror-model";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
 import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
@@ -995,25 +995,71 @@ function AskAIButton({ onAsk }: { onAsk: () => void }) {
 
 function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void; blockLink?: ((id: string) => string) | undefined; notify: (m: string) => void }) {
   const Components = useComponentsContext()!;
-  // Aufbau wie das Seitenmenü der Shell und Notions Blockmenü: Blocktyp als Kopf, Gruppen mit Trennlinie, Icons,
-  // Kürzel rechts, unten „Last edited“ mit Wort- und Zeichenzahl.
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const show = (label: string) => q === "" || label.toLowerCase().includes(q);
+  // Das Menü zeichnet seinen Inhalt erst beim Öffnen und setzt dann selbst den Fokus (auf sich): danach ins Suchfeld –
+  // aber nur, solange der Fokus noch auf dem Menü selbst liegt, nicht wenn schon ein Eintrag gewählt ist.
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const field = useCallback((el: HTMLInputElement | null) => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    if (!el) {
+      setQuery("");
+      return;
+    }
+    const focus = () => {
+      const menu = el.closest("[role=menu]");
+      if (document.activeElement === menu || !menu?.contains(document.activeElement)) el.focus({ preventScroll: true });
+    };
+    timers.current = [0, 60, 160].map((ms) => setTimeout(focus, ms));
+  }, []);
+  const labels = ["Turn into", "Color", ...(props.blockLink ? ["Copy link to block"] : []), "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"];
+  const none = !labels.some(show);
+  // Aufbau wie das Seitenmenü der Shell und Notions Blockmenü: Suchfeld, Blocktyp als Kopf, Gruppen mit Trennlinie,
+  // Icons, Kürzel rechts, unten „Last edited“ mit Wort- und Zeichenzahl.
   return (
     <DragHandleMenu>
-      <BlockMenuHead />
-      <TurnIntoItem session={props.session} />
-      <BlockColorsItem><MenuIcon name="color" />Color</BlockColorsItem>
-      <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" />
-      {props.blockLink ? <CopyLinkItem link={props.blockLink} notify={props.notify} /> : null}
-      <DuplicateItem duplicate={props.duplicate} />
-      <MoveToItem session={props.session} startMove={props.startMove} />
-      <RemoveBlockItem><MenuIcon name="trash" />Delete<span className="bx-menu-key">Del</span></RemoveBlockItem>
-      <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" />
-      <CopyMarkdownItem session={props.session} />
-      <CopyAndSyncItem session={props.session} />
-      <BlockMenuFoot session={props.session} />
+      <MenuFilter.Provider value={q}>
+        <input ref={field} className="bx-menu-search" type="text" placeholder="Search actions…" aria-label="Search actions" value={query} autoComplete="off" spellCheck={false}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            const items = () => [...(e.currentTarget.closest("[role=menu]")?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              e.stopPropagation();
+              const all = items();
+              all[e.key === "ArrowDown" ? 0 : all.length - 1]?.focus();
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              if (q !== "") items()[0]?.click();
+            } else if (e.key === "Escape" && query !== "") {
+              e.preventDefault();
+              e.stopPropagation();
+              setQuery("");
+            } else if (e.key !== "Escape" && e.key !== "Tab") e.stopPropagation(); // getippt wird ins Feld, nicht ins Menü
+          }} />
+        {q === "" ? <BlockMenuHead /> : null}
+        {show("Turn into") ? <TurnIntoItem session={props.session} /> : null}
+        {show("Color") ? <BlockColorsItem><MenuIcon name="color" />Color</BlockColorsItem> : null}
+        {q === "" ? <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" /> : null}
+        {props.blockLink && show("Copy link to block") ? <CopyLinkItem link={props.blockLink} notify={props.notify} /> : null}
+        {show("Duplicate") ? <DuplicateItem duplicate={props.duplicate} /> : null}
+        {show("Move to") ? <MoveToItem session={props.session} startMove={props.startMove} /> : null}
+        {show("Delete") ? <RemoveBlockItem><MenuIcon name="trash" />Delete<span className="bx-menu-key">Del</span></RemoveBlockItem> : null}
+        {q === "" ? <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" /> : null}
+        {show("Copy as Markdown") ? <CopyMarkdownItem session={props.session} /> : null}
+        {show("Copy and sync") ? <CopyAndSyncItem session={props.session} /> : null}
+        {none ? <div className="bx-menu-empty" role="status">No actions</div> : null}
+        {q === "" ? <BlockMenuFoot session={props.session} /> : null}
+      </MenuFilter.Provider>
     </DragHandleMenu>
   );
 }
+
+/** Suchtext des Blockmenüs (klein geschrieben), für spätere Einträge, die sich selbst filtern. */
+const MenuFilter = createContext("");
 
 /** Name des Blocktyps für den Kopf des Blockmenüs. */
 const BLOCK_NAMES: Readonly<Record<string, string>> = {
