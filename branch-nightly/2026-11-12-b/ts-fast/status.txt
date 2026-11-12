@@ -1,1 +1,1 @@
-success f167b9fe8dbfcede99fecca9fa8336cbe31dcdd3 nightly/2026-11-12-b
+failure 38f1e056b865c0137bdc90e884bf37053a410a2a nightly/2026-11-12-b
