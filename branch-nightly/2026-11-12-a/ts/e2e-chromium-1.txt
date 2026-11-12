@@ -1,61 +1,61 @@
-failure db6859e821dc9f5e239c37cf650c78dd2f29a5ec
-    Call log:
-      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
-      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
-        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-        - unexpected value " "
-        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-           - unexpected value "pwd; ecrunner@runnervm7aw5e:/tmp/based-e2e-code-EELeDW$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-EELeDWrunner@runnervm7aw5e:/tmp/based-e2e-code-EELeDW$  "
+cancelled 6ccea1766bde51f63a4a8e23e9278ae37bd384e9
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
+Running 108 tests using 2 workers, shard 1 of 2
 
-      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
-      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
-    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
-          |                                                 ^
-      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      343 |         await page.setViewportSize({ width: w, height: h });
-      344 |         const box = (await term.boundingBox())!;
-        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toContainText(expected) failed
-
-    Locator: getByTestId('coding-terminal').locator('.xterm-rows')
-    Expected substring: "hi-42"
-    Received string:    "runner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-dAMzbkrunner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$  "
-    Timeout: 15000ms
-
-    Call log:
-      - Expect "toContainText" getByTestId('coding-terminal').locator('.xterm-rows') with timeout 15000ms
-      - waiting for getByTestId('coding-terminal').locator('.xterm-rows')
-        - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-        - unexpected value " "
-        29 × locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>
-           - unexpected value "runner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$ pwd; echo hi-$((40+2))/tmp/based-e2e-code-dAMzbkrunner@runnervm7aw5e:/tmp/based-e2e-code-dAMzbk$  "
-
-
-      339 |       await page.getByTestId("coding-sessions").getByRole("listitem").last().click();
-      340 |       await page.getByRole("radio", { name: "Terminal" }).click();
-    > 341 |       await expect(term.locator(".xterm-rows")).toContainText("hi-42", { timeout: 15_000 });
-          |                                                 ^
-      342 |       for (const [w, h] of [[1280, 820], [900, 600], [1728, 1000]] as const) {
-      343 |         await page.setViewportSize({ width: w, height: h });
-      344 |         const box = (await term.boundingBox())!;
-        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:341:49
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
-
-    Error Context: test-results/coding-BSD-314-Terminal-Re-bf578-kel-Größe-folgt-dem-Fenster-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster 
-  3 skipped
-  103 passed (4.4m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+(node:3350) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    1 [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (4.3s)
+  ✓    3 [chromium] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (3.9s)
+  ✓    4 [chromium] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (2.8s)
+  ✓    2 [chromium] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (10.4s)
+  ✓    5 [chromium] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (3.2s)
+  ✓    7 [chromium] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (2.6s)
+  ✓    6 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.8s)
+  ✓    9 [chromium] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (2.2s)
+  ✓    8 [chromium] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (3.5s)
+  -   11 [chromium] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
+(node:3688) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   10 [chromium] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (2.2s)
+  ✓   13 [chromium] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (2.8s)
+  ✓   12 [chromium] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (3.4s)
+  ✓   14 [chromium] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (2.1s)
+(node:3792) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   15 [chromium] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.0s)
+  -   16 [chromium] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
+(node:3879) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   17 [chromium] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (6.9s)
+  ✓   18 [chromium] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (9.8s)
+  ✓   19 [chromium] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (5.7s)
+  ✓   21 [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (7.8s)
+  ✘   22 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (20.9s)
+(node:4147) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   23 [chromium] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (retry #1) (20.4s)
+(node:4299) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   24 [chromium] › e2e/coding.spec.ts:358:1 › BSD-315: #coding auf dem Handy (390 × 844) (3.8s)
+  ✓   25 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.8s)
+  ✓   26 [chromium] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (1.7s)
+  ✓   27 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (2.2s)
+  ✓   28 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (2.0s)
+  ✓   29 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (2.0s)
+[chromium] Klick-Durchlauf: 110 Klicks, 4 ausgelassen
+  ✓   20 [chromium] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.2m)
+  ✓   30 [chromium] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (2.8s)
+  ✓   31 [chromium] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (2.9s)
+  ✓   32 [chromium] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (1.8s)
+  ✓   33 [chromium] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (2.1s)
+  -   35 [chromium] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓   36 [chromium] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (2.0s)
+  ✓   37 [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (2.0s)
+  ✓   34 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (6.8s)
+  ✓   38 [chromium] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (3.8s)
