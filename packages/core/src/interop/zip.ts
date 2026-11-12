@@ -40,6 +40,8 @@ export interface ZipEntry {
   compressedSize: number;
   uncompressedSize: number;
   localHeaderOffset: number;
+  /** BSD-317: Änderungszeit aus dem Verzeichnis (DOS-Zeit ohne Zeitzone, als UTC gelesen; ms seit 1970). */
+  modified?: number;
 }
 
 export const isDirectoryEntry = (e: ZipEntry) => e.path.endsWith("/");
@@ -156,7 +158,7 @@ export function readZipEntries(input: Uint8Array | ByteSource): ZipEntry[] {
     p.u16(); p.u16();
     const flags = p.u16();
     const method = p.u16();
-    p.u16(); p.u16();
+    const dosTime = p.u16(), dosDate = p.u16();
     const crc = p.u32();
     let csize = p.u32();
     let usize = p.u32();
@@ -181,7 +183,12 @@ export function readZipEntries(input: Uint8Array | ByteSource): ZipEntry[] {
         try { name = utf8.decode(body.subarray(5)); } catch { /* Name aus dem Kopf behalten */ }
       }
     }
-    out.push({ path: name.replaceAll("\\", "/"), method, flags, crc32: crc, compressedSize: csize, uncompressedSize: usize, localHeaderOffset: offset });
+    const entry: ZipEntry = { path: name.replaceAll("\\", "/"), method, flags, crc32: crc, compressedSize: csize, uncompressedSize: usize, localHeaderOffset: offset };
+    if (dosDate !== 0) {
+      const ms = Date.UTC(1980 + (dosDate >> 9), ((dosDate >> 5) & 15) - 1, dosDate & 31, dosTime >> 11, (dosTime >> 5) & 63, (dosTime & 31) * 2);
+      if (Number.isFinite(ms)) entry.modified = ms;
+    }
+    out.push(entry);
   }
   void total;
   return out;

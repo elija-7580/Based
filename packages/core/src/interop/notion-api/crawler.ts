@@ -14,6 +14,20 @@ export interface NotionImportOptions {
   downloadFiles: boolean;
   subpages: boolean;
   maxConcurrent: number;
+  /**
+   * BSD-317 (Hybrid): `false` holt keinen Seiteninhalt (`blocks/{id}/children`) – nur Seiten, Datenbanken, Schemas,
+   * Ansichten, Zeilen und Nutzer. Den Inhalt liefert dann der ZIP-Export.
+   */
+  blockContent?: boolean;
+  /** BSD-317: in `crawlContent` Datenbanken im Inhalt nicht nachladen (die Struktur kennt sie schon). */
+  followDatabases?: boolean;
+  /**
+   * BSD-317 (Delta): nur, was seit diesem Zeitpunkt (ISO) in Notion bearbeitet wurde – die Suche läuft absteigend nach
+   * `last_edited_time` und hört dort auf; Zeilen werden mit demselben Zeitfilter abgefragt.
+   */
+  editedSince?: string;
+  /** BSD-317: Netz- und Serverfehler brechen ab, statt als Warnung zu einem lückenhaften Ergebnis zu führen. */
+  strict?: boolean;
 }
 
 export const defaultNotionImportOptions = (): NotionImportOptions => ({ rowContent: true, followRelations: true, downloadFiles: true, subpages: true, maxConcurrent: 3 });
@@ -90,6 +104,12 @@ export class NotionCrawler {
     this.enqueue({ k: "users" });
     if (targets.length === 0) this.enqueue({ k: "search" });
     else for (const id of targets) this.enqueue({ k: "resolve", id });
+    await this.drain();
+    this.finishRows();
+    return this.snap;
+  }
+
+  private async drain(): Promise<NotionSnapshot> {
     while (this.queue.length > 0) {
       if (this.client.signal?.aborted) throw new NotionAPIError("cancelled", "");
       const batch = this.queue.splice(0, Math.max(1, this.options.maxConcurrent));
@@ -98,6 +118,11 @@ export class NotionCrawler {
       this.done += batch.length;
       this.onProgress?.(this.done, this.done + this.queue.length, this.describe(batch[0]));
     }
+    return this.snap;
+  }
+
+  /** Zeilenreihenfolge und Abschluss nach `drain` (voller Lauf). */
+  private finishRows() {
     // Zeilenreihenfolge: zuerst die der Hauptansicht, dann der Rest in Abfrage-Reihenfolge.
     for (const [ds, ids] of this.snap.rows) {
       const order = this.viewOrders.get(ds);
@@ -107,7 +132,43 @@ export class NotionCrawler {
       const placed = new Set(out);
       this.snap.rows.set(ds, [...out, ...ids.filter((x) => !placed.has(x))]);
     }
-    return this.snap;
+  }
+
+  private get content() { return this.options.blockContent !== false; }
+
+  /**
+   * Bricht dieser Fehler den Lauf ab? Immer: Token abgelehnt, abgebrochen. Mit `strict` außerdem alles, was kein
+   * „nicht gefunden / nicht geteilt“ ist (Netz weg, 5xx, Ratenlimit erschöpft) – ein lückenhafter Stand wäre sonst
+   * nicht von einem vollständigen zu unterscheiden.
+   */
+  private fatal(e: unknown): boolean {
+    if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) return true;
+    return this.options.strict === true && !(e instanceof NotionAPIError && (e.kind === "notFound" || e.kind === "restricted"));
+  }
+
+  /** BSD-317: nur den Inhalt dieser Seiten holen (Blöcke mit Kindern, Dateien) – ohne Unterseiten. */
+  async crawlContent(pages: readonly string[]): Promise<NotionSnapshot> {
+    for (const id of pages) this.enqueue({ k: "children", id });
+    return this.drain();
+  }
+
+  /** BSD-317: Suche absteigend nach Bearbeitungszeit, bis zum ersten Treffer vor `since`. */
+  private async searchSince(since: string): Promise<JSONValue[]> {
+    const out: JSONValue[] = [];
+    const limit = Date.parse(since);
+    let cursor: string | undefined;
+    do {
+      const body: { [k: string]: JSONValue } = { page_size: 100, sort: { direction: "descending", timestamp: "last_edited_time" }, ...(cursor ? { start_cursor: cursor } : {}) };
+      const r = jobj(await this.client.post("search", body));
+      let older = false;
+      for (const x of jarr(r?.results)) {
+        const t = Date.parse(jstr(at(x, "last_edited_time")) ?? "");
+        if (Number.isFinite(t) && Number.isFinite(limit) && t < limit) { older = true; continue; }
+        out.push(x);
+      }
+      cursor = !older && r?.has_more === true ? jstr(r.next_cursor) : undefined;
+    } while (cursor !== undefined);
+    return out;
   }
 
   private describe(job: Job | undefined): string {
@@ -157,21 +218,21 @@ export class NotionCrawler {
     try {
       switch (job.k) {
         case "users":
-          for (const u of await c.paginateGet("users").catch(() => [] as JSONValue[])) {
+          for (const u of await c.paginateGet("users").catch((e: unknown) => { if (this.fatal(e)) throw e; return [] as JSONValue[]; })) {
             const id = nid(at(u, "id")), n = jstr(at(u, "name")) ?? jstr(at(u, "person", "email"));
             if (id && n !== undefined) o.users.push([id, n]);
           }
           break;
         case "search":
-          o.searchResults = await c.paginatePost("search");
-          if (o.searchResults.length === 0) o.warnings.push("Nothing is shared with the integration yet. In Notion, open a page → ••• → Connections → add the integration.");
+          o.searchResults = this.options.editedSince === undefined ? await c.paginatePost("search") : await this.searchSince(this.options.editedSince);
+          if (o.searchResults.length === 0 && this.options.editedSince === undefined) o.warnings.push("Nothing is shared with the integration yet. In Notion, open a page → ••• → Connections → add the integration.");
           break;
         case "resolve": await this.resolve(job.id, o); break;
         case "page": {
           const p = await c.get(`pages/${job.id}`);
           o.pages.push(p);
           this.filesOfPage(p, o);
-          o.next.push({ k: "children", id: job.id });
+          if (this.content) o.next.push({ k: "children", id: job.id });
           break;
         }
         case "children": {
@@ -206,14 +267,15 @@ export class NotionCrawler {
           break;
         }
         case "rows": {
-          const pages = await c.paginatePost(`data_sources/${job.id}/query`);
+          const since = this.options.editedSince;
+          const pages = await c.paginatePost(`data_sources/${job.id}/query`, since === undefined ? {} : { filter: { timestamp: "last_edited_time", last_edited_time: { on_or_after: since } } });
           o.rows.push([job.id, pages.flatMap((p) => { const id = nid(at(p, "id")); return id ? [id] : []; })]);
           for (const p of pages) {
             o.pages.push(p);
             this.filesOfPage(p, o);
             const pid = nid(at(p, "id"));
             if (!pid) continue;
-            if (this.options.rowContent) o.next.push({ k: "children", id: pid });
+            if (this.options.rowContent && this.content) o.next.push({ k: "children", id: pid });
             for (const v of Object.values(jobj(at(p, "properties")) ?? {})) {
               const prop = jstr(at(v, "id"));
               if (at(v, "has_more") === true && prop) o.next.push({ k: "propertyItem", page: pid, prop });
@@ -236,7 +298,7 @@ export class NotionCrawler {
         }
       }
     } catch (e) {
-      if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) throw e;
+      if (this.fatal(e)) throw e;
       o.warnings.push(`${describeJob(job)}: ${e instanceof Error ? e.message : String(e)}`);
     }
     return o;
@@ -245,11 +307,11 @@ export class NotionCrawler {
   /** Ein Link kann auf eine Seite, eine Datenbank oder eine Datenquelle zeigen. */
   private async resolve(id: string, o: Outcome): Promise<void> {
     let last: unknown;
-    const rethrow = (e: unknown) => { if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) throw e; last = e; };
+    const rethrow = (e: unknown) => { if (this.fatal(e)) throw e; last = e; };
     try {
       const p = await this.client.get(`pages/${id}`);
       o.pages.push(p); this.filesOfPage(p, o);
-      o.roots.push({ page: id }); o.next.push({ k: "children", id });
+      o.roots.push({ page: id }); if (this.content) o.next.push({ k: "children", id });
       return;
     } catch (e) { rethrow(e); }
     try {
@@ -275,7 +337,7 @@ export class NotionCrawler {
     let refs: JSONValue[];
     try { refs = await this.client.paginateGet("views", { database_id: dbID }); }
     catch (e) {
-      if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) throw e;
+      if (this.fatal(e)) throw e;
       o.warnings.push(`Views of database ${dbID} unavailable (${e instanceof Error ? e.message : String(e)}); a default table view is used.`);
       return;
     }
@@ -285,7 +347,7 @@ export class NotionCrawler {
       if (!vid) continue;
       try { full.push(await this.client.get(`views/${vid}`)); }
       catch (e) {
-        if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) throw e;
+        if (this.fatal(e)) throw e;
         o.warnings.push(`View ${jstr(at(r, "name")) ?? vid} of database ${dbID} couldn't be read (${e instanceof Error ? e.message : String(e)}).`);
       }
     }
@@ -300,7 +362,7 @@ export class NotionCrawler {
           have.add(wid);
           try { full.push(await this.client.get(`views/${wid}`)); }
           catch (e) {
-            if (e instanceof NotionAPIError && (e.kind === "unauthorized" || e.kind === "cancelled")) throw e;
+            if (this.fatal(e)) throw e;
             o.warnings.push(`Dashboard widget ${wid} couldn't be read (${e instanceof Error ? e.message : String(e)}).`);
           }
         }
@@ -327,7 +389,7 @@ export class NotionCrawler {
       try {
         const order = await this.client.viewOrder(vid);
         o.viewOrders.push([ds, order.map((x) => notionUUID(x) ?? x)]);
-      } catch { /* ohne Reihenfolge */ }
+      } catch (e) { if (this.fatal(e)) throw e; /* ohne Reihenfolge */ }
     }
   }
 
@@ -335,7 +397,7 @@ export class NotionCrawler {
     const id = nid(at(b, "id")), type = jstr(at(b, "type"));
     if (!id || !type) return;
     if (type === "child_page") { if (this.options.subpages) o.next.push({ k: "page", id }); }
-    else if (type === "child_database") o.next.push({ k: "database", id });
+    else if (type === "child_database") { if (this.options.followDatabases !== false) o.next.push({ k: "database", id }); }
     else if (at(b, "has_children") === true) o.next.push({ k: "children", id });
     const body = at(b, type);
     const url = jstr(at(body, "file", "url"));
@@ -392,7 +454,9 @@ export class NotionCrawler {
         if (ptype === "workspace" || pid === undefined || !ids.has(pid)) {
           if (!this.snap.roots.some((x) => "page" in x && x.page === id)) this.snap.roots.push({ page: id });
         }
-        this.enqueue({ k: "children", id });
+        if (this.content) this.enqueue({ k: "children", id });
+        // Delta: die Zeile braucht das Schema ihrer Datenquelle (und deren geänderte Geschwister).
+        if (this.options.editedSince !== undefined && (ptype === "data_source_id" || ptype === "database_id") && pid) this.enqueue(ptype === "data_source_id" ? { k: "dataSource", id: pid } : { k: "database", id: pid });
         const o = outcome();
         this.filesOfPage(r, o);
         for (const j of o.next) this.enqueue(j);

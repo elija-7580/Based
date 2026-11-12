@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 import { appearanceStore, applyAppearance, effectiveTheme, onSystemThemeChange } from "./appearance.js";
 import { ChatDock, ChatPage } from "./chat/ChatDock.js";
 import { ImportDialog } from "./components/ImportExport.js";
+import { hybridImport } from "./worker/notionHybridClient.js";
 import { NewPalette, type PaletteCommand } from "./components/NewPalette.js";
 import { QuickFind } from "./components/QuickFind.js";
 import { Sidebar } from "./components/Sidebar.js";
@@ -110,7 +111,9 @@ export function App({ client, history }: { client: StoreClient; history: History
   outlineRef.current = state.outline;
   // BSD-204: Kürzel (shell/shortcuts.ts) und Befehlspalette „New…“ (⌘N).
   const [palette, setPalette] = useState(false);
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useState<false | "pick" | "notion">(false);
+  // BSD-317: unfertigen Notion-Import nach dem Start anbieten (Seitenleiste zeigt „Import paused“).
+  useEffect(() => { if (state.ready) void hybridImport.restore(client); }, [client, state.ready]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "F6" && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -169,7 +172,7 @@ export function App({ client, history }: { client: StoreClient; history: History
     { id: "chat", title: "New AI chat", hint: "⌘J", icon: "chat", keywords: "ai agent ask", run: () => history.navigate({ name: "chat" }) },
     { id: "meeting", title: "New meeting notes", icon: "mic", keywords: "meeting record transcribe notes", run: () => void newMeeting() },
     { id: "database", title: "New database", icon: "database", keywords: "table board", run: () => void newDatabase() },
-    { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting(true) },
+    { id: "import", title: "Import…", icon: "library", keywords: "markdown notion html csv", run: () => setImporting("pick") },
   ];
 
   let screen;
@@ -208,7 +211,7 @@ export function App({ client, history }: { client: StoreClient; history: History
 
   return (
     <div className="shell" data-testid="based-root" data-ready={state.ready ? "" : undefined}>
-      <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} advanced={appearance.agentDetails} />
+      <Sidebar client={client} state={state} route={route} homePage={homePage} onHome={goHome} onNavigate={navigate} onOpenPage={openPage} onNewPage={newPage} onQuickFind={() => setQuickFind(true)} onImportStatus={() => setImporting("notion")} advanced={appearance.agentDetails} />
       <main className="main">
         <TabBar history={history} titles={state.titles} />
         <div className="panel"><Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading" />}>{screen}</Suspense></div>
@@ -220,7 +223,7 @@ export function App({ client, history }: { client: StoreClient; history: History
       <ChatDock client={client} history={history} route={route} />
       <Notice notice={state.notice} onDismiss={client.dismissNotice} />
       {palette ? <NewPalette commands={commands} onClose={() => setPalette(false)} /> : null}
-      {importing ? <ImportDialog client={client} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
+      {importing ? <ImportDialog client={client} initial={importing} onClose={() => setImporting(false)} onOpenPage={openPage} /> : null}
       {quickFind ? <QuickFind client={client} titles={state.titles} recent={recent} currentPage={route.name === "page" ? { id: route.id, title: state.titles.get(route.id) || "Untitled" } : undefined} onOpen={(id) => { setQuickFind(false); openPage(id); }} onClose={() => setQuickFind(false)}
         onCommand={(id) => {
           setQuickFind(false);

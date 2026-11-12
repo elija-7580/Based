@@ -141,10 +141,21 @@ export interface NotionHTMLOptions {
   isCancelled?: (() => boolean) | undefined;
   /** Verweise auf Dateien, die im Export fehlen, als Warnung melden (die Swift-App meldet sie nicht). */
   warnMissingFiles?: boolean | undefined;
+  /**
+   * BSD-317 (Hybrid): nur den Inhalt einer Seite lesen. Unterseiten und Datenbanken werden nicht importiert, sondern als
+   * Platzhalter-Blöcke an ihrer Stelle vermerkt (`page` bzw. `databaseInline` mit der Notion-ID) – die Struktur kommt
+   * aus der API, der Platzhalter sagt nur, wo sie im Inhalt steht.
+   */
+  shallow?: boolean | undefined;
 }
+
+/** BSD-317: Zusatzfelder an Datenbank-Platzhaltern des flachen Lesens (Ordner-ID der Quelle, Titel). */
+export const SHALLOW_SOURCE_KEY = "hybridSourceDB";
+export const SHALLOW_TITLE_KEY = "hybridTitle";
 
 export class NotionHTMLImporter {
   private readonly warnMissingFiles: boolean;
+  private readonly shallow: boolean;
   progress: ((fraction: number) => void) | undefined;
   isCancelled: (() => boolean) | undefined;
 
@@ -164,6 +175,7 @@ export class NotionHTMLImporter {
 
   constructor(readonly builder: ImportBuilder, readonly files: ImportFiles, opts: NotionHTMLOptions = {}) {
     this.warnMissingFiles = opts.warnMissingFiles === true;
+    this.shallow = opts.shallow === true;
     this.progress = opts.progress;
     this.isCancelled = opts.isCancelled;
   }
@@ -207,6 +219,33 @@ export class NotionHTMLImporter {
       else this.importPage(f, undefined);
     }
     this.finish();
+  }
+
+  /** BSD-317: eine Seite flach lesen (Option `shallow`); `undefined`, wenn die Datei eine ganzseitige Datenbank ist. */
+  importPageShallow(file: string): string | undefined {
+    const k = normalizePath(file);
+    this.registerFile(k);
+    return this.importPage(k, undefined);
+  }
+
+  /** BSD-317: eine Seite mit allem darunter lesen (Seiten, die nur im ZIP stehen). */
+  importSubtree(file: string, parent: string | undefined): string | undefined {
+    const k = normalizePath(file);
+    const files = [k, ...this.htmlFiles(stripExtension(k))];
+    for (const f of files) this.registerFile(f);
+    this.total = Math.max(1, files.length);
+    const id = this.importPage(k, parent);
+    for (const f of files) {
+      if (this.consumed.has(f)) continue;
+      const dbBlock = this.dbBlockByFolder.get(dirname(f));
+      const dbID = dbBlock !== undefined ? this.databaseByBlock.get(dbBlock) : undefined;
+      const pid = this.pageFiles.get(dirname(f) + ".html");
+      if (dbID !== undefined) this.importPage(f, "d:" + dbID);
+      else if (pid !== undefined && this.builder.contains(pid) && this.builder.block(pid)?.type === "page") this.importPage(f, "b:" + pid);
+      else if (id !== undefined) this.importPage(f, "b:" + id);
+    }
+    this.finish();
+    return id;
   }
 
   private registerFile(f: string) {
@@ -287,6 +326,7 @@ export class NotionHTMLImporter {
     }
     const table = looseTable ?? bodyOnly;
     if (table && (looseTable === undefined ? true : (bodyNode?.elements.length ?? 0) === 0)) {
+      if (this.shallow) return undefined;
       const descNode = header?.first((n) => n.has("page-description"));
       const desc = descNode ? this.richText(descNode.children, ctx) : undefined;
       const props: BlockProps = {};
@@ -317,6 +357,7 @@ export class NotionHTMLImporter {
 
   /** Unterseiten im Ordner der Seite, die der Inhalt nicht verlinkt hat (am Ende angehängt). */
   private importRemainingChildren(file: string, id: string) {
+    if (this.shallow) return;
     const folder = stripExtension(file);
     if (!this.files.isDirectory(folder) || this.files.isFile(folder)) return;
     for (const item of this.topLevelItems(folder, false)) {
@@ -782,6 +823,7 @@ export class NotionHTMLImporter {
     if (target.file !== undefined && !this.consumed.has(target.file)) {
       const ownFolder = stripExtension(ctx.file);
       const isChild = dirname(target.file) === ownFolder || (this.flat && dirname(target.file) === ctx.dir);
+      if (isChild && parent.startsWith("b:") && this.shallow) return this.append("page", parent, target.id);
       if (isChild && parent.startsWith("b:")) {
         // Eine Unterseite: genau hier importieren.
         const pid = this.importPage(target.file, parent);
@@ -923,6 +965,17 @@ export class NotionHTMLImporter {
   // MARK: Datenbanken
 
   private importInlineDatabase(table: HTMLNode, title: Run[], blockID: string, parent: string, ctx: Ctx): string | undefined {
+    if (this.shallow) {
+      const id = this.append("databaseInline", parent, blockID);
+      const folder = this.rowFolder(table, ctx);
+      const source = folder !== undefined ? notionIDInName(basename(folder)) : undefined;
+      this.builder.update(id, (b) => {
+        const x = b as Record<string, unknown>;
+        if (source !== undefined) x[SHALLOW_SOURCE_KEY] = source;
+        if (!isEmptyRuns(title)) x[SHALLOW_TITLE_KEY] = plain(title);
+      });
+      return id;
+    }
     // Zeilen, die in den Ordner einer anderen Datenbank zeigen: eine verknüpfte Ansicht dieser Datenbank.
     const folder = this.rowFolder(table, ctx);
     const own = stripExtension(ctx.file);

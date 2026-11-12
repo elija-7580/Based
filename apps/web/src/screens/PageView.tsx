@@ -1,7 +1,7 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
-import { pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
+import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
@@ -16,6 +16,7 @@ import { ShareButton } from "../components/Share.js";
 import { VersionHistory } from "../components/VersionHistory.js";
 import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
+import { hybridImport } from "../worker/notionHybridClient.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
 import { mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
@@ -100,7 +101,10 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const [coverPicker, setCoverPicker] = useState(false);
   const iconFile = useRef<HTMLInputElement>(null);
   const storeReadOnly = trashed || state.status.state === "readonly";
-  const readOnly = storeReadOnly || format.locked;
+  // BSD-317: Seite aus dem Notion-Import, deren Inhalt noch nachgeladen wird – gesperrt, Öffnen zieht sie vor.
+  const pendingImport = importPendingSource(page) !== undefined;
+  useEffect(() => { if (pendingImport) hybridImport.prioritize(pageID); }, [pendingImport, pageID]);
+  const readOnly = storeReadOnly || format.locked || pendingImport;
 
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];
@@ -263,6 +267,11 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
                     onPick={(e) => { setPageIcon(store, pageID, e); setIconPicker(false); }} />
                 ) : null}
                 {coverPicker && store ? <CoverPicker store={store} pageID={pageID} hasCover={false} onClose={() => setCoverPicker(false)} /> : null}
+              </div>
+            ) : null}
+            {pendingImport ? (
+              <div className="page-locked t-desc" role="status" data-testid="import-pending">
+                <Icon name="history" size={14} /> Content is still importing from Notion — this page unlocks when it arrives
               </div>
             ) : null}
             {format.locked ? (
