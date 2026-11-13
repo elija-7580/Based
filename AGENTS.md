@@ -38,6 +38,16 @@ abgehakt ist: in 1280 × 820, 900 × 600 und 1728 × 1000, hell und dunkel, in a
 - `@smoke` nur für Kernfälle vergeben (Seite anlegen, tippen, Slash, Datenbank, Sidebar, ⌘K, Neuladen; ~20 Tests).
 - Swift (`legacy/`) nur prüfen, wenn Swift-Code oder `fixtures/` berührt sind.
 
+## Graph zuerst (BSD-379)
+
+- Zu Beginn einer Sitzung `scripts/agent-graph.sh` (codebase-memory-mcp 0.12.1, MIT, ~10 s; Index im Cache, nie im Repo).
+- „Wo ist / wer ruft / was hängt dran“ zuerst über den Graphen, nicht über ganze Dateien:
+  `scripts/agent-graph.sh q search_graph --name-pattern '^name$'`, `q trace_path --function-name name --direction inbound`,
+  `q get_file_outline --file-path pfad`, `q get_code_snippet --qualified-name qn`.
+- Vor dem Commit `q detect_changes --base-branch origin/main`: betroffene Symbole → nur die passenden Tests/Specs
+  zusätzlich zu `run-ts.sh --fast` laufen lassen.
+- Ganze Dateien lesen, wenn sie geändert werden. `legacy/` ist nicht im Index (`scripts/agent-graph.sh --with-legacy`).
+
 <!-- ASTRYX:START -->
 Astryx v0.7.11 · 174 components
 CLI: run every command as `pnpm dlx @astryxdesign/cli@0.7.11 <cmd>` (shown below as `astryx ...`).

@@ -39,4 +39,17 @@ describe("design tokens", () => {
   it.each(themes)("control borders pass 3:1 in %s", (t) => {
     expect(contrast(color("control-border", t), color("bg", t))).toBeGreaterThanOrEqual(3);
   });
+
+  // BSD-367: Fokus und Auswahl neutral, nicht in der Marker-Farbe; Fokusrahmen ≥ 3:1 auf allen Flächen, Text auf der
+  // Auswahl ≥ 4,5:1.
+  it.each(themes)("focus ring and selection are neutral and readable in %s", (t) => {
+    for (const bg of ["bg", "canvas", "sidebar", "surface-raised", "surface-soft", "selected"]) {
+      expect(contrast(color("focus-ring", t), color(bg, t)), `focus-ring on ${bg} (${t})`).toBeGreaterThanOrEqual(3);
+    }
+    expect(contrast(color("ink", t), color("selection-bg", t)), `ink on selection-bg (${t})`).toBeGreaterThanOrEqual(4.5);
+    for (const tok of ["focus-ring", "selection-bg"]) {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(color(tok, t).slice(i, i + 2), 16));
+      expect(Math.max(r!, g!, b!) - Math.min(r!, g!, b!), `${tok} is grey (${t})`).toBeLessThanOrEqual(8);
+    }
+  });
 });

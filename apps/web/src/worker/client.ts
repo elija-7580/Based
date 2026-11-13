@@ -45,6 +45,15 @@ export class RequestCancelled extends Error {
   }
 }
 
+/** BSD-336: Anfragen, die etwas speichern (Lesen, Suchen, Öffnen zählen nicht). */
+const WRITE_TYPES = new Set(["command", "applyLocal", "commitImport", "importAsset", "assetPut", "ydocSave", "setSync", "discardImport"]);
+const READ_COMMANDS = new Set(["pageAncestors"]);
+function isWrite(req: Request): boolean {
+  if (!WRITE_TYPES.has(req.type)) return false;
+  const op = (req as { op?: unknown; command?: { op?: unknown } }).command?.op ?? (req as { op?: unknown }).op;
+  return !(req.type === "command" && typeof op === "string" && READ_COMMANDS.has(op));
+}
+
 export class StoreClient {
   private nextID = 1;
   private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
@@ -63,10 +72,18 @@ export class StoreClient {
     this.endpoint.removeEventListener("message", this.onMessage);
     for (const p of this.pending.values()) p.reject(new RequestCancelled());
     this.pending.clear();
+    this.writes.clear();
     this.checkSettled();
   }
 
   private settleWaiters: { upTo: number; resolve: () => void }[] = [];
+  /** BSD-336: abgeschickte schreibende Anfragen ohne Antwort (noch nicht im Store-Tab gespeichert). */
+  private writes = new Set<number>();
+
+  /** BSD-336: Wie viele Änderungen noch unterwegs sind. Solange > 0, fragt das Fenster beim Neuladen/Schließen nach. */
+  get unsavedWrites(): number {
+    return this.writes.size;
+  }
 
   /**
    * BSD-335: Erfüllt, sobald jede bis jetzt abgeschickte Anfrage beantwortet ist. Der Store-Tab antwortet erst nach dem
@@ -120,6 +137,7 @@ export class StoreClient {
         const p = this.pending.get(ev.id);
         if (!p) return;
         this.pending.delete(ev.id);
+        this.writes.delete(ev.id);
         if (ev.ok) p.resolve(ev.result);
         else p.reject(ev.cancelled ? new RequestCancelled() : new Error(ev.error));
         this.checkSettled();
@@ -148,6 +166,7 @@ export class StoreClient {
     const id = this.nextID++;
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject });
+      if (isWrite(req)) this.writes.add(id);
       this.endpoint.postMessage({ ...req, id } as RequestMessage);
     });
   }

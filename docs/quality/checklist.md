@@ -42,7 +42,8 @@ interfaces feel better“) stehen im Entwicklungslog unter „Recherche und Plan
 
 ## 3 · Jedes Element in jedem Zustand
 
-- [ ] Ruhe, Überfahren, gedrückt, Fokus per Tastatur (Rahmen in der Marker-Farbe), ausgewählt, deaktiviert.
+- [ ] Ruhe, Überfahren, gedrückt, Fokus per Tastatur (neutraler Rahmen `focus-ring`, nie Marker – BSD-367),
+      ausgewählt (`selection-bg`/`selected`), deaktiviert.
 - [ ] Gleiche Elemente verhalten sich überall gleich (ein Menü ist überall dasselbe Menü).
 - [ ] Zustände fremder Bibliotheken (BlockNote, Ariakit, Astryx) sind auf Based-Flächen umgestellt. Kein
       fremdes Blau, keine fremden Schatten, keine fremde Schrift.
