@@ -1,1 +1,1 @@
-success ff52b99ab774c5ecaf14025c5c603e2fec658d11 nightly/2026-11-13-blockeditor-e7
+success 84d16df2d9efcff14f01f544bf2d5bafd970e35d nightly/2026-11-13-blockeditor-e7
