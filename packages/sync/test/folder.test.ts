@@ -2,7 +2,7 @@
 // an verschiedenen Blöcken, halbe Datei (iCloud lädt noch), Löschung, Konflikt-Kopie, Schalter aus.
 import { describe, expect, it } from "vitest";
 import { createPage, emptyTrash, MemoryPersistence, renamePage, trashPages, WorkspaceStore } from "@based/core";
-import { FolderSync, parseSegment, segmentName, snapshotName, type FolderTarget } from "../src/index.js";
+import { FolderAssets, FolderSync, MemoryAssetBlobStore, parseSegment, sha256Hex, segmentName, snapshotName, type FolderTarget } from "../src/index.js";
 
 function folder(): FolderTarget & { files: Map<string, Uint8Array> } {
   const files = new Map<string, Uint8Array>();
@@ -162,5 +162,25 @@ describe("Ordner-Sync (BSD-296, Spike)", () => {
     f.files.set(seg, good);
     await a2.round();
     expect([...f.files.keys()].filter((k) => k.startsWith("devices/macA/") && k.endsWith(".jsonl"))).toEqual([`devices/macA/${snapshotName(3)}`]);
+  });
+
+  it("BSD-334: Anhänge unter assets/<hash> – einmal geschrieben, beim Lesen geprüft, halbe Datei gilt als nicht da", async () => {
+    const f = folder();
+    const blobsA = new MemoryAssetBlobStore(), blobsB = new MemoryAssetBlobStore();
+    const bytes = new TextEncoder().encode("a picture, pretend");
+    const hash = await sha256Hex(bytes);
+    await blobsA.put(hash, bytes);
+    const a = new FolderAssets(f, blobsA), b = new FolderAssets(f, blobsB);
+    expect(await b.get(hash)).toBeUndefined();
+    expect(await a.push()).toBe(1);
+    expect(await a.push()).toBe(0); // schon da: nie neu geschrieben
+    const full = f.files.get(`assets/${hash}`)!;
+    f.files.set(`assets/${hash}`, full.slice(0, 4)); // iCloud lädt noch
+    expect(await b.get(hash)).toBeUndefined();
+    expect(await blobsB.has(hash)).toBe(false);
+    f.files.set(`assets/${hash}`, full);
+    expect(await b.get(hash)).toEqual(bytes);
+    expect(await blobsB.has(hash)).toBe(true);
+    expect(await b.get("../evil")).toBeUndefined();
   });
 });

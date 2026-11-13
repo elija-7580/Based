@@ -25,6 +25,7 @@
 //   hält die Kompaktierung auf. Erst wird der Schnappschuss geschrieben, dann werden die alten Dateien entfernt.
 // - Ein neues Gerät (oder eines, dem Segment seen+1 fehlt) liest den neuesten Schnappschuss mit N > seen und macht bei
 //   N+1 weiter. Ohne `remove` am Ziel wird nie kompaktiert.
+import { isAssetHash, sha256Hex, type AssetBlobStore } from "./assets.js";
 import { keyOf, parseKey, safeParseRecord, type RecordKeyString, type RecordKind, type Stamp, type WireRecord, type WorkspaceStore } from "@based/core";
 
 /** Dateizugriff (wie BackupTarget in @based/core): Pfade relativ zum Sync-Ordner. */
@@ -287,3 +288,42 @@ export class FolderSync {
 
 /** Schlüssel für einen Record (Hilfe für Tests/Hüllen). */
 export const recordKeyOf = (kind: RecordKind, id: string) => keyOf(kind, id);
+
+/**
+ * BSD-334 (ADR 0015 Punkt 7): Anhänge im Sync-Ordner unter `assets/<sha256>` – wie in den Backups (BSD-274). Jede Datei
+ * wird einmal geschrieben und nie geändert (inhaltsadressiert); beim Lesen wird die Prüfsumme kontrolliert: eine halb
+ * hochgeladene oder fremde Datei gilt als „noch nicht da“, nie als Inhalt.
+ */
+export class FolderAssets {
+  constructor(private readonly target: FolderTarget, private readonly blobs: AssetBlobStore, private readonly log?: (message: string) => void) {}
+
+  /** Lokale Dateien, die im Ordner fehlen, hineinschreiben. Gibt die Zahl der geschriebenen zurück. */
+  async push(hashes?: readonly string[]): Promise<number> {
+    const there = new Set((await this.target.list("assets").catch(() => [])).filter(isAssetHash));
+    let n = 0;
+    for (const h of hashes ?? (await this.blobs.list())) {
+      if (!isAssetHash(h) || there.has(h)) continue;
+      const bytes = await this.blobs.get(h);
+      if (!bytes || (await sha256Hex(bytes)) !== h) continue;
+      await this.target.write(`assets/${h}`, bytes);
+      there.add(h);
+      n++;
+    }
+    return n;
+  }
+
+  /** Datei holen: lokal, sonst aus dem Ordner (geprüft, dann lokal gespeichert); `undefined` = (noch) nicht da. */
+  async get(hash: string): Promise<Uint8Array | undefined> {
+    if (!isAssetHash(hash)) return undefined;
+    const local = await this.blobs.get(hash);
+    if (local) return local;
+    const bytes = await this.target.read(`assets/${hash}`).catch(() => undefined);
+    if (!bytes) return undefined;
+    if ((await sha256Hex(bytes)) !== hash) {
+      this.log?.(`folder sync: assets/${hash.slice(0, 12)}… is not complete yet`);
+      return undefined;
+    }
+    await this.blobs.put(hash, bytes);
+    return bytes;
+  }
+}
