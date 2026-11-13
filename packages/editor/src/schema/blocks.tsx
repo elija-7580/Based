@@ -12,6 +12,7 @@ import { columnFractions, resizeColumns } from "../ui/columns.js";
 import { ButtonBlockView, type CaretEditor } from "../ui/ButtonBlock.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
 import { scrollToHeading } from "../ui/Outline.js";
+import { fetchBookmarkPreview } from "../ui/linkPreview.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
 
 const colorProps = { textColor: defaultProps.textColor, backgroundColor: defaultProps.backgroundColor };
@@ -397,18 +398,20 @@ function EmbedView(props: { id: string; kind: string; url: string; meta: string;
 function BookmarkWithFetch(props: { id: string; url: string; hasMeta: boolean; editor: AnyEditor; children: ReactNode }) {
   const env = useEnv();
   const [busy, setBusy] = useState(false);
+  // BSD-363: nach dem Aushängen (Block gelöscht, Seite gewechselt) keinen Zustand mehr setzen.
+  const mounted = useRef(true);
+  useEffect(() => () => { mounted.current = false; }, []);
   const fetchPreview = async () => {
-    if (busy || !env.fetchLinkPreview) return;
+    const fetchLink = env.fetchLinkPreview;
+    if (busy || !fetchLink) return;
     setBusy(true);
-    try {
-      const m = await env.fetchLinkPreview(props.url);
-      if (Object.keys(m).length === 0) env.notify("That page didn’t share a title or description.");
-      else props.editor.updateBlock(props.id, { props: { meta: canonicalStringify(m) } } as never);
-    } catch {
-      env.notify("Couldn’t fetch a preview for this link. Check the address and your connection.");
-    } finally {
-      setBusy(false);
-    }
+    await fetchBookmarkPreview(props.url, {
+      fetch: fetchLink,
+      exists: () => mounted.current && props.editor.getBlock(props.id) !== undefined,
+      apply: (m) => props.editor.updateBlock(props.id, { props: { meta: canonicalStringify(m) } } as never),
+      notify: env.notify,
+    });
+    if (mounted.current) setBusy(false);
   };
   return (
     <div className="bx-bookmark">
