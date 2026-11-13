@@ -48,6 +48,11 @@ export interface FolderSyncOptions {
   /** Stand von früher (`state()`), damit nach einem Neustart nicht alles neu gelesen wird. */
   state?: FolderSyncState;
   log?: (message: string) => void;
+  /**
+   * BSD-334: auch Änderungen mit Herkunft „remote“ in den Ordner schreiben (nur die nicht, die er selbst eingemischt
+   * hat). Für den based-server: dort kommen die Änderungen der Clients per Sync v2 als „remote“ an.
+   */
+  exportRemote?: boolean;
   /** BSD-334: ab so vielen eigenen Segmenten versucht `round()` zu kompaktieren (Standard 200). */
   compactAfter?: number;
 }
@@ -136,6 +141,8 @@ export function parseSegment(bytes: Uint8Array, device: string, seq: number): Pa
 
 export class FolderSync {
   private readonly pending = new Set<RecordKeyString>();
+  /** Gerade eingemischte Ordner-Änderungen (nicht zurückschreiben). */
+  private applying = false;
   private unobserve: (() => void) | undefined;
   private st: FolderSyncState;
 
@@ -145,7 +152,8 @@ export class FolderSync {
     if (o.enabled) {
       this.unobserve = o.store.observe((c) => {
         // nur eigene Änderungen; was per Sync/Ordner kam, nicht zurückschreiben
-        if (c.origin === "remote" || c.origin === "load" || c.origin === "derived") return;
+        if (this.applying || c.origin === "load" || c.origin === "derived") return;
+        if (c.origin === "remote" && !o.exportRemote) return;
         const notified = new Set(c.notified ?? []);
         for (const k of c.keys) if (!notified.has(k)) this.pending.add(k);
       });
@@ -202,7 +210,7 @@ export class FolderSync {
         const bytes = await this.o.target.read(`devices/${device}/${snapshotName(upTo)}`).catch(() => undefined);
         const parsed = bytes ? parseSegment(bytes, device, upTo) : undefined;
         if (!parsed) { result.waiting++; this.o.log?.(`folder sync: ${device}/${snapshotName(upTo)} is not complete yet`); continue; }
-        this.o.store.applyRemote(parsed.puts, parsed.dels, parsed.stamps);
+        this.applyFromFolder(parsed);
         result.received += parsed.puts.length + parsed.dels.length;
         seen = upTo;
         this.st.seen[device] = upTo;
@@ -213,7 +221,7 @@ export class FolderSync {
         const bytes = await this.o.target.read(`devices/${device}/${segmentName(seq)}`).catch(() => undefined);
         const parsed = bytes ? parseSegment(bytes, device, seq) : undefined;
         if (!parsed) { result.waiting++; this.o.log?.(`folder sync: ${device}/${segmentName(seq)} is not complete yet`); break; }
-        this.o.store.applyRemote(parsed.puts, parsed.dels, parsed.stamps);
+        this.applyFromFolder(parsed);
         result.received += parsed.puts.length + parsed.dels.length;
         seen = seq;
         this.st.seen[device] = seq;
@@ -221,6 +229,15 @@ export class FolderSync {
     }
     await this.writeCursor();
     return result;
+  }
+
+  private applyFromFolder(parsed: Parsed) {
+    this.applying = true;
+    try {
+      this.o.store.applyRemote(parsed.puts, parsed.dels, parsed.stamps);
+    } finally {
+      this.applying = false;
+    }
   }
 
   private lastCursor = "";

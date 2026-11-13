@@ -55,9 +55,12 @@ export interface Options {
   tailnet: boolean;
   /** BSD-274: Ordner für automatische Backups. */
   backupDir: string | undefined;
+  /** BSD-334: Sync-Ordner (iCloud Drive) und Kennung dieses Geräts darin (Standard: --node). */
+  folderSync: string | undefined;
+  folderDevice: string | undefined;
 }
 
-export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local [--tailnet]] [--backups <dir>] | --stdio [--db …]";
+export const USAGE = "usage: based-server --token <secret> [--db based.sqlite] [--port 8787] [--host 0.0.0.0] [--node server] [--property-records | --revert-property-records] [--public-url https://…] [--web-url https://…] [--assets <dir>] [--max-asset-mb 100] [--sandbox docker|local] [--sandbox-dir <dir>] [--coding-root <dir>]… [--coding-agents agents.json] [--local [--tailnet]] [--backups <dir>] [--folder-sync <dir> [--folder-device <id>]] | --stdio [--db …]";
 
 /** Optionen aus Argumenten und Umgebung; wirft bei unbekannten Optionen. */
 export function parseOptions(argv: string[], env: Record<string, string | undefined>): Options {
@@ -82,6 +85,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
     local: false,
     tailnet: env.BASED_TAILNET === "1",
     backupDir: env.BASED_BACKUP_DIR || undefined,
+    folderSync: env.BASED_FOLDER_SYNC || undefined,
+    folderDevice: env.BASED_FOLDER_DEVICE || undefined,
   };
   let portGiven = false;
   let sandbox = env.BASED_SANDBOX;
@@ -114,6 +119,8 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
       case "--local": o.local = true; break;
       case "--tailnet": o.tailnet = true; break;
       case "--backups": o.backupDir = value(a); break;
+      case "--folder-sync": o.folderSync = value(a); break;
+      case "--folder-device": o.folderDevice = value(a); break;
       default: throw new Error(`unknown option ${a}`);
     }
   }
@@ -131,6 +138,9 @@ export function parseOptions(argv: string[], env: Record<string, string | undefi
   if (o.tailnet && !o.local) throw new Error("--tailnet only works with --local (the server listens on 127.0.0.1 and the Tailscale addresses)");
   if (!Number.isInteger(o.port) || o.port < 0 || o.port > 65535) throw new Error("--port must be 0…65535");
   if (o.maxAssetMB !== undefined && !(o.maxAssetMB > 0)) throw new Error("--max-asset-mb must be a positive number");
+  if (o.folderSync !== undefined && !o.folderSync.startsWith("/")) throw new Error("--folder-sync must be an absolute path");
+  if (o.folderDevice !== undefined && !/^[A-Za-z0-9_-]{1,64}$/.test(o.folderDevice)) throw new Error("--folder-device: letters, digits, - and _ only");
+  if (o.folderDevice !== undefined && o.folderSync === undefined) throw new Error("--folder-device only works with --folder-sync");
   return o;
 }
 
@@ -273,6 +283,8 @@ export async function main(argv: string[] = process.argv.slice(2)) {
     ...(process.env.BASED_ANTHROPIC_API_KEY ? { agentEngine: (store: WorkspaceStore) => anthropicAgentEngine(store, { apiKey: process.env.BASED_ANTHROPIC_API_KEY ?? "", model: process.env.BASED_AGENT_MODEL || undefined }) } : {}),
     ...(opts.assetsDir ? { assetsDir: opts.assetsDir } : {}),
     ...(opts.backupDir ? { backupDir: opts.backupDir } : {}),
+    // BSD-334: Gerätekennung im Ordner – ohne Angabe der Knotenname (nur erlaubte Zeichen)
+    ...(opts.folderSync ? { folderSync: { dir: opts.folderSync, device: opts.folderDevice ?? (opts.node.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 64) || "server") } } : {}),
     ...(opts.maxAssetMB !== undefined ? { maxAssetBytes: Math.floor(opts.maxAssetMB * (1 << 20)) } : {}),
     ...(opts.sandbox ? { sandbox: sandboxManager(opts) } : {}),
     ...(opts.codingRoots.length > 0 ? { coding: codingSessions(opts, log, selfMcp), codingHost: { home: homedir(), env: process.env, approvedEnv: opts.codingEnv } } : {}),

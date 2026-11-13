@@ -58,6 +58,9 @@ copies and placeholders ignored, broken segments never treated as deletions, swi
 
 ## Follow-ups
 
+- **Where it runs (BSD-334, 13.11.):** in the based-server, i.e. the desktop app's local sidecar (`--local`), with
+  `--folder-sync <dir>`. The sidecar has file access (no WebView/worker file bridge needed) and the app keeps syncing
+  with it over Sync v2; changes of its clients arrive there as origin `remote` and are exported (`exportRemote`).
 - Desktop shell: choose the folder (default `~/Library/Mobile Documents/com~apple~CloudDocs/Based`), keep access,
-  run rounds; Settings → Sync & server: "Sync through iCloud Drive" (exclusive with a server).
+  start the sidecar with `--folder-sync`; Settings → Sync & server: "Sync through iCloud Drive" (exclusive with a remote server).
 - Compaction and per-device cursors; assets in the folder; Mac test with two Macs and one iCloud account.

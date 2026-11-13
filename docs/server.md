@@ -162,6 +162,16 @@ Echtzeit-Text (BSD-252, `CollabBinder.unsynced`, Worker `pendingLocal`); nach de
 so überschreibt der Server-Stand nichts. Synced-Block-Originale (eigene Wurzeln, `syncedBlock` ohne `syncSource`) haben
 ein eigenes `/collab`-Dokument (`page:<id>`, BSD-252); Kopien nicht.
 
+## Ordner-Sync über iCloud Drive (BSD-334, ADR 0015)
+
+`--folder-sync <dir>` (oder `BASED_FOLDER_SYNC`) lässt den Server – gedacht für den lokalen Sidecar der Desktop-App –
+zusätzlich über einen geteilten Ordner synchronisieren, z. B. `~/Library/Mobile Documents/com~apple~CloudDocs/Based`.
+`--folder-device <id>` (Standard: der Knotenname) ist der Unterordner dieses Macs unter `devices/`. Alle 5 s eine Runde:
+Änderungen der Clients (per Sync v2) gehen als Segment in den Ordner, Segmente der anderen Macs kommen in den Store und
+damit per Pull zu den Clients; Anhänge unter `assets/<sha256>` (geprüft). Kompaktierung mit Cursor je Gerät, Zustand in
+der Datenbank (überlebt den Neustart). `GET /folder-sync` zeigt den Stand, `POST /folder-sync` startet eine Runde.
+Einschalten aus der App (Einstellungen → Sync) und Ordner-Wahl der Hülle folgen.
+
 ## Zeitpläne (BSD-243)
 
 `src/scheduler.ts` prüft alle 30 s (`scheduleEvery`) die Zeitplan-Records aller Agenten und legt fällige Läufe als

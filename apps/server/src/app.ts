@@ -18,6 +18,7 @@ import { registerCodingRoutes, type CodingHost } from "./coding-routes.js";
 import { TerminalSockets } from "./terminal-ws.js";
 import { OwnerDevices } from "./devices.js";
 import { Backups } from "./backups.js";
+import { FolderSyncService } from "./folder-sync.js";
 import { registerSandboxRoutes } from "./sandbox-routes.js";
 import type { SandboxManager } from "./sandbox.js";
 import { ShareService } from "./share.js";
@@ -51,6 +52,8 @@ export interface AppOptions extends SyncServiceOptions {
   codingHost?: CodingHost | undefined;
   /** BSD-274: Ordner für automatische Backups (stündlich bei Änderungen, beim Beenden); ohne: keine. */
   backupDir?: string | undefined;
+  /** BSD-334: Ordner-Sync (iCloud Drive) – Ordner und Kennung dieses Geräts; ohne: keiner. */
+  folderSync?: { dir: string; device: string; intervalMs?: number } | undefined;
   /** Takt der Backups in ms (Tests); Standard 1 h. */
   backupEvery?: number;
   /** BSD-314: PTY-Start für Terminals (Tests); `null` = kein Terminal; ohne Angabe node-pty. */
@@ -74,6 +77,8 @@ export interface App {
   /** BSD-243: fällige Zeitpläne → Run-Records, auch ohne offene App. */
   scheduler: Scheduler;
   collab: Collab;
+  /** BSD-334: Ordner-Sync, wenn eingeschaltet. */
+  folderSync: FolderSyncService | undefined;
   router: Router;
   server: Server;
   log: Logger;
@@ -263,6 +268,15 @@ export function createApp(opts: AppOptions): App {
 
   // MARK: Backups (BSD-274)
   const backups = opts.backupDir ? new Backups(opts.backupDir, sync.store, assets, log) : undefined;
+  // BSD-334: Ordner-Sync – nach Backups, damit ein Stand vor dem ersten Einmischen gesichert werden kann
+  const folderSync = opts.folderSync
+    ? new FolderSyncService({ ...opts.folderSync, store: sync.store, persistence: sync.persistence, assets, log, referencedAssets: () => referencedAssets(sync.store) })
+    : undefined;
+  if (folderSync) {
+    folderSync.start();
+    router.add("GET", "/folder-sync", async () => json({ dir: opts.folderSync!.dir, device: opts.folderSync!.device, lastRound: folderSync.lastRound ?? null, error: folderSync.lastError ?? null, state: folderSync.sync.state() }));
+    router.add("POST", "/folder-sync", async () => { await folderSync.round(); return json({ lastRound: folderSync.lastRound ?? null, error: folderSync.lastError ?? null }); });
+  }
   if (backups) {
     backups.start(opts.backupEvery);
     const nameOK = (n: string) => /^[0-9T-]+Z\.based\.jsonl$/.test(n);
@@ -368,6 +382,7 @@ export function createApp(opts: AppOptions): App {
   }
 
   return {
+    folderSync,
     sync,
     assets,
     collectAssets,
@@ -402,6 +417,7 @@ export function createApp(opts: AppOptions): App {
       if (gc) clearInterval(gc);
       // BSD-274: beim Beenden noch einmal sichern (nur bei Änderungen)
       if (backups) { backups.stop(); await backups.snapshot().catch(() => undefined); }
+      if (folderSync) await folderSync.stop().catch(() => undefined);
       for (const x of extraServers) { x.close(); x.closeAllConnections(); }
       if (opts.sandbox) await opts.sandbox.stopAll();
       opts.coding?.closeAll();
