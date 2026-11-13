@@ -288,13 +288,18 @@ export function BlockEditor(props: PageEditorProps) {
       if (created && props.onOpenPage) props.onOpenPage(created);
       return;
     }
+    if (item.create) {
+      const created = item.create(store, s.id, empty);
+      if (created) ctrl.select([created]);
+      return;
+    }
     if (empty && blockCmd.isTextBlock(b)) {
       blockCmd.turnInto(store, [s.id], item.type, item.props);
       if (blockCmd.TEXT_BLOCKS.has(item.type)) ctrl.setCaret({ id: s.id, from: 0, to: 0 });
-      else {
+      else if (item.type === "divider") {
         const next = blockCmd.insertBlock(store, { after: s.id, type: "text" });
         ctrl.setCaret({ id: next, from: 0, to: 0 });
-      }
+      } else ctrl.select([s.id]);
     } else {
       const nid = blockCmd.insertBlock(store, { after: s.id, type: item.type, ...(item.props ? { props: item.props } : {}) });
       if (blockCmd.TEXT_BLOCKS.has(item.type)) ctrl.setCaret({ id: nid, from: 0, to: 0 });
@@ -387,6 +392,8 @@ export function BlockEditor(props: PageEditorProps) {
     }
     if (m && e.key === "Escape") { e.preventDefault(); setMention(undefined); return; }
     const target = e.target as HTMLElement;
+    // Eingabefelder in Blöcken (Gleichung, Link, Datenbank-Zellen) behalten ihre Tasten
+    if (target.matches("input, textarea, select") || (target.isContentEditable && !target.dataset.editableId)) return;
     const id = target.dataset.editableId;
     if (id) return onFieldKey(e, id, mod);
     if (ctrl.selected.length) return onSelectionKey(e, mod);
@@ -1073,11 +1080,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
     case "image":
       return <ImageBlock block={b} />;
     case "equation":
-      return (
-        <div className="bx2-embed bx2-equation" data-embed="" contentEditable={false}>
-          {props.renderEquation ? props.renderEquation({ expression: b.props?.expression ?? "", displayMode: true }) : <code>{b.props?.expression}</code>}
-        </div>
-      );
+      return <EquationBlock block={b} />;
     case "bookmark": case "embed": {
       const url = b.props?.url ?? "";
       const meta = b.props?.bookmark;
@@ -1135,9 +1138,25 @@ function ImageBlock({ block: b }: { block: Block }) {
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
   const src = useFileURL(raw);
   const width = typeof b.props?.width === "number" ? b.props.width : undefined;
+  const { store, props, editable } = useCtx();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const upload = async (f: File | undefined) => {
+    if (!f || !props.uploadFile) return;
+    setBusy(true);
+    try {
+      const url = await props.uploadFile(f, b.id);
+      blockCmd.setProps(store, [b.id], { url }, "Add image");
+    } finally { setBusy(false); }
+  };
   return (
     <figure className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
-      {src ? <img src={src} alt="" draggable={false} style={width ? { width } : undefined} /> : <span className="bx2-muted">Image</span>}
+      {src ? <img src={src} alt="" draggable={false} style={width ? { width } : undefined} /> : (
+        <button type="button" className="bx2-placeholder-btn" disabled={!editable || !props.uploadFile || busy} onClick={() => input.current?.click()}>
+          {busy ? "Uploading…" : "Add an image"}
+          <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
+        </button>
+      )}
       {b.props?.caption ? <figcaption>{rich.richPlain(b.props.caption)}</figcaption> : null}
     </figure>
   );
@@ -1200,6 +1219,26 @@ function TableOfContents() {
         </button>
       )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
     </nav>
+  );
+}
+
+function EquationBlock({ block: b }: { block: Block }) {
+  const { store, props, editable } = useCtx();
+  const expr = b.props?.expression ?? "";
+  const [editing, setEditing] = useState(expr === "" && editable);
+  const [draft, setDraft] = useState(expr);
+  const save = () => {
+    setEditing(false);
+    if (draft !== expr) blockCmd.setProps(store, [b.id], { expression: draft }, "Edit equation");
+  };
+  return (
+    <div className="bx2-embed bx2-equation" data-embed="" contentEditable={false} onClick={() => editable && !editing && (setDraft(expr), setEditing(true))}>
+      {expr ? (props.renderEquation ? props.renderEquation({ expression: expr, displayMode: true }) : <code>{expr}</code>) : <span className="bx2-muted">Add a TeX equation</span>}
+      {editing ? (
+        <textarea autoFocus className="bx2-link-input bx2-eq-input" aria-label="TeX" value={draft} placeholder="E = mc^2" onChange={(e) => setDraft(e.target.value)} onBlur={save}
+          onKeyDown={(e) => { if ((e.key === "Enter" && (e.metaKey || e.ctrlKey)) || e.key === "Escape") { e.preventDefault(); e.stopPropagation(); save(); } }} />
+      ) : null}
+    </div>
   );
 }
 

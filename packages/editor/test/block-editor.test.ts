@@ -29,7 +29,7 @@ describe("Ablageziel", () => {
 
 describe("Slash-Menü", () => {
   it("findet über Name und Suchwörter", () => {
-    expect(filterSlash(SLASH_ITEMS, "head").map((i) => i.type)).toEqual(["heading1", "heading2", "heading3"]);
+    expect(filterSlash(SLASH_ITEMS, "head").map((i) => i.type)).toEqual(["heading1", "heading2", "heading3", "tableOfContents"]);
     expect(filterSlash(SLASH_ITEMS, "check").map((i) => i.type)).toEqual(["todo"]);
     expect(filterSlash(SLASH_ITEMS, "").length).toBe(SLASH_ITEMS.length);
   });

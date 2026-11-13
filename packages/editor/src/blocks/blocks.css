@@ -443,3 +443,21 @@
 }
 .bx2-link-input:focus { border-color: var(--ink-2); }
 .bx2-menu-path { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); }
+.bx2-placeholder-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--type-ui-size);
+  text-align: left;
+  cursor: pointer;
+}
+.bx2-placeholder-btn:hover:not(:disabled) { background: var(--selected); color: var(--ink-2); }
+.bx2-equation { display: flex; flex-direction: column; gap: var(--space-2); cursor: pointer; }
+.bx2-eq-input { height: auto; min-height: 60px; padding: var(--space-2); font-family: var(--font-mono); resize: vertical; }
