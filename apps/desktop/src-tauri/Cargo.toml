@@ -27,6 +27,12 @@ tauri-plugin-shell = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
+
+# BSD-390: macOS Writing Tools aus – die WKWebViewConfiguration des Hauptfensters bekommt
+# writingToolsBehavior = none (macOS 15+). Beide Kisten (MIT) kommen schon über wry/tauri mit, gleiche Versionen.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-web-kit = { version = "0.3", default-features = false, features = ["std", "objc2-core-foundation", "WKWebViewConfiguration"] }
 serde_json = "1"
 
 [profile.release]
