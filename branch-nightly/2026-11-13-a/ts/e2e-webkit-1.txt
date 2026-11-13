@@ -1,61 +1,61 @@
-cancelled 04ab5567fa83ac045a2761bc288687cd1fe400b8
-  ✓   25 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (3.6s)
-  -   26 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:6768) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+cancelled dff716f5b8d9848b8e94322018989a557a98baf6
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+[WebServer] 
+[WebServer] "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Running 147 tests using 2 workers, shard 1 of 2
+
+  ✓    2 [webkit] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (5.2s)
+  ✓    3 [webkit] › e2e/ai-switch.spec.ts:48:1 › Einstellungen: Schalter unter Agents & AI; ohne AI nur Skills und Memories, keine Connections (4.5s)
+  -    4 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (light)
+  -    5 [webkit] › e2e/ai-switch.spec.ts:75:3 › Screenshots ohne AI (dark)
+(node:5066) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   24 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (10.2s)
-  ✓   28 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (6.2s)
-  ✓   27 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (15.1s)
-  ✓   30 [webkit] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (3.6s)
-  ✓   29 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (8.9s)
-  ✓   31 [webkit] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (3.8s)
-  ✓   32 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (6.5s)
-  ✓   33 [webkit] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (8.7s)
-  ✓   34 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (4.7s)
-  ✓   36 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (6.2s)
-  ✓   37 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (5.3s)
-  ✓   38 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (3.1s)
-  ✓   39 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (3.6s)
-  ✓   40 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (6.7s)
-  ✓   41 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (5.6s)
-  ✓   42 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (5.9s)
-  ✓   43 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (5.3s)
-  ✓   44 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (3.0s)
-  ✓   45 [webkit] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (11.2s)
-  ✓   46 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (7.9s)
-  ✓   47 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (1.9s)
-  ✓   48 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (4.3s)
-  ✓   49 [webkit] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (3.1s)
-  ✓   50 [webkit] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (5.6s)
-  ✓   51 [webkit] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (2.7s)
-  ✓   52 [webkit] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (3.1s)
-  ✓   53 [webkit] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (3.3s)
-  ✓   54 [webkit] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (3.2s)
-  ✓   55 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (3.2s)
-  ✓   56 [webkit] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (2.1s)
-  ✓   57 [webkit] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (4.5s)
-  ✓   58 [webkit] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (5.8s)
-  ✓   59 [webkit] › e2e/editor-bookmark.spec.ts:95:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (3.4s)
-  -   60 [webkit] › e2e/editor-bookmark.spec.ts:103:1 › Bildschirmfotos: Bookmark mit Vorschau
-[webkit] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
-  ✓   35 [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.9m)
-  ✓   62 [webkit] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (4.0s)
-  ✓   61 [webkit] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (6.5s)
-  ✓   63 [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (3.3s)
-  -   65 [webkit] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
-  ✓   66 [webkit] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (2.9s)
-  ✓   64 [webkit] › e2e/editor-drag.spec.ts:119:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (8.1s)
-  ✓   68 [webkit] › e2e/editor-drag.spec.ts:147:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (4.7s)
-  ✓   67 [webkit] › e2e/editor-mermaid.spec.ts:60:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (8.2s)
-  ✓   70 [webkit] › e2e/editor-mermaid.spec.ts:96:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (4.8s)
-  ✓   69 [webkit] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (6.9s)
-  -   71 [webkit] › e2e/editor-mermaid.spec.ts:110:1 › Bildschirmfotos: Mermaid-Vorschau
-  ✓   73 [webkit] › e2e/editor-notion.spec.ts:49:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (3.7s)
-  ✓   74 [webkit] › e2e/editor-notion.spec.ts:68:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (3.2s)
-  ✓   72 [webkit] › e2e/editor-drag.spec.ts:191:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (9.5s)
-  ✓   75 [webkit] › e2e/editor-notion.spec.ts:78:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (4.4s)
-  ✓   77 [webkit] › e2e/editor-notion.spec.ts:98:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (3.3s)
-  ✓   76 [webkit] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (7.2s)
-  ✓   78 [webkit] › e2e/editor-notion.spec.ts:115:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (3.9s)
-  ✓   79 [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (6.9s)
-  ✓   80 [webkit] › e2e/editor-notion.spec.ts:139:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (3.2s)
+{"t":"2026-11-13T02:22:44.729Z","level":"warning","category":"server","message":"backup failed","error":"Error"}
+  ✓    6 [webkit] › e2e/backups.spec.ts:41:1 › BSD-274: Back up now, Seite löschen und Papierkorb leeren, aus dem Backup wiederherstellen (11.2s)
+  ✓    7 [webkit] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen (6.2s)
+  ✓    8 [webkit] › e2e/brain.spec.ts:72:1 › skills: import, chips appear while typing, swap, the turn shows the chosen skill (5.9s)
+  ✓    9 [webkit] › e2e/brain.spec.ts:101:1 › privacy redact: placeholders go to the engine, the answer gets the real values back (3.9s)
+
+  ✓    1 [webkit] › e2e/a11y.spec.ts:113:1 › Tab-Durchlauf: Namen, Fokusrahmen, Klickflächen auf allen Hauptscreens (43.3s)
+  -   11 [webkit] › e2e/a11y.spec.ts:153:1 › Fotos: Gliederung, Quick Find, Tabelle mit Fokus
+  ✓   10 [webkit] › e2e/brain.spec.ts:106:1 › privacy check (BSD-184): hits shown before sending; redact and send, or send anyway (4.5s)
+  ✓   12 [webkit] › e2e/a11y.spec.ts:195:1 › Quick Find: Esc gibt den Fokus zurück (2.5s)
+  ✓   13 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (4.1s)
