@@ -203,6 +203,11 @@ export const newPageFormat = devicePref<NewPageFormat>("based.newPageFormat", { 
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
 /** BSD-168: Rechtschreibprüfung beim Schreiben (Standard an, wie Swift). */
 export const spellCheckPref = devicePref<boolean>("based.spellCheck", true, isBool);
+/**
+ * BSD-381 (ADR 0016, E0): neuer Block-Editor statt BlockNote – pro Gerät, Standard aus (Settings → Diagnostics →
+ * For developers). Bis E8 nur zum Ausprobieren; die Seite zeigt dann die Blöcke direkt aus den Records.
+ */
+export const newEditorPref = devicePref<boolean>("based.newEditor", false, isBool);
 /** BSD-168: Desktop-App sucht beim Start nach Updates (Standard an). */
 export const autoUpdatePref = devicePref<boolean>("based.autoUpdateCheck", true, isBool);
 

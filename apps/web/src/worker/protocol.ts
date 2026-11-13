@@ -112,7 +112,9 @@ export type Command =
   /** BSD-215 (Tests): Datenbankseite mit `count` Zeilen. */
   | { op: "seedDatabase"; count: number }
   /** BSD-278 (Tests): Datenbank „Due tasks“ (Status + Datum) mit offenen und erledigten Zeilen für heute. */
-  | { op: "seedDueTasks" };
+  | { op: "seedDueTasks" }
+  /** BSD-381 (Tests): Testseite des neuen Block-Editors (Spalten mit Datenbanken, Listen, lange Tabelle); liefert die Seiten-ID. */
+  | { op: "seedBlockFixture"; title?: string };
 
 export interface QuickFindHit {
   pageID: string;

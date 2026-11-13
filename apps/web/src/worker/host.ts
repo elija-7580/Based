@@ -2,6 +2,7 @@
 // als Transaktionen aus und schickt der UI nur, was sie braucht: Seitenleisten-Struktur (nur bei Strukturänderungen),
 // Titel (nur geänderte), Status und die Records offener Seiten. Ohne Worker-Globals, damit er in Node testbar ist
 // (die Worker-Datei `store.worker.ts` verbindet ihn nur mit `self`).
+import { buildBlockFixture } from "@based/editor/blocks/fixture";
 import {
   buildOutline,
   buildPageGraph,
@@ -398,6 +399,7 @@ export class StoreHost {
       case "seed": return this.seed(c.count, c.prefix ?? "Page");
       case "seedDatabase": return this.seedDatabase(c.count);
       case "seedDueTasks": return this.seedDueTasks();
+      case "seedBlockFixture": return buildBlockFixture(this.store, c.title ? { title: c.title } : {});
     }
   }
 

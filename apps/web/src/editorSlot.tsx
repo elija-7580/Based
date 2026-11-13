@@ -5,7 +5,7 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { BlockPage, PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
@@ -19,7 +19,7 @@ import { slots, type PageEditorProps } from "./slots.js";
 import type { StoreClient } from "./worker/client.js";
 import { WorkerYDocStore } from "./worker/ydocStore.js";
 import { createCollab, pageCollab } from "./collab.js";
-import { syncConfig } from "./shell/storage.js";
+import { newEditorPref, syncConfig } from "./shell/storage.js";
 import type { CollabBinder } from "@based/editor";
 
 let shellClient: StoreClient | undefined;
@@ -61,7 +61,28 @@ const blockLink = (pageID: string) => (blockID: string) => {
   return u.toString();
 };
 
-export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
+/**
+ * Steckplatz „PageEditor“: BlockNote-Editor oder – mit Settings → Diagnostics → „New editor“ (BSD-381, ADR 0016) –
+ * der neue Block-Editor. Die Wahl gilt pro Gerät und wechselt sofort.
+ */
+export function ShellPageEditor(props: PageEditorProps) {
+  const newEditor = useSyncExternalStore(newEditorPref.subscribe, newEditorPref.get);
+  return newEditor ? <ShellBlockPage {...props} /> : <LegacyPageEditor {...props} />;
+}
+
+function ShellBlockPage({ store, pageID, readOnly, onOpenPage }: PageEditorProps) {
+  const renderDatabase = (p: DatabaseRenderProps) => {
+    const View = slots.DatabaseView;
+    return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
+  };
+  return (
+    <div className="shell-editor" data-editor-kind="blocks">
+      <BlockPage store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} renderDatabase={renderDatabase} />
+    </div>
+  );
+}
+
+function LegacyPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
   const renderDatabase = (p: DatabaseRenderProps) => {
