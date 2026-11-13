@@ -89,3 +89,23 @@ describe("Lokale Modelle (BSD-231 Teil 1)", () => {
     expect(store.files.size).toBe(0);
   });
 });
+
+describe("Katalog (BSD-231 Teil 2a)", () => {
+  it("jede Datei gepinnt (https, Commit-Hash in der URL), mit Größe und SHA-256; je Zweck ein Modell", () => {
+    expect(lm.LOCAL_MODEL_CATALOG.length).toBeGreaterThan(0);
+    for (const spec of lm.LOCAL_MODEL_CATALOG) {
+      expect(lm.validateSpec(spec)).toEqual([]);
+      for (const f of spec.files) expect(f.url).toMatch(/^https:\/\/huggingface\.co\/[^/]+\/[^/]+\/resolve\/[0-9a-f]{40}\//);
+      expect(spec.license).toMatch(/MIT|Apache/);
+    }
+    expect(lm.catalogFor("transcription")?.id).toBe("whisper-base");
+    expect(lm.catalogFor("embeddings")?.id).toBe("multilingual-e5-small");
+  });
+
+  it("ohne Opt-in lädt auch der Katalog nichts", async () => {
+    const { calls, fetcher } = net({});
+    const m = new lm.LocalModelManager({ store: new lm.MemoryLocalModelStore(), fetch: fetcher, consent: () => new Set() });
+    for (const spec of lm.LOCAL_MODEL_CATALOG) await expect(m.download(spec)).rejects.toBeInstanceOf(lm.ConsentRequired);
+    expect(calls).toEqual([]);
+  });
+});
