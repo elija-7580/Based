@@ -59,6 +59,25 @@ function setup(opts: { transcriber?: boolean; engine?: ScriptedEngine; roles?: A
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 describe("MeetingRecorder", () => {
+  it("BSD-226: Aufnahme hochladen – Spur „upload“ hinter dem Bisherigen, Transkript, nicht während der Aufnahme", async () => {
+    const { store, m, rec, saved, cap } = setup();
+    await rec.start(store, m);
+    expect(await rec.importRecording(store, m, { data: "file", mime: "audio/mpeg", duration: 30, name: "call.mp3" })).toBe(false);
+    cap().advance(4);
+    await rec.stop();
+    expect(await rec.importRecording(store, m, { data: "file", mime: "audio/mpeg", duration: 0, name: "broken.mp3" })).toBe(false);
+    expect(rec.errorFor(m)).toMatch(/length/);
+    expect(await rec.importRecording(store, m, { data: "file", mime: "audio/mpeg", duration: 30, name: "call.mp3" })).toBe(true);
+    const info = meetingInfo(store, m)!;
+    expect(info.tracks?.map((t) => [t.role, t.offset, t.duration])).toEqual([["microphone", 0, 4], ["upload", 4, 30]]);
+    expect(saved[saved.length - 1]).toMatchObject({ id: "asset-upload", name: "call.mp3", mime: "audio/mpeg" });
+    expect(info.duration).toBe(34);
+    expect(info.status).toBe("done");
+    expect(rec.errorFor(m)).toBeUndefined();
+    expect(meetingTranscript(store, m).length).toBeGreaterThan(0);
+  });
+
+
   it("Start → Live-Transkript → Notiz mit Zeit → Stop → Spur gespeichert, finaler Durchlauf", async () => {
     const { store, m, rec, saved, cap, tick } = setup();
     await rec.start(store, m);
