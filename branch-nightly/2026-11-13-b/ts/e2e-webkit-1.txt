@@ -1,61 +1,61 @@
-failure 2b635d5e016525e1aeacdf06856ff0bdd93eacd1
-
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
-           - unexpected value "typescript"
-
-
-      165 |     const code = ed.locator("[data-content-type=codeBlock]");
-      166 |     await expect(code).toContainText("const answer = 42;");
-    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
-          |                        ^
-      168 |     const table = ed.locator("[data-content-type=table]");
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
-
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toHaveAttribute(expected) failed
-
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
-           - unexpected value "typescript"
-
-
-      165 |     const code = ed.locator("[data-content-type=codeBlock]");
-      166 |     await expect(code).toContainText("const answer = 42;");
-    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
-          |                        ^
-      168 |     const table = ed.locator("[data-content-type=table]");
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
-
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
-  16 skipped
-  147 passed (8.6m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
+cancelled 372288f5e431e5829b0995f96e6f28184119c34d
+  ✓   69 [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (5.3s)
+  -   71 [webkit] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓   70 [webkit] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (6.6s)
+  ✓   72 [webkit] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (5.7s)
+  ✓   73 [webkit] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (7.1s)
+  ✓   74 [webkit] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (9.9s)
+  ✓   75 [webkit] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (6.3s)
+  ✓   77 [webkit] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (6.7s)
+  ✓   76 [webkit] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (11.9s)
+  ✓   78 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (5.4s)
+  ✓   79 [webkit] › e2e/editor-bookmark.spec.ts:95:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (6.8s)
+  -   81 [webkit] › e2e/editor-bookmark.spec.ts:103:1 › Bildschirmfotos: Bookmark mit Vorschau
+  ✓   80 [webkit] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (12.0s)
+  ✓   83 [webkit] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (6.2s)
+  ✓   82 [webkit] › e2e/editor-drag.spec.ts:119:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (14.6s)
+  ✓   85 [webkit] › e2e/editor-drag.spec.ts:147:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (8.4s)
+  ✓   84 [webkit] › e2e/editor-mermaid.spec.ts:60:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (14.3s)
+  ✓   86 [webkit] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (12.2s)
+  ✓   87 [webkit] › e2e/editor-mermaid.spec.ts:96:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (7.4s)
+  -   89 [webkit] › e2e/editor-mermaid.spec.ts:110:1 › Bildschirmfotos: Mermaid-Vorschau
+  ✓   90 [webkit] › e2e/editor-notion.spec.ts:49:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (6.3s)
+  ✓   91 [webkit] › e2e/editor-notion.spec.ts:68:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (5.8s)
+  ✓   88 [webkit] › e2e/editor-drag.spec.ts:191:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (16.2s)
+  ✓   92 [webkit] › e2e/editor-notion.spec.ts:78:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (6.8s)
+  ✓   94 [webkit] › e2e/editor-notion.spec.ts:98:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (6.4s)
+  ✓   93 [webkit] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (12.6s)
+  ✓   95 [webkit] › e2e/editor-notion.spec.ts:115:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (7.2s)
+  ✓   97 [webkit] › e2e/editor-notion.spec.ts:143:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (4.2s)
+  ✘   96 [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (12.0s)
+  ✓   98 [webkit] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus (8.0s)
+  ✘   99 [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (retry #1) (12.3s)
+  ✓  100 [webkit] › e2e/editor-notion.spec.ts:198:1 › Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen (6.4s)
+  ✓  101 [webkit] › e2e/editor-notion.spec.ts:220:1 › Formatleiste: kompaktes Feld, ganz im Fenster (8.7s)
+  ✓  102 [webkit] › e2e/editor-parity.spec.ts:193:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (8.9s)
+  ✓  103 [webkit] › e2e/editor-notion.spec.ts:236:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (9.2s)
+  -  105 [webkit] › e2e/editor-notion.spec.ts:257:1 › Beim Öffnen einer Seite springt der Titel nicht
+  ✓  106 [webkit] › e2e/editor-notion.spec.ts:280:1 › Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl (6.3s)
+  ✓  104 [webkit] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (16.8s)
+  ✓  108 [webkit] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (20.3s)
+  ✓  107 [webkit] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen (30.3s)
+  ✓  110 [webkit] › e2e/editor-polish.spec.ts:140:1 › Links und Häkchen im Editor ohne Browser-Blau (6.0s)
+  ✓  111 [webkit] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (5.4s)
+  ✓  109 [webkit] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (25.1s)
+  ✓  112 [webkit] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (7.8s)
+  -  114 [webkit] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten
+  ✓  113 [webkit] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (12.0s)
+  ✓  115 [webkit] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (8.7s)
+  ✓  116 [webkit] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (10.3s)
+  ✓  117 [webkit] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (8.5s)
+  ✓  119 [webkit] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (3.9s)
+  ✓  120 [webkit] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (5.3s)
+  ✓  118 [webkit] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (16.0s)
+  ✓  122 [webkit] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (8.3s)
+  ✓  121 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (15.7s)
+  ✓  123 [webkit] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (11.4s)
+  ✓  124 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.5s)
+  ✓  126 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (5.3s)
+  ✓  125 [webkit] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (15.0s)
+  ✓  127 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (6.7s)
+  ✓  129 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (5.9s)

@@ -1,4 +1,5 @@
-failure 2b635d5e016525e1aeacdf06856ff0bdd93eacd1
+failure 372288f5e431e5829b0995f96e6f28184119c34d
+
     Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
     Expected: "ts"
     Received: "typescript"
@@ -51,11 +52,10 @@ failure 2b635d5e016525e1aeacdf06856ff0bdd93eacd1
 
     Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
 
-  2 failed
-    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  1 failed
     [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
   8 skipped
-  154 passed (5.1m)
+  156 passed (5.4m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
