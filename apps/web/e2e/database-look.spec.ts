@@ -72,3 +72,42 @@ test("Daten in UI-Schrift, IDs in Monospace", async ({ page }) => {
   expect(mono.data).not.toMatch(/mono|Menlo|Consolas/i);
   expect(mono.id).toMatch(/mono|Menlo|Consolas/i);
 });
+
+test("Ansichts-Tab: Klick auf den aktiven Tab öffnet das Menü – umbenennen, duplizieren, löschen", async ({ page, browserName }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.evaluate((cmd) => (globalThis as unknown as { __based: { client: { command: (c: unknown) => Promise<unknown> } } }).__based.client.command(cmd), { op: "createDatabase", title: "Views" });
+  await page.getByRole("treeitem", { name: "Views" }).click();
+  const tabs = page.getByRole("tablist", { name: "Views" }).getByRole("tab");
+  await expect(tabs).toHaveCount(1);
+  await tabs.first().click();
+  const menu = page.getByRole("menu", { name: /^View / });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByTestId("view-menu-delete")).toBeDisabled();
+  await menu.getByLabel("View name").fill("Alle");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("tab", { name: "Alle" })).toBeVisible();
+  // Rechtsklick → Duplizieren: neue Ansicht wird gewählt
+  await page.getByRole("tab", { name: "Alle" }).click({ button: "right" });
+  await page.getByTestId("view-menu-duplicate").click();
+  await expect(tabs).toHaveCount(2);
+  if (process.env.BASED_SCREENSHOTS === "1" && browserName === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(tabs).toHaveCount(2);
+      await tabs.nth(1).click({ button: "right" });
+      await expect(menu).toBeVisible();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: `../../docs/design/screens/web-db-view-menu-1280x820-${theme}.png` });
+      await page.keyboard.press("Escape");
+    }
+  }
+  await tabs.nth(1).click({ button: "right" });
+  await page.getByTestId("view-menu-delete").click();
+  await expect(tabs).toHaveCount(1);
+  // „Edit view“ öffnet die Ansichts-Einstellungen
+  await tabs.first().click();
+  await page.getByTestId("view-menu-edit").click();
+  await expect(page.getByRole("dialog", { name: "View settings" })).toBeVisible();
+});

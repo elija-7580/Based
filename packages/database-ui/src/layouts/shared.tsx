@@ -5,6 +5,7 @@ import {
   addRow, deleteRows, duplicateRow, propertyOf, setValue, pv, valueCase, valueForGroup, visiblePropertyIDs,
   type Block, type Database, type DatabaseView, type PropertySchema, type PropertyValue, type RowGroup,
 } from "@based/core";
+import { BasedButton } from "@based/ui/astryx";
 import { CellView } from "../cells/CellView.js";
 import { useDB } from "../context.js";
 import { conditionOf } from "../logic/filters.js";
@@ -66,13 +67,24 @@ export function RowMenu({ row, anchor, onClose }: { row: Block; anchor: Anchor; 
 
 /** Kopf einer Gruppe (Tabelle, Liste, Galerie): Auf/Zu, Name als Pille, Anzahl. */
 export function GroupHeader({ group, prop, collapsed, onToggle }: { group: RowGroup; prop: PropertySchema | undefined; collapsed: boolean; onToggle: () => void }) {
+  const { store, onOpenPage } = useDB();
   const isOption = prop && ["select", "status", "multiSelect"].includes(prop.type) && group.id !== "";
+  // Gruppe = eine verknüpfte Seite (z. B. PARA-Projekt): Icon der Seite und Name als Link, wie Notion.
+  const page = group.pageID ? store.blocks.get(group.pageID) : undefined;
+  const icon = page?.props?.icon;
+  const emoji = typeof icon === "string" ? icon : (icon as { emoji?: string } | undefined)?.emoji;
   return (
     <div className="dbui-group-head" role="row" aria-expanded={!collapsed}>
-      <button type="button" className="dbui-icon-btn" aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.title}`} onClick={onToggle}>
+      <button type="button" className="dbui-icon-btn dbui-group-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.title}`} onClick={onToggle}>
         <Icon name={collapsed ? "chevronRight" : "chevronDown"} size={14} />
       </button>
-      {isOption ? <OptionPill name={group.title} color={group.color} status={prop?.type === "status"} /> : <span className="dbui-group-title">{group.title}</span>}
+      {isOption ? <OptionPill name={group.title} color={group.color} status={prop?.type === "status"} />
+        : page && onOpenPage ? (
+          <span className="dbui-group-page">
+            <BasedButton variant="ghost" size="sm" label={group.title} ariaLabel={`Open ${group.title}`} onClick={() => onOpenPage(page.id)}
+              icon={<span className="dbui-group-icon" aria-hidden>{emoji ?? <Icon name="file" size={16} />}</span>} />
+          </span>
+        ) : <span className="dbui-group-title">{group.title}</span>}
       <span className="dbui-count">{group.rows.length}</span>
     </div>
   );

@@ -3,6 +3,7 @@
 import type { AutofillWriter } from "./logic/autofill.js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  deleteView, duplicateView, renameView,
   addRow, addRowOnDay, addTemplate, addView, calendarDateProperty, calendarEndProperty, dbops, plainText, today, setDatabaseTitle, viewsForBlock,
   type Block, type DatabaseView as View, type WorkspaceStore,
 } from "@based/core";
@@ -13,7 +14,7 @@ import { FilterEditor } from "./menus/FilterEditor.js";
 import { SortEditor } from "./menus/SortEditor.js";
 import { ViewSettings } from "./menus/ViewSettings.js";
 import { groupProperty, newRowValues } from "./layouts/shared.js";
-import { Icon, MenuItem, Popover, VIEW_ICONS, type Anchor } from "./ui.js";
+import { Icon, MenuItem, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "./ui.js";
 import { useQuery, ViewBody } from "./ViewBody.js";
 
 /** Was die Hülle eines Peeks (Drawer/Dialog der Shell) braucht. Gerendert wird im DBContext der Datenbank. */
@@ -85,19 +86,52 @@ export interface DatabaseViewProps {
   peek?: PeekOptions | undefined;
 }
 
-function Tabs({ views, active, onSelect, blockID, inline }: { views: View[]; active: View; onSelect: (id: string) => void; blockID: string; inline?: boolean | undefined }) {
+/**
+ * Menü eines Ansichts-Tabs (Rechtsklick oder Klick auf den aktiven Tab, wie Notion): Name direkt ändern, Ansicht
+ * bearbeiten, duplizieren, löschen. Gleiche Bausteine wie das Spaltenmenü.
+ */
+function ViewMenu({ view, anchor, onClose, onEdit, canDelete, onSelect }: {
+  view: View; anchor: Anchor; onClose: () => void; onEdit: (a: Anchor) => void; canDelete: boolean; onSelect: (id: string) => void;
+}) {
+  const { store, locked } = useDB();
+  const [name, setName] = useState(view.name);
+  const commit = () => { if (name.trim() && name !== view.name) renameView(store, view.id, name.trim()); };
+  return (
+    <Popover anchor={anchor} onClose={() => { commit(); onClose(); }} className="dbui-property-menu" label={`View ${view.name}`} role="menu">
+      <div className="dbui-option-field">
+        <span className="dbui-menu-icon" aria-hidden><Icon name={VIEW_ICONS[view.type] ?? "table"} /></span>
+        <input className="dbui-input bare" aria-label="View name" value={name} disabled={locked} onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { commit(); onClose(); } }} />
+      </div>
+      <MenuItem icon={<Icon name="settings" />} testID="view-menu-edit" onClick={() => { commit(); onClose(); onEdit(anchor); }}>Edit view</MenuItem>
+      {!locked && (
+        <>
+          <MenuSeparator />
+          <MenuItem icon={<Icon name="copy" />} testID="view-menu-duplicate" onClick={() => { commit(); const id = duplicateView(store, view.id); onClose(); if (id) onSelect(id); }}>Duplicate view</MenuItem>
+          <MenuItem icon={<Icon name="trash" />} danger disabled={!canDelete} testID="view-menu-delete" onClick={() => { deleteView(store, view.id); onClose(); }}>Delete view</MenuItem>
+        </>
+      )}
+    </Popover>
+  );
+}
+
+function Tabs({ views, active, onSelect, blockID, inline, onEdit }: { views: View[]; active: View; onSelect: (id: string) => void; blockID: string; inline?: boolean | undefined; onEdit: (a: Anchor) => void }) {
   const { store, locked } = useDB();
   const [add, setAdd] = useState<Anchor | null>(null);
+  const [menu, setMenu] = useState<{ view: View; anchor: Anchor } | null>(null);
   // Inline mit nur einer Ansicht: kein einzelner Tab („Table“) – wie Notion; „+“ bleibt beim Überfahren erreichbar.
   const single = inline && views.length === 1;
   return (
     <div className={"dbui-tabs" + (single ? " single" : "")} role="tablist" aria-label="Views">
       {!single && views.map((v) => (
-        <button key={v.id} type="button" role="tab" className="dbui-tab" aria-selected={v.id === active.id} onClick={() => onSelect(v.id)} data-view-id={v.id}>
+        <button key={v.id} type="button" role="tab" className="dbui-tab" aria-selected={v.id === active.id} aria-haspopup="menu" data-view-id={v.id}
+          onClick={(e) => { if (v.id === active.id) setMenu({ view: v, anchor: e.currentTarget }); else onSelect(v.id); }}
+          onContextMenu={(e) => { e.preventDefault(); onSelect(v.id); setMenu({ view: v, anchor: e.currentTarget }); }}>
           <Icon name={VIEW_ICONS[v.type] ?? "table"} size={14} />{v.name}
         </button>
       ))}
       {!locked && <button type="button" className="dbui-icon-btn" aria-label="Add view" onClick={(e) => setAdd(e.currentTarget)}><Icon name="plus" size={14} /></button>}
+      {menu && <ViewMenu view={menu.view} anchor={menu.anchor} onClose={() => setMenu(null)} onEdit={onEdit} canDelete={views.length > 1} onSelect={onSelect} />}
       {add && (
         <Popover anchor={add} onClose={() => setAdd(null)} role="menu" label="Add view">
           {["table", "board", "list", "gallery", "chart", "dashboard", "calendar", "timeline", "form", "map"].map((t) => (
@@ -153,12 +187,16 @@ function TemplateMenu({ anchor, onClose, onNew }: { anchor: Anchor; onClose: () 
   );
 }
 
-function Toolbar({ view, search, setSearch, onNew }: { view: View; search: string; setSearch: (s: string) => void; onNew: (template?: string) => void }) {
+function Toolbar({ view, search, setSearch, onNew, settingsRequest, onSettingsShown }: {
+  view: View; search: string; setSearch: (s: string) => void; onNew: (template?: string) => void; settingsRequest?: Anchor | null; onSettingsShown?: () => void;
+}) {
   const { store, db, locked } = useDB();
   const [templates, setTemplates] = useState<Anchor | null>(null);
   const [filter, setFilter] = useState<Anchor | null>(null);
   const [sort, setSort] = useState<Anchor | null>(null);
   const [settings, setSettings] = useState<Anchor | null>(null);
+  // „Edit view“ aus dem Tab-Menü öffnet dieselben Ansichts-Einstellungen am Tab.
+  useEffect(() => { if (settingsRequest) { setSettings(settingsRequest); onSettingsShown?.(); } }, [settingsRequest, onSettingsShown]);
   const [searching, setSearching] = useState(search !== "");
   const result = useQuery(view, search);
   const chips = topConditions(view.filter);
@@ -263,6 +301,8 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, in
   useEffect(() => { if (viewID) setSelected(viewID); }, [viewID]);
   const active = views.find((v) => v.id === selected) ?? views[0];
   const [search, setSearch] = useState("");
+  const [editView, setEditView] = useState<Anchor | null>(null);
+  const clearEditView = useCallback(() => setEditView(null), []);
   const [requestEdit, setRequestEdit] = useState<{ rowID: string } | undefined>(undefined);
   const select = useCallback((id: string) => { setSelected(id); onViewChange?.(id); }, [onViewChange]);
   const outerOpen = ctx.onOpenPage;
@@ -312,8 +352,8 @@ function Inner({ blockID, viewID, onViewChange, showTitle, peek: peekOptions, in
       <div className="dbui-head">
         {showTitle && <Title />}
         <div className="dbui-toolbar">
-          <Tabs views={views} active={active} onSelect={select} blockID={blockID} inline={inline} />
-          <Toolbar view={active} search={search} setSearch={setSearch} onNew={onNew} />
+          <Tabs views={views} active={active} onSelect={select} blockID={blockID} inline={inline} onEdit={setEditView} />
+          <Toolbar view={active} search={search} setSearch={setSearch} onNew={onNew} settingsRequest={editView} onSettingsShown={clearEditView} />
           {inline && outerOpen ? (
             <button type="button" className="dbui-icon-btn dbui-open-full" aria-label="Open as full page" title="Open as full page" onClick={() => outerOpen(blockID)}>
               <Icon name="open" size={14} />
