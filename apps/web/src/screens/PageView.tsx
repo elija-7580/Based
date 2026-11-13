@@ -19,7 +19,7 @@ import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { hybridImport } from "../worker/notionHybridClient.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
-import { mayDeleteForever } from "../shell/guest.js";
+import { guestMayEdit, mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
@@ -119,7 +119,15 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   // BSD-317: Seite aus dem Notion-Import, deren Inhalt noch nachgeladen wird – gesperrt, Öffnen zieht sie vor.
   const pendingImport = importPendingSource(page) !== undefined;
   useEffect(() => { if (pendingImport) hybridImport.prioritize(pageID); }, [pendingImport, pageID]);
-  const readOnly = storeReadOnly || format.locked || pendingImport;
+  // BSD-235: Gast mit „Can view“/„Can comment“ liest nur (Elternseite aus der Seitenleiste, Zeilen über ihre Datenbank).
+  const guestReadOnly = !guestMayEdit(pageID, (id) => {
+    const viaOutline = outline?.nodes[id]?.parent;
+    if (viaOutline) return viaOutline;
+    const b = store?.blocks.get(id);
+    if (b?.parent.startsWith("d:")) return store?.databases.get(b.parent.slice(2))?.blockID;
+    return b?.parent.startsWith("b:") ? store?.containingPage(b.parent.slice(2)) : undefined;
+  });
+  const readOnly = storeReadOnly || format.locked || pendingImport || guestReadOnly;
 
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];

@@ -94,10 +94,29 @@ export function guestStartPage(cfg: GuestConfig, me: GuestMe | undefined): strin
  * Der Server lehnt es ohnehin ab, die Oberfläche bietet es dann gar nicht erst an.
  */
 let deleteForeverAllowed = true;
+/** BSD-235: Rolle je geteilter Seite (nur im Gast-Modus; `undefined` = Besitzer oder Rolle unbekannt). */
+let guestRoles: ReadonlyMap<string, string> | undefined;
 
 /** Nur im Gast-Modus aufrufen. Unbekannte Rolle (Server nicht erreichbar) zählt als „Can edit“. */
 export function setGuestAccess(me: Pick<GuestMe, "pages"> | undefined) {
   deleteForeverAllowed = me !== undefined && me.pages.some((p) => p.role === "full");
+  guestRoles = me ? new Map(me.pages.map((p) => [p.id, p.role])) : undefined;
+}
+
+/**
+ * BSD-235: Darf der Gast diese Seite bearbeiten? Maßgeblich ist die nächste geteilte Seite auf dem Weg nach oben
+ * (`parentOf` liefert die Elternseite). „view“/„comment“ → nur lesen; „edit“/„full“ → bearbeiten. Kein Gast, Rolle
+ * unbekannt oder keine geteilte Seite gefunden → bearbeiten (der Server entscheidet ohnehin, BSD-285).
+ */
+export function guestMayEdit(pageID: string, parentOf: (id: string) => string | undefined): boolean {
+  if (!guestRoles) return true;
+  let cur: string | undefined = pageID;
+  for (let n = 0; cur && n < 1000; n++) {
+    const role = guestRoles.get(cur);
+    if (role !== undefined) return role === "edit" || role === "full";
+    cur = parentOf(cur);
+  }
+  return true;
 }
 
 export const mayDeleteForever = (): boolean => deleteForeverAllowed;

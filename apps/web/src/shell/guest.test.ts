@@ -57,6 +57,25 @@ describe("BSD-282: endgültig löschen im Gast-Modus", () => {
   });
 });
 
+describe("BSD-235: nur lesen bei „Can view“/„Can comment“", () => {
+  it("nächste geteilte Seite nach oben entscheidet; ohne Gast/Rolle oder ohne Treffer: bearbeiten", async () => {
+    const { guestMayEdit, setGuestAccess } = await import("./guest.js");
+    const parents: Record<string, string> = { child: "viewed", grand: "child", row: "edited" };
+    const parentOf = (id: string) => parents[id];
+    setGuestAccess({ pages: [{ id: "viewed", title: "V", role: "view" }, { id: "edited", title: "E", role: "edit" }, { id: "c", title: "C", role: "comment" }] });
+    expect(guestMayEdit("viewed", parentOf)).toBe(false);
+    expect(guestMayEdit("grand", parentOf)).toBe(false);
+    expect(guestMayEdit("c", parentOf)).toBe(false);
+    expect(guestMayEdit("row", parentOf)).toBe(true);
+    expect(guestMayEdit("elsewhere", parentOf)).toBe(true);
+    // Unterseite mit eigener Freigabe „edit“ unter einer „view“-Seite: die nähere gilt
+    setGuestAccess({ pages: [{ id: "viewed", title: "V", role: "view" }, { id: "child", title: "C", role: "full" }] });
+    expect(guestMayEdit("grand", parentOf)).toBe(true);
+    setGuestAccess(undefined);
+    expect(guestMayEdit("viewed", parentOf)).toBe(true);
+  });
+});
+
 describe("Widerruf während der Gast offen ist (BSD-235 Teil 3)", () => {
   it("prüft im Takt und bei Ereignissen; ruft onRevoked genau einmal; Netzfehler zählen nicht", async () => {
     vi.useFakeTimers();
