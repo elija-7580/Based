@@ -489,7 +489,7 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 .bn-root .bx-menu-sep { height: 1px; border: 0; background: var(--line); margin: var(--space-1) 0; }
 .bn-root .bx-menu-foot { display: grid; gap: var(--space-1); margin-top: var(--space-1); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--line); color: var(--muted); font-size: var(--type-meta-size); font-weight: var(--type-meta-weight); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 /* Pfeil des Untermenüs und Häkchen stehen rechts (wie die Kürzel). */
-.bn-root .bn-ak-menu .bn-ak-menu-item > :last-child:not(.bx-menu-icon):not(.bx-menu-key) { margin-left: auto; }
+.bn-root .bn-ak-menu .bn-ak-menu-item > :last-child:not(.bx-menu-icon):not(.bx-menu-key):not(.nf-glyph) { margin-left: auto; }
 
 /* Formatleiste als kompaktes Feld wie in Notion (statt einer langen Zeile, die am Fensterrand abgeschnitten wurde):
    oben der Blocktyp über die ganze Breite, darunter die Zeichenformate als Raster aus Icon-Knöpfen, unten „Ask AI“. */

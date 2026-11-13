@@ -1,10 +1,17 @@
 // ADR 0016 (E2/E3): Zustand eines Block-Editors außerhalb von React – Fokus-Manager (Cursor = Block + Offsets),
 // Blockauswahl (Menge von Block-IDs) und die Ausführung von Befehlen. Die Ansicht meldet ihre Textfelder an; nach
 // jedem Rendern setzt der Controller den ausstehenden Cursor ins DOM.
-import { blockCmd, type Caret, type EditResult, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, type EditorFocus, type WorkspaceStore } from "@based/core";
 import { offsetAtPoint, selectionIn, setSelectionIn, textLength } from "./dom.js";
 
 type Listener = () => void;
+
+/** Cursor bzw. Textauswahl in einem Block (UTF-16-Offsets wie der Kern; eine Erwähnung zählt ihre Textlänge). */
+export interface Caret {
+  id: string;
+  from: number;
+  to: number;
+}
 
 export class EditorController {
   caret: Caret | undefined;
@@ -103,14 +110,33 @@ export class EditorController {
     return this.caret;
   }
 
-  /** Ergebnis eines Befehls übernehmen. */
-  apply(r: EditResult) {
-    if (r.select) this.select(r.select);
-    else if (r.caret) this.setCaret(r.caret);
+  /** Fokus nach einem Befehl übernehmen (Schreibmarke, Textauswahl oder ausgewählter Block). */
+  apply(f: EditorFocus | undefined) {
+    if (!f) return;
+    if ("selected" in f) this.select([f.blockId]);
+    else if ("range" in f) this.setCaret({ id: f.blockId, from: f.range.from, to: f.range.to });
+    else this.setCaret({ id: f.blockId, from: f.offset, to: f.offset });
+  }
+
+  /** Sichtbare Blöcke der Seite in Lesereihenfolge, ohne die Spalten-Hüllen (die sind keine eigenen Zeilen). */
+  order(): string[] {
+    return cmd.visibleOrder(this.store, this.pageID).filter((id) => {
+      const t = this.store.blocks.get(id)?.type;
+      return t !== "columnList" && t !== "column";
+    });
+  }
+
+  /** Nächster/vorheriger sichtbarer Block mit Textfeld (Pfeiltasten, auch über Spalten hinweg). */
+  neighbourText(id: string, dir: -1 | 1): string | undefined {
+    const order = this.order();
+    for (let i = order.indexOf(id) + dir; i >= 0 && i < order.length; i += dir) {
+      if (cmd.isTextBlock(this.store.blocks.get(order[i]!))) return order[i];
+    }
+    return undefined;
   }
 
   select(ids: readonly string[], anchor?: string) {
-    this.selected = blockCmd.topLevel(this.store, this.pageID, ids);
+    this.selected = cmd.topLevel(this.store, ids);
     this.anchor = anchor ?? this.selected[0];
     if (this.selected.length) {
       this.caret = undefined;
@@ -133,7 +159,7 @@ export class EditorController {
 
   /** Blockauswahl von `anchor` bis `head` (sichtbare Reihenfolge). */
   selectRange(anchor: string, head: string) {
-    const order = blockCmd.visibleOrder(this.store, this.pageID);
+    const order = this.order();
     const a = order.indexOf(anchor), b = order.indexOf(head);
     if (a < 0 || b < 0) return;
     this.select(order.slice(Math.min(a, b), Math.max(a, b) + 1), anchor);

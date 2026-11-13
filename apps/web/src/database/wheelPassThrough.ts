@@ -26,7 +26,8 @@ export function attachWheelPassThrough(root: HTMLElement): () => void {
   const onDown = () => { active = true; root.dataset.dbActive = ""; };
   const onLeave = () => { active = false; delete root.dataset.dbActive; };
   const onWheel = (e: WheelEvent) => {
-    if (!passWheelToPage(e, active)) return;
+    // BSD-374: eine laufende Geste, die schon umgeleitet wurde (shell/wheelLatch.ts), nicht ein zweites Mal rollen.
+    if (e.defaultPrevented || !passWheelToPage(e, active)) return;
     const target = pageScroller(root);
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? target.clientHeight : 1;
     e.preventDefault();
