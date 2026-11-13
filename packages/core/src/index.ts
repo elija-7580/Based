@@ -58,6 +58,7 @@ export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, pa
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
 export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
+export { bundleTitle, highlightToMark, isBearExport, isBundleText, isNoteFile } from "./interop/bear.js";
 export { EnexImporter, enexDate, enmlToHTML, parseEnex, type EnexNote, type EnexResource } from "./interop/enex-import.js";
 export { md5Hex } from "./interop/md5.js";
 export { exportOPML, importOPML, parseOPML, type OutlineNode as OPMLOutline } from "./interop/opml.js";
