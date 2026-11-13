@@ -41,6 +41,7 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "callout", label: "Callout", group: "Basic blocks", icon: "💡", keywords: "note info tip" },
   { type: "code", label: "Code", group: "Basic blocks", icon: "</>", keywords: "snippet pre", hint: "```" },
   { type: "divider", label: "Divider", group: "Basic blocks", icon: "—", keywords: "hr line separator", hint: "---" },
+  { type: "table", label: "Simple table", group: "Basic blocks", icon: "▦", keywords: "grid cells rows columns", props: { tableColumns: 2, tableHeaderRow: true, cells: ["", "", "", ""] } },
   { type: "page", label: "Page", group: "Pages", icon: "📄", keywords: "subpage new page", page: subPage },
   { type: "databaseInline", label: "Database", group: "Pages", icon: "▦", keywords: "table inline database grid", create: (store, after, replace) => {
     const a = store.blocks.get(after);
@@ -50,6 +51,11 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
     return r.blockID;
   } },
   { type: "image", label: "Image", group: "Media", icon: "🖼", keywords: "picture photo upload" },
+  { type: "video", label: "Video", group: "Media", icon: "▶", keywords: "movie clip upload" },
+  { type: "audio", label: "Audio", group: "Media", icon: "♪", keywords: "sound music recording" },
+  { type: "file", label: "File", group: "Media", icon: "📎", keywords: "attachment upload document" },
+  { type: "bookmark", label: "Web bookmark", group: "Media", icon: "🔖", keywords: "link url preview" },
+  { type: "embed", label: "Embed", group: "Media", icon: "⧉", keywords: "iframe link url" },
   { type: "equation", label: "Block equation", group: "Advanced", icon: "∑", keywords: "math latex tex formula", props: { expression: "" } },
   { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
 ];

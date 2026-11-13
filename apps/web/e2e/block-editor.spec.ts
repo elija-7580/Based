@@ -317,6 +317,74 @@ test("@ erwähnt eine Seite", async ({ page }) => {
   await expect(fields(page).first()).toHaveText("see !");
 });
 
+test("Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel", async ({ page }) => {
+  await newPage(page);
+  const title = page.getByLabel("Page title");
+  await title.click();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first()).toBeFocused();
+  await page.keyboard.type("First line");
+  await page.keyboard.press("ArrowUp");
+  await expect(title).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(fields(page).first()).toBeFocused();
+});
+
+test("Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Colored");
+  await page.keyboard.press("Escape");
+  await editor(page).locator(".bx2-block").first().locator(".bx2-grip").click();
+  await page.getByTestId("block-menu").getByRole("menuitem", { name: "Color" }).click();
+  await page.getByTestId("block-menu").getByRole("menuitemradio", { name: "Red background" }).click();
+  await expect(editor(page).locator(".bx2-block").first().locator(".bx2-row")).toHaveClass(/bx2-color-redBackground/);
+
+  // Code-Sprache
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("```");
+  await page.keyboard.type("print(1)");
+  await editor(page).locator(".bx2-code-lang-btn").click();
+  await page.getByLabel("Search languages").fill("pyth");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator(".bx2-code-lang-btn")).toHaveText("Python");
+
+  // Callout-Icon
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/callout");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Note");
+  await editor(page).getByRole("button", { name: "Change icon" }).click();
+  await page.getByRole("dialog", { name: "Choose an icon" }).getByRole("textbox").fill("rocket");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).getByRole("button", { name: "Change icon" })).toHaveText("🚀");
+
+  // Tabelle
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/simple table");
+  await page.keyboard.press("Enter");
+  const cell = editor(page).getByRole("textbox", { name: "Row 1, column 1" });
+  await cell.click();
+  await page.keyboard.type("Name");
+  await page.keyboard.press("Enter");
+  await expect(cell).toHaveText("Name");
+  await editor(page).getByRole("button", { name: "Add row" }).click();
+  await expect(editor(page).locator(".bx2-table tr")).toHaveCount(3);
+  // Rahmen sichtbar (Farbtoken --line darf nicht von einer Block-Variable überdeckt sein)
+  expect(await editor(page).locator(".bx2-table td").first().evaluate((e) => getComputedStyle(e).borderTopWidth)).toBe("1px");
+
+  // Datum
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("Due @tod");
+  await expect(page.getByTestId("mention-menu").getByRole("option", { name: /Today/ })).toBeVisible();
+  await page.getByTestId("mention-menu").getByRole("option", { name: /Today/ }).click();
+  await expect(fields(page).last().locator(".bx2-mention")).toHaveText("@Today");
+  await page.keyboard.press("Escape");
+  await page.mouse.move(0, 0);
+  if (test.info().project.name === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-block-editor-embeds-1280x820-light.png" });
+});
+
 test("Spaltenbreite ziehen", async ({ page }) => {
   await newPage(page);
   await startTyping(page);
