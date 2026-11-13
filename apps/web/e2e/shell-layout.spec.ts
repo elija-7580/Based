@@ -71,14 +71,14 @@ test("„/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten n
   expect(db.width).toBeGreaterThan(panel.width * 0.85);
 });
 
-test("Fokusrahmen per Tastatur in der Highlight-Farbe (Marker)", async ({ page }) => {
+test("Fokusrahmen per Tastatur neutral (Token focus-ring, nicht Marker – BSD-367)", async ({ page }) => {
   await ready(page);
   await page.getByRole("button", { name: "Home" }).focus();
   await page.keyboard.press("Tab");
   const [outline, marker] = await page.evaluate(() => {
     const el = document.activeElement as HTMLElement;
     const probe = document.createElement("i");
-    probe.style.color = "var(--marker-strong)";
+    probe.style.color = "var(--focus-ring)";
     document.body.append(probe);
     const m = getComputedStyle(probe).color;
     probe.remove();

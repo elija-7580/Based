@@ -10,6 +10,8 @@
   --surface-raised: #F2F2EF;
   --selected: #EBEBE7;
   --line: #EAEAE6;
+  --focus-ring: #7A7974;
+  --selection-bg: #DCDCD6;
   --control-border: #8E8D88;
   --ink: #1F1F1D;
   --ink-2: #37362F;
@@ -89,6 +91,8 @@
   --surface-raised: #262626;
   --selected: #2E2E2E;
   --line: #2F2F2F;
+  --focus-ring: #E9E9E6;
+  --selection-bg: #454545;
   --control-border: #6E6E6A;
   --ink: #E9E9E6;
   --ink-2: #D0D0CB;

@@ -175,7 +175,7 @@ export function astryxThemeSpec(opts: { density?: Density } = {}): AstryxThemeSp
     "--shadow-inset-warning": `inset 0 0 0 2px ${ld("control-border")}`,
     "--shadow-inset-error": `inset 0 0 0 2px ${ld("danger")}`,
 
-    "--focus-outline-color": pair("ink"),
+    "--focus-outline-color": pair("focus-ring"),
 
     // Schrift: Systemschrift; die Variablen folgen data-style="bold"
     "--font-family-body": "var(--font-ui)",
