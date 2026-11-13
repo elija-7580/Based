@@ -1,6 +1,34 @@
-failure 84d16df2d9efcff14f01f544bf2d5bafd970e35d
+success 44831497d761b8a3b945f6076c46deac010b2d60
 
-  1) [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+
+  1) [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' }) with timeout 5000ms
+      - waiting for getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+
+
+      240 |   await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
+      241 |   await page.keyboard.press("Shift+Tab");
+    > 242 |   await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
+          |                                                                     ^
+      243 |
+      244 |   // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
+      245 |   await input.pressSequentially("/");
+        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:242:69
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+
+  2) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
 
     Error: expect(locator).toBeFocused() failed
 
@@ -14,48 +42,20 @@ failure 84d16df2d9efcff14f01f544bf2d5bafd970e35d
       - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
-    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
           |                                                                         ^
-      168 |   };
-      169 |   await openMenu();
-      170 |   await page.keyboard.type("cop");
-        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
     Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeFocused() failed
-
-    Locator: getByRole('textbox', { name: 'Search actions' })
-    Expected: focused
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
-      - waiting for getByRole('textbox', { name: 'Search actions' })
-
-
-      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
-    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-          |                                                                         ^
-      168 |   };
-      169 |   await openMenu();
-      170 |   await page.keyboard.type("cop");
-        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
-
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  2 flaky
+    [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
+    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  144 passed (5.5m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+  156 passed (5.0m)

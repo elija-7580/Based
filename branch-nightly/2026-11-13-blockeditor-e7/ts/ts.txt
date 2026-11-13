@@ -18,13 +18,13 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1816 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1817)[39m
+packages/core test: [2m      Tests [22m [1m[32m1818 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1819)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
-packages/sync test: [2m      Tests [22m [1m[32m49 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (52)[39m
+packages/sync test: [2m      Tests [22m [1m[32m52 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (55)[39m
 packages/brain test: [22m[39mbrain-routing: 25/25 grün
-packages/brain test: [2m      Tests [22m [1m[32m416 passed[39m[22m[90m (416)[39m
+packages/brain test: [2m      Tests [22m [1m[32m420 passed[39m[22m[90m (420)[39m
 packages/editor test: [2m      Tests [22m [1m[32m99 passed[39m[22m[90m (99)[39m
-apps/web test: [2m      Tests [22m [1m[32m220 passed[39m[22m[90m (220)[39m
+apps/web test: [2m      Tests [22m [1m[32m225 passed[39m[22m[90m (225)[39m
 apps/server test: [2m      Tests [22m [1m[32m151 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (152)[39m
 apps/cli test: [2m      Tests [22m [1m[32m20 passed[39m[22m[90m (20)[39m
 packages/design-tokens test: [2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
@@ -47,14 +47,14 @@ packages/core test:   search     239/239 grün
 packages/core test:   sortkeys   343/343 grün
 packages/core test:   undo-remote 7/7 grün
 packages/core test:   values     46/46 grün
-packages/core test: [2m      Tests [22m [1m[32m1816 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1817)[39m
+packages/core test: [2m      Tests [22m [1m[32m1818 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (1819)[39m
 packages/database-ui test: [2m      Tests [22m [1m[32m64 passed[39m[22m[90m (64)[39m
-packages/sync test: [2m      Tests [22m [1m[32m49 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (52)[39m
+packages/sync test: [2m      Tests [22m [1m[32m52 passed[39m[22m[2m | [22m[33m3 skipped[39m[90m (55)[39m
 packages/brain test: [22m[39mbrain-routing: 25/25 grün
-packages/brain test: [2m      Tests [22m [1m[32m416 passed[39m[22m[90m (416)[39m
+packages/brain test: [2m      Tests [22m [1m[32m420 passed[39m[22m[90m (420)[39m
 packages/editor test: [2m      Tests [22m [1m[32m99 passed[39m[22m[90m (99)[39m
-apps/web test: [2m      Tests [22m [1m[32m220 passed[39m[22m[90m (220)[39m
 apps/server test: [2m      Tests [22m [1m[32m151 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (152)[39m
+apps/web test: [2m      Tests [22m [1m[32m225 passed[39m[22m[90m (225)[39m
 apps/cli test: [2m      Tests [22m [1m[32m20 passed[39m[22m[90m (20)[39m
 --- smoke
 [WebServer] 
@@ -66,34 +66,34 @@ apps/cli test: [2m      Tests [22m [1m[32m20 passed[39m[22m[90m (20)[39m
 
 Running 29 tests using 2 workers
 
-  ✓   2 [chromium] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (1.4s)
-  ✓   1 [chromium] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (2.1s)
+  ✓   2 [chromium] › e2e/block-editor.spec.ts:37:1 › Tippen, Enter, Markdown-Kürzel, ⌫ zusammenführen, Undo, Neuladen @smoke (1.6s)
+  ✓   1 [chromium] › e2e/ai-switch.spec.ts:22:1 › ohne AI: kein Chat, keine Agenten, Home ist eine Seite @smoke (2.4s)
   ✓   3 [chromium] › e2e/block-editor.spec.ts:105:1 › Griff sitzt an der ersten Zeile jedes Blocktyps; Klick darauf verschiebt nichts und öffnet das Blockmenü @smoke (2.3s)
-  ✓   5 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (1.6s)
-  ✓   4 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.1s)
-  ✓   6 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (2.4s)
-  ✓   8 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (1.5s)
-  ✓   9 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (1.7s)
-  ✓   7 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (5.9s)
-  ✓  10 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (2.5s)
-  ✓  12 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (4.2s)
-  ✓  13 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.6s)
-  ✓  14 [chromium] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (928ms)
-  ✓  15 [chromium] › e2e/native-free.spec.ts:25:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (1.0s)
-  ✓  16 [chromium] › e2e/native-free.spec.ts:92:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (1.4s)
-  ✓  11 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.5s)
-  ✓  18 [chromium] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (1.2s)
-  ✓  17 [chromium] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (3.7s)
-  ✓  20 [chromium] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (2.4s)
-  ✓  19 [chromium] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (3.0s)
-  ✓  21 [chromium] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (1.6s)
-  ✓  22 [chromium] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (2.1s)
-  ✓  23 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (1.1s)
-  ✓  25 [chromium] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (934ms)
-  ✓  24 [chromium] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke (3.1s)
-  ✓  26 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (2.5s)
-  ✓  28 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (1.4s)
-  ✓  27 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (3.4s)
-  ✓  29 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (3.3s)
+  ✓   5 [chromium] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (2.5s)
+  ✓   4 [chromium] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (4.9s)
+  ✓   6 [chromium] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (3.3s)
+  ✓   8 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (1.6s)
+  ✓   7 [chromium] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (6.4s)
+  ✓   9 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (2.4s)
+  ✓  10 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.2s)
+  ✓  12 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.4s)
+  ✓  13 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.8s)
+  ✓  14 [chromium] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (1.2s)
+  ✓  15 [chromium] › e2e/native-free.spec.ts:25:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (1.3s)
+  ✓  16 [chromium] › e2e/native-free.spec.ts:92:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (1.7s)
+  ✓  11 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.2s)
+  ✓  17 [chromium] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (3.8s)
+  ✓  18 [chromium] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (1.9s)
+  ✓  20 [chromium] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (2.1s)
+  ✓  19 [chromium] › e2e/shell.spec.ts:33:1 › Seite anlegen, umbenennen, in den Papierkorb, wiederherstellen, endgültig löschen @smoke (3.2s)
+  ✓  21 [chromium] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (2.3s)
+  ✓  22 [chromium] › e2e/shell.spec.ts:74:1 › Vor und zurück; Favoriten; Ziehen sortiert um @smoke (2.3s)
+  ✓  23 [chromium] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (1.9s)
+  ✓  25 [chromium] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (1.2s)
+  ✓  24 [chromium] › e2e/shell.spec.ts:171:1 › Neuladen behält Daten (OPFS) @smoke (3.2s)
+  ✓  26 [chromium] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (3.3s)
+  ✓  27 [chromium] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (3.6s)
+  ✓  28 [chromium] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (2.5s)
+  ✓  29 [chromium] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (2.6s)
 
-  29 passed (1.2m)
+  29 passed (1.3m)

@@ -1,61 +1,61 @@
-cancelled 84d16df2d9efcff14f01f544bf2d5bafd970e35d
-  ✓   25 [webkit] › e2e/block-editor.spec.ts:250:1 › Formatierung: ⌘B auf Auswahl, Formatleiste erscheint (3.2s)
-  ✓   24 [webkit] › e2e/brain.spec.ts:222:1 › trashing the Agent Brain shows why it stays (4.6s)
-  -   27 [webkit] › e2e/brain.spec.ts:233:1 › Screenshots web-brain-refused-*
-  ✓   26 [webkit] › e2e/block-editor.spec.ts:277:1 › Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link (3.5s)
-  ✓   29 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (3.4s)
-  ✓   30 [webkit] › e2e/block-editor.spec.ts:320:1 › Titel ↔ Text: Enter im Titel legt die erste Zeile an, ↑ in der ersten Zeile geht in den Titel (2.3s)
-  ✓   28 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (10.2s)
-  ✓   32 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.0s)
-  ✓   33 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (3.5s)
-  ✓   31 [webkit] › e2e/block-editor.spec.ts:334:1 › Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per @ (10.7s)
-  ✓   34 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (4.3s)
-  ✓   35 [webkit] › e2e/block-editor.spec.ts:388:1 › ⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung (7.5s)
-  ✓   36 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (5.2s)
-  -   38 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-  ✓   37 [webkit] › e2e/block-editor.spec.ts:436:1 › Spaltenbreite ziehen (4.1s)
-  -   40 [webkit] › e2e/block-editor.spec.ts:465:3 › Screenshots neuer Editor (light)
-  -   41 [webkit] › e2e/block-editor.spec.ts:465:3 › Screenshots neuer Editor (dark)
-(node:7606) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-(node:7741) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   42 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.4s)
-  ✓   39 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (8.5s)
-(node:7976) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   43 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (12.7s)
-  ✓   45 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (9.1s)
-  ✓   44 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (20.6s)
-  ✓   47 [webkit] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (5.4s)
-  ✓   46 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (11.3s)
-  ✓   48 [webkit] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (5.8s)
-  ✓   49 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (9.9s)
-  ✓   51 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (6.4s)
-  ✓   50 [webkit] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (12.4s)
-  ✓   53 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (9.0s)
-  ✓   54 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (7.9s)
-  ✓   55 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (4.1s)
-  ✓   56 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (6.5s)
-  ✓   57 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (9.1s)
-  ✓   58 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (7.5s)
-  ✓   59 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (8.3s)
-  ✓   60 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (7.6s)
-  ✓   61 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (4.3s)
-  ✓   62 [webkit] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (16.8s)
-  ✓   63 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (10.3s)
-  ✓   64 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (2.9s)
-  ✓   65 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (5.5s)
-  ✓   66 [webkit] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (4.2s)
-  ✓   67 [webkit] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (8.5s)
-  ✓   68 [webkit] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (4.1s)
-  ✓   69 [webkit] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (4.0s)
-  ✓   70 [webkit] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (3.8s)
-  ✓   71 [webkit] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (4.8s)
-  ✓   72 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (4.4s)
-  ✓   73 [webkit] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (3.3s)
-[webkit] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
-  ✓   52 [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (2.4m)
-  ✓   74 [webkit] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (7.8s)
-  ✓   75 [webkit] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (4.7s)
-  ✓   76 [webkit] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (8.4s)
+success 44831497d761b8a3b945f6076c46deac010b2d60
+  ✓  139 [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.1s)
+  ✓  141 [webkit] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.4s)
+  ✓  140 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (8.4s)
+  ✓  142 [webkit] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.3s)
+  ✓  144 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (13.1s)
+  ✓  143 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (16.1s)
+  ✓  145 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (11.9s)
+  ✓  146 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (14.7s)
+  ✓  148 [webkit] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (13.6s)
+  ✓  147 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (25.3s)
+  ✓  149 [webkit] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (11.5s)
+  ✓  150 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (6.2s)
+  ✓  152 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (7.5s)
+  ✓  151 [webkit] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (10.5s)
+  ✓  153 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (3.0s)
+  -  155 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  156 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  -  154 [webkit] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  157 [webkit] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (3.8s)
+  ✓  158 [webkit] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (5.0s)
+  ✓  159 [webkit] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (5.4s)
+  ✓  160 [webkit] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (5.2s)
+  ✓  161 [webkit] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (5.1s)
+  ✓  162 [webkit] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (4.4s)
+  ✓  163 [webkit] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (6.6s)
+  ✓  164 [webkit] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (4.8s)
+  ✓  165 [webkit] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (4.5s)
+  ✓  166 [webkit] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (3.8s)
+  ✓  167 [webkit] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (5.7s)
+
+
+  1) [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+
+    Error: tote Knöpfe
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Home: „New database“ #0",
+    + ]
+
+      228 |   console.log(`[${info.project.name}] Klick-Durchlauf: ${total} Klicks, ${skipped.length} ausgelassen`);
+      229 |   expect(total).toBeGreaterThan(60);
+    > 230 |   expect(dead, "tote Knöpfe").toEqual([]);
+          |                               ^
+      231 |   expect(errors, "Konsolenfehler").toEqual([]);
+      232 | });
+      233 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:230:31
+
+    Error Context: test-results/crawl-Klick-Durchlauf-jede-31d31--Knopf-keine-Konsolenfehler-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler 
+  16 skipped
+  149 passed (16.4m)
