@@ -38,6 +38,19 @@ export interface LocalServerState {
   tailnet: boolean;
   /** Adressen im Tailnet, wenn der Server dort lauscht (leer: kein Tailscale gefunden). */
   tailnetUrls: string[] | undefined;
+  /** BSD-334: über iCloud Drive mit anderen Macs abgleichen (der lokale Server liest/schreibt den Ordner). */
+  icloud: boolean;
+  /** BSD-334: Kennung dieses Macs im Sync-Ordner (einmal erzeugt, bleibt). */
+  icloudDevice: string | undefined;
+}
+
+/** BSD-334: Standard-Ordner in iCloud Drive (macOS). */
+export const ICLOUD_FOLDER = "Library/Mobile Documents/com~apple~CloudDocs/Based";
+
+/** BSD-334: Umgebung für den lokalen Server, wenn iCloud-Sync an ist (Ordner unter dem Home, Gerätekennung). */
+export function folderSyncEnv(home: string, on: boolean, device: string | undefined): Record<string, string> {
+  if (!on || !device || !/^[A-Za-z0-9_-]{1,64}$/.test(device)) return {};
+  return { BASED_FOLDER_SYNC: `${home.replace(/\/+$/, "")}/${ICLOUD_FOLDER}`, BASED_FOLDER_DEVICE: device };
 }
 
 /** BSD-315: Kopplungs-Link für ein Gerät (QR-Code): Adresse im Tailnet + eigenes Geräte-Token, nie das Haupt-Token. */
@@ -107,12 +120,12 @@ export function newToken(random: (a: Uint8Array) => Uint8Array = (a) => crypto.g
 
 interface Child { kill(): Promise<void> }
 
-function readSettings(): { enabled: boolean; tailnet: boolean } {
+function readSettings(): { enabled: boolean; tailnet: boolean; icloud: boolean; icloudDevice: string | undefined } {
   try {
-    const v = JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown; tailnet?: unknown };
-    return { enabled: v.enabled === true, tailnet: v.tailnet === true };
+    const v = JSON.parse(globalThis.localStorage?.getItem(SETTINGS_KEY) ?? "{}") as { enabled?: unknown; tailnet?: unknown; icloud?: unknown; icloudDevice?: unknown };
+    return { enabled: v.enabled === true, tailnet: v.tailnet === true, icloud: v.icloud === true, icloudDevice: typeof v.icloudDevice === "string" ? v.icloudDevice : undefined };
   } catch {
-    return { enabled: false, tailnet: false };
+    return { enabled: false, tailnet: false, icloud: false, icloudDevice: undefined };
   }
 }
 
@@ -217,9 +230,12 @@ class LocalServer {
     }
   }
 
-  private save(patch: { enabled?: boolean; tailnet?: boolean }) {
+  private save(patch: { enabled?: boolean; tailnet?: boolean; icloud?: boolean; icloudDevice?: string }) {
     try {
-      globalThis.localStorage?.setItem(SETTINGS_KEY, JSON.stringify({ enabled: patch.enabled ?? this.state.enabled, tailnet: patch.tailnet ?? this.state.tailnet }));
+      globalThis.localStorage?.setItem(SETTINGS_KEY, JSON.stringify({
+        enabled: patch.enabled ?? this.state.enabled, tailnet: patch.tailnet ?? this.state.tailnet,
+        icloud: patch.icloud ?? this.state.icloud, icloudDevice: patch.icloudDevice ?? this.state.icloudDevice,
+      }));
     } catch {
       // nur für diese Sitzung
     }
@@ -235,6 +251,20 @@ class LocalServer {
       await this.start();
     }
   }
+
+  /** BSD-334: iCloud-Sync an/aus (Neustart des laufenden Servers); die Gerätekennung entsteht beim ersten Einschalten. */
+  async setICloud(on: boolean): Promise<void> {
+    const device = this.state.icloudDevice ?? "mac-" + [...globalThis.crypto.getRandomValues(new Uint8Array(4))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    this.save({ icloud: on, icloudDevice: device });
+    if (this.child || this.starting) {
+      await this.stop();
+      this.set({ status: "off" });
+      await this.start();
+    }
+  }
+
+  /** BSD-334: Stand des Ordner-Syncs im lokalen Server. */
+  folderSync() { return this.call<{ dir: string; device: string; lastRound: number | null; error: string | null }>("GET", "/folder-sync"); }
 
   /** BSD-315: Gerät koppeln – eigenes Token beim lokalen Server anlegen (mit dem Haupt-Token dieser App). */
   async addDevice(name: string): Promise<{ id: string; token: string; link: string | undefined }> {
@@ -303,6 +333,8 @@ class LocalServer {
         BASED_APP_ORIGIN: globalThis.location?.origin ?? "",
         // BSD-315: zusätzlich nur auf den Tailscale-Adressen lauschen
         ...(this.state.tailnet ? { BASED_TAILNET: "1" } : {}),
+        // BSD-334: über iCloud Drive mit anderen Macs abgleichen (der Server liest/schreibt den Ordner)
+        ...folderSyncEnv(home, this.state.icloud, this.state.icloudDevice),
         // BSD-274: automatische Backups (stündlich bei Änderungen, beim Beenden) außerhalb des App-Speichers
         BASED_BACKUP_DIR: await path.join(await path.documentDir(), "Based Backups"),
       });

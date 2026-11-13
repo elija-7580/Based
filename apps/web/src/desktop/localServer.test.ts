@@ -1,6 +1,6 @@
 // BSD-138: reine Teile (Node-Suche, Ergebnis-Zeilen, Umgebung, Token) – ohne Tauri.
 import { describe, expect, it } from "vitest";
-import { actionEnv, localServer, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
+import { actionEnv, folderSyncEnv, ICLOUD_FOLDER, localServer, newToken, pairingLink, parseNodeProbe, parsePairingLink, parseReady, parseResult, PROBE, RUN } from "./localServer.js";
 
 describe("lokaler Server und CLI (Desktop)", () => {
   it("Node suchen: gefunden, zu alt, fehlt", () => {
@@ -8,6 +8,15 @@ describe("lokaler Server und CLI (Desktop)", () => {
     expect(parseNodeProbe("motd\n/usr/local/bin/node\nv18.19.0\n", 0)).toMatchObject({ ok: false, message: expect.stringContaining("too old") });
     expect(parseNodeProbe("", 1)).toMatchObject({ ok: false, message: expect.stringContaining("wasn't found") });
     expect(parseNodeProbe("", 1).message).toContain("brew install node");
+  });
+
+  it("BSD-334: iCloud-Ordner nur, wenn eingeschaltet und mit gültiger Gerätekennung", () => {
+    expect(folderSyncEnv("/Users/e", true, "mac-1a2b3c4d")).toEqual({ BASED_FOLDER_SYNC: `/Users/e/${ICLOUD_FOLDER}`, BASED_FOLDER_DEVICE: "mac-1a2b3c4d" });
+    expect(ICLOUD_FOLDER).toBe("Library/Mobile Documents/com~apple~CloudDocs/Based");
+    expect(folderSyncEnv("/Users/e/", true, "mac-1")).toMatchObject({ BASED_FOLDER_SYNC: `/Users/e/${ICLOUD_FOLDER}` });
+    expect(folderSyncEnv("/Users/e", false, "mac-1")).toEqual({});
+    expect(folderSyncEnv("/Users/e", true, undefined)).toEqual({});
+    expect(folderSyncEnv("/Users/e", true, "../x")).toEqual({});
   });
 
   it("feste Aufrufe, Umgebung nur mit BASED_*, kein Token in Argumenten", () => {

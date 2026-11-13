@@ -11,6 +11,7 @@ import { BasedButton } from "@based/ui/astryx";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { TailnetGroup } from "./TailnetGroup.js";
 import { BackupsGroup } from "./BackupsGroup.js";
+import { ICloudGroup } from "./ICloudGroup.js";
 import { Group, Row, Value } from "../screens/settings/parts.js";
 import { registerSettingsSection, type SettingsSectionProps } from "../screens/settings/registry.js";
 import { syncConfig } from "../shell/storage.js";
@@ -64,6 +65,7 @@ function LocalServerSection({ client }: SettingsSectionProps) {
         {syncsHere ? <Text type="supporting" color="secondary">This app syncs with the local server.</Text> : null}
         {message ? <Text type="supporting" color="secondary" role="status">{message}</Text> : null}
       </Group>
+      <ICloudGroup />
       <BackupsGroup />
       <TailnetGroup />
       <Group>
