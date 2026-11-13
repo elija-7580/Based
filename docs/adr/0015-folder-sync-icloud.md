@@ -37,7 +37,7 @@ as conflict copies (`name 2.ext`) when two Macs write the same file.
    never changed — the same layout as the backups (BSD-274), so a missing file is a placeholder, not an error.
 8. **Compaction.** Each device may replace its own old segments with one snapshot segment (all current records it
    wrote last) once every other device has read past them (their cursors are visible as `devices/<id>/cursor.json`);
-   until then nothing is removed. Not part of the spike.
+   until then nothing is removed. Implemented in BSD-334 (`FolderSync.compact`, `snapshot-<N>.jsonl`, `cursor.json`; a device without a cursor blocks compaction, a target without `remove` never compacts; a new device reads the latest snapshot and continues at N+1).
 
 ## Consequences
 
