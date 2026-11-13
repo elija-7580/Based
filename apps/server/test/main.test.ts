@@ -13,7 +13,10 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 function run(args: string[], env: Record<string, string> = {}) {
   const { BASED_TOKEN: _drop, ...rest } = process.env;
   void _drop;
-  return spawn(join(root, "node_modules/.bin/tsx"), [join(root, "src/main.ts"), ...args], {
+  // Direkt node mit tsx als Loader (nicht über den tsx-Wrapper): SIGTERM erreicht so den Server selbst. Über den Wrapper
+  // endete der Test unter Last gelegentlich mit 143 (Signal-Weitergabe des Wrappers), obwohl der Server sauber stoppt.
+  return spawn(process.execPath, ["--import", "tsx", join(root, "src/main.ts"), ...args], {
+    cwd: root,
     // altes Format, auch wenn die Suite mit BASED_PROPERTY_RECORDS=1 läuft (BSD-30; eigener Test unten)
     env: { ...rest, BASED_LOG_LEVEL: "info", BASED_PROPERTY_RECORDS: "", ...env },
     stdio: ["ignore", "pipe", "pipe"],
@@ -50,7 +53,7 @@ describe("Start", () => {
 
   it("mit Token: lauscht, antwortet mit Auth, beendet sich auf SIGTERM", async () => {
     const dir = mkdtempSync(join(tmpdir(), "based-main-"));
-    const port = 18_190 + Math.floor(Math.random() * 9);
+    const port = 20_000 + Math.floor(Math.random() * 20_000); // breit: parallele Läufe kollidieren sonst
     const p = run(["--port", String(port), "--host", "127.0.0.1", "--db", join(dir, "based.sqlite")], { BASED_TOKEN: "main-test-token-123456" });
     let out = "";
     p.stderr.on("data", (d: Buffer) => (out += d.toString()));
