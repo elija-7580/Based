@@ -1,0 +1,61 @@
+success f0adc589f70211d66fe7dca31142bb5c7ef450e3
+  ✓  128 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (4.4s)
+(node:9154) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  130 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.6s)
+  ✓  131 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.5s)
+  ✓  132 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (2.4s)
+  ✓  133 [chromium] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (2.3s)
+  ✓  134 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.7s)
+  ✓  135 [chromium] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.6s)
+  ✓  137 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.8s)
+  ✓  136 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.0s)
+  ✓  138 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.2s)
+  ✓  139 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (2.9s)
+  ✓  140 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.7s)
+  ✓  142 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.9s)
+  ✓  143 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.8s)
+  ✓  144 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.4s)
+  -  145 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  141 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.5s)
+  ✓  146 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.8s)
+  ✓  147 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (1.8s)
+  ✓  148 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.2s)
+  ✓  149 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.3s)
+  ✓  150 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.1s)
+
+
+  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 8
+    + Received  + 1
+
+    - Array [
+    -   Array [
+    -     "Alpha",
+    -   ],
+    -   Array [
+    -     "Omega",
+    -   ],
+    - ]
+    + Array []
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      233 |   // links vom Griff, unten in der Zeile
+      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+          |                                              ^
+      236 | });
+      237 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
+
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+
+  1 flaky
+    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+  8 skipped
+  140 passed (5.5m)

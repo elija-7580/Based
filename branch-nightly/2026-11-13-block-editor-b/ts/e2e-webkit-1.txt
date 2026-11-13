@@ -1,0 +1,61 @@
+success f0adc589f70211d66fe7dca31142bb5c7ef450e3
+  ✓  117 [webkit] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (14.9s)
+  ✓  118 [webkit] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (11.1s)
+  ✓  119 [webkit] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (13.7s)
+  ✓  120 [webkit] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (14.2s)
+  ✓  121 [webkit] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (5.1s)
+  ✓  123 [webkit] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (6.3s)
+  ✓  122 [webkit] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (12.8s)
+  ✓  124 [webkit] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (5.5s)
+  ✓  126 [webkit] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (7.0s)
+  ✓  125 [webkit] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (12.5s)
+  ✓  127 [webkit] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (4.2s)
+  ✓  129 [webkit] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (10.8s)
+(node:16897) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  128 [webkit] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (17.8s)
+  ✓  130 [webkit] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (6.6s)
+  ✓  132 [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (4.5s)
+  ✓  133 [webkit] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (3.5s)
+  ✓  131 [webkit] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (11.4s)
+  ✓  134 [webkit] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (3.1s)
+  ✓  135 [webkit] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (10.5s)
+  ✓  136 [webkit] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (11.7s)
+  ✓  137 [webkit] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (8.3s)
+  ✓  138 [webkit] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (13.1s)
+  ✓  139 [webkit] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (15.9s)
+  ✓  141 [webkit] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (9.2s)
+  ✓  140 [webkit] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (23.1s)
+  ✓  143 [webkit] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (7.5s)
+  ✓  142 [webkit] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (18.9s)
+  ✓  144 [webkit] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (7.1s)
+  ✓  146 [webkit] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (4.4s)
+  -  147 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light)
+  -  148 [webkit] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark)
+  ✓  145 [webkit] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (10.1s)
+  ✓  149 [webkit] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (6.6s)
+  -  150 [webkit] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+
+
+  1) [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "dead"
+    Received: "ok"
+
+      260 |     document.querySelector("main.main")!.prepend(live);
+      261 |   });
+    > 262 |   expect(await probe(page, "main.main", { name: "Crawl dead probe", nth: 0 })).toBe("dead");
+          |                                                                                ^
+      263 |   expect(await probe(page, "main.main", { name: "Crawl live probe", nth: 0 })).toBe("ok");
+      264 | });
+      265 |
+        at /home/runner/work/Based/Based/apps/web/e2e/crawl.spec.ts:262:80
+
+    Error Context: test-results/crawl-Ein-eingeschleuster-toter-Knopf-fällt-auf-webkit/error-context.md
+
+  1 flaky
+    [webkit] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf ─────────────────
+  16 skipped
+  132 passed (12.9m)
