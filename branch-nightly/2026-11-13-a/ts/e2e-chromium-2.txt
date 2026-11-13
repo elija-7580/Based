@@ -1,4 +1,4 @@
-failure 1aff36f753ed094427fdddffbdf611a8afcc64ed
+failure 057d95d9aff66cdedc3876338c9ef34298aade0a
 
     Error: expect(locator).not.toHaveCount(expected) failed
 
@@ -55,7 +55,7 @@ failure 1aff36f753ed094427fdddffbdf611a8afcc64ed
   1 failed
     [chromium] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
   9 skipped
-  133 passed (4.1m)
+  133 passed (3.2m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
