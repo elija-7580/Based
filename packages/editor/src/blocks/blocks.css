@@ -461,3 +461,26 @@
 .bx2-placeholder-btn:hover:not(:disabled) { background: var(--selected); color: var(--ink-2); }
 .bx2-equation { display: flex; flex-direction: column; gap: var(--space-2); cursor: pointer; }
 .bx2-eq-input { height: auto; min-height: 60px; padding: var(--space-2); font-family: var(--font-mono); resize: vertical; }
+
+/* ADR 0016 (E7): Präsenz – Schreibmarken und Auswahl der anderen, Farbe je Gerät */
+.bx2-presence { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.bx2-peer { --peer: var(--block-blue-text); }
+.bx2-peer-1 { --peer: var(--block-green-text); }
+.bx2-peer-2 { --peer: var(--block-orange-text); }
+.bx2-peer-3 { --peer: var(--block-purple-text); }
+.bx2-peer-4 { --peer: var(--block-pink-text); }
+.bx2-peer-5 { --peer: var(--block-red-text); }
+.bx2-peer-sel { position: absolute; background: var(--peer); opacity: 0.18; border-radius: var(--radius-xs); }
+.bx2-peer-caret { position: absolute; width: var(--space-half); margin-left: calc(var(--space-half) / -2); background: var(--peer); border-radius: var(--radius-xs); }
+.bx2-peer-name {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--peer);
+  color: var(--bg);
+  font-size: var(--type-meta-size);
+  line-height: var(--type-meta-leading);
+  white-space: nowrap;
+}

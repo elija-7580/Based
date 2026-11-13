@@ -72,6 +72,8 @@ export interface PageEditorProps {
   docStore?: YDocStore;
   /** BSD-220: Echtzeit-Text über `/collab` (Seiten-Wurzeln); ohne: nur Records + Sync. */
   collab?: CollabSource;
+  /** ADR 0016 (E7): Name, unter dem die anderen einen in der Seite sehen (Präsenz im neuen Editor). */
+  presenceName?: string;
   /** Standard: bearbeitbar, solange der Store nicht schreibgeschützt ist. */
   editable?: boolean;
   /** `based-asset:<id>`- und andere URLs für Medien auflösen. */

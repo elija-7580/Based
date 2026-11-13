@@ -13,6 +13,7 @@ import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
+import { PresenceLayer, useRealtime } from "./realtime.js";
 import "./blocks.css";
 
 interface Ctx {
@@ -804,14 +805,17 @@ export function BlockEditor(props: PageEditorProps) {
   };
 
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
+  // ADR 0016 (E7): Echtzeit-Text und Präsenz über /collab (Dokument `text:<seite>`)
+  const presence = useRealtime(store, pageID, props.collab, ctrl, props.presenceName);
   const slashItems = slash ? filterSlash(SLASH_ITEMS, slash.query) : [];
 
   return (
     <EditorCtx.Provider value={ctx}>
-      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-theme={props.theme}
+      <div ref={rootRef} className={"bx2-editor" + (props.className ? " " + props.className : "")} data-testid="block-editor" data-theme={props.theme} data-collab={presence ? "" : undefined}
         tabIndex={-1} onKeyDown={onKeyDown} onPointerDown={onPointerDown} writingsuggestions="false">
         <BlockList parent={pageID} depth={0} />
         {editable ? <div className="bx2-tail" onClick={onTailClick} data-testid="block-editor-tail" /> : null}
+        {presence ? <PresenceLayer presence={presence} ctrl={ctrl} store={store} root={rootRef.current} /> : null}
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}

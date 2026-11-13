@@ -13,7 +13,7 @@ import type { IncomingMessage, Server } from "node:http";
 import type { Duplex } from "node:stream";
 import { Hocuspocus } from "@hocuspocus/server";
 import { isPageLike, type WorkspaceStore } from "@based/core";
-import { createConverter, DocSession, STORE_ORIGIN, type BlockConverter } from "@based/editor/headless";
+import { createConverter, DocSession, STORE_ORIGIN, TEXT_STORE_ORIGIN, TextSession, type BlockConverter } from "@based/editor/headless";
 import type { SqlDatabase } from "@based/sync";
 import { WebSocketServer, type WebSocket } from "ws";
 import * as Y from "yjs";
@@ -22,6 +22,8 @@ import { tokenEquals } from "./router.js";
 
 export const COLLAB_PATH = "/collab";
 export const DOC_PREFIX = "page:";
+/** ADR 0016 (E7): Dokumente des neuen Block-Editors – ein Y.Text je Textblock (TextSession), Name `text:<seite>`. */
+export const TEXT_DOC_PREFIX = "text:";
 /** Größte WebSocket-Nachricht (ein Yjs-Update). */
 export const MAX_MESSAGE = 16 << 20;
 /** Y.Map mit Metadaten im Dokument; `origin: "server"` = vom Server aus den Records gefüllt (Abstammung). */
@@ -67,8 +69,8 @@ export class Collab {
   readonly hocuspocus: Hocuspocus;
   private readonly wss = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE });
 
-  /** Geladene Dokumente mit ihrer Brücke zum Store. */
-  readonly sessions = new Map<string, DocSession>();
+  /** Geladene Dokumente mit ihrer Brücke zum Store (alter Editor: DocSession, neuer: TextSession). */
+  readonly sessions = new Map<string, DocSession | TextSession>();
 
   constructor(readonly opts: CollabOptions) {
     const { store, states, token, log } = opts;
@@ -80,17 +82,39 @@ export class Collab {
       maxDebounce: 10_000,
       async onAuthenticate({ token: given, documentName }) {
         if (!(opts.acceptToken ? opts.acceptToken(given) : tokenEquals(given, token))) throw new Error("unauthorized");
-        const id = documentName.startsWith(DOC_PREFIX) ? documentName.slice(DOC_PREFIX.length) : "";
+        const text = documentName.startsWith(TEXT_DOC_PREFIX);
+        const id = documentName.startsWith(DOC_PREFIX) ? documentName.slice(DOC_PREFIX.length) : text ? documentName.slice(TEXT_DOC_PREFIX.length) : "";
         const root = store.blocks.get(id);
         // Seiten und (BSD-252) Synced-Block-Originale sind eigene Dokument-Wurzeln; Kopien zeigen nur aufs Original.
         const syncedOriginal = root?.type === "syncedBlock" && !root.props?.syncSource;
-        if (!isPageLike(root) && !syncedOriginal) throw new Error("no such page");
+        if (!isPageLike(root) && (text || !syncedOriginal)) throw new Error("no such page");
         return { page: id };
       },
       async onLoadDocument({ document, documentName }) {
         const state = states.load(documentName);
         if (state) Y.applyUpdate(document, state);
         const save = () => states.save(documentName, Y.encodeStateAsUpdate(document));
+        if (documentName.startsWith(TEXT_DOC_PREFIX)) {
+          // ADR 0016 (E7): Migration vom alten Seiten-Dokument – ist es geladen, erst seine Änderungen als Records
+          // schreiben; das neue Dokument wird aus den Records gefüllt (beide Brücken laufen über die Records).
+          const pageID = documentName.slice(TEXT_DOC_PREFIX.length);
+          sessions.get(DOC_PREFIX + pageID)?.flush();
+          document.on("update", (_u: Uint8Array, origin: unknown) => {
+            if (origin === TEXT_STORE_ORIGIN) save();
+          });
+          const session = new TextSession(store, pageID, {
+            doc: document,
+            role: "server",
+            debounceMs: opts.materializeDelay ?? 120,
+            // Geräte, die an diesem Dokument hängen (Awareness `node`): ihr Text kommt über Yjs, nicht über Records.
+            participants: () => participantNodes(document),
+            onError: (e) => log.warning("collab text materialize failed", { error: e instanceof Error ? e.name : "unknown" }),
+          });
+          if (!state) document.transact(() => document.getMap(META_MAP).set(META_ORIGIN, "server"), TEXT_STORE_ORIGIN);
+          save();
+          sessions.set(documentName, session);
+          return document;
+        }
         // Diffs aus dem Store sofort sichern (vor dem Verteilen an die Geräte): ginge so ein Zustand verloren,
         // erzeugte der nächste Diff denselben Text mit neuen Items, und Geräte hätten ihn doppelt.
         document.on("update", (_u: Uint8Array, origin: unknown) => {
@@ -115,11 +139,12 @@ export class Collab {
         states.save(documentName, Y.encodeStateAsUpdate(document));
         log.debug("collab stored", { doc: documentName.length });
       },
-      async beforeUnloadDocument({ documentName }) {
+      async beforeUnloadDocument({ documentName, document }) {
         // Ausstehende Änderungen als Records schreiben, Zustand sichern.
         const session = sessions.get(documentName);
         session?.flush();
-        session?.save();
+        if (session instanceof DocSession) session.save();
+        else if (session) states.save(documentName, Y.encodeStateAsUpdate(document));
       },
       async afterUnloadDocument({ documentName }) {
         const session = sessions.get(documentName);
@@ -177,4 +202,12 @@ export class Collab {
     // Gespeicherte Zustände sind synchron geschrieben; kurz warten, bis Hocuspocus seine Hooks beendet hat.
     await new Promise((r) => setTimeout(r, 10));
   }
+}
+
+/** Knoten der Geräte an einem Dokument (Awareness-Feld `node`, gesetzt vom Editor). */
+function participantNodes(doc: Y.Doc): Set<string> {
+  const out = new Set<string>();
+  const aw = (doc as Y.Doc & { awareness?: { getStates(): Map<number, Record<string, unknown>> } }).awareness;
+  for (const st of aw?.getStates().values() ?? []) if (typeof st.node === "string") out.add(st.node);
+  return out;
 }
