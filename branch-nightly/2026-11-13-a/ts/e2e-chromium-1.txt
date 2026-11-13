@@ -1,4 +1,9 @@
-failure 5a4dbb442f6076a1efc69d273c7c37107fdb7d33
+failure a25a4107afdc257a2207443cc35024fd12f41cde
+
+    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
+    Expected: "ts"
+    Received: "typescript"
+    Timeout:  5000ms
 
     Call log:
       - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
@@ -19,43 +24,38 @@ failure 5a4dbb442f6076a1efc69d273c7c37107fdb7d33
 
     Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
 
-  3) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+  2) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
 
-    Error: expect(received).toEqual(expected) // deep equality
+    Error: expect(locator).toBeFocused() failed
 
-    - Expected  - 8
-    + Received  + 1
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
 
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
+    Call log:
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
 
-      233 |   // links vom Griff, unten in der Zeile
-      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      236 | });
-      237 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-  2 failed
-    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  1 failed
     [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
   1 flaky
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  147 passed (5.9m)
+  148 passed (5.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
