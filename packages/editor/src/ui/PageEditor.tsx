@@ -16,7 +16,8 @@ import {
   ComponentsContext, useBlockNoteEditor, useComponentsContext, useSelectedBlocks, useExtensionState, usePortalElement, type DefaultReactSuggestionItem,
 } from "@blocknote/react";
 import { type BookmarkMeta, createDatabase, createLinkedView, createMeeting, duplicatePages, plainText, keysBetween, syncedOriginal, syncedPasteProblem, type SyncedPasteProblem, type WorkspaceStore } from "@based/core";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import type { ResolvedPos } from "prosemirror-model";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "../mapping/bn.js";
 import { freshButtons } from "./ButtonBlock.js";
 import { attachBlockDrop, type BlockDropHost, type Rect } from "./dragDrop.js";
@@ -24,7 +25,7 @@ import { hasText, MARQUEE_MIN, marqueeRange, rectFrom, siblingSpan } from "./blo
 import { basedSchema, sharedConverter, type BasedEditor } from "../schema/schema.js";
 import { syntaxHighlighting } from "../schema/code.js";
 import {
-  applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_EQUATION, TURN_INTO_PAGE, turnInto, turnIntoEquation,
+  applyURLChoice, blocksAsMarkdown, canTurnInto, duplicateBlocks, inlineText, isCurrent, moveBlocksToPage, rangeIDs, stepRange, targetBlocks, toggleAll, TURN_INTO, TURN_INTO_EQUATION, TURN_INTO_PAGE, turnInto, turnIntoEquation,
   turnIntoPage, type ActionEditor, type BlockLike, type BlockRange, type SelectionEditor, type URLChoice,
 } from "./blockActions.js";
 import { DatabasePicker, MovePicker, type DatabaseRef, type DatabaseSource } from "./MovePicker.js";
@@ -34,6 +35,7 @@ import type { CollabHandle, CollabSource } from "../yjs/collab.js";
 import { EnvContext, storePageDirectory, type DatabaseRenderProps, type PageRef, type EditorEnv, type EquationRenderProps, type PageDirectory, type Person } from "./env.js";
 import type { MeetingHost } from "./meetingHost.js";
 import { mentionItems, resolveWikilink, wikilinkBefore } from "./mentions.js";
+import { MenuIcon, type MenuIconName } from "./menuIcons.js";
 import { PageOutline } from "./Outline.js";
 import { handlePaste } from "./paste.js";
 import { lastCopiedSync, rememberSyncClipboard } from "./syncClipboard.js";
@@ -543,6 +545,19 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
     globalThis.document?.addEventListener("mouseup", up);
     return () => globalThis.document?.removeEventListener("mouseup", up);
   }, [editor]);
+  // Fokus von außen (Shell): Enter oder ↓ im Seitentitel, Klick in die leere Fläche unter dem Inhalt. Nur der
+  // Editor der Seite hört zu, nicht die eingebetteten (Synced Block).
+  const topLevel = props.ancestors.length === 0;
+  useEffect(() => {
+    const host = topLevel ? docEl?.closest(".bx-editor") : undefined;
+    if (!host) return;
+    const on = (ev: Event) => {
+      const d = (ev as CustomEvent<FocusRequest>).detail;
+      if (focusFromOutside(editor, d, editable)) ev.preventDefault();
+    };
+    host.addEventListener("bx:focus", on);
+    return () => host.removeEventListener("bx:focus", on);
+  }, [docEl, editor, editable, topLevel]);
   const chooseURL = (choice: URLChoice) => {
     if (urlMenu) applyURLChoice(actions, urlMenu.blockID, urlMenu.url, choice);
     setURLMenu(undefined);
@@ -616,6 +631,37 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
             e.preventDefault();
             e.stopPropagation();
             return;
+          }
+        }
+        const plain = !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.nativeEvent.isComposing;
+        const menuOpen = () => globalThis.document?.querySelector(".bn-suggestion-menu") != null;
+        // Wie Notion: Rücktaste am Anfang einer Überschrift, eines Zitats oder Listenpunkts macht daraus wieder Text
+        // (der Inhalt bleibt); erst die nächste Rücktaste hängt den Text an den Block davor.
+        if (editable && plain && e.key === "Backspace") {
+          const $caret = caretPos(editor);
+          if ($caret?.parentOffset === 0) {
+            const cur = actions.getBlock(caretBlockID(editor));
+            if (cur && resetsToText(cur)) {
+              e.preventDefault();
+              e.stopPropagation();
+              editor.updateBlock(cur.id, { type: "paragraph" });
+              return;
+            }
+          }
+        }
+        // Wie Notion: ↑ in der ersten Zeile des ersten Blocks (und Rücktaste am Anfang einer leeren ersten Zeile) geht
+        // in den Seitentitel. Die Shell hört auf „bx:leave-top“ und übernimmt den Fokus (preventDefault = übernommen).
+        if (props.ancestors.length === 0 && plain && (e.key === "ArrowUp" || e.key === "Backspace") && !menuOpen()) {
+          const view = editor.prosemirrorView;
+          const $caret = caretPos(editor);
+          const first = editor.document[0];
+          if (view && $caret && first && caretBlockID(editor) === first.id && atTopOfBlock(view, $caret, e.key === "Backspace")) {
+            const leave = new CustomEvent("bx:leave-top", { bubbles: true, cancelable: true, detail: { key: e.key } });
+            if (!e.currentTarget.dispatchEvent(leave)) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
           }
         }
         if (e.shiftKey && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") plainPasteAt.current = Date.now();
@@ -734,6 +780,70 @@ function BoundEditor(props: { session: DocSession; ancestors: readonly string[];
       </div>
     </EnvContext.Provider>
   );
+}
+
+/** Blocktypen, die die Rücktaste am Zeilenanfang wieder zu Text macht. */
+const RESET_TO_TEXT: ReadonlySet<string> = new Set(["heading", "quote", "bulletListItem", "numberedListItem", "checkListItem", "toggleListItem"]);
+export function resetsToText(b: BlockLike): boolean {
+  return RESET_TO_TEXT.has(b.type) && Array.isArray(b.content);
+}
+
+/**
+ * Die Schreibmarke (ohne Auswahl) als Position im Dokument. Aus der DOM-Auswahl gelesen: direkt nach Pos1/Klick hat
+ * ProseMirror die neue Auswahl evtl. noch nicht übernommen, wenn die nächste Taste kommt (siehe `caretBlockID`).
+ */
+function caretPos(editor: BasedEditor): ResolvedPos | undefined {
+  const view = editor.prosemirrorView;
+  if (!view) return undefined;
+  const dom = globalThis.getSelection?.();
+  if (dom && dom.rangeCount > 0 && dom.anchorNode && view.dom.contains(dom.anchorNode)) {
+    if (!dom.isCollapsed) return undefined;
+    try {
+      return view.state.doc.resolve(view.posAtDOM(dom.anchorNode, dom.anchorOffset));
+    } catch { /* unten: Zustand von ProseMirror */ }
+  }
+  return view.state.selection.empty ? view.state.selection.$from : undefined;
+}
+
+/** Steht die Schreibmarke in der ersten Zeile ihres Blocks (bzw. mit `start`: ganz am Anfang eines leeren Blocks)? */
+function atTopOfBlock(view: NonNullable<BasedEditor["prosemirrorView"]>, $from: ResolvedPos, start: boolean): boolean {
+  if (start) return $from.parentOffset === 0 && $from.parent.content.size === 0 && $from.parent.type.name === "paragraph";
+  if ($from.parentOffset === 0) return true;
+  try {
+    const here = view.coordsAtPos($from.pos);
+    const top = view.coordsAtPos($from.start());
+    return here.top - top.top < (here.bottom - here.top) / 2;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Bitte der Shell, den Fokus in den Text zu setzen (Ereignis „bx:focus“ am Rahmen `.bx-editor`):
+ * `start` – an den Anfang (↓ im Titel); mit `insert` vorher eine neue erste Zeile mit `text` anlegen (Enter im Titel).
+ * `end` – ans Ende (Klick unter den Inhalt); ist der letzte Block keine leere Textzeile, entsteht eine.
+ */
+export interface FocusRequest { at: "start" | "end"; insert?: boolean; text?: string }
+
+export function focusFromOutside(editor: BasedEditor, req: FocusRequest, editable: boolean): boolean {
+  const doc = editor.document;
+  const first = doc[0], last = doc[doc.length - 1];
+  if (!first || !last) return false;
+  const emptyText = (b: typeof first) => b.type === "paragraph" && Array.isArray(b.content) && b.content.length === 0 && b.children.length === 0;
+  let target = req.at === "start" ? first.id : last.id;
+  if (editable && req.at === "start" && req.insert && req.text && emptyText(first)) {
+    editor.updateBlock(first.id, { content: req.text }); // leere Seite: der Text kommt in die vorhandene erste Zeile
+  } else if (editable && req.at === "start" && req.insert && !emptyText(first)) {
+    target = editor.insertBlocks([{ type: "paragraph", content: req.text ?? "" }], first.id, "before")[0]?.id ?? target;
+  } else if (editable && req.at === "end" && !emptyText(last)) {
+    target = editor.insertBlocks([{ type: "paragraph" }], last.id, "after")[0]?.id ?? target;
+  }
+  editor.focus();
+  // Blöcke ohne Text (Bild, Trennlinie) nehmen keine Schreibmarke: dann bleibt es beim Fokus.
+  try {
+    editor.setTextCursorPosition(target, req.at === "end" ? "end" : "start");
+  } catch { /* kein Textblock */ }
+  return true;
 }
 
 /**
@@ -932,17 +1042,119 @@ function mediaSelected(editor: BasedEditor): boolean {
 // MARK: Block-Menü mit „Copy and sync“
 
 function BlockMenu(props: { session: DocSession; duplicate: (blocks: readonly BlockLike[]) => unknown; startMove: (req: MoveRequest) => void; blockLink?: ((id: string) => string) | undefined; notify: (m: string) => void }) {
+  const Components = useComponentsContext()!;
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const show = (label: string) => q === "" || label.toLowerCase().includes(q);
+  // Das Menü zeichnet seinen Inhalt erst beim Öffnen und setzt dann selbst den Fokus (auf sich): danach ins Suchfeld –
+  // aber nur, solange der Fokus noch auf dem Menü selbst liegt, nicht wenn schon ein Eintrag gewählt ist.
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const field = useCallback((el: HTMLInputElement | null) => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    if (!el) {
+      setQuery("");
+      return;
+    }
+    const focus = () => {
+      const menu = el.closest("[role=menu]");
+      if (document.activeElement === menu || !menu?.contains(document.activeElement)) el.focus({ preventScroll: true });
+    };
+    timers.current = [0, 60, 160].map((ms) => setTimeout(focus, ms));
+  }, []);
+  const labels = ["Turn into", "Color", ...(props.blockLink ? ["Copy link to block"] : []), "Duplicate", "Move to", "Delete", "Copy as Markdown", "Copy and sync"];
+  const none = !labels.some(show);
+  // Aufbau wie das Seitenmenü der Shell und Notions Blockmenü: Suchfeld, Blocktyp als Kopf, Gruppen mit Trennlinie,
+  // Icons, Kürzel rechts, unten „Last edited“ mit Wort- und Zeichenzahl.
   return (
     <DragHandleMenu>
-      <TurnIntoItem session={props.session} />
-      <DuplicateItem duplicate={props.duplicate} />
-      <MoveToItem session={props.session} startMove={props.startMove} />
-      <CopyMarkdownItem session={props.session} />
-      <BlockColorsItem>Colors</BlockColorsItem>
-      <CopyAndSyncItem session={props.session} />
-      {props.blockLink ? <CopyLinkItem link={props.blockLink} notify={props.notify} /> : null}
-      <RemoveBlockItem>Delete</RemoveBlockItem>
+      <MenuFilter.Provider value={q}>
+        <input ref={field} className="bx-menu-search" type="text" placeholder="Search actions…" aria-label="Search actions" value={query} autoComplete="off" spellCheck={false}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            const items = () => [...(e.currentTarget.closest("[role=menu]")?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              e.stopPropagation();
+              const all = items();
+              all[e.key === "ArrowDown" ? 0 : all.length - 1]?.focus();
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              if (q !== "") items()[0]?.click();
+            } else if (e.key === "Escape" && query !== "") {
+              e.preventDefault();
+              e.stopPropagation();
+              setQuery("");
+            } else if (e.key !== "Escape" && e.key !== "Tab") e.stopPropagation(); // getippt wird ins Feld, nicht ins Menü
+          }} />
+        {q === "" ? <BlockMenuHead /> : null}
+        {show("Turn into") ? <TurnIntoItem session={props.session} /> : null}
+        {show("Color") ? <BlockColorsItem><MenuIcon name="color" />Color</BlockColorsItem> : null}
+        {q === "" ? <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" /> : null}
+        {props.blockLink && show("Copy link to block") ? <CopyLinkItem link={props.blockLink} notify={props.notify} /> : null}
+        {show("Duplicate") ? <DuplicateItem duplicate={props.duplicate} /> : null}
+        {show("Move to") ? <MoveToItem session={props.session} startMove={props.startMove} /> : null}
+        {show("Delete") ? <RemoveBlockItem><MenuIcon name="trash" />Delete<span className="bx-menu-key">Del</span></RemoveBlockItem> : null}
+        {q === "" ? <Components.Generic.Menu.Divider className="bn-menu-divider bx-menu-sep" /> : null}
+        {show("Copy as Markdown") ? <CopyMarkdownItem session={props.session} /> : null}
+        {show("Copy and sync") ? <CopyAndSyncItem session={props.session} /> : null}
+        {none ? <div className="bx-menu-empty" role="status">No actions</div> : null}
+        {q === "" ? <BlockMenuFoot session={props.session} /> : null}
+      </MenuFilter.Provider>
     </DragHandleMenu>
+  );
+}
+
+/** Suchtext des Blockmenüs (klein geschrieben), für spätere Einträge, die sich selbst filtern. */
+const MenuFilter = createContext("");
+
+/** Name des Blocktyps für den Kopf des Blockmenüs. */
+const BLOCK_NAMES: Readonly<Record<string, string>> = {
+  paragraph: "Text", bulletListItem: "Bulleted list", numberedListItem: "Numbered list", checkListItem: "To-do list",
+  toggleListItem: "Toggle list", quote: "Quote", codeBlock: "Code", table: "Table", image: "Image", video: "Video",
+  audio: "Audio", file: "File", divider: "Divider",
+};
+export function blockTypeName(b: BlockLike): string {
+  if (b.type === "heading") return `Heading ${String(b.props?.level ?? 1)}`;
+  const known = BLOCK_NAMES[b.type] ?? TURN_INTO.find((o) => o.type === b.type)?.label;
+  if (known) return known;
+  // eigene Blöcke: „pageLink“ → „Page link“
+  const words = b.type.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function BlockMenuHead() {
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  const a = editor as unknown as ActionEditor;
+  const current = block ? a.getBlock(block.id) : undefined;
+  if (!current) return null;
+  const n = targetBlocks(a, current.id).length;
+  return <div className="bx-menu-head" data-testid="block-menu-head">{n > 1 ? `${n} blocks` : blockTypeName(current)}</div>;
+}
+
+/** Sekunden seit 2001-01-01 (Swift) → Datum. */
+const SWIFT_EPOCH = 978307200;
+
+function BlockMenuFoot(props: { session: DocSession }) {
+  const editor = useBlockNoteEditor() as unknown as BasedEditor;
+  const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
+  const a = editor as unknown as ActionEditor;
+  const current = block ? a.getBlock(block.id) : undefined;
+  if (!current) return null;
+  const text = inlineText(current.content).trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  const at = props.session.store.blocks.get(current.id)?.updatedAt;
+  const when = typeof at === "number" && at > 0
+    ? new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date((at + SWIFT_EPOCH) * 1000))
+    : undefined;
+  if (!when && !text) return null;
+  return (
+    <div className="bx-menu-foot" data-testid="block-menu-foot">
+      {when ? <span>Last edited {when}</span> : null}
+      {Array.isArray(current.content) ? <span>{words} {words === 1 ? "word" : "words"} · {text.length} {text.length === 1 ? "character" : "characters"}</span> : null}
+    </div>
   );
 }
 
@@ -953,11 +1165,11 @@ function DuplicateItem(props: { duplicate: (blocks: readonly BlockLike[]) => unk
   const block = useExtensionState(SideMenuExtension, { editor, selector: (s) => s?.block });
   if (!block) return null;
   return (
-    <Components.Generic.Menu.Item className="bn-menu-item" icon={<MenuGlyph name="duplicate" />} onClick={() => {
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={() => {
       const a = editor as unknown as ActionEditor;
       props.duplicate(targetBlocks(a, block.id));
     }}>
-      Duplicate <span className="bx-menu-key">⌘D</span>
+      <MenuIcon name="duplicate" />Duplicate<span className="bx-menu-key">⌘D</span>
     </Components.Generic.Menu.Item>
   );
 }
@@ -975,7 +1187,7 @@ function CopyMarkdownItem(props: { session: DocSession }) {
       lastMarkdownCopy = md;
       void globalThis.navigator?.clipboard?.writeText(md).catch(() => { /* ohne Berechtigung: lastMarkdownCopy */ });
     }}>
-      Copy as Markdown
+      <MenuIcon name="markdown" />Copy as Markdown
     </Components.Generic.Menu.Item>
   );
 }
@@ -1000,7 +1212,7 @@ function MoveToItem(props: { session: DocSession; startMove: (req: MoveRequest) 
       const a = editor as unknown as ActionEditor;
       props.startMove({ editor: a, session: props.session, ids: targetBlocks(a, block.id).map((b) => b.id) });
     }}>
-      Move to
+      <MenuIcon name="move" />Move to<span className="bx-menu-key">⌘⇧P</span>
     </Components.Generic.Menu.Item>
   );
 }
@@ -1023,14 +1235,23 @@ function AnchoredMenus({ children }: { children: ReactNode }) {
     // Icons wie im Seitenmenü „…“ – auch für die Einträge, die BlockNote selbst zeichnet (Colors, Delete).
     const Item = components.Generic.Menu.Item;
     const WithIcon: typeof Item = (p) => {
+      // Einträge mit eigenem MenuIcon (Blockmenü der Tagschicht 12.11.) bringen ihr Icon im Text mit; „Delete“ bleibt rot.
+      const label = typeof p.children === "string" ? p.children : Array.isArray(p.children) ? p.children.find((c): c is string => typeof c === "string") : undefined;
+      const danger = label === "Delete" ? " bx-menu-danger" : "";
       const name = typeof p.children === "string" ? BLOCK_MENU_ICONS[p.children] : undefined;
-      if (!name || p.icon) return <Item {...p} />;
-      return <Item {...p} icon={<MenuGlyph name={name} />} className={(p.className ?? "") + (p.children === "Delete" ? " bx-menu-danger" : "")} />;
+      if (!name || p.icon) return <Item {...p} className={(p.className ?? "") + danger} />;
+      return <Item {...p} icon={<MenuGlyph name={name} />} className={(p.className ?? "") + danger} />;
     };
     return { ...components, Generic: { ...components.Generic, Menu: { ...components.Generic.Menu, Root: Anchored, Item: WithIcon } } };
   }, [components]);
   return <ComponentsContext.Provider value={value}>{children}</ComponentsContext.Provider>;
 }
+
+/** Icon je Ziel in „Turn into“ (Schlüssel aus TURN_INTO). */
+const TURN_ICONS: Readonly<Record<string, MenuIconName>> = {
+  paragraph: "text", h1: "h1", h2: "h2", h3: "h3", bullet: "bullet", numbered: "numbered", todo: "todo", toggle: "toggle",
+  quote: "quote", code: "code", callout: "callout",
+};
 
 /** BSD-207: „Turn into“ als Untermenü – alle Blöcke mit Text, Callout eingeschlossen, dazu „Page“. */
 function TurnIntoItem(props: { session: DocSession }) {
@@ -1044,20 +1265,20 @@ function TurnIntoItem(props: { session: DocSession }) {
   return (
     <Components.Generic.Menu.Root position="right" sub={true} portalElement={portalElement}>
       <Components.Generic.Menu.Trigger sub={true}>
-        <Components.Generic.Menu.Item className="bn-menu-item" subTrigger={true}>Turn into</Components.Generic.Menu.Item>
+        <Components.Generic.Menu.Item className="bn-menu-item" subTrigger={true}><MenuIcon name="turn" />Turn into</Components.Generic.Menu.Item>
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown sub={true} className="bn-menu-dropdown">
         {TURN_INTO.map((o) => (
           <Components.Generic.Menu.Item key={o.key} className="bn-menu-item" checked={isCurrent(current, o)}
             onClick={() => turnInto(a, targetBlocks(a, current.id), o)}>
-            {o.label}
+            <MenuIcon name={TURN_ICONS[o.key] ?? "text"} />{o.label}
           </Components.Generic.Menu.Item>
         ))}
         <Components.Generic.Menu.Item key={TURN_INTO_EQUATION.key} className="bn-menu-item" onClick={() => turnIntoEquation(a, targetBlocks(a, current.id))}>
-          {TURN_INTO_EQUATION.label}
+          <MenuIcon name="equation" />{TURN_INTO_EQUATION.label}
         </Components.Generic.Menu.Item>
         <Components.Generic.Menu.Item key={TURN_INTO_PAGE.key} className="bn-menu-item" onClick={() => void turnIntoPage(a, props.session, current.id)}>
-          {TURN_INTO_PAGE.label}
+          <MenuIcon name="page" />{TURN_INTO_PAGE.label}
         </Components.Generic.Menu.Item>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
@@ -1075,7 +1296,7 @@ function CopyLinkItem(props: { link: (id: string) => string; notify: (m: string)
       const url = props.link(block.id);
       void Promise.resolve(globalThis.navigator?.clipboard?.writeText(url)).then(() => props.notify("Link to block copied"), () => props.notify("Couldn’t copy the link"));
     }}>
-      Copy link to block
+      <MenuIcon name="link" />Copy link to block
     </Components.Generic.Menu.Item>
   );
 }
@@ -1091,7 +1312,7 @@ function CopyAndSyncItem(props: { session: DocSession }) {
       const ids = selected && selected.some((b) => b.id === block.id) ? selected.map((b) => b.id) : [block.id];
       void copyAndSync(editor, props.session, ids);
     }}>
-      Copy and sync
+      <MenuIcon name="sync" />Copy and sync
     </Components.Generic.Menu.Item>
   );
 }
