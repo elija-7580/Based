@@ -483,6 +483,8 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 .bx-editor .bn-inline-content a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: var(--space-half); }
 .bx-editor .bn-inline-content a:hover { text-decoration-color: var(--ink); }
 .bx-editor input[type="checkbox"] { accent-color: var(--ink); }
+/* BSD-359: BlockNote zeichnet das To-do-Kästchen 12 × 24 (für das Systemkästchen); in Based-Optik quadratisch, mittig. */
+.bx-editor .bn-block-content[data-content-type=checkListItem] > div > input { width: var(--icon-sm); height: var(--icon-sm); margin-block: auto; margin-left: 0; }
 
 /* Blockmenü (am Griff ⋮⋮) im Stil des Seitenmenüs der Shell: Icon, Text, Kürzel rechts, Gruppen mit Trennlinie,
    Blocktyp als Kopf, „Last edited“ als Fuß. Die Menüs hängen als Portal außerhalb von .bx-editor. */

@@ -222,3 +222,25 @@ test("Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfu
   // Rechtschreibprüfung ist eine eigene Einstellung und bleibt an
   expect(await page.evaluate(() => document.body.spellcheck)).toBe(true);
 });
+
+// BSD-359: Kästchen in Based-Optik (keine Systemzeichnung), Leertaste schaltet weiter, Rolle bleibt „checkbox“.
+test("Kästchen und Optionsfelder: Based-Zeichnung, Tastatur und Rolle unverändert", async ({ page }) => {
+  await fresh(page);
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  const box = page.locator(".bx-editor input[type=checkbox]").first();
+  await expect(box).toBeVisible();
+  const look = () => box.evaluate((el) => { const s = getComputedStyle(el); return { appearance: s.appearance || s.getPropertyValue("-webkit-appearance"), bg: s.backgroundColor, border: s.borderTopColor, w: Math.round(el.getBoundingClientRect().width) }; });
+  const tok = (name: string) => page.evaluate((n) => { const p = document.createElement("i"); p.style.color = `var(--${n})`; document.body.append(p); const c = getComputedStyle(p).color; p.remove(); return c; }, name);
+  const off = await look();
+  expect(off.appearance).toBe("none");
+  expect(off.border).toBe(await tok("control-border"));
+  expect(off.w).toBe(16);
+  expect(await box.evaluate((el) => Math.round(el.getBoundingClientRect().height))).toBe(16); // quadratisch
+  await expect(page.getByRole("checkbox").first()).toBeVisible();
+  await box.focus();
+  await page.keyboard.press("Space");
+  await expect(box).toBeChecked();
+  expect((await look()).bg).toBe(await tok("button"));
+  await box.click(); // (der Editor zeichnet das Kästchen nach dem Umschalten neu, der Fokus bleibt nicht darauf)
+  await expect(box).not.toBeChecked();
+});

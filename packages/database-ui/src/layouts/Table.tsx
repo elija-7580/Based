@@ -49,7 +49,9 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
         {agent && <span className="dbui-agent-bar" role="img" aria-label="Changed by Based" />}
         {onSelect && (
           <input type="checkbox" className="dbui-row-check" tabIndex={-1} checked={selected} aria-label={`Select ${plainText(row.text) || "Untitled"}`}
-            onClick={(e) => { e.preventDefault(); onSelect(row, e.shiftKey); }} onChange={() => undefined} />
+            // BSD-359: kein preventDefault – sonst setzt der Browser das Häkchen nach dem Klick zurück und die gewählte Zeile
+            // zeigt ein leeres Kästchen; der Zustand kommt ohnehin aus `selected`.
+            onClick={(e) => onSelect(row, e.shiftKey)} onChange={() => undefined} />
         )}
         <button type="button" className="dbui-row-handle" aria-label="Row actions" tabIndex={-1} onClick={(e) => onMenu(row, e.currentTarget)}><Icon name="more" size={14} /></button>
       </div>
