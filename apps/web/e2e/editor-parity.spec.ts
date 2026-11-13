@@ -164,7 +164,7 @@ test("Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach d
     await expect(ed.locator("[data-content-type=quote]")).toHaveText("Stay calm and ship.");
     const code = ed.locator("[data-content-type=codeBlock]");
     await expect(code).toContainText("const answer = 42;");
-    await expect(code).toHaveAttribute("data-language", "ts");
+    await expect(code).toHaveAttribute("data-language", "typescript"); // BSD-343: „ts“ wird als TypeScript angezeigt
     const table = ed.locator("[data-content-type=table]");
     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
