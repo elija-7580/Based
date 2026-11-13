@@ -1,0 +1,61 @@
+failure b78c2d6dbc6311edc1d5ae5d60645458ccb255a8
+  1) [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByRole('treeitem', { name: 'Untitled', exact: true })
+    Expected: 2
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByRole('treeitem', { name: 'Untitled', exact: true }) with timeout 5000ms
+      - waiting for getByRole('treeitem', { name: 'Untitled', exact: true })
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      108 |   await page.keyboard.press("Enter");
+      109 |   await expect(menu).toBeHidden();
+    > 110 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+          |                                                                               ^
+      111 | });
+      112 |
+        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:110:79
+
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator:  getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
+    Expected: focused
+    Received: inactive
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeFocused" getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' }) with timeout 5000ms
+      - waiting for getByRole('menu', { name: 'Page menu' }).getByRole('menuitem', { name: 'Duplicate' })
+        14 × locator resolved to <button type="button" role="menuitem" class="menu-item">…</button>
+           - unexpected value "inactive"
+
+
+      105 |   await expect(menu.getByRole("menuitem", { name: /Find in page/ })).toBeFocused();
+      106 |   await page.keyboard.press("ArrowDown");
+    > 107 |   await expect(menu.getByRole("menuitem", { name: "Duplicate" })).toBeFocused();
+          |                                                                   ^
+      108 |   await page.keyboard.press("Enter");
+      109 |   await expect(menu).toBeHidden();
+      110 |   await expect(page.getByRole("treeitem", { name: "Untitled", exact: true })).toHaveCount(2);
+        at /home/runner/work/Based/Based/apps/web/e2e/shortcuts.spec.ts:107:67
+
+    Error Context: test-results/shortcuts-Kopfzeile-„Edite-eb5cd-nü-mit-allen-Seitenaktionen-chromium-retry1/error-context.md
+
+  1 failed
+    [chromium] › e2e/shortcuts.spec.ts:85:1 › Kopfzeile: „Edited …“ und •••-Menü mit allen Seitenaktionen 
+  9 skipped
+  127 passed (3.9m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=2/2 --grep-invert @perf
