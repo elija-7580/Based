@@ -1,61 +1,61 @@
-cancelled e688ac9efa62f329c3c9039949a4da9a4a4a02b0
-  ✓   22 [webkit] › e2e/block-editor.spec.ts:300:1 › @ erwähnt eine Seite (3.2s)
-  ✓   23 [webkit] › e2e/brain.spec.ts:161:1 › workspace answer with sources: the citation jumps to the block (5.0s)
-  ✓   24 [webkit] › e2e/block-editor.spec.ts:320:1 › Spaltenbreite ziehen (5.7s)
-  -   26 [webkit] › e2e/block-editor.spec.ts:349:3 › Screenshots neuer Editor (light)
-  -   27 [webkit] › e2e/block-editor.spec.ts:349:3 › Screenshots neuer Editor (dark)
-  ✓   25 [webkit] › e2e/brain.spec.ts:166:1 › memory suggestions are saved only after Save (5.6s)
-  -   29 [webkit] › e2e/brain.spec.ts:188:1 › Screenshots web-brain-*
-  ✓   30 [webkit] › e2e/brain.spec.ts:222:1 › trashing the Agent Brain shows why it stays (6.4s)
-  -   31 [webkit] › e2e/brain.spec.ts:233:1 › Screenshots web-brain-refused-*
-  ✓   28 [webkit] › e2e/chat.spec.ts:40:1 › ⌘J → Frage → gestreamte Antwort mit Tool-Karte → Seite angelegt → nach Neuladen noch da @smoke (12.4s)
-(node:7221) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   33 [webkit] › e2e/chat.spec.ts:104:1 › Stop bricht ab; Nachricht während der Antwort wartet und folgt (4.1s)
-  ✓   34 [webkit] › e2e/chat.spec.ts:126:1 › Fehler mit Retry (4.3s)
-  ✓   32 [webkit] › e2e/chatgpt.spec.ts:54:1 › ChatGPT über Codex: Anbieter wählen, Status, Chat-Turn (10.9s)
-  ✓   35 [webkit] › e2e/chat.spec.ts:138:1 › Vollseite und zurück ins Panel (5.5s)
-(node:7527) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   36 [webkit] › e2e/coding.spec.ts:84:1 › ohne Server: ehrlicher Hinweis (1.6s)
-  ✓   37 [webkit] › e2e/chat.spec.ts:153:1 › Einstellungen: Schlüssel nie im Klartext im localStorage (6.0s)
-  -   39 [webkit] › e2e/chat.spec.ts:171:1 › Screenshots web-chat-*
-(node:7822) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   38 [webkit] › e2e/coding.spec.ts:89:1 › Sitzung starten, Prompt, Freigabe aus der Inbox → Datei geändert (14.4s)
-  ✓   41 [webkit] › e2e/coding.spec.ts:127:1 › BSD-251: Gespräche aus Claude Code und Codex stehen im Chat, lassen sich lesen; Fortsetzen sagt ehrlich, was fehlt (11.7s)
-  ✓   40 [webkit] › e2e/collab.spec.ts:55:1 › Echtzeit-Text: zwei Geräte schreiben in denselben Absatz, live und ohne Doppelungen (26.6s)
-  ✓   42 [webkit] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus (13.7s)
-  ✓   43 [webkit] › e2e/crash-report.spec.ts:23:1 › Ohne Einwilligung kein Hinweis; Settings bietet den Bericht trotzdem von Hand an (6.9s)
-  ✓   45 [webkit] › e2e/crash-report.spec.ts:45:1 › Mit Einwilligung: Hinweis beim Start, Vorschau ohne Inhalte, Abbrechen, danach nicht noch einmal (7.4s)
-  ✓   44 [webkit] › e2e/coding.spec.ts:306:1 › BSD-314: Terminal-Reiter – echo im Arbeitsordner, Farben hell/dunkel, Größe folgt dem Fenster (13.1s)
-  ✓   47 [webkit] › e2e/coding.spec.ts:364:1 › BSD-315: #coding auf dem Handy (390 × 844) (7.8s)
-  ✓   46 [webkit] › e2e/crash-report.spec.ts:81:1 › Checkliste: Hinweis und Settings-Abschnitt in drei Größen, hell und dunkel – im Fenster, ohne waagrechtes Rollen (16.0s)
-  ✓   49 [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus (10.9s)
-  ✓   50 [webkit] › e2e/database-click.spec.ts:64:1 › Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Maus, auch nach dem Scrollen der Seite (11.0s)
-  ✓   51 [webkit] › e2e/database-click.spec.ts:100:1 › Kästchen der ausgewählten Zeile ist gesetzt (5.2s)
-  ✓   52 [webkit] › e2e/database-create.spec.ts:19:1 › „/Linked view of database“ zeigt eine Datenbank einer anderen Seite und bleibt aktuell @smoke (11.3s)
-  ✓   53 [webkit] › e2e/database-create.spec.ts:49:1 › Vorlagen: anlegen, als Standard setzen, „New“ nutzt sie, löschen (10.0s)
-  ✓   54 [webkit] › e2e/database-edges.spec.ts:44:1 › Ganzseitige Datenbank: Titel, Tab und erste Spalte auf einer Kante (4.6s)
-  ✓   55 [webkit] › e2e/database-edges.spec.ts:65:1 › Inline-Datenbank: Tab und erste Spalte am Seitentext (6.9s)
-  ✓   56 [webkit] › e2e/database-inline.spec.ts:47:1 › Inline-Tabelle: keine eigene Bildlaufleiste, Load more, Werkzeuge beim Überfahren, Open as full page @smoke (12.9s)
-  ✓   57 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-list: wächst mit der Seite, Load more (10.8s)
-  ✓   58 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-gallery: wächst mit der Seite, Load more (11.8s)
-  ✓   59 [webkit] › e2e/database-inline.spec.ts:91:3 › Inline-board: wächst mit der Seite, Load more (10.6s)
-  ✓   60 [webkit] › e2e/database-polish.spec.ts:6:1 › Inline-Tabelle: leere Titel bleiben leer, Zelleneditor ist ein BasedField, kein Rahmen um den Block (8.7s)
-  ✓   61 [webkit] › e2e/database-select.spec.ts:11:1 › Zeilen wählen, Bereich mit ⇧, alle; Duplizieren, Löschen, in Tabs öffnen (6.1s)
-  ✓   62 [webkit] › e2e/database-views.spec.ts:109:1 › Peek: öffnen, blättern (Buttons und ⌃⇧↑/↓), Esc, Neuladen, Center Peek, Full page @smoke (22.9s)
-  ✓   63 [webkit] › e2e/database-views.spec.ts:214:1 › Formular: Fragen bearbeiten, ausfüllen, Pflicht/Typ prüfen, absenden → Zeile da (12.7s)
-  ✓   64 [webkit] › e2e/database-views.spec.ts:271:1 › Datumsfilter: Zeitraum, dessen Ende im Fenster liegt, bleibt sichtbar (3.7s)
-  ✓   65 [webkit] › e2e/database-views.spec.ts:301:1 › Karte: Pins offline, Auswahl zeigt die Zeilenkarte, „No location“, Ort von Hand eingeben (7.4s)
-  ✓   66 [webkit] › e2e/database-views.spec.ts:460:1 › Files-&-Media-Property: Datei hochladen, nach Neuladen da, öffnet als Blob (BSD-208) (6.5s)
-[webkit] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
-  ✘   48 [webkit] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (3.0m)
-  ✓   67 [webkit] › e2e/database-views.spec.ts:490:1 › BSD-216: Dashboard – Widgets aus anderer Quelle, verschieben, Breite, Zeilenhöhe, entfernen (11.7s)
-  ✓   69 [webkit] › e2e/database-views.spec.ts:534:1 › BSD-216 Teil 2: Diagramm – Farben und Höhe (5.1s)
-  ✓   70 [webkit] › e2e/database-views.spec.ts:558:1 › BSD-216 Teil 3: Personen aus einer Liste wählen (schon verwendete Namen) (6.6s)
-  ✓   71 [webkit] › e2e/database-views.spec.ts:576:1 › BSD-225 Teil 2 / BSD-293: Property per AI ausfüllen (Skript-Engine), ⌘Z/⇧⌘Z in der Datenbank (5.7s)
-  ✓   72 [webkit] › e2e/database-views.spec.ts:607:1 › BSD-238 Teil 3: Pfeiltasten wandern zwischen Kalender-Einträgen und Timeline-Balken (6.5s)
-  ✓   73 [webkit] › e2e/database-views.spec.ts:641:1 › BSD-238: Pfeiltasten wandern zwischen Board-Karten und Listenzeilen, ⇧F10 öffnet das Zeilenmenü (6.6s)
-  ✓   74 [webkit] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (5.3s)
-  ✓   75 [webkit] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (9.2s)
+failure 099cd95d88bb38082d5d6d213d382df107b3fea5
+      168 |     const table = ed.locator("[data-content-type=table]");
+      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
+      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
+        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
+
+    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit-retry1/error-context.md
+
+  2) [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Row 30"
+    Received: "Row 41"
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      25 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
+      26 |   await page.mouse.click(x, y);
+    > 27 |   await expect.poll(() => activeRow(page)).toBe(under);
+         |                                            ^
+      28 |   await page.keyboard.press("Escape"); // Zelleneditor zu
+      29 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
+      30 | }
+        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:27:44)
+        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:46:40
+
+    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
+
+  3) [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+
+    Error: page.reload: Navigation canceled by policy check
+    Call log:
+      - waiting for navigation until "load"
+
+
+      89 |   await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+      90 |   expect((await fetch(`${serverURL}/share/v1/links/${link.id}/revoke`, { method: "POST", headers: owner })).ok).toBe(true);
+    > 91 |   await page.reload();
+         |              ^
+      92 |   await expect(page.getByRole("heading", { name: "This link no longer works" })).toBeVisible({ timeout: 20_000 });
+      93 |   await expect(page.getByTestId("based-root")).toHaveCount(0);
+      94 |   await page.getByRole("button", { name: "Open Based" }).click();
+        at /home/runner/work/Based/Based/apps/web/e2e/guest.spec.ts:91:14
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+    Error Context: test-results/guest-Teil-3-widerrufener--98ff8-leeren-Gast-Arbeitsbereichs-webkit/error-context.md
+
+  1 failed
+    [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
+  2 flaky
+    [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
+    [webkit] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs 
+  16 skipped
+  150 passed (14.5m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf
