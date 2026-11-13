@@ -1,61 +1,61 @@
-failure 099cd95d88bb38082d5d6d213d382df107b3fea5
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
-    Timeout:  5000ms
+success d77cd3b0fb62678c1a2927347411ba564ba4d2a2
+  ✓  166 [chromium] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.9s)
+  ✓  167 [chromium] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (2.6s)
+  ✓  163 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (13.4s)
+  ✓  168 [chromium] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.0s)
+  ✓  170 [chromium] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (2.3s)
+  ✓  171 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.8s)
+  ✓  169 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (11.0s)
+
+
+  1) [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('menuitem', { name: 'Copy link to block' })
+
+
+      27 |     await target.locator(".bn-block-content").hover();
+      28 |     await page.locator(".bn-side-menu [draggable=true]").first().click();
+    > 29 |     await page.getByRole("menuitem", { name: "Copy link to block" }).click();
+         |                                                                      ^
+      30 |     const copied = await page.evaluate(() => navigator.clipboard.readText());
+      31 |     expect(copied).toContain(`#page-${pageID}/${blockID}`);
+      32 |   }
+        at /home/runner/work/Based/Based/apps/web/e2e/block-link.spec.ts:29:70
+
+    Error Context: test-results/block-link-Link-zu-einem-Block-kopieren-und-öffnen-chromium/error-context.md
+
+  2) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
 
     Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
-           - unexpected value "typescript"
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      165 |     const code = ed.locator("[data-content-type=codeBlock]");
-      166 |     await expect(code).toContainText("const answer = 42;");
-    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
-          |                        ^
-      168 |     const table = ed.locator("[data-content-type=table]");
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toHaveAttribute(expected) failed
-
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
-           - unexpected value "typescript"
-
-
-      165 |     const code = ed.locator("[data-content-type=codeBlock]");
-      166 |     await expect(code).toContainText("const answer = 42;");
-    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
-          |                        ^
-      168 |     const table = ed.locator("[data-content-type=table]");
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
-
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
-
-  2 failed
+  2 flaky
+    [chromium] › e2e/block-link.spec.ts:9:1 › Link zu einem Block kopieren und öffnen ──────────────
     [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
-    [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
   8 skipped
-  159 passed (6.0m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+  159 passed (5.9m)
