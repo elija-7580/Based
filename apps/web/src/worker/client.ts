@@ -46,7 +46,7 @@ export class RequestCancelled extends Error {
 }
 
 /** BSD-336: Anfragen, die etwas speichern (Lesen, Suchen, Öffnen zählen nicht). */
-const WRITE_TYPES = new Set(["command", "applyLocal", "commitImport", "importAsset", "assetPut", "ydocSave", "setSync", "discardImport"]);
+const WRITE_TYPES = new Set(["command", "applyLocal", "commitImport", "importAsset", "assetPut", "ydocSave", "discardImport"]);
 const READ_COMMANDS = new Set(["pageAncestors"]);
 function isWrite(req: Request): boolean {
   if (!WRITE_TYPES.has(req.type)) return false;

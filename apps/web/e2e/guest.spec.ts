@@ -98,6 +98,14 @@ test("Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235)", asyn
   await expect(nav.getByRole("button", { name: /^New page in/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Move to Trash" })).toHaveCount(0);
   await expect(page.getByTestId("sync-status")).toContainText("Shared link");
+  // Einstellungen → Sync & server: kein Server-Formular (der Link ist die Verbindung), nur der Hinweis
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Sync & server" }).click();
+  await expect(page.getByTestId("sync-guest")).toContainText("127.0.0.1");
+  await expect(page.getByLabel("Token")).toHaveCount(0);
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-guest-settings-sync-light.png" });
+  await page.getByRole("treeitem", { name: "Team Wiki" }).click();
+  await expect(content).toContainText("Welcome to the shared wiki");
   if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
     for (const theme of ["light", "dark"] as const) {
       await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);

@@ -46,7 +46,7 @@ export const SETTINGS_PAGES: readonly SettingsPageDef[] = [
   { id: "agents", group: "workspace", title: "Agents & AI", summary: "AI features, skills and memories.", ai: "missing", missing: ["API keys for AI providers", "Agents and the main agent", "Permissions", "Skills", "Sandbox cleanup"] },
   { id: "connections", group: "workspace", title: "Connections", summary: "MCP servers and other tools agents can use.", ai: "page", missing: ["MCP connections", "Tool permissions"] },
   { id: "import", group: "workspace", title: "Import", summary: "Bring in a Notion export or Markdown files, or take everything with you.", missing: [] },
-  { id: "sync", group: "workspace", title: "Sync & server", summary: "Use your workspace on your other devices.", missing: ["iCloud sync"] },
+  { id: "sync", group: "workspace", title: "Sync & server", summary: "Use your workspace on your other devices.", missing: [] },
   { id: "billing", group: "workspace", title: "Billing", summary: "Based is open source and free.", ai: "missing", missing: ["AI usage overview"] },
   { id: "updates", group: "workspace", title: "Updates", summary: "How this copy of Based stays current.", missing: ["Update channel", "Automatic update checks on or off"] },
   { id: "diagnostics", group: "workspace", title: "Diagnostics", summary: "What the app knows about its own state.", missing: ["Logs", "Hang reports", "Layout audit"] },

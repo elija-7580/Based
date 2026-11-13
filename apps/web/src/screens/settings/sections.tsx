@@ -18,7 +18,7 @@ import { checkForUpdates, isTauri } from "../../desktop.js";
 import { validateSyncForm } from "../../shell/settings.js";
 import { CrashReportsSection, DeveloperSection, LogSection, ProblemsSection, ReportsSection, StatusSection } from "./diagnostics.js";
 import { autoUpdatePref, deviceNode, newPageFormat, propertyRecordsSetting, spellCheckPref, startPage, syncConfig, weekStartPref } from "../../shell/storage.js";
-import { mayDeleteForever } from "../../shell/guest.js";
+import { isGuest, mayDeleteForever } from "../../shell/guest.js";
 import { weekStartForLocale } from "@based/core";
 import { Group, Row, Value } from "./parts.js";
 import { AiSettingsSection } from "../../chat/AiSettingsSection.js";
@@ -117,6 +117,19 @@ function SyncSection({ client, state }: SettingsSectionProps) {
     setConnected(false);
     void syncConfig.flush().then(() => client.setSync(undefined));
   };
+  // BSD-235: als Gast kein Server-Formular (Adresse/Token sind der geteilte Link; „Disconnect“ beendete den Gast-Modus)
+  if (isGuest()) {
+    let host = saved?.url ?? "";
+    try { host = new URL(host).host; } catch { /* Adresse bleibt */ }
+    return (
+      <Group>
+        <Row label="Shared link" hint="You're working on pages someone shared with you. Changes go straight to their Based server; nothing is kept on this device.">
+          <Value testID="sync-guest">{host || "Shared link"}</Value>
+        </Row>
+        <Row label="Status"><Value testID="sync-settings-status">{status.state === "memory" ? "Shared link" : SYNC_LABEL[status.state]}</Value></Row>
+      </Group>
+    );
+  }
   return (
     <Group>
       <Row label="Status" hint={status.persistent ? "Your workspace is saved in this browser." : "This browser can't keep your workspace — changes are lost when you close the tab."}>
