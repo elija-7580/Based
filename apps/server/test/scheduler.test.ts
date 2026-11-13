@@ -1,7 +1,8 @@
 // BSD-243: Zeitpläne laufen auch bei geschlossener App – der Server legt fällige Läufe als Run-Records an.
 import { afterEach, describe, expect, it } from "vitest";
 import { AgentStore, ChatStore, fromMs, MAIN_AGENT_ID, putRecord, RUN_TYPE, SCHEDULE_TYPE, listRecords, ScriptedEngine, WorkspaceTools, type RunData, type ScheduleData } from "@based/brain";
-import { serverModelFor } from "../src/agent-engine.js";
+import { MemoryPersistence, WorkspaceStore } from "@based/core";
+import { anthropicAgentEngine, serverModelFor } from "../src/agent-engine.js";
 import { startApp, TOKEN } from "./helpers.js";
 
 const apps: { close(): Promise<void> }[] = [];
@@ -95,6 +96,13 @@ describe("Server-Scheduler (BSD-243)", () => {
     expect(serverModelFor("anthropic/claude-opus-5-5", "d")).toBe("claude-opus-5-5");
     expect(serverModelFor("openai/gpt-5", "d")).toBe("d");
     expect(serverModelFor("claude-haiku-5", "d")).toBe("claude-haiku-5");
+    // BSD-392: Agent über 80 % Budget → Low-Modell des Servers (BASED_AGENT_LOW_MODEL), genaue Wahl bleibt
+    const lowStore = new WorkspaceStore({ node: "low", persistence: new MemoryPersistence() });
+    const make = anthropicAgentEngine(lowStore, { apiKey: "k", model: "claude-sonnet-5", lowModel: "claude-haiku-5" });
+    const policy = { mode: "free" as const };
+    expect((make({ policy, forceLow: true }) as { label: string }).label).toContain("claude-haiku-5");
+    expect((make({ policy }) as { label: string }).label).toContain("claude-sonnet-5");
+    expect((make({ policy, forceLow: true, model: "anthropic/claude-opus-5" }) as { label: string }).label).toContain("claude-opus-5");
   });
 });
 

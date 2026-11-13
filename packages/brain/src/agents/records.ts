@@ -90,6 +90,8 @@ export interface AgentData {
   model?: string;
   /** € je Kalendermonat; `undefined` = unbegrenzt. */
   monthlyBudgetEUR?: number;
+  /** BSD-392 (Swift `dailyTokenBudget`): Tokens je Kalendertag; ab 80 % Low, ab 100 % keine geplanten Läufe. `undefined` = unbegrenzt. */
+  dailyTokenBudget?: number;
   /** Ein Unteragent bis zu dieser Schätzung läuft ohne Bestätigung (€). */
   perTaskEUR?: number;
   /** Kurs für API-Kosten (Anbieter melden USD). */

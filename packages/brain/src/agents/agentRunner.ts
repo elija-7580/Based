@@ -10,7 +10,7 @@ import { runTurn } from "../engine.js";
 import type { StoredChatEvent } from "../events.js";
 import { historyFromEvents } from "../history.js";
 import type { ToolCall } from "../messages.js";
-import { mayContinue, spentThisMonth } from "./budget.js";
+import { budgetForceLow, mayContinue, scheduleBudgetStop, spentThisMonth } from "./budget.js";
 import { mainArgument, Permissions, targetPage } from "./permissions.js";
 import { PlanRecorder } from "../planmode.js";
 import { fromMs, isRunFinished, MAIN_AGENT_ID, toMs, type AgentData, type ProjectData, type Rec, type RunApproval, type RunData, type ScheduleData } from "./records.js";
@@ -38,6 +38,14 @@ export interface AgentEngineRequest {
   policy: ToolPolicy;
   /** BSD-250: Projekt des Laufs – sein Connection-Scope gilt zusätzlich zu dem des Agenten. */
   project?: ProjectData | undefined;
+  /**
+   * BSD-392: Budget ab 80 % (Monat oder Tages-Tokens) → das Modell auf Low routen (`routeModel(..., { forceLow })`).
+   * Ein ausdrücklich gewähltes Modell (`model`) bleibt; `forceLowReason` erklärt die Wahl.
+   */
+  forceLow?: boolean;
+  forceLowReason?: string;
+  /** Text des Auftrags (für die Routing-Regeln). */
+  task?: string;
 }
 
 export interface PendingRunApproval {
@@ -237,7 +245,12 @@ export class AgentRunner {
           this.o.onChange?.();
         }),
       };
-      const engine = await this.o.engine({ model: run.data.model, policy, ...(project ? { project: project.data } : {}) });
+      const agentID = run.data.agentID ?? MAIN_AGENT_ID;
+      const low = budgetForceLow(main, (await b.runs()).filter((r) => r.id !== runID), agentID, this.now());
+      const engine = await this.o.engine({
+        model: run.data.model, policy, ...(project ? { project: project.data } : {}), task: run.data.instructions ?? run.name,
+        ...(low.forceLow ? { forceLow: true, ...(low.reason ? { forceLowReason: low.reason } : {}) } : {}),
+      });
       if (!engine) {
         await b.updateRun(runID, { status: "failed", result: "No model is set up." });
         return;
@@ -245,7 +258,7 @@ export class AgentRunner {
       if (!chatID) chatID = (await b.chatCreate(run.name || "Agent run")).id;
       const chat = { id: chatID };
       await b.updateRun(runID, { chatID: chat.id, model: engine.label, ...(resume ? { resume: null } : {}) });
-      const spentBefore = spentThisMonth((await b.runs()).filter((r) => r.id !== runID), run.data.agentID ?? MAIN_AGENT_ID, this.now());
+      const spentBefore = spentThisMonth((await b.runs()).filter((r) => r.id !== runID), agentID, this.now());
       const prompt = resume
         ? `The user approved ${resume.name} now (Based was restarted while you waited). Run it again with the same input and finish the task.`
         : run.data.instructions ?? run.name;
@@ -289,15 +302,15 @@ export const runIsActive = (r: RunData) => !isRunFinished(r.status);
 
 /**
  * BSD-243: Lauf für einen fälligen Zeitplan (nach `claimSchedule`). Gemeinsame Regel für die App (AgentRunner) und
- * den Server-Scheduler: Monatsbudget des Agenten aufgebraucht → „cancelled“ mit Grund, sonst „queued“. Verpasste
+ * den Server-Scheduler: Monatsbudget aufgebraucht oder Tages-Token-Budget erreicht (BSD-392) → „cancelled“ mit Grund,
+ * sonst „queued“ (ab 80 % läuft er dann auf Low, siehe `budgetForceLow`). Verpasste
  * Termine holt `claimSchedule` höchstens einmal nach (es schiebt `nextAt` auf den nächsten künftigen Termin).
  */
 export function scheduledRun(s: Rec<ScheduleData>, main: AgentData, runs: readonly Rec<RunData>[], nowMs: number): NewRun {
-  const spent = spentThisMonth(runs, s.data.agentID, nowMs);
-  const exhausted = main.monthlyBudgetEUR !== undefined && spent >= main.monthlyBudgetEUR;
+  const stop = scheduleBudgetStop(main, runs, s.data.agentID, nowMs);
   return {
-    kind: "schedule", status: exhausted ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
+    kind: "schedule", status: stop ? "cancelled" : "queued", agentID: s.data.agentID, title: s.name, scheduleID: s.id, instructions: s.data.prompt,
     ...(s.data.projectID ? { projectID: s.data.projectID } : {}), ...(s.data.taskID ? { taskID: s.data.taskID } : {}),
-    ...(exhausted ? { result: `Skipped: monthly budget used up (${spent.toFixed(2)} € of ${main.monthlyBudgetEUR!.toFixed(2)} €)` } : {}),
+    ...(stop ? { result: `Skipped: ${stop}` } : {}),
   };
 }

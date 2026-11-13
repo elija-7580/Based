@@ -10,6 +10,8 @@ export interface ServerModelOptions {
   apiKey: string;
   /** Standardmodell, wenn der Lauf keines (oder eines anderen Anbieters) nennt. */
   model?: string | undefined;
+  /** BSD-392: Modell für Läufe, deren Agent über 80 % seines Budgets ist (BASED_AGENT_LOW_MODEL); ohne: das Standardmodell. */
+  lowModel?: string | undefined;
   baseURL?: string | undefined;
   fetch?: FetchLike;
 }
@@ -27,5 +29,6 @@ export function anthropicAgentEngine(store: WorkspaceStore, o: ServerModelOption
   const provider = new AnthropicProvider({ apiKey: o.apiKey, ...(o.baseURL ? { baseURL: o.baseURL } : {}), ...(o.fetch ? { fetch: o.fetch } : {}) });
   const tools = new WorkspaceTools(store);
   const fallback = o.model || DEFAULT_AGENT_MODEL;
-  return (req) => new ModelEngine({ provider, model: serverModelFor(req.model, fallback), tools, policy: req.policy });
+  const low = o.lowModel || fallback;
+  return (req) => new ModelEngine({ provider, model: serverModelFor(req.model, req.forceLow ? low : fallback), tools, policy: req.policy });
 }

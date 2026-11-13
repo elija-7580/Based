@@ -241,13 +241,14 @@ export class AiConfig {
    * BSD-242: Modell für eine Aufgabe. Mit Low/Auto/High nach `routeModel` (Anbieter des gewählten Modells zuerst),
    * sonst das gewählte Modell. ChatGPT (Codex) hat eigene Stufen und bleibt außen vor.
    */
-  modelFor(task: RouteTask): { choice: ModelChoice | undefined; route?: RouteDecision } {
-    const level = this.state.settings.compute;
+  modelFor(task: RouteTask, opts: { forceLow?: boolean } = {}): { choice: ModelChoice | undefined; route?: RouteDecision } {
+    // BSD-392: Budget des Agenten ab 80 % → Low, auch ohne eingestellte Stufe.
+    const level = this.state.settings.compute ?? (opts.forceLow ? "auto" : undefined);
     const active = this.activeModel();
     if (!level) return { choice: active };
     const usable = this.models().filter((m) => m.usable && m.kind !== "chatgpt");
     if (usable.length === 0) return { choice: active };
-    const route = routeModel(task, level, usable.map((m) => ({ ref: m.ref, ...(m.kind === "ollama" ? { onDevice: true } : {}) })), { defaultModel: active?.kind === "chatgpt" ? undefined : active?.ref });
+    const route = routeModel(task, level, usable.map((m) => ({ ref: m.ref, ...(m.kind === "ollama" ? { onDevice: true } : {}) })), { defaultModel: active?.kind === "chatgpt" ? undefined : active?.ref, ...(opts.forceLow ? { forceLow: true } : {}) });
     return { choice: usable.find((m) => m.ref === route.model) ?? active, route };
   }
 

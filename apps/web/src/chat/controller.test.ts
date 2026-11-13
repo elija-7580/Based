@@ -86,6 +86,10 @@ describe("AiConfig", () => {
     await cfg.setKey("anthropic", "sk-x");
     cfg.setModel("anthropic/claude-sonnet-4-5");
     expect(cfg.modelFor({ text: "hi" }).choice?.ref).toBe("anthropic/claude-sonnet-4-5"); // ohne Stufe: gewähltes Modell
+    // BSD-392: Agent-Budget ab 80 % → Low, auch ohne eingestellte Stufe; Begründung im Routing-Text
+    const forced = cfg.modelFor({ text: "Tell me something about the history of cats" }, { forceLow: true });
+    expect(forced.choice?.ref).toBe("anthropic/claude-haiku-4-5");
+    expect(forced.route?.reason).toContain("budget exceeded → Low");
     cfg.setCompute("low");
     const low = cfg.modelFor({ text: "Tell me something about the history of cats" });
     expect(low.route?.level).toBe("low");

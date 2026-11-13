@@ -3,7 +3,7 @@
 import { MemoryPersistence, WorkspaceStore, plainText } from "@based/core";
 import { describe, expect, it } from "vitest";
 import {
-  AgentRunner, AgentStore, budgetLevel, ChatStore, executeTool, formatEUR, fromMs, globMatch, MAIN_AGENT_ID, mayContinue, nextFire, parseLayer, parseSchedule,
+  AgentRunner, AgentStore, budgetForceLow, budgetLevel, ChatStore, routeModel, scheduleBudgetStop, tokensToday, type AgentEngineRequest, executeTool, formatEUR, fromMs, globMatch, MAIN_AGENT_ID, mayContinue, nextFire, parseLayer, parseSchedule,
   Permissions, ScriptedEngine, spentThisMonth, WorkspaceTools, type AgentRunBackend, type ChatEvent, type RunData,
 } from "../src/index.js";
 
@@ -93,6 +93,73 @@ describe("Budget", () => {
     expect(u!.data.costEUR).toBeCloseTo(0.6);
     expect(u!.data.subscriptionShare).toBe(0.06);
     expect(agents.snapshot().spentEUR).toBeCloseTo(0.6);
+  });
+});
+
+describe("Budget-Regel (BSD-392, wie Swift AgentBudget.forceLow/decide)", () => {
+  const run = (startedMs: number, costEUR: number, tokens = 0, agentID = MAIN_AGENT_ID) => ({ id: String(Math.random()), name: "r", createdAt: 0, updatedAt: 0, data: { v: 1, kind: "subagent", status: "done", agentID, title: "r", startedAt: fromMs(startedMs), usage: { inputTokens: tokens, outputTokens: 0, costUSD: 0 }, costEUR } as RunData });
+  const now = new Date(2026, 10, 13, 15).getTime();
+
+  it("Tages-Tokens zählen nur heute und nur diesen Agenten (Ein- + Ausgabe)", () => {
+    const r = run(new Date(2026, 10, 13, 1).getTime(), 0, 300);
+    r.data.usage.outputTokens = 200;
+    const runs = [r, run(new Date(2026, 10, 12, 23).getTime(), 0, 1000), run(now, 0, 999, "other")];
+    expect(tokensToday(runs, MAIN_AGENT_ID, now)).toBe(500);
+  });
+
+  it("ab 80 % Monatsbudget oder Tages-Token-Budget → Low; darunter nicht; ohne Budget nie", () => {
+    const main = (m?: number, d?: number) => ({ ...(m !== undefined ? { monthlyBudgetEUR: m } : {}), ...(d !== undefined ? { dailyTokenBudget: d } : {}) });
+    const runs = [run(new Date(2026, 10, 2).getTime(), 4), run(new Date(2026, 10, 13, 8).getTime(), 0, 800)];
+    expect(budgetForceLow(main(), runs, MAIN_AGENT_ID, now)).toEqual({ forceLow: false });
+    expect(budgetForceLow(main(10), runs, MAIN_AGENT_ID, now)).toEqual({ forceLow: false });
+    expect(budgetForceLow(main(5), runs, MAIN_AGENT_ID, now)).toEqual({ forceLow: true, reason: "monthly budget at 80 %" });
+    expect(budgetForceLow(main(undefined, 1000), runs, MAIN_AGENT_ID, now)).toEqual({ forceLow: true, reason: "daily token budget at 80 %" });
+    expect(budgetForceLow(main(undefined, 1001), runs, MAIN_AGENT_ID, now).forceLow).toBe(false);
+    // Tages-Budget 0 = ausgeschaltet (Swift: daily > 0)
+    expect(budgetForceLow(main(undefined, 0), runs, MAIN_AGENT_ID, now).forceLow).toBe(false);
+    // Begründung im Routing-Text
+    const models = [{ ref: "anthropic/claude-haiku-4-5" }, { ref: "anthropic/claude-sonnet-4-5" }, { ref: "anthropic/claude-opus-4-5" }];
+    const d = routeModel({ text: "Plan the quarter" }, "high", models, { defaultModel: "anthropic/claude-sonnet-4-5", forceLow: budgetForceLow(main(5), runs, MAIN_AGENT_ID, now).forceLow });
+    expect(d).toMatchObject({ level: "low", model: "anthropic/claude-haiku-4-5" });
+    expect(d.reason).toContain("budget exceeded → Low");
+  });
+
+  it("geplante Läufe stoppen bei erreichtem Tages-Token-Budget oder aufgebrauchtem Monatsbudget", () => {
+    const runs = [run(new Date(2026, 10, 2).getTime(), 4.5), run(new Date(2026, 10, 13, 8).getTime(), 0, 1000)];
+    expect(scheduleBudgetStop({ dailyTokenBudget: 1000 }, runs, MAIN_AGENT_ID, now)).toBe("daily token budget used up (1000 of 1000 tokens)");
+    expect(scheduleBudgetStop({ dailyTokenBudget: 1001 }, runs, MAIN_AGENT_ID, now)).toBeUndefined();
+    expect(scheduleBudgetStop({ monthlyBudgetEUR: 4.5 }, runs, MAIN_AGENT_ID, now)).toBe("monthly budget used up (4.50 € of 4.50 €)");
+    expect(scheduleBudgetStop({ monthlyBudgetEUR: 5 }, runs, MAIN_AGENT_ID, now)).toBeUndefined();
+  });
+
+  it("Runner: Agent über 80 % → Engine-Anfrage mit forceLow und Grund; Zeitplan bei Tages-Tokens übersprungen", async () => {
+    const { agents, store, setNow } = setup(now);
+    agents.saveMain((d) => { d.permissions.mode = "free"; d.monthlyBudgetEUR = 1; });
+    agents.createRun({ kind: "chat", status: "done", agentID: MAIN_AGENT_ID, title: "earlier", usage: { inputTokens: 0, outputTokens: 0, costUSD: 0.9 } });
+    agents.saveMain((d) => { d.eurPerUSD = 1; });
+    const queued = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "Cheap", instructions: "Summarize" });
+    const seen: AgentEngineRequest[] = [];
+    const runner = new AgentRunner({ backend: backend(agents, store), now: () => now, engine: (req) => { seen.push(req); return new ScriptedEngine({ script: [{ text: "ok" }] }); } });
+    await runner.start(queued.id);
+    expect(seen[0]).toMatchObject({ forceLow: true, task: "Summarize" });
+    expect(seen[0]!.forceLowReason).toMatch(/monthly budget at \d+ %/);
+
+    agents.saveMain((d) => { delete d.monthlyBudgetEUR; });
+    const fresh = agents.createRun({ kind: "subagent", status: "queued", agentID: MAIN_AGENT_ID, title: "Fresh", instructions: "x" });
+    await runner.start(fresh.id);
+    expect(seen[1]!.forceLow).toBeUndefined();
+
+    const { executePlan, assignTargets, parsePlan } = await import("../src/index.js");
+    const plan = parsePlan('{"actions":[{"type":"schedule","title":"Brief","when":"every 2h","prompt":"Brief"}]}');
+    if (!plan.ok) throw new Error(plan.error);
+    executePlan(store, { taskID: "t", input: "x", plan: plan.plan, decisions: {}, targets: assignTargets(plan.plan), confirmed: false, nowMs: now });
+    agents.saveMain((d) => { d.dailyTokenBudget = 10; });
+    agents.createRun({ kind: "chat", status: "done", agentID: MAIN_AGENT_ID, title: "tokens", usage: { inputTokens: 8, outputTokens: 2, costUSD: 0 } });
+    const later = now + 3 * 3_600_000;
+    setNow(later);
+    const c = new AgentRunner({ backend: backend(agents, store), engine: () => undefined, now: () => later });
+    expect(await c.fireSchedules()).toBe(1);
+    expect(agents.runs().find((r) => r.data.kind === "schedule")?.data).toMatchObject({ status: "cancelled", result: "Skipped: daily token budget used up (10 of 10 tokens)" });
   });
 });
 
