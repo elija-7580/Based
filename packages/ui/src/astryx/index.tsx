@@ -26,10 +26,12 @@ export interface BasedButtonProps {
   busy?: boolean;
   icon?: ReactNode;
   onClick?: () => void;
+  /** Genauerer Name für Screenreader, wenn das Label allein mehrdeutig ist (z. B. „Link“ in einer Liste). */
+  ariaLabel?: string;
 }
 
-export function BasedButton({ label, variant, size = "md", type = "button", disabled = false, busy = false, icon, onClick }: BasedButtonProps) {
-  return <Button label={label} variant={buttonVariant(variant)} size={size} type={type} isDisabled={disabled} isLoading={busy} icon={icon} {...(onClick ? { onClick: () => onClick() } : {})} />;
+export function BasedButton({ label, variant, size = "md", type = "button", disabled = false, busy = false, icon, onClick, ariaLabel }: BasedButtonProps) {
+  return <Button label={label} variant={buttonVariant(variant)} size={size} type={type} isDisabled={disabled} isLoading={busy} icon={icon} {...(onClick ? { onClick: () => onClick() } : {})} {...(ariaLabel ? { "aria-label": ariaLabel } : {})} />;
 }
 
 export interface BasedDialogProps {
