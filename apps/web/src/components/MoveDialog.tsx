@@ -1,10 +1,9 @@
 // „Move to…“: Ziel für eine oder mehrere Seiten wählen – Private, ein Teamspace oder eine andere Seite. Aus der
 // Seitenleiste (Seitenmenü) und der Library (Bulk-Aktion). Astryx-Dialog mit Suchfeld und Liste; die Ziele kommen aus
 // der Seitenleisten-Struktur, verschoben wird im Store-Worker (ein Undo-Schritt).
+import { BasedButton, BasedDialog } from "@based/ui/astryx";
 import { useReturnFocus } from "@based/ui/native";
-import { Button } from "@astryxdesign/core/Button";
-import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
-import { HStack, Layout, LayoutContent, LayoutFooter, VStack } from "@astryxdesign/core/Layout";
+import { VStack } from "@astryxdesign/core/Layout";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
@@ -95,12 +94,10 @@ export function MoveDialog({ client, state, ids, onClose, onMoved }: { client: S
   );
 
   return (
-    <Dialog isOpen onOpenChange={(open) => { if (!open) onClose(); }} width={480} purpose="info" data-testid="move-dialog">
-      <Layout
-        header={<DialogHeader title={`Move ${what} to`} onOpenChange={() => onClose()} />}
-        content={
-          <LayoutContent>
-            <VStack gap={3}>
+    // BSD-352: Hülle und Knopf aus @based/ui/astryx.
+    <BasedDialog open onClose={onClose} title={`Move ${what} to`} width={480} testID="move-dialog"
+      actions={<BasedButton label="Cancel" variant="ghost" onClick={onClose} />}>
+      <VStack gap={3}>
               <TextInput type="search" label="Find a page or teamspace" isLabelHidden placeholder="Find a page or teamspace" value={query} onChange={setQuery} hasAutoFocus hasClear />
               {error ? <p role="alert" className="dialog-error">{error}</p> : null}
               <div className="move-list">
@@ -122,16 +119,6 @@ export function MoveDialog({ client, state, ids, onClose, onMoved }: { client: S
                 {targets.sections.length + targets.pages.length === 0 ? <Text type="body" color="secondary">No matching destination.</Text> : null}
               </div>
             </VStack>
-          </LayoutContent>
-        }
-        footer={
-          <LayoutFooter>
-            <HStack gap={2} hAlign="end">
-              <Button label="Cancel" variant="ghost" onClick={onClose} />
-            </HStack>
-          </LayoutFooter>
-        }
-      />
-    </Dialog>
+    </BasedDialog>
   );
 }
