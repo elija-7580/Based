@@ -102,6 +102,8 @@ export {
   READ_ONLY_TYPES, RELATIVE_DATE_LABELS, calculationOptions, calculationText, formatDateCell, formatNumber, formatValue,
 } from "./query/display.js";
 export { changeAffects, databaseDependencies, watchDatabase } from "./query/dependencies.js";
+export { DEFAULT_GEOCODER, geocodeURL, lookupAddress, parseGeocode, tileURL, validateTiles, visibleTiles } from "./query/geocode.js";
+export type { GeocodeHit, GeocoderConfig, TileConfig } from "./query/geocode.js";
 // BSD-8: Kalender und Timeline – Datumslogik (Tagesraster, Zeiträume, Spuren, Zeitachse) und Schreib-Operationen.
 export {
   CALENDAR_PROPERTY_TYPES, SpanIndex, TIMELINE_SCALES, addMonths, calendarDateProperty, calendarEndProperty, dateOfDay, dayFromYMD, dayOf,
