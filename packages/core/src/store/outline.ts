@@ -51,6 +51,12 @@ export interface Outline {
 
 export const sectionKey = (id: string) => "section:" + id;
 
+/** Gehört die Datenbank diesem Block (nicht nur eine verknüpfte Ansicht)? */
+function ownsDatabase(store: WorkspaceStore, b: Block): boolean {
+  const db = b.props?.databaseID;
+  return db !== undefined && store.databases.get(db)?.blockID === b.id;
+}
+
 export function iconText(b: Block | undefined): string | undefined {
   const icon = b?.props?.icon;
   if (!icon) return undefined;
@@ -92,6 +98,13 @@ export function buildOutline(store: WorkspaceStore): Outline {
         nodes[id] = node;
         push(page ?? sectionKey(sec), id);
         visit("b:" + id, id, sec);
+      } else if (page && b.type === "databaseInline" && ownsDatabase(store, b)) {
+        // BSD-377: Inline-Datenbanken stehen wie in Notion unter ihrer Seite (verknüpfte Ansichten nicht).
+        const node: OutlineNode = { kind: "database", section, parent: page };
+        const icon = iconText(b);
+        if (icon) node.icon = icon;
+        nodes[id] = node;
+        push(page, id);
       } else {
         visit("b:" + id, page, section);
       }
