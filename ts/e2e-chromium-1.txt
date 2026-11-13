@@ -1,31 +1,28 @@
-success f7e1236955d2e6388bd0ad73a0e54bb886ce3c7b
-  ✓  116 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (2.3s)
-  ✓  118 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.8s)
-  ✓  119 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.7s)
-  ✓  120 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.3s)
-  -  121 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  122 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.6s)
-  ✓  123 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.3s)
-  ✓  117 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.6s)
-  ✓  124 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.3s)
-  ✓  125 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.4s)
-  ✓  126 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.1s)
-  ✓  128 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.4s)
-  ✓  127 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (3.2s)
-  ✓  130 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.8s)
-  ✓  129 [chromium] › e2e/interop.spec.ts:179:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.5s)
-  ✓  132 [chromium] › e2e/interop.spec.ts:210:1 › Word-Dokument (.docx) importieren (BSD-260) (2.5s)
-  ✓  133 [chromium] › e2e/interop.spec.ts:227:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (1.8s)
-  ✓  134 [chromium] › e2e/interop.spec.ts:241:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.6s)
-  ✓  135 [chromium] › e2e/interop.spec.ts:260:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.4s)
-  ✓  131 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (12.6s)
-  ✓  136 [chromium] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (3.0s)
-  ✓  138 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light) (2.0s)
-  ✓  139 [chromium] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark) (2.0s)
-  ✓  137 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (12.2s)
+failure 5258160282e51f3d8d5b9eeb56b1876f8cad71fb
+    - Array [
+    -   Array [
+    -     "Alpha",
+    -   ],
+    -   Array [
+    -     "Omega",
+    -   ],
+    - ]
+    + Array []
 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+      233 |   // links vom Griff, unten in der Zeile
+      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+          |                                              ^
+      236 | });
+      237 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
+
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
     Error: expect(received).toEqual(expected) // deep equality
 
@@ -53,9 +50,12 @@ success f7e1236955d2e6388bd0ad73a0e54bb886ce3c7b
       237 |
         at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
 
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium-retry1/error-context.md
 
-  1 flaky
+  1 failed
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  129 passed (4.8m)
+  137 passed (4.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
