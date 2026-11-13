@@ -20,3 +20,7 @@ apps/desktop/src-tauri/gen/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# BSD-379: Code-Graph (codebase-memory-mcp) – nie committen
+.codebase-memory/
+.cbmignore.off

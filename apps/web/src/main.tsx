@@ -32,7 +32,8 @@ import { connectAssets } from "./assetBridge.js";
 import { connectEditor, ShellPageEditor } from "./editorSlot.js";
 import { registerSlots } from "./slots.js";
 import { registerSettingsSection } from "./screens/settings/registry.js";
-import { bootMark, diagnosticsLog, installDiagnostics } from "./shell/diagnostics.js";
+import { bootMark, diagnosticsLog, installDiagnostics, noteActivity } from "./shell/diagnostics.js";
+import { installUnloadGuard } from "./shell/unloadGuard.js";
 import { exposeReplayHooks, installBugRecorder } from "./shell/bugReport.js";
 
 registerSlots({ PageEditor: ShellPageEditor, DatabaseView: ShellDatabaseView });
@@ -156,6 +157,8 @@ function start(guest: GuestBoot | undefined) {
       diagnosticsLog.add(st.state === "error" || st.state === "readonly" ? "error" : st.state === "offline" || st.state === "memory" || st.storageWarnings?.length ? "warning" : "info", `status: ${line}`);
     });
   }
+  // BSD-336: Neuladen/Schließen fragt nur nach, solange eine Änderung noch nicht beim Store-Tab gespeichert ist.
+  installUnloadGuard(window, () => client.unsavedWrites);
   connectEditor(client);
   link.onReconnect = () => void client.resync();
   client.onDevice = devices.set;
@@ -170,6 +173,19 @@ function start(guest: GuestBoot | undefined) {
     const id = guest ? guest.start : startPage.get();
     return id ? { name: "page", id } : { name: "home" };
   });
+  // BSD-368: Hänger und Herzschlag nennen nach dem Start die offene Ansicht (nur den Namen der Route, keine Inhalte).
+  {
+    let started = false;
+    const note = () => started && noteActivity(`route ${history.route.name}`);
+    history.subscribe(note);
+    const off = client.subscribe(() => {
+      const st = client.getState();
+      if (!st.ready || !st.outline) return;
+      started = true;
+      note();
+      off();
+    });
+  }
   // BSD-164: in der Tauri-Hülle Titelleiste, Updates und ⌘W aus dem Menü (im Browser ohne Wirkung).
   void startDesktop({ close: () => history.close(), count: () => history.tabs.length }).catch(() => undefined);
 

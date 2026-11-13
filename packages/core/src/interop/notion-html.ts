@@ -167,6 +167,12 @@ export class NotionHTMLImporter {
   private flat = false;
   private readonly rowDatabase = new Map<string, string>();
   private readonly dbBlockByFolder = new Map<string, string>();
+  /**
+   * BSD-377: Notion-ID einer Datenbank (aus dem Ordnernamen der Zeilen) → ID des Container-Blocks. Bei Inline-
+   * Datenbanken ist der Block die `<div id>` der Tabelle, nicht die Datenbank-ID; Erwähnungen und Links zeigen aber auf
+   * die Datenbank-ID und erschienen sonst als „deleted“.
+   */
+  private readonly dbAliases = new Map<string, string>();
   private readonly databaseByBlock = new Map<string, string>();
   private readonly relationTitles = new Map<string, Map<string, string[]>>();
   private readonly linkedCandidates: { blockID: string; folder: string; table: HTMLNode; dir: string; title: Run[]; parent: string; inline: boolean }[] = [];
@@ -1028,6 +1034,8 @@ export class NotionHTMLImporter {
     this.databaseByBlock.set(blockID, dbID);
     const folder = this.rowFolder(table, ctx);
     this.dbBlockByFolder.set(folder ?? joinPath(ctx.dir, plain(title)), blockID);
+    const notionDB = folder !== undefined ? notionIDInName(basename(folder)) : undefined;
+    if (notionDB !== undefined && notionDB !== blockID && !this.dbAliases.has(notionDB)) this.dbAliases.set(notionDB, blockID);
 
     // Kopf
     const ths = table.first((n) => n.tag === "thead")?.all((n) => n.tag === "th") ?? [];
@@ -1320,6 +1328,38 @@ export class NotionHTMLImporter {
 
   // MARK: Abschluss
 
+  /** BSD-377: Erwähnungen, Seitenlinks und Link-Blöcke, die auf die Notion-ID einer Datenbank zeigen, auf ihren Block umbiegen. */
+  private resolveDatabaseAliases() {
+    const aliases = this.dbAliases;
+    for (const [k, v] of [...aliases]) if (this.builder.contains(k) || !this.builder.contains(v)) aliases.delete(k);
+    if (aliases.size === 0) return;
+    const fixRuns = (t: RichText | undefined): RichText | undefined => {
+      if (!Array.isArray(t)) return undefined;
+      let changed = false;
+      const out = t.map((r) => {
+        let x = r;
+        const target = (r.mention as { page?: { _0?: string } } | undefined)?.page?._0;
+        if (target !== undefined && aliases.has(target)) { x = { ...x, mention: { page: { _0: aliases.get(target)! } } }; changed = true; }
+        const link = r.m?.link;
+        const linked = link?.startsWith("based://page/") ? link.slice("based://page/".length) : undefined;
+        if (linked !== undefined && aliases.has(linked)) { x = { ...x, m: { ...x.m, link: "based://page/" + aliases.get(linked)! } }; changed = true; }
+        return x;
+      });
+      return changed ? out : undefined;
+    };
+    for (const b of [...this.builder.blocks]) {
+      const text = fixRuns(b.text);
+      const caption = fixRuns(b.props?.caption);
+      const link = b.props?.linkTarget !== undefined ? aliases.get(b.props.linkTarget) : undefined;
+      if (text === undefined && caption === undefined && link === undefined) continue;
+      this.builder.update(b.id, (x) => {
+        if (text !== undefined) x.text = text;
+        if (caption !== undefined) x.props = { ...(x.props ?? {}), caption };
+        if (link !== undefined) x.props = { ...(x.props ?? {}), linkTarget: link };
+      });
+    }
+  }
+
   private finish() {
     // Verknüpfte Ansichten, deren Quelle später kam.
     for (const c of this.linkedCandidates) {
@@ -1359,6 +1399,7 @@ export class NotionHTMLImporter {
         }
       }
     }
+    this.resolveDatabaseAliases();
     if (this.fallbackCount > 0) this.builder.notes.push(`${this.fallbackCount} block(s) without a native equivalent were kept as HTML blocks.`);
   }
 }

@@ -58,6 +58,7 @@ export { commitPreparedImport, importNotionItems, inferCSVType, leadingEmoji, pa
 export type { ImportSource, NotionImportOptions, PreparedImport, PreparedImportWire } from "./interop/notion-import.js";
 export { findObsidianVault, ObsidianImporter, parseWikiTarget, splitFrontmatter, yamlList, type ObsidianImportOptions } from "./interop/obsidian-import.js";
 export { isLogseqGraph, logseqBlockIDs, logseqTitle, logseqToMarkdown } from "./interop/logseq.js";
+export { bundleTitle, highlightToMark, isBearExport, isBundleText, isNoteFile } from "./interop/bear.js";
 export { EnexImporter, enexDate, enmlToHTML, parseEnex, type EnexNote, type EnexResource } from "./interop/enex-import.js";
 export { md5Hex } from "./interop/md5.js";
 export { exportOPML, importOPML, parseOPML, type OutlineNode as OPMLOutline } from "./interop/opml.js";
@@ -126,10 +127,6 @@ export { countWords, findInText, foldWithMap, pageTextStats, textStats } from ".
 export type { TextMatch, TextStats } from "./editor/text-stats.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
 export type { EmojiEntry } from "./editor/emoji.js";
-// ADR 0016: Block-Editor – Textoperationen und Befehle auf den Block-Records
-export * as rich from "./editor/rich.js";
-export * as blockCmd from "./editor/block-cmd.js";
-export type { Caret, EditResult, DropSide } from "./editor/block-cmd.js";
 export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
@@ -187,4 +184,4 @@ export {
 } from "./bugReport.js";
 // BSD-382 (ADR 0016, E1): Befehle des neuen Block-Editors (Namensraum, damit nichts mit Seiten-/Store-Funktionen kollidiert).
 export * as blockCommands from "./editor/commands/index.js";
-export type { BasedClipboard, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";
+export type { BasedClipboard, BlockPlace, DropZone as BlockDropZone, Focus as EditorFocus, TextRange as EditorTextRange } from "./editor/commands/index.js";

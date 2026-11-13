@@ -69,6 +69,12 @@ export interface SessionRecord {
   stalls: number;
   /** Letzte Log-Einträge der Sitzung (für den Bericht nach einem Absturz). */
   log?: DiagnosticsEntry[];
+  /** BSD-368: Was zuletzt lief (Start-Phase oder Ansicht, z. B. „route page“) – ohne Nutzerinhalte. */
+  activity?: string;
+  /** BSD-368: JS-Speicher beim letzten Herzschlag (MB; nur wo der Browser ihn nennt, z. B. Chromium). */
+  heapMB?: number;
+  /** BSD-368: höchster gesehener JS-Speicher der Sitzung (MB). */
+  peakHeapMB?: number;
 }
 
 export const SESSION_KEY = "based.diagnostics.session";
@@ -79,7 +85,13 @@ function read(storage: DiagnosticsStorage, key: string): SessionRecord | undefin
     if (!raw) return undefined;
     const v = JSON.parse(raw) as Partial<SessionRecord>;
     if (typeof v.startedAt !== "number" || typeof v.lastBeat !== "number") return undefined;
-    return { startedAt: v.startedAt, lastBeat: v.lastBeat, clean: v.clean === true, stalls: typeof v.stalls === "number" ? v.stalls : 0, ...(Array.isArray(v.log) ? { log: v.log.slice(-50) } : {}) };
+    return {
+      startedAt: v.startedAt, lastBeat: v.lastBeat, clean: v.clean === true, stalls: typeof v.stalls === "number" ? v.stalls : 0,
+      ...(Array.isArray(v.log) ? { log: v.log.slice(-50) } : {}),
+      ...(typeof v.activity === "string" ? { activity: redact(v.activity).slice(0, 80) } : {}),
+      ...(typeof v.heapMB === "number" ? { heapMB: v.heapMB } : {}),
+      ...(typeof v.peakHeapMB === "number" ? { peakHeapMB: v.peakHeapMB } : {}),
+    };
   } catch {
     return undefined;
   }
@@ -99,11 +111,21 @@ export function beginSession(storage: DiagnosticsStorage, now: number): SessionR
   return previous;
 }
 
-export function heartbeat(storage: DiagnosticsStorage, now: number, update: Partial<Pick<SessionRecord, "stalls" | "log">> = {}) {
+export function heartbeat(storage: DiagnosticsStorage, now: number, update: Partial<Pick<SessionRecord, "stalls" | "log" | "activity" | "heapMB">> = {}) {
   const cur = read(storage, SESSION_KEY);
   if (!cur) return;
+  const next: SessionRecord = { ...cur, ...update, lastBeat: now, clean: false };
+  if (update.heapMB !== undefined) next.peakHeapMB = Math.max(cur.peakHeapMB ?? 0, update.heapMB);
   // Wer noch schlägt, lebt: ein „sauber beendet“ (z. B. Fenster schließen, das dann doch offen blieb) gilt nicht mehr.
-  write(storage, SESSION_KEY, { ...cur, ...update, lastBeat: now, clean: false });
+  write(storage, SESSION_KEY, next);
+}
+
+/** Stichworte zur Sitzung für Hinweis und Bericht: zuletzt aktiv, Speicher. */
+function sessionDetails(prev: SessionRecord): string[] {
+  const out: string[] = [];
+  if (prev.activity) out.push(`last activity: ${prev.activity}`);
+  if (prev.heapMB !== undefined) out.push(`memory ${prev.heapMB} MB${prev.peakHeapMB !== undefined && prev.peakHeapMB > prev.heapMB ? ` (peak ${prev.peakHeapMB} MB)` : ""}`);
+  return out;
 }
 
 export function endSession(storage: DiagnosticsStorage, now: number, log?: DiagnosticsEntry[]) {
@@ -116,7 +138,8 @@ export function endSession(storage: DiagnosticsStorage, now: number, log?: Diagn
 export function previousSessionNotice(prev: SessionRecord | undefined): string | undefined {
   if (!prev || prev.clean) return undefined;
   const when = new Date(prev.lastBeat).toISOString().replace("T", " ").slice(0, 16) + " UTC";
-  return `Based didn't close normally last time (last sign of life ${when}${prev.stalls > 0 ? `, ${prev.stalls} freeze${prev.stalls === 1 ? "" : "s"}` : ""}).`;
+  const details = [prev.stalls > 0 ? `${prev.stalls} freeze${prev.stalls === 1 ? "" : "s"}` : "", ...sessionDetails(prev)].filter(Boolean);
+  return `Based didn't close normally last time (last sign of life ${when}${details.map((d) => `, ${d}`).join("")}).`;
 }
 
 // MARK: Hänger
@@ -165,7 +188,7 @@ export function buildReport(facts: ReportFacts, previous: SessionRecord | undefi
   for (const [k, v] of Object.entries(facts)) if (v !== undefined) lines.push(`${k}: ${redact(String(v))}`);
   lines.push("");
   if (previous) {
-    lines.push(`previous session: started ${new Date(previous.startedAt).toISOString()}, last beat ${new Date(previous.lastBeat).toISOString()}, ${previous.clean ? "closed normally" : "ended unexpectedly"}, freezes ${previous.stalls}`);
+    lines.push(`previous session: started ${new Date(previous.startedAt).toISOString()}, last beat ${new Date(previous.lastBeat).toISOString()}, ${previous.clean ? "closed normally" : "ended unexpectedly"}, freezes ${previous.stalls}${sessionDetails(previous).map((d) => `, ${d}`).join("")}`);
     if (!previous.clean && previous.log?.length) {
       lines.push("previous session log (last entries):");
       for (const e of previous.log) lines.push("  " + formatEntry({ ...e, message: redact(e.message) }));

@@ -1,8 +1,10 @@
 // ADR 0016 (E2): RichText ↔ DOM eines Textfelds. Das DOM eines Blocks wird nur aus dem Modell geschrieben
 // (renderRich), nie per React-Kinder; Offsets (UTF-16) und DOM-Positionen werden hier ineinander umgerechnet.
-// Atomare Läufe (Erwähnung, Gleichung) sind `contenteditable=false`-Elemente mit `data-atom` und zählen als 1.
-import type { RichText, TextRun } from "@based/core";
-import { rich } from "@based/core";
+// Atomare Läufe (Erwähnung, Gleichung) sind `contenteditable=false`-Elemente mit `data-atom`; sie zählen so viele
+// Zeichen wie ihr Text im Modell (`data-len`), auch wenn sie etwas anderes anzeigen (aktueller Seitentitel).
+import { blockCommands as cmd, plainText, type RichText } from "@based/core";
+
+type Run = cmd.Run;
 
 export interface AtomRenderer {
   /** Text einer Seiten-Erwähnung (Titel); ohne: „Untitled“. */
@@ -11,31 +13,34 @@ export interface AtomRenderer {
 
 const MARK_CLASSES: Record<string, string> = { b: "bx2-b", i: "bx2-i", u: "bx2-u", s: "bx2-s", c: "bx2-c" };
 
-function runElement(doc: Document, r: TextRun, atoms: AtomRenderer): Node {
+/** Wert einer Erwähnung (Swift-Enum `{ page: { _0: … } }`). */
+function mentionValue(m: Record<string, unknown>, kind: string): unknown {
+  const v = m[kind] as { _0?: unknown } | string | undefined;
+  return typeof v === "object" && v !== null ? v._0 : v;
+}
+
+function runElement(doc: Document, r: Run, atoms: AtomRenderer): Node {
   if (r.mention !== undefined || r.eq !== undefined) {
     const el = doc.createElement("span");
     el.contentEditable = "false";
     el.dataset.atom = "";
+    el.dataset.len = String(r.t.length);
     if (r.eq !== undefined) {
       el.className = "bx2-eq";
       el.textContent = r.eq;
     } else {
       const m = r.mention as Record<string, unknown>;
       el.className = "bx2-mention";
-      if (typeof m.page === "string") {
-        el.dataset.page = m.page;
-        el.textContent = atoms.pageTitle?.(m.page) || "Untitled";
-      } else if (typeof m.user === "string") el.textContent = "@" + m.user;
-      else if (typeof m.link === "string") el.textContent = m.link;
-      else if (m.date && typeof m.date === "object") {
-        const d = m.date as { start?: number };
-        el.textContent = typeof d.start === "number" ? new Date((d.start + 978_307_200) * 1000).toLocaleDateString() : "Date";
-      } else el.textContent = "•";
+      const page = mentionValue(m, "page");
+      if (typeof page === "string") {
+        el.dataset.page = page;
+        el.textContent = atoms.pageTitle?.(page) || r.t || "Untitled";
+      } else el.textContent = r.t || "•";
     }
     return el;
   }
-  const t = r.t ?? "";
-  const m = (r.m ?? {}) as Record<string, unknown>;
+  const t = r.t;
+  const m = r.m as Record<string, unknown>;
   const classes = Object.keys(MARK_CLASSES).filter((k) => m[k]).map((k) => MARK_CLASSES[k]!);
   if (typeof m.color === "string" && m.color !== "default") classes.push("bx2-color-" + m.color);
   if (classes.length === 0 && typeof m.link !== "string") return doc.createTextNode(t);
@@ -53,15 +58,16 @@ function runElement(doc: Document, r: TextRun, atoms: AtomRenderer): Node {
 export function renderRich(el: HTMLElement, text: RichText | undefined, atoms: AtomRenderer = {}): void {
   const doc = el.ownerDocument;
   const frag = doc.createDocumentFragment();
-  const runs = rich.runsOf(text);
+  const runs = cmd.runsOf(text);
   for (const r of runs) frag.append(runElement(doc, r, atoms));
   // Ein abschließender Zeilenumbruch braucht ein <br>, sonst ist die letzte (leere) Zeile nicht sichtbar
-  const plain = rich.richPlain(text);
+  const plain = plainText(text);
   if (plain === "" || plain.endsWith("\n")) frag.append(doc.createElement("br"));
   el.replaceChildren(frag);
 }
 
 const isAtomEl = (n: Node): n is HTMLElement => n.nodeType === 1 && (n as HTMLElement).dataset.atom !== undefined;
+const atomLen = (n: HTMLElement): number => Number(n.dataset.len ?? 1) || 1;
 
 /** UTF-16-Offset einer DOM-Position innerhalb von `root`. */
 export function offsetOf(root: HTMLElement, node: Node, offset: number): number {
@@ -79,11 +85,11 @@ export function offsetOf(root: HTMLElement, node: Node, offset: number): number 
     if (isAtomEl(n)) {
       if (n.contains(node)) {
         // Position in einer Erwähnung: davor oder dahinter
-        count += offset > 0 ? 1 : 0;
+        count += offset > 0 ? atomLen(n) : 0;
         done = true;
         return;
       }
-      count += 1;
+      count += atomLen(n);
       return;
     }
     if (n.nodeType === 3) {
@@ -103,7 +109,7 @@ export function offsetOf(root: HTMLElement, node: Node, offset: number): number 
 }
 
 function nodeLength(n: Node): number {
-  if (isAtomEl(n)) return 1;
+  if (isAtomEl(n)) return atomLen(n);
   if (n.nodeType === 3) return (n.nodeValue ?? "").length;
   let len = 0;
   for (const c of Array.from(n.childNodes)) len += nodeLength(c);
@@ -121,7 +127,8 @@ export function pointAt(root: HTMLElement, offset: number): { node: Node; offset
       const n = children[i]!;
       if (isAtomEl(n)) {
         if (remaining === 0) return { node: parent, offset: i };
-        remaining -= 1;
+        // Mitten in einer Erwähnung gibt es keine Stelle: dahinter (wie der Kern, snapOffset)
+        remaining = Math.max(0, remaining - atomLen(n));
         if (remaining === 0) return { node: parent, offset: i + 1 };
         continue;
       }

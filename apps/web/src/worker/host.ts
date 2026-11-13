@@ -1172,9 +1172,12 @@ export class StoreHost {
     if (store?.propertyRecords) s.propertyRecords = true;
     if (this.ws?.persistent && this.ws.storageWarnings?.length) s.storageWarnings = [...this.ws.storageWarnings];
     const a = this.assets?.status();
-    if (a && (a.pending > 0 || a.downloading > 0 || a.failed > 0)) {
-      s.assets = { uploads: a.pending, downloads: a.downloading, failed: a.failed };
-      if (a.pending > 0 && a.lastError) s.assets.paused = a.lastError;
+    // BSD-368: Ohne Sync-Server lädt nichts hoch – die Warteschlange bleibt (für später), wird aber nicht angezeigt
+    // (Bericht 13.11.: „On this device · 412 files uploading“ ohne Server nach einem Notion-Import).
+    const uploads = a && this.assets?.configured ? a.pending : 0;
+    if (a && (uploads > 0 || a.downloading > 0 || a.failed > 0)) {
+      s.assets = { uploads, downloads: a.downloading, failed: a.failed };
+      if (uploads > 0 && a.lastError) s.assets.paused = a.lastError;
     }
     return s;
   }

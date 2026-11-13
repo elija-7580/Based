@@ -25,3 +25,5 @@ export * from "./mcp/connections.js";
 // BSD-223: Coding-Agenten (ACP) – Client, Sitzung als ChatEngine, Freigabe-Inbox.
 export * from "./acp/index.js";
 export * from "./routing.js";
+// BSD-231: lokale Modelle nur per Opt-in (Namensraum: sha256Hex u. a. gibt es auch anderswo)
+export * as localModels from "./localmodels/index.js";

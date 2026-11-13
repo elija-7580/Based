@@ -159,9 +159,8 @@ function putImported(store: WorkspaceStore, tx: Tx, items: readonly ImportedBloc
   });
 }
 
-/** Based-intern: Kopien der Records (neue IDs, eigene Datenbanken samt Zeilen) hinter die Schreibmarke. */
-function insertBased(store: WorkspaceStore, at: TextRange, clip: BasedClipboard): Focus | undefined {
-  // Aus demselben Workspace: direkt aus dem Store kopieren (aktueller Stand). Sonst aus den Records der Zwischenablage.
+/** Woher kopiert wird: aus demselben Workspace direkt aus dem Store (aktueller Stand), sonst aus den Records der Zwischenablage. */
+function clipboardSource(store: WorkspaceStore, clip: BasedClipboard): { source: WorkspaceStore; local: boolean; roots: string[] } {
   const local = clip.roots.every((id) => store.blocks.has(id));
   let source = store;
   if (!local) {
@@ -169,7 +168,34 @@ function insertBased(store: WorkspaceStore, at: TextRange, clip: BasedClipboard)
     // Wurzeln hängen in der Quelle irgendwo; für die Kopie reicht ein gemeinsamer Elternteil.
     source = new WorkspaceStore({ node: "clipboard", persistence: new MemoryPersistence(records), propertyRecords: false, now: () => store.now(), userID: store.userID });
   }
-  const roots = clip.roots.filter((id) => source.blocks.has(id));
+  return { source, local, roots: clip.roots.filter((id) => source.blocks.has(id)) };
+}
+
+/**
+ * Einfügen, während Blöcke ausgewählt sind (keine Schreibmarke): alles kommt als eigene Blöcke hinter `afterId`.
+ * Fokus: der letzte eingefügte Block ist ausgewählt.
+ */
+export function insertContentAfter(store: WorkspaceStore, afterId: string, content: PasteContent, opts: PasteOptions = {}): Focus | undefined {
+  const anchor = store.blocks.get(afterId);
+  if (!anchor) return undefined;
+  if (content.based && !content.plainOnly && content.based.roots.length > 0) {
+    const { source, local, roots } = clipboardSource(store, content.based);
+    if (roots.length === 0) return undefined;
+    const ids = store.transact("Paste", (tx) => {
+      const keys = sortKeys(store, anchor.parent, { kind: "after", id: anchor.id }, roots.length);
+      return roots.map((id, i) => copyTree(source, tx, source.blocks.get(id)!, anchor.parent, keys[i]!, local && isPageLike(source.blocks.get(id)) ? " (1)" : undefined));
+    });
+    return { blockId: ids[ids.length - 1]!, selected: true };
+  }
+  const blocks = parsePaste(content, opts).filter((b) => b.type !== "text" || b.text.length > 0 || b.children.length > 0 || Object.keys(b.props).length > 0);
+  if (blocks.length === 0) return undefined;
+  const ids = store.transact("Paste", (tx) => putImported(store, tx, blocks, anchor.parent, sortKeys(store, anchor.parent, { kind: "after", id: anchor.id }, blocks.length)));
+  return { blockId: ids[ids.length - 1]!, selected: true };
+}
+
+/** Based-intern: Kopien der Records (neue IDs, eigene Datenbanken samt Zeilen) hinter die Schreibmarke. */
+function insertBased(store: WorkspaceStore, at: TextRange, clip: BasedClipboard): Focus | undefined {
+  const { source, local, roots } = clipboardSource(store, clip);
   if (roots.length === 0) return undefined;
   const cur = store.blocks.get(at.blockId)!;
   return store.transact("Paste", (tx) => {

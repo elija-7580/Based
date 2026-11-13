@@ -390,6 +390,8 @@ export function encodeInlineMarkdown(text: RichText | undefined, pageLink: (id: 
 const SPANS: [string, (m: Marks) => void][] = [
   ["**", (m) => { m.b = true; }], ["__", (m) => { m.b = true; }], ["~~", (m) => { m.s = true; }],
   ["<u>", (m) => { m.u = true; }], ["<b>", (m) => { m.b = true; }], ["<i>", (m) => { m.i = true; }],
+  // BSD-260 Teil 9: <mark> (aus ==Hervorheben== in Obsidian/Bear) → gelber Hintergrund
+  ["<mark>", (m) => { m.color = "yellowBackground"; }],
   ["*", (m) => { m.i = true; }], ["_", (m) => { m.i = true; }], ["~", (m) => { m.s = true; }],
 ];
 
