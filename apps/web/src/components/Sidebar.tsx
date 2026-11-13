@@ -21,6 +21,7 @@ import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navAvailable, navLa
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
 import { assetsLabel } from "../assetBridge.js";
 import { meetingHost } from "../editorSlot.js";
+import { IconView } from "@based/editor";
 import { keyLabel } from "../shell/keyHints.js";
 import type { ShellState, StoreClient } from "../worker/client.js";
 import type { SyncState } from "../worker/protocol.js";
@@ -669,7 +670,7 @@ const PageRow = memo(function PageRow(p: RowProps) {
       >
         <Icon name="right" size={14} />
       </button>
-      <span className="tree-icon" aria-hidden="true">{p.icon ?? <Icon name={row.database ? "database" : "page"} size={16} />}</span>
+      <span className="tree-icon" aria-hidden="true"><IconView icon={p.icon} fallback={<Icon name={row.database ? "database" : "page"} size={16} />} /></span>
       {p.renaming ? (
         <input
           className="tree-rename"

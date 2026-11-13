@@ -11,6 +11,7 @@ import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { columnFractions, resizeColumns } from "../ui/columns.js";
 import { ButtonBlockView, type CaretEditor } from "../ui/ButtonBlock.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
+import { IconView } from "../ui/phosphor.js";
 import { scrollToHeading } from "../ui/Outline.js";
 import { fetchBookmarkPreview } from "../ui/linkPreview.js";
 import { rememberSyncClipboard } from "../ui/syncClipboard.js";
@@ -79,7 +80,7 @@ function CalloutIcon(props: { editor: AnyEditor; id: string; icon: string }) {
   return (
     <span className="bx-callout-icon-wrap" contentEditable={false}>
       <button type="button" className="bx-callout-icon" aria-label="Icon" aria-haspopup="dialog" aria-expanded={open} disabled={!env.editable}
-        onClick={() => setOpen((o) => !o)}>{shown}</button>
+        onClick={() => setOpen((o) => !o)}><IconView icon={shown} fallback={CALLOUT_ICONS[0]} /></button>
       {open ? (
         <EmojiPicker className="bx-callout-picker" current={props.icon || undefined} onClose={() => setOpen(false)}
           onPick={(emoji) => {
@@ -163,7 +164,7 @@ function PageLink(props: { id: string; missing?: string }) {
   };
   return (
     <span className="bx-pagelink" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
-      <span className="bx-pagelink-icon" aria-hidden>{pageIcon(rec)}</span>
+      <span className="bx-pagelink-icon" aria-hidden><IconView icon={pageIcon(rec)} fallback="📄" /></span>
       <span className="bx-pagelink-title">{pageTitle(rec)}</span>
     </span>
   );
@@ -192,7 +193,7 @@ function PagePicker(props: { onPick: (id: string) => void; exclude?: string }) {
         }} />
       <ul className="bx-picker-list">
         {pages.map((p) => (
-          <li key={p.id}><button type="button" onClick={() => props.onPick(p.id)}>{pageIcon(p)} {pageTitle(p)}</button></li>
+          <li key={p.id}><button type="button" onClick={() => props.onPick(p.id)}><IconView icon={pageIcon(p)} fallback="📄" /> {pageTitle(p)}</button></li>
         ))}
       </ul>
     </div>

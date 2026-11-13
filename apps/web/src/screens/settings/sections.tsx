@@ -317,6 +317,9 @@ function AboutSection() {
       <Row label="Fonts" hint="Style Bold uses Schibsted Grotesk and Literata (SIL Open Font License 1.1), bundled with the app">
         <Text type="supporting" color="secondary">No requests to font servers</Text>
       </Row>
+      <Row label="Icons" hint="Page icons from Phosphor Icons (MIT License, © Phosphor Icons), bundled with the app">
+        <Text type="supporting" color="secondary">phosphoricons.com</Text>
+      </Row>
     </Group>
   );
 }

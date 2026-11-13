@@ -7,6 +7,7 @@ import type { Database, PropertySchema } from "../model/records.js";
 import type { WorkspaceStore } from "../store/store.js";
 import { sanitizeURL } from "./html.js";
 import { plain, runsOf } from "./runs.js";
+import { iconAsText } from "../editor/icon-ref.js";
 
 type AssetRef = NonNullable<BlockProps["asset"]>;
 
@@ -37,8 +38,9 @@ export interface HTMLExporterOptions {
 export const escapeText = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 export const escapeAttribute = (s: string) => escapeText(s).replaceAll("\"", "&quot;").replaceAll("'", "&#39;");
 
+// BSD-376: Phosphor-Referenzen („phosphor:…“) sind kein Text – im Export wie „kein Icon“.
 const emojiOf = (icon: BlockProps["icon"]): string | undefined =>
-  typeof icon === "string" ? icon : icon && typeof icon === "object" && typeof icon.emoji === "string" ? icon.emoji : undefined;
+  typeof icon === "string" ? iconAsText(icon) : icon && typeof icon === "object" && typeof icon.emoji === "string" ? icon.emoji : undefined;
 
 const LIST_TYPES = new Set(["bulletedList", "numberedList", "todo"]);
 

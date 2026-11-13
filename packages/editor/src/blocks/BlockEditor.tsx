@@ -11,6 +11,7 @@ import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
 import { EmojiPicker } from "../ui/EmojiPicker.js";
+import { IconView } from "../ui/phosphor.js";
 import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
@@ -1236,7 +1237,7 @@ function PageLink({ target }: { target: string | undefined }) {
   const icon = ref?.icon ?? (typeof local?.props?.icon === "string" ? local.props.icon : undefined);
   return (
     <button type="button" className="bx2-pagelink" data-embed="" contentEditable={false} onClick={() => target && props.onOpenPage?.(target)}>
-      <span className="bx2-pagelink-icon" aria-hidden="true">{icon && !/^[a-z]/i.test(icon) ? icon : "📄"}</span>
+      <span className="bx2-pagelink-icon" aria-hidden="true"><IconView icon={icon} fallback="📄" /></span>
       <span className="bx2-pagelink-title">{title || "Untitled"}</span>
     </button>
   );
@@ -1450,7 +1451,7 @@ function CalloutIcon({ block: b }: { block: Block }) {
   const icon = typeof b.props?.icon === "string" ? b.props.icon : "💡";
   return (
     <span className="bx2-callout-icon" contentEditable={false}>
-      <button type="button" className="bx2-icon-btn" aria-label="Change icon" disabled={!editable} onClick={() => setOpen(true)}>{icon}</button>
+      <button type="button" className="bx2-icon-btn" aria-label="Change icon" disabled={!editable} onClick={() => setOpen(true)}><IconView icon={icon} fallback="💡" /></button>
       {open ? (
         <EmojiPicker className="bx-callout-picker" current={icon} onClose={() => setOpen(false)}
           onPick={(e) => { setOpen(false); cmd.setBlockProps(store, [b.id], { icon: e ?? undefined }, "Change icon"); }} />
@@ -1671,7 +1672,7 @@ function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoo
           {i === firstDate ? <div className="bx2-menu-label">Date</div> : null}
           {it.kind === "page" ? (
             <div role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(it)}>
-              <span className="bx2-menu-icon" aria-hidden="true">{it.ref.icon && !/^[a-z]/i.test(it.ref.icon) ? it.ref.icon : "📄"}</span>
+              <span className="bx2-menu-icon" aria-hidden="true"><IconView icon={it.ref.icon} fallback="📄" /></span>
               <span className="bx2-menu-text">{it.ref.title || "Untitled"}</span>
               {it.ref.path ? <span className="bx2-menu-hint bx2-menu-path">{it.ref.path}</span> : null}
             </div>

@@ -4,7 +4,8 @@ import { createReactInlineContentSpec } from "@blocknote/react";
 import { useEffect, useRef, useState } from "react";
 import { canonicalStringify, dateFromSwift, dateParts, withDateParts, type DateParts } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
-import { isEmojiIcon, useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
+import { IconView, isDrawableIcon } from "../ui/phosphor.js";
+import { useEnv, usePageRef, useStoreRevision } from "../ui/env.js";
 import { pageIcon, pageTitle } from "./blocks.js";
 
 function formatDate(value: string): string {
@@ -22,7 +23,7 @@ function formatDate(value: string): string {
 
 /** Emoji-Icon einer Seite; Symbolnamen (ASCII) kann der Editor nicht zeichnen, dann das Standardzeichen. */
 function mentionIcon(icon: string | undefined, kind: string | undefined): string {
-  if (isEmojiIcon(icon)) return icon;
+  if (isDrawableIcon(icon)) return icon;
   return kind === "database" ? "▦" : "📄";
 }
 
@@ -47,7 +48,7 @@ function PageMention(props: { id: string; text: string }) {
     <span className="bx-mention" data-kind="page" data-page={props.id} data-trashed={trashed ? "true" : undefined} data-missing={missing ? "true" : undefined}
       role="link" tabIndex={-1} title={missing ? "This page no longer exists" : trashed ? "This page is in the Trash" : undefined}
       onClick={open} onKeyDown={(e) => e.key === "Enter" && open(e)}>
-      <span className="bx-mention-icon" aria-hidden>{icon}</span>
+      <span className="bx-mention-icon" aria-hidden><IconView icon={icon} fallback="📄" /></span>
       <span className="bx-mention-title">{title}</span>
       {missing ? <span className="bx-mention-flag">deleted</span> : trashed ? <span className="bx-mention-flag">in Trash</span> : null}
     </span>

@@ -3,7 +3,7 @@
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
 import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
-import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
+import { EmojiPicker, IconView, isDrawableIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { isChatPanelOpen, subscribeChatPanel, toggleChatPanel } from "../chat/runtime.js";
@@ -108,7 +108,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   const trashed = page?.trashedAt !== undefined;
   // BSD-201: Seiten-Optionen (Icon, Schrift, Small text, Full width, Sperre) aus den Block-Props.
   const format = store && page ? pageFormat(store, pageID) : { font: "default" as const, smallText: false, fullWidth: false, locked: false };
-  const icon = typeof page?.props?.icon === "string" && isEmojiIcon(page.props.icon) ? page.props.icon : undefined;
+  const icon = typeof page?.props?.icon === "string" && isDrawableIcon(page.props.icon) ? page.props.icon : undefined;
   const [iconPicker, setIconPicker] = useState(false);
   // BSD-201 Teil 2: Bild als Icon (Swift PageIcon.asset / .url) und Cover.
   const rawIcon = page?.props?.icon as { asset?: { id: string; name: string }; url?: string } | string | undefined;
@@ -305,7 +305,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             {icon || iconImage || (!readOnly && page) ? (
               <div className="page-icon-row">
                 {icon ? (
-                  <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}>{icon}</button>
+                  <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}><IconView icon={icon} fallback={null} /></button>
                 ) : iconImage ? (
                   <button type="button" className="page-icon" aria-label="Page icon" aria-haspopup="dialog" disabled={readOnly} onClick={() => setIconPicker((o) => !o)}>
                     {iconImageURL ? <img className="page-icon-img" src={iconImageURL} alt="" data-testid="page-icon-image" /> : null}
@@ -393,7 +393,7 @@ interface CrumbMenuState { key: string; self?: string; pages: readonly string[];
 const CRUMB_MENU_FIRST = 5;
 
 function CrumbIcon({ node }: { node: Outline["nodes"][string] | undefined }) {
-  return <span className="crumb-icon" aria-hidden="true">{node?.icon && isEmojiIcon(node.icon) ? node.icon : <Icon name={node?.kind === "database" ? "database" : "page"} size={16} />}</span>;
+  return <span className="crumb-icon" aria-hidden="true"><IconView icon={node?.icon} fallback={<Icon name={node?.kind === "database" ? "database" : "page"} size={16} />} /></span>;
 }
 
 function CrumbMenu({ menu, outline, titles, current, onClose, onOpen }: { menu: CrumbMenuState; outline: Outline; titles: ReadonlyMap<string, string>; current: string; onClose: () => void; onOpen: (id: string) => void }) {

@@ -328,6 +328,9 @@ importers:
         specifier: ^13.6.33
         version: 13.6.33
     devDependencies:
+      '@phosphor-icons/core':
+        specifier: 2.1.1
+        version: 2.1.1
       '@playwright/test':
         specifier: ^1.65.0
         version: 1.65.0
@@ -1303,6 +1306,9 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
+
+  '@phosphor-icons/core@2.1.1':
+    resolution: {integrity: sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ==}
 
   '@playwright/test@1.65.0':
     resolution: {integrity: sha512-iGURLGuKDLakSEl7Pgfv8h7f+XLT+V861Wfhz0zlEl5nyFuKUopdkFBPKqTllTUp06aOwPuH8iuUEb3yp3MpbQ==}
@@ -4497,6 +4503,8 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@4.6.7)
     transitivePeerDependencies:
       - supports-color
+
+  '@phosphor-icons/core@2.1.1': {}
 
   '@playwright/test@1.65.0':
     dependencies:

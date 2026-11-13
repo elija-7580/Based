@@ -237,3 +237,48 @@ test("Icon-Auswahl: kein seitliches Rollen, Raster passt zur Breite", async ({ p
     await page.keyboard.press("Escape");
   }
 });
+
+// BSD-376 (Mac 13.11.): In WebKit fielen die Rasterzeilen zusammen, Emojis lagen übereinander. Zeilen haben eine
+// feste Höhe – keine zwei Zellen dürfen sich senkrecht überlappen, auch mit großen Glyphen.
+test("Icon-Auswahl: Rasterzellen überlappen sich nicht", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await page.getByLabel("Page title").hover();
+  await page.getByRole("button", { name: "Add icon" }).click();
+  const grid = page.getByRole("listbox", { name: "Emoji" });
+  await page.addStyleTag({ content: ".bx-emoji-cell { font-size: 40px; }" });
+  const cells = grid.getByRole("option");
+  const a = (await cells.nth(0).boundingBox())!;
+  const b = (await cells.nth(10).boundingBox())!; // erste Zelle der zweiten Zeile
+  expect(a.height).toBeGreaterThanOrEqual(28);
+  expect(b.y).toBeGreaterThanOrEqual(a.y + a.height - 0.5);
+});
+
+// BSD-376 Teil 2: Reiter „Icons“ mit Phosphor in Farben; das gewählte Icon steht im Titel und in der Seitenleiste
+// (gespeichert wird es als String wie ein Emoji – Persistenz deckt der Emoji-Fall ab).
+test("Icon-Auswahl: Phosphor-Icon mit Farbe als Seiten-Icon", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await fresh(page);
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await page.getByLabel("Page title").hover();
+  await page.getByRole("button", { name: "Add icon" }).click();
+  await page.getByRole("tab", { name: "Icons" }).click();
+  const grid = page.getByRole("listbox", { name: "Icons" });
+  await expect(grid.getByRole("option").first()).toBeVisible();
+  expect(await grid.getByRole("option").count()).toBeGreaterThan(1000);
+  await page.getByRole("radio", { name: "blue" }).click();
+  await page.getByLabel("Filter icons").fill("rocket");
+  await expect(grid.getByRole("option").first()).toHaveAttribute("data-icon", /^rocket/);
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Choose an icon" })).toHaveCount(0);
+  const head = page.locator(".page-icon .bx-phosphor");
+  await expect(head).toHaveAttribute("data-phosphor", /^rocket/);
+  await expect(page.getByRole("treeitem", { name: "Welcome to Based" }).locator(".bx-phosphor")).toBeVisible();
+  const color = await head.evaluate((el) => getComputedStyle(el).color);
+  expect(color).not.toBe(await page.locator("body").evaluate((el) => getComputedStyle(el).color));
+  // Wieder öffnen: Reiter „Icons“ und die Farbe sind vorgewählt.
+  await page.locator(".page-icon").click();
+  await expect(page.getByRole("tab", { name: "Icons" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("radio", { name: "blue" })).toHaveAttribute("aria-checked", "true");
+});

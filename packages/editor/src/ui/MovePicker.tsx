@@ -1,7 +1,8 @@
 // BSD-207: „Move to“ aus dem Blockmenü – Zielseite suchen (Seitenverzeichnis der Shell, leer = zuletzt benutzt) und
 // wählen; Pfeiltasten und Enter wie im @-Menü, Esc schließt. Das Verschieben selbst macht moveBlocksToPage.
 import { useEffect, useRef, useState } from "react";
-import { isEmojiIcon, type PageDirectory, type PageRef } from "./env.js";
+import { IconView } from "./phosphor.js";
+import type { PageDirectory, PageRef } from "./env.js";
 import { moveTargetAllowed } from "./blockActions.js";
 
 export interface MovePickerProps {
@@ -53,7 +54,7 @@ export function MovePicker(props: MovePickerProps) {
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === active}>
               <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(p)}>
-                <span className="bx-move-icon" aria-hidden="true">{isEmojiIcon(p.icon) ? p.icon : "📄"}</span>
+                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback="📄" /></span>
                 <span className="bx-move-text">
                   <span className="bx-move-title">{p.title || "Untitled"}</span>
                   {p.path ? <span className="bx-move-path">{p.path}</span> : null}
@@ -175,7 +176,7 @@ export function PageTargetPicker(props: { pages: PageDirectory; onPick: (page: P
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === active}>
               <button type="button" className="bx-move-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => props.onPick(p)}>
-                <span className="bx-move-icon" aria-hidden="true">{isEmojiIcon(p.icon) ? p.icon : "📄"}</span>
+                <span className="bx-move-icon" aria-hidden="true"><IconView icon={p.icon} fallback="📄" /></span>
                 <span className="bx-move-text">
                   <span className="bx-move-title">{p.title || "Untitled"}</span>
                   {p.path ? <span className="bx-move-path">{p.path}</span> : null}

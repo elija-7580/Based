@@ -347,6 +347,32 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 }
 .bx-emoji-cell { min-width: 0; height: var(--space-6); display: grid; place-items: center; background: none; border: 0; border-radius: var(--radius-sm); font-size: var(--icon-md); line-height: 1; cursor: pointer; padding: 0; overflow: hidden; }
 .bx-emoji-cell[data-active="true"] { background: var(--surface-raised); }
+/* BSD-376 Teil 2: Reiter Emoji | Icons (Pillen auf einer Fläche wie die übrigen Umschalter), Farbpunkte, Phosphor-Glyphen. */
+.bx-emoji-tabs { display: flex; align-items: center; gap: var(--space-1); user-select: none; -webkit-user-select: none; }
+.bx-emoji-tab {
+  background: none; border: 0; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); font: inherit;
+  color: var(--muted); cursor: pointer;
+}
+.bx-emoji-tab:hover { color: var(--ink); background: var(--surface-raised); }
+.bx-emoji-tab[aria-selected="true"] { color: var(--ink); background: var(--selected); font-weight: 600; }
+.bx-emoji-tab:focus-visible, .bx-emoji-action:focus-visible, .bx-emoji-color:focus-visible, .bx-emoji-cell:focus-visible {
+  outline: 1px solid var(--focus-ring); outline-offset: 1px; box-shadow: 0 0 0 1px var(--focus-ring);
+}
+.bx-emoji-tabs-end { margin-left: auto; display: inline-flex; gap: var(--space-1); }
+.bx-emoji-colors { display: inline-flex; gap: var(--space-half); flex: none; }
+.bx-emoji-color {
+  width: var(--space-5); height: var(--space-5); padding: 0; border: 0; border-radius: var(--radius-pill); background: none;
+  cursor: pointer; display: grid; place-items: center;
+}
+.bx-emoji-color::before { content: ""; width: var(--space-3); height: var(--space-3); border-radius: var(--radius-pill); background: currentColor; }
+.bx-emoji-color:hover { background: var(--surface-raised); }
+.bx-emoji-color[aria-checked="true"] { background: var(--selected); }
+.bx-emoji-empty { grid-column: 1 / -1; padding: var(--space-2); }
+.bx-emoji-cell .bx-phosphor { width: var(--icon-md); height: var(--icon-md); }
+/* Phosphor-Icon in Seitenleiste, Titel, Erwähnung, Unterseite: so groß wie die Schrift des Platzes, wie ein Emoji. */
+.bx-phosphor-wrap { display: inline-flex; vertical-align: -0.125em; }
+.bx-phosphor-wrap .bx-phosphor { vertical-align: 0; }
+.bx-phosphor { width: 1em; height: 1em; display: inline-block; vertical-align: -0.125em; flex: none; }
 
 /* BSD-209: Syntax-Hervorhebung (Swift-Hervorheber). Bis es Syntax-Tokens gibt (Designentscheidung, docs/design/astryx.md
    „Offen“): nur vorhandene Text-Tokens – Gewicht für Struktur, `synced` für Literale, `muted` für Kommentare. */

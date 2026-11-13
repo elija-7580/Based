@@ -8,6 +8,7 @@ export type { PageEditorProps } from "./ui/PageEditor.js";
 export type { DatabaseRenderProps, EquationRenderProps, PageDirectory, PageRef, Person } from "./ui/env.js";
 export { isEmojiIcon, storePageDirectory } from "./ui/env.js";
 export { EmojiPicker } from "./ui/EmojiPicker.js";
+export { IconView, isDrawableIcon, loadPhosphor, PhosphorGlyph } from "./ui/phosphor.js";
 export type { EmojiPickerProps } from "./ui/EmojiPicker.js";
 export type { DatabaseRef, DatabaseSource } from "./ui/MovePicker.js";
 export { AIBox, applyAIResult, SELECTION_ACTIONS } from "./ui/AIBox.js";

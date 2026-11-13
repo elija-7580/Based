@@ -1,9 +1,9 @@
 {
   "note": "BSD-348: Bestand, darf nur schrumpfen (node ci/design-guard.mjs --shrink)",
   "totals": {
-    "px": 145,
-    "button": 325,
-    "astryx": 188
+    "px": 144,
+    "button": 295,
+    "astryx": 183
   },
   "files": {
     "apps/web/src/assets.css": {
@@ -50,7 +50,7 @@
       "px": 2
     },
     "apps/web/src/components/Backlinks.tsx": {
-      "button": 4
+      "button": 3
     },
     "apps/web/src/components/BlockView.tsx": {
       "button": 3
@@ -65,14 +65,14 @@
       "button": 3
     },
     "apps/web/src/components/ImportExport.tsx": {
-      "button": 13,
+      "button": 4,
       "astryx": 2
     },
     "apps/web/src/components/LibraryTabs.tsx": {
       "astryx": 1
     },
     "apps/web/src/components/MoveDialog.tsx": {
-      "astryx": 6
+      "astryx": 4
     },
     "apps/web/src/components/Notice.tsx": {
       "button": 1
@@ -94,7 +94,6 @@
       "astryx": 4
     },
     "apps/web/src/components/Share.tsx": {
-      "button": 1,
       "astryx": 6
     },
     "apps/web/src/components/Sidebar.tsx": {
@@ -105,10 +104,10 @@
       "button": 2
     },
     "apps/web/src/components/TeamspaceDialog.tsx": {
-      "astryx": 7
+      "astryx": 4
     },
     "apps/web/src/components/VersionHistory.tsx": {
-      "button": 5
+      "button": 1
     },
     "apps/web/src/components/crashReport.css": {
       "px": 2
@@ -124,9 +123,6 @@
     },
     "apps/web/src/database/RowPeek.tsx": {
       "astryx": 4
-    },
-    "apps/web/src/database/rowPeek.css": {
-      "px": 1
     },
     "apps/web/src/desktop/BackupsGroup.tsx": {
       "astryx": 4
@@ -172,13 +168,13 @@
       "astryx": 3
     },
     "apps/web/src/screens/PageView.tsx": {
-      "button": 34
+      "button": 27
     },
     "apps/web/src/screens/Settings.tsx": {
       "astryx": 4
     },
     "apps/web/src/screens/Trash.tsx": {
-      "button": 7
+      "button": 1
     },
     "apps/web/src/screens/Welcome.tsx": {
       "button": 2
@@ -292,7 +288,7 @@
       "button": 8
     },
     "packages/editor/src/ui/EmojiPicker.tsx": {
-      "button": 3
+      "button": 1
     },
     "packages/editor/src/ui/ImageViewer.tsx": {
       "button": 1

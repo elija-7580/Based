@@ -5,7 +5,8 @@ import { trackPosition } from "@blocknote/core";
 import { canonicalStringify, dateMentionValue, dateSuggestions } from "@based/core";
 import { INLINE } from "../mapping/bn.js";
 import type { BasedEditor } from "../schema/schema.js";
-import { isEmojiIcon, type PageDirectory, type PageRef, type Person } from "./env.js";
+import { IconView } from "./phosphor.js";
+import type { PageDirectory, PageRef, Person } from "./env.js";
 
 export const MENTION_TRIGGERS = ["@", "[["] as const;
 
@@ -70,7 +71,7 @@ export async function resolveWikilink(editor: BasedEditor, title: string, opts: 
   return "text";
 }
 
-const icon = (p: PageRef) => (isEmojiIcon(p.icon) ? p.icon : p.kind === "database" ? "▦" : "📄");
+const icon = (p: PageRef) => <IconView icon={p.icon} fallback={p.kind === "database" ? "▦" : "📄"} />;
 
 export interface MentionMenuOptions {
   pages: PageDirectory;
