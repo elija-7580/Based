@@ -133,7 +133,7 @@ export type { Caret, EditResult, DropSide } from "./editor/block-cmd.js";
 export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";
-export { CODE_LANGUAGES, syntaxTokens } from "./editor/syntax.js";
+export { CODE_LANGUAGES, codeLanguageID, syntaxTokens } from "./editor/syntax.js";
 export type { SyntaxKind, SyntaxToken } from "./editor/syntax.js";
 export { embedTarget } from "./editor/embed.js";
 export type { EmbedTarget } from "./editor/embed.js";
