@@ -58,7 +58,7 @@ function openAsset(host: FileHost, id: string) {
   void host.open(id).then((u) => globalThis.open?.(u, "_blank"), () => { /* nicht ladbar: nichts zu öffnen */ });
 }
 
-function CellViewInner({ row, prop, wrap, compact, onToggleCheckbox, onButton, blankEmptyTitle }: CellViewProps): ReactNode {
+function CellViewInner({ row, prop, wrap, onToggleCheckbox, onButton, blankEmptyTitle }: CellViewProps): ReactNode {
   const fileHost = useContext(ShellSlots).files;
   const { store, engine, db, onOpenPage, locked } = useDB();
   const cls = wrap ? "dbui-wrap" : "dbui-clip";
