@@ -28,6 +28,34 @@ fn show_main(app: &tauri::AppHandle) {
     }
 }
 
+/// BSD-390: WKWebViewConfiguration mit ausgeschalteten Writing Tools (runder Knopf neben markiertem Text,
+/// „Ask Siri“-Vorschläge). Das Verhalten lässt sich nur beim Anlegen der WKWebView setzen; macOS < 15 kennt den
+/// Selektor nicht und bekommt eine unveränderte Konfiguration. Wry legt Datenspeicher und URL-Schemata auf dieser
+/// Konfiguration selbst an (wie ohne eigene Konfiguration).
+#[cfg(target_os = "macos")]
+fn webview_configuration_without_writing_tools() -> objc2::rc::Retained<objc2_web_kit::WKWebViewConfiguration> {
+    use objc2::{msg_send, sel, MainThreadMarker};
+    let mtm = MainThreadMarker::new().expect("Fenster werden im Hauptthread angelegt");
+    let config = unsafe { objc2_web_kit::WKWebViewConfiguration::new(mtm) };
+    // NSWritingToolsBehaviorNone = -1 (NSInteger)
+    let supported: bool = unsafe { msg_send![&*config, respondsToSelector: sel!(setWritingToolsBehavior:)] };
+    if supported {
+        let none: isize = -1;
+        let _: () = unsafe { msg_send![&*config, setWritingToolsBehavior: none] };
+    }
+    config
+}
+
+/// Hauptfenster aus tauri.conf.json („create“: false), auf dem Mac mit eigener WebView-Konfiguration (BSD-390).
+fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
+    let Some(cfg) = app.config().app.windows.iter().find(|w| w.label == "main").cloned() else { return Ok(()) };
+    let builder = tauri::WebviewWindowBuilder::from_config(app.handle(), &cfg)?;
+    #[cfg(target_os = "macos")]
+    let builder = builder.with_webview_configuration(webview_configuration_without_writing_tools());
+    builder.build()?;
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .manage(FrontWindow(Mutex::new("main".to_string())))
@@ -39,6 +67,10 @@ pub fn run() {
         // BSD-319: Fehlerberichte nach ~/.config/based/reports (Rechte nur dort, capabilities/default.json) und im Finder zeigen.
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            create_main_window(app)?;
+            Ok(())
+        })
         .menu(|app| {
             let name = app.package_info().name.clone();
             let about = AboutMetadata { name: Some(name.clone()), ..Default::default() };

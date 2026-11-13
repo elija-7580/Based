@@ -2,6 +2,8 @@
 // Import-Worker vorbereiten – mit Fortschritt und Abbrechen –, dann im Store-Worker schreiben und berichten.
 // Export: Seite als Markdown, HTML (eigenständige Datei oder ZIP mit Unterseiten/assets) oder PDF (Druckansicht);
 // Workspace als ZIP (Markdown oder HTML mit assets/) oder Based-Archiv, als Download.
+import { BasedButton } from "@based/ui/astryx";
+import { useReturnFocus } from "@based/ui/native";
 import { CheckboxInput } from "@astryxdesign/core/CheckboxInput";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -28,6 +30,7 @@ export function download(file: ExportFile) {
 function Dialog({ title, onClose, busy, children }: { title: string; onClose: () => void; busy?: boolean; children: ReactNode }) {
   const id = useId();
   const box = useRef<HTMLDivElement>(null);
+  useReturnFocus(); // BSD-304
   useEffect(() => box.current?.focus(), []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -133,9 +136,9 @@ export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: 
             <span aria-hidden="true" className="import-source-arrow">→</span>
           </button>
           <div className="dialog-actions">
-            <button type="button" className="btn ghost" onClick={onClose}>Close</button>
-            <button type="button" className="btn" onClick={() => folder.current?.click()}>Choose folder…</button>
-            <button type="button" className="btn primary" onClick={() => files.current?.click()}>Choose files…</button>
+            <BasedButton label="Close" variant="ghost" onClick={onClose} />
+            <BasedButton label="Choose folder…" onClick={() => folder.current?.click()} />
+            <BasedButton label="Choose files…" variant="primary" onClick={() => files.current?.click()} />
           </div>
         </>
       ) : null}
@@ -150,7 +153,7 @@ export function ImportDialog({ client, onClose, onOpenPage, initial = "pick" }: 
             <span style={{ width: `${Math.round(fraction * 100)}%` }} />
           </div>
           <div className="dialog-actions">
-            <button type="button" className="btn" disabled={phase.k !== "preparing"} onClick={() => running.current?.cancel()}>Cancel</button>
+            <BasedButton label="Cancel" disabled={phase.k !== "preparing"} onClick={() => running.current?.cancel()} />
           </div>
         </>
       ) : null}
@@ -176,9 +179,9 @@ function ImportReport({ summary, report, onClose, onMore, onOpenPage }: { summar
       ) : null}
       <div className="dialog-actions">
         {report ? <CopyReport report={report} /> : null}
-        <button type="button" className="btn ghost" onClick={onMore}>Import more…</button>
-        {first && onOpenPage ? <button type="button" className="btn" onClick={() => { onClose(); onOpenPage(first); }}>Open</button> : null}
-        <button type="button" className="btn primary" onClick={onClose}>Done</button>
+        <BasedButton label="Import more…" variant="ghost" onClick={onMore} />
+        {first && onOpenPage ? <BasedButton label="Open" onClick={() => { onClose(); onOpenPage(first); }} /> : null}
+        <BasedButton label="Done" variant="primary" onClick={onClose} />
       </div>
     </>
   );
@@ -261,8 +264,8 @@ export function ExportDialog({ client, pageID, onClose }: { client: StoreClient;
       ) : null}
       {result ? <p role={result.ok ? "status" : "alert"} className={result.ok ? "t-desc" : "dialog-error"} data-testid="export-result">{result.text}</p> : null}
       <div className="dialog-actions">
-        <button type="button" className="btn ghost" onClick={onClose}>{result?.ok ? "Done" : "Cancel"}</button>
-        <button type="button" className="btn primary" disabled={busy} onClick={() => void run()}>{busy ? (format === "pdf" ? "Preparing…" : "Exporting…") : format === "pdf" ? "Print…" : "Export"}</button>
+        <BasedButton label={result?.ok ? "Done" : "Cancel"} variant="ghost" onClick={onClose} />
+        <BasedButton label={busy ? (format === "pdf" ? "Preparing…" : "Exporting…") : format === "pdf" ? "Print…" : "Export"} variant="primary" busy={busy} onClick={() => void run()} />
       </div>
     </Dialog>
   );

@@ -18,6 +18,7 @@ export { openCalendar, openTimeList } from "./calendar.js";
 export { DateField, TimeField } from "./fields.js";
 export * from "./logic.js";
 export { installNoWritingTools } from "./writingTools.js";
+export { useReturnFocus } from "./returnFocus.js";
 
 let uninstall: (() => void) | undefined;
 

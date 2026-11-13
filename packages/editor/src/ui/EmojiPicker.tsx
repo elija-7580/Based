@@ -1,6 +1,7 @@
 // BSD-210: Emoji-Picker mit Suche (wie Swift IconPicker, Reiter „Emoji“): Filterfeld, Raster, Random, Remove.
 // Für Callout-Icons; exportiert, damit die Shell ihn für Seiten-Icons nutzen kann. Pfeiltasten wandern im Raster,
 // Enter wählt, Esc schließt.
+import { useReturnFocus } from "@based/ui/native";
 import { randomIcon, searchEmoji } from "@based/core";
 import { useEffect, useRef, useState } from "react";
 
@@ -19,6 +20,7 @@ export function EmojiPicker(props: EmojiPickerProps) {
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const root = useRef<HTMLDivElement>(null);
+  useReturnFocus(); // BSD-304
   const list = searchEmoji(query, 600);
   useEffect(() => input.current?.focus(), []);
   useEffect(() => setActive(0), [query]);

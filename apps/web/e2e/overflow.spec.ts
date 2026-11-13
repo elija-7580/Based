@@ -269,3 +269,33 @@ test("Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig", async ({ page }
   expect(full.x + full.width).toBeLessThanOrEqual(box.x + box.width + 1);
   await expect(db.getByRole("button", { name: "Filter" })).toBeVisible();
 });
+
+// BSD-301 Teil 3: Datenbank mit 1.000 Zeilen, langen Spaltennamen und langen Optionen in drei Größen – nichts läuft
+// aus seinem Kasten, nichts schneidet ohne „…“ ab, kein waagrechter Rollbalken der Seite.
+test("Datenbank: 1.000 Zeilen, lange Spaltennamen und Optionen", async ({ page, browserName }) => {
+  await page.goto("/");
+  await ready(page);
+  const blockID = (await command(page, { op: "seedDatabase", count: 1000 })) as string;
+  await page.goto("/#page-" + blockID);
+  await ready(page);
+  await expect(page.getByRole("grid").first()).toBeVisible();
+  await page.evaluate(async ({ id, long }) => {
+    interface Tx { put(r: unknown): void; update(id: string, f: (b: { values?: Record<string, unknown> }) => void): void }
+    interface Store { blocks: Map<string, { id: string; parent: string; props?: { databaseID?: string } }>; databases: Map<string, { id: string; properties: unknown[] }>; children(p: string): string[]; transact(n: string, f: (tx: Tx) => void): void }
+    const b = (globalThis as unknown as { __based: { client: { openPage(id: string): Promise<{ store: Store }> } } }).__based;
+    const { store } = await b.client.openPage(id);
+    const dbID = store.blocks.get(id)!.props!.databaseID!;
+    const db = structuredClone(store.databases.get(dbID)!);
+    const options = [{ id: "o1", name: long, color: "blue" }, { id: "o2", name: "Short", color: "green" }];
+    db.properties.push({ id: "pl", name: `Status of the review process ${long}`, type: "select", options }, { id: "pt", name: `Notes ${long}`, type: "text" });
+    const rows = store.children("d:" + dbID).slice(0, 40);
+    store.transact("Long", (tx) => {
+      tx.put({ kind: "database", data: db });
+      rows.forEach((r, i) => tx.update(r, (x) => { x.values = { ...(x.values ?? {}), pl: { select: { _0: i % 2 ? "o1" : "o2" } }, pt: { text: { _0: i % 3 ? long : "x" } } }; }));
+    });
+  }, { id: blockID, long: LONG_TITLE });
+  await expect(page.getByRole("columnheader", { name: /Status of the review/ })).toBeVisible();
+  await expect(page.getByRole("gridcell", { name: /^A very long page title/ }).first()).toBeVisible(); // Werte angekommen
+  const found = await check(page, [{ name: "database-long", hash: "#page-" + blockID }], "extreme", browserName);
+  expect(found).toEqual([]);
+});

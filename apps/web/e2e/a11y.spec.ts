@@ -205,3 +205,39 @@ test("Quick Find: Esc gibt den Fokus zurück", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Quick Find" })).toHaveCount(0);
   await expect(row).toBeFocused();
 });
+
+// BSD-304 Teil 3: Export, „Move to“ (aus dem Seitenmenü) und die Icon-Auswahl geben beim Schließen mit Esc den Fokus
+// an den Auslöser zurück – vorher landete er auf <body>.
+test("Dialoge geben den Fokus zurück: Export, Move to, Icon-Auswahl", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/");
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  await page.getByRole("treeitem", { name: "Welcome to Based" }).click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Welcome to Based");
+  // Export
+  const exportBtn = page.getByRole("button", { name: "Export" });
+  await exportBtn.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: /Export/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: /Export/ })).toHaveCount(0);
+  await expect(exportBtn).toBeFocused();
+  // Move to aus dem Seitenmenü → zurück an „…“
+  const more = page.getByRole("button", { name: "Page menu" });
+  await more.focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("menuitem", { name: /^Move to/ }).first().click();
+  await expect(page.getByTestId("move-dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("move-dialog")).toHaveCount(0);
+  await expect(more).toBeFocused();
+  // Icon-Auswahl
+  await page.getByLabel("Page title").hover();
+  const add = page.getByRole("button", { name: "Add icon" });
+  await add.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Choose an icon" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Choose an icon" })).toHaveCount(0);
+  await expect(add).toBeFocused();
+});
