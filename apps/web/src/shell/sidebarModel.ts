@@ -20,7 +20,7 @@ export const TEAMSPACES = "teamspaces";
  * Unterseiten nur unter aufgeklappten Seiten. `collapsed` enthält zugeklappte Abschnitte (`favorites`, `teamspaces`,
  * `private`) und zugeklappte Teamspaces (ihre ID).
  */
-export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, collapsed: ReadonlySet<string> = new Set()): SidebarRow[] {
+export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, collapsed: ReadonlySet<string> = new Set(), opts: { guest?: boolean } = {}): SidebarRow[] {
   const rows: SidebarRow[] = [];
   const pages = (ids: readonly string[], depth: number, scope: string, path: Set<string>) => {
     for (const id of ids) {
@@ -44,6 +44,13 @@ export function flattenSidebar(outline: Outline, expanded: ReadonlySet<string>, 
     const c = collapsed.has(FAVORITES);
     rows.push({ kind: "header", key: "h/" + FAVORITES, label: "Favorites", group: FAVORITES, collapsed: c });
     if (!c) pages(outline.favorites, 0, "fav", new Set());
+  }
+  if (opts.guest) {
+    // BSD-235: ein Gast sieht nur, was mit ihm geteilt ist – ein Abschnitt, kein „+“, keine Teamspaces.
+    const c = collapsed.has(PRIVATE_SECTION);
+    rows.push({ kind: "header", key: "h/" + PRIVATE_SECTION, label: "Shared with you", group: PRIVATE_SECTION, collapsed: c });
+    if (!c) for (const s of [...outline.sections].reverse()) pages(outline.children[sectionKey(s.id)] ?? [], 0, "s:" + s.id, new Set());
+    return rows;
   }
   const teamspaces = outline.sections.filter((s) => s.id !== PRIVATE_SECTION);
   const tc = collapsed.has(TEAMSPACES);

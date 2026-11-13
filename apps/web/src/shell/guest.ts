@@ -96,9 +96,14 @@ export function guestStartPage(cfg: GuestConfig, me: GuestMe | undefined): strin
 let deleteForeverAllowed = true;
 /** BSD-235: Rolle je geteilter Seite (nur im Gast-Modus; `undefined` = Besitzer oder Rolle unbekannt). */
 let guestRoles: ReadonlyMap<string, string> | undefined;
+let guestMode = false;
+
+/** BSD-235: Läuft dieser Tab als Gast (geteilter Link)? */
+export const isGuest = (): boolean => guestMode;
 
 /** Nur im Gast-Modus aufrufen. Unbekannte Rolle (Server nicht erreichbar) zählt als „Can edit“. */
 export function setGuestAccess(me: Pick<GuestMe, "pages"> | undefined) {
+  guestMode = true;
   deleteForeverAllowed = me !== undefined && me.pages.some((p) => p.role === "full");
   guestRoles = me ? new Map(me.pages.map((p) => [p.id, p.role])) : undefined;
 }
