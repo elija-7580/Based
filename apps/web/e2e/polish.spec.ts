@@ -184,3 +184,35 @@ test("Alles löschen: Library → alle in den Papierkorb, Papierkorb leeren; die
   await mark('await expect(page.getByText("The Trash i');
   for (const st of steps) expect(Number(st.split(": ").pop()), st).toBeLessThan(1000);
 });
+
+// BSD-367: Fokus und Auswahl sind neutral (grau hell, weiß dunkel) – auch mit Marker „Mint“, der vorher grüne
+// Fokusrahmen in Tabelle, Feldern und Editor erzeugte. Der Marker bleibt der Agentenarbeit vorbehalten.
+test("Fokusrahmen und Textauswahl neutral, unabhängig vom Marker", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 820 });
+  for (const theme of ["light", "dark"] as const) {
+    await page.goto("/");
+    await page.evaluate((t) => { localStorage.clear(); localStorage.setItem("based.appearance", JSON.stringify({ theme: t, marker: "mint" })); }, theme);
+    await page.reload();
+    await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    const tok = (name: string) => page.evaluate((n) => {
+      const probe = document.createElement("i");
+      probe.style.color = `var(--${n})`;
+      document.body.append(probe);
+      const c = getComputedStyle(probe).color;
+      probe.remove();
+      return c;
+    }, name);
+    const ring = await tok("focus-ring");
+    expect(ring).not.toBe(await tok("marker-strong"));
+    // Tastatur-Fokus auf einem Knopf der Seitenleiste
+    await page.getByRole("button", { name: "Search" }).first().focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    const outline = await page.evaluate(() => getComputedStyle(document.activeElement!).outlineColor);
+    expect(outline, theme).toBe(ring);
+    // Textauswahl
+    const sel = await page.evaluate(() => getComputedStyle(document.body, "::selection").backgroundColor);
+    expect(sel, theme).toBe(await tok("selection-bg"));
+  }
+});

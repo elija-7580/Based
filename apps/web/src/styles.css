@@ -23,9 +23,11 @@ body {
   :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
   h1, h2, h3, p { margin: 0; }
 }
-/* Fokusrahmen in der Highlight-Farbe (Marker aus Einstellungen → Appearance), für Based und Astryx gleich. Gesetzt auf
-   jedem Element, damit Astryx' eigener Wert am Theme-Element nicht durchschlägt. */
-body, body * { --focus-ring: var(--marker-strong); --focus-outline-color: var(--focus-ring); }
+/* BSD-367: Fokusrahmen neutral (Token `focus-ring`: grau hell, weiß dunkel) – der Marker bedeutet nur Agentenarbeit.
+   Für Based und Astryx gleich; gesetzt auf jedem Element, damit Astryx' eigener Wert am Theme-Element nicht durchschlägt. */
+body, body * { --focus-outline-color: var(--focus-ring); }
+/* BSD-367: markierter Text neutral statt Systemfarbe (Akzent) oder Marker. */
+::selection { background-color: var(--selection-bg); color: var(--ink); }
 input::placeholder { color: var(--muted); }
 /* BSD-261: Rollbalken schmal, rund, ohne Spur und ohne Eckkasten, auch bei „Rollbalken immer anzeigen“ (macOS).
    Chromium und WebKit (ab Safari 18.2) ignorieren ::-webkit-scrollbar, sobald scrollbar-width/-color gesetzt ist, und

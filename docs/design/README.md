@@ -27,6 +27,7 @@ erfolgreiche Apps (Obsidian, Bear) sind im Standard ruhig und lassen sich tief a
 | Flächen | `canvas` #F1F1EE / #141414 (Grund) · `bg` #FFFFFF / #191919 (Seite) · `surface-raised` #F2F2EF / #262626 (Gruppen, Karten, Pillen) · `sidebar` · `selected` · `line` |
 | Text | `ink` #1F1F1D / #E9E9E6 · `ink-2` (Seitentext) · `muted` #6B6A65 / #A3A29D (≥4,5:1 auf allen Flächen) |
 | Aktion | `button` = Tinte, eine primäre Aktion pro Ansicht |
+| Fokus, Auswahl | `focus-ring` grau / weiß (Tastatur-Fokus, fokussierte Tabelle, Zelleneditor, markiertes Medium) · `selection-bg` (markierter Text) · `selected` (Zeilen, Menüeinträge) – neutral, nie Marker (BSD-367) |
 | Signal | `marker` #F1DE8A (Fläche, Tag) · `marker-strong` #E0C24A (3-px-Strich) · `marker-calm` |
 | Status | Ready, Review, Blocked, Neutral als Tönungen mit Tinte; „In progress“ = Marker |
 | Schrift | Default: Systemschrift, Titel 32/650, Text 16/1.68, Beschreibung 13/450 +0,005 em, Meta 12/500 +0,01 em, Tab-Label 10,5/600 +0,02 em · Bold: Schibsted 40/800, Literata 17/1.7 · Mono 11,5 für Daten |

@@ -37,7 +37,7 @@
 .dbui-root *, .dbui-popover *, .dbui-rowprops * { box-sizing: border-box; }
 .dbui-root button, .dbui-popover button, .dbui-rowprops button { font: inherit; color: inherit; cursor: pointer; }
 .dbui-root button:disabled, .dbui-popover button:disabled, .dbui-rowprops button:disabled { cursor: default; opacity: 0.5; }
-:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
+:where(.dbui-root, .dbui-popover, .dbui-rowprops) :where(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .dbui-icon { flex: none; }
 
 /* Kopf: Titel, Tabs, Aktionen */
@@ -125,11 +125,11 @@
 
 /* Tabelle */
 .dbui-table { position: relative; outline: none; margin: 0 var(--space-6); }
-/* BSD-304: Die Tabelle nimmt per Tab den Fokus (Pfeiltasten wählen Zellen) – dann sichtbar, in der Marker-Farbe. */
+/* BSD-304: Die Tabelle nimmt per Tab den Fokus (Pfeiltasten wählen Zellen) – dann sichtbar, im neutralen Fokusrahmen (BSD-367). */
 /* Als Rahmen über allem (die klebende Kopfzeile liegt sonst über der Kontur). */
 .dbui-table:focus-visible::after {
   content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  border: var(--marker-width) solid var(--focus-ring, var(--marker-strong)); border-radius: var(--radius-sm);
+  border: var(--marker-width) solid var(--focus-ring); border-radius: var(--radius-sm);
 }
 .dbui-thead {
   position: sticky; top: 0; z-index: 2; display: flex; height: var(--dbui-row); background: var(--bg); border-bottom: 1px solid var(--line);
@@ -524,7 +524,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-rowprop-value { min-width: 0; min-height: var(--space-7); display: flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); }
 .dbui-rowprop-value.editable { cursor: pointer; }
 .dbui-rowprop-value.editable:hover { background: var(--surface-raised); }
-.dbui-rowprop-value:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
+.dbui-rowprop-value:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 
 /* Place-Editor */
 .dbui-place-editor { width: calc(var(--space-8) * 6); gap: var(--space-2); padding: var(--space-3); }
@@ -581,7 +581,7 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-chip.danger { color: var(--danger); }
 
 /* BSD-238: Fokusrahmen um die ganze Karte bzw. Zeile (wie Notion), nicht nur um den Titel. */
-.dbui-card:has(.dbui-card-open:focus-visible), .dbui-list-row:has(.dbui-list-title:focus-visible) { outline: 2px solid var(--marker-strong); outline-offset: 1px; }
+.dbui-card:has(.dbui-card-open:focus-visible), .dbui-list-row:has(.dbui-list-title:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .dbui-card-open:focus-visible, .dbui-list-title:focus-visible { outline: none; }
 
 /* BSD-255: inline in einer Seite – ruhig wie Notion: kein Kasten, linke Kante bündig mit dem Text, Tabelle ohne eigenen

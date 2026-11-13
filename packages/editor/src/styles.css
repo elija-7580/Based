@@ -193,7 +193,7 @@
 .bn-root .bn-suggestion-menu-item[aria-selected="true"],
 .bn-root .bn-ak-tab[aria-selected="true"] { color: var(--ink); background-color: var(--selected); }
 .bn-root .bn-ak-primary { color: var(--button-ink); background-color: var(--button); }
-.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--marker-strong); }
+.bn-root .bn-ak-popover:focus-visible, .bn-root .bn-ak-input:focus-visible { outline-color: var(--focus-ring); }
 .bn-root .bn-ak-popover, .bn-root .bn-ak-menu, .bn-root .bn-suggestion-menu { border-radius: var(--radius-lg); box-shadow: var(--shadow-menu); background: var(--bg); color: var(--ink); }
 /* Menüs (Blockgriff ⋮⋮ und Untermenüs) wie die übrigen Based-Menüs (.menu, „…“ oben rechts auf einer Seite): Glas auf
    dem Mac, Kanten-Licht, gleiche Zeilen, Icons und Abstände. */
@@ -368,7 +368,7 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-editor [data-content-type="codeBlock"]:hover > div > select, .bx-editor [data-content-type="codeBlock"] > div > select:focus-visible,
 .bx-editor [data-content-type="codeBlock"]:hover .bx-code-tools, .bx-editor .bx-code-tools:focus-within { opacity: 1; transition-delay: 0s; }
 .bx-editor [data-content-type="codeBlock"] > div > select:hover, .bx-editor .bx-code-tool:hover { color: var(--ink); }
-.bx-editor [data-content-type="codeBlock"] > div > select:focus-visible, .bx-editor .bx-code-tool:focus-visible { outline: 1px solid var(--marker-strong) !important; }
+.bx-editor [data-content-type="codeBlock"] > div > select:focus-visible, .bx-editor .bx-code-tool:focus-visible { outline: 1px solid var(--focus-ring) !important; }
 /* Umbruch aus: eine Zeile je Codezeile, der Block rollt waagrecht (die Seite nicht). */
 .bx-editor [data-content-type="codeBlock"] > pre { overflow-x: auto; }
 .bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre, .bx-editor [data-content-type="codeBlock"][data-wrap="false"] > pre * { white-space: pre; overflow-wrap: normal; word-break: normal; }
@@ -465,13 +465,13 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
   position: absolute; top: var(--space-4); right: var(--space-4); width: var(--space-8); height: var(--space-8); border: 0; border-radius: var(--radius-pill);
   background: var(--surface-raised); color: var(--ink); font: inherit; font-size: var(--type-ui-size); cursor: pointer;
 }
-.bx-image-viewer-close:focus-visible { outline: 2px solid var(--marker-strong); outline-offset: 2px; }
+.bx-image-viewer-close:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media print { .bx-image-viewer { display: none; } }
-/* BSD-290: Markiertes Bild/Video ohne das Blau von BlockNote – Rahmen in der Marker-Farbe, keine Tönung. */
+/* BSD-290/367: Markiertes Bild/Video ohne das Blau von BlockNote – neutraler Rahmen (focus-ring), keine Tönung. */
 .bx-editor .bn-block-content.ProseMirror-selectednode > [data-file-block]::after,
 .bx-editor .bn-block-content.ProseMirror-selectednode > *::after,
 .bx-editor .ProseMirror-selectednode > .bn-block-content > *::after {
-  background-color: transparent; box-shadow: inset 0 0 0 2px var(--marker-strong); border-radius: var(--radius-xs);
+  background-color: transparent; box-shadow: inset 0 0 0 2px var(--focus-ring); border-radius: var(--radius-xs);
 }
 
 /* BSD-305: Links im Text und Häkchen der To-dos ohne das Blau des Browsers – Tinte mit gedämpfter Unterstreichung
@@ -523,5 +523,5 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
   border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font: inherit;
 }
 .bn-root .bx-menu-search::placeholder { color: var(--muted); }
-.bn-root .bx-menu-search:focus-visible { outline: 1px solid var(--marker-strong); border-color: var(--marker-strong); }
+.bn-root .bx-menu-search:focus-visible { outline: 1px solid var(--focus-ring); border-color: var(--focus-ring); }
 .bn-root .bx-menu-empty { padding: var(--space-2) var(--space-3); color: var(--muted); }
