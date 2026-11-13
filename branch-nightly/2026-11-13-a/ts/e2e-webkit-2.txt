@@ -1,61 +1,61 @@
-failure 866203c9972ecc640b872a1d5d62d1d80fe5dc22
-
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
-  18 skipped
-  122 passed (7.5m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+cancelled 0704a4c9351de773a7a4a6689e8f4d85a8be1761
+  ✓   23 [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über (17.1s)
+  ✓   22 [webkit] › e2e/notion-hybrid.spec.ts:43:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (27.9s)
+  ✓   25 [webkit] › e2e/notion-hybrid.spec.ts:129:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (6.5s)
+  -   26 [webkit] › e2e/notion-hybrid.spec.ts:147:1 › Hybrid-Import: Bildschirmfotos
+  ✓   24 [webkit] › e2e/overflow.spec.ts:149:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (19.7s)
+  ✓   28 [webkit] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (6.8s)
+  ✓   27 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (23.9s)
+  ✓   29 [webkit] › e2e/overflow.spec.ts:199:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (10.7s)
+  ✓   30 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (6.0s)
+  ✓   32 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (6.6s)
+  -   33 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   34 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   31 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (12.8s)
+  ✓   35 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (4.1s)
+  ✓   37 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (7.3s)
+  ✓   36 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (15.3s)
+  ✓   38 [webkit] › e2e/polish.spec.ts:13:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (8.0s)
+  ✓   40 [webkit] › e2e/polish.spec.ts:27:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (5.1s)
+  ✓   41 [webkit] › e2e/polish.spec.ts:38:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (8.5s)
+  ✓   39 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (18.3s)
+  -   43 [webkit] › e2e/replay/record-sample.spec.ts:13:1 › Beispielbündel: tippen, fett, Liste, Auswahl mit der Maus, Einfügen
+  ✓   42 [webkit] › e2e/polish.spec.ts:59:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (2.2s)
+  -   44 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
+  -   46 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
+  ✓   45 [webkit] › e2e/polish.spec.ts:85:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (8.5s)
+  ✓   47 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung (12.8s)
+  ✓   49 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung (5.7s)
+  ✓   48 [webkit] › e2e/polish.spec.ts:120:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (11.9s)
+(node:8804) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   50 [webkit] › e2e/report.spec.ts:24:1 › ⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (11.4s)
+  ✓   51 [webkit] › e2e/schedules-server.spec.ts:39:1 › BSD-243: Hinweis unter Schedules – ohne Server nur bei offener App, mit Server mit Modellzugang auch geschlossen (9.1s)
+  ✓   52 [webkit] › e2e/report.spec.ts:65:1 › Echter Text nur per Häkchen, Foto abwählbar; ⌘K → Report a problem (9.7s)
+  ✓   54 [webkit] › e2e/report.spec.ts:87:1 › Settings → Diagnostics: Gruppen, Log mit Stufe und Suche, Entwickler-Ansicht (7.8s)
+  ✓   53 [webkit] › e2e/settings-region.spec.ts:11:1 › Wochenbeginn: Sonntag bzw. Montag als erste Kalenderspalte, bleibt nach dem Neuladen (15.2s)
+  ✓   56 [webkit] › e2e/settings-region.spec.ts:41:1 › Workspace-Name in Einstellungen → General (2.8s)
+  ✓   55 [webkit] › e2e/report.spec.ts:122:1 › Entwickler-Ansicht zeigt die letzten Ereignisse live (7.7s)
+  ✓   57 [webkit] › e2e/settings-region.spec.ts:53:1 › Workspace-Icon in Einstellungen → General, erscheint in der Seitenleiste und lässt sich entfernen (BSD-205) (5.3s)
+  ✓   59 [webkit] › e2e/settings.spec.ts:15:1 › Navigation: 17 Seiten in Account und Workspace, Auswahl steht in der Adresse und übersteht das Neuladen @smoke (4.1s)
+  ✓   58 [webkit] › e2e/report.spec.ts:135:1 › Aufzeichnung kostet beim Tippen messbar nichts (5.9s)
+(node:9706) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   60 [webkit] › e2e/settings.spec.ts:34:1 › Seiten ohne Logik sind ehrlich beschriftet und enthalten keine Schalter (2.6s)
+  ✓   62 [webkit] › e2e/settings.spec.ts:63:1 › Sync-Formular prüft die Adresse, bevor es verbindet (5.5s)
+  ✓   63 [webkit] › e2e/settings.spec.ts:81:1 › General: Zahlen aus dem Workspace, Papierkorb leeren mit Rückfrage (5.7s)
+  ✓   64 [webkit] › e2e/settings.spec.ts:107:1 › Account und Diagnostics zeigen echten Gerätezustand (4.0s)
+  ✓   61 [webkit] › e2e/sharing.spec.ts:77:1 › Veröffentlichen → /p/<id> ohne Token lesbar → zurückziehen → 404 (15.2s)
+  ✓   65 [webkit] › e2e/settings.spec.ts:116:1 › Diagnose (BSD-227): Hinweis nach unsauberem Ende, Log, Bericht ohne Inhalte und Token (3.2s)
+  ✓   67 [webkit] › e2e/settings.spec.ts:143:1 › Registry: ein anderer Bereich hängt einen Abschnitt ein, ohne Settings.tsx anzufassen (2.4s)
+  -   68 [webkit] › e2e/settings.spec.ts:163:3 › Screenshot Einstellungen (light)
+  -   69 [webkit] › e2e/settings.spec.ts:163:3 › Screenshot Einstellungen (dark)
+  ✓   70 [webkit] › e2e/shell-layout.spec.ts:11:1 › Dokument scrollt nie, die Kopfzeile bleibt beim Scrollen der Seite stehen (6.0s)
+  ✓   71 [webkit] › e2e/shell-layout.spec.ts:30:1 › Seitenleiste: Breite ziehen (gemerkt), ⌘\ blendet aus und ein (4.7s)
+  ✓   66 [webkit] › e2e/sharing.spec.ts:125:1 › dunkel: Panel und veröffentlichte Seite; ohne Server ein ehrlicher Hinweis (19.4s)
+  ✓   72 [webkit] › e2e/shell-layout.spec.ts:53:1 › „/Database – Inline“ legt eine echte Datenbank an; Datenbankseiten nutzen die volle Breite (10.4s)
+  ✓   74 [webkit] › e2e/shell-layout.spec.ts:74:1 › Fokusrahmen per Tastatur in der Highlight-Farbe (Marker) (2.3s)
+  ✓   73 [webkit] › e2e/shell-parity.spec.ts:70:1 › Library: suchen, nach Typ und Favorit filtern, mehrere in den Papierkorb (13.7s)
+  ✓   75 [webkit] › e2e/shell-layout.spec.ts:90:1 › Letzten Tab schließen (⌘W) führt zur selbst gewählten Startseite (5.6s)
+  ✓   77 [webkit] › e2e/shell-layout.spec.ts:106:1 › Rad über einer Inline-Datenbank scrollt die Seite weiter (Elija 11.11.) (10.6s)
+  ✓   76 [webkit] › e2e/shell-parity.spec.ts:108:1 › Teamspace anlegen, Seite hineinverschieben, nach Neuladen noch da; löschen schickt sie nach Private (18.3s)
