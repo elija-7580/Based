@@ -131,7 +131,7 @@ export function NotionImport({ client, onBack, onDone, onBusy, onClose }: Props)
   };
 
   if (hybridRunning) return <HybridRunning status={hybrid} onClose={onClose} />;
-  if (hybrid.k === "done") return <HybridReport status={hybrid} onClose={onClose} />;
+  if (hybrid.k === "done") return <HybridReport status={hybrid} onClose={onClose} copyReport={(report) => <CopyReport report={report} />} />;
 
   if (busy) {
     const fraction = phase.k === "running" ? phase.fraction : 1;

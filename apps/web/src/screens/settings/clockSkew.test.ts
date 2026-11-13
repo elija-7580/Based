@@ -1,6 +1,6 @@
 // BSD-286: Text des Uhr-Hinweises in Sync & server und Diagnose.
 import { describe, expect, it } from "vitest";
-import { clockSkewText } from "./sections.js";
+import { clockSkewText } from "./clockSkew.js";
 
 describe("clockSkewText", () => {
   it("nach/vor, Stunden und Minuten, Tage", () => {

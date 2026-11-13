@@ -30,7 +30,7 @@ export const ViewBody = memo(function ViewBody({ view, search, compact, requestE
     case "list": return <ListLayout view={view} result={result} />;
     case "gallery": return <GalleryLayout view={view} result={result} />;
     case "chart": return <ChartLayout view={view} result={result} {...(compact ? { height: 240 } : {})} />;
-    case "dashboard": return <DashboardLayout view={view} />;
+    case "dashboard": return <DashboardLayout view={view} Body={ViewBody} />;
     case "calendar": return <CalendarLayout view={view} result={result} />;
     case "timeline": return <TimelineLayout view={view} result={result} />;
     case "map": return <MapLayout view={view} result={result} />;

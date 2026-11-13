@@ -1,6 +1,6 @@
 // BSD-155: Dashboard (Swift DashboardLayout): Zeilen mit bis zu 4 Widgets auf 12 Spalten; jedes Widget ist
 // eine eigene Ansicht (Diagramm, Tabelle, Board …), auch aus anderen Datenbanken.
-import { useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ComponentType } from "react";
 import {
   addDashboardWidget, moveDashboardWidget, plainText, removeDashboardWidget, setDashboardRowHeight, setDashboardWidgetWidth, WIDGET_TYPES, type DatabaseView,
 } from "@based/core";
@@ -8,7 +8,13 @@ import { DBContext, ShellSlots, useDatabaseContext, useDB } from "../context.js"
 import { ViewSettings } from "../menus/ViewSettings.js";
 import { Icon, MenuItem, MenuLabel, MenuSeparator, Popover, VIEW_ICONS, type Anchor } from "../ui.js";
 import { EmptyState } from "./shared.js";
-import { ViewBody } from "../ViewBody.js";
+
+/**
+ * BSD-399: Das Dashboard zeigt Ansichten mit dem ViewBody, den ViewBody ihm als Prop gibt – so importieren sich
+ * ViewBody.tsx und Dashboard.tsx nicht gegenseitig (die Rekursion bleibt gewollt, läuft aber über die Prop).
+ */
+export type WidgetBody = ComponentType<{ view: DatabaseView; search: string; compact?: boolean }>;
+const BodyContext = createContext<WidgetBody | undefined>(undefined);
 
 const ROW_HEIGHT = 320;
 /** BSD-216: Zeilenhöhen und Breiten zur Wahl (12-Spalten-Raster wie Swift DashboardLayout). */
@@ -48,6 +54,7 @@ function WidgetMenu({ view, place, anchor, onClose, onSettings }: { view: Databa
 
 function WidgetFrame({ view, height, place }: { view: DatabaseView; height: number; place: Place }) {
   const { locked } = useDB();
+  const Body = useContext(BodyContext);
   const [settings, setSettings] = useState<Anchor | null>(null);
   const [menu, setMenu] = useState<Anchor | null>(null);
   const head = useRef<HTMLElement>(null);
@@ -60,7 +67,7 @@ function WidgetFrame({ view, height, place }: { view: DatabaseView; height: numb
         {!locked && <button type="button" className="dbui-icon-btn" aria-label={`Actions for ${view.name}`} data-testid="widget-actions" onClick={(e) => setMenu(e.currentTarget)}><Icon name="more" size={14} /></button>}
       </header>
       <div className="dbui-widget-body" style={{ height }}>
-        <ViewBody view={view} search="" compact />
+        {Body ? <Body view={view} search="" compact /> : null}
       </div>
       {settings && <ViewSettings view={view} anchor={settings} onClose={() => setSettings(null)} groups={[]} />}
       {menu && <WidgetMenu view={view} place={place} anchor={menu} onClose={() => setMenu(null)} onSettings={() => head.current && setSettings(head.current)} />}
@@ -84,7 +91,7 @@ function ForeignWidget({ view, height, place }: { view: DatabaseView; height: nu
   return <DBContext.Provider value={ctx}><WidgetFrame view={view} height={height} place={place} /></DBContext.Provider>;
 }
 
-export function DashboardLayout({ view }: { view: DatabaseView }) {
+export function DashboardLayout({ view, Body }: { view: DatabaseView; Body: WidgetBody }) {
   const { store, db, locked } = useDB();
   const [add, setAdd] = useState<Anchor | null>(null);
   const [source, setSource] = useState<string | undefined>(undefined);
@@ -106,6 +113,7 @@ export function DashboardLayout({ view }: { view: DatabaseView }) {
   };
   const rows = view.dashboard?.rows ?? [];
   return (
+    <BodyContext.Provider value={Body}>
     <div className="dbui-scroll dbui-dashboard" data-testid="dashboard">
       {rows.length === 0 && <EmptyState>Add a widget to start this dashboard.</EmptyState>}
       {rows.map((r, ri) => (
@@ -139,5 +147,6 @@ export function DashboardLayout({ view }: { view: DatabaseView }) {
         </Popover>
       )}
     </div>
+    </BodyContext.Provider>
   );
 }

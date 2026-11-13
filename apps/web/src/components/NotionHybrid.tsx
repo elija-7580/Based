@@ -2,10 +2,9 @@
 // Ablauf liegt in packages/core (notion-hybrid), der Verwalter in worker/notionHybridClient.ts. Der Import läuft
 // weiter, wenn der Dialog zu ist; die Seitenleiste zeigt dann den Stand.
 import { hybridDeviationWarnings } from "@based/core";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "../icons.js";
 import { hybridImport, type HybridStatus } from "../worker/notionHybridClient.js";
-import { CopyReport } from "./NotionImport.js";
 
 export const useHybridImport = (): HybridStatus => useSyncExternalStore(hybridImport.subscribe, hybridImport.getStatus, hybridImport.getStatus);
 
@@ -54,7 +53,8 @@ export function HybridRunning({ status, onClose }: { status: HybridStatus; onClo
 }
 
 /** Abschluss: was kam woher, und jede Abweichung zwischen Export, Notion und Based. */
-export function HybridReport({ status, onClose }: { status: HybridStatus; onClose: () => void }) {
+/** BSD-399: „Copy report“ kommt als Prop aus NotionImport (sonst importierten sich beide Dateien gegenseitig). */
+export function HybridReport({ status, onClose, copyReport }: { status: HybridStatus; onClose: () => void; copyReport: (report: string) => ReactNode }) {
   const s = status.state;
   if (!s) return null;
   const warnings = [...hybridDeviationWarnings(s.deviations), ...s.warnings];
@@ -77,7 +77,7 @@ export function HybridReport({ status, onClose }: { status: HybridStatus; onClos
         </div>
       ) : null}
       <div className="dialog-actions">
-        {status.diagnostic ? <CopyReport report={status.diagnostic} /> : null}
+        {status.diagnostic ? copyReport(status.diagnostic) : null}
         <button type="button" className="btn primary" onClick={() => { hybridImport.dismiss(); onClose(); }}>Done</button>
       </div>
     </div>

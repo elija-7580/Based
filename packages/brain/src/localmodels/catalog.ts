@@ -2,7 +2,7 @@
 // SHA-256 je Datei (aus der Hugging-Face-API: LFS-Prüfsumme bzw. selbst nachgerechnet, 13.11.2026). Nichts davon
 // wird geladen, solange der Nutzer den Zweck nicht einschaltet (LocalModelManager). Laufzeit folgt (Teil 3:
 // whisper.cpp als Tauri-Sidecar/auf dem based-server, ONNX im Worker).
-import type { LocalModelSpec } from "./index.js";
+import type { LocalModelSpec } from "./types.js";
 
 const hf = (repo: string, commit: string, file: string) => `https://huggingface.co/${repo}/resolve/${commit}/${file}`;
 

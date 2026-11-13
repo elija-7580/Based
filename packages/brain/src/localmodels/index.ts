@@ -5,25 +5,9 @@
 // hineingereicht (Worker: fetch + OPFS, Tests: Doppel). Die Modelle selbst hängen sich später hinter `Transcriber`,
 // `TextEmbedder` und `RedactModel` ein.
 
-export type LocalModelPurpose = "transcription" | "embeddings" | "redact";
-
-export interface LocalModelFile {
-  /** Pfad im Modell-Speicher (relativ, ohne ..). */
-  path: string;
-  /** Feste Quelle (https). Leer = vom eigenen based-server (`<server>/models/<modell>/<pfad>`). */
-  url?: string;
-  size: number;
-  sha256: string;
-}
-
-export interface LocalModelSpec {
-  id: string;
-  purpose: LocalModelPurpose;
-  name: string;
-  version: string;
-  license: string;
-  files: readonly LocalModelFile[];
-}
+// BSD-399: Typen in types.ts (catalog.ts braucht sie, ohne index.ts zu importieren).
+export type { LocalModelFile, LocalModelPurpose, LocalModelSpec } from "./types.js";
+import type { LocalModelFile, LocalModelPurpose, LocalModelSpec } from "./types.js";
 
 /** Ablage für Modelldateien (OPFS im Worker, Map in Tests). */
 export interface LocalModelStore {

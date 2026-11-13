@@ -17,7 +17,7 @@ import { crashConsentPref, crashPrompt, previousCrashReport } from "../../shell/
 import { devViewPref, deviceNode, newEditorPref } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
 import type { SettingsSectionProps } from "./registry.js";
-import { clockSkewText } from "./sections.js";
+import { clockSkewText } from "./clockSkew.js";
 
 const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? "" : "s"}`;
 const useLog = () => useSyncExternalStore(diagnosticsLog.subscribe, diagnosticsLog.getSnapshot);
