@@ -82,6 +82,36 @@ test("Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderunge
   await expect(page.getByTestId("page-content")).toContainText("edited by guest", { timeout: 20_000 });
 });
 
+test("Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235)", async ({ page }) => {
+  const res = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "view" }) });
+  const link = (await res.json()) as { secret: string };
+  await page.goto("/#/share/" + encodeURIComponent(`${serverURL}/s/${link.secret}`));
+  await expect(page.getByTestId("based-root")).toHaveAttribute("data-ready", "");
+  const content = page.getByTestId("page-content");
+  await expect(content).toContainText("Welcome to the shared wiki", { timeout: 20_000 });
+  await expect(content.locator("[contenteditable='true']")).toHaveCount(0);
+  await expect(page.getByLabel("Page title")).not.toBeEditable();
+  // Gast-Oberfläche: ein Abschnitt ohne „+“, keine Teamspaces, kein Papierkorb-Knopf an der Seite, Status „Shared link“
+  const nav = page.getByRole("navigation", { name: "Workspace" });
+  await expect(nav.getByText("Shared with you")).toBeVisible();
+  await expect(nav.getByText("Create a teamspace")).toHaveCount(0);
+  await expect(nav.getByRole("button", { name: /^New page in/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Move to Trash" })).toHaveCount(0);
+  await expect(page.getByTestId("sync-status")).toContainText("Shared link");
+  if (process.env.BASED_SCREENSHOTS === "1" && test.info().project.name === "chromium") {
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(content).toContainText("Welcome to the shared wiki", { timeout: 20_000 });
+      for (const [w, h, suffix] of [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"]] as const) {
+        await page.setViewportSize({ width: w, height: h });
+        await page.waitForTimeout(150);
+        await page.screenshot({ path: `../../docs/design/screens/web-guest-view-only-${theme}${suffix}.png` });
+      }
+    }
+  }
+});
+
 test("Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs", async ({ page }) => {
   const res = await fetch(`${serverURL}/share/v1/links`, { method: "POST", headers: owner, body: JSON.stringify({ pageID: "11111111-1111-4111-8111-111111111111", kind: "access", role: "view" }) });
   const link = (await res.json()) as { id: string; secret: string };

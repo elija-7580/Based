@@ -365,6 +365,37 @@ export class MeetingRecorder {
     await this.finalize(s.store, s.meetingID);
   }
 
+  /**
+   * BSD-226: eine vorhandene Aufnahme (Datei) zum Meeting hinzufügen – Spur „upload“ hinter dem bisher Aufgenommenen,
+   * dann der finale Durchlauf (mit Transcriber: Transkript, sonst nur Status). Nicht, während dieses Meeting aufnimmt.
+   */
+  async importRecording(store: WorkspaceStore, meetingID: string, file: Omit<CapturedTrack, "role">): Promise<boolean> {
+    const info = meetingInfo(store, meetingID);
+    if (!info || this.session?.meetingID === meetingID || this.state.processing.includes(meetingID)) return false;
+    if (!(file.duration > 0)) {
+      this.errors.set(meetingID, "Couldn't read the length of this recording.");
+      this.set({});
+      return false;
+    }
+    this.errors.delete(meetingID);
+    this.set({ processing: [...this.state.processing, meetingID] });
+    try {
+      // Hinter die letzte Spur (ohne Spuren: hinter die bisherige Dauer); addMeetingTrack verlängert die Dauer.
+      const tracks = info.tracks ?? [];
+      const offset = tracks.length ? Math.max(...tracks.map((t) => t.offset + (t.duration ?? 0))) : info.duration ?? 0;
+      const ref = await this.o.saveAudio({ ...file, role: "upload" });
+      addMeetingTrack(store, meetingID, { role: "upload", asset: ref, offset, duration: file.duration });
+      setMeetingStatus(store, meetingID, "processing");
+    } catch (e) {
+      this.errors.set(meetingID, "Couldn't save the recording: " + (e instanceof Error ? e.message : String(e)));
+      return false;
+    } finally {
+      this.set({ processing: this.state.processing.filter((x) => x !== meetingID) });
+    }
+    await this.finalize(store, meetingID);
+    return true;
+  }
+
   /** Finaler Durchlauf: jede Spur neu transkribieren (ersetzt das Live-Transkript). Ohne Transcriber: nur Status. */
   async finalize(store: WorkspaceStore, meetingID: string): Promise<void> {
     const info = meetingInfo(store, meetingID);

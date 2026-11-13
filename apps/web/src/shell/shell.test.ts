@@ -25,6 +25,14 @@ describe("Seitenleisten-Zeilen", () => {
     expect(rows.find((r) => r.kind === "teamspace")).toMatchObject({ count: 1, collapsed: false });
   });
 
+  it("BSD-235 Gast: ein Abschnitt „Shared with you“ ohne „+“, keine Teamspaces", () => {
+    const { o, a, b, d } = outline();
+    const rows = flattenSidebar(o, new Set(), new Set(), { guest: true });
+    expect(rows.map((r) => (r.kind === "header" ? "#" + r.label : r.kind === "page" ? r.id : r.kind))).toEqual(["#Favorites", b, "#Shared with you", a, d]);
+    const head = rows.find((r) => r.kind === "header" && r.label === "Shared with you");
+    expect(head && "section" in head ? head.section : undefined).toBeUndefined();
+  });
+
   it("aufgeklappt bis zur leeren Seite; Abschnitte zuklappbar", () => {
     const { o, a, b, c, t } = outline();
     const rows = flattenSidebar(o, new Set([a, b, c]), new Set(["favorites", t]));

@@ -183,3 +183,4 @@ export class MemoryLocalModelStore implements LocalModelStore {
   async put(path: string, bytes: Uint8Array) { this.files.set(path, bytes.slice()); }
   async delete(path: string) { this.files.delete(path); }
 }
+export { catalogFor, LOCAL_MODEL_CATALOG } from "./catalog.js";

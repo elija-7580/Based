@@ -22,6 +22,8 @@ corepack enable >/dev/null 2>&1 || true
 pnpm install --frozen-lockfile
 pnpm -r typecheck
 pnpm lint
+# BSD-348: Design-Wächter (kein neues <button>, kein direkter Astryx-Import, keine festen px; Bestand darf nur schrumpfen)
+node ci/design-guard.mjs --base origin/main
 pnpm -r test
 # BSD-30: dieselben Tests noch einmal im neuen Format (Spalten als eigene Records).
 BASED_PROPERTY_RECORDS=1 pnpm -r test

@@ -15,6 +15,7 @@ import { openPageWindow } from "../desktop.js";
 import { asNewTabs } from "../shell/newTabIntent.js";
 import { download } from "./ImportExport.js";
 import { ancestorsInOutline, dropZone, flattenSidebar, pickRange, rowIndexOf, type SidebarRow } from "../shell/sidebarModel.js";
+import { isGuest } from "../shell/guest.js";
 import { collapsedSections, expandedPages, sidebarNavPrefs, startPage } from "../shell/storage.js";
 import { cleanNavPrefs, FOOTER_STYLE, hideNav, moveNav, NAV, navAvailable, navLayout, navPlace, pinNav, showNav, unpinNav, type NavID, type NavPrefs } from "../shell/sidebarNav.js";
 import { applySidebar, isSidebarToggle, SIDEBAR_MAX, SIDEBAR_MIN, sidebarSize } from "../shell/sidebarSize.js";
@@ -139,7 +140,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     if (missing.length) setExp((s) => missing.forEach((a) => s.add(a)));
   }, [outline, activeID]);
 
-  const rows = useMemo(() => (outline ? flattenSidebar(outline, expanded, collapsed) : []), [outline, expanded, collapsed]);
+  const rows = useMemo(() => (outline ? flattenSidebar(outline, expanded, collapsed, { guest: isGuest() }) : []), [outline, expanded, collapsed]);
   const pageRowIDs = useMemo(() => rows.flatMap((r) => (r.kind === "page" && !r.key.startsWith("fav/") ? [r.id] : [])), [rows]);
   const pick = useCallback((id: string, mode: "toggle" | "range") => {
     setPicked((prev) => {
@@ -427,7 +428,7 @@ export function Sidebar({ client, state, route, homePage, onHome, onNavigate, on
     <div className="synced t-meta" data-testid="sync-status" data-state={status.state} data-sync={status.sync ?? status.state} data-assets={assetsLabel(status.assets) || undefined} title={[status.detail ?? SYNC_LABEL[status.state], assetsLabel(status.assets)].filter(Boolean).join(" · ")}>
       <span className={`dot ${status.state === "synced" ? "synced-dot" : status.state === "error" || status.state === "readonly" ? "error-dot" : ""}`} aria-hidden="true" />
       <span className="synced-text">
-        {SYNC_LABEL[status.state]}
+        {isGuest() && status.state === "memory" ? "Shared link" : SYNC_LABEL[status.state]}
         {status.assets ? <span data-testid="sync-assets"> · {assetsLabel(status.assets)}</span> : null}
       </span>
     </div>

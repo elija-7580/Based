@@ -19,7 +19,7 @@ import { SYNC_LABEL } from "../components/Sidebar.js";
 import { Icon } from "../icons.js";
 import { hybridImport } from "../worker/notionHybridClient.js";
 import { fromSwift, longDate, relative } from "../shell/format.js";
-import { mayDeleteForever } from "../shell/guest.js";
+import { guestMayEdit, isGuest, mayDeleteForever } from "../shell/guest.js";
 import { routeToHash, type History, type Route } from "../shell/router.js";
 import { FIND_EVENT, type ShortcutAction } from "../shell/shortcuts.js";
 import { slots } from "../slots.js";
@@ -119,7 +119,15 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
   // BSD-317: Seite aus dem Notion-Import, deren Inhalt noch nachgeladen wird – gesperrt, Öffnen zieht sie vor.
   const pendingImport = importPendingSource(page) !== undefined;
   useEffect(() => { if (pendingImport) hybridImport.prioritize(pageID); }, [pendingImport, pageID]);
-  const readOnly = storeReadOnly || format.locked || pendingImport;
+  // BSD-235: Gast mit „Can view“/„Can comment“ liest nur (Elternseite aus der Seitenleiste, Zeilen über ihre Datenbank).
+  const guestReadOnly = !guestMayEdit(pageID, (id) => {
+    const viaOutline = outline?.nodes[id]?.parent;
+    if (viaOutline) return viaOutline;
+    const b = store?.blocks.get(id);
+    if (b?.parent.startsWith("d:")) return store?.databases.get(b.parent.slice(2))?.blockID;
+    return b?.parent.startsWith("b:") ? store?.containingPage(b.parent.slice(2)) : undefined;
+  });
+  const readOnly = storeReadOnly || format.locked || pendingImport || guestReadOnly;
 
   // Breadcrumb: Abschnitt und Elternseiten aus der Seitenleisten-Struktur.
   const crumbs: { id?: string; label: string }[] = [];
@@ -202,7 +210,7 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
           ))}
           <span className="crumb-current" aria-current="page" title={title || "Untitled"}>{title || "Untitled"}</span>
         </nav>
-        <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : SYNC_LABEL[state.status.state]}</span>
+        <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : isGuest() && state.status.state === "memory" ? "Shared link" : SYNC_LABEL[state.status.state]}</span>
         {page && !trashed ? (
           <>
             <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
@@ -222,12 +230,14 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
             }}>
               <Icon name="more" size={18} />
             </button>
-            <button type="button" className="icon-btn ghost" aria-label="Move to Trash" title="Move to Trash" onClick={() => {
-              void client.command({ op: "trash", ids: [pageID] });
-              onNavigate({ name: "home" });
-            }}>
-              <Icon name="trash" size={18} />
-            </button>
+            {guestReadOnly ? null : (
+              <button type="button" className="icon-btn ghost" aria-label="Move to Trash" title="Move to Trash" onClick={() => {
+                void client.command({ op: "trash", ids: [pageID] });
+                onNavigate({ name: "home" });
+              }}>
+                <Icon name="trash" size={18} />
+              </button>
+            )}
           </>
         ) : null}
       </header>

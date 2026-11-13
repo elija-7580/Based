@@ -30,8 +30,9 @@ test("Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich al
 
   if (SHOTS && browserName === "chromium") {
     for (const theme of ["light", "dark"] as const) {
-      await page.emulateMedia({ colorScheme: theme });
-      await page.evaluate((t) => { document.documentElement.dataset.theme = t; document.documentElement.style.colorScheme = t; }, theme);
+      await page.evaluate((t) => localStorage.setItem("based.appearance", JSON.stringify({ theme: t })), theme);
+      await page.reload();
+      await expect(child).toHaveCount(1);
       for (const [w, h, suffix] of [[1280, 820, ""], [900, 600, "-900"], [1728, 1000, "-1728"]] as const) {
         await page.setViewportSize({ width: w, height: h });
         await page.waitForTimeout(150);
