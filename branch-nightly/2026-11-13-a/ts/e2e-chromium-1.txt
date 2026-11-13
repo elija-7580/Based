@@ -1,18 +1,4 @@
-failure 838bc98cd53afa567b384bf731f8413dc622536a
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
-
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toHaveAttribute(expected) failed
-
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
+failure 45662964a6be194167379fb069fcf008e77e3e57
     Timeout:  5000ms
 
     Call log:
@@ -34,28 +20,42 @@ failure 838bc98cd53afa567b384bf731f8413dc622536a
 
     Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
 
-  3) [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter 
+  2) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
 
-    TypeError: Cannot read properties of null (reading 'x')
+    Error: expect(received).toEqual(expected) // deep equality
 
-      179 |   await expect(handle).toBeVisible();
-      180 |   const h = (await handle.boundingBox())!;
-    > 181 |   await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
-          |                           ^
-      182 |   await page.mouse.down();
-      183 |   await page.mouse.move(h.x + h.width / 2 + 6, h.y + h.height / 2 + 6, { steps: 6 });
-      184 |   const vh = page.viewportSize()!.height;
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:181:27
+    - Expected  - 8
+    + Received  + 1
 
-    Error Context: test-results/editor-drag-Auto-Scroll-Zi-9f0dd-nd-scrollt-die-Seite-weiter-chromium/error-context.md
+    - Array [
+    -   Array [
+    -     "Alpha",
+    -   ],
+    -   Array [
+    -     "Omega",
+    -   ],
+    - ]
+    + Array []
 
-  2 failed
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      233 |   // links vom Griff, unten in der Zeile
+      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+          |                                              ^
+      236 | });
+      237 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
+
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
+
+  1 failed
     [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
   1 flaky
-    [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter 
+    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  147 passed (5.0m)
+  148 passed (5.8m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
