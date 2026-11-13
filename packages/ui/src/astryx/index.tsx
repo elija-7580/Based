@@ -76,14 +76,15 @@ export interface BasedDialogProps {
   busy?: boolean;
   /** Formular-Dialog: ein Klick daneben schließt nach einer Eingabe nicht mehr. */
   form?: boolean;
+  testID?: string;
 }
 
-export function BasedDialog({ open, onClose, title, subtitle, children, actions, width = 440, busy, form }: BasedDialogProps) {
+export function BasedDialog({ open, onClose, title, subtitle, children, actions, width = 440, busy, form, testID }: BasedDialogProps) {
   const change = (isOpen: boolean) => {
     if (!isOpen && !busy) onClose();
   };
   return (
-    <Dialog isOpen={open} onOpenChange={change} width={width} purpose={dialogPurpose({ busy, form })}>
+    <Dialog isOpen={open} onOpenChange={change} width={width} purpose={dialogPurpose({ busy, form })} {...(testID ? { "data-testid": testID } : {})}>
       <DialogHeader title={title} {...(subtitle ? { subtitle } : {})} hasDivider={false} {...(busy ? {} : { onOpenChange: change })} />
       <VStack gap={4} style={{ paddingInline: "var(--spacing-4)" }}>
         {children}
@@ -176,10 +177,11 @@ export interface BasedFieldProps {
   inputRef?: Ref<HTMLInputElement>;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   inputMode?: "text" | "decimal" | "numeric" | "email" | "url" | "tel" | "search";
+  autoFocus?: boolean;
 }
 
 /** Einzeiliges Formularfeld mit sichtbarem Label; nimmt die volle Breite seines Containers. */
-export function BasedField({ label, value, onChange, type = "text", hint, placeholder, error, disabled = false, required = false, autoComplete, onEnter, labelHidden, inputRef, onKeyDown, inputMode }: BasedFieldProps) {
+export function BasedField({ label, value, onChange, type = "text", hint, placeholder, error, disabled = false, required = false, autoComplete, onEnter, labelHidden, inputRef, onKeyDown, inputMode, autoFocus }: BasedFieldProps) {
   const status = fieldStatus(error);
   return (
     <TextInput
@@ -201,6 +203,7 @@ export function BasedField({ label, value, onChange, type = "text", hint, placeh
       {...(labelHidden ? { isLabelHidden: true } : {})}
       {...(inputRef ? { ref: inputRef } : {})}
       {...(onKeyDown ? { onKeyDown } : {})}
+      {...(autoFocus ? { hasAutoFocus: true } : {})}
     />
   );
 }
