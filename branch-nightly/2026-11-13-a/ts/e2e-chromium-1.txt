@@ -1,61 +1,61 @@
-failure c8f38a8c3406ca549a894cee22e45df6df0263e5
-  2) [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
-
-    Error: expect(locator).toBeFocused() failed
-
-    Locator: getByRole('textbox', { name: 'Search actions' })
-    Expected: focused
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
-      - waiting for getByRole('textbox', { name: 'Search actions' })
-
-
-      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
-    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-          |                                                                         ^
-      168 |   };
-      169 |   await openMenu();
-      170 |   await page.keyboard.type("cop");
-        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
-
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeFocused() failed
-
-    Locator: getByRole('textbox', { name: 'Search actions' })
-    Expected: focused
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
-      - waiting for getByRole('textbox', { name: 'Search actions' })
-
-
-      165 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      166 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
-    > 167 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-          |                                                                         ^
-      168 |   };
-      169 |   await openMenu();
-      170 |   await page.keyboard.type("cop");
-        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:167:73)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:186:3
-
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
-
-  2 failed
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
-    [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
-  8 skipped
-  136 passed (4.5m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+cancelled a3d72f880b4390a1e55ef23784281eb19e26e786
+  ✓   56 [chromium] › e2e/editor-ai.spec.ts:22:1 › Leertaste auf leerer Zeile: AI schreibt, Insert fügt ein, ⌘Z nimmt es in einem Schritt zurück (939ms)
+  ✓   57 [chromium] › e2e/editor-ai.spec.ts:39:1 › Auswahl → Ask AI → Make shorter → Replace selection; Discard lässt alles stehen (1.3s)
+  ✓   58 [chromium] › e2e/editor-bookmark.spec.ts:66:1 › Bookmark: „Fetch preview“ holt Titel und Beschreibung nur auf Klick; bleibt nach dem Neuladen (2.4s)
+  ✓   59 [chromium] › e2e/editor-bookmark.spec.ts:95:1 › Bookmark im Browser-Tab: kein Knopf „Fetch preview“ (fremde Seiten nur aus der Desktop-App) (1.0s)
+  -   60 [chromium] › e2e/editor-bookmark.spec.ts:103:1 › Bildschirmfotos: Bookmark mit Vorschau
+  ✓   61 [chromium] › e2e/editor-callout-select.spec.ts:67:1 › Blockauswahl über Zitat und Callout: keine Formatleiste, kein Seiten-Fokusring, Callout-Kasten mit Kindern (2.8s)
+  ✓   62 [chromium] › e2e/editor-drag.spec.ts:119:1 › Ziehen: davor/dahinter, verschachteln, ausrücken; ein Undo-Schritt; nach dem Neuladen gleich (2.6s)
+  ✓   63 [chromium] › e2e/editor-drag.spec.ts:147:1 › Mehrere ausgewählte Blöcke gemeinsam ziehen (Esc-Blockauswahl, ⇧↓); ein Undo-Schritt (1.3s)
+  ✓   64 [chromium] › e2e/editor-drag.spec.ts:161:1 › Auto-Scroll: Ziehen am unteren Rand scrollt die Seite weiter (1.8s)
+[chromium] Klick-Durchlauf: 108 Klicks, 4 ausgelassen
+  ✓   33 [chromium] › e2e/crawl.spec.ts:190:1 › Klick-Durchlauf: jeder Screen, kein toter Knopf, keine Konsolenfehler (1.1m)
+  ✓   65 [chromium] › e2e/editor-drag.spec.ts:191:1 › Ziehen an den Rand: Spalten anlegen, erweitern, zurückziehen; nach dem Neuladen gleich (3.7s)
+  ✓   66 [chromium] › e2e/crawl.spec.ts:234:1 › Start in einem frischen Profil ohne Konsolenfehler (OPFS-Pool nur einmal je Worker) (2.6s)
+  ✓   68 [chromium] › e2e/crawl.spec.ts:249:1 › Ein eingeschleuster toter Knopf fällt auf (1.7s)
+  -   69 [chromium] › e2e/crawl.spec.ts:268:1 › Fotos: Home, Chat, Diagnose
+  ✓   70 [chromium] › e2e/editor-embed.spec.ts:6:1 › Embed: YouTube eingebettet (ohne Cookies, sandbox) (936ms)
+  ✘   67 [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (7.1s)
+  ✓   71 [chromium] › e2e/editor-mermaid.spec.ts:60:1 › Mermaid: Diagramm als Bild ohne Netz, Fehler in einem Satz, nach dem Neuladen wieder da (2.7s)
+  ✓   73 [chromium] › e2e/editor-mermaid.spec.ts:96:1 › Mermaid: beim Umschalten auf dunkel zeichnet sich die Vorschau in den dunklen Farben neu (1.5s)
+  ✓   72 [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter (retry #1) (2.6s)
+  -   74 [chromium] › e2e/editor-mermaid.spec.ts:110:1 › Bildschirmfotos: Mermaid-Vorschau
+  ✓   75 [chromium] › e2e/editor-notion.spec.ts:49:1 › Titel und Text: Enter teilt, ↓ und ↑ wechseln (1.3s)
+  ✓   77 [chromium] › e2e/editor-notion.spec.ts:68:1 › Enter im Titel nimmt die leere erste Zeile, statt eine weitere anzulegen (1.0s)
+  ✓   78 [chromium] › e2e/editor-notion.spec.ts:78:1 › Rücktaste am Zeilenanfang macht Überschrift und Listenpunkt zu Text (1.3s)
+  ✓   76 [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen (3.6s)
+  ✓   79 [chromium] › e2e/editor-notion.spec.ts:98:1 › Klick unter den Inhalt setzt die Schreibmarke ans Ende (1.3s)
+  ✓   80 [chromium] › e2e/editor-parity.spec.ts:193:1 › Einfügen: HTML hat Vorrang, ⇧⌘V bleibt Klartext, eine Zeile mit Inline-Markdown landet im Absatz (1.5s)
+  ✓   81 [chromium] › e2e/editor-notion.spec.ts:115:1 › Blockmenü: Kopf mit Blocktyp, Gruppen, Fuß mit Wortzahl (1.8s)
+  ✓   83 [chromium] › e2e/editor-notion.spec.ts:139:1 › Codeblock: Kopierknopf kopiert den Code, die Leiste verschiebt nichts (1.1s)
+  ✓   82 [chromium] › e2e/editor-parity.spec.ts:225:1 › @ und [[ erwähnen Seiten: Titel live, Klick navigiert, Backlink sichtbar, Papierkorb markiert (3.2s)
+  ✓   85 [chromium] › e2e/editor-parity.spec.ts:318:1 › Gliederung: Balken am rechten Rand, Klick scrollt, aktuelle Position, pro Seite abschaltbar (4.6s)
+  ✘   84 [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus (6.9s)
+  ✓   86 [chromium] › e2e/editor-parity.spec.ts:382:1 › Synced Block: Copy and sync, auf zwei Seiten derselbe Inhalt, Unsync, Hinweis bei Original im Papierkorb (6.7s)
+  ✘   87 [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus (retry #1) (6.8s)
+  ✓   88 [chromium] › e2e/editor-parity.spec.ts:477:1 › Blockmenü: Turn into, Duplicate und ⌘D (BSD-207) (3.3s)
+  ✓   89 [chromium] › e2e/editor-notion.spec.ts:194:1 › Codeblock: Umbruch aus rollt im Block, bleibt nach dem Neuladen (2.6s)
+  ✓   91 [chromium] › e2e/editor-notion.spec.ts:216:1 › Formatleiste: kompaktes Feld, ganz im Fenster (1.4s)
+  ✓   90 [chromium] › e2e/editor-parity.spec.ts:505:1 › Blockmenü: Turn into → Block equation (BSD-249 Teil 2) (3.1s)
+  ✓   92 [chromium] › e2e/editor-notion.spec.ts:232:1 › Breadcrumb: Klick klappt die Seite mit ihren Unterseiten auf (1.3s)
+  ✓   94 [chromium] › e2e/editor-notion.spec.ts:253:1 › Beim Öffnen einer Seite springt der Titel nicht (2.0s)
+  ✓   93 [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (3.7s)
+  ✓   96 [chromium] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (1.4s)
+  ✓   97 [chromium] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (2.6s)
+  ✓   98 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (3.6s)
+  ✓   99 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (2.6s)
+  ✓   95 [chromium] › e2e/editor-polish.spec.ts:54:1 › Editor in Ruhe und in seinen Zuständen (12.1s)
+  ✓  101 [chromium] › e2e/editor-polish.spec.ts:140:1 › Links und Häkchen im Editor ohne Browser-Blau (963ms)
+  ✓  100 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (2.3s)
+  ✓  102 [chromium] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (1.4s)
+  ✓  104 [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (1.5s)
+  ✓  103 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (3.2s)
+  ✓  105 [chromium] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten (1.4s)
+  ✓  107 [chromium] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (1.4s)
+  ✓  106 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (2.7s)
+  ✓  108 [chromium] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.1s)
+  ✓  109 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (2.1s)
+  ✓  110 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (869ms)
+  ✓  112 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (1.0s)
+  ✓  111 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.1s)
+  ✓  113 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (2.0s)

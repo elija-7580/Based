@@ -1,61 +1,61 @@
-failure c8f38a8c3406ca549a894cee22e45df6df0263e5
+cancelled a3d72f880b4390a1e55ef23784281eb19e26e786
+[WebServer] 
+[WebServer] "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+[WebServer]  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+[WebServer]  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+[WebServer] 
+[WebServer] in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+[WebServer] [plugin vite:reporter] 
+[WebServer] (!) /home/runner/work/Based/Based/apps/web/src/shell/diagnostics.ts is dynamically imported by /home/runner/work/Based/Based/apps/web/src/desktop.ts but also statically imported by /home/runner/work/Based/Based/apps/web/src/main.tsx, /home/runner/work/Based/Based/apps/web/src/screens/settings/diagnostics.tsx, /home/runner/work/Based/Based/apps/web/src/shell/bugReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/crashReport.ts, /home/runner/work/Based/Based/apps/web/src/shell/reportUI.ts, dynamic import will not move module into another chunk.
+[WebServer] 
+[WebServer] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-    Error: expect(locator).not.toHaveCount(expected) failed
+Running 141 tests using 2 workers, shard 2 of 2
 
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
-  18 skipped
-  122 passed (7.3m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (5.7s)
+  -    3 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    2 [webkit] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (8.6s)
+  ✓    5 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (6.6s)
+  ✓    6 [webkit] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (8.4s)
+  ✓    8 [webkit] › e2e/native-free.spec.ts:25:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (2.9s)
+  ✓    7 [webkit] › e2e/meeting.spec.ts:97:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (9.6s)
+  ✓    9 [webkit] › e2e/native-free.spec.ts:41:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (4.0s)
+  -   10 [webkit] › e2e/meeting.spec.ts:117:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓   11 [webkit] › e2e/native-free.spec.ts:64:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (6.1s)
+  ✓   13 [webkit] › e2e/native-free.spec.ts:85:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (2.8s)
+  ✓   12 [webkit] › e2e/meeting.spec.ts:196:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (8.0s)
+  ✓   14 [webkit] › e2e/native-free.spec.ts:92:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (5.9s)
+  ✓   16 [webkit] › e2e/native-free.spec.ts:130:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (3.4s)
+  ✓   17 [webkit] › e2e/native-free.spec.ts:150:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (2.3s)
+  ✘   18 [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (7.7s)
+  ✓   15 [webkit] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (26.8s)
+  ✘   19 [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (retry #1) (7.8s)
+  ✓   20 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (6.0s)
+  ✓   21 [webkit] › e2e/native-free.spec.ts:179:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (5.2s)
+  ✓   23 [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über (13.7s)
+  ✓   22 [webkit] › e2e/notion-hybrid.spec.ts:43:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (21.6s)
+  ✓   25 [webkit] › e2e/notion-hybrid.spec.ts:129:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (3.8s)
+  -   26 [webkit] › e2e/notion-hybrid.spec.ts:147:1 › Hybrid-Import: Bildschirmfotos
+  ✓   24 [webkit] › e2e/overflow.spec.ts:149:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (16.1s)
+  ✓   28 [webkit] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (5.0s)
+  ✓   27 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (15.8s)
+  ✓   29 [webkit] › e2e/overflow.spec.ts:199:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (9.0s)
+  ✓   30 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (3.7s)
+  ✓   32 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (5.0s)
+  -   33 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   34 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   31 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (9.1s)
+  ✓   35 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (3.6s)
+  ✓   37 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (5.1s)
+  ✓   36 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (10.7s)
+  ✓   38 [webkit] › e2e/polish.spec.ts:13:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (5.7s)
+  ✓   40 [webkit] › e2e/polish.spec.ts:27:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (3.7s)
+  ✓   41 [webkit] › e2e/polish.spec.ts:38:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (6.0s)
+  ✓   42 [webkit] › e2e/polish.spec.ts:59:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (2.1s)
+  ✓   39 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (14.2s)
+  -   44 [webkit] › e2e/replay/record-sample.spec.ts:13:1 › Beispielbündel: tippen, fett, Liste, Auswahl mit der Maus, Einfügen
