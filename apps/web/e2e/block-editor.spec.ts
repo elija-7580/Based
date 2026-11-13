@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { blockFixtureOutline, FIXTURE_TABLE_ROWS } from "@based/editor/blocks/fixture";
+import { blockFixtureOutline, FIXTURE_TABLE_ROWS } from "../../../packages/editor/src/blocks/fixture.ts";
 
 // BSD-381 (ADR 0016, E0): neuer Block-Editor hinter dem Schalter „New editor“ (Settings → Diagnostics → For
 // developers, pro Gerät, Standard aus). Die Testseite (Spalten mit zwei Inline-Datenbanken, Callout, Zitat, Listen,
