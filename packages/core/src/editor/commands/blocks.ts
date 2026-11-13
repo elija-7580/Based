@@ -9,11 +9,13 @@
 //  - Nur bestehende Records, RichText und Sortierschlüssel; kein neues Datenformat.
 import type { Block, BlockProps, RichText } from "../../model/records.js";
 import { keyBetween } from "../../sortkeys.js";
+import { graphemes } from "../../graphemes.js";
+import { isAtomic, PLAIN } from "../../interop/runs.js";
 import { makeBlock } from "../../interop/builder.js";
 import { copyTree, isPageLike, sortKeys } from "../../store/pages.js";
 import type { Tx, WorkspaceStore } from "../../store/store.js";
 import {
-  blockText, concatRuns, snapRange, hasMark, plainRuns, replaceRuns, runsLength, runsOf, setMark, splitRuns, type MarkKey, type Marks, type Run,
+  blockText, clampRange, concatRuns, snapRange, hasMark, plainRuns, replaceRuns, runsLength, runsOf, setMark, splitRuns, type MarkKey, type Marks, type Run,
 } from "./text.js";
 import {
   canNestUnder, CONTINUING_TYPES, isCollapsed, isHeading, isInside, isTextBlock, isToggle, liveChildren, nextVisible, parentBlockID,
@@ -571,4 +573,179 @@ export function setChecked(store: WorkspaceStore, blockId: string, checked: bool
     else delete x.props;
   }));
   return { blockId, selected: true };
+}
+
+// MARK: Tastatur: ⌫ und Entf (ADR 0016, E2)
+
+function previousGrapheme(text: string, pos: number): number {
+  const g = graphemes(text.slice(Math.max(0, pos - 32), pos));
+  const last = g[g.length - 1];
+  return pos - (last ? last.length : 1);
+}
+
+function nextGrapheme(text: string, pos: number): number {
+  const g = graphemes(text.slice(pos, pos + 32));
+  return pos + (g[0] ? g[0].length : 1);
+}
+
+/**
+ * ⌫. Eine Auswahl im Block wird gelöscht, sonst das Zeichen (Graphem, z. B. ein ganzes Emoji) vor der Schreibmarke;
+ * eine Erwähnung geht als Ganzes. Am Blockanfang wie Notion, Schritt für Schritt: ein anderer Typ wird erst Text,
+ * ein eingerückter Block rückt dann aus, erst danach wird er mit dem Block darüber zusammengeführt (`mergeBackward`).
+ */
+export function deleteBackward(store: WorkspaceStore, range: TextRange): Focus | undefined {
+  const b = store.blocks.get(range.blockId);
+  if (!b || !isTextBlock(b)) return undefined;
+  const runs = textOf(b);
+  const [from, to] = clampRange(runsLength(runs), range.from, range.to);
+  if (from !== to) return replaceText(store, { blockId: b.id, from, to }, "");
+  if (from > 0) return replaceText(store, { blockId: b.id, from: previousGrapheme(runs.map((r) => r.t).join(""), from), to: from }, "");
+  if (b.type !== "text") return turnInto(store, [b.id], "text") && at(b.id, 0);
+  const parent = parentBlockID(b);
+  if (parent && canNestUnder(store.blocks.get(parent))) return outdentBlocks(store, [b.id], 0);
+  return mergeBackward(store, b.id);
+}
+
+/** Entf. Auswahl bzw. Zeichen hinter der Schreibmarke löschen; am Blockende den Block darunter anhängen (`mergeForward`). */
+export function deleteForward(store: WorkspaceStore, range: TextRange): Focus | undefined {
+  const b = store.blocks.get(range.blockId);
+  if (!b || !isTextBlock(b)) return undefined;
+  const runs = textOf(b);
+  const len = runsLength(runs);
+  const [from, to] = clampRange(len, range.from, range.to);
+  if (from !== to) return replaceText(store, { blockId: b.id, from, to }, "");
+  if (from < len) return replaceText(store, { blockId: b.id, from, to: nextGrapheme(runs.map((r) => r.t).join(""), from) }, "");
+  return mergeForward(store, b.id);
+}
+
+// MARK: Inline-Markdown (**fett**, *kursiv*, `Code`, ~~durch~~)
+
+const INLINE_RULES: readonly { re: RegExp; open: number; close: number; mark: MarkKey }[] = [
+  { re: /\*\*([^*]+)\*\*$/, open: 2, close: 2, mark: "b" },
+  { re: /~~([^~]+)~~$/, open: 2, close: 2, mark: "s" },
+  { re: /`([^`]+)`$/, open: 1, close: 1, mark: "c" },
+  { re: /(?:^|[^*\w])\*([^*\s][^*]*)\*$/, open: 1, close: 1, mark: "i" },
+  { re: /(?:^|[^_\w])_([^_\s][^_]*)_$/, open: 1, close: 1, mark: "i" },
+];
+
+/**
+ * Nach dem Tippen des schließenden Zeichens vor `offset`: die Zeichen fallen weg, der Text dazwischen bekommt den
+ * Mark (ein eigener Undo-Schritt nach dem Tippen; ⌘Z stellt die Sternchen wieder her). Über Erwähnungen hinweg nicht.
+ */
+export function applyInlineMarkdown(store: WorkspaceStore, blockId: string, offset: number): Focus | undefined {
+  const b = store.blocks.get(blockId);
+  if (!b || !isTextBlock(b) || b.type === "code") return undefined;
+  const runs = textOf(b);
+  const head = runs.map((r) => r.t).join("").slice(0, offset);
+  for (const rule of INLINE_RULES) {
+    const m = rule.re.exec(head);
+    if (!m) continue;
+    const inner = m[1]!.length;
+    const start = offset - rule.close - inner - rule.open;
+    if (crossesAtom(runs, start, offset)) return undefined;
+    let next = replaceRuns(runs, offset - rule.close, offset, "");
+    next = replaceRuns(next, start, start + rule.open, "");
+    next = setMark(next, start, start + inner, rule.mark, true);
+    store.transact("Format", (tx) => writeText(tx, b.id, next));
+    return at(b.id, start + inner);
+  }
+  return undefined;
+}
+
+function crossesAtom(runs: readonly Run[], from: number, to: number): boolean {
+  let pos = 0;
+  for (const r of runs) {
+    const end = pos + r.t.length;
+    if (isAtomic(r) && end > from && pos < to) return true;
+    pos = end;
+  }
+  return false;
+}
+
+// MARK: Erwähnung, neue Blöcke, Props, Spaltenbreite
+
+/**
+ * `@…` (oder eine Auswahl) durch eine Erwähnung ersetzen, dahinter ein Leerzeichen (wie Notion). `label` ist der
+ * angezeigte Text (Seitentitel, Name, Datum); er bestimmt die Länge der Erwähnung im Text.
+ */
+export function insertMention(store: WorkspaceStore, range: TextRange, mention: NonNullable<Run["mention"]>, label: string): Focus | undefined {
+  const t = label || "Untitled";
+  return replaceText(store, range, [{ t, m: PLAIN, mention }, { t: " ", m: PLAIN }], { coalesce: null });
+}
+
+/** Wo ein neuer Block hinkommt: hinter/vor einen Block oder als erstes/letztes Kind eines Blocks bzw. der Seite. */
+export type BlockPlace = { after: string } | { before: string } | { inside: string; at?: "start" | "end" };
+
+/** Einen Block anlegen (Klick unter die Seite, „+“ am Griff, Slash-Menü hinter einem vollen Block). */
+export function insertBlock(store: WorkspaceStore, where: BlockPlace, type: string, opts: { props?: BlockProps; text?: RichText } = {}): Focus | undefined {
+  let parent: string;
+  let position: { kind: "end" } | { kind: "start" } | { kind: "before" | "after"; id: string };
+  if ("inside" in where) {
+    parent = store.blocks.has(where.inside) ? "b:" + where.inside : where.inside;
+    position = { kind: where.at ?? "end" };
+  } else {
+    const ref = store.blocks.get("after" in where ? where.after : where.before);
+    if (!ref) return undefined;
+    parent = ref.parent;
+    position = { kind: "after" in where ? "after" : "before", id: ref.id };
+  }
+  const runs = runsOf(opts.text);
+  const id = store.transact("New block", (tx) => {
+    let sk: string;
+    if (position.kind === "start") {
+      const first = store.children(parent)[0];
+      sk = first ? sortKeys(store, parent, { kind: "before", id: first }, 1)[0]! : sortKeys(store, parent, { kind: "end" }, 1)[0]!;
+    } else sk = sortKeys(store, parent, position, 1)[0]!;
+    return create(store, tx, type, parent, sk, runs, opts.props && Object.keys(opts.props).length ? opts.props : undefined);
+  });
+  return TEXT_TYPES.has(type) ? at(id, runsLength(runs)) : { blockId: id, selected: true };
+}
+
+/**
+ * Slash-Menü in einem leeren Block: der Block selbst wird zum gewählten Typ, auch zu einem Block ohne Text (Bild,
+ * Trenner, Gleichung …; seine ID bleibt). Unter einem Trenner kommt ein neuer Textblock zum Weiterschreiben.
+ */
+export function convertEmptyBlock(store: WorkspaceStore, blockId: string, type: string, props: BlockProps = {}): Focus | undefined {
+  const b = store.blocks.get(blockId);
+  if (!b || !isTextBlock(b) || runsLength(textOf(b)) > 0) return undefined;
+  if (TEXT_TYPES.has(type)) return turnInto(store, [b.id], type, props) && at(b.id, 0);
+  return store.transact("Turn into", (tx) => {
+    tx.update(b.id, (x) => {
+      x.type = type as Block["type"];
+      delete x.text;
+      if (Object.keys(props).length) x.props = { ...props };
+      else delete x.props;
+    });
+    const kids = liveChildren(store, b.id);
+    if (kids.length > 0) place(store, tx, kids, b.parent, { kind: "after", id: b.id });
+    if (type !== "divider") return { blockId: b.id, selected: true } as Focus;
+    const sk = sortKeys(store, b.parent, { kind: "after", id: b.id }, 1)[0]!;
+    return at(create(store, tx, "text", b.parent, sk), 0);
+  });
+}
+
+/** Props setzen (`undefined` entfernt einen Schlüssel): Toggle auf/zu, Sprache, Bild-URL, Farbe … Ein Undo-Schritt. */
+export function setBlockProps(store: WorkspaceStore, ids: readonly string[], patch: Partial<BlockProps>, name = "Change block"): void {
+  const live = ids.filter((id) => store.blocks.has(id));
+  if (live.length === 0) return;
+  store.transact(name, (tx) => {
+    for (const id of live) tx.update(id, (x) => {
+      const p: Record<string, unknown> = { ...(x.props ?? {}) };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete p[k];
+        else p[k] = v;
+      }
+      if (Object.keys(p).length) x.props = p as BlockProps;
+      else delete x.props;
+    });
+  });
+}
+
+/** Spaltenbreiten (Anteile) beim Ziehen am Spaltenrand; das Ziehen ist ein Undo-Schritt. */
+export function setColumnRatios(store: WorkspaceStore, ratios: ReadonlyMap<string, number>): void {
+  const live = [...ratios].filter(([id]) => store.blocks.get(id)?.type === "column");
+  if (live.length === 0) return;
+  store.transact("Resize columns", (tx) => {
+    for (const [id, r] of live) tx.update(id, (x) => { x.props = { ...(x.props ?? {}), ratio: Math.round(r * 1000) / 1000 }; });
+  }, { coalesce: "columns:" + live.map(([id]) => id).join() });
 }

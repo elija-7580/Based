@@ -530,6 +530,97 @@ describe.each([false, true])("Block-Editor E1 (propertyRecords=%s)", (pr) => {
     });
   });
 
+  // ADR 0016 (E2–E6): Befehle für Tastatur, Slash, @, Spalten – zusammengeführt aus dem ersten Editor-Stand.
+  describe("Tastatur, Slash, Erwähnung", () => {
+    it("⌫ am Anfang: erst Text, dann ausrücken, dann zusammenführen (Kinder bleiben)", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "Hello" }), blk("b", "todo", "b:a", "a0", { text: "World" }), blk("c", "text", "b:b", "a0", { text: "kid" })]);
+      expect(step(s, () => cmd.deleteBackward(s, { blockId: "b", from: 0, to: 0 }))).toEqual({ blockId: "b", offset: 0 });
+      expect(s.blocks.get("b")!.type).toBe("text");
+      step(s, () => cmd.deleteBackward(s, { blockId: "b", from: 0, to: 0 }));
+      expect(outline(s)).toEqual(["text: Hello", "text: World", "  text: kid"]);
+      expect(step(s, () => cmd.deleteBackward(s, { blockId: "b", from: 0, to: 0 }))).toEqual({ blockId: "a", offset: 5 });
+      expect(outline(s)).toEqual(["text: HelloWorld", "  text: kid"]);
+    });
+
+    it("⌫/Entf löschen ganze Emojis und Erwähnungen; Auswahl zuerst", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: [{ t: "ok👍🏽 " }, { t: "@Page", mention: { page: { _0: "P" } } }] })]);
+      expect(step(s, () => cmd.deleteBackward(s, { blockId: "a", from: 10, to: 10 }))).toEqual({ blockId: "a", offset: 7 });
+      expect(s.blocks.get("a")!.text).toBe("ok👍🏽 ");
+      expect(step(s, () => cmd.deleteBackward(s, { blockId: "a", from: 6, to: 6 }))).toEqual({ blockId: "a", offset: 2 });
+      expect(plainText(s.blocks.get("a")!.text)).toBe("ok ");
+      step(s, () => cmd.deleteForward(s, { blockId: "a", from: 0, to: 0 }));
+      expect(plainText(s.blocks.get("a")!.text)).toBe("k ");
+      step(s, () => cmd.deleteForward(s, { blockId: "a", from: 0, to: 2 }));
+      expect("text" in s.blocks.get("a")!).toBe(false);
+    });
+
+    it("⌫ hinter einem Bild: leerer Block weg und Bild ausgewählt", () => {
+      const s = make(pr, [blk("img", "image", "b:P", "a0"), blk("a", "text", "b:P", "a1")]);
+      expect(step(s, () => cmd.deleteBackward(s, { blockId: "a", from: 0, to: 0 }))).toEqual({ blockId: "img", selected: true });
+      expect(s.blocks.get("a")?.trashedAt ?? s.blocks.get("a")).toBeFalsy();
+    });
+
+    it("Inline-Markdown beim schließenden Zeichen, nicht über Erwähnungen", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "say **hi**" })]);
+      expect(step(s, () => cmd.applyInlineMarkdown(s, "a", 10))).toEqual({ blockId: "a", offset: 6 });
+      expect(s.blocks.get("a")!.text).toEqual([{ t: "say " }, bold("hi")]);
+      const t = make(pr, [blk("a", "text", "b:P", "a0", { text: "a `x` and *y*" })]);
+      step(t, () => cmd.applyInlineMarkdown(t, "a", 5));
+      expect(t.blocks.get("a")!.text).toEqual([{ t: "a " }, { t: "x", m: { c: true } }, { t: " and *y*" }]);
+      expect(cmd.applyInlineMarkdown(t, "a", 3)).toBeUndefined();
+      const m = make(pr, [blk("a", "text", "b:P", "a0", { text: [{ t: "*" }, { t: "@P", mention: { page: { _0: "P" } } }, { t: "*" }] })]);
+      expect(cmd.applyInlineMarkdown(m, "a", 4)).toBeUndefined();
+    });
+
+    it("Kürzel in Listen: „1. “ macht aus einem Aufzählungspunkt eine Nummer", () => {
+      const s = make(pr, [blk("a", "bulletedList", "b:P", "a0", { text: "1. x" })]);
+      step(s, () => cmd.applyMarkdownShortcut(s, "a", 3));
+      expect(outline(s)).toEqual(["numberedList: x"]);
+    });
+
+    it("@-Erwähnung ersetzt die Eingabe; ihre Länge ist die ihres Texts", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "see @pa" })]);
+      const f = step(s, () => cmd.insertMention(s, { blockId: "a", from: 4, to: 7 }, { page: { _0: "P" } }, "Page"));
+      expect(f).toEqual({ blockId: "a", offset: 9 });
+      expect(s.blocks.get("a")!.text).toEqual([{ t: "see " }, { t: "Page", mention: { page: { _0: "P" } } }, { t: " " }]);
+    });
+
+    it("neuer Block hinter/am Ende; Slash in leerem Block: Bild ausgewählt, Trenner mit Textblock darunter", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "A" }), blk("e", "text", "b:P", "a1"), blk("f", "heading2", "b:P", "a2")]);
+      const n = step(s, () => cmd.insertBlock(s, { after: "a" }, "todo"));
+      expect(n).toMatchObject({ offset: 0 });
+      expect(step(s, () => cmd.insertBlock(s, { inside: "P" }, "image"))).toMatchObject({ selected: true });
+      expect(step(s, () => cmd.convertEmptyBlock(s, "e", "image", { url: "https://x.y/i.png" }))).toEqual({ blockId: "e", selected: true });
+      const d = step(s, () => cmd.convertEmptyBlock(s, "f", "divider"));
+      expect(outline(s)).toEqual(["text: A", "todo: ", "image: ", "divider: ", "text: ", "image: "]);
+      expect(s.blocks.get((d as { blockId: string }).blockId)!.type).toBe("text");
+      expect(cmd.convertEmptyBlock(s, "a", "image")).toBeUndefined();
+    });
+
+    it("Props setzen und entfernen; Spaltenbreite beim Ziehen ein Schritt", () => {
+      const s = make(pr, [blk("t", "toggle", "b:P", "a0", { text: "T" }), blk("L", "columnList", "b:P", "a1"), blk("c1", "column", "b:L", "a0"), blk("x", "text", "b:c1", "a0"), blk("c2", "column", "b:L", "a1"), blk("y", "text", "b:c2", "a0")]);
+      step(s, () => cmd.setBlockProps(s, ["t"], { color: "red" }));
+      expect(s.blocks.get("t")!.props).toEqual({ color: "red" });
+      step(s, () => cmd.setBlockProps(s, ["t"], { color: undefined }));
+      expect("props" in s.blocks.get("t")!).toBe(false);
+      s.clearUndoHistory();
+      s.undoCoalesceInterval = 1e9;
+      cmd.setColumnRatios(s, new Map([["c1", 0.3], ["c2", 0.7]]));
+      cmd.setColumnRatios(s, new Map([["c1", 0.25], ["c2", 0.75]]));
+      expect(s.blocks.get("c1")!.props?.ratio).toBe(0.25);
+      s.undo();
+      expect(s.blocks.get("c1")!.props?.ratio).toBeUndefined();
+    });
+
+    it("Einfügen bei Blockauswahl: hinter den Block, Based-intern und Markdown", () => {
+      const s = make(pr, [blk("a", "text", "b:P", "a0", { text: "A" }), blk("img", "image", "b:P", "a1")]);
+      const clip = cmd.copyBlocks(s, ["a"]);
+      expect(step(s, () => cmd.insertContentAfter(s, "img", { based: clip }))).toMatchObject({ selected: true });
+      step(s, () => cmd.insertContentAfter(s, "a", { text: "# H\n- one" }));
+      expect(outline(s)).toEqual(["text: A", "heading1: H", "bulletedList: one", "image: ", "text: A"]);
+    });
+  });
+
   it("sichtbare Reihenfolge und Nachbarn (Pfeiltasten)", () => {
     const s = make(pr, [
       blk("a", "text", "b:P", "a0"), blk("t", "toggle", "b:P", "a1"), blk("tk", "text", "b:t", "a0"),

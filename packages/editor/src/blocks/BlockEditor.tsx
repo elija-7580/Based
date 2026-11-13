@@ -3,14 +3,14 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { ClipboardHTMLImporter, blockCmd, importedJSON, rich, plainText, type Block, type Caret, type DropSide, type WorkspaceStore } from "@based/core";
+import { blockCommands as cmd, plainText, type Block, type BlockDropZone, type EditorFocus, type EditorTextRange, type WorkspaceStore } from "@based/core";
 import { mermaidPreview } from "../schema/mermaid.js";
 import type { PageRef } from "../ui/env.js";
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
 import { ChevronIcon, GripIcon, PlusIcon } from "../ui/icons.js";
-import { EditorController, scrollParent } from "./controller.js";
+import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
 import "./blocks.css";
@@ -81,7 +81,9 @@ export function BlockEditor(props: PageEditorProps) {
     return () => clearTimeout(t);
   }, [props.focusBlock]);
 
-  const run = useCallback((r: ReturnType<typeof blockCmd.insertText>) => ctrl.apply(r), [ctrl]);
+  const run = useCallback((f: EditorFocus | undefined) => ctrl.apply(f), [ctrl]);
+  /** ⌘B/⌘I/… über die Auswahl im Block (ohne Auswahl: nichts – das übernimmt „stored“). */
+  const format = (c: Caret, key: cmd.MarkKey) => (c.from === c.to ? undefined : cmd.formatText(store, [R(c)], key));
 
   // MARK: Eingabe (beforeinput – das Modell entscheidet, das DOM folgt)
 
@@ -106,61 +108,61 @@ export function BlockEditor(props: PageEditorProps) {
         case "insertText": {
           const data = e.data ?? "";
           const st = ctrl.stored && ctrl.stored.id === c.id && ctrl.stored.at === c.from && c.from === c.to ? ctrl.stored.marks : undefined;
-          const r = blockCmd.insertText(store, c, data, st as never);
-          if (st !== undefined && r.caret) ctrl.stored = { id: c.id, at: r.caret.from, marks: st };
+          const f = cmd.replaceText(store, R(c), data, st !== undefined ? { marks: (st ?? {}) as cmd.Marks } : {});
+          const pos = f && "offset" in f ? f.offset : undefined;
+          if (st !== undefined && pos !== undefined) ctrl.stored = { id: c.id, at: pos, marks: st };
           else ctrl.stored = undefined;
-          run(r);
-          if (data === " " && r.caret) {
-            const s = blockCmd.applyMarkdownShortcut(store, r.caret);
-            if (s) run(s);
-          }
-          if ((data === "*" || data === "`" || data === "~" || data === "_") && r.caret) {
-            const s = blockCmd.applyInlineMarkdown(store, r.caret);
+          run(f);
+          // Kürzel am Blockanfang („## “, „- “, „---“, „```“), sonst Inline-Markdown beim schließenden Zeichen
+          const block = pos !== undefined && (data === " " || data === "-" || data === "`") ? cmd.applyMarkdownShortcut(store, c.id, pos) : undefined;
+          if (block) run(block);
+          else if (pos !== undefined && (data === "*" || data === "`" || data === "~" || data === "_")) {
+            const s = cmd.applyInlineMarkdown(store, c.id, pos);
             if (s) {
               run(s);
-              if (s.caret) ctrl.stored = { id: s.caret.id, at: s.caret.from, marks: null };
+              if ("offset" in s) ctrl.stored = { id: s.blockId, at: s.offset, marks: null };
             }
           }
-          if (data === "/" && r.caret) openSlash(id, r.caret.from - 1);
+          if (data === "/" && pos !== undefined && !block) openSlash(id, pos - 1);
           else if (slashRef.current) updateSlash(id);
-          if (data === "@" && r.caret && props.pages) openMention(id, r.caret.from - 1);
+          if (data === "@" && pos !== undefined && props.pages) openMention(id, pos - 1);
           else if (mentionRef.current) updateMention(id);
           break;
         }
         case "insertReplacementText": {
           const t = e.dataTransfer?.getData("text/plain") ?? e.data ?? "";
-          run(blockCmd.insertText(store, target, t));
+          run(cmd.replaceText(store, R(target), t, { coalesce: null }));
           break;
         }
         case "insertParagraph":
-          run(blockCmd.splitBlock(store, pageID, c));
+          run(cmd.splitBlock(store, c.id, c.from, c.to));
           break;
         case "insertLineBreak":
-          run(blockCmd.insertText(store, c, "\n"));
+          run(cmd.replaceText(store, R(c), "\n"));
           break;
         case "deleteContentBackward":
-          run(blockCmd.deleteBackward(store, pageID, c));
+          run(cmd.deleteBackward(store, R(c)));
           if (slashRef.current) updateSlash(id);
           if (mentionRef.current) updateMention(id);
           break;
         case "deleteContentForward":
-          run(blockCmd.deleteForward(store, pageID, c));
+          run(cmd.deleteForward(store, R(c)));
           break;
         case "deleteWordBackward": case "deleteSoftLineBackward": case "deleteHardLineBackward":
         case "deleteWordForward": case "deleteSoftLineForward": case "deleteHardLineForward": case "deleteContent": case "deleteByCut":
-          if (target.from !== target.to) run(blockCmd.deleteBackward(store, pageID, target));
-          else run(e.inputType.endsWith("Forward") ? blockCmd.deleteForward(store, pageID, c) : blockCmd.deleteBackward(store, pageID, c));
+          if (target.from !== target.to) run(cmd.deleteBackward(store, R(target)));
+          else run(e.inputType.endsWith("Forward") ? cmd.deleteForward(store, R(c)) : cmd.deleteBackward(store, R(c)));
           if (slashRef.current) updateSlash(id);
           break;
-        case "formatBold": run(blockCmd.toggleMark(store, c, "b")); break;
-        case "formatItalic": run(blockCmd.toggleMark(store, c, "i")); break;
-        case "formatUnderline": run(blockCmd.toggleMark(store, c, "u")); break;
-        case "formatStrikeThrough": run(blockCmd.toggleMark(store, c, "s")); break;
+        case "formatBold": run(format(c, "b")); break;
+        case "formatItalic": run(format(c, "i")); break;
+        case "formatUnderline": run(format(c, "u")); break;
+        case "formatStrikeThrough": run(format(c, "s")); break;
         case "historyUndo": undo(); break;
         case "historyRedo": redo(); break;
         case "insertFromDrop": {
           const t = e.dataTransfer?.getData("text/plain");
-          if (t) run(blockCmd.insertText(store, target, t.replace(/\r\n?/g, "\n")));
+          if (t) run(cmd.replaceText(store, R(target), t.replace(/\r\n?/g, "\n"), { coalesce: null }));
           break;
         }
         default:
@@ -181,7 +183,7 @@ export function BlockEditor(props: PageEditorProps) {
       const start = compStart;
       compStart = undefined;
       const el = ctrl.editable(id);
-      if (e.data) run(blockCmd.insertText(store, start, e.data));
+      if (e.data) run(cmd.replaceText(store, R(start), e.data));
       else if (el) {
         renderRich(el, store.blocks.get(id)?.text, atomRenderer(props));
         ctrl.setCaret(start);
@@ -192,27 +194,24 @@ export function BlockEditor(props: PageEditorProps) {
       const id = idOf(e.target);
       const data = e.clipboardData;
       if (!data || !editable) return;
-      const internal = data.getData(BLOCKS_MIME);
       const anchor = id ?? ctrl.selected[ctrl.selected.length - 1];
       if (!anchor) return;
       e.preventDefault();
-      if (internal) {
-        pasteBlocks(store, anchor, internal, ctrl);
-        return;
-      }
-      const text = data.getData("text/plain").replace(/\r\n?/g, "\n");
-      const c = id ? ctrl.readCaret(id) : undefined;
-      if (!c) return;
-      // URL über markiertem Text: Link setzen (wie Notion)
-      if (c.from !== c.to && /^https?:\/\/\S+$/.test(text.trim())) { run(blockCmd.setLink(store, c, text.trim())); return; }
+      let based: cmd.BasedClipboard | undefined;
+      try {
+        const raw = data.getData(cmd.BASED_CLIPBOARD_MIME);
+        const v: unknown = raw ? JSON.parse(raw) : undefined;
+        if (cmd.isBasedClipboard(v)) based = v;
+      } catch { based = undefined; }
+      const text = data.getData("text/plain");
       const html = data.getData("text/html");
-      if (html && store.blocks.get(c.id)?.type !== "code") {
-        const importer = new ClipboardHTMLImporter(ClipboardHTMLImporter.pageResolver((x) => store.blocks.has(x) || props.pages?.get(x) !== undefined));
-        const parsed = importer.parse(html).map((b) => importedJSON(b) as unknown as blockCmd.PastedBlock);
-        if (parsed.length) { run(blockCmd.insertPasted(store, c, parsed)); return; }
-      }
-      if (!text) return;
-      pastePlain(store, pageID, c, text, ctrl);
+      const content: cmd.PasteContent = { based, text: text || undefined, html: html || undefined };
+      const opts = { pageExists: (x: string) => store.blocks.has(x) || props.pages?.get(x) !== undefined };
+      const c = id ? ctrl.readCaret(id) : undefined;
+      if (!c) { run(cmd.insertContentAfter(store, anchor, content, opts)); return; }
+      // URL über markiertem Text: Link setzen (wie Notion)
+      if (c.from !== c.to && /^https?:\/\/\S+$/.test(text.trim())) { run(cmd.formatText(store, [R(c)], "link", text.trim())); return; }
+      run(cmd.insertContent(store, R(c), content, opts));
     };
 
     const onCopy = (e: ClipboardEvent) => {
@@ -220,10 +219,9 @@ export function BlockEditor(props: PageEditorProps) {
       e.preventDefault();
       writeBlocksClipboard(store, ctrl.selected, e.clipboardData);
       if (e.type === "cut" && editable) {
-        const before = blockCmd.neighbourText(store, pageID, ctrl.selected[0]!, -1);
-        blockCmd.deleteBlocks(store, ctrl.selected);
+        const f = cmd.deleteBlocks(store, ctrl.selected);
         ctrl.clearSelection();
-        if (before) ctrl.setCaret(endCaret(store, before));
+        run(f);
       }
     };
 
@@ -266,7 +264,7 @@ export function BlockEditor(props: PageEditorProps) {
   const updateSlash = (id: string) => {
     const s = slashRef.current;
     if (!s || s.id !== id) return;
-    const text = rich.richPlain(store.blocks.get(id)?.text);
+    const text = plainText(store.blocks.get(id)?.text);
     const c = ctrl.caret;
     if (!c || c.from <= s.at || text[s.at] !== "/") { setSlash(undefined); return; }
     const query = text.slice(s.at + 1, c.from);
@@ -280,9 +278,8 @@ export function BlockEditor(props: PageEditorProps) {
     const b = store.blocks.get(s.id);
     if (!b) return;
     const end = s.at + 1 + s.query.length;
-    const cleared = rich.richReplace(b.text, s.at, end, "");
-    const empty = rich.richLength(cleared) === 0;
-    store.transact("Remove slash", (tx) => tx.update(s.id, (x) => { if (empty) delete x.text; else x.text = cleared; }), { coalesce: "text:" + s.id });
+    cmd.replaceText(store, { blockId: s.id, from: s.at, to: end }, "");
+    const empty = textLen(store, s.id) === 0;
     if (item.page) {
       const created = item.page(store, empty ? s.id : undefined, s.id);
       if (created && props.onOpenPage) props.onOpenPage(created);
@@ -293,18 +290,8 @@ export function BlockEditor(props: PageEditorProps) {
       if (created) ctrl.select([created]);
       return;
     }
-    if (empty && blockCmd.isTextBlock(b)) {
-      blockCmd.turnInto(store, [s.id], item.type, item.props);
-      if (blockCmd.TEXT_BLOCKS.has(item.type)) ctrl.setCaret({ id: s.id, from: 0, to: 0 });
-      else if (item.type === "divider") {
-        const next = blockCmd.insertBlock(store, { after: s.id, type: "text" });
-        ctrl.setCaret({ id: next, from: 0, to: 0 });
-      } else ctrl.select([s.id]);
-    } else {
-      const nid = blockCmd.insertBlock(store, { after: s.id, type: item.type, ...(item.props ? { props: item.props } : {}) });
-      if (blockCmd.TEXT_BLOCKS.has(item.type)) ctrl.setCaret({ id: nid, from: 0, to: 0 });
-      else ctrl.select([nid]);
-    }
+    if (empty) run(cmd.convertEmptyBlock(store, s.id, item.type, item.props ?? {}));
+    else run(cmd.insertBlock(store, { after: s.id }, item.type, item.props ? { props: item.props } : {}));
   };
 
   // MARK: @-Erwähnungen
@@ -325,7 +312,7 @@ export function BlockEditor(props: PageEditorProps) {
   const updateMention = (id: string) => {
     const s = mentionRef.current;
     if (!s || s.id !== id) return;
-    const text = rich.richPlain(store.blocks.get(id)?.text);
+    const text = plainText(store.blocks.get(id)?.text);
     const c = ctrl.caret;
     if (!c || c.from <= s.at || text[s.at] !== "@") { setMention(undefined); return; }
     const query = text.slice(s.at + 1, c.from);
@@ -338,7 +325,7 @@ export function BlockEditor(props: PageEditorProps) {
     const s = mentionRef.current;
     setMention(undefined);
     if (!s) return;
-    run(blockCmd.insertMention(store, { id: s.id, from: s.at, to: s.at + 1 + s.query.length }, { page: ref.id }));
+    run(cmd.insertMention(store, { blockId: s.id, from: s.at, to: s.at + 1 + s.query.length }, { page: { _0: ref.id } }, ref.title || "Untitled"));
   };
 
   // MARK: Link (⌘K)
@@ -347,15 +334,17 @@ export function BlockEditor(props: PageEditorProps) {
     const doc = rootRef.current!.ownerDocument;
     const r = doc.getSelection()?.rangeCount ? doc.getSelection()!.getRangeAt(0).getBoundingClientRect() : undefined;
     const b = store.blocks.get(c.id);
-    const current = rich.richSlice(b?.text, c.from, c.to).find((x) => (x.m as Record<string, unknown> | undefined)?.link)?.m?.link;
+    const current = linkIn(b?.text, c.from, c.to);
     setLinkState({ caret: c, x: r?.left ?? 100, y: (r?.bottom ?? 100) + 8, value: typeof current === "string" ? current : "" });
   };
   const commitLink = (value: string | undefined) => {
     const l = link;
     setLinkState(undefined);
     if (!l) return;
-    if (value !== undefined) run(blockCmd.setLink(store, l.caret, value));
-    else ctrl.setCaret(l.caret);
+    if (value !== undefined) {
+      cmd.formatText(store, [R(l.caret)], "link", value.trim() || false);
+      ctrl.setCaret({ id: l.caret.id, from: l.caret.to, to: l.caret.to });
+    } else ctrl.setCaret(l.caret);
   };
 
   // MARK: Tastatur
@@ -404,24 +393,24 @@ export function BlockEditor(props: PageEditorProps) {
     if (!el) return;
     const c = ctrl.readCaret(id);
     if (!c) return;
-    const len = rich.richLength(store.blocks.get(id)?.text);
+    const len = textLen(store, id);
     const key = e.key;
     // WebKit schickt am Anfang/Ende eines Felds kein beforeinput (nichts zu löschen) – hier selbst behandeln
     if (key === "Backspace" && !mod && !e.altKey && c.from === 0 && c.to === 0) {
       e.preventDefault();
-      if (editable) run(blockCmd.deleteBackward(store, pageID, c));
+      if (editable) run(cmd.deleteBackward(store, R(c)));
       return;
     }
     if (key === "Delete" && !mod && !e.altKey && c.from === len && c.to === len) {
       e.preventDefault();
-      if (editable) run(blockCmd.deleteForward(store, pageID, c));
+      if (editable) run(cmd.deleteForward(store, R(c)));
       return;
     }
     if (key === "Tab") {
       e.preventDefault();
       if (!editable) return;
-      if (e.shiftKey) blockCmd.outdent(store, [id]);
-      else blockCmd.indent(store, [id], pageID);
+      if (e.shiftKey) cmd.outdentBlocks(store, [id]);
+      else cmd.indentBlocks(store, [id]);
       ctrl.setCaret(c);
       return;
     }
@@ -439,14 +428,14 @@ export function BlockEditor(props: PageEditorProps) {
         if (!editable) return;
         if (c.from === c.to) {
           // ohne Auswahl: gilt für die nächsten Zeichen an dieser Stelle (wie Notion)
-          const base = ctrl.stored && ctrl.stored.id === c.id && ctrl.stored.at === c.from ? ctrl.stored.marks ?? {} : { ...(rich.typingMarks(store.blocks.get(id)?.text, c.from) ?? {}) };
+          const base = ctrl.stored && ctrl.stored.id === c.id && ctrl.stored.at === c.from ? ctrl.stored.marks ?? {} : { ...cmd.marksAt(cmd.runsOf(store.blocks.get(id)?.text), c.from) };
           const next: Record<string, unknown> = { ...base };
           if (next[mark]) delete next[mark];
           else next[mark] = true;
           ctrl.stored = { id: c.id, at: c.from, marks: Object.keys(next).length ? next : null };
           return;
         }
-        run(blockCmd.toggleMark(store, c, mark));
+        run(format(c, mark));
         return;
       }
       if (k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -454,25 +443,25 @@ export function BlockEditor(props: PageEditorProps) {
       if (k === "y") { e.preventDefault(); redo(); return; }
       if (k === "a" && c.from === 0 && c.to === len) {
         e.preventDefault();
-        ctrl.select(blockCmd.visibleOrder(store, pageID));
+        ctrl.select(ctrl.order());
         return;
       }
       if (k === "d" && editable) {
         e.preventDefault();
-        const [copy] = blockCmd.duplicateBlocks(store, [id]);
+        const [copy] = duplicate(store, [id]);
         if (copy) ctrl.setCaret({ id: copy, from: c.from, to: c.to });
         return;
       }
       if (key === "Enter" && editable) {
         e.preventDefault();
         const b = store.blocks.get(id)!;
-        if (b.type === "todo") blockCmd.setProps(store, [id], { checked: !b.props?.checked }, "Check");
-        else if (b.type === "toggle") blockCmd.setProps(store, [id], { isOpen: !b.props?.isOpen }, "Toggle");
+        if (b.type === "todo") cmd.setChecked(store, id, !b.props?.checked);
+        else if (cmd.isToggle(b)) cmd.setBlockProps(store, [id], { isOpen: !b.props?.isOpen }, "Toggle");
         return;
       }
       if (e.shiftKey && (key === "ArrowUp" || key === "ArrowDown") && editable) {
         e.preventDefault();
-        if (blockCmd.nudgeBlocks(store, [id], key === "ArrowUp" ? -1 : 1)) ctrl.setCaret(c);
+        if (cmd.moveBlocksBy(store, [id], key === "ArrowUp" ? "up" : "down")) ctrl.setCaret(c);
         return;
       }
     }
@@ -480,13 +469,13 @@ export function BlockEditor(props: PageEditorProps) {
       const dir = key === "ArrowUp" ? -1 : 1;
       if (!caretOnEdgeLine(el, dir < 0 ? "first" : "last")) return;
       if (e.shiftKey) {
-        const n = blockCmd.visibleOrder(store, pageID);
+        const n = ctrl.order();
         const other = n[n.indexOf(id) + dir];
         if (other) { e.preventDefault(); ctrl.selectRange(id, other); }
         return;
       }
       if (e.altKey || mod) return;
-      const next = blockCmd.neighbourText(store, pageID, id, dir);
+      const next = ctrl.neighbourText(id, dir);
       if (!next) return;
       e.preventDefault();
       const x = caretX(el) ?? el.getBoundingClientRect().left;
@@ -496,7 +485,7 @@ export function BlockEditor(props: PageEditorProps) {
     if ((key === "ArrowLeft" && c.from === 0 && c.to === 0) || (key === "ArrowRight" && c.from === len && c.to === len)) {
       if (e.shiftKey || e.altKey || mod) return;
       const dir = key === "ArrowLeft" ? -1 : 1;
-      const next = blockCmd.neighbourText(store, pageID, id, dir);
+      const next = ctrl.neighbourText(id, dir);
       if (!next) return;
       e.preventDefault();
       ctrl.setCaret(dir < 0 ? endCaret(store, next) : { id: next, from: 0, to: 0 });
@@ -506,35 +495,33 @@ export function BlockEditor(props: PageEditorProps) {
   const onSelectionKey = (e: React.KeyboardEvent, mod: boolean) => {
     const sel = ctrl.selected;
     const key = e.key;
-    const order = blockCmd.visibleOrder(store, pageID);
+    const order = ctrl.order();
     if (key === "Escape") { e.preventDefault(); ctrl.clearSelection(); return; }
     if ((key === "Backspace" || key === "Delete") && editable) {
       e.preventDefault();
-      const before = order[order.indexOf(sel[0]!) - 1];
-      blockCmd.deleteBlocks(store, sel);
+      const f = cmd.deleteBlocks(store, sel);
       ctrl.clearSelection();
-      const caretTarget = before && blockCmd.isTextBlock(store.blocks.get(before)) ? before : blockCmd.visibleOrder(store, pageID).find((x) => blockCmd.isTextBlock(store.blocks.get(x)));
-      if (caretTarget) ctrl.setCaret(endCaret(store, caretTarget));
+      run(f);
       return;
     }
     if (key === "Enter") {
       e.preventDefault();
-      const first = sel.find((x) => blockCmd.isTextBlock(store.blocks.get(x)));
+      const first = sel.find((x) => cmd.isTextBlock(store.blocks.get(x)));
       if (first) ctrl.setCaret(endCaret(store, first));
       return;
     }
     if (key === "Tab" && editable) {
       e.preventDefault();
-      if (e.shiftKey) blockCmd.outdent(store, sel);
-      else blockCmd.indent(store, sel, pageID);
+      if (e.shiftKey) cmd.outdentBlocks(store, sel);
+      else cmd.indentBlocks(store, sel);
       ctrl.select(sel);
       return;
     }
     if (mod && key.toLowerCase() === "a") { e.preventDefault(); ctrl.select(order); return; }
-    if (mod && key.toLowerCase() === "d" && editable) { e.preventDefault(); ctrl.select(blockCmd.duplicateBlocks(store, sel)); return; }
+    if (mod && key.toLowerCase() === "d" && editable) { e.preventDefault(); ctrl.select(duplicate(store, sel)); return; }
     if (mod && e.shiftKey && (key === "ArrowUp" || key === "ArrowDown") && editable) {
       e.preventDefault();
-      blockCmd.nudgeBlocks(store, sel, key === "ArrowUp" ? -1 : 1);
+      cmd.moveBlocksBy(store, sel, key === "ArrowUp" ? "up" : "down");
       ctrl.select(sel);
       return;
     }
@@ -634,7 +621,7 @@ export function BlockEditor(props: PageEditorProps) {
         top: r.top - sb.top + scroller.scrollTop, bottom: r.bottom - sb.top + scroller.scrollTop,
         wholeBottom: whole.bottom - sb.top + scroller.scrollTop,
         left: r.left, right: r.right,
-        nestable: blockCmd.canHaveChildren(b),
+        nestable: cmd.canNestUnder(b),
         columnable: isColumnable(store, id, pageID),
       });
     }
@@ -651,7 +638,7 @@ export function BlockEditor(props: PageEditorProps) {
     const start = { x: e.clientX, y: e.clientY };
     let dragging = false;
     let rows: Measured[] = [];
-    let drop: { id: string; side: DropSide } | undefined;
+    let drop: { id: string; side: BlockDropZone } | undefined;
     let frame = 0;
     let last = { x: e.clientX, y: e.clientY };
     const indicator = doc.createElement("div");
@@ -698,7 +685,7 @@ export function BlockEditor(props: PageEditorProps) {
         dragging = true;
         for (const x of ids) root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(x)}"]`)?.setAttribute("data-dragging", "");
         rows = measure(new Set(ids));
-        ghost.textContent = ids.map((x) => rich.richPlain(store.blocks.get(x)?.text) || labelOf(store.blocks.get(x))).join(" · ").slice(0, 80) || "Block";
+        ghost.textContent = ids.map((x) => plainText(store.blocks.get(x)?.text) || labelOf(store.blocks.get(x))).join(" · ").slice(0, 80) || "Block";
         doc.body.append(indicator, ghost);
         doc.documentElement.classList.add("bx2-is-dragging");
       }
@@ -722,7 +709,7 @@ export function BlockEditor(props: PageEditorProps) {
         return;
       }
       if (drop && editable) {
-        blockCmd.moveBlocks(store, ids, drop.id, drop.side);
+        cmd.moveBlocks(store, ids, drop.id, drop.side);
         ctrl.select(ids);
       }
     };
@@ -812,9 +799,8 @@ export function BlockEditor(props: PageEditorProps) {
     const kids = store.children("b:" + pageID).filter((k) => store.blocks.get(k)?.trashedAt === undefined);
     const last = kids[kids.length - 1];
     const lb = last ? store.blocks.get(last) : undefined;
-    if (lb && lb.type === "text" && rich.richLength(lb.text) === 0) { ctrl.setCaret({ id: last!, from: 0, to: 0 }); return; }
-    const id = blockCmd.insertBlock(store, { parent: pageID, type: "text" });
-    ctrl.setCaret({ id, from: 0, to: 0 });
+    if (lb && lb.type === "text" && plainText(lb.text).length === 0) { ctrl.setCaret({ id: last!, from: 0, to: 0 }); return; }
+    run(cmd.insertBlock(store, { inside: pageID }, "text"));
   };
 
   const ctx = useMemo<Ctx>(() => ({ ctrl, store, props, editable }), [ctrl, store, props, editable]);
@@ -831,7 +817,7 @@ export function BlockEditor(props: PageEditorProps) {
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
-      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(blockCmd.toggleMark(store, c, m)); }} /> : null}
+      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }} /> : null}
     </EditorCtx.Provider>
   );
 }
@@ -858,7 +844,7 @@ interface Measured {
 }
 
 /** Reine Regel: welcher Block, welche Seite. Exportiert für Tests. */
-export function dropTarget(rows: readonly Pick<Measured, "id" | "top" | "bottom" | "wholeBottom" | "left" | "right" | "nestable" | "columnable">[], x: number, y: number): { id: string; side: DropSide } | undefined {
+export function dropTarget(rows: readonly Pick<Measured, "id" | "top" | "bottom" | "wholeBottom" | "left" | "right" | "nestable" | "columnable">[], x: number, y: number): { id: string; side: BlockDropZone } | undefined {
   if (!rows.length) return undefined;
   // Zeilen, die horizontal passen (Spalten nebeneinander), dann die mit dem kleinsten Abstand in y
   const near = rows.filter((r) => x >= r.left - 48 && x <= r.right + 48);
@@ -913,7 +899,7 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const selected = useSelected(ctrl, id);
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
-  const showKids = blockCmd.childrenVisible(b) && b.type !== "callout" && b.type !== "syncedBlock";
+  const showKids = cmd.visibleChildren(store, b).length > 0 && b.type !== "callout" && b.type !== "syncedBlock";
   return (
     <div className="bx2-block" data-block-id={id} data-type={b.type} data-selected={selected ? "" : undefined} data-depth={depth}>
       <Gutter id={id} />
@@ -939,9 +925,8 @@ function Gutter({ id }: { id: string }) {
     e.preventDefault();
     e.stopPropagation();
     const b = store.blocks.get(id);
-    if (b && b.type === "text" && rich.richLength(b.text) === 0) { ctrl.setCaret({ id, from: 0, to: 0 }); return; }
-    const nid = blockCmd.insertBlock(store, { after: id, type: "text" });
-    ctrl.setCaret({ id: nid, from: 0, to: 0 });
+    if (b && b.type === "text" && plainText(b.text).length === 0) { ctrl.setCaret({ id, from: 0, to: 0 }); return; }
+    ctrl.apply(cmd.insertBlock(store, { after: id }, "text"));
   };
   return (
     <div className="bx2-gutter" contentEditable={false}>
@@ -994,7 +979,7 @@ function ColumnResizer({ left, right }: { left: string; right: string }) {
       doc.removeEventListener("pointermove", move);
       doc.removeEventListener("pointerup", up);
       doc.documentElement.classList.remove("bx2-col-resizing");
-      blockCmd.setColumnRatios(store, new Map([[left, ratios[0]], [right, ratios[1]]]));
+      cmd.setColumnRatios(store, new Map([[left, ratios[0]], [right, ratios[1]]]));
     };
     doc.documentElement.classList.add("bx2-col-resizing");
     doc.addEventListener("pointermove", move);
@@ -1025,7 +1010,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
         <div className="bx2-codewrap">
           <TextField block={b} />
           <span className="bx2-code-lang" contentEditable={false}>{b.props?.language || "Plain text"}</span>
-          {b.props?.language === "mermaid" && rich.richLength(b.text) > 0 ? <MermaidPreview code={rich.richPlain(b.text)} /> : null}
+          {b.props?.language === "mermaid" && plainText(b.text).length > 0 ? <MermaidPreview code={plainText(b.text)} /> : null}
         </div>
       );
     case "bulletedList":
@@ -1037,7 +1022,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
         <>
           <span className="bx2-marker" contentEditable={false}>
             <input type="checkbox" className="bx2-check" checked={b.props?.checked === true} disabled={!editable} aria-label="Done"
-              onChange={() => blockCmd.setProps(store, [b.id], { checked: !b.props?.checked }, "Check")} />
+              onChange={() => cmd.setChecked(store, b.id, !b.props?.checked)} />
           </span>
           <TextField block={b} />
         </>
@@ -1046,7 +1031,7 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
       return (
         <>
           <button type="button" className="bx2-marker bx2-toggle" data-open={b.props?.isOpen ? "" : undefined} aria-label={b.props?.isOpen ? "Collapse" : "Expand"} aria-expanded={b.props?.isOpen === true}
-            onClick={() => blockCmd.setProps(store, [b.id], { isOpen: !b.props?.isOpen }, "Toggle")}>
+            onClick={() => cmd.setBlockProps(store, [b.id], { isOpen: !b.props?.isOpen }, "Toggle")}>
             <ChevronIcon />
           </button>
           <TextField block={b} />
@@ -1146,7 +1131,7 @@ function ImageBlock({ block: b }: { block: Block }) {
     setBusy(true);
     try {
       const url = await props.uploadFile(f, b.id);
-      blockCmd.setProps(store, [b.id], { url }, "Add image");
+      cmd.setBlockProps(store, [b.id], { url }, "Add image");
     } finally { setBusy(false); }
   };
   return (
@@ -1157,7 +1142,7 @@ function ImageBlock({ block: b }: { block: Block }) {
           <input ref={input} type="file" accept="image/*" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
         </button>
       )}
-      {b.props?.caption ? <figcaption>{rich.richPlain(b.props.caption)}</figcaption> : null}
+      {b.props?.caption ? <figcaption>{plainText(b.props.caption)}</figcaption> : null}
     </figure>
   );
 }
@@ -1199,7 +1184,7 @@ function TableBlock({ block: b }: { block: Block }) {
       <table className="bx2-table">
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i}>{r.map((c, j) => (head && i === 0 ? <th key={j}>{rich.richPlain(c)}</th> : <td key={j}>{rich.richPlain(c)}</td>))}</tr>
+            <tr key={i}>{r.map((c, j) => (head && i === 0 ? <th key={j}>{plainText(c)}</th> : <td key={j}>{plainText(c)}</td>))}</tr>
           ))}
         </tbody>
       </table>
@@ -1210,12 +1195,12 @@ function TableBlock({ block: b }: { block: Block }) {
 function TableOfContents() {
   const { store, ctrl } = useCtx();
   useSyncExternalStore(storeSubscribe(store), () => store.revision);
-  const heads = blockCmd.visibleOrder(store, ctrl.pageID).map((id) => store.blocks.get(id)!).filter((x) => /^heading[1-3]$/.test(x.type));
+  const heads = ctrl.order().map((id) => store.blocks.get(id)!).filter((x) => /^heading[1-3]$/.test(x.type));
   return (
     <nav className="bx2-embed bx2-toc" data-embed="" contentEditable={false} aria-label="Table of contents">
       {heads.length ? heads.map((h) => (
         <button key={h.id} type="button" className={"bx2-toc-item bx2-toc-" + h.type} onClick={() => ctrl.root?.querySelector(`[data-block-id="${CSS.escape(h.id)}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" })}>
-          {rich.richPlain(h.text) || "Untitled"}
+          {plainText(h.text) || "Untitled"}
         </button>
       )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
     </nav>
@@ -1229,7 +1214,7 @@ function EquationBlock({ block: b }: { block: Block }) {
   const [draft, setDraft] = useState(expr);
   const save = () => {
     setEditing(false);
-    if (draft !== expr) blockCmd.setProps(store, [b.id], { expression: draft }, "Edit equation");
+    if (draft !== expr) cmd.setBlockProps(store, [b.id], { expression: draft }, "Edit equation");
   };
   return (
     <div className="bx2-embed bx2-equation" data-embed="" contentEditable={false} onClick={() => editable && !editing && (setDraft(expr), setEditing(true))}>
@@ -1274,7 +1259,7 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
     const el = ref.current;
     if (!el || ctrl.composing === block.id) return;
     renderRich(el, block.text, atomRenderer(props));
-    if (rich.richLength(block.text) === 0) el.setAttribute("data-empty", "");
+    if (plainText(block.text).length === 0) el.setAttribute("data-empty", "");
     else el.removeAttribute("data-empty");
     ctrl.restore(block.id);
   }, [block.text, ctrl, block.id, props]);
@@ -1330,22 +1315,22 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
   const ids = ctrl.isSelected(id) ? [...ctrl.selected] : [id];
   const b = store.blocks.get(id);
   const act = (f: () => void) => () => { f(); onClose(); };
-  const turnable = ids.every((x) => blockCmd.isTextBlock(store.blocks.get(x)));
+  const turnable = ids.every((x) => cmd.isTextBlock(store.blocks.get(x)));
   return (
     <div ref={ref} className="bx2-menu bx2-blockmenu" role="menu" aria-label="Block" data-testid="block-menu" style={{ left: x + 8, top: Math.min(y, window.innerHeight - 360) }}>
       <div className="bx2-menu-label">{labelOf(b)}</div>
       {editable ? (
         <>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { blockCmd.deleteBlocks(store, ids); ctrl.clearSelection(); })}><span className="bx2-menu-text">Delete</span><span className="bx2-menu-hint">Del</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => ctrl.select(blockCmd.duplicateBlocks(store, ids)))}><span className="bx2-menu-text">Duplicate</span><span className="bx2-menu-hint">⌘D</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { blockCmd.nudgeBlocks(store, ids, -1); ctrl.select(ids); })}><span className="bx2-menu-text">Move up</span><span className="bx2-menu-hint">⌘⇧↑</span></button>
-          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { blockCmd.nudgeBlocks(store, ids, 1); ctrl.select(ids); })}><span className="bx2-menu-text">Move down</span><span className="bx2-menu-hint">⌘⇧↓</span></button>
+          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { const f = cmd.deleteBlocks(store, ids); ctrl.clearSelection(); ctrl.apply(f); })}><span className="bx2-menu-text">Delete</span><span className="bx2-menu-hint">Del</span></button>
+          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => ctrl.select(duplicate(store, ids)))}><span className="bx2-menu-text">Duplicate</span><span className="bx2-menu-hint">⌘D</span></button>
+          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "up"); ctrl.select(ids); })}><span className="bx2-menu-text">Move up</span><span className="bx2-menu-hint">⌘⇧↑</span></button>
+          <button type="button" role="menuitem" className="bx2-menu-item" onClick={act(() => { cmd.moveBlocksBy(store, ids, "down"); ctrl.select(ids); })}><span className="bx2-menu-text">Move down</span><span className="bx2-menu-hint">⌘⇧↓</span></button>
           {turnable ? (
             <>
               <div className="bx2-menu-sep" role="separator" />
               <div className="bx2-menu-label">Turn into</div>
-              {SLASH_ITEMS.filter((s) => blockCmd.TEXT_BLOCKS.has(s.type) && !s.page).map((s) => (
-                <button key={s.type + s.label} type="button" role="menuitemradio" aria-checked={b?.type === s.type} className="bx2-menu-item" onClick={act(() => blockCmd.turnInto(store, ids, s.type, s.props))}>
+              {SLASH_ITEMS.filter((s) => cmd.TEXT_TYPES.has(s.type) && !s.page).map((s) => (
+                <button key={s.type + s.label} type="button" role="menuitemradio" aria-checked={b?.type === s.type} className="bx2-menu-item" onClick={act(() => cmd.turnInto(store, ids, s.type, s.props ?? {}))}>
                   <span className="bx2-menu-icon" aria-hidden="true">{s.icon}</span><span className="bx2-menu-text">{s.label}</span>
                 </button>
               ))}
@@ -1400,21 +1385,46 @@ function LinkPopover({ x, y, value, onDone }: { x: number; y: number; value: str
   );
 }
 
-// MARK: Zwischenablage
+// MARK: Hilfen
 
-const BLOCKS_MIME = "application/x-based-blocks";
+const R = (c: Caret): EditorTextRange => ({ blockId: c.id, from: c.from, to: c.to });
+const textLen = (store: WorkspaceStore, id: string) => plainText(store.blocks.get(id)?.text).length;
 
 function endCaret(store: WorkspaceStore, id: string): Caret {
-  const n = rich.richLength(store.blocks.get(id)?.text);
+  const n = textLen(store, id);
   return { id, from: n, to: n };
 }
 function clampCaret(store: WorkspaceStore, c: Caret): Caret {
-  const n = rich.richLength(store.blocks.get(c.id)?.text);
+  const n = textLen(store, c.id);
   return { id: c.id, from: Math.min(c.from, n), to: Math.min(c.to, n) };
 }
 
+/** Link im Bereich (für ⌘K: vorhandene URL vorbelegen). */
+function linkIn(text: Block["text"], from: number, to: number): string | undefined {
+  let pos = 0;
+  for (const r of cmd.runsOf(text)) {
+    const end = pos + r.t.length;
+    if (end > from && pos < Math.max(to, from + 1) && typeof r.m.link === "string") return r.m.link;
+    pos = end;
+  }
+  return undefined;
+}
+
+/** Duplizieren (⌘D) und die Kopien zurückgeben (zum Auswählen). */
+function duplicate(store: WorkspaceStore, ids: readonly string[]): string[] {
+  const roots = cmd.topLevel(store, ids);
+  const last = roots[roots.length - 1];
+  if (!last) return [];
+  const parent = store.blocks.get(last)!.parent;
+  const before = new Set(store.children(parent));
+  cmd.duplicateBlocks(store, roots);
+  return store.children(parent).filter((x) => !before.has(x));
+}
+
+// MARK: Zwischenablage
+
 function markdownLine(b: Block, depth: number): string {
-  const t = rich.richPlain(b.text).replace(/￼/g, "");
+  const t = plainText(b.text);
   const pad = "  ".repeat(depth);
   switch (b.type) {
     case "heading1": return "# " + t;
@@ -1430,64 +1440,19 @@ function markdownLine(b: Block, depth: number): string {
   }
 }
 
+/** Blockauswahl kopieren: Based-intern (Records mit allem darin) und Markdown als Klartext. */
 function writeBlocksClipboard(store: WorkspaceStore, ids: readonly string[], data: DataTransfer) {
   const lines: string[] = [];
-  const records: Block[] = [];
   const walk = (id: string, depth: number) => {
     const b = store.blocks.get(id);
-    if (!b) return;
-    records.push(b);
+    if (!b || b.trashedAt !== undefined) return;
     if (b.type !== "columnList" && b.type !== "column") lines.push(markdownLine(b, depth));
     for (const k of store.children("b:" + id)) walk(k, b.type === "columnList" || b.type === "column" ? depth : depth + 1);
   };
-  for (const id of ids) walk(id, 0);
+  const roots = cmd.topLevel(store, ids);
+  for (const id of roots) walk(id, 0);
   data.setData("text/plain", lines.join("\n"));
-  data.setData(BLOCKS_MIME, JSON.stringify({ roots: ids, blocks: records }));
-}
-
-function pasteBlocks(store: WorkspaceStore, after: string, json: string, ctrl: EditorController) {
-  let parsed: { roots: string[]; blocks: Block[] };
-  try { parsed = JSON.parse(json); } catch { return; }
-  const byID = new Map(parsed.blocks.map((b) => [b.id, b]));
-  const out: string[] = [];
-  let anchor = after;
-  for (const root of parsed.roots) {
-    const b = byID.get(root);
-    if (!b) continue;
-    const copyTree = (src: Block, opts: { after?: string; parent?: string }): string => {
-      const nid = blockCmd.insertBlock(store, { ...opts, type: src.type, ...(src.text !== undefined ? { text: src.text } : {}), ...(src.props ? { props: structuredClone(src.props) } : {}) });
-      for (const k of parsed.blocks.filter((x) => x.parent === "b:" + src.id).sort((a, c) => (a.sk < c.sk ? -1 : 1))) copyTree(k, { parent: nid });
-      return nid;
-    };
-    anchor = copyTree(b, { after: anchor });
-    out.push(anchor);
-  }
-  if (out.length) ctrl.select(out);
-}
-
-function pastePlain(store: WorkspaceStore, pageID: string, c: Caret, text: string, ctrl: EditorController) {
-  const lines = text.split("\n");
-  if (lines.length === 1) {
-    ctrl.apply(blockCmd.insertText(store, c, text));
-    return;
-  }
-  // Erste Zeile in den Block, Rest als neue Blöcke (Markdown-Kürzel am Zeilenanfang werden umgesetzt)
-  let r = blockCmd.insertText(store, c, lines[0]!);
-  let caret = r.caret!;
-  r = blockCmd.splitBlock(store, pageID, caret);
-  caret = r.caret!;
-  lines.slice(1).forEach((line, i) => {
-    if (i > 0) caret = blockCmd.splitBlock(store, pageID, caret).caret!;
-    const b = store.blocks.get(caret.id);
-    if (b && b.type !== "text") blockCmd.turnInto(store, [caret.id], "text");
-    const m = /^(#{1,3} |[-*+] |\d+\. |\[[ x]?\] |> )/.exec(line);
-    caret = blockCmd.insertText(store, { id: caret.id, from: 0, to: 0 }, line).caret!;
-    if (m) {
-      const s = blockCmd.applyMarkdownShortcut(store, { id: caret.id, from: m[0].length, to: m[0].length });
-      if (s?.caret) caret = { id: caret.id, from: rich.richLength(store.blocks.get(caret.id)?.text), to: rich.richLength(store.blocks.get(caret.id)?.text) };
-    }
-  });
-  ctrl.setCaret(caret);
+  data.setData(cmd.BASED_CLIPBOARD_MIME, JSON.stringify(cmd.copyBlocks(store, roots)));
 }
 
 export type { ReactNode };

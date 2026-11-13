@@ -307,6 +307,14 @@ test("@ erwähnt eine Seite", async ({ page }) => {
   await expect(fields(page).first().locator(".bx2-mention")).toHaveText("Welcome to Based");
   await page.keyboard.type("now");
   await expect(fields(page).first()).toHaveText("see Welcome to Based now");
+  // Die Erwähnung zählt ihre Textlänge (wie im Kern): Pfeile springen über sie, ⌫ nimmt sie als Ganzes
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Backspace");
+  await expect(fields(page).first()).toHaveText("see Welcome to Based");
+  await page.keyboard.press("Backspace");
+  await expect(fields(page).first().locator(".bx2-mention")).toHaveCount(0);
+  await expect(fields(page).first()).toHaveText("see");
+  await page.keyboard.type("!");
+  await expect(fields(page).first()).toHaveText("see !");
 });
 
 test("Spaltenbreite ziehen", async ({ page }) => {
