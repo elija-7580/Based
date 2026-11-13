@@ -203,6 +203,8 @@ export const newPageFormat = devicePref<NewPageFormat>("based.newPageFormat", { 
 const isBool = (v: unknown): v is boolean => typeof v === "boolean";
 /** BSD-168: Rechtschreibprüfung beim Schreiben (Standard an, wie Swift). */
 export const spellCheckPref = devicePref<boolean>("based.spellCheck", true, isBool);
+/** BSD-373: Breite des Side Peek in px (pro Gerät); `undefined` = Standardbreite. */
+export const peekWidthPref = devicePref<number | undefined>("based.peekWidth", undefined, (v): v is number | undefined => v === undefined || (typeof v === "number" && Number.isFinite(v) && v > 0));
 /** BSD-168: Desktop-App sucht beim Start nach Updates (Standard an). */
 export const autoUpdatePref = devicePref<boolean>("based.autoUpdateCheck", true, isBool);
 
