@@ -867,15 +867,18 @@ export class WorkspaceStore {
 
   /** Blöcke löschen: Seiten/Datenbanken in den Papierkorb, sonst entfernen; darin liegende Seiten werden gerettet (BSD-99). */
   deleteBlocks(ids: string[]) {
-    this.transact("Delete", (tx) => {
-      const now = this.now();
-      for (const id of ids) {
-        const b = tx.block(id);
-        if (!b) continue;
-        if (this.isTrashable(b)) tx.update(id, (x) => { x.trashedAt = now; });
-        else this.removeSubtreeKeepingPages(id, now, tx);
-      }
-    });
+    this.transact("Delete", (tx) => this.deleteBlocksIn(tx, ids));
+  }
+
+  /** Wie `deleteBlocks`, aber in einer laufenden Transaktion (Editor-Befehle, BSD-382). */
+  deleteBlocksIn(tx: Tx, ids: readonly string[]) {
+    const now = this.now();
+    for (const id of ids) {
+      const b = tx.block(id);
+      if (!b) continue;
+      if (this.isTrashable(b)) tx.update(id, (x) => { x.trashedAt = now; });
+      else this.removeSubtreeKeepingPages(id, now, tx);
+    }
   }
 
   private nestedTrashables(id: string): string[] {
