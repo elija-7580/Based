@@ -1,4 +1,28 @@
-failure 45662964a6be194167379fb069fcf008e77e3e57
+failure 5a4dbb442f6076a1efc69d273c7c37107fdb7d33
+
+    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
+    Expected: "ts"
+    Received: "typescript"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
+      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
+        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
+           - unexpected value "typescript"
+
+
+      165 |     const code = ed.locator("[data-content-type=codeBlock]");
+      166 |     await expect(code).toContainText("const answer = 42;");
+    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
+          |                        ^
+      168 |     const table = ed.locator("[data-content-type=table]");
+      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
+      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
+        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
+
+    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit/error-context.md
 
     Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -28,34 +52,10 @@ failure 45662964a6be194167379fb069fcf008e77e3e57
 
     Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-webkit-retry1/error-context.md
 
-  2) [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: "Row 148"
-    Received: "Row 149"
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      25 |   expect(under, `Zeile unter (${x}, ${y})`).not.toBeNull();
-      26 |   await page.mouse.click(x, y);
-    > 27 |   await expect.poll(() => activeRow(page)).toBe(under);
-         |                                            ^
-      28 |   await page.keyboard.press("Escape"); // Zelleneditor zu
-      29 |   await page.keyboard.press("Escape"); // Auswahl weg – der nächste Klick fokussiert die Tabelle neu
-      30 | }
-        at clickAt (/home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:27:44)
-        at /home/runner/work/Based/Based/apps/web/e2e/database-click.spec.ts:46:40
-
-    Error Context: test-results/database-click-Vollseite-m-a6c98-ck-die-Zeile-unter-der-Maus-webkit/error-context.md
-
   1 failed
     [webkit] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
-  1 flaky
-    [webkit] › e2e/database-click.spec.ts:32:1 › Vollseite mit 300 Zeilen: nach dem Scrollen trifft der Klick die Zeile unter der Maus 
   16 skipped
-  140 passed (13.7m)
+  141 passed (9.2m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=1/2 --grep-invert @perf

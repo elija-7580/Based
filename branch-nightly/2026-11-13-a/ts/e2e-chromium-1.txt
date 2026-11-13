@@ -1,5 +1,4 @@
-failure 45662964a6be194167379fb069fcf008e77e3e57
-    Timeout:  5000ms
+failure 5a4dbb442f6076a1efc69d273c7c37107fdb7d33
 
     Call log:
       - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
@@ -20,7 +19,7 @@ failure 45662964a6be194167379fb069fcf008e77e3e57
 
     Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
 
-  2) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+  3) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
 
     Error: expect(received).toEqual(expected) // deep equality
 
@@ -50,12 +49,13 @@ failure 45662964a6be194167379fb069fcf008e77e3e57
 
     Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
 
-  1 failed
+  2 failed
+    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
     [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
   1 flaky
     [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  148 passed (5.8m)
+  147 passed (5.9m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
