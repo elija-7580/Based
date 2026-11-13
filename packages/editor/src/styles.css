@@ -338,12 +338,14 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-emoji-action { background: none; border: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); font: inherit; color: var(--muted); cursor: pointer; }
 .bx-emoji-action:hover { background: var(--surface-raised); color: var(--ink); }
 /* BSD-376: Raster passt zur Breite und rollt nur senkrecht (vorher 1fr = mindestens Inhaltsbreite → seitliches Rollen,
-   erste Spalte abgeschnitten). Platz für den Rollbalken ist reserviert, damit nichts springt. */
+   erste Spalte abgeschnitten). Platz für den Rollbalken ist reserviert, damit nichts springt.
+   Zeilenhöhe fest statt aspect-ratio: in WebKit (Tauri/Mac) fielen die Zeilen sonst zusammen, Emojis lagen übereinander. */
 .bx-emoji-grid {
-  display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--space-1); max-height: calc(var(--space-8) * 4);
+  display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); grid-auto-rows: var(--space-6); gap: var(--space-1);
+  max-height: calc(var(--space-8) * 4);
   overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain;
 }
-.bx-emoji-cell { min-width: 0; aspect-ratio: 1; background: none; border: 0; border-radius: var(--radius-sm); font-size: var(--icon-md); line-height: 1; cursor: pointer; padding: 0; overflow: hidden; }
+.bx-emoji-cell { min-width: 0; height: var(--space-6); display: grid; place-items: center; background: none; border: 0; border-radius: var(--radius-sm); font-size: var(--icon-md); line-height: 1; cursor: pointer; padding: 0; overflow: hidden; }
 .bx-emoji-cell[data-active="true"] { background: var(--surface-raised); }
 
 /* BSD-209: Syntax-Hervorhebung (Swift-Hervorheber). Bis es Syntax-Tokens gibt (Designentscheidung, docs/design/astryx.md
