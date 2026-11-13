@@ -4,8 +4,9 @@ import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Heading, Text } from "@astryxdesign/core/Text";
-import { BasedButton, BasedConfirm, BasedDialog, BasedField, BasedMenu, BasedPopover } from "@based/ui/astryx";
+import { BasedButton, BasedConfirm, BasedDialog, BasedField, BasedIconButton, BasedMenu, BasedPopover } from "@based/ui/astryx";
 import { useState } from "react";
+import { Icon } from "../../icons.js";
 
 export function AstryxKit() {
   const [dialog, setDialog] = useState(false);
@@ -30,6 +31,8 @@ export function AstryxKit() {
             <BasedButton label="Delete" variant="danger" />
             <BasedButton label="Disabled" disabled />
             <BasedButton label="Small" size="sm" />
+            <BasedIconButton label="Close" tooltip="Close (Esc)" icon={<Icon name="close" size={16} />} />
+            <BasedIconButton label="Add to Favorites" pressed={false} icon={<Icon name="star" size={16} />} />
             <Badge label="3" />
           </HStack>
         </Card>

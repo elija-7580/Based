@@ -95,3 +95,17 @@ test("Inline in einer Seite: Klick nach Escape bleibt auf der Zeile unter der Ma
     await clickAt(page, box.x + 5, box.y + box.height / 2);
   }
 });
+
+// BSD-359: Ausgewählte Zeile zeigt ein gesetztes Kästchen (vorher setzte preventDefault es optisch zurück).
+test("Kästchen der ausgewählten Zeile ist gesetzt", async ({ page }) => {
+  await fresh(page);
+  await command(page, { op: "seedDatabase", count: 4 });
+  await page.getByRole("treeitem", { name: "Big 4" }).click();
+  const row = page.locator("[data-row-id]").filter({ has: page.getByText("Row 2", { exact: true }) });
+  await row.hover();
+  await row.locator(".dbui-row-check").click();
+  await expect(row).toHaveAttribute("aria-selected", "true");
+  await expect(row.locator(".dbui-row-check")).toBeChecked();
+  await row.locator(".dbui-row-check").click();
+  await expect(row.locator(".dbui-row-check")).not.toBeChecked();
+});

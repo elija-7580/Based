@@ -337,8 +337,13 @@ li[data-depth="3"] > .bx-outline-item .bx-outline-bar { width: var(--space-2); }
 .bx-emoji-bar .bx-field { flex: 1; min-width: 0; }
 .bx-emoji-action { background: none; border: 0; padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill); font: inherit; color: var(--muted); cursor: pointer; }
 .bx-emoji-action:hover { background: var(--surface-raised); color: var(--ink); }
-.bx-emoji-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: var(--space-1); max-height: calc(var(--space-8) * 4); overflow-y: auto; }
-.bx-emoji-cell { aspect-ratio: 1; background: none; border: 0; border-radius: var(--radius-sm); font-size: var(--icon-md); line-height: 1; cursor: pointer; padding: 0; }
+/* BSD-376: Raster passt zur Breite und rollt nur senkrecht (vorher 1fr = mindestens Inhaltsbreite → seitliches Rollen,
+   erste Spalte abgeschnitten). Platz für den Rollbalken ist reserviert, damit nichts springt. */
+.bx-emoji-grid {
+  display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--space-1); max-height: calc(var(--space-8) * 4);
+  overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain;
+}
+.bx-emoji-cell { min-width: 0; aspect-ratio: 1; background: none; border: 0; border-radius: var(--radius-sm); font-size: var(--icon-md); line-height: 1; cursor: pointer; padding: 0; overflow: hidden; }
 .bx-emoji-cell[data-active="true"] { background: var(--surface-raised); }
 
 /* BSD-209: Syntax-Hervorhebung (Swift-Hervorheber). Bis es Syntax-Tokens gibt (Designentscheidung, docs/design/astryx.md
@@ -483,6 +488,8 @@ html[data-bx-dropzone] .prosemirror-dropcursor-block, html[data-bx-dropzone] .bn
 .bx-editor .bn-inline-content a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: var(--space-half); }
 .bx-editor .bn-inline-content a:hover { text-decoration-color: var(--ink); }
 .bx-editor input[type="checkbox"] { accent-color: var(--ink); }
+/* BSD-359: BlockNote zeichnet das To-do-Kästchen 12 × 24 (für das Systemkästchen); in Based-Optik quadratisch, mittig. */
+.bx-editor .bn-block-content[data-content-type=checkListItem] > div > input { width: var(--icon-sm); height: var(--icon-sm); margin-block: auto; margin-left: 0; }
 
 /* Blockmenü (am Griff ⋮⋮) im Stil des Seitenmenüs der Shell: Icon, Text, Kürzel rechts, Gruppen mit Trennlinie,
    Blocktyp als Kopf, „Last edited“ als Fuß. Die Menüs hängen als Portal außerhalb von .bx-editor. */

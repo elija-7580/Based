@@ -6,6 +6,7 @@ import { AlertDialog } from "@astryxdesign/core/AlertDialog";
 import { Button } from "@astryxdesign/core/Button";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { DropdownMenu } from "@astryxdesign/core/DropdownMenu";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { HStack, VStack } from "@astryxdesign/core/Layout";
 import { Popover } from "@astryxdesign/core/Popover";
 import { TextInput } from "@astryxdesign/core/TextInput";
@@ -26,10 +27,40 @@ export interface BasedButtonProps {
   busy?: boolean;
   icon?: ReactNode;
   onClick?: () => void;
+  /** Genauerer Name für Screenreader, wenn das Label allein mehrdeutig ist (z. B. „Link“ in einer Liste). */
+  ariaLabel?: string;
 }
 
-export function BasedButton({ label, variant, size = "md", type = "button", disabled = false, busy = false, icon, onClick }: BasedButtonProps) {
-  return <Button label={label} variant={buttonVariant(variant)} size={size} type={type} isDisabled={disabled} isLoading={busy} icon={icon} {...(onClick ? { onClick: () => onClick() } : {})} />;
+export function BasedButton({ label, variant, size = "md", type = "button", disabled = false, busy = false, icon, onClick, ariaLabel }: BasedButtonProps) {
+  return <Button label={label} variant={buttonVariant(variant)} size={size} type={type} isDisabled={disabled} isLoading={busy} icon={icon} {...(onClick ? { onClick: () => onClick() } : {})} {...(ariaLabel ? { "aria-label": ariaLabel } : {})} />;
+}
+
+export interface BasedIconButtonProps {
+  /** Name für Screenreader (Pflicht – der Knopf zeigt nur ein Icon). */
+  label: string;
+  icon: ReactNode;
+  /** Tooltip, Standard: das Label; mit Tastenkürzel, z. B. „Back (⌘[)“. */
+  tooltip?: string;
+  variant?: "ghost" | "secondary";
+  size?: "sm" | "md";
+  disabled?: boolean;
+  /** Umschalter (z. B. Favorit): aria-pressed. */
+  pressed?: boolean;
+  /** Öffnet ein Menü: aria-haspopup, aria-expanded und data-menu-trigger (Klick daneben schließt nicht doppelt). */
+  menu?: { expanded: boolean };
+  /** Bekommt den Knopf (z. B. als Anker für ein Menü). */
+  onClick?: (el: HTMLElement) => void;
+  testID?: string;
+}
+
+/** Icon-Knopf (Kopfzeile, Schließen-×, Werkzeugleisten) – BSD-350. Klickfläche ≥ 24 px, Name und Tooltip immer gesetzt. */
+export function BasedIconButton({ label, icon, tooltip, variant = "ghost", size = "sm", disabled = false, pressed, menu, onClick, testID }: BasedIconButtonProps) {
+  return (
+    <IconButton label={label} tooltip={tooltip ?? label} variant={variant} size={size} icon={icon} isDisabled={disabled}
+      {...(pressed !== undefined ? { "aria-pressed": pressed } : {})} {...(testID ? { "data-testid": testID } : {})}
+      {...(menu ? { "aria-haspopup": "menu" as const, "aria-expanded": menu.expanded, "data-menu-trigger": "" } : {})}
+      {...(onClick ? { onClick: (e: { currentTarget: HTMLElement }) => onClick(e.currentTarget) } : {})} />
+  );
 }
 
 export interface BasedDialogProps {

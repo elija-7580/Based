@@ -1,4 +1,5 @@
 // Papierkorb: gelöschte Seiten, Datenbanken und Zeilen (neueste zuerst) – wiederherstellen oder endgültig löschen.
+import { BasedButton } from "@based/ui/astryx";
 import { useState } from "react";
 import { Icon } from "../icons.js";
 import { fromSwift, relative } from "../shell/format.js";
@@ -34,13 +35,11 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
           ) : entries.length && forever ? (
             confirm ? (
               <span className="actions">
-                <button type="button" className="btn primary" onClick={empty}>
-                  Delete {entries.length} forever
-                </button>
-                <button type="button" className="btn ghost" onClick={() => setConfirm(false)}>Cancel</button>
+                <BasedButton label={`Delete ${entries.length} forever`} variant="danger" onClick={empty} />
+                <BasedButton label="Cancel" variant="ghost" onClick={() => setConfirm(false)} />
               </span>
             ) : (
-              <button type="button" className="btn" onClick={() => setConfirm(true)}>Empty Trash</button>
+              <BasedButton label="Empty Trash" onClick={() => setConfirm(true)} />
             )
           ) : null}
         </header>
@@ -57,10 +56,8 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
                     <strong>{title}</strong>
                     <span className="t-desc" style={{ display: "block" }}>{e.from ? `in ${e.from} · ` : ""}deleted {relative(fromSwift(e.trashedAt))}</span>
                   </button>
-                  <button type="button" className="btn" onClick={() => void client.command({ op: "restore", ids: [e.id] })}>
-                    <Icon name="restore" size={16} />Restore
-                  </button>
-                  {forever ? <button type="button" className="btn ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })}>Delete forever</button> : null}
+                  <BasedButton label="Restore" size="sm" icon={<Icon name="restore" size={16} />} onClick={() => void client.command({ op: "restore", ids: [e.id] })} />
+                  {forever ? <BasedButton label="Delete forever" size="sm" variant="ghost" onClick={() => void client.command({ op: "deleteForever", ids: [e.id] })} /> : null}
                 </li>
               );
             })}
@@ -69,7 +66,7 @@ export function Trash({ client, state, onOpenPage }: { client: StoreClient; stat
         {entries.length > shown ? (
           <p className="t-desc trash-more" data-testid="trash-more">
             {entries.length - shown} more in Trash.{" "}
-            <button type="button" className="btn ghost" onClick={() => setShown((n) => n + PAGE * 5)}>Show more</button>
+            <BasedButton label="Show more" size="sm" variant="ghost" onClick={() => setShown((n) => n + PAGE * 5)} />
           </p>
         ) : null}
       </div>

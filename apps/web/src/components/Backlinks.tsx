@@ -2,6 +2,7 @@
 // auf, wenn sich Titel oder Seitenstruktur ändern und wenn das Fenster wieder in den Vordergrund kommt.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { isEmojiIcon } from "@based/editor";
+import { BasedButton } from "@based/ui/astryx";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
 import type { PageInfo, UnlinkedMentionInfo } from "../worker/protocol.js";
@@ -58,7 +59,7 @@ export function Backlinks({ client, pageID, onOpenPage }: { client: StoreClient;
                     <span className="backlink-title">{m.pageTitle}</span>
                     <span className="t-desc unlinked-snippet">{m.snippet}</span>
                   </button>
-                  <button type="button" className="btn ghost" onClick={() => link(m)} aria-label={`Link the mention in ${m.pageTitle}`}>Link</button>
+                  <BasedButton label="Link" size="sm" variant="ghost" ariaLabel={`Link the mention in ${m.pageTitle}`} onClick={() => link(m)} />
                 </li>
               ))}
             </ul>
