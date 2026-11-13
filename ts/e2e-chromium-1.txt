@@ -1,29 +1,32 @@
-failure d37ad191f8a79d65361e60cacdbfe6ffa6c4eef1
+failure 43791d05b5750c43d955c80c2f1ce043b67b3651
 
-    Locator: getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
-    Expected: visible
+
+  1) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: ""
     Timeout: 5000ms
     Error: element(s) not found
 
     Call log:
-      - Expect "toBeVisible" getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' }) with timeout 5000ms
-      - waiting for getByTestId('coding-agent-mode').getByRole('button', { name: 'Mode: Default' })
+      - Expect "toHaveValue" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      240 |   await expect(mode.getByRole("button", { name: "Mode: Plan" })).toBeVisible();
-      241 |   await page.keyboard.press("Shift+Tab");
-    > 242 |   await expect(mode.getByRole("button", { name: "Mode: Default" })).toBeVisible();
-          |                                                                     ^
-      243 |
-      244 |   // „/“: Befehle des Agenten mit Beschreibung; Pfeil + Enter übernimmt, Esc schließt
-      245 |   await input.pressSequentially("/");
-        at /home/runner/work/Based/Based/apps/web/e2e/coding.spec.ts:242:69
+      189 |   // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
+      190 |   await openMenu();
+    > 191 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+          |                                                                       ^
+      192 |   await page.keyboard.press("ArrowDown");
+      193 |   await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
+      194 |   await page.keyboard.press("Escape");
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:191:71
 
-    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-    Error Context: test-results/coding-BSD-313-zeigt-die-B-550c0-ner-⇧Tab-wechselt-den-Modus-chromium/error-context.md
-
-  3) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
     Error: expect(locator).toBeFocused() failed
 
@@ -47,15 +50,12 @@ failure d37ad191f8a79d65361e60cacdbfe6ffa6c4eef1
         at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
         at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
 
   1 failed
-    [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
-  2 flaky
-    [chromium] › e2e/coding.spec.ts:213:1 › BSD-313: / zeigt die Befehle, @ sucht Dateien im Ordner, ⇧Tab wechselt den Modus 
     [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  147 passed (5.6m)
+  161 passed (5.1m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
