@@ -1,6 +1,7 @@
 // Seite: Vor/Zurück, Breadcrumb, Titel, Metazeile; Inhalt im Steckplatz für @based/editor (bis dahin Lese-Darstellung),
 // Datenbankseiten im Steckplatz für @based/database-ui (bis dahin Platzhalter). Die Inhalte kommen aus einer
 // Seiten-Replik (StoreClient.openPage), der Titel aus der Titel-Tabelle des Workers.
+import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { importPendingSource, pageFormat, pageTextStats, rowsOf, setPageFormat, setPageIcon, subtree, type Outline, type PageFont, type PageFormatPatch, type WorkspaceStore } from "@based/core";
 import { EmojiPicker, isEmojiIcon, isOutlineHidden, setOutlineHidden } from "@based/editor";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
@@ -179,8 +180,8 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
     <>
       <header className="topbar t-desc">
         <div className="history-buttons">
-          <button type="button" className="icon-btn ghost" aria-label="Back" title="Back (⌘[)" disabled={!history.canBack} onClick={() => history.back()}><Icon name="back" size={18} /></button>
-          <button type="button" className="icon-btn ghost" aria-label="Forward" title="Forward (⌘])" disabled={!history.canForward} onClick={() => history.forward()}><Icon name="forward" size={18} /></button>
+          <BasedIconButton label="Back" tooltip="Back (⌘[)" disabled={!history.canBack} icon={<Icon name="back" size={18} />} onClick={() => history.back()} />
+          <BasedIconButton label="Forward" tooltip="Forward (⌘])" disabled={!history.canForward} icon={<Icon name="forward" size={18} />} onClick={() => history.forward()} />
         </div>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           {/* BSD-301: tiefe Seiten – erster und die zwei letzten Vorfahren, dazwischen „…“ (wie Notion); jeder Teil
@@ -205,29 +206,22 @@ export function PageView({ client, state, pageID, history, onOpenPage, onNavigat
         <span className="spacer" data-testid="page-edited" title={state.status.state === "synced" || state.status.state === "local" ? "Saved" : undefined}>{state.status.state === "synced" || state.status.state === "local" ? (edited ?? "Saved") : SYNC_LABEL[state.status.state]}</span>
         {page && !trashed ? (
           <>
-            <button type="button" className="icon-btn ghost" aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"} aria-pressed={favorite} title="Favorite" onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })}>
-              <Icon name="star" size={18} filled={favorite} />
-            </button>
+            <BasedIconButton label={favorite ? "Remove from Favorites" : "Add to Favorites"} tooltip="Favorite" pressed={favorite} icon={<Icon name="star" size={18} filled={favorite} />}
+              onClick={() => void client.command({ op: "favorite", ids: [pageID], on: !favorite })} />
             <ShareButton pageID={pageID} title={title} onNavigate={onNavigate} />
             {/* BSD-168: AI-Knopf wie Swift NotionChrome – öffnet/schließt das Chat-Panel (⌘J), aktiv solange es offen ist. */}
             {ai ? (
-              <button type="button" className="icon-btn ghost" aria-label="AI chat" title="AI chat (⌘J)" aria-pressed={chatOpen} data-testid="topbar-ai" onClick={toggleChatPanel}>
-                <Icon name="chat" size={18} filled={chatOpen} />
-              </button>
+              <BasedIconButton label="AI chat" tooltip="AI chat (⌘J)" pressed={chatOpen} testID="topbar-ai" icon={<Icon name="chat" size={18} filled={chatOpen} />} onClick={toggleChatPanel} />
             ) : null}
-            <button type="button" className="btn ghost" onClick={() => setExporting(true)}>Export</button>
-            <button type="button" className="icon-btn ghost" aria-label="Page menu" data-menu-trigger="" aria-haspopup="menu" aria-expanded={menu !== undefined} title="More" onClick={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
+            <BasedButton label="Export" variant="ghost" size="sm" onClick={() => setExporting(true)} />
+            <BasedIconButton label="Page menu" tooltip="More" menu={{ expanded: menu !== undefined }} icon={<Icon name="more" size={18} />} onClick={(el) => {
+              const r = el.getBoundingClientRect();
               setMenu(menu ? undefined : { top: r.bottom + 4, right: window.innerWidth - r.right });
-            }}>
-              <Icon name="more" size={18} />
-            </button>
-            <button type="button" className="icon-btn ghost" aria-label="Move to Trash" title="Move to Trash" onClick={() => {
+            }} />
+            <BasedIconButton label="Move to Trash" icon={<Icon name="trash" size={18} />} onClick={() => {
               void client.command({ op: "trash", ids: [pageID] });
               onNavigate({ name: "home" });
-            }}>
-              <Icon name="trash" size={18} />
-            </button>
+            }} />
           </>
         ) : null}
       </header>

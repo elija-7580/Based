@@ -2,7 +2,7 @@
 // links die gewählte Version als Lese-Ansicht, rechts die Versionen nach Tagen, unten „Restore“. Wiederherstellen
 // verschiebt die aktuelle Fassung in eine Version (nichts geht verloren) und ist ein Undo-Schritt.
 import { canonicalStringify, MemoryPersistence, plainText, WorkspaceStore, type Block, type HistoryVersion } from "@based/core";
-import { BasedButton } from "@based/ui/astryx";
+import { BasedButton, BasedIconButton } from "@based/ui/astryx";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../icons.js";
 import type { StoreClient } from "../worker/client.js";
@@ -137,7 +137,7 @@ export function VersionHistory({ client, pageID, current, onClose, onRestored }:
       <div role="dialog" aria-modal="true" aria-label="Version history" className="vh" data-testid="version-history">
         <section className="vh-main">
           <header className="vh-head">
-            <button type="button" className="icon-btn ghost" aria-label="Close" title="Close (Esc)" onClick={onClose}><Icon name="close" size={18} /></button>
+            <BasedIconButton label="Close" tooltip="Close (Esc)" icon={<Icon name="close" size={18} />} onClick={onClose} />
             <strong className="vh-when">{version ? `${dayLabel(when(version))}, ${time(when(version))}` : "Version history"}</strong>
             {isLatest ? <span className="t-desc">Latest</span> : null}
             <span className="spacer" />
