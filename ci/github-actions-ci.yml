@@ -155,7 +155,7 @@ jobs:
         if: always()
         run: |
           mkdir -p out
-          { echo "${{ job.status }} ${{ github.sha }} (nicht blockierend)"; grep -E "BSD-215|Quick Find|perf 5000|sidebar-scroll|✘|Error|passed|failed|flaky" perf.log 2>/dev/null | head -n 80; } > out/perf.txt
+          { echo "${{ job.status }} ${{ github.sha }} (nicht blockierend)"; grep -E "BSD-215|Quick Find|perf 5000|sidebar-scroll|Start mit|Seitenwechsel|✘|Error|passed|failed|flaky" perf.log 2>/dev/null | head -n 80; } > out/perf.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
