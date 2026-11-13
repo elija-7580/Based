@@ -5,7 +5,8 @@
 import { aiSetting } from "./shell/ai.js";
 import { routeToHash } from "./shell/router.js";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { BlockEditor, PageEditor, type DatabaseRenderProps, type EquationRenderProps } from "@based/editor";
+import { newEditorPref } from "./shell/storage.js";
 import { assets } from "./assetBridge.js";
 import "./assets.css";
 import { Backlinks } from "./components/Backlinks.js";
@@ -64,6 +65,9 @@ const blockLink = (pageID: string) => (blockID: string) => {
 export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBlock }: PageEditorProps) {
   const theme = useRootTheme();
   const client = shellClient;
+  // ADR 0016: neuer Block-Editor hinter einem Schalter (Settings → Diagnostics → For developers)
+  const newEditor = useSyncExternalStore(newEditorPref.subscribe, newEditorPref.get);
+  const Editor = newEditor ? BlockEditor : PageEditor;
   const renderDatabase = (p: DatabaseRenderProps) => {
     const View = slots.DatabaseView;
     return View ? <View store={store} blockID={p.blockID} databaseID={p.databaseID} readOnly={readOnly} onOpenPage={onOpenPage} /> : null;
@@ -87,7 +91,7 @@ export function ShellPageEditor({ store, pageID, readOnly, onOpenPage, focusBloc
   const fetchLinkPreview = useMemo(() => linkPreviewFetcher(), []);
   return (
     <div className="shell-editor">
-      <PageEditor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
+      <Editor store={store} pageID={pageID} editable={!readOnly} onOpenPage={onOpenPage} blockLink={blockLink(pageID)} focusBlock={focusBlock} theme={theme} renderDatabase={renderDatabase} renderEquation={renderEquation}
         {...(directory ? { pages: directory } : {})} {...(loadSynced ? { loadSynced } : {})} {...(meeting ? { meeting } : {})} {...(docStore ? { docStore } : {})} {...(pageCollabSource ? { collab: pageCollabSource } : {})} {...(copyPages ? { duplicatePages: copyPages } : {})} {...(databases ? { databases } : {})} {...(ai ? { ai } : {})} {...(fetchLinkPreview ? { fetchLinkPreview } : {})}
         {...(files ? { uploadFile: (f: File) => files.uploadFile(f), resolveFileUrl: (u: string) => files.resolveFileUrl(u) } : {})} />
       {client && !hideBacklinks ? <div className="shell-backlinks"><Backlinks client={client} pageID={pageID} onOpenPage={onOpenPage} /></div> : null}
