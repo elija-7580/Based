@@ -157,6 +157,32 @@ test("Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Blo
   await expect(page.getByTestId("page-content")).not.toContainText("collapsed::");
 });
 
+test("Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9)", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();
+  await page.getByRole("button", { name: "Import…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import" });
+  await expect(dialog).toContainText("Bear export");
+  const bear = zip([
+    { path: "Bear Notes/Shopping.textbundle/text.md", data: Buffer.from("# Shopping\n\n::Urgent:: buy for [[Dinner ideas]]\n- [ ] Lemons") },
+    { path: "Bear Notes/Shopping.textbundle/info.json", data: Buffer.from(JSON.stringify({ version: 2, creatorIdentifier: "net.shinyfrog.bear" })) },
+    { path: "Bear Notes/Dinner ideas.textbundle/text.md", data: Buffer.from("# Dinner ideas\n\nRisotto with ==lemon==") },
+  ]);
+  await dialog.getByLabel("Choose files to import").setInputFiles({ name: "Bear Notes.zip", mimeType: "application/zip", buffer: bear });
+  await expect(dialog.getByTestId("import-summary")).toContainText("Imported");
+  await dialog.getByRole("button", { name: "Done" }).click();
+  const hits = await quickFind(page, "Urgent");
+  await expect(hits.first()).toContainText("Shopping");
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Page title")).toHaveValue("Shopping");
+  const content = page.getByTestId("page-content");
+  await expect(content).not.toContainText("::");
+  await expect(content).toContainText("Lemons");
+  await content.getByText("Dinner ideas").first().click();
+  await expect(page.getByLabel("Page title")).toHaveValue("Dinner ideas");
+  await expect(page.getByTestId("page-content")).not.toContainText("==");
+});
+
 test("Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260)", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("navigation", { name: "Settings pages" }).getByRole("button", { name: "Import" }).click();

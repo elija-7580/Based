@@ -23,5 +23,5 @@ export type { PageAccess, ShareLinkInfo, ShareLinkKind, SharePerson, ShareRole }
 // BSD-220: Y-Zustände der Editor-Dokumente in einer eigenen Datei (ydocs.sqlite, nie gesynct)
 export { MemoryYDocStorage, SqliteYDocStorage, YDOCS_SCHEMA } from "./ydocs.js";
 export type { YDocStorage } from "./ydocs.js";
-export { FolderSync, parseSegment, segmentName } from "./folder.js";
+export { FolderAssets, FolderSync, parseSegment, segmentName, snapshotName } from "./folder.js";
 export type { FolderRoundResult, FolderSyncOptions, FolderSyncState, FolderTarget } from "./folder.js";
