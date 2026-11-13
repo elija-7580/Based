@@ -1,0 +1,1808 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "spentThisMonth",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Monat: nur dieser Agent und dieser Monat",
+      "output" : {
+        "value" : 4.4024
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "c",
+        "kind" : "spentThisMonth",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "c",
+            "cost" : 0,
+            "endedAt" : 815562060,
+            "id" : "e1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815562000,
+            "status" : "Done",
+            "tokens" : 1000000
+          }
+        ]
+      },
+      "name" : "Monat: Lauf ohne Kosten wird aus Tokens geschätzt",
+      "output" : {
+        "value" : 3
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "tokensToday",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Tages-Tokens: nur heute",
+      "output" : {
+        "value" : 3800
+      }
+    },
+    {
+      "input" : {
+        "budget" : null,
+        "kind" : "level",
+        "spent" : 4
+      },
+      "name" : "Stufe 4.0 von unbegrenzt",
+      "output" : {
+        "level" : "ok"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 5,
+        "kind" : "level",
+        "spent" : 3.9
+      },
+      "name" : "Stufe 3.9 von 5.0",
+      "output" : {
+        "level" : "ok"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 5,
+        "kind" : "level",
+        "spent" : 4
+      },
+      "name" : "Stufe 4.0 von 5.0",
+      "output" : {
+        "level" : "warning"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 5,
+        "kind" : "level",
+        "spent" : 4.99
+      },
+      "name" : "Stufe 4.99 von 5.0",
+      "output" : {
+        "level" : "warning"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 5,
+        "kind" : "level",
+        "spent" : 5
+      },
+      "name" : "Stufe 5.0 von 5.0",
+      "output" : {
+        "level" : "exhausted"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 5,
+        "kind" : "level",
+        "spent" : 6
+      },
+      "name" : "Stufe 6.0 von 5.0",
+      "output" : {
+        "level" : "exhausted"
+      }
+    },
+    {
+      "input" : {
+        "budget" : 0,
+        "kind" : "level",
+        "spent" : 0
+      },
+      "name" : "Stufe 0.0 von 0.0",
+      "output" : {
+        "level" : "exhausted"
+      }
+    },
+    {
+      "input" : {
+        "budget" : -1,
+        "kind" : "level",
+        "spent" : 1
+      },
+      "name" : "Stufe 1.0 von -1.0",
+      "output" : {
+        "level" : "ok"
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "leaseTTL",
+        "runs" : [
+
+        ]
+      },
+      "name" : "Lease-Dauer: ohne Läufe",
+      "output" : {
+        "seconds" : 1200
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "leaseTTL",
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Lease-Dauer: Median aus fertigen Läufen",
+      "output" : {
+        "seconds" : 960
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "leaseTTL",
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "endedAt" : 815216430,
+            "id" : "s1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815216400,
+            "status" : "Done",
+            "tokens" : 0
+          }
+        ]
+      },
+      "name" : "Lease-Dauer: kurz → mindestens 2 min",
+      "output" : {
+        "seconds" : 120
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "leaseTTL",
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "endedAt" : 815219400,
+            "id" : "l1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815216400,
+            "status" : "Done",
+            "tokens" : 0
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "endedAt" : 815227800,
+            "id" : "l2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815223600,
+            "status" : "Done",
+            "tokens" : 0
+          }
+        ]
+      },
+      "name" : "Lease-Dauer: lang → höchstens 1 h",
+      "output" : {
+        "seconds" : 3600
+      }
+    },
+    {
+      "input" : {
+        "agentID" : "a",
+        "kind" : "leaseTTL",
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "x1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815216400,
+            "status" : "Running",
+            "tokens" : 0
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "endedAt" : 815216580,
+            "id" : "x2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815216400,
+            "status" : "Failed",
+            "tokens" : 0
+          }
+        ]
+      },
+      "name" : "Lease-Dauer: laufende zählen nicht",
+      "output" : {
+        "seconds" : 360
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: ohne Budget",
+      "output" : {
+        "forceLow" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 10,
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Monat unter 80 %",
+      "output" : {
+        "forceLow" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 5,
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Monat 80 %",
+      "output" : {
+        "forceLow" : true
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 3,
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Monat erschöpft",
+      "output" : {
+        "forceLow" : true
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 4750,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Tages-Tokens 80 %",
+      "output" : {
+        "forceLow" : true
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 5000,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Tages-Tokens unter 80 %",
+      "output" : {
+        "forceLow" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 0,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "forceLow",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Low: Tages-Tokens 0 = aus",
+      "output" : {
+        "forceLow" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: ohne Budget",
+      "output" : {
+        "decision" : "run",
+        "warning" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 10,
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Monat unter 80 %",
+      "output" : {
+        "decision" : "run",
+        "warning" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 5,
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Monat 80 %",
+      "output" : {
+        "decision" : "run",
+        "warning" : true
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "monthlyBudget" : 3,
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Monat erschöpft",
+      "output" : {
+        "decision" : "skipBudget",
+        "reason" : "monthly budget reached (€4.40 of €3.00)"
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 4750,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Tages-Tokens 80 %",
+      "output" : {
+        "decision" : "run",
+        "warning" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 5000,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Tages-Tokens unter 80 %",
+      "output" : {
+        "decision" : "run",
+        "warning" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 0,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Tages-Tokens 0 = aus",
+      "output" : {
+        "decision" : "skipBudget",
+        "reason" : "daily token budget reached"
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "dailyTokenBudget" : 3800,
+          "id" : "a",
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Tages-Tokens erreicht",
+      "output" : {
+        "decision" : "skipBudget",
+        "reason" : "daily token budget reached"
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "runningNode" : "mac",
+          "runningSince" : 816274740,
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Lease frisch (anderer Knoten)",
+      "output" : {
+        "decision" : "skipLeased",
+        "node" : "mac",
+        "since" : 816274740
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "runningNode" : "mac",
+          "runningSince" : 816267600,
+          "schedule" : "every 1h"
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: Lease abgelaufen",
+      "output" : {
+        "decision" : "run",
+        "warning" : false
+      }
+    },
+    {
+      "input" : {
+        "agent" : {
+          "id" : "a",
+          "schedule" : null
+        },
+        "kind" : "decide",
+        "now" : 816274800,
+        "runs" : [
+          {
+            "agentID" : "a",
+            "cost" : 1.5,
+            "endedAt" : 815303040,
+            "id" : "r1",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815302800,
+            "status" : "Done",
+            "tokens" : 1200
+          },
+          {
+            "agentID" : "a",
+            "cost" : 2.5,
+            "endedAt" : 816224880,
+            "id" : "r2",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816224400,
+            "status" : "Done",
+            "tokens" : 3000
+          },
+          {
+            "agentID" : "a",
+            "cost" : 9,
+            "endedAt" : 815184060,
+            "id" : "r3",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 815183940,
+            "status" : "Done",
+            "tokens" : 9000
+          },
+          {
+            "agentID" : "b",
+            "cost" : 4,
+            "endedAt" : 816256860,
+            "id" : "r4",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816256800,
+            "status" : "Done",
+            "tokens" : 500
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0,
+            "id" : "r5",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816271200,
+            "status" : "Running",
+            "tokens" : 800
+          },
+          {
+            "agentID" : "a",
+            "cost" : 0.4,
+            "endedAt" : 816222540,
+            "id" : "r6",
+            "model" : "anthropic/claude-sonnet-4-5",
+            "startedAt" : 816220740,
+            "status" : "Done",
+            "tokens" : 100000
+          }
+        ]
+      },
+      "name" : "Zeitplan: kein Zeitplan",
+      "output" : {
+        "decision" : "skipNotDue"
+      }
+    }
+  ],
+  "module" : "agents-budget",
+  "note" : "Swift AgentBudget (BSD-51/126), Kalender UTC. Erzeugt von legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift; bewusste Abweichungen des TS-Ports in packages/brain/test/fixtures-agents.test.ts."
+}

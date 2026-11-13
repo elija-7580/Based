@@ -1,0 +1,3530 @@
+{
+  "cases" : [
+    {
+      "input" : {
+        "kind" : "parse",
+        "text" : "## Rules\n- allow Bash(git status:*)\n- `deny Write(~/secret/**)`\nask based.trash_page\n# a comment\nallow: Web(*)\nnonsense here\nallow Bash(unclosed"
+      },
+      "name" : "parse: Zeilen, Aufzählungen, Kommentare, Fehler",
+      "output" : {
+        "errors" : [
+          "nonsense here",
+          "allow Bash(unclosed"
+        ],
+        "rules" : [
+          {
+            "effect" : "allow",
+            "pattern" : "git status:*",
+            "tool" : "Bash"
+          },
+          {
+            "effect" : "deny",
+            "pattern" : "~/secret/**",
+            "tool" : "Write"
+          },
+          {
+            "effect" : "ask",
+            "tool" : "based.trash_page"
+          },
+          {
+            "effect" : "allow",
+            "tool" : "Web"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "parse",
+        "text" : "- deny based.trash\\_page"
+      },
+      "name" : "parse: Markdown-Escapes",
+      "output" : {
+        "errors" : [
+
+        ],
+        "rules" : [
+          {
+            "effect" : "deny",
+            "tool" : "based.trash_page"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "parse",
+        "text" : "{\"permissions\": {\"allow\": [\"Bash(npm run test:*)\"], \"deny\": [\"Read(./.env)\"], \"ask\": [\"mcp__gmail__*\"]}}"
+      },
+      "name" : "parse: Claude-Code-JSON",
+      "output" : {
+        "errors" : [
+
+        ],
+        "rules" : [
+          {
+            "effect" : "deny",
+            "pattern" : "./.env",
+            "tool" : "Read"
+          },
+          {
+            "effect" : "ask",
+            "tool" : "mcp__gmail__*"
+          },
+          {
+            "effect" : "allow",
+            "pattern" : "npm run test:*",
+            "tool" : "Bash"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "parse",
+        "text" : "allow based.read_page()\nallow based.search(*)\ndeny based.*(Secret*)"
+      },
+      "name" : "parse: Leeres Muster und Stern",
+      "output" : {
+        "errors" : [
+
+        ],
+        "rules" : [
+          {
+            "effect" : "allow",
+            "tool" : "based.read_page"
+          },
+          {
+            "effect" : "allow",
+            "tool" : "based.search"
+          },
+          {
+            "effect" : "deny",
+            "pattern" : "Secret*",
+            "tool" : "based.*"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "kind" : "parse",
+        "text" : "- [ ] Allow based.create_page\n- [x] DENY based.trash_page\n* ask based.update_row(Inbox)"
+      },
+      "name" : "parse: Checkliste und Großschreibung",
+      "output" : {
+        "errors" : [
+
+        ],
+        "rules" : [
+          {
+            "effect" : "allow",
+            "tool" : "based.create_page"
+          },
+          {
+            "effect" : "deny",
+            "tool" : "based.trash_page"
+          },
+          {
+            "effect" : "ask",
+            "pattern" : "Inbox",
+            "tool" : "based.update_row"
+          }
+        ]
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: bearbeiten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Seite anlegen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Zeile ändern",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: in den Papierkorb",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Web",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: MCP lesen (extern)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Shell in Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : ""
+      },
+      "name" : "Modus ask: Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: in den Papierkorb",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Web",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: MCP lesen (extern)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Shell in Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "acceptEdits",
+        "rules" : ""
+      },
+      "name" : "Modus acceptEdits: Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "accept edits mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: bearbeiten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Seite anlegen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Zeile ändern",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: in den Papierkorb",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: endgültig löschen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Inbox beantworten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: MCP senden",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: MCP lesen (extern)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Shell in Sandbox",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : ""
+      },
+      "name" : "Modus plan: Shell ohne Sandbox",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: in den Papierkorb",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (sends something out)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: MCP lesen (extern)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : ""
+      },
+      "name" : "Modus bypass: Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Zeile ändern",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "rule “ask based.update_row”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): in den Papierkorb",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "rule “deny based.trash_page”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): endgültig löschen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Inbox beantworten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (sends something out)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): MCP lesen (extern)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.*\nask based.update_row\ndeny based.trash_page"
+      },
+      "name" : "Regeln deny vor ask vor allow (bypass): Bash Präfix",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.append_markdown(p1)”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Seite anlegen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Zeile ändern",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): in den Papierkorb",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Web",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): MCP lesen (extern)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Shell in Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): geheim lesen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "rule “deny based.read_page(secret*)”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown(p1)\ndeny based.read_page(secret*)"
+      },
+      "name" : "Regeln Muster auf das Hauptargument (ask): Bash Präfix",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): bearbeiten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Seite anlegen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Zeile ändern",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): in den Papierkorb",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): endgültig löschen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Inbox beantworten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): MCP senden",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): MCP lesen (extern)",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Shell in Sandbox",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode (read only)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Bash Wortgrenze",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "plan",
+        "rules" : "allow based.*"
+      },
+      "name" : "Regeln Plan bleibt nur lesen trotz allow (plan): Bash Präfix",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "plan mode mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): in den Papierkorb",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): endgültig löschen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.delete_forever”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): MCP senden",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow mcp__gmail__*”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): MCP lesen (extern)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "allow based.delete_forever\nallow mcp__gmail__*"
+      },
+      "name" : "Regeln allow erlaubt, was sonst immer fragt (bypass): Bash Präfix",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Seite anlegen",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "rule “deny BASED.CREATE_PAGE”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): in den Papierkorb",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Web",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (sends something out)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): MCP lesen (extern)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny BASED.CREATE_PAGE"
+      },
+      "name" : "Regeln Groß/klein im Werkzeug (bypass): Bash Präfix",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): bearbeiten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Seite anlegen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Zeile ändern",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): in den Papierkorb",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Web",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): MCP lesen (extern)",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow Bash(git status:*)”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "ask permissions mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "ask",
+        "rules" : "allow Bash(git status:*)"
+      },
+      "name" : "Regeln Bash-Präfix mit Wortgrenze (ask): Bash Präfix",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow Bash(git status:*)”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "d1",
+          "category" : "destructive",
+          "tool" : "based.update_database"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): zerstörend (Spalte löschen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.trash_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): in den Papierkorb",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.delete_forever"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): endgültig löschen",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "i1",
+          "category" : "edit",
+          "tool" : "based.resolve_inbox"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Inbox beantworten",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (deletes for good)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "https://example.org/a",
+          "category" : "web",
+          "tool" : "WebFetch"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Web",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "rule “deny Web”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__gmail__send_email"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): MCP senden",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (sends something out)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "external",
+          "tool" : "mcp__github__list_issues"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): MCP lesen (extern)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status",
+          "category" : "shell",
+          "sandboxed" : true,
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Shell in Sandbox",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "rm -rf build",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Shell ohne Sandbox",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "secret-plan",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): geheim lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): andere Seite bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git statusx; rm -rf /",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Bash Wortgrenze",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "git status --short",
+          "category" : "shell",
+          "tool" : "Bash"
+        },
+        "kind" : "decide",
+        "mode" : "bypass",
+        "rules" : "deny Web"
+      },
+      "name" : "Regeln Web-Alias (bypass): Bash Präfix",
+      "output" : {
+        "effect" : "ask",
+        "reason" : "always asks (shell outside a sandbox)"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "read",
+          "tool" : "based.read_page"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: lesen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "Budget",
+          "category" : "read",
+          "tool" : "based.search"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: suchen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: bearbeiten",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "rule “allow based.append_markdown”"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "category" : "edit",
+          "tool" : "based.create_page"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: Seite anlegen",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "r1",
+          "category" : "edit",
+          "tool" : "based.update_row"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: Zeile ändern",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p1",
+          "category" : "destructive",
+          "tool" : "based.replace_page_content"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: zerstörend (Inhalt ersetzen)",
+      "output" : {
+        "effect" : "allow",
+        "reason" : "allow everything mode"
+      }
+    },
+    {
+      "input" : {
+        "call" : {
+          "argument" : "p2",
+          "category" : "edit",
+          "tool" : "based.append_markdown"
+        },
+        "kind" : "layered",
+        "layerMode" : "bypass",
+        "layerRules" : "deny based.append_markdown(p2)",
+        "mode" : "ask",
+        "rules" : "allow based.append_markdown"
+      },
+      "name" : "Schichten: andere Seite bearbeiten",
+      "output" : {
+        "effect" : "deny",
+        "reason" : "rule “deny based.append_markdown(p2)”"
+      }
+    }
+  ],
+  "module" : "agents-permissions",
+  "note" : "Swift AgentPermissions (BSD-50/98). Erzeugt von legacy/Swift/BasedBrain/Tests/BasedBrainTests/AgentFixtureExport.swift; bewusste Abweichungen des TS-Ports in packages/brain/test/fixtures-agents.test.ts."
+}

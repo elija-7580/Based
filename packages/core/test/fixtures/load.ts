@@ -7,11 +7,11 @@ export const FIXTURES_DIR = fileURLToPath(new URL("../../../../fixtures/", impor
 export interface FixtureCase { name: string; input: unknown; output: unknown }
 export interface FixtureFile { module: string; file: string; cases: FixtureCase[]; meta: Record<string, unknown> }
 
-/** Alle JSON-Fixture-Dateien des Kerns (records/ hat eigenes Format und eigenen Test; brain/ spielt packages/brain ab, BSD-328). */
+/** Alle JSON-Fixture-Dateien des Kerns (records/ hat eigenes Format und eigenen Test; brain/ und agents/ spielt packages/brain ab, BSD-328/BSD-393). */
 export function loadFixtureFiles(): FixtureFile[] {
   const out: FixtureFile[] = [];
   for (const dir of readdirSync(FIXTURES_DIR, { withFileTypes: true })) {
-    if (!dir.isDirectory() || dir.name === "records" || dir.name === "brain") continue;
+    if (!dir.isDirectory() || dir.name === "records" || dir.name === "brain" || dir.name === "agents") continue;
     for (const file of readdirSync(FIXTURES_DIR + dir.name).filter((f) => f.endsWith(".json")).sort()) {
       const json = JSON.parse(readFileSync(`${FIXTURES_DIR}${dir.name}/${file}`, "utf8")) as Record<string, unknown>;
       const { module, cases, ...meta } = json as { module: string; cases: FixtureCase[] };
