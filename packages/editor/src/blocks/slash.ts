@@ -1,5 +1,5 @@
 // ADR 0016 (E5, erster Teil): Einträge des Slash-Menüs im Block-Editor. Reine Daten + Filter; Kürzel im Mac-Stil.
-import { insertPage, type Block, type WorkspaceStore } from "@based/core";
+import { createDatabase, insertPage, type Block, type WorkspaceStore } from "@based/core";
 
 export interface SlashItem {
   type: string;
@@ -11,6 +11,8 @@ export interface SlashItem {
   props?: Block["props"];
   /** Sonderfall Unterseite: legt sie an (an Stelle des leeren Blocks oder dahinter) und gibt ihre ID zurück. */
   page?: (store: WorkspaceStore, replace: string | undefined, after: string) => string | undefined;
+  /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
+  create?: (store: WorkspaceStore, after: string, replace: boolean) => string | undefined;
 }
 
 const subPage = (store: WorkspaceStore, replace: string | undefined, after: string): string | undefined => {
@@ -40,6 +42,16 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "code", label: "Code", group: "Basic blocks", icon: "</>", keywords: "snippet pre", hint: "```" },
   { type: "divider", label: "Divider", group: "Basic blocks", icon: "—", keywords: "hr line separator", hint: "---" },
   { type: "page", label: "Page", group: "Pages", icon: "📄", keywords: "subpage new page", page: subPage },
+  { type: "databaseInline", label: "Database", group: "Pages", icon: "▦", keywords: "table inline database grid", create: (store, after, replace) => {
+    const a = store.blocks.get(after);
+    if (!a) return undefined;
+    const r = createDatabase(store, { parent: a.parent, inline: true, position: { after } });
+    if (replace) store.transact("Remove empty block", (tx) => tx.remove(`block:${after}`), { coalesce: "db:" + r.blockID });
+    return r.blockID;
+  } },
+  { type: "image", label: "Image", group: "Media", icon: "🖼", keywords: "picture photo upload" },
+  { type: "equation", label: "Block equation", group: "Advanced", icon: "∑", keywords: "math latex tex formula", props: { expression: "" } },
+  { type: "tableOfContents", label: "Table of contents", group: "Advanced", icon: "≡", keywords: "toc outline headings" },
 ];
 
 /** Einträge passend zur Eingabe nach „/“ (Anfang von Name oder Suchwort). */

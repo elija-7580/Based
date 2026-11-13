@@ -220,16 +220,31 @@ test("Blockauswahl: Esc, ⇧↓, Rechteck aus dem Rand, Ziehen über Blöcke, �
 test("Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Überschrift", async ({ page }) => {
   await newPage(page);
   await startTyping(page);
-  await page.keyboard.type("/head");
+  await page.keyboard.type("/heading");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(3);
+  await expect(menu.getByRole("option")).toHaveCount(4);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(menu).toHaveCount(0);
   expect(await blockTypes(page)).toEqual(["heading2"]);
   await page.keyboard.type("Section");
   expect(await texts(page)).toEqual(["Section"]);
+  // Datenbank und Gleichung über das Slash-Menü
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("/database");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator('.bx2-block[data-type="databaseInline"]')).toHaveCount(1);
+  await expect(editor(page).locator(".bx2-database").getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/equation");
+  await page.keyboard.press("Enter");
+  await page.getByRole("textbox", { name: "TeX" }).fill("a^2+b^2=c^3");
+  // ⌫ im Gleichungsfeld löscht ein Zeichen, nicht den Block
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("2");
+  await page.keyboard.press("Escape");
+  await expect(editor(page).locator('.bx2-block[data-type="equation"] .katex')).toBeVisible();
 });
 
 test("Formatierung: ⌘B auf Auswahl, Formatleiste erscheint", async ({ page }) => {
