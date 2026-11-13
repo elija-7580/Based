@@ -1,0 +1,8 @@
+# BSD-379: was der Code-Graph (scripts/agent-graph.sh) nicht indexiert – Syntax wie .gitignore.
+legacy/
+spikes/
+docs/design/screens/
+fixtures/
+**/*.png
+**/*.jpg
+**/*.pdf
