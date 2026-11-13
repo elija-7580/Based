@@ -8,6 +8,12 @@ Blöcken / 221 Datenbanken); die einzelnen Funktionen sind damit aber noch nicht
 > unten ist deshalb „im Code vorhanden", aber erst nach dem ersten erfolgreichen Xcode-Build wirklich
 > geprüft. `bash ci/typecheck/run.sh` prüft `App/Shared` unter Linux gegen SwiftUI/AppKit/MapKit-Stubs.
 
+## Offen für Notion-Backlog (13.11., Notion war nicht erreichbar)
+
+| Anforderung | Status | Notiz |
+|---|---|---|
+| TS · Animationen komplett überarbeiten | ❌ | Wunsch Elija 13.11.: alle Animationen neu machen und verbessern. Plan: eine Motion-Sprache als Tokens (Dauer, Kurven, Federn) in packages/design-tokens, Bestand aller Übergänge (Menüs, Popover, Dialoge, Peek, Sidebar, Tabs, Blockziehen, Toasts) erfassen, jede Stelle auf die Tokens umstellen, `prefers-reduced-motion` überall, keine Layout-Sprünge, 60 fps auch in WebKit. Akzeptanz: Galerie/Fotos vorher-nachher, Tests auf Tokens (kein festes `ms` außerhalb der Tokens), Mac-Abnahme. Typ UX/Polish, Bereich Sidebar/Shell + Editor + Datenbanken, P1, L, autonom machbar; beim nächsten Lauf als Notion-Eintrag anlegen. |
+
 ## Nachtlauf 2026-11-12 (Pass 33, TS-Stack)
 Zwei Schichten (A Kern & Server, B Oberfläche) 05:13–08:50, danach Kurzschichten A2/B2 bis 09:09, alles auf `main` = 11a86d8; nach jedem Merge geprüft: `pnpm -r typecheck`, `pnpm lint`, `pnpm -r test` (beide Datenformate; core 1674, brain 390, web 200+, server 150, editor 80, database-ui 64, sync 52, cli 19), Playwright gezielt + @smoke in Chromium und WebKit, zweimal voll (361 bzw. 378 grün, nur Wackler). CI neu (BSD-322): Merge-Check `ts-fast`, voller Lauf in 4 Shards, Zeitmessungen nicht blockierend, Status immer auf `ci-logs`.
 
