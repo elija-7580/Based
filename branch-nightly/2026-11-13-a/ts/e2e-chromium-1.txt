@@ -1,61 +1,61 @@
-success 057d95d9aff66cdedc3876338c9ef34298aade0a
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  133 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (4.7s)
-  ✓  135 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.2s)
-  ✓  136 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (2.2s)
-  ✓  137 [chromium] › e2e/guest.spec.ts:85:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.7s)
-  ✓  138 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.9s)
-  ✓  139 [chromium] › e2e/guest.spec.ts:99:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.5s)
-  ✓  141 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.9s)
-  ✓  142 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (3.5s)
-  ✓  143 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (2.5s)
-  ✓  144 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.2s)
-  -  145 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
-  ✓  146 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.2s)
-  ✓  140 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.4s)
-  ✓  147 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (1.9s)
-  ✓  149 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.4s)
-  ✓  148 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.8s)
-  ✓  150 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (1.9s)
-  ✓  151 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.4s)
-  ✓  153 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (1.2s)
-  ✓  152 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (1.7s)
-  ✓  155 [chromium] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.3s)
-  ✓  156 [chromium] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.7s)
-  ✓  157 [chromium] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (2.4s)
-  ✓  158 [chromium] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.1s)
-  ✓  154 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.4s)
-  ✓  159 [chromium] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.5s)
-  ✓  161 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.7s)
-  ✓  160 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (10.7s)
+cancelled 9fe71d869be220c9dad22020ab95074c695922c7
+  ✓  139 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (2.3s)
+  ✓  141 [chromium] › e2e/guest.spec.ts:111:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.7s)
+  ✓  142 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (1.5s)
+  ✓  144 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (5.1s)
+  ✓  145 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.2s)
+  ✓  146 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.1s)
+  -  147 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  143 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (13.4s)
+  ✓  148 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (4.9s)
+  ✓  149 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (2.4s)
+  ✓  150 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.0s)
+  ✓  151 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.0s)
+  ✓  153 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (893ms)
+  ✓  152 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (2.0s)
+  ✓  155 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.3s)
+  ✓  156 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (2.4s)
+  ✓  157 [chromium] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.3s)
+  ✓  158 [chromium] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (2.5s)
+  ✓  154 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (10.5s)
+  ✓  159 [chromium] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (1.9s)
+  ✓  161 [chromium] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.0s)
+  ✓  162 [chromium] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.2s)
+  ✓  163 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (2.5s)
+  ✓  160 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (9.4s)
 
 
-  1) [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
 
-    Error: expect(locator).toContainText(expected) failed
+    Error: expect(received).toEqual(expected) // deep equality
 
-    Locator: locator('[role=menu] [data-active-item]')
-    Expected substring: "Turn into"
-    Timeout: 5000ms
-    Error: element(s) not found
+    - Expected  - 8
+    + Received  + 1
 
-    Call log:
-      - Expect "toContainText" locator('[role=menu] [data-active-item]') with timeout 5000ms
-      - waiting for locator('[role=menu] [data-active-item]')
+    - Array [
+    -   Array [
+    -     "Alpha",
+    -   ],
+    -   Array [
+    -     "Omega",
+    -   ],
+    - ]
+    + Array []
 
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
 
-      187 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-      188 |   await page.keyboard.press("ArrowDown");
-    > 189 |   await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
-          |                                                                ^
-      190 |   await page.keyboard.press("Escape");
-      191 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-      192 | });
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:189:64
+      233 |   // links vom Griff, unten in der Zeile
+      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
+    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
+          |                                              ^
+      236 | });
+      237 |
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
 
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
+    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
 
   1 flaky
-    [chromium] › e2e/editor-notion.spec.ts:157:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
   8 skipped
-  151 passed (4.9m)
+  153 passed (4.4m)

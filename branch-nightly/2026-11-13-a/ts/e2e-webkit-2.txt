@@ -1,61 +1,61 @@
-failure 057d95d9aff66cdedc3876338c9ef34298aade0a
+cancelled 9fe71d869be220c9dad22020ab95074c695922c7
+[WebServer] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 
-    Error: expect(locator).not.toHaveCount(expected) failed
+Running 146 tests using 2 workers, shard 2 of 2
 
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
-  18 skipped
-  124 passed (6.3m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+  ✓    1 [webkit] › e2e/key-hints.spec.ts:14:1 › ⌘/Strg halten zeigt Plaketten, Loslassen blendet aus; ⌘/Strg+Taste lässt nichts aufblitzen (8.9s)
+  -    3 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (light)
+  -    4 [webkit] › e2e/key-hints.spec.ts:38:3 › Screenshot Kürzel-Plaketten (dark)
+  ✓    2 [webkit] › e2e/keyboard.spec.ts:11:1 › F6 / ⇧F6: Seitenleiste → Kopfzeile → Seite @smoke (13.5s)
+  ✓    5 [webkit] › e2e/mcp.spec.ts:42:1 › eigener MCP-Server: einrichten, verbinden, Werkzeug im Chat mit Freigabe (8.6s)
+  ✓    6 [webkit] › e2e/keyboard.spec.ts:26:1 › Tabelle: Fokus wählt die erste Zelle, Tab wandert, Leertaste öffnet die Zeile; Menüs mit Pfeilen (10.7s)
+  ✓    8 [webkit] › e2e/native-free.spec.ts:25:1 › Rechtsklick auf freie Fläche: Based-Menü mit den Wegen der App, kein Systemmenü @smoke (3.9s)
+  ✓    7 [webkit] › e2e/meeting.spec.ts:97:1 › /meet legt einen Meeting-Block an; Titel und Notizen bleiben nach dem Neuladen (12.7s)
+  -   10 [webkit] › e2e/meeting.spec.ts:117:1 › Aufnahme → Notiz mit Zeitstempel → Stop → Transkript → Zusammenfassung mit Zitat → Sprung; Neuladen
+  ✓    9 [webkit] › e2e/native-free.spec.ts:41:1 › Rechtsklick an vielen Stellen: überall unterdrückt, Escape und Klick daneben schließen (5.9s)
+  ✓   12 [webkit] › e2e/native-free.spec.ts:64:1 › Rechtsklick im Text: Ausschneiden, Kopieren, Einfügen, Alles auswählen – Auswahl und Fokus bleiben (9.0s)
+  ✓   11 [webkit] › e2e/meeting.spec.ts:196:1 › BSD-281: Library-Reiter „Meetings“ listet Meeting-Notizen und öffnet ihre Seite (11.3s)
+  ✓   13 [webkit] › e2e/native-free.spec.ts:85:1 › Bausteine mit eigenem Menü behalten es (Seitenleiste), ohne zweites Menü darüber (4.2s)
+  ✓   15 [webkit] › e2e/native-free.spec.ts:92:1 › Auswahlfeld: Klick öffnet die Based-Liste; Maus, Pfeile und Tippen wählen @smoke (7.8s)
+  ✓   16 [webkit] › e2e/native-free.spec.ts:130:1 › Tooltips: kein title mehr im Dokument, Based-Tooltip beim Überfahren, Name bleibt zugänglich (4.0s)
+  ✓   17 [webkit] › e2e/native-free.spec.ts:150:1 › Keine Systemauswahl für Datum und Uhrzeit in der App (3.2s)
+  ✓   18 [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben (7.2s)
+  ✓   19 [webkit] › e2e/native-free.spec.ts:179:1 › Glas wie die übrigen Menüs: Kontextmenü und Blockmenü sehen aus wie „…“ oben rechts (5.3s)
+  ✓   20 [webkit] › e2e/native-free.spec.ts:204:1 › Writing Tools und Schreibvorschläge sind überall aus, Rechtschreibprüfung bleibt (2.8s)
+  ✓   14 [webkit] › e2e/notion-api.spec.ts:52:1 › Notion-API-Import: Token prüfen, importieren mit Fortschritt, Struktur und Ansichten kommen an (33.5s)
+  ✓   22 [webkit] › e2e/notion-api.spec.ts:107:1 › Notion-API-Import: Abbrechen beendet den Lauf und schreibt nichts (8.1s)
+  ✓   23 [webkit] › e2e/overflow.spec.ts:135:1 › Leerer Workspace: nichts läuft über (16.6s)
+  ✓   21 [webkit] › e2e/notion-hybrid.spec.ts:43:1 › Hybrid-Import: Struktur zuerst, gesperrte Platzhalterseite, Fortsetzen nach Neuladen, Delta (27.8s)
+  ✓   25 [webkit] › e2e/notion-hybrid.spec.ts:129:1 › Hybrid-Import: Markdown-Export wird erklärt statt halb importiert (6.5s)
+  -   26 [webkit] › e2e/notion-hybrid.spec.ts:147:1 › Hybrid-Import: Bildschirmfotos
+  ✓   24 [webkit] › e2e/overflow.spec.ts:149:1 › Extrem-Workspace: lange Titel, langes Wort, tiefe Verschachtelung (19.7s)
+  ✓   28 [webkit] › e2e/overflow.spec.ts:169:1 › Gliederung überdeckt nie den Text (6.5s)
+  ✓   27 [webkit] › e2e/page-cover.spec.ts:16:1 › Cover: Farbe, Bild hochladen, verschieben, entfernen (23.3s)
+  ✓   29 [webkit] › e2e/overflow.spec.ts:199:1 › 30 Tabs und eine breite Datenbank: nichts läuft über (11.4s)
+  ✓   30 [webkit] › e2e/page-cover.spec.ts:93:1 › Bild als Seiten-Icon hochladen (6.1s)
+  ✓   32 [webkit] › e2e/page-cover.spec.ts:101:1 › Cover-Galerie: Verläufe wie in der Swift-App, bleibt nach dem Neuladen (7.2s)
+  -   33 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (light)
+  -   34 [webkit] › e2e/page-cover.spec.ts:121:3 › Screenshot Cover-Galerie (dark)
+  ✓   31 [webkit] › e2e/page-window.spec.ts:6:1 › Seite in eigenem Fenster öffnen (Seitenmenü und Seitenleiste) (11.9s)
+  ✓   36 [webkit] › e2e/permissions.spec.ts:40:1 › Pfad-Regel: unter „Privat“ darf der Chat nichts anlegen, daneben schon (4.4s)
+  ✓   35 [webkit] › e2e/peek-resize.spec.ts:28:1 › Side Peek: Breite ziehen, Grenzen, pro Gerät gemerkt, Doppelklick setzt zurück (11.3s)
+  ✓   37 [webkit] › e2e/permissions.spec.ts:67:1 › Plan-Modus: Änderung wird gesammelt, „Run plan“ führt sie aus und kehrt zum Modus davor zurück (5.7s)
+  ✓   38 [webkit] › e2e/peek-resize.spec.ts:67:1 › Esc schließt den Peek: aus dem Titel, nach der Blockauswahl im Editor, mit Fokus in der Tabelle (12.8s)
+  ✓   39 [webkit] › e2e/phase2.spec.ts:8:1 › Editor und Datenbank in der Shell, nach dem Neuladen noch da @smoke (14.0s)
+  ✓   40 [webkit] › e2e/polish.spec.ts:13:1 › Home: der Composer ist im Startfenster (1280 × 820) ohne Scrollen ganz sichtbar (8.5s)
+  ✓   42 [webkit] › e2e/polish.spec.ts:27:1 › Tabs tragen das Icon ihres Ziels, nicht pauschal das Haus (5.5s)
+  ✓   41 [webkit] › e2e/property-records.spec.ts:17:1 › Umstellen in Sync & server: Datenbank bleibt gleich, Spalten weiter bearbeitbar, übersteht Neuladen (19.2s)
+  -   44 [webkit] › e2e/replay/record-sample.spec.ts:13:1 › Beispielbündel: tippen, fett, Liste, Auswahl mit der Maus, Einfügen
+  ✓   43 [webkit] › e2e/polish.spec.ts:38:1 › Slash-Menü: Überfahren färbt die Zeile mit der Auswahl-Fläche, nicht mit dem Blau der Bibliothek (8.0s)
+  -   45 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (input): gleicher Endzustand, keine Überdeckung
+  -   47 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-chromium wiedergeben (steps): gleicher Endzustand, keine Überdeckung
+  ✓   46 [webkit] › e2e/polish.spec.ts:59:1 › Seitenleiste: im ruhigen Zustand nur der Punkt, Text nur wenn etwas Aufmerksamkeit braucht – und nie gekürzt (BSD-308) (2.4s)
+  ✓   49 [webkit] › e2e/polish.spec.ts:85:1 › Seitenleiste ausgeblendet: der Knopf zum Einblenden steht in einer eigenen Zeile über der Seite und überdeckt nichts (9.0s)
+  ✓   48 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (input): gleicher Endzustand, keine Überdeckung (13.4s)
+  ✓   51 [webkit] › e2e/replay/replay.spec.ts:17:5 › typing-basics-webkit wiedergeben (steps): gleicher Endzustand, keine Überdeckung (4.9s)
+  ✓   50 [webkit] › e2e/polish.spec.ts:120:1 › Gliederung: die Markierung folgt dem Scrollen; am Seitenende gilt die letzte Überschrift (11.6s)
+  ✓   53 [webkit] › e2e/polish.spec.ts:190:1 › Fokusrahmen und Textauswahl neutral, unabhängig vom Marker (3.9s)
+  ✓   52 [webkit] › e2e/report.spec.ts:24:1 › ⇧⌘B: Bündel mit Foto, Aufzeichnung, Blockbaum und Layout – ohne Nutzertext (11.1s)
+(node:9013) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
