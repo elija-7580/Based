@@ -14,10 +14,6 @@ export { mentionItems } from "./ui/mentions.js";
 export { handlePaste, htmlToBlocks, insertMarkdown, insertParsed } from "./ui/paste.js";
 export { importedToBlocks, markdownToBlocks, singleParagraph } from "./mapping/imported.js";
 
-// BSD-381 (ADR 0016): neuer Block-Editor (E0: Gerüst, Anzeige direkt aus den Records)
-export { BlockPage, BLOCK_FIXTURE_TITLE, blockFixtureOutline, blockTree, buildBlockFixture, flatIDs, outlineOf } from "./blocks/index.js";
-export type { BlockNode, BlockPageProps } from "./blocks/index.js";
-
 // Reine Abbildung Records ⇄ BlockNote
 export { ASSET_URL_PREFIX, CUSTOM, INLINE, SYNC_CLIPBOARD_PREFIX, syncSourceFromClipboard } from "./mapping/bn.js";
 export type { BNBlock, BNInline } from "./mapping/bn.js";

@@ -14,7 +14,7 @@ import { diagnosticsLog, diagnosticsReport, previousSessionText, stallCount } fr
 import { bundleFile, onReportsChanged, reportsChanged, reportStore, type SavedReport } from "../../shell/reportStore.js";
 import { reportUI, startReport } from "../../shell/reportUI.js";
 import { crashConsentPref, crashPrompt, previousCrashReport } from "../../shell/crashReport.js";
-import { devViewPref, deviceNode, newEditorPref } from "../../shell/storage.js";
+import { devViewPref, deviceNode } from "../../shell/storage.js";
 import { Group, Row, Value } from "./parts.js";
 import type { SettingsSectionProps } from "./registry.js";
 import { clockSkewText } from "./sections.js";
@@ -197,7 +197,6 @@ export function LogSection({ state }: SettingsSectionProps) {
 /** Für Entwickler: Entwickler-Ansicht, Design Kit, Aufzeichnung leeren. */
 export function DeveloperSection({ navigate }: SettingsSectionProps) {
   const dev = useSyncExternalStore(devViewPref.subscribe, devViewPref.get);
-  const newEditor = useSyncExternalStore(newEditorPref.subscribe, newEditorPref.get);
   const [size, setSize] = useState(recorder.size);
   useEffect(() => {
     const id = setInterval(() => setSize(recorder.size), 1000);
@@ -207,8 +206,6 @@ export function DeveloperSection({ navigate }: SettingsSectionProps) {
     <Group>
       <Switch label="Developer view" description="Shows block bounds, layers and focus, and the last editor events live. Helps with the daily acceptance test."
         value={dev} onChange={(on) => devViewPref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
-      <Switch label="New editor" description="Shows pages with the new block editor on this device. Read-only while it is being built."
-        value={newEditor} onChange={(on) => newEditorPref.set(on)} labelPosition="start" labelSpacing="spread" width="100%" />
       <Row label="Editor recording" hint="Always on · the last two minutes, in memory only">
         <HStack gap={2} vAlign="center">
           <Value testID="diagnostics-recording">{plural(size, "event")}</Value>

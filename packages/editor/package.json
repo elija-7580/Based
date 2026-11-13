@@ -5,7 +5,6 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./blocks/fixture": "./src/blocks/fixture.ts",
     "./headless": {
       "types": "./src/headless-api.ts",
       "default": "./src/headless.ts"
