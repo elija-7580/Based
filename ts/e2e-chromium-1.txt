@@ -1,61 +1,61 @@
-failure 43791d05b5750c43d955c80c2f1ce043b67b3651
+success 8fb6bd9e4a4a17cccf7a08ec7344a7711de7f3eb
+  ✓  118 [chromium] › e2e/editor-polish.spec.ts:158:1 › Blockfarben im Dunkelmodus aus den Tokens (1.8s)
+  ✓  116 [chromium] › e2e/editor-parity.spec.ts:531:1 › Blockmenü: Move to und Turn into → Page (BSD-207, Teil 2) (5.0s)
+  ✓  119 [chromium] › e2e/editor-select.spec.ts:76:1 › Text über mehrere Absätze markieren; über einen Block ohne Text wird es eine Blockauswahl (2.5s)
+  ✓  120 [chromium] › e2e/editor-parity.spec.ts:574:1 › ⌘⌥T klappt alle Toggles auf und wieder zu (BSD-207, Teil 2) (2.4s)
+  ✓  121 [chromium] › e2e/editor-select.spec.ts:112:1 › Blockauswahl reicht bis unter schwebende Leisten (2.0s)
+  ✓  123 [chromium] › e2e/editor-select.spec.ts:142:1 › Rechteck aus dem breiten Seitenrand außerhalb des Editors (2.0s)
+  ✓  122 [chromium] › e2e/editor-parity.spec.ts:598:1 › Esc-Blockauswahl: Pfeile, ⇧↓ erweitern, ⌘D, Löschen, Enter (BSD-207, Teil 3) (4.0s)
+  ✓  124 [chromium] › e2e/editor-select.spec.ts:162:1 › Rechteck aus dem Rand, ⇧-Klick erweitert, ⌘A zweimal, Kopieren und Ausschneiden (2.9s)
+  ✓  126 [chromium] › e2e/feedback-1111.spec.ts:17:1 › schmale Seitenleiste: Library, Trash, Settings bleiben ganz sichtbar, der Status kürzt (1.5s)
+  ✓  125 [chromium] › e2e/editor-parity.spec.ts:648:1 › Duplicate kopiert Unterseiten tief (BSD-207, Teil 3) (4.9s)
+  ✓  127 [chromium] › e2e/feedback-1111.spec.ts:37:1 › Seitenleiste ausblenden: Knopf in der Kopfzeile, zurück über „Show sidebar“, Taste an der Stelle von \ (1.5s)
+  ✓  129 [chromium] › e2e/feedback-1111.spec.ts:57:1 › Home kann eine Seite sein: Set as Home, Home öffnet sie, Dashboard bleibt über ⌘K, zurückstellen (2.6s)
+  ✓  128 [chromium] › e2e/editor-parity.spec.ts:677:1 › Nummerierung 1./a./i. und Spalten 4–5 mit ziehbarer Breite (BSD-210) (3.8s)
+  ✓  130 [chromium] › e2e/feedback-1111.spec.ts:96:1 › Graph: kommt eine Seite dazu, bleibt das Bild stehen – nur die neue sucht sich einen Platz (3.1s)
+  ✓  131 [chromium] › e2e/editor-parity.spec.ts:728:1 › Callout-Icon aus dem Emoji-Picker mit Suche (BSD-210) (3.1s)
+  ✓  132 [chromium] › e2e/feedback-1111.spec.ts:129:1 › Oberfläche lässt sich nicht markieren (Seitenleiste, Fuß, Einstellungs-Navigation); Seiteninhalt und Eingaben schon (2.3s)
+  ✓  134 [chromium] › e2e/find.spec.ts:26:1 › ⌘F: Fundstellen zählen, Enter/⇧Enter/⌘G wandern, Tippen im Editor zählt nach, Esc schließt @smoke (2.3s)
+  ✓  133 [chromium] › e2e/editor-parity.spec.ts:761:1 › Button-Block: Vorlage einfügen, Seite in Datenbank anlegen, Rückfrage, öffnen (BSD-210) (4.3s)
+  ✓  135 [chromium] › e2e/find.spec.ts:61:1 › •••-Menü: Find in page und Wortzahl (2.1s)
+  ✓  137 [chromium] › e2e/find.spec.ts:70:1 › Quick Find: Title only, In this page und Sortierung filtern die Treffer @smoke (1.9s)
+  ✓  136 [chromium] › e2e/editor-parity.spec.ts:819:1 › Codeblock: Sprache wählen, Hervorhebung offline, HTML-Vorschau abgeschottet (BSD-209) (3.7s)
+  ✓  138 [chromium] › e2e/find.spec.ts:98:1 › Zurück/Vor: Maustasten 4/5, Tastatur außerhalb von Text, Wischen mit Hinweis (2.3s)
+  ✓  139 [chromium] › e2e/editor-parity.spec.ts:854:1 › URL einfügen: Link, Bookmark oder Embed; Copy as Markdown (BSD-211) (2.7s)
+  ✓  141 [chromium] › e2e/editor-parity.spec.ts:896:1 › Notion-/Google-Docs-HTML einfügen über den Kern-Importer (BSD-211) (2.5s)
+  ✓  140 [chromium] › e2e/graph-layout.spec.ts:14:1 › Layout bleibt beim erneuten Öffnen und nach dem Neuladen gleich; Re-layout baut neu auf (4.4s)
+(node:9588) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  142 [chromium] › e2e/editor-parity.spec.ts:919:1 › Dateien hochladen: PDF mit Anzeige, Video, Audio und Datei offline (BSD-208) (4.0s)
+  ✓  144 [chromium] › e2e/editor-parity.spec.ts:953:1 › Seiten-Optionen: Icon, Schrift, Small text, Full width, Sperre (BSD-201) (3.0s)
+  ✓  143 [chromium] › e2e/guest.spec.ts:56:1 › Bearbeiten-Link öffnet den Gast-Modus: nur die geteilte Seite, Änderungen kommen an (3.9s)
+  ✓  146 [chromium] › e2e/guest.spec.ts:85:1 › Nur-Lesen-Link: Seite sichtbar, Editor und Titel gesperrt (BSD-235) (2.2s)
+  ✓  145 [chromium] › e2e/history-katex.spec.ts:29:1 › Versionsverlauf: Seite ändern → Version → Restore holt alten Inhalt, neuer Stand bleibt als Version, Undo @smoke (3.4s)
+  ✓  147 [chromium] › e2e/guest.spec.ts:123:1 › Teil 3: widerrufener Link zeigt „This link no longer works“ statt eines leeren Gast-Arbeitsbereichs (1.9s)
+  ✓  149 [chromium] › e2e/guest.spec.ts:137:1 › Teil 3: Widerruf wirkt, während der Gast die Seite offen hat (ohne Neuladen von Hand) (1.2s)
+  ✓  148 [chromium] › e2e/history-katex.spec.ts:72:1 › Gleichungen rendern offline mit KaTeX und lassen sich bearbeiten (3.2s)
+  ✓  150 [chromium] › e2e/guest.spec.ts:149:1 › BSD-282: Gast mit „Can edit“ bekommt kein endgültiges Löschen angeboten (1.9s)
+  ✓  152 [chromium] › e2e/image-block.spec.ts:130:1 › Bild aus der Zwischenablage: Caption, Mitte, Größe, Vollbild; nach Neuladen und offline bleibt alles (4.1s)
+  ✓  153 [chromium] › e2e/image-block.spec.ts:218:1 › Bilddatei auf den Editor ablegen fügt ein Bild ein; Ausrichtung rechts und zurück nach links (1.9s)
+  ✓  154 [chromium] › e2e/image-block.spec.ts:249:1 › Importiertes Notion-Bild erscheint mit Caption und Breite (2.5s)
+  -  155 [chromium] › e2e/image-block.spec.ts:266:1 › Bildschirmfotos: Bild-Block mit Leiste und Vollbild
+  ✓  156 [chromium] › e2e/interop.spec.ts:53:1 › Volltextsuche findet Text aus dem Seiteninhalt, auch frisch geschriebenen @smoke (1.6s)
+  ✓  157 [chromium] › e2e/interop.spec.ts:79:1 › Import eines Notion-HTML-Exports (ZIP) legt die Seiten an (2.2s)
+  ✓  151 [chromium] › e2e/home.spec.ts:29:1 › Leerzustand → Senden → Karte durchläuft Zustände → landet; Undo; Rückfrage; Frage; Neuladen @smoke (14.4s)
+  ✓  158 [chromium] › e2e/interop.spec.ts:103:1 › Import eines Obsidian-Vaults (ZIP): Ordner, Wikilinks als Erwähnungen, Bild (BSD-260) (3.3s)
+  ✓  159 [chromium] › e2e/home.spec.ts:109:1 › Agent im inneren Ring: Needs you am Scheitel → Agent-Detail → Allow; Projekt-Detail (3.2s)
+  ✓  160 [chromium] › e2e/interop.spec.ts:133:1 › Import eines Logseq-Graphs (ZIP): Journale, Namensräume, Alias-Links, Block-Verweise (BSD-260 Teil 8) (2.8s)
+  ✓  161 [chromium] › e2e/home.spec.ts:143:1 › Projekt-Detail aus echten Records (2.6s)
+  ✓  163 [chromium] › e2e/home.spec.ts:161:1 › BSD-278: fällige Aufgaben aus Datenbanken rechts auf dem Bogen, erledigte nicht; Klick öffnet die Zeile (2.0s)
+  ✓  162 [chromium] › e2e/interop.spec.ts:160:1 › Import eines Bear-Exports (ZIP mit TextBundles): Seiten, Link, Hervorheben (BSD-260 Teil 9) (3.2s)
+  ✓  165 [chromium] › e2e/interop.spec.ts:186:1 › Import eines Evernote-Notizbuchs (.enex) als Datenbank (BSD-260) (2.2s)
+  ✓  166 [chromium] › e2e/interop.spec.ts:205:1 › OPML: Gliederung importieren und als OPML wieder exportieren (BSD-260) (3.0s)
+  ✓  167 [chromium] › e2e/interop.spec.ts:236:1 › Word-Dokument (.docx) importieren (BSD-260) (2.8s)
+  ✓  168 [chromium] › e2e/interop.spec.ts:253:1 › JSON Lines importieren: Liste von Objekten wird Datenbank (BSD-260 Teil 7) (2.5s)
+  ✓  169 [chromium] › e2e/interop.spec.ts:267:1 › Export: Markdown mit Frontmatter und JSON (BSD-260) (1.8s)
+  ✓  164 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (light) (13.9s)
+  ✓  170 [chromium] › e2e/interop.spec.ts:286:1 › Export: Seite als Markdown, Workspace als Based-Archiv @smoke (3.1s)
+  ✓  171 [chromium] › e2e/home.spec.ts:203:3 › Screenshots Startseite (dark) (11.7s)
 
-
-  1) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
-
-    Error: expect(locator).toHaveValue(expected) failed
-
-    Locator: getByRole('textbox', { name: 'Search actions' })
-    Expected: ""
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toHaveValue" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
-      - waiting for getByRole('textbox', { name: 'Search actions' })
-
-
-      189 |   // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
-      190 |   await openMenu();
-    > 191 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-          |                                                                       ^
-      192 |   await page.keyboard.press("ArrowDown");
-      193 |   await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
-      194 |   await page.keyboard.press("Escape");
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:191:71
-
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).toBeFocused() failed
-
-    Locator: getByRole('textbox', { name: 'Search actions' })
-    Expected: focused
-    Timeout: 5000ms
-    Error: element(s) not found
-
-    Call log:
-      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
-      - waiting for getByRole('textbox', { name: 'Search actions' })
-
-
-      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
-      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
-    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
-          |                                                                         ^
-      172 |   };
-      173 |   await openMenu();
-      174 |   await page.keyboard.type("cop");
-        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
-
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
-
-  1 failed
-    [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  161 passed (5.1m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
+  163 passed (5.9m)
