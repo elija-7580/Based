@@ -1,30 +1,32 @@
-failure a25a4107afdc257a2207443cc35024fd12f41cde
+failure 296a4ff9e58a3893d4b83f1e211f2b7641402fdf
 
-    Locator:  locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-    Expected: "ts"
-    Received: "typescript"
-    Timeout:  5000ms
+
+  1) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: ""
+    Timeout: 5000ms
+    Error: element(s) not found
 
     Call log:
-      - Expect "toHaveAttribute" locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]') with timeout 5000ms
-      - waiting for locator('.bx-editor > .bx-doc .bn-editor').first().locator('[data-content-type=codeBlock]')
-        14 × locator resolved to <div class="bn-block-content" data-language="typescript" data-content-type="codeBlock">…</div>
-           - unexpected value "typescript"
+      - Expect "toHaveValue" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      165 |     const code = ed.locator("[data-content-type=codeBlock]");
-      166 |     await expect(code).toContainText("const answer = 42;");
-    > 167 |     await expect(code).toHaveAttribute("data-language", "ts");
-          |                        ^
-      168 |     const table = ed.locator("[data-content-type=table]");
-      169 |     await expect(table.locator("th")).toHaveText(["Owner", "Status"]);
-      170 |     await expect(table.locator("td")).toHaveText(["Ada", "Ready"]);
-        at check (/home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:167:24)
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-parity.spec.ts:174:3
+      189 |   // beim nächsten Öffnen ist das Feld leer; ↓ geht in die Liste, Escape schließt
+      190 |   await openMenu();
+    > 191 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
+          |                                                                       ^
+      192 |   await page.keyboard.press("ArrowDown");
+      193 |   await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
+      194 |   await page.keyboard.press("Escape");
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:191:71
 
-    Error Context: test-results/editor-parity-Markdown-ein-61dc9-nd-bleibt-nach-dem-Neuladen-chromium-retry1/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-  2) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
 
     Error: expect(locator).toBeFocused() failed
 
@@ -48,14 +50,12 @@ failure a25a4107afdc257a2207443cc35024fd12f41cde
         at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
         at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
-    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
 
   1 failed
-    [chromium] › e2e/editor-parity.spec.ts:137:1 › Markdown einfügen erzeugt Blöcke, ist ein Undo-Schritt und bleibt nach dem Neuladen 
-  1 flaky
     [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  148 passed (5.1m)
+  161 passed (4.7m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
