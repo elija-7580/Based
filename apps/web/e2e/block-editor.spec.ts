@@ -259,6 +259,68 @@ test("Formatierung: ⌘B auf Auswahl, Formatleiste erscheint", async ({ page }) 
   await expect(fields(page).nth(1).locator(".bx2-b").last()).toHaveText("X");
 });
 
+test("Einfügen aus dem Web: HTML wird zu Blöcken, URL über Auswahl wird Link; ⌘K setzt Link", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.evaluate(() => {
+    const el = document.activeElement!;
+    const dt = new DataTransfer();
+    dt.setData("text/html", "<h2>Pasted title</h2><ul><li>first</li><li>second</li></ul><p>with <b>bold</b></p>");
+    dt.setData("text/plain", "Pasted title\nfirst\nsecond\nwith bold");
+    el.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  });
+  await expect.poll(() => blockTypes(page)).toEqual(["heading2", "bulletedList", "bulletedList", "text"]);
+  await expect(fields(page).nth(3).locator(".bx2-b")).toHaveText("bold");
+  // ⌘K auf markiertem Wort
+  await fields(page).nth(0).click();
+  await page.keyboard.press("End");
+  for (let i = 0; i < 5; i++) await page.keyboard.press("Shift+ArrowLeft");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByTestId("link-popover").getByRole("textbox").fill("https://based.example");
+  await page.keyboard.press("Enter");
+  await expect(fields(page).nth(0).locator("a")).toHaveAttribute("href", "https://based.example");
+  await expect(fields(page).nth(0).locator("a")).toHaveText("title");
+});
+
+test("@ erwähnt eine Seite", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("see @Welc");
+  const menu = page.getByTestId("mention-menu");
+  await expect(menu.getByRole("option", { name: /Welcome to Based/ })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(fields(page).first().locator(".bx2-mention")).toHaveText("Welcome to Based");
+  await page.keyboard.type("now");
+  await expect(fields(page).first()).toHaveText("see Welcome to Based now");
+});
+
+test("Spaltenbreite ziehen", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  for (const t of ["Left", "Right"]) {
+    await page.keyboard.type(t);
+    await page.keyboard.press("Enter");
+  }
+  await page.keyboard.press("Backspace");
+  const left = editor(page).locator(".bx2-block").nth(0).locator(".bx2-row");
+  const lb = (await left.boundingBox())!;
+  await dragHandle(page, 1, { x: lb.x + lb.width - 8, y: lb.y + lb.height / 2 });
+  await expect(editor(page).locator(".bx2-column")).toHaveCount(2);
+  const sep = editor(page).locator(".bx2-col-resize");
+  const sb = (await sep.boundingBox())!;
+  const before = (await editor(page).locator(".bx2-column").first().boundingBox())!.width;
+  await page.mouse.move(sb.x + sb.width / 2, sb.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(sb.x + 120, sb.y + 10, { steps: 6 });
+  await page.mouse.up();
+  const after = (await editor(page).locator(".bx2-column").first().boundingBox())!.width;
+  expect(after - before).toBeGreaterThan(80);
+  // bleibt (Records) – nach Seitenwechsel
+  await page.goBack();
+  await page.goForward();
+  await expect.poll(async () => (await editor(page).locator(".bx2-column").first().boundingBox())!.width).toBeGreaterThan(before + 80);
+});
+
 // Checkliste: Bildschirmfotos des neuen Editors (hell/dunkel, drei Größen) mit allen Grundtypen und Spalten.
 for (const theme of ["light", "dark"] as const) {
   test(`Screenshots neuer Editor (${theme})`, async ({ page, browserName }) => {

@@ -550,3 +550,69 @@ export function applyMarkdownShortcut(store: WorkspaceStore, c: Caret): EditResu
   }));
   return { caret: { id: c.id, from: 0, to: 0 } };
 }
+
+// MARK: Einfügen von Struktur (HTML aus Web/Notion, Markdown)
+
+/** Ein eingefügter Block in Wire-naher Form (z. B. `importedJSON` aus der Zwischenablage). */
+export interface PastedBlock {
+  type: string;
+  text?: RichText;
+  props?: Block["props"];
+  children?: PastedBlock[];
+  linkTarget?: string;
+}
+
+/**
+ * Blöcke an der Cursorposition einfügen: ein einzelner Absatz geht in den Text, sonst werden die Blöcke hinter dem
+ * aktuellen Block eingefügt (ein leerer Textblock wird ersetzt). Ein Undo-Schritt; Cursor ans Ende des letzten.
+ */
+export function insertPasted(store: WorkspaceStore, c: Caret, blocks: readonly PastedBlock[]): EditResult {
+  const cur = blockOf(store, c.id);
+  if (!cur || blocks.length === 0) return {};
+  if (blocks.length === 1 && blocks[0]!.type === "text" && !blocks[0]!.children?.length) {
+    return replaceRich(store, c, blocks[0]!.text ?? "");
+  }
+  const replaceCurrent = cur.type === "text" && richLength(cur.text) === 0 && kids(store, c.id).length === 0;
+  let last = "";
+  store.transact("Paste", (tx) => {
+    const put = (b: PastedBlock, parent: string, sk: string): string => {
+      const props: Block["props"] = { ...(b.props ?? {}) };
+      if (b.linkTarget) props.linkTarget = b.linkTarget;
+      const id = makeBlock(store, tx, parent, sk, b.type, b.text, props);
+      const ch = b.children ?? [];
+      const keys = keysBetween(ch.length, undefined, undefined);
+      ch.forEach((k, i) => put(k, "b:" + id, keys[i]!));
+      return id;
+    };
+    const keys = sortKeys(store, cur.parent, { kind: "after", id: c.id }, blocks.length);
+    blocks.forEach((b, i) => { last = put(b, cur.parent, keys[i]!); });
+    if (replaceCurrent) tx.remove(keyOf("block", c.id));
+  });
+  const lb = store.blocks.get(last);
+  if (lb && isTextBlock(lb)) { const n = richLength(lb.text); return { caret: { id: last, from: n, to: n } }; }
+  return { select: [last] };
+}
+
+/** Bereich als Link markieren (⌘K, URL über Auswahl einfügen); leere URL entfernt den Link. */
+export function setLink(store: WorkspaceStore, c: Caret, url: string): EditResult {
+  const b = blockOf(store, c.id);
+  if (!b || c.from >= c.to) return { caret: c };
+  store.transact("Link", (tx) => setText(tx, c.id, richSetMark(b.text, c.from, c.to, "link", url.trim() || undefined)));
+  return { caret: { id: c.id, from: c.to, to: c.to } };
+}
+
+/** `@…`-Text durch eine Erwähnung ersetzen (Seite, Person, Datum). */
+export function insertMention(store: WorkspaceStore, c: Caret, mention: Record<string, unknown>): EditResult {
+  const b = blockOf(store, c.id);
+  if (!b) return {};
+  const run = { mention } as unknown as import("../model/records.js").TextRun;
+  store.transact("Mention", (tx) => setText(tx, c.id, richReplace(b.text, c.from, c.to, [run, { t: " " }])));
+  return { caret: { id: c.id, from: c.from + 2, to: c.from + 2 } };
+}
+
+/** Spaltenbreiten setzen (Anteile, Summe beliebig). */
+export function setColumnRatios(store: WorkspaceStore, ratios: ReadonlyMap<string, number>): void {
+  store.transact("Resize columns", (tx) => {
+    for (const [id, r] of ratios) tx.update(id, (x) => { x.props = { ...(x.props ?? {}), ratio: Math.round(r * 1000) / 1000 }; });
+  }, { coalesce: "columns:" + [...ratios.keys()].join() });
+}

@@ -3,7 +3,9 @@
 // Befehle aus @based/core ausgeführt (ein Befehl = ein Undo-Schritt). Griff, Ziehen und Blockauswahl liegen in einer
 // eigenen Schicht: der Griff sitzt an der ersten Zeile, Ziehziele werden beim Start einmal vermessen und danach nur
 // gegen diesen Zwischenspeicher geprüft (höchstens einmal pro Frame), Auswahl ist eine Menge von Block-IDs.
-import { blockCmd, rich, plainText, type Block, type Caret, type DropSide, type WorkspaceStore } from "@based/core";
+import { ClipboardHTMLImporter, blockCmd, importedJSON, rich, plainText, type Block, type Caret, type DropSide, type WorkspaceStore } from "@based/core";
+import { mermaidPreview } from "../schema/mermaid.js";
+import type { PageRef } from "../ui/env.js";
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { PageEditorProps } from "../ui/PageEditor.js";
 import { ASSET_URL_PREFIX } from "../mapping/bn.js";
@@ -58,6 +60,10 @@ export function BlockEditor(props: PageEditorProps) {
   const [toolbar, setToolbar] = useState<{ x: number; y: number } | undefined>();
   const slashRef = useRef(slash);
   slashRef.current = slash;
+  const [mention, setMention] = useState<MentionState | undefined>();
+  const mentionRef = useRef(mention);
+  mentionRef.current = mention;
+  const [link, setLinkState] = useState<{ caret: Caret; x: number; y: number; value: string } | undefined>();
 
   useLayoutEffect(() => {
     ctrl.root = rootRef.current;
@@ -117,6 +123,8 @@ export function BlockEditor(props: PageEditorProps) {
           }
           if (data === "/" && r.caret) openSlash(id, r.caret.from - 1);
           else if (slashRef.current) updateSlash(id);
+          if (data === "@" && r.caret && props.pages) openMention(id, r.caret.from - 1);
+          else if (mentionRef.current) updateMention(id);
           break;
         }
         case "insertReplacementText": {
@@ -133,6 +141,7 @@ export function BlockEditor(props: PageEditorProps) {
         case "deleteContentBackward":
           run(blockCmd.deleteBackward(store, pageID, c));
           if (slashRef.current) updateSlash(id);
+          if (mentionRef.current) updateMention(id);
           break;
         case "deleteContentForward":
           run(blockCmd.deleteForward(store, pageID, c));
@@ -192,9 +201,17 @@ export function BlockEditor(props: PageEditorProps) {
         return;
       }
       const text = data.getData("text/plain").replace(/\r\n?/g, "\n");
-      if (!text) return;
       const c = id ? ctrl.readCaret(id) : undefined;
       if (!c) return;
+      // URL über markiertem Text: Link setzen (wie Notion)
+      if (c.from !== c.to && /^https?:\/\/\S+$/.test(text.trim())) { run(blockCmd.setLink(store, c, text.trim())); return; }
+      const html = data.getData("text/html");
+      if (html && store.blocks.get(c.id)?.type !== "code") {
+        const importer = new ClipboardHTMLImporter(ClipboardHTMLImporter.pageResolver((x) => store.blocks.has(x) || props.pages?.get(x) !== undefined));
+        const parsed = importer.parse(html).map((b) => importedJSON(b) as unknown as blockCmd.PastedBlock);
+        if (parsed.length) { run(blockCmd.insertPasted(store, c, parsed)); return; }
+      }
+      if (!text) return;
       pastePlain(store, pageID, c, text, ctrl);
     };
 
@@ -285,6 +302,57 @@ export function BlockEditor(props: PageEditorProps) {
     }
   };
 
+  // MARK: @-Erwähnungen
+
+  const openMention = (id: string, at: number) => {
+    const el = ctrl.editable(id);
+    if (!el) return;
+    const r = el.ownerDocument.getSelection()?.getRangeAt(0).getBoundingClientRect();
+    const box = r && (r.width || r.height) ? r : el.getBoundingClientRect();
+    const st: MentionState = { id, at, query: "", index: 0, x: box.left, y: box.bottom + 6, items: [] };
+    setMention(st);
+    void searchMention(st);
+  };
+  const searchMention = async (st: MentionState) => {
+    const items = await (props.pages?.search(st.query) ?? Promise.resolve([] as PageRef[])).catch(() => [] as PageRef[]);
+    setMention((cur) => (cur && cur.id === st.id && cur.at === st.at && cur.query === st.query ? { ...cur, items: items.slice(0, 8), index: 0 } : cur));
+  };
+  const updateMention = (id: string) => {
+    const s = mentionRef.current;
+    if (!s || s.id !== id) return;
+    const text = rich.richPlain(store.blocks.get(id)?.text);
+    const c = ctrl.caret;
+    if (!c || c.from <= s.at || text[s.at] !== "@") { setMention(undefined); return; }
+    const query = text.slice(s.at + 1, c.from);
+    if (/\s\s/.test(query) || query.length > 40) { setMention(undefined); return; }
+    const next = { ...s, query };
+    setMention(next);
+    void searchMention(next);
+  };
+  const chooseMention = (ref: PageRef) => {
+    const s = mentionRef.current;
+    setMention(undefined);
+    if (!s) return;
+    run(blockCmd.insertMention(store, { id: s.id, from: s.at, to: s.at + 1 + s.query.length }, { page: ref.id }));
+  };
+
+  // MARK: Link (⌘K)
+
+  const openLink = (c: Caret) => {
+    const doc = rootRef.current!.ownerDocument;
+    const r = doc.getSelection()?.rangeCount ? doc.getSelection()!.getRangeAt(0).getBoundingClientRect() : undefined;
+    const b = store.blocks.get(c.id);
+    const current = rich.richSlice(b?.text, c.from, c.to).find((x) => (x.m as Record<string, unknown> | undefined)?.link)?.m?.link;
+    setLinkState({ caret: c, x: r?.left ?? 100, y: (r?.bottom ?? 100) + 8, value: typeof current === "string" ? current : "" });
+  };
+  const commitLink = (value: string | undefined) => {
+    const l = link;
+    setLinkState(undefined);
+    if (!l) return;
+    if (value !== undefined) run(blockCmd.setLink(store, l.caret, value));
+    else ctrl.setCaret(l.caret);
+  };
+
   // MARK: Tastatur
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -307,6 +375,17 @@ export function BlockEditor(props: PageEditorProps) {
       }
       if (e.key === "Escape") { e.preventDefault(); setSlash(undefined); return; }
     }
+    const m = mentionRef.current;
+    if (m && m.items.length) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const n = m.items.length;
+        setMention({ ...m, index: (m.index + (e.key === "ArrowDown" ? 1 : n - 1)) % n });
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); chooseMention(m.items[m.index]!); return; }
+    }
+    if (m && e.key === "Escape") { e.preventDefault(); setMention(undefined); return; }
     const target = e.target as HTMLElement;
     const id = target.dataset.editableId;
     if (id) return onFieldKey(e, id, mod);
@@ -364,6 +443,7 @@ export function BlockEditor(props: PageEditorProps) {
         return;
       }
       if (k === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+      if (k === "k" && editable && c.from !== c.to) { e.preventDefault(); e.stopPropagation(); openLink(c); return; }
       if (k === "y") { e.preventDefault(); redo(); return; }
       if (k === "a" && c.from === 0 && c.to === len) {
         e.preventDefault();
@@ -742,6 +822,8 @@ export function BlockEditor(props: PageEditorProps) {
       </div>
       {slash && slashItems.length ? <SlashMenu items={slashItems} state={slash} onChoose={chooseSlash} onHover={(i) => setSlash({ ...slash, index: i })} /> : null}
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}
+      {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
+      {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
       {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(blockCmd.toggleMark(store, c, m)); }} /> : null}
     </EditorCtx.Provider>
   );
@@ -824,7 +906,7 @@ const BlockView = memo(function BlockView({ id, depth, number }: { id: string; d
   const selected = useSelected(ctrl, id);
   if (!b || b.trashedAt !== undefined) return null;
   if (b.type === "columnList") return <Columns block={b} depth={depth} />;
-  const showKids = blockCmd.childrenVisible(b) && b.type !== "callout";
+  const showKids = blockCmd.childrenVisible(b) && b.type !== "callout" && b.type !== "syncedBlock";
   return (
     <div className="bx2-block" data-block-id={id} data-type={b.type} data-selected={selected ? "" : undefined} data-depth={depth}>
       <Gutter id={id} />
@@ -873,24 +955,72 @@ function Columns({ block, depth }: { block: Block; depth: number }) {
   return (
     <div className="bx2-block bx2-columns-block" data-block-id={block.id} data-type="columnList" data-selected={selected ? "" : undefined} data-depth={depth}>
       <div className="bx2-columns">
-        {cols.map((c) => <Column key={c} id={c} depth={depth} />)}
+        {cols.map((c, i) => <Column key={c} id={c} depth={depth} next={cols[i + 1]} />)}
       </div>
     </div>
   );
 }
 
-function Column({ id, depth }: { id: string; depth: number }) {
+/** Trenner zwischen zwei Spalten: Ziehen verteilt die Breite der beiden neu (ein Undo-Schritt am Ende). */
+function ColumnResizer({ left, right }: { left: string; right: string }) {
+  const { store, editable } = useCtx();
+  const onDown = (e: React.PointerEvent) => {
+    if (!editable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const sep = e.currentTarget as HTMLElement;
+    const l = sep.parentElement as HTMLElement | null;
+    const r = l?.nextElementSibling as HTMLElement | null;
+    if (!l || !r) return;
+    const lw = l.getBoundingClientRect().width, rw = r.getBoundingClientRect().width;
+    const lr = Number(l.style.flexGrow) || 1, rr = Number(r.style.flexGrow) || 1;
+    const total = lw + rw, sumR = lr + rr, startX = e.clientX;
+    let ratios: [number, number] = [lr, rr];
+    const doc = sep.ownerDocument;
+    const move = (ev: PointerEvent) => {
+      const nl = Math.min(Math.max(lw + ev.clientX - startX, total * 0.15), total * 0.85);
+      ratios = [(nl / total) * sumR, ((total - nl) / total) * sumR];
+      l.style.flexGrow = String(ratios[0]);
+      r.style.flexGrow = String(ratios[1]);
+    };
+    const up = () => {
+      doc.removeEventListener("pointermove", move);
+      doc.removeEventListener("pointerup", up);
+      doc.documentElement.classList.remove("bx2-col-resizing");
+      blockCmd.setColumnRatios(store, new Map([[left, ratios[0]], [right, ratios[1]]]));
+    };
+    doc.documentElement.classList.add("bx2-col-resizing");
+    doc.addEventListener("pointermove", move);
+    doc.addEventListener("pointerup", up);
+  };
+  return <div className="bx2-col-resize" role="separator" aria-orientation="vertical" aria-label="Resize columns" contentEditable={false} onPointerDown={onDown} />;
+}
+
+function Column({ id, depth, next }: { id: string; depth: number; next: string | undefined }) {
   const { store } = useCtx();
   const b = useBlock(store, id);
   const ratio = typeof b?.props?.ratio === "number" && b.props.ratio > 0 ? b.props.ratio : 1;
-  return <div className="bx2-column" data-column-id={id} style={{ flexGrow: ratio }}><BlockList parent={id} depth={depth} /></div>;
+  return (
+    <div className="bx2-column" data-column-id={id} style={{ flexGrow: ratio }}>
+      <BlockList parent={id} depth={depth} />
+      {next ? <ColumnResizer left={id} right={next} /> : null}
+    </div>
+  );
 }
 
 function BlockContent({ block: b, depth, number }: { block: Block; depth: number; number: number }) {
   const { store, props, editable } = useCtx();
   switch (b.type) {
-    case "text": case "heading1": case "heading2": case "heading3": case "heading4": case "quote": case "code":
+    case "text": case "heading1": case "heading2": case "heading3": case "heading4": case "quote":
       return <TextField block={b} />;
+    case "code":
+      return (
+        <div className="bx2-codewrap">
+          <TextField block={b} />
+          <span className="bx2-code-lang" contentEditable={false}>{b.props?.language || "Plain text"}</span>
+          {b.props?.language === "mermaid" && rich.richLength(b.text) > 0 ? <MermaidPreview code={rich.richPlain(b.text)} /> : null}
+        </div>
+      );
     case "bulletedList":
       return <><span className="bx2-marker" contentEditable={false}>{["•", "◦", "▪"][depth % 3]}</span><TextField block={b} /></>;
     case "numberedList":
@@ -948,6 +1078,32 @@ function BlockContent({ block: b, depth, number }: { block: Block; depth: number
           {props.renderEquation ? props.renderEquation({ expression: b.props?.expression ?? "", displayMode: true }) : <code>{b.props?.expression}</code>}
         </div>
       );
+    case "bookmark": case "embed": {
+      const url = b.props?.url ?? "";
+      const meta = b.props?.bookmark;
+      return (
+        <a className="bx2-embed bx2-bookmark" data-embed="" contentEditable={false} href={url} target="_blank" rel="noopener noreferrer">
+          <span className="bx2-bookmark-title">{meta?.title || url || labelOf(b)}</span>
+          {meta?.summary ? <span className="bx2-bookmark-summary">{meta.summary}</span> : null}
+          <span className="bx2-bookmark-url">{url}</span>
+        </a>
+      );
+    }
+    case "video": case "audio": case "file": case "pdf":
+      return <FileBlock block={b} />;
+    case "table":
+      return <TableBlock block={b} />;
+    case "tableOfContents":
+      return <TableOfContents />;
+    case "button":
+      return <div className="bx2-embed" data-embed="" contentEditable={false}><button type="button" className="bx2-button" disabled>{b.props?.buttonLabel || "Button"}</button></div>;
+    case "syncedBlock":
+      return (
+        <div className="bx2-embed bx2-synced" data-embed="">
+          <ChildList id={b.id} depth={depth + 1} />
+          {!store.children("b:" + b.id).length ? <span className="bx2-muted">Synced block</span> : null}
+        </div>
+      );
     default:
       return <div className="bx2-embed bx2-unsupported" data-embed="" contentEditable={false}>{labelOf(b)}<span className="bx2-muted"> · in the new editor soon</span></div>;
   }
@@ -976,8 +1132,19 @@ function PageLink({ target }: { target: string | undefined }) {
 }
 
 function ImageBlock({ block: b }: { block: Block }) {
-  const { props } = useCtx();
   const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
+  const src = useFileURL(raw);
+  const width = typeof b.props?.width === "number" ? b.props.width : undefined;
+  return (
+    <figure className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
+      {src ? <img src={src} alt="" draggable={false} style={width ? { width } : undefined} /> : <span className="bx2-muted">Image</span>}
+      {b.props?.caption ? <figcaption>{rich.richPlain(b.props.caption)}</figcaption> : null}
+    </figure>
+  );
+}
+
+function useFileURL(raw: string | undefined): string | undefined {
+  const { props } = useCtx();
   const [src, setSrc] = useState<string | undefined>(raw && !raw.startsWith(ASSET_URL_PREFIX) ? raw : undefined);
   useEffect(() => {
     if (!raw) return;
@@ -986,13 +1153,65 @@ function ImageBlock({ block: b }: { block: Block }) {
     void props.resolveFileUrl(raw).then((u) => { if (alive) setSrc(u); }).catch(() => undefined);
     return () => { alive = false; };
   }, [raw, props]);
-  const width = typeof b.props?.width === "number" ? b.props.width : undefined;
+  return src;
+}
+
+function FileBlock({ block: b }: { block: Block }) {
+  const raw = b.props?.asset ? ASSET_URL_PREFIX + b.props.asset.id : b.props?.url;
+  const src = useFileURL(raw);
+  const name = b.props?.asset?.name ?? (b.props?.url ? b.props.url.split("/").pop() : undefined) ?? labelOf(b);
+  if (b.type === "video" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><video className="bx2-media" src={src} controls preload="metadata" /></div>;
+  if (b.type === "audio" && src) return <div className="bx2-embed" data-embed="" contentEditable={false}><audio className="bx2-media" src={src} controls preload="metadata" /></div>;
   return (
-    <figure className="bx2-embed bx2-image" data-embed="" contentEditable={false}>
-      {src ? <img src={src} alt="" draggable={false} style={width ? { width } : undefined} /> : <span className="bx2-muted">Image</span>}
-      {b.props?.caption ? <figcaption>{rich.richPlain(b.props.caption)}</figcaption> : null}
-    </figure>
+    <a className="bx2-embed bx2-file" data-embed="" contentEditable={false} href={src} target="_blank" rel="noopener noreferrer" download={b.type === "file" ? name : undefined}>
+      <span aria-hidden="true">{b.type === "pdf" ? "📕" : "📎"}</span><span className="bx2-file-name">{name}</span>
+    </a>
   );
+}
+
+function TableBlock({ block: b }: { block: Block }) {
+  const cols = Math.max(1, b.props?.tableColumns ?? 1);
+  const cells = b.props?.cells ?? [];
+  const rows: (typeof cells)[] = [];
+  for (let i = 0; i < cells.length; i += cols) rows.push(cells.slice(i, i + cols));
+  const head = b.props?.tableHeaderRow === true;
+  return (
+    <div className="bx2-embed bx2-table-wrap" data-embed="" contentEditable={false}>
+      <table className="bx2-table">
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>{r.map((c, j) => (head && i === 0 ? <th key={j}>{rich.richPlain(c)}</th> : <td key={j}>{rich.richPlain(c)}</td>))}</tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TableOfContents() {
+  const { store, ctrl } = useCtx();
+  useSyncExternalStore(storeSubscribe(store), () => store.revision);
+  const heads = blockCmd.visibleOrder(store, ctrl.pageID).map((id) => store.blocks.get(id)!).filter((x) => /^heading[1-3]$/.test(x.type));
+  return (
+    <nav className="bx2-embed bx2-toc" data-embed="" contentEditable={false} aria-label="Table of contents">
+      {heads.length ? heads.map((h) => (
+        <button key={h.id} type="button" className={"bx2-toc-item bx2-toc-" + h.type} onClick={() => ctrl.root?.querySelector(`[data-block-id="${CSS.escape(h.id)}"]`)?.scrollIntoView({ block: "start", behavior: "smooth" })}>
+          {rich.richPlain(h.text) || "Untitled"}
+        </button>
+      )) : <span className="bx2-muted">Add headings to build a table of contents.</span>}
+    </nav>
+  );
+}
+
+function MermaidPreview({ code }: { code: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host) return;
+    const t = setTimeout(() => host.replaceChildren(mermaidPreview(code)), 250);
+    return () => clearTimeout(t);
+  }, [code]);
+  return <div ref={ref} className="bx2-mermaid" contentEditable={false} data-embed="" />;
 }
 
 function labelOf(b: Block | undefined): string {
@@ -1107,6 +1326,37 @@ function FormatBar({ x, y, onMark }: { x: number; y: number; onMark: (m: "b" | "
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 44) }} onPointerDown={(e) => e.preventDefault()}>
       {items.map((it) => <button key={it.m} type="button" className={"bx2-format-btn bx2-format-" + it.m} title={it.title} aria-label={it.title} onClick={() => onMark(it.m)}>{it.label}</button>)}
+    </div>
+  );
+}
+
+interface MentionState { id: string; at: number; query: string; index: number; x: number; y: number; items: PageRef[] }
+
+function MentionMenu({ state, onChoose, onHover }: { state: MentionState; onChoose: (r: PageRef) => void; onHover: (i: number) => void }) {
+  return (
+    <div className="bx2-menu bx2-slash" role="listbox" aria-label="Mention a page" data-testid="mention-menu" style={{ left: state.x, top: Math.min(state.y, window.innerHeight - 340) }} onPointerDown={(e) => e.preventDefault()}>
+      <div className="bx2-menu-label">Link to page</div>
+      {state.items.map((r, i) => (
+        <div key={r.id} role="option" aria-selected={i === state.index} className="bx2-menu-item" onMouseEnter={() => onHover(i)} onClick={() => onChoose(r)}>
+          <span className="bx2-menu-icon" aria-hidden="true">{r.icon && !/^[a-z]/i.test(r.icon) ? r.icon : "📄"}</span>
+          <span className="bx2-menu-text">{r.title || "Untitled"}</span>
+          {r.path ? <span className="bx2-menu-hint bx2-menu-path">{r.path}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LinkPopover({ x, y, value, onDone }: { x: number; y: number; value: string; onDone: (v: string | undefined) => void }) {
+  const [v, setV] = useState(value);
+  return (
+    <div className="bx2-menu bx2-link" role="dialog" aria-label="Link" data-testid="link-popover" style={{ left: x, top: Math.min(y, window.innerHeight - 80) }}>
+      <input autoFocus className="bx2-link-input" placeholder="Paste or type a link" aria-label="Link" value={v} onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); onDone(v); }
+          else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onDone(undefined); }
+        }} onBlur={() => onDone(undefined)} />
+      {value ? <button type="button" className="bx2-menu-item" onPointerDown={(e) => e.preventDefault()} onClick={() => onDone("")}><span className="bx2-menu-text">Remove link</span></button> : null}
     </div>
   );
 }

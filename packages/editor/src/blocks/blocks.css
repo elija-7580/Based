@@ -346,3 +346,100 @@
 .bx2-format-u { text-decoration: underline; }
 .bx2-format-s { text-decoration: line-through; }
 .bx2-format-c { font-family: var(--font-mono); font-size: var(--type-meta-size); }
+
+/* Code: Sprache, Mermaid-Vorschau */
+.bx2-codewrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.bx2-codewrap > .bx2-field { display: block; }
+.bx2-code-lang {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-2);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--type-meta-size);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.bx2-mermaid { margin-top: var(--space-2); }
+
+/* Bookmark, Datei, Medien */
+.bx2-bookmark {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-half);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--font-ui);
+}
+.bx2-bookmark:hover { background: var(--surface-soft); }
+.bx2-bookmark-title { font-weight: 600; }
+.bx2-bookmark-summary { color: var(--ink-2); font-size: var(--type-description-size); }
+.bx2-bookmark-url { color: var(--muted); font-size: var(--type-meta-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bx2-file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  text-decoration: none;
+}
+.bx2-file:hover { background: var(--selected); }
+.bx2-file-name { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.bx2-media { display: block; max-width: 100%; border-radius: var(--radius-sm); }
+
+/* Einfache Tabelle (nur Anzeige) */
+.bx2-table-wrap { overflow-x: auto; }
+.bx2-table { border-collapse: collapse; font-size: var(--type-ui-size); }
+.bx2-table td, .bx2-table th { min-width: 120px; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); text-align: left; vertical-align: top; }
+.bx2-table th { background: var(--surface-soft); font-weight: 600; }
+
+.bx2-toc { display: flex; flex-direction: column; gap: var(--space-half); }
+.bx2-toc-item { padding: var(--space-half) var(--space-1); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--ink-2); font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); }
+.bx2-toc-item:hover { background: var(--selected); }
+.bx2-toc-heading2 { padding-left: var(--space-5); }
+.bx2-toc-heading3 { padding-left: var(--space-7); }
+.bx2-button { padding: var(--space-1) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font: inherit; }
+.bx2-synced { border-left: 2px solid var(--line); padding-left: var(--space-2); }
+
+/* Spaltenbreite ziehen: schmale Fläche im Spaltenabstand, nah an der linken Spalte (der Griff der rechten Spalte
+   liegt weiter rechts im Abstand und bleibt erreichbar) */
+.bx2-column { position: relative; }
+.bx2-col-resize {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  right: calc(-1 * var(--space-4) - var(--space-half));
+  width: var(--space-2);
+  cursor: col-resize;
+}
+.bx2-col-resize::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--space-1) - 1px);
+  width: 2px;
+  border-radius: var(--radius-xs);
+}
+.bx2-col-resize:hover::after, .bx2-col-resizing .bx2-col-resize::after { background: var(--line); }
+.bx2-col-resizing, .bx2-col-resizing * { cursor: col-resize !important; user-select: none !important; }
+
+.bx2-link { display: flex; flex-direction: column; gap: var(--space-1); min-width: 300px; }
+.bx2-link-input {
+  height: 30px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+.bx2-link-input:focus { border-color: var(--ink-2); }
+.bx2-menu-path { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); }
