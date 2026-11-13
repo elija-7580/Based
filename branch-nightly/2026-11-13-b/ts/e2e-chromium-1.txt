@@ -1,61 +1,61 @@
-success 8b0273ab4339aeacde2e95232eb190e4bf97b74c
-  1) [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+failure 5c82ec8603c6a28cfa6b4891feae7279e3fcf038
 
-    Error: expect(received).toEqual(expected) // deep equality
+  1) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
 
-    - Expected  - 8
-    + Received  + 1
+    Error: expect(locator).toBeFocused() failed
 
-    - Array [
-    -   Array [
-    -     "Alpha",
-    -   ],
-    -   Array [
-    -     "Omega",
-    -   ],
-    - ]
-    + Array []
-
-    Call Log:
-    - Timeout 5000ms exceeded while waiting on the predicate
-
-      233 |   // links vom Griff, unten in der Zeile
-      234 |   await dragBlock(page, "Alpha", "Omega", (b) => ({ x: b.x - 48, y: b.y + b.height - 4 }));
-    > 235 |   await expect.poll(() => columnTexts(page)).toEqual([["Alpha"], ["Omega"]]);
-          |                                              ^
-      236 | });
-      237 |
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-drag.spec.ts:235:46
-
-    Error Context: test-results/editor-drag-Ziehen-am-Grif-81253--dem-letzten-Block-dahinter-chromium/error-context.md
-
-  2) [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
-
-    Error: expect(locator).toContainText(expected) failed
-
-    Locator: locator('[role=menu] [data-active-item]')
-    Expected substring: "Turn into"
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
     Timeout: 5000ms
     Error: element(s) not found
 
     Call log:
-      - Expect "toContainText" locator('[role=menu] [data-active-item]') with timeout 5000ms
-      - waiting for locator('[role=menu] [data-active-item]')
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
 
 
-      191 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveValue("");
-      192 |   await page.keyboard.press("ArrowDown");
-    > 193 |   await expect(page.locator("[role=menu] [data-active-item]")).toContainText("Turn into");
-          |                                                                ^
-      194 |   await page.keyboard.press("Escape");
-      195 |   await expect(page.getByRole("textbox", { name: "Search actions" })).toHaveCount(0);
-      196 | });
-        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:193:64
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
 
     Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium/error-context.md
 
-  2 flaky
-    [chromium] › e2e/editor-drag.spec.ts:219:1 › Ziehen: am Griff entlang sortiert um; links vom Griff und am rechten Rand entstehen Spalten; unter dem letzten Block dahinter 
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('textbox', { name: 'Search actions' })
+    Expected: focused
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeFocused" getByRole('textbox', { name: 'Search actions' }) with timeout 5000ms
+      - waiting for getByRole('textbox', { name: 'Search actions' })
+
+
+      169 |     await expect(page.locator(".bn-side-menu [draggable=true]")).toBeVisible();
+      170 |     await page.locator(".bn-side-menu [draggable=true]").last().click();
+    > 171 |     await expect(page.getByRole("textbox", { name: "Search actions" })).toBeFocused();
+          |                                                                         ^
+      172 |   };
+      173 |   await openMenu();
+      174 |   await page.keyboard.type("cop");
+        at openMenu (/home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:171:73)
+        at /home/runner/work/Based/Based/apps/web/e2e/editor-notion.spec.ts:190:3
+
+    Error Context: test-results/editor-notion-Blockmenü-Su-0c296-ührt-den-ersten-Treffer-aus-chromium-retry1/error-context.md
+
+  1 failed
     [chromium] › e2e/editor-notion.spec.ts:161:1 › Blockmenü: Suchfeld filtert, Enter führt den ersten Treffer aus 
   8 skipped
-  160 passed (5.3m)
+  161 passed (5.8m)
+undefined
+/home/runner/work/Based/Based/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=chromium --shard=1/2 --grep-invert @perf
