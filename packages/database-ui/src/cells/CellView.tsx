@@ -19,6 +19,8 @@ export interface CellViewProps {
   compact?: boolean;
   onToggleCheckbox?: () => void;
   onButton?: () => void;
+  /** BSD-375: Tabelle – ein leerer Titel bleibt leer (wie Notion), statt grau „Untitled“. */
+  blankEmptyTitle?: boolean;
 }
 
 function RichRuns({ runs }: { runs: FormulaRun[] }) {
@@ -56,14 +58,14 @@ function openAsset(host: FileHost, id: string) {
   void host.open(id).then((u) => globalThis.open?.(u, "_blank"), () => { /* nicht ladbar: nichts zu öffnen */ });
 }
 
-function CellViewInner({ row, prop, wrap, compact, onToggleCheckbox, onButton }: CellViewProps): ReactNode {
+function CellViewInner({ row, prop, wrap, onToggleCheckbox, onButton, blankEmptyTitle }: CellViewProps): ReactNode {
   const fileHost = useContext(ShellSlots).files;
   const { store, engine, db, onOpenPage, locked } = useDB();
   const cls = wrap ? "dbui-wrap" : "dbui-clip";
   switch (prop.type) {
     case "title": {
       const t = plainText(row.text);
-      return t ? <span className={cls}>{t}</span> : compact ? <span className="dbui-muted">Untitled</span> : <span className="dbui-muted">Untitled</span>;
+      return t ? <span className={cls}>{t}</span> : blankEmptyTitle ? null : <span className="dbui-muted">Untitled</span>;
     }
     case "select": case "status": {
       const id = valueCase(row.values?.[prop.id]);

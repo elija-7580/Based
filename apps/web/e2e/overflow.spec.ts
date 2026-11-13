@@ -214,3 +214,58 @@ test("30 Tabs und eine breite Datenbank: nichts läuft über", async ({ page, br
   // Die Tab-Leiste rollt waagrecht statt das Fenster zu verbreitern
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });
+
+// BSD-345: Kopfzeile bricht in 900 × 600 auf tiefen Seiten nicht in zwei Zeilen um; Breadcrumb und „Edited …“ kürzen,
+// alle Knöpfe bleiben sichtbar in einer Zeile.
+test("Kopfzeile bleibt in 900 × 600 einzeilig, auch 6 Ebenen tief mit langen Namen", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.goto("/");
+  await ready(page);
+  let parent = (await command(page, { op: "createPage", title: `Root ${LONG_TITLE}` })) as string;
+  for (let i = 1; i <= 6; i++) parent = (await command(page, { op: "createPage", title: `Level ${i} ${LONG_TITLE}`, parent })) as string;
+  for (const hash of ["#page-" + parent, "#page-" + parent]) {
+    await page.goto("/" + hash);
+    await ready(page);
+    const bar = page.locator("header.topbar").first();
+    await expect(bar.getByLabel("Breadcrumb")).toBeVisible();
+    const tops = await bar.evaluate((el) => [...el.children].filter((c) => (c as HTMLElement).offsetParent !== null).map((c) => Math.round(c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2)));
+    expect(Math.max(...tops) - Math.min(...tops), "eine Zeile").toBeLessThanOrEqual(4);
+    const box = (await bar.boundingBox())!;
+    expect(box.height).toBeLessThanOrEqual(64);
+    // nichts ragt rechts aus der Kopfzeile, Knöpfe vollständig sichtbar
+    for (const name of ["Share", "Add to Favorites"]) {
+      const b = (await bar.getByRole("button", { name }).first().boundingBox())!;
+      expect(b.x + b.width, name).toBeLessThanOrEqual(box.x + box.width + 1);
+    }
+    expect(await bar.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(1);
+    // zweiter Durchlauf: ohne Seitenleiste (falls die Shell den Knopf zeigt)
+    const hide = page.getByRole("button", { name: /Hide sidebar|Close sidebar/ }).first();
+    if (await hide.isVisible()) await hide.click();
+  }
+});
+
+// BSD-338: Werkzeugleiste der Inline-Datenbank bleibt in 900 × 600 und in einer schmalen Spalte einzeilig („Open as
+// full page“ rutscht nicht allein in eine zweite Zeile); Filter/Sort zeigen dann nur ihr Icon.
+test("Inline-Datenbank: Werkzeugleiste in 900 × 600 einzeilig", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 600 });
+  await page.goto("/");
+  await ready(page);
+  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByRole("button", { name: "New page" }).first().click();
+  const editor = page.locator(".bn-editor[contenteditable='true']").first();
+  await editor.click();
+  await page.keyboard.type("/database");
+  await page.getByRole("option", { name: /Database – Inline/ }).click();
+  const db = page.locator(".shell-database.inline");
+  await expect(db.getByRole("columnheader", { name: /Name/ }).first()).toBeVisible();
+  await db.hover();
+  const bar = db.locator(".dbui-toolbar").first();
+  const centers = await bar.evaluate((el) => [...el.querySelectorAll(".dbui-tab, .dbui-actions > *, .dbui-open-full")]
+    .filter((c) => (c as HTMLElement).offsetParent !== null).map((c) => { const r = c.getBoundingClientRect(); return Math.round(r.top + r.height / 2); }));
+  expect(centers.length).toBeGreaterThan(3);
+  expect(Math.max(...centers) - Math.min(...centers), "eine Zeile").toBeLessThanOrEqual(4);
+  const box = (await bar.boundingBox())!;
+  const full = (await db.getByRole("button", { name: "Open as full page" }).boundingBox())!;
+  expect(full.x + full.width).toBeLessThanOrEqual(box.x + box.width + 1);
+  await expect(db.getByRole("button", { name: "Filter" })).toBeVisible();
+});

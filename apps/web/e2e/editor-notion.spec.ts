@@ -275,3 +275,16 @@ test("Beim Öffnen einer Seite springt der Titel nicht", async ({ page, browserN
   }
   expect(await page.evaluate(() => (globalThis as unknown as { __shifts: string[] }).__shifts)).toEqual([]);
 });
+
+// BSD-343: Kurznamen wie „js“, „ts“, „py“ aus Markdown/Notion zeigen die Sprache in der Auswahl (vorher leer).
+test("Codeblock: Kurznamen der Sprache zeigen die Sprache in der Auswahl", async ({ page }) => {
+  await open(page, "Langs");
+  await editor(page).locator(".bn-block-content").first().click();
+  await paste(page, "```js\nconst a = 1;\n```\n\n```TS\nlet b: number = 2;\n```\n\n```py\nx = 3\n```\n\n```cobol\nDISPLAY 'X'.\n```");
+  const selects = editor(page).locator("[data-content-type=codeBlock] select");
+  await expect(selects).toHaveCount(4);
+  await expect(selects.nth(0)).toHaveValue("javascript");
+  await expect(selects.nth(1)).toHaveValue("typescript");
+  await expect(selects.nth(2)).toHaveValue("python");
+  await expect(editor(page).locator("[data-content-type=codeBlock]").first().locator(".bx-tok-keyword")).toHaveText(["const"]);
+});

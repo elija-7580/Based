@@ -57,7 +57,7 @@ const TableRow = memo(function TableRow({ row, from, to, lead, props, widths, ac
       {props.slice(from, to).map((p, i) => { const col = from + i; return (
         <div key={p.id} role="gridcell" className={"dbui-cell" + (col === activeCol ? " active" : "") + (p.type === "title" ? " title" : "")} style={{ width: widths[col] }}
           data-cell={`${row.id}:${col}`} aria-selected={col === activeCol} onClick={(e) => onCell(row, col, e.currentTarget)}>
-          <CellView row={row} prop={p} wrap={wrap} onToggleCheckbox={() => onToggle(row, p)} />
+          <CellView row={row} prop={p} wrap={wrap} blankEmptyTitle onToggleCheckbox={() => onToggle(row, p)} />
           {p.type === "title" && onOpen && (
             <button type="button" className="dbui-open-btn" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onOpen(row.id); }} aria-label={`Open ${plainText(row.text) || "Untitled"}`}>
               <Icon name="open" size={12} />Open

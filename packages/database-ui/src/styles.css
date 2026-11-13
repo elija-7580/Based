@@ -47,6 +47,9 @@
   letter-spacing: var(--type-heading-tracking); border: 0; background: transparent; color: var(--ink); padding: 0; margin: 0; outline: none; width: 100%;
 }
 .dbui-title::placeholder { color: var(--muted); }
+/* BSD-375: Inline-Datenbank ohne Titel – kein graues „Untitled“ (wie Notion); beim Überfahren oder im Fokus erscheint
+   der Platzhalter, damit man ihr einen Namen geben kann. Platz bleibt, damit nichts springt. */
+.dbui-root.inline:not(:hover) .dbui-title:placeholder-shown:not(:focus)::placeholder { color: transparent; }
 .dbui-toolbar { display: flex; align-items: center; gap: var(--space-1); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .dbui-tabs { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
 .dbui-tab {
@@ -604,6 +607,17 @@ body.dbui-dragging, body.dbui-dragging * { cursor: grabbing !important; user-sel
 .dbui-vlist.static { display: flex; flex-direction: column; }
 .dbui-vitem.static { position: static; }
 .dbui-board-col .dbui-load-more { padding-left: var(--space-3); }
+/* BSD-338: Inline bleibt die Werkzeugleiste einzeilig – auch in schmalen Spalten und im kleinsten Fenster. Tabs geben
+   zuerst Platz ab; unter 40rem Breite zeigen Filter/Sort nur ihr Icon und die Zeilenzahl fällt weg. */
+.dbui-root.inline { container: dbui-inline / inline-size; }
+.dbui-root.inline .dbui-toolbar { flex-wrap: nowrap; }
+.dbui-root.inline .dbui-tabs { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: hidden; }
+.dbui-root.inline .dbui-actions { flex: none; flex-wrap: nowrap; }
+.dbui-root.inline .dbui-open-full { flex: none; }
+@container dbui-inline (max-width: 40rem) {
+  .dbui-chip-label, .dbui-rowcount { display: none; }
+  .dbui-chip.ghost { padding: 0 var(--space-2); }
+}
 .dbui-root.inline .dbui-actions, .dbui-root.inline .dbui-open-full { opacity: 0; transition: opacity var(--duration-fast) var(--ease-out); }
 .dbui-root.inline:hover .dbui-actions, .dbui-root.inline:focus-within .dbui-actions,
 .dbui-root.inline:hover .dbui-open-full, .dbui-root.inline:focus-within .dbui-open-full { opacity: 1; }

@@ -6,7 +6,7 @@
 // Ein Dokument (ein Y.Doc) gehört zu einer Wurzel: einer Seite oder dem Original eines Synced Blocks.
 // Grenzblöcke (Unterseiten, Datenbanken, Synced Blocks, Seitenlinks) erscheinen als Atom; ihre Kinder gehören
 // nicht zu diesem Dokument. Tabellenzeilen stecken im Inhalt des Tabellenblocks.
-import { canonicalStringify, plainText, type Block, type BlockProps, type RichText } from "@based/core";
+import { canonicalStringify, codeLanguageID, plainText, type Block, type BlockProps, type RichText } from "@based/core";
 import { ASSET_URL_PREFIX, CUSTOM, type BNBlock, type BNTableCell, type BNTableContent } from "./bn.js";
 import { canonicalRichText, colorFromBN, colorToBN, inlineToRichText, richTextToInline } from "./richtext.js";
 
@@ -129,7 +129,8 @@ export function projectBlock(b: Block, src?: BlockSource): BNBlock {
     case "callout": return colored(CUSTOM.callout, { icon: typeof p.icon === "string" ? p.icon : "" });
     case "divider": return atom("divider");
     // Umbruch: an, solange er nicht ausdrücklich abgeschaltet ist (so zeichnet Based Next Code seit jeher).
-    case "code": return { id: b.id, type: "codeBlock", props: { language: p.language ?? "text", wrap: p.wrap !== false }, content: plainText(b.text), children: children() };
+    // BSD-343: Kurznamen („js“, „ts“) zeigen die passende Sprache im Menü; gespeichert wird beim nächsten Bearbeiten der Schlüssel.
+    case "code": return { id: b.id, type: "codeBlock", props: { language: codeLanguageID(p.language) ?? "text", wrap: p.wrap !== false }, content: plainText(b.text), children: children() };
     case "equation": return atom(CUSTOM.equation, { expression: p.expression ?? "" });
     case "image": case "video": case "audio": case "file":
       return atom(b.type, {

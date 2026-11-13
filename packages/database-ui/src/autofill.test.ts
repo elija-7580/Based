@@ -66,7 +66,8 @@ describe("⌘Z in Datenbank-Ansichten (BSD-293)", () => {
     expect(k("y", { ctrlKey: true })).toBe("redo");
     expect(k("z")).toBeUndefined();
     expect(k("z", { metaKey: true, altKey: true })).toBeUndefined();
-  });
+    // Das erste Laden von DatabaseView (mit Astryx-Feldern, BSD-375) braucht unter Last mehr als die Standard-5 s.
+  }, 30_000);
 });
 
 describe("Diagramm-Farben (BSD-216)", () => {

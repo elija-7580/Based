@@ -180,10 +180,10 @@ function Toolbar({ view, search, setSearch, onNew }: { view: View; search: strin
         </button>
       ))}
       {showsRows && nested > 0 && <button type="button" className="dbui-chip" onClick={(e) => setFilter(e.currentTarget)}>+{nested} rules</button>}
-      {showsRows && <button type="button" className="dbui-chip ghost" onClick={(e) => setFilter(e.currentTarget)}><Icon name="filter" size={14} />Filter</button>}
+      {showsRows && <button type="button" className="dbui-chip ghost" aria-label="Filter" onClick={(e) => setFilter(e.currentTarget)}><Icon name="filter" size={14} /><span className="dbui-chip-label">Filter</span></button>}
       {showsRows && (sorts.length
         ? <button type="button" className="dbui-chip" onClick={(e) => setSort(e.currentTarget)}><Icon name="sort" size={14} />{sorts.length > 1 ? `${sorts.length} sorts` : `${sortName} ${sorts[0]!.ascending ? "↑" : "↓"}`}</button>
-        : <button type="button" className="dbui-chip ghost" onClick={(e) => setSort(e.currentTarget)}><Icon name="sort" size={14} />Sort</button>)}
+        : <button type="button" className="dbui-chip ghost" aria-label="Sort" onClick={(e) => setSort(e.currentTarget)}><Icon name="sort" size={14} /><span className="dbui-chip-label">Sort</span></button>)}
       {showsRows && (searching
         ? <input className="dbui-input dbui-search" type="search" placeholder="Search" aria-label="Search this view" value={search} autoFocus onChange={(e) => setSearch(e.target.value)}
             onBlur={() => { if (!search) setSearching(false); }} onKeyDown={(e) => { if (e.key === "Escape") { setSearch(""); setSearching(false); } }} />

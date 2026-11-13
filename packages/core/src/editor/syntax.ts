@@ -170,3 +170,14 @@ export const CODE_LANGUAGES: readonly { id: string; name: string; aliases?: read
   { id: "xml", name: "XML" },
   { id: "yaml", name: "YAML", aliases: ["yml"] },
 ];
+
+const LANGUAGE_IDS: ReadonlyMap<string, string> = new Map(CODE_LANGUAGES.flatMap((l) => [[l.id, l.id] as const, ...(l.aliases ?? []).map((a) => [a, l.id] as const)]));
+
+/**
+ * BSD-343: Kurzname oder Schreibweise einer Sprache („js“, „TS“, „py“, „yml“, „c++“) → Schlüssel aus CODE_LANGUAGES,
+ * damit die Sprachwahl im Codeblock nicht leer bleibt. Unbekanntes bleibt unverändert (wird nicht verworfen).
+ */
+export function codeLanguageID(raw: string | undefined): string | undefined {
+  if (raw === undefined) return undefined;
+  return LANGUAGE_IDS.get(raw.trim().toLowerCase()) ?? raw;
+}

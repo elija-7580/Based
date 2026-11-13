@@ -1,6 +1,6 @@
 // BSD-209: dieselben Fälle wie Swift SyntaxHighlighterTests.
 import { describe, expect, it } from "vitest";
-import { syntaxTokens, type SyntaxKind } from "../src/index.js";
+import { CODE_LANGUAGES, codeLanguageID, syntaxTokens, type SyntaxKind } from "../src/index.js";
 
 const kinds = (code: string, lang: string | undefined): [string, SyntaxKind][] =>
   syntaxTokens(code, lang).map((t) => [code.slice(t.from, t.from + t.length), t.kind]);
@@ -35,5 +35,18 @@ describe("Syntax-Hervorhebung (Swift SyntaxHighlighter)", () => {
       expect(syntaxTokens(code, "swift").every((t) => t.from + t.length <= code.length)).toBe(true);
     }
     expect(kinds("SELECT name FROM users -- all", "sql").map((x) => x[1])).toEqual(["keyword", "keyword", "comment"]);
+  });
+});
+
+describe("BSD-343: Sprach-Kurznamen im Codeblock", () => {
+  it("Kurznamen und Schreibweisen ergeben den Schlüssel aus CODE_LANGUAGES", () => {
+    for (const [raw, id] of [["js", "javascript"], ["JS", "javascript"], ["ts", "typescript"], ["tsx", "typescript"], ["py", "python"], ["yml", "yaml"], ["c++", "cpp"], ["sh", "bash"], ["md", "markdown"], [" Rust ", "rust"], ["rs", "rust"], ["javascript", "javascript"]] as const) {
+      expect(codeLanguageID(raw), raw).toBe(id);
+      expect(CODE_LANGUAGES.some((l) => l.id === id)).toBe(true);
+    }
+  });
+  it("Unbekanntes bleibt, wie es ist; ohne Sprache keine Sprache", () => {
+    expect(codeLanguageID("cobol")).toBe("cobol");
+    expect(codeLanguageID(undefined)).toBeUndefined();
   });
 });
