@@ -2,7 +2,7 @@
   "note": "BSD-348: Bestand, darf nur schrumpfen (node ci/design-guard.mjs --shrink)",
   "totals": {
     "px": 144,
-    "button": 332,
+    "button": 324,
     "astryx": 188
   },
   "files": {
@@ -271,7 +271,7 @@
       "button": 4
     },
     "packages/editor/src/blocks/BlockEditor.tsx": {
-      "button": 14
+      "button": 6
     },
     "packages/editor/src/blocks/blocks.css": {
       "px": 47
