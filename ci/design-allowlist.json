@@ -1,0 +1,310 @@
+{
+  "note": "BSD-348: Bestand, darf nur schrumpfen (node ci/design-guard.mjs --shrink)",
+  "totals": {
+    "px": 144,
+    "button": 332,
+    "astryx": 188
+  },
+  "files": {
+    "apps/web/src/assets.css": {
+      "px": 2
+    },
+    "apps/web/src/brain/BrainChatUI.tsx": {
+      "button": 4,
+      "astryx": 4
+    },
+    "apps/web/src/brain/BrainSettings.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/brain/brain.css": {
+      "px": 1
+    },
+    "apps/web/src/chat/AiSettingsSection.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/chat/ChatMessages.tsx": {
+      "astryx": 6
+    },
+    "apps/web/src/chat/ChatView.tsx": {
+      "astryx": 6
+    },
+    "apps/web/src/chat/ConnectionsSection.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/chat/chat.css": {
+      "px": 1
+    },
+    "apps/web/src/coding/CliChats.tsx": {
+      "astryx": 3
+    },
+    "apps/web/src/coding/CodingScreen.tsx": {
+      "astryx": 12
+    },
+    "apps/web/src/coding/Composer.tsx": {
+      "astryx": 8
+    },
+    "apps/web/src/coding/TerminalView.tsx": {
+      "astryx": 1
+    },
+    "apps/web/src/coding/coding.css": {
+      "px": 2
+    },
+    "apps/web/src/components/Backlinks.tsx": {
+      "button": 4
+    },
+    "apps/web/src/components/BlockView.tsx": {
+      "button": 3
+    },
+    "apps/web/src/components/Composer.tsx": {
+      "button": 5
+    },
+    "apps/web/src/components/CrashReportPrompt.tsx": {
+      "astryx": 2
+    },
+    "apps/web/src/components/FindBar.tsx": {
+      "button": 3
+    },
+    "apps/web/src/components/ImportExport.tsx": {
+      "button": 13,
+      "astryx": 2
+    },
+    "apps/web/src/components/LibraryTabs.tsx": {
+      "astryx": 1
+    },
+    "apps/web/src/components/MoveDialog.tsx": {
+      "astryx": 6
+    },
+    "apps/web/src/components/Notice.tsx": {
+      "button": 1
+    },
+    "apps/web/src/components/NotionHybrid.tsx": {
+      "button": 4
+    },
+    "apps/web/src/components/NotionImport.tsx": {
+      "button": 10,
+      "astryx": 1
+    },
+    "apps/web/src/components/PageCover.tsx": {
+      "button": 3
+    },
+    "apps/web/src/components/QuickFind.tsx": {
+      "button": 2
+    },
+    "apps/web/src/components/ReportProblem.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/components/Share.tsx": {
+      "button": 1,
+      "astryx": 6
+    },
+    "apps/web/src/components/Sidebar.tsx": {
+      "button": 22,
+      "astryx": 1
+    },
+    "apps/web/src/components/TabBar.tsx": {
+      "button": 2
+    },
+    "apps/web/src/components/TeamspaceDialog.tsx": {
+      "astryx": 7
+    },
+    "apps/web/src/components/VersionHistory.tsx": {
+      "button": 5
+    },
+    "apps/web/src/components/crashReport.css": {
+      "px": 2
+    },
+    "apps/web/src/components/history.css": {
+      "px": 4
+    },
+    "apps/web/src/components/teamspaces.css": {
+      "px": 2
+    },
+    "apps/web/src/database/FormView.tsx": {
+      "astryx": 16
+    },
+    "apps/web/src/database/RowPeek.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/database/rowPeek.css": {
+      "px": 1
+    },
+    "apps/web/src/desktop/BackupsGroup.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/desktop/LocalServerSection.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/desktop/TailnetGroup.tsx": {
+      "astryx": 6
+    },
+    "apps/web/src/home/AgentDetail.tsx": {
+      "button": 4,
+      "astryx": 3
+    },
+    "apps/web/src/home/ProjectDetail.tsx": {
+      "button": 3,
+      "astryx": 3
+    },
+    "apps/web/src/home/TaskCard.tsx": {
+      "button": 1,
+      "astryx": 2
+    },
+    "apps/web/src/home/TimeArc.tsx": {
+      "button": 12,
+      "astryx": 1
+    },
+    "apps/web/src/home/home.css": {
+      "px": 35
+    },
+    "apps/web/src/screens/Graph.tsx": {
+      "button": 1,
+      "astryx": 7
+    },
+    "apps/web/src/screens/Home.tsx": {
+      "button": 4,
+      "astryx": 1
+    },
+    "apps/web/src/screens/Library.tsx": {
+      "button": 1,
+      "astryx": 9
+    },
+    "apps/web/src/screens/Meetings.tsx": {
+      "astryx": 3
+    },
+    "apps/web/src/screens/PageView.tsx": {
+      "button": 34
+    },
+    "apps/web/src/screens/Settings.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/screens/Trash.tsx": {
+      "button": 7
+    },
+    "apps/web/src/screens/Welcome.tsx": {
+      "button": 2
+    },
+    "apps/web/src/screens/graph.css": {
+      "px": 3
+    },
+    "apps/web/src/screens/library.css": {
+      "px": 1
+    },
+    "apps/web/src/screens/settings/AstryxKit.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/screens/settings/diagnostics.tsx": {
+      "astryx": 4
+    },
+    "apps/web/src/screens/settings/parts.tsx": {
+      "astryx": 3
+    },
+    "apps/web/src/screens/settings/sections.tsx": {
+      "astryx": 7
+    },
+    "apps/web/src/screens/settings/settings.css": {
+      "px": 2
+    },
+    "apps/web/src/shell/GuestRevoked.tsx": {
+      "astryx": 3
+    },
+    "apps/web/src/styles.css": {
+      "px": 22
+    },
+    "apps/web/src/tasks/AgentSettingsSection.tsx": {
+      "astryx": 9
+    },
+    "apps/web/src/tasks/TasksScreen.tsx": {
+      "astryx": 9
+    },
+    "apps/web/src/tasks/tasks.css": {
+      "px": 1
+    },
+    "packages/database-ui/src/DatabaseView.tsx": {
+      "button": 13
+    },
+    "packages/database-ui/src/cells/CellEditor.tsx": {
+      "button": 12
+    },
+    "packages/database-ui/src/cells/CellView.tsx": {
+      "button": 4
+    },
+    "packages/database-ui/src/layouts/Board.tsx": {
+      "button": 6
+    },
+    "packages/database-ui/src/layouts/Calendar.tsx": {
+      "button": 9
+    },
+    "packages/database-ui/src/layouts/Dashboard.tsx": {
+      "button": 3
+    },
+    "packages/database-ui/src/layouts/List.tsx": {
+      "button": 6
+    },
+    "packages/database-ui/src/layouts/Map.tsx": {
+      "button": 13
+    },
+    "packages/database-ui/src/layouts/Table.tsx": {
+      "button": 12
+    },
+    "packages/database-ui/src/layouts/Timeline.tsx": {
+      "button": 9
+    },
+    "packages/database-ui/src/layouts/shared.tsx": {
+      "button": 2
+    },
+    "packages/database-ui/src/menus/FilterEditor.tsx": {
+      "button": 5
+    },
+    "packages/database-ui/src/menus/PropertyMenu.tsx": {
+      "button": 6
+    },
+    "packages/database-ui/src/menus/SortEditor.tsx": {
+      "button": 4
+    },
+    "packages/database-ui/src/menus/ViewSettings.tsx": {
+      "button": 10
+    },
+    "packages/database-ui/src/styles.css": {
+      "px": 15
+    },
+    "packages/database-ui/src/ui.tsx": {
+      "button": 4
+    },
+    "packages/editor/src/blocks/BlockEditor.tsx": {
+      "button": 14
+    },
+    "packages/editor/src/blocks/blocks.css": {
+      "px": 47
+    },
+    "packages/editor/src/schema/blocks.tsx": {
+      "button": 7
+    },
+    "packages/editor/src/schema/meeting.tsx": {
+      "button": 16
+    },
+    "packages/editor/src/styles.css": {
+      "px": 3
+    },
+    "packages/editor/src/ui/AIBox.tsx": {
+      "button": 8
+    },
+    "packages/editor/src/ui/ButtonBlock.tsx": {
+      "button": 8
+    },
+    "packages/editor/src/ui/EmojiPicker.tsx": {
+      "button": 3
+    },
+    "packages/editor/src/ui/ImageViewer.tsx": {
+      "button": 1
+    },
+    "packages/editor/src/ui/MovePicker.tsx": {
+      "button": 3
+    },
+    "packages/editor/src/ui/Outline.tsx": {
+      "button": 1
+    },
+    "packages/editor/src/ui/PageEditor.tsx": {
+      "button": 2
+    }
+  }
+}

@@ -121,6 +121,9 @@ für Zeilen: `screens/settings/parts.tsx` (`Group`, `Row`, `Value`). Adresse ein
 - **Keine festen px-Werte** für Abstände, Radien, Größen – `var(--space-*|--radius-*|--size-*)`. Ausnahme: 1-px-Linien
   und 3-px-Marker-Strich.
 - Agenten lesen vor jeder sichtbaren Änderung den Skill `.claude/skills/based-design/SKILL.md`.
+- **Wächter (BSD-348):** `node ci/design-guard.mjs` (läuft in `run-ts.sh`) zählt rohe `<button>`, direkte
+  Astryx-Importe und feste px je Datei gegen `ci/design-allowlist.json`. Neue Verstöße machen den Lauf rot; die Liste
+  darf nur schrumpfen (`--shrink` nach einer Umstellung).
 
 ## Offen
 
