@@ -126,6 +126,10 @@ export { countWords, findInText, foldWithMap, pageTextStats, textStats } from ".
 export type { TextMatch, TextStats } from "./editor/text-stats.js";
 export { EMOJI_CATALOG, RANDOM_ICONS, randomIcon, searchEmoji } from "./editor/emoji.js";
 export type { EmojiEntry } from "./editor/emoji.js";
+// ADR 0016: Block-Editor – Textoperationen und Befehle auf den Block-Records
+export * as rich from "./editor/rich.js";
+export * as blockCmd from "./editor/block-cmd.js";
+export type { Caret, EditResult, DropSide } from "./editor/block-cmd.js";
 export { COVER_HEIGHT_MAX, COVER_HEIGHT_MIN, coverHeight, setCoverHeight } from "./store/page-options.js";
 export { pageCover, pageFormat, setCoverPosition, setPageCover, setPageFormat, setPageIcon, setPageIconImage } from "./store/page-options.js";
 export type { CoverAsset, PageCoverValue, PageFont, PageFormatPatch } from "./store/page-options.js";

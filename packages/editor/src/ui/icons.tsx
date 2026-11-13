@@ -9,3 +9,20 @@ export function ExpandIcon() {
     </svg>
   );
 }
+
+// ADR 0016: Symbole des Block-Editors (Griff, Plus, Toggle) auf demselben 16er-Raster.
+export function PlusIcon() {
+  return <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>;
+}
+
+export function GripIcon() {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+      {[3, 8, 13].map((y) => [2.5, 7.5].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.4" fill="currentColor" />))}
+    </svg>
+  );
+}
+
+export function ChevronIcon() {
+  return <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
