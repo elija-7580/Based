@@ -218,6 +218,9 @@ export const guestDeviceNode = (id: string) => ({
   set: (node: string) => write(`based.guest.${id}.device`, node),
 });
 
+/** ADR 0016: neuer Block-Editor statt BlockNote (pro Gerät, Settings → Diagnostics → For developers). Standard aus. */
+export const newEditorPref = devicePref<boolean>("based.newEditor", false, isBool);
+
 /** BSD-319: Entwickler-Ansicht (Blockgrenzen, Ebenen, Fokus, letzte Ereignisse) – pro Gerät, Settings → Diagnostics. */
 const devViewListeners = new Set<() => void>();
 export const devViewPref = {
