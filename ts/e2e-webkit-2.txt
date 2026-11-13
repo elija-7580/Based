@@ -1,61 +1,61 @@
-failure 96a70930580e305881d83732067218015f1496aa
+success 41cd2f6330ae2ac61a06f464eda5c313c8baa1fa
+  ✓   95 [webkit] › e2e/sidebar-menu.spec.ts:25:1 › Seitenmenü: neuer Tab, Link kopieren, Export als Markdown (7.0s)
+  ✓   94 [webkit] › e2e/sidebar-inline-db.spec.ts:8:1 › Seitenleiste: Inline-Datenbank steht unter ihrer Seite und öffnet sich als ganze Seite (9.6s)
+  ✓   96 [webkit] › e2e/sidebar-menu.spec.ts:49:1 › Mehrfachauswahl: Open in new tabs und Copy links (7.5s)
+  ✓   97 [webkit] › e2e/sidebar-multi.spec.ts:22:1 › ⇧-Klick wählt mehrere Seiten; Sammelaktionen Favorit und Papierkorb (7.9s)
+  ✓   98 [webkit] › e2e/sidebar-menu.spec.ts:68:1 › Seitenmenü bleibt im kleinsten Fenster ganz sichtbar (5.6s)
+  ✓   99 [webkit] › e2e/sidebar-multi.spec.ts:45:1 › Esc und normaler Klick heben die Auswahl auf (5.0s)
+  ✓  101 [webkit] › e2e/sidebar-multi.spec.ts:59:1 › Eingeklappt: Zeiger an den linken Rand zeigt die Seitenleiste schwebend (8.0s)
+  ✓  100 [webkit] › e2e/sidebar-nav.spec.ts:16:1 › oben nur Search, Home, Chat; Fuß als Icon-Zeile; Tasks, Graph, Settings bleiben erreichbar @smoke (9.1s)
+  ✓  102 [webkit] › e2e/smoke.spec.ts:12:1 › Shell mit Seitenleiste und Home @smoke (4.1s)
+  ✓  104 [webkit] › e2e/smoke.spec.ts:24:1 › Composer-Picker öffnen ein Menü und übernehmen die Wahl @smoke (4.3s)
+  ✓  103 [webkit] › e2e/sidebar-nav.spec.ts:47:1 › Rechtsklick: oben anpinnen, ausblenden, wieder zeigen – bleibt nach Neuladen @smoke (9.0s)
+  -  106 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (light)
+  -  107 [webkit] › e2e/sidebar-nav.spec.ts:72:3 › Screenshot Seitenleiste (dark)
+  ✓  105 [webkit] › e2e/smoke.spec.ts:30:1 › Theme-, Stil- und Calm-Umschalter ändern die Wurzel-Attribute @smoke (9.4s)
+  ✓  108 [webkit] › e2e/sidebar-nav.spec.ts:84:1 › Einträge ziehen: oben umsortieren, in den Fuß und zurück; bleibt nach Neuladen; Reset (8.1s)
+  ✓  109 [webkit] › e2e/smoke.spec.ts:58:1 › Show agent details blendet Planer und Laufzeit auf Home ein @smoke (5.4s)
+  ✓  110 [webkit] › e2e/storage.spec.ts:50:1 › Versionsverlauf übersteht das Neuladen; keine Speicher-Warnung (10.3s)
+  ✓  111 [webkit] › e2e/switch-parity.spec.ts:41:1 › AI-Knopf in der Kopfzeile öffnet und schließt das Chat-Panel (wie ⌘J) (7.1s)
+  ✓  112 [webkit] › e2e/storage.spec.ts:71:1 › erzwungener Speicher-Fallback von history.sqlite ist sichtbar, nicht nur in der Konsole (3.8s)
+  -  114 [webkit] › e2e/storage.spec.ts:87:1 › Screenshots web-storage-warning-*
+  ✓  113 [webkit] › e2e/switch-parity.spec.ts:54:1 › ⇧⌘U öffnet die Elternseite; oben angekommen passiert nichts (4.9s)
+(node:13618) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  116 [webkit] › e2e/switch-parity.spec.ts:66:1 › Datenbank-Zeile: Breadcrumb zeigt Datenbank und Seiten darüber, ⇧⌘U springt zur Datenbank (4.2s)
+  ✓  117 [webkit] › e2e/switch-parity.spec.ts:89:1 › Einstellungen → Writing: neue Seiten mit Serif und voller Breite, Rechtschreibprüfung aus (9.1s)
+  ✓  118 [webkit] › e2e/switch-parity.spec.ts:105:1 › Bild: Doppelklick zeigt es groß, Esc schließt; Breite bleibt nach dem Neuladen (11.3s)
+  -  119 [webkit] › e2e/switch-parity.spec.ts:145:1 › Bildschirmfotos: Kopfzeile mit AI-Knopf, Writing-Einstellungen, Bildansicht
+  ✓  115 [webkit] › e2e/sync-assets.spec.ts:101:1 › Bild auf Gerät A → auf Gerät B sichtbar, Bytes identisch; Platzhalter, wenn die Datei nicht ladbar ist (27.0s)
+(node:14466) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  120 [webkit] › e2e/tabs.spec.ts:32:1 › zwei Browser-Tabs: Änderungen sofort im anderen, Store-Tab schließen, der andere speichert weiter (9.1s)
+  ✓  121 [webkit] › e2e/tailnet.spec.ts:39:1 › BSD-315: im Tailnet erreichbar – Adresse, Gerät koppeln (QR, eigenes Token), widerrufen (7.5s)
+  ✓  122 [webkit] › e2e/tabs.spec.ts:77:1 › Tabs in der Shell: öffnen, wechseln, eigener Verlauf, umsortieren, schließen, nach dem Neuladen noch da @smoke (21.6s)
+  ✓  123 [webkit] › e2e/tasks.spec.ts:32:1 › Eingabe → Received → Plan → ausgeführt → Undo; Rückfrage; Neuladen (18.8s)
+  ✓  124 [webkit] › e2e/tabs.spec.ts:158:1 › Sync-Token nicht im Klartext: alter localStorage-Eintrag wird verschlüsselt übernommen (5.0s)
+  ✓  125 [webkit] › e2e/tasks.spec.ts:109:1 › Budget und Regeln in den Einstellungen; Unteragent über Budget → Vorschlag (7.6s)
+  -  127 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (light)
+  -  128 [webkit] › e2e/tasks.spec.ts:143:3 › Screenshot Auftragsliste (dark)
+  ✓  126 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (light) (5.9s)
+  ✓  130 [webkit] › e2e/theme.spec.ts:22:3 › Astryx-Komponenten tragen die Based-Farben (dark) (4.3s)
+  ✓  129 [webkit] › e2e/unlinked.spec.ts:9:1 › unverlinkte Erwähnung finden und verlinken (9.0s)
+  ✓  131 [webkit] › e2e/theme.spec.ts:86:1 › Appearance-Umschalter schaltet Astryx mit: Theme, Dichte, Stil (5.8s)
+  ✓  132 [webkit] › e2e/unlinked.spec.ts:40:1 › [[Titel]] fertig getippt wird zur Erwähnung – vorhandene Seite oder neu angelegt (BSD-90 Teil 2) (5.2s)
+  ✓  133 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme dark bei System light (3.0s)
+  ✓  135 [webkit] › e2e/theme.spec.ts:120:3 › Seitentitel und Wortmarke in Tinte: Theme light bei System dark (3.0s)
+  ✓  136 [webkit] › e2e/theme.spec.ts:135:1 › Theme „System“ folgt dem Betriebssystem (3.6s)
+  ✓  137 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil default) (4.9s)
+  ✓  134 [webkit] › e2e/welcome.spec.ts:27:1 › Frischer Speicher → Willkommen → Turn on agents → Start empty → Anleitungsseiten, danach Home @smoke (12.7s)
+  ✓  138 [webkit] › e2e/theme.spec.ts:150:3 › beim Laden gehen keine Requests an fremde Hosts (Stil bold) (4.0s)
+  ✓  139 [webkit] › e2e/welcome.spec.ts:69:1 › Willkommen → Import from Notion öffnet den Import-Dialog mit „Connect Notion directly“ (5.4s)
+  ✓  140 [webkit] › e2e/scrollbars.spec.ts:41:1 › Rollbalken: Standard-Eigenschaften nur ohne ::-webkit-scrollbar (2.3s)
+  ✓  141 [webkit] › e2e/welcome.spec.ts:93:1 › Automatisierter Browser ohne Haken: gewohnte Startseite (bestehende Specs) (3.4s)
+  ✓  142 [webkit] › e2e/scrollbars.spec.ts:46:1 › Rollbalken: schmale feste Spalte (8 px) in Chromium und WebKit, ohne Eckkasten (1.9s)
+  ✓  144 [webkit] › e2e/scrollbars.spec.ts:52:1 › Rollbalken: scrollbar-color von Astryx (ScrollableArea) schaltet den Based-Balken nicht ab (1.7s)
+  ✓  143 [webkit] › e2e/welcome.spec.ts:105:1 › Checkliste: 900 × 600 ohne waagrechten Rollbalken, beide Wege und „Turn on agents“ ohne Scrollen sichtbar, nichts gekürzt (3.0s)
+  -  146 [webkit] › e2e/welcome.spec.ts:124:1 › Willkommen: Bildschirmfotos
+  ✓  145 [webkit] › e2e/scrollbars.spec.ts:58:1 › Rollbalken: Seite mit Inline-Tabelle rollt, Balken sichtbar; Bildschirmfotos hell/dunkel in drei Größen (4.6s)
 
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit/error-context.md
-
-    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
-
-    Error: expect(locator).not.toHaveCount(expected) failed
-
-    Locator:  locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-    Expected: not 0
-    Received: 0
-    Timeout:  5000ms
-
-    Call log:
-      - Expect "not toHaveCount" locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg') with timeout 5000ms
-      - waiting for locator('.bn-drag-handle-menu').locator('.bn-ak-menu-item .nf-glyph svg')
-        14 × locator resolved to 0 elements
-           - unexpected value "0"
-
-
-      171 |     expect(Math.abs(m.x + m.width - h.x), `${text}: links neben dem Griff`).toBeLessThanOrEqual(12);
-      172 |     // Gleiche Icons wie im Seitenmenü „…“
-    > 173 |     await expect(menu.locator(".bn-ak-menu-item .nf-glyph svg")).not.toHaveCount(0);
-          |                                                                      ^
-      174 |     await page.keyboard.press("Escape");
-      175 |     await expect(menu).toHaveCount(0);
-      176 |   }
-        at /home/runner/work/Based/Based/apps/web/e2e/native-free.spec.ts:173:70
-
-    Error Context: test-results/native-free-Blockmenü-⋮⋮-ö-316bf-ht-je-nach-Block-verschoben-webkit-retry1/error-context.md
-
-  1 failed
-    [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
   18 skipped
-  124 passed (9.4m)
-undefined
-/home/runner/work/Based/Based/apps/web:
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
+  128 passed (9.5m)
