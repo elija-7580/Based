@@ -1,4 +1,4 @@
-failure f0adc589f70211d66fe7dca31142bb5c7ef450e3
+failure 7284a6b367ba087b7a678dab87c59e24e7b01ce4
 
     Error: expect(locator).not.toHaveCount(expected) failed
 
@@ -55,7 +55,7 @@ failure f0adc589f70211d66fe7dca31142bb5c7ef450e3
   1 failed
     [webkit] › e2e/native-free.spec.ts:158:1 › Blockmenü (⋮⋮) öffnet direkt am Griff, nicht je nach Block verschoben 
   18 skipped
-  131 passed (6.4m)
+  124 passed (6.4m)
 undefined
 /home/runner/work/Based/Based/apps/web:
  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: playwright test --project=webkit --shard=2/2 --grep-invert @perf
