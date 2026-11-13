@@ -11,6 +11,8 @@ export interface SlashItem {
   props?: Block["props"];
   /** Sonderfall Unterseite: legt sie an (an Stelle des leeren Blocks oder dahinter) und gibt ihre ID zurück. */
   page?: (store: WorkspaceStore, replace: string | undefined, after: string) => string | undefined;
+  /** Spaltenliste mit so vielen Spalten. */
+  columns?: number;
   /** Sonderfall mit eigenen Records (Datenbank): legt an und gibt die Block-ID zurück. */
   create?: (store: WorkspaceStore, after: string, replace: boolean) => string | undefined;
 }
@@ -38,10 +40,14 @@ export const SLASH_ITEMS: readonly SlashItem[] = [
   { type: "todo", label: "To-do list", group: "Basic blocks", icon: "☐", keywords: "checkbox task todo", hint: "[]" },
   { type: "toggle", label: "Toggle list", group: "Basic blocks", icon: "▸", keywords: "collapse details", hint: ">", props: { isOpen: true } },
   { type: "quote", label: "Quote", group: "Basic blocks", icon: "❝", keywords: "blockquote citation", hint: "\"" },
+  { type: "heading1", label: "Toggle heading 1", group: "Basic blocks", icon: "▸H1", keywords: "toggle collapse h1", props: { toggleable: true, isOpen: true } },
+  { type: "heading2", label: "Toggle heading 2", group: "Basic blocks", icon: "▸H2", keywords: "toggle collapse h2", props: { toggleable: true, isOpen: true } },
+  { type: "heading3", label: "Toggle heading 3", group: "Basic blocks", icon: "▸H3", keywords: "toggle collapse h3", props: { toggleable: true, isOpen: true } },
   { type: "callout", label: "Callout", group: "Basic blocks", icon: "💡", keywords: "note info tip" },
   { type: "code", label: "Code", group: "Basic blocks", icon: "</>", keywords: "snippet pre", hint: "```" },
   { type: "divider", label: "Divider", group: "Basic blocks", icon: "—", keywords: "hr line separator", hint: "---" },
   { type: "table", label: "Simple table", group: "Basic blocks", icon: "▦", keywords: "grid cells rows columns", props: { tableColumns: 2, tableHeaderRow: true, cells: ["", "", "", ""] } },
+  ...[2, 3, 4, 5].map((n): SlashItem => ({ type: "columnList", label: `${n} columns`, group: "Advanced", icon: "▥", keywords: `columns layout side ${n}`, columns: n })),
   { type: "page", label: "Page", group: "Pages", icon: "📄", keywords: "subpage new page", page: subPage },
   { type: "databaseInline", label: "Database", group: "Pages", icon: "▦", keywords: "table inline database grid", create: (store, after, replace) => {
     const a = store.blocks.get(after);

@@ -219,9 +219,11 @@ export function splitBlock(store: WorkspaceStore, blockId: string, from: number,
     let type = b.type;
     if (b.type === "callout") type = "text";
     else if (atEnd && !CONTINUING_TYPES.has(b.type)) type = "text";
-    const props = type === b.type ? propsFor(type, b.props, { checked: undefined, isOpen: undefined }) : undefined;
     const kids = liveChildren(store, b.id);
-    const intoChildren = b.type === "callout" || (kids.length > 0 && !isCollapsed(b));
+    // Offenes Toggle (auch Toggle-Überschrift) am Ende, auch ohne Kinder: der neue Block kommt hinein (Notion).
+    const openToggleEnd = isToggle(b) && !isCollapsed(b) && atEnd;
+    const intoChildren = b.type === "callout" || openToggleEnd || (kids.length > 0 && !isCollapsed(b));
+    const props = type === b.type ? propsFor(type, b.props, { checked: undefined, isOpen: undefined }) : undefined;
     let id: string;
     if (intoChildren) {
       const sk = sortKeys(store, "b:" + b.id, kids.length ? { kind: "before", id: kids[0]! } : { kind: "end" }, 1)[0]!;
@@ -748,4 +750,28 @@ export function setColumnRatios(store: WorkspaceStore, ratios: ReadonlyMap<strin
   store.transact("Resize columns", (tx) => {
     for (const [id, r] of live) tx.update(id, (x) => { x.props = { ...(x.props ?? {}), ratio: Math.round(r * 1000) / 1000 }; });
   }, { coalesce: "columns:" + live.map(([id]) => id).join() });
+}
+
+/**
+ * Slash „2–5 columns“: eine Spaltenliste mit `n` Spalten, jede mit einem leeren Textblock. Ein leerer Textblock
+ * (`replace`) wird ersetzt, sonst kommt die Liste dahinter. Fokus: erste Spalte.
+ */
+export function insertColumns(store: WorkspaceStore, after: string, n: number, replace = false): Focus | undefined {
+  const ref = store.blocks.get(after);
+  if (!ref || n < 2 || n > 5) return undefined;
+  const empty = replace && ref.type === "text" && runsLength(textOf(ref)) === 0 && liveChildren(store, ref.id).length === 0;
+  return store.transact("Columns", (tx) => {
+    const sk = sortKeys(store, ref.parent, { kind: "after", id: ref.id }, 1)[0]!;
+    const list = create(store, tx, "columnList", ref.parent, sk);
+    let first = "";
+    let k: string | undefined;
+    for (let i = 0; i < n; i++) {
+      k = keyBetween(k, undefined);
+      const col = create(store, tx, "column", "b:" + list, k);
+      const t = create(store, tx, "text", "b:" + col, keyBetween(undefined, undefined));
+      if (i === 0) first = t;
+    }
+    if (empty) store.deleteBlocksIn(tx, [ref.id]);
+    return at(first, 0);
+  });
 }

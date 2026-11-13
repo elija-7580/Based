@@ -15,6 +15,7 @@ import { EditorController, scrollParent, type Caret } from "./controller.js";
 import { caretOnEdgeLine, caretX, offsetOf, renderRich, selectionIn } from "./dom.js";
 import { SLASH_ITEMS, filterSlash, type SlashItem } from "./slash.js";
 import { PresenceLayer, useRealtime } from "./realtime.js";
+import { highlightCode } from "./highlight.js";
 import "./blocks.css";
 
 interface Ctx {
@@ -341,6 +342,10 @@ export function BlockEditor(props: PageEditorProps) {
       if (created && props.onOpenPage) props.onOpenPage(created);
       return;
     }
+    if (item.columns) {
+      run(cmd.insertColumns(store, s.id, item.columns, empty));
+      return;
+    }
     if (item.create) {
       const created = item.create(store, s.id, empty);
       if (created) ctrl.select([created]);
@@ -440,12 +445,38 @@ export function BlockEditor(props: PageEditorProps) {
       if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); chooseMention(m.items[m.index]!); return; }
     }
     if (m && e.key === "Escape") { e.preventDefault(); setMention(undefined); return; }
+    // ⌘⌥T gilt überall im Editor (auch nach einem Klick auf einen Pfeil)
+    if (e.code === "KeyT" && blockShortcut(e, [])) return;
     const target = e.target as HTMLElement;
     // Eingabefelder in Blöcken (Gleichung, Link, Datenbank-Zellen) behalten ihre Tasten
     if (target.matches("input, textarea, select") || (target.isContentEditable && !target.dataset.editableId)) return;
     const id = target.dataset.editableId;
     if (id) return onFieldKey(e, id, mod);
     if (ctrl.selected.length) return onSelectionKey(e, mod);
+  };
+
+  /** ⌘⌥0–9 (wie Notion): Text, H1–H3, To-do, Liste, Nummern, Toggle, Code, Seite. ⌘⌥T: alle Toggles auf/zu. */
+  const blockShortcut = (e: React.KeyboardEvent, ids: readonly string[]): boolean => {
+    if (!(e.metaKey || e.ctrlKey) || !e.altKey || !editable) return false;
+    if (e.code === "KeyT") {
+      e.preventDefault();
+      const toggles = ctrl.order().map((x) => store.blocks.get(x)!).filter((x) => cmd.isToggle(x));
+      const anyClosed = toggles.some((x) => x.props?.isOpen !== true);
+      const all = [...store.children("b:" + pageID)].flatMap(function walk(x: string): string[] { return [x, ...store.children("b:" + x).flatMap(walk)]; }).filter((x) => cmd.isToggle(store.blocks.get(x)!));
+      cmd.setBlockProps(store, all, { isOpen: anyClosed ? true : undefined }, anyClosed ? "Expand all" : "Collapse all");
+      return true;
+    }
+    const m = /^Digit([0-9])$/.exec(e.code);
+    if (!m) return false;
+    const types = ["text", "heading1", "heading2", "heading3", "todo", "bulletedList", "numberedList", "toggle", "code", "page"] as const;
+    const type = types[Number(m[1])]!;
+    e.preventDefault();
+    const targets = ids.filter((x) => cmd.isTextBlock(store.blocks.get(x)));
+    if (type === "page" || targets.length === 0) return true;
+    const c = ctrl.caret;
+    cmd.turnInto(store, targets, type);
+    if (c && targets.includes(c.id)) ctrl.setCaret(clampCaret(store, c));
+    return true;
   };
 
   const onFieldKey = (e: React.KeyboardEvent, id: string, mod: boolean) => {
@@ -455,6 +486,7 @@ export function BlockEditor(props: PageEditorProps) {
     if (!c) return;
     const len = textLen(store, id);
     const key = e.key;
+    if (blockShortcut(e, [id])) return;
     // WebKit schickt am Anfang/Ende eines Felds kein beforeinput (nichts zu löschen) – hier selbst behandeln
     if (key === "Backspace" && !mod && !e.altKey && c.from === 0 && c.to === 0) {
       e.preventDefault();
@@ -565,6 +597,7 @@ export function BlockEditor(props: PageEditorProps) {
     const sel = ctrl.selected;
     const key = e.key;
     const order = ctrl.order();
+    if (blockShortcut(e, sel)) return;
     if (key === "Escape") { e.preventDefault(); ctrl.clearSelection(); return; }
     if ((key === "Backspace" || key === "Delete") && editable) {
       e.preventDefault();
@@ -889,7 +922,8 @@ export function BlockEditor(props: PageEditorProps) {
       {menu ? <BlockMenu id={menu.id} x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} /> : null}
       {mention && mention.items.length ? <MentionMenu state={mention} onChoose={chooseMention} onHover={(i) => setMention({ ...mention, index: i })} /> : null}
       {link ? <LinkPopover x={link.x} y={link.y} value={link.value} onDone={commitLink} /> : null}
-      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }} /> : null}
+      {toolbar && editable && ctrl.caret ? <FormatBar x={toolbar.x} y={toolbar.y} onMark={(m) => { const c = ctrl.caret; if (c) run(format(c, m)); }}
+        onColor={(color) => { const c = ctrl.caret; if (c && c.from !== c.to) run(cmd.formatText(store, [R(c)], "color", color ?? false)); }} /> : null}
     </EditorCtx.Provider>
   );
 }
@@ -1075,7 +1109,20 @@ function Column({ id, depth, next }: { id: string; depth: number; next: string |
 function BlockContent({ block: b, depth, number }: { block: Block; depth: number; number: number }) {
   const { store, props, editable } = useCtx();
   switch (b.type) {
-    case "text": case "heading1": case "heading2": case "heading3": case "heading4": case "quote":
+    case "heading1": case "heading2": case "heading3": case "heading4":
+      if (b.props?.toggleable) {
+        return (
+          <>
+            <button type="button" className="bx2-marker bx2-toggle" data-open={b.props?.isOpen ? "" : undefined} aria-label={b.props?.isOpen ? "Collapse" : "Expand"} aria-expanded={b.props?.isOpen === true}
+              onClick={() => cmd.setBlockProps(store, [b.id], { isOpen: b.props?.isOpen ? undefined : true }, "Toggle")}>
+              <ChevronIcon />
+            </button>
+            <TextField block={b} />
+          </>
+        );
+      }
+      return <TextField block={b} />;
+    case "text": case "quote":
       return <TextField block={b} />;
     case "code":
       return (
@@ -1476,7 +1523,9 @@ const TextField = memo(function TextField({ block }: { block: Block }) {
     if (plainText(block.text).length === 0) el.setAttribute("data-empty", "");
     else el.removeAttribute("data-empty");
     ctrl.restore(block.id);
-  }, [block.text, ctrl, block.id, props]);
+    if (block.type === "code") highlightCode(block.id, el, plainText(block.text), block.props?.language);
+  }, [block.text, ctrl, block.id, props, block.type, block.props?.language]);
+  useEffect(() => () => highlightCode(block.id, null, "", undefined), [block.id]);
   const cls = "bx2-field bx2-t-" + block.type + (block.type === "todo" && block.props?.checked ? " bx2-done" : "");
   return (
     <div ref={ref} className={cls} data-editable-id={block.id} contentEditable={editable} suppressContentEditableWarning
@@ -1581,7 +1630,8 @@ function BlockMenu({ id, x, y, onClose }: { id: string; x: number; y: number; on
 
 const BLOCK_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"] as const;
 
-function FormatBar({ x, y, onMark }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void }) {
+function FormatBar({ x, y, onMark, onColor }: { x: number; y: number; onMark: (m: "b" | "i" | "u" | "s" | "c") => void; onColor: (color: string | undefined) => void }) {
+  const [colors, setColors] = useState(false);
   const items: { m: "b" | "i" | "u" | "s" | "c"; label: string; title: string }[] = [
     { m: "b", label: "B", title: "Bold (⌘B)" }, { m: "i", label: "I", title: "Italic (⌘I)" }, { m: "u", label: "U", title: "Underline (⌘U)" },
     { m: "s", label: "S", title: "Strikethrough (⌘⇧S)" }, { m: "c", label: "</>", title: "Code (⌘E)" },
@@ -1589,6 +1639,21 @@ function FormatBar({ x, y, onMark }: { x: number; y: number; onMark: (m: "b" | "
   return (
     <div className="bx2-menu bx2-formatbar" role="toolbar" aria-label="Format" data-testid="format-bar" style={{ left: x, top: Math.max(8, y - 44) }} onPointerDown={(e) => e.preventDefault()}>
       {items.map((it) => <button key={it.m} type="button" className={"bx2-format-btn bx2-format-" + it.m} title={it.title} aria-label={it.title} onClick={() => onMark(it.m)}>{it.label}</button>)}
+      <button type="button" className="bx2-format-btn" title="Text color" aria-label="Text color" aria-expanded={colors} onClick={() => setColors((c) => !c)}>A</button>
+      {colors ? (
+        <span className="bx2-menu bx2-color-menu" role="menu" aria-label="Text color">
+          {BLOCK_COLORS.map((c) => (
+            <button key={c} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c === "default" ? undefined : c); }}>
+              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c} aria-hidden="true">A</span><span className="bx2-menu-text">{c === "default" ? "Default" : c[0]!.toUpperCase() + c.slice(1)}</span>
+            </button>
+          ))}
+          {BLOCK_COLORS.filter((c) => c !== "default").map((c) => (
+            <button key={c + "Background"} type="button" role="menuitem" className="bx2-menu-item" onClick={() => { setColors(false); onColor(c + "Background"); }}>
+              <span className={"bx2-menu-icon bx2-swatch bx2-color-" + c + "Background"} aria-hidden="true">A</span><span className="bx2-menu-text">{c[0]!.toUpperCase() + c.slice(1)} background</span>
+            </button>
+          ))}
+        </span>
+      ) : null}
     </div>
   );
 }

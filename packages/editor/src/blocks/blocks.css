@@ -534,3 +534,13 @@
 .bx2-table-add:hover { background: var(--selected); color: var(--ink-2); }
 .bx2-url { display: flex; }
 .bx2-url .bx2-link-input { flex: 1 1 auto; }
+
+/* E6: Syntax-Hervorhebung (CSS Highlight API, nur Farben aus vorhandenen Tokens wie im alten Editor) */
+::highlight(bx2-syn-keyword) { color: var(--block-purple-text); }
+::highlight(bx2-syn-type) { color: var(--block-blue-text); }
+::highlight(bx2-syn-function) { color: var(--block-blue-text); }
+::highlight(bx2-syn-string) { color: var(--block-green-text); }
+::highlight(bx2-syn-number) { color: var(--block-orange-text); }
+::highlight(bx2-syn-comment) { color: var(--muted); }
+::highlight(bx2-syn-property) { color: var(--ink-2); }
+.bx2-color-menu { position: absolute; top: 100%; left: 0; margin-top: var(--space-1); }

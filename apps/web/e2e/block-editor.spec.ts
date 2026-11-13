@@ -223,7 +223,7 @@ test("Slash-Menü: filtern, Pfeile, Enter macht aus dem leeren Block eine Übers
   await page.keyboard.type("/heading");
   const menu = page.getByTestId("slash-menu");
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole("option")).toHaveCount(4);
+  await expect(menu.getByRole("option")).toHaveCount(7);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(menu).toHaveCount(0);
@@ -383,6 +383,54 @@ test("Blockmenü: Farbe, Code-Sprache, Callout-Icon, einfache Tabelle, Datum per
   await page.keyboard.press("Escape");
   await page.mouse.move(0, 0);
   if (test.info().project.name === "chromium") await page.screenshot({ path: "../../docs/design/screens/web-block-editor-embeds-1280x820-light.png" });
+});
+
+test("⌘⌥-Kürzel, Textfarbe, Spalten per Slash, Toggle-Überschrift, Syntax-Hervorhebung", async ({ page }) => {
+  await newPage(page);
+  await startTyping(page);
+  await page.keyboard.type("Shortcut");
+  await page.keyboard.press("Meta+Alt+Digit2");
+  await expect(editor(page).locator(".bx2-block").first()).toHaveAttribute("data-type", "heading2");
+  await page.keyboard.press("Meta+Alt+Digit0");
+  await expect(editor(page).locator(".bx2-block").first()).toHaveAttribute("data-type", "text");
+
+  // Textfarbe über die Formatleiste
+  await page.keyboard.press("Shift+Home");
+  await expect(page.getByTestId("format-bar")).toBeVisible();
+  await page.getByTestId("format-bar").getByRole("button", { name: "Text color" }).click();
+  await page.getByTestId("format-bar").getByRole("menuitem", { name: "Blue", exact: true }).click();
+  await expect(fields(page).first().locator(".bx2-color-blue")).toHaveText("Shortcut");
+
+  // 3 Spalten
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/3 col");
+  await page.keyboard.press("Enter");
+  await expect(editor(page).locator(".bx2-column")).toHaveCount(3);
+  await page.keyboard.type("left");
+  await expect(editor(page).locator(".bx2-column").first().locator("[data-editable-id]")).toHaveText("left");
+
+  // Toggle-Überschrift zu- und aufklappen
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("/toggle heading 2");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Section");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Inside");
+  const head = editor(page).locator('.bx2-block[data-type="heading2"]').last();
+  await expect(head.locator(".bx2-children [data-editable-id]")).toHaveText("Inside");
+  await head.locator(":scope > .bx2-row .bx2-toggle").click();
+  await expect(head.locator(".bx2-children")).toHaveCount(0);
+  await page.keyboard.press("Meta+Alt+KeyT");
+  await expect(head.locator(".bx2-children [data-editable-id]")).toHaveText("Inside");
+
+  // Syntax-Hervorhebung
+  await editor(page).getByTestId("block-editor-tail").click();
+  await page.keyboard.type("```");
+  await page.keyboard.type("const x = 1 // note");
+  await editor(page).locator(".bx2-code-lang-btn").last().click();
+  await page.getByLabel("Search languages").fill("javascript");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (CSS as unknown as { highlights: Map<string, unknown> }).highlights.has("bx2-syn-keyword"))).toBe(true);
 });
 
 test("Spaltenbreite ziehen", async ({ page }) => {
